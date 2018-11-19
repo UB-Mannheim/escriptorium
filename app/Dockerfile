@@ -1,0 +1,46 @@
+# pull official base image
+FROM python:3.7-alpine
+
+# EXPOSE 8000
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# try to autodetect number of cpus available
+# ENV NGINX_WORKER_PROCESSES auto
+
+# set work directory
+WORKDIR /usr/src/app
+
+# update apk
+RUN apk update
+
+# install uwsgi
+# RUN apk add uwsgi-python3
+RUN apk add gcc \
+		    libc-dev \
+		    linux-headers 
+
+RUN addgroup -S uwsgi && adduser -S -g uwsgi uwsgi
+
+# install psycopg2
+RUN apk add --virtual build-deps gcc python3-dev musl-dev \
+    && apk add postgresql-dev \
+    && pip install psycopg2 \
+    && apk del build-deps
+        
+# install dependencies
+RUN pip install --upgrade pip
+RUN pip install pipenv
+COPY ./Pipfile /usr/src/app/Pipfile
+RUN pipenv install --skip-lock --system --dev
+
+# copy entrypoint.sh
+COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
+
+# copy project
+COPY . /usr/src/app/
+
+# run entrypoint.sh
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
