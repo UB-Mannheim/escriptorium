@@ -23,10 +23,10 @@ sys.path.append('apps')
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'a beautiful snowflake')
+SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
 
 ALLOWED_HOSTS = ['*']
 
@@ -122,6 +122,17 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.uk'
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+    EMAIL_FILE_PATH = '/tmp/django-emails'
+
+USE_CELERY = True
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/

@@ -2,40 +2,57 @@ version: "3.7"
 
 services:
   web:
-    build: ./app
+    build:
+      context: ./app
+    env_file: .env
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     volumes:
       - ./app/:/usr/src/app/
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/media
     # ports:
-    #   - 8000:8000
+    #   - 8000:8000  # uncomment to access uwsgi directly
     expose:
       - 8000
-    environment:
-      - SECRET_KEY=whatever
-      - SQL_ENGINE=django.db.backends.postgresql
-      - SQL_DATABASE=postgres
-      - SQL_USER=postgres
-      - SQL_PASSWORD=postgres
-      - SQL_HOST=db
-      - SQL_PORT=5432
-      - DATABASE=postgres
-      - DJANGO_SU_NAME=admin
-      - DJANGO_SU_EMAIL=admin@admin.com
-      - DJANGO_SU_PASSWORD=admin
+    env_file: .env
     depends_on:
       - db
+
   db:
     image: postgres:10.5-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+
   nginx:
     build: ./nginx
+    volumes:
+      - static_volume:/usr/src/app/static
+      - media_volume:/usr/src/app/media
     ports:
       - 8080:80
     depends_on:
       - web
+
+  redis:
+    image: redis:3.0-alpine
+
+  celeryworker:
+    build:
+      context: ./app
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    command: celery -A app.escriptorium worker -l INFO
+
+  celerybeat:
+    build:
+      context: ./app
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    command: celery -A app.escriptorium beat -l INFO
 
 volumes:
   postgres_data:

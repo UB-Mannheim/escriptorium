@@ -16,7 +16,7 @@ WORKDIR /usr/src/app
 # update apk
 RUN apk update
 
-# install uwsgi
+# install uwsgi dependencies
 # RUN apk add uwsgi-python3
 RUN apk add gcc \
 		    libc-dev \
@@ -32,9 +32,8 @@ RUN apk add --virtual build-deps gcc python3-dev musl-dev \
         
 # install dependencies
 RUN pip install --upgrade pip
-RUN pip install pipenv
-COPY ./Pipfile /usr/src/app/Pipfile
-RUN pipenv install --skip-lock --system --dev
+COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN pip install -r requirements.txt
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
@@ -45,9 +44,9 @@ COPY . /usr/src/app/
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
 
-RUN python -c "import django; django.setup(); \
-   from django.contrib.auth.management.commands.createsuperuser import get_user_model; \
-   get_user_model()._default_manager.db_manager('$SQL_DATABASE').create_superuser( \
-   username='$DJANGO_SU_NAME', \
-   email='$DJANGO_SU_EMAIL', \
-   password='$DJANGO_SU_PASSWORD')"
+# RUN python -c "import django; django.setup(); \
+#    from django.contrib.auth.management.commands.createsuperuser import get_user_model; \
+#    get_user_model()._default_manager.db_manager('$SQL_DATABASE').create_superuser( \
+#    username='$DJANGO_SU_NAME', \
+#    email='$DJANGO_SU_EMAIL', \
+#    password='$DJANGO_SU_PASSWORD')"
