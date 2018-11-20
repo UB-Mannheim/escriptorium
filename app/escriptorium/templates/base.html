@@ -1,0 +1,25 @@
+{% load i18n staticfiles %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
+  <head>
+    <title>Escriptorium - {% block head_title %}{% endblock %}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    {% block styles %}
+    <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+    {% comment %}<link href="{% static '/vendor/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">{% endcomment %}
+
+    {% comment %}<link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">{% endcomment %}
+    {% endblock styles %}
+  </head>
+  <body>
+    {% block body %}
+    {% endblock body %}
+
+    {% block scripts %}
+    {% comment %}<script src="{% static '/vendor/jquery/jquery.min.js' %}"></script>{% endcomment %}
+    <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
+    {% endblock scripts %}
+  </body>
+</html>

@@ -21,6 +21,9 @@ services:
       - SQL_HOST=db
       - SQL_PORT=5432
       - DATABASE=postgres
+      - DJANGO_SU_NAME=admin
+      - DJANGO_SU_EMAIL=admin@admin.com
+      - DJANGO_SU_PASSWORD=admin
     depends_on:
       - db
   db:
