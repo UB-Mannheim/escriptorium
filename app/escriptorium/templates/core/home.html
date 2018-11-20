@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block head_title %}{% trans "Homepage" %}{% endblock %}
+
+{% block nav-home-class %}active{% endblock %}
+
 {% block body %}
-<main>Fill me in</main>
+<div class="jumbotron">
+<h1>eScriptorium</h1>
+<p>A project providing digital recognition of handwritten documents using machine learning techniques<p>
+</div>
 {% endblock %}

@@ -4,5 +4,5 @@ from core.views import Home
 
 
 urlpatterns = [
-    path('', Home.as_view()),
+    path('', Home.as_view(), name='home'),
 ]

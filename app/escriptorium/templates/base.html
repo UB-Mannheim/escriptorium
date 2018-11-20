@@ -1,21 +1,89 @@
-{% load i18n staticfiles %}<!doctype html>
+{% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
-    <title>Escriptorium - {% block head_title %}{% endblock %}</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Escriptorium - {% block head_title %}Digital Library{% endblock %}</title>
+
+    {% comment %}
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+    {% endcomment %}
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
     {% block styles %}
     <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
     {% comment %}<link href="{% static '/vendor/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">{% endcomment %}
 
-    {% comment %}<link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">{% endcomment %}
+    <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <a class="navbar-brand" href="{% url 'home' %}">eScriptorium</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item {% block nav-home-class %}{% endblock %}">
+            <a class="nav-link" href="{% url 'home'%}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">{% trans 'About' %}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">{% trans 'Contact' %}</a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Dropdown
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <form class="form-inline my-2 my-lg-0">
+              <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+              <button class="btn btn-outline-info my-2 my-sm-0" type="submit">Search</button>
+            </form>
+          </li>
+          {% endif %}
+        </ul>
+
+        {% if user.is_authenticated %}
+        <span class="nav-item navbar-text">
+          {% blocktrans with username=user.username %}Hello {{username}}{% endblocktrans %}
+        </span>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'login' %}">{% trans 'Login' %}</a>
+        </li>
+        {% endif %}
+      </div>
+    </nav>
+
+    <div class="container">
     {% block body %}
     {% endblock body %}
+    </div>
 
     {% block scripts %}
     {% comment %}<script src="{% static '/vendor/jquery/jquery.min.js' %}"></script>{% endcomment %}
