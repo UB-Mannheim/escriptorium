@@ -3,3 +3,10 @@ body {
     padding-top: 70px;
     max-width: 1800px;
 }
+
+/* alerts */
+#alerts-container {
+    width: 400px;
+    position: absolute;
+    right: 0;
+}
