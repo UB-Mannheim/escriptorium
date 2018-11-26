@@ -1,3 +1,8 @@
 from django.db import models
 
-# Create your models here.
+# entities
+
+# Document (eg Book)
+# DocumentPart (eg Page) = Image
+# Block (eg main, margin annotations)
+# Line ()
