@@ -64,7 +64,7 @@ class AcceptInvitation(CreateView):
     def form_valid(self, form):    
         response = super().form_valid(form)
         self.invitation.accept(form.instance)
+        # TODO: send a welcome message ?!
         return response
 
 # request invitation
- 

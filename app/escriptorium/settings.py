@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
+    'ordered_model',
     'channels',
     
     'users',
@@ -162,3 +163,14 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(PROJECT_ROOT, 'static'),
     ]
+
+if 'test' in sys.argv:
+    class DisableMigrations(object):
+
+        def __contains__(self, item):
+            return True
+
+        def __getitem__(self, item):
+            return None
+
+    MIGRATION_MODULES = DisableMigrations()
