@@ -11,10 +11,12 @@ from users.consumers import send_notification
 
 
 class User(AbstractUser):
+    email = models.EmailField(
+        verbose_name=_('email address'),
+        max_length=255,
+        unique=True,
+    )
     fields = models.ManyToManyField('ResearchField', blank=True)
-    
-    class Meta:
-        unique_together = ('email',)
     
     def get_full_name(self):
         fn = super().get_full_name()
