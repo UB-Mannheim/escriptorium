@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 # Add apps directory the sys.path
-sys.path.append('apps')
+sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'ordered_model',
+    'versioning',
     'channels',
     
     'users',
@@ -131,7 +132,7 @@ if DEBUG:
     EMAIL_FILE_PATH = '/tmp/django-emails'
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = os.getenv('REDIS_PORT', 6379)
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
@@ -157,6 +158,8 @@ CHANNEL_LAYERS = {
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 
 # only needed in developement
 if DEBUG:
