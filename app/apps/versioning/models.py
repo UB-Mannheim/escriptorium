@@ -8,12 +8,21 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 
+def _dummy_db(*args, **kwargs):
+    raise RuntimeError("Can not save/delete an old version.")
+
+
 class Versioned(models.Model):
     """
-    Allows the versioning of a model, every revisions is stored in the revisions field
+    Allows the flat versioning of a model instance, every revisions is stored in the versions field
     this technique allows to not have to deal with changing references to this 'object'.
-    Also takes less database place.
     
+    API:
+    instance.history : is a property returning a list of instances corresponding to the versions.
+    instance.new_version() : store the current data in versions.
+    instance.revert(revision) : store the current data in versions and revert to the given revision
+                                does not call save(), it needs to be done manually.
+
     revisions = [{
       revision: <uuid>,
       source: <kraken>,
@@ -54,12 +63,18 @@ class Versioned(models.Model):
             'data': data
         }
     
-    def instance_from_version(self, version):        
+    def unpack(self, version):
+        """
+        Create an instance (not saved in db) from a dict (usually coming from the history)
+        """
         fields = version.pop('data')
         fields['revision'] = uuid.UUID(version.pop('revision'))
         # version_source, version_author, version_created_at, version_updated_at
         fields.update(**{'version_%s' % key: value for key, value in version.items()})
         instance = self._meta.model(**fields)
+        # disable database operations
+        instance.save = _dummy_db
+        instance.delete = _dummy_db
         return instance
     
     def new_version(self):
@@ -105,7 +120,7 @@ class Versioned(models.Model):
     @property
     def history(self):
         versions = json.loads(self.versions)
-        return [self.instance_from_version(version) for version in versions]
+        return [self.unpack(version) for version in versions]
     
     class Meta:
         abstract = True
