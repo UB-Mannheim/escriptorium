@@ -15,39 +15,39 @@ class VersioningTest(TestCase):
             username='user_2', password='test', email='2@test.com')
     
     def test_nominal(self):
-        v1 = TestModel.objects.create(identity=1, content='test', author=self.user1.username)
-        self.assertEqual(TestModel.objects.count(), 1)
-        self.assertEqual(v1.current_version, v1)
-        self.assertEqual(v1.is_current, True)
+        test = TestModel.objects.create(content='test',
+                                      version_author=self.user1.username)
+        v1_revision = test.revision
+        self.assertEqual(len(test.history), 0)
+        test.new_version()
+        test.author = self.user2.username
+        test.content = 'test v2'
+        test.save()
+        self.assertEqual(len(test.history), 1)
+        self.assertNotEqual(test.revision, v1_revision)
+        v2_revision = test.revision
         
-        v2 = v1.make_new_version()
-        v2.content = 'test v2'
-        v2.author = self.user2.username
-        v2.save()
-
-        v3 = v2.make_new_version()
-        v3.content = 'test v3'
-        v3.save()
-
-        v4 = v1.make_new_version()
-        v4.content = 'test v4'
-        v4.save()
+        test.new_version()
+        test.content = 'test v3'
+        v3_revision = test.revision
         
-        self.assertEqual(TestModel.objects.count(), 1)
-        self.assertEqual(v4.history().count(), 4)
-        self.assertEqual(v1.content, 'test')
-        self.assertEqual(v2.content, 'test v2')
-        self.assertEqual(v3.content, 'test v3')
-        self.assertEqual(v4.content, 'test v4')
-        self.assertEqual(v1.current_version, v4)
+        test.new_version()
+        test.content = 'test v4'
+        v4_revision = test.revision
+        
+        self.assertEqual(len(test.history), 3)
+        
+        test.revert(v1_revision.hex)
+        self.assertEqual(len(test.history), 3)
+        self.assertEqual(test.revision, v1_revision)
+        self.assertEqual(test.history[0].revision, v4_revision)
+        self.assertEqual(test.history[1].revision, v3_revision)
+        self.assertEqual(test.history[2].revision, v2_revision)
+        
+        test.revert(v3_revision.hex)
+        self.assertEqual(len(test.history), 3)
+        self.assertEqual(test.revision, v3_revision)
+        self.assertEqual(test.history[0].revision, v1_revision)
+        self.assertEqual(test.history[1].revision, v4_revision)
+        self.assertEqual(test.history[2].revision, v2_revision)
 
-        v4.revert_to(v1)
-        self.assertEqual(TestModel.objects.count(), 1)  # still 1 because v1 is hidden
-        self.assertEqual(v4.history().count(), 4)
-        self.assertEqual(v4.current_version, v1)
-
-        v1.revert_to_revision(v2.revision)
-        self.assertEqual(v1.current_version, v2)
-
-        v3.revert_to(v1)
-        self.assertEqual(v3.current_version, v1)

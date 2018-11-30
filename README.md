@@ -40,6 +40,9 @@ it is recomanded to then make an alias for manage.py or set $DJANGO_SETTINGS_MOD
 * if you need to test methods from the queue manager, set USE_CELERY=True and run a celery worker  
 > $ celery -A app.escriptorium worker -l INFO  
   
+* Create the sql tables  
+> $ cd app && python manage.py migrate  
+
 * Run the server  
 > $ cd app && python manage.py runserver  
 

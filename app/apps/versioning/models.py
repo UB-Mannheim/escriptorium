@@ -1,143 +1,119 @@
+import json
 import sys
 import uuid
-import logging
+from datetime import datetime
 
 from django.conf import settings
-from django.core.validators import MinLengthValidator
-from django.db import models, transaction
-from django.utils.functional import cached_property
-
-
-logger = logging.getLogger(__name__)
-
-
-class NoVersionManager(models.Manager):
-    def get_queryset(self):
-        """
-        By default we always fetch the last version transparently
-        """
-        return super().get_queryset().filter(is_current=True)
-
-
-class VersionManager(models.Manager):
-    def history(self, instance):
-        return self.filter(**instance.get_version_identity())
-    
-    def get_previous_version(self, instance):
-        pass
-    
-    def get_next_version(self, instance):
-        pass
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 
 
 class Versioned(models.Model):
     """
-    Naïve versioning.
-
-    version_identity_fields is a tuple of field names that identify an object as unique, 
-    meaning all versions of it will share the same value for these fields.
+    Allows the versioning of a model, every revisions is stored in the revisions field
+    this technique allows to not have to deal with changing references to this 'object'.
+    Also takes less database place.
     
-    It is advised to create an partial unique index to add a constraint on is_current, exp:
-    operations = [
-    migrations.RunSQL("CREATE UNIQUE INDEX partial_index ON table_name(is_current)
-                       WHERE is_current"),
-    ]
-
+    revisions = [{
+      revision: <uuid>,
+      source: <kraken>,
+      author: <karen>,
+      created_at: <utc iso>,
+      updated_at: <utc iso>,
+      data: {}  # no need to pickle since jsonb is compiled anyway
+    ]}
     """
+    ### these fields store the 'current' revision
     revision = models.UUIDField(default=uuid.uuid4, editable=False)
-    # allows for fast fetching
-    is_current = models.BooleanField(null=True, db_index=True, default=True)
+    version_source = models.CharField(editable=False, max_length=128,
+                                      default=getattr(settings, 'VERSIONING_DEFAULT_SOURCE'))
+    # can't use FK because can be external
+    version_author = models.CharField(editable=False, max_length=128)
+    version_created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    version_updated_at = models.DateTimeField(editable=False, auto_now=True)
     
-    source = models.CharField(max_length=128,
-                              default=getattr(settings, 'VERSIONING_DEFAULT_SOURCE'))
+    # this is a stack, more recents to the top
+    # on postgres it's stored as jsonb, super fast and indexable!
+    versions = JSONField(editable=False, default='[]')
     
-    # username, can't use FK because can be external
-    author = models.CharField(max_length=128)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    version_identity_fields = None
-    
-    objects = NoVersionManager()
-    versions = VersionManager()
-    
-    def get_version_identity(self):
-        if self.version_identity_fields is None:
-            raise ValueError("version_identity_fields attribute can not be empty.")
-        return {field: self.__dict__[field]
-                for field in self.version_identity_fields}
-    
-    @cached_property
-    def current_version(self):
-        try:
-            return self.history().get(is_current=True)
-        except self._meta.model.DoesNotExist:
-            logger.error("Current version not found for %s.", self)
-            return None
-    
-    def make_new_version(self):
-        kwargs = {}
+    def pack(self):
+        """
+        Create a dict from the current instance to be added to the history
+        """
+        data = {}
         for field in self._meta.fields:
-            if field.name not in ('id', 'revision'):
-                kwargs[field.name] = getattr(self, field.name)
-        new = self._meta.model(**kwargs)
-        try:
-            del self.current_version
-        except AttributeError:
-            pass
-        return new
-            
-    def history(self):
-        """
-        Returns a unevaluated queryset of all versions of this object
-        """
-        return self._meta.model.versions.history(self)
+            if field.name not in ('id', 'revision', 'versions') and not field.name.startswith('version_'):
+                data[field.name] = getattr(self, field.name)
+        
+        return {
+            'revision': self.revision.hex,
+            'source': self.version_source,
+            'author': self.version_author,
+            'created_at': self.version_created_at.isoformat(),
+            'updated_at': self.version_updated_at.isoformat(),
+            'data': data
+        }
     
-    def make_current(self):
-        # this is wrapped in a transaction because if the second save fails,
-        # we want to rollback the current_version
-        with transaction.atomic():
-            self.unset_current_version()
-            self.is_current = True
-            self.save()
+    def instance_from_version(self, version):        
+        fields = version.pop('data')
+        fields['revision'] = uuid.UUID(version.pop('revision'))
+        # version_source, version_author, version_created_at, version_updated_at
+        fields.update(**{'version_%s' % key: value for key, value in version.items()})
+        instance = self._meta.model(**fields)
+        return instance
     
-    def unset_current_version(self):
+    def new_version(self):
+        history = json.loads(self.versions)
+        history.insert(0, self.pack())
+        self.versions = json.dumps(history)
+        
+        self.revision = uuid.uuid4()  # new revision number
+        self.version_created_at = datetime.utcnow()
+        self.version_updated_at = datetime.utcnow()
+    
+    def revert(self, revision):
         """
-        remove the is_current from the current version
+        revision is a hex of the uuid field as stored in the history
+        does not save to base
         """
-        if self.current_version:
-            self.current_version.is_current = False
-            self.current_version.save()
-        del self.current_version
-    
-    def revert_to(self, target):
-        target.make_current()
-    
-    def revert_to_revision(self, revision):
-        try:
-            target = self.history().get(revision=revision)
-        except self._meta.model.DoesNotExist:
-            # catch the .get(), no need to rollback at this point
-            logger.warning("Couldn't find revision %s for %s.", revision, self)
+        history = json.loads(self.versions)
+        
+        for version in history:
+            if version['revision'] == revision:
+                # insert current state
+                history.insert(0, self.pack())
+                # pop revision
+                history.pop(history.index(version))
+                self.version = json.dumps(history)
+                
+                # load its data
+                self.revision = uuid.UUID(revision)
+                for field_name, value in version['data'].items():
+                    setattr(self, field_name, value)
+                self.version_source = version['source']
+                self.version_author = version['author']
+                # self.version_created_at = datetime.fromisoformat(version['created_at'])  # 3.7 only
+                self.version_created_at = datetime.strptime(
+                    version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
+                self.version_updated_at = datetime.utcnow()
+                self.versions = json.dumps(history)
+                break
         else:
-            target.make_current()
+            # get here if we don't break
+            raise ValueError("Revision %s not found for %s" % (revision, self))
     
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.is_current and self.current_version != self:
-                self.unset_current_version()
-            return super().save(*args, **kwargs)
+    @property
+    def history(self):
+        versions = json.loads(self.versions)
+        return [self.instance_from_version(version) for version in versions]
     
     class Meta:
         abstract = True
-        ordering = ('-updated_at',)
 
 
 if 'test' in sys.argv:
     class TestModel(Versioned):
-        identity = models.IntegerField()
         content = models.CharField(max_length=128)
-        version_identity_fields = ('identity',)
 
         def __str__(self):
             return self.content
