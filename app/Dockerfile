@@ -22,6 +22,10 @@ RUN apk add gcc \
 		    libc-dev \
 		    linux-headers 
 
+
+# install Pillow dependencies
+RUN apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev
+
 RUN addgroup -S uwsgi && adduser -S -g uwsgi uwsgi
 
 # install psycopg2
