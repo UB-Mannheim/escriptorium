@@ -1,59 +1,114 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.utils.translation import gettext as _
 
 from ordered_model.models import OrderedModel
 
-# from versioning.models import Versioned
+from versioning.models import Versioned
+
+User = get_user_model()
 
 
-# class Typology():
-#     """
-#     Document: map, poem, novel ..
-#     Part: page, log, cover ..
-#     Block: main text, floating text, illustration, 
-#     """
-#     TARGET_DOCUMENT = 1
-#     TARGET_PART = 2
-#     TARGET_BLOCK = 3
-#     TARGET_CHOICES = (
-#         (TARGET_DOCUMENT, 'Document'),
-#         (TARGET_PART, 'Part'),
-#         (TARGET_BLOCK, 'Block'), 
-#     )
-#     name = models.CharField(max_length=128)
-#     target = models.PositiveSmallIntegerField()
+class Typology(models.Model):
+    """
+    Document: map, poem, novel ..
+    Part: page, log, cover ..
+    Block: main text, floating text, illustration, 
+    """
+    TARGET_DOCUMENT = 1
+    TARGET_PART = 2
+    TARGET_BLOCK = 3
+    TARGET_CHOICES = (
+        (TARGET_DOCUMENT, 'Document'),
+        (TARGET_PART, 'Part (eg Page)'),
+        (TARGET_BLOCK, 'Block (eg Paragraph)'), 
+    )
+    name = models.CharField(max_length=128)
+    target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
 
+    def __str__(self):
+        return self.name
+
+
+class Document(models.Model):
+    WORKFLOW_STATE_UNPUBLISHED = 0
+    WORKFLOW_STATE_PUBLISHED = 1
+    WORKFLOW_STATE_ARCHIVED = 2
+    WORKFLOW_STATE_CHOICES = (
+        (WORKFLOW_STATE_UNPUBLISHED, _("Unpublished")),
+        (WORKFLOW_STATE_PUBLISHED, _("Published")),
+        (WORKFLOW_STATE_ARCHIVED, _("Archived")),
+    )
     
-# class Document():
-#     name = models.CharField(max_length=512)
-#     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
-#                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
-#     created_at
-#     updated_at
-#     workflow
-#     access
+    ACCESS_PRIVATE = 0
+    ACCESS_PUBLIC = 1
+    ACCESS_CHOICES = (
+        (ACCESS_PRIVATE, _("Private")),
+        (ACCESS_PUBLIC, _("Public")),
+    )
+    
+    name = models.CharField(max_length=512)
+    
+    access = models.PositiveSmallIntegerField(
+        default=ACCESS_PRIVATE, choices=ACCESS_CHOICES,
+        help_text=_("A private document can be shared specifically with teams and individuals."))
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    shared_with_users = models.ManyToManyField(User, blank=True,
+                                               verbose_name=_("Share with users"),
+                                               related_name='shared_documents')
+    shared_with_groups = models.ManyToManyField(Group, blank=True,
+                                                verbose_name=_("Share with teams"),
+                                                related_name='shared_documents')
+    
+    typology = models.ForeignKey(Typology, null=True, blank=True, on_delete=models.SET_NULL,
+                                 limit_choices_to={'target': Typology.TARGET_DOCUMENT})
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    workflow_state = models.PositiveSmallIntegerField(
+        default=WORKFLOW_STATE_UNPUBLISHED,
+        choices=WORKFLOW_STATE_CHOICES)
 
-# class Transcription():
+    class Meta:
+        ordering = ('-updated_at',)
+    
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_published(self):
+        return self.workflow_state == self.WORKFLOW_STATE_PUBLISHED
+
+    @property
+    def is_archived(self):
+        return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED
+
+
+# class Transcription(models.Model):
 #     name = models.CharField(max_length=512)
 #     document = models.ForeignKey(Document, on_delete=models.CASCADE)
+#     ocr_backend = models.CharField(default='kraken')
+#     ocr_model = models.FileField()
 #     created_at
 #     updated_at
 
-# class DocumentPart():  # OrderedModel
-#     """
-#     Represents a physical part of a larger document that is usually a page
-#     """
-#     image = models.ImageField()
-#     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
-#                                  limit_choices_to={'target': Typology.TARGET_PART})
-#     document = models.ForeignKey(Document, on_delete=models.CASCADE)
-#     order_with_respect_to = 'document'
+
+class DocumentPart(OrderedModel):
+    """
+    Represents a physical part of a larger document that is usually a page
+    """
+    image = models.ImageField()
+    typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
+                                 limit_choices_to={'target': Typology.TARGET_PART})
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    order_with_respect_to = 'document'
     
-#     class Meta(OrderedModel.Meta):
-#         pass
+    class Meta(OrderedModel.Meta):
+        pass
 
 
-# class Block():
+# class Block(models.Model):
 #     """
 #     Represents a visualy close group of graphemes (characters) bound by the same semantic 
 #     example: a paragraph, a margin note or floating text
@@ -67,7 +122,7 @@ from ordered_model.models import OrderedModel
 #     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE)
 
 
-# class Line():  # Versioned, OrderedModel
+# class Line(models.Model):  # Versioned, OrderedModel
 #     """
 #     Represents a transcripted line of a document part in a given transcription
 #     """
@@ -85,7 +140,7 @@ from ordered_model.models import OrderedModel
 #     block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
 
 #     order_with_respect_to = 'document_part'
-#     version_identity_fields = ('transcription', 'document_part', 'order')
+#     version_ignore_fields = ('transcription', 'document_part', 'order')
         
 #     class Meta(OrderedModel.Meta):
 #         pass
