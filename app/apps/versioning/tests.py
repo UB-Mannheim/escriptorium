@@ -60,3 +60,9 @@ class VersioningTest(TestCase):
 
         with self.assertRaises(RuntimeError):
             test.history[0].delete()
+
+    def test_ignored_field(self):
+        test = TestModel.objects.create(content='test',
+                                        version_author=self.user1.username)
+        test.new_version()
+        self.assertNotIn('ignored', test.versions)

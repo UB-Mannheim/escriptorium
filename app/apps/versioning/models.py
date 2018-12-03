@@ -44,6 +44,7 @@ class Versioned(models.Model):
     # this is a stack, more recents to the top
     # on postgres it's stored as jsonb, super fast and indexable!
     versions = JSONField(editable=False, default='[]')
+    version_ignore_fields = ()
     
     def pack(self):
         """
@@ -51,7 +52,9 @@ class Versioned(models.Model):
         """
         data = {}
         for field in self._meta.fields:
-            if field.name not in ('id', 'revision', 'versions') and not field.name.startswith('version_'):
+            if (field.name not in ('id', 'revision', 'versions')
+                and not field.name in self._meta.model.version_ignore_fields
+                and not field.name.startswith('version_')):
                 data[field.name] = getattr(self, field.name)
         
         return {
@@ -129,6 +132,8 @@ class Versioned(models.Model):
 if 'test' in sys.argv:
     class TestModel(Versioned):
         content = models.CharField(max_length=128)
-
+        ignored = models.SmallIntegerField(default=5)
+        version_ignore_fields = ('ignored',)
+        
         def __str__(self):
             return self.content
