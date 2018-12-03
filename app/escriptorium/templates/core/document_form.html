@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+{% block head_title %}{% trans "Create a new Document" %}{% endblock %}
+
+{% block body %}
+<div class="row">
+  <div class="col-md-12 col-md-offset-4">
+    {% if object %}
+    {% if can_publish %}
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right"></form>
+    {% if object.is_published %}
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_UNPUBLISHED }}"><input type="submit" value="{% trans 'Unpublish' %}" class="btn btn-warning float-sm-right"></form>
+    {% else %}
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}"><input type="submit" value="{% trans 'Publish' %}" class="btn btn-success float-sm-right"></form>
+    {% endif %}
+    {% endif %}
+    <h2>{% trans "Update document" %}</h2>
+    {% else %}
+    <h2>{% trans "Create a new Document" %}</h2>
+    {% endif %}
+    
+    <form method="post">
+      {% csrf_token %}
+      {{ form.errors }}
+      <fieldset>
+        {% include 'includes/widgets/input.html' with field=form.name %}
+        {% include 'includes/widgets/select.html' with field=form.typology %}
+        {% include 'includes/widgets/checkboxes.html' with field=form.shared_with_groups %}
+
+        {#form.shared_with_groups#}
+        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block">
+      </fieldset>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

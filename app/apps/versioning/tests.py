@@ -50,4 +50,19 @@ class VersioningTest(TestCase):
         self.assertEqual(test.history[0].revision, v1_revision)
         self.assertEqual(test.history[1].revision, v4_revision)
         self.assertEqual(test.history[2].revision, v2_revision)
+    
+    def test_save_version(self):
+        test = TestModel.objects.create(content='test',
+                                        version_author=self.user1.username)
+        test.new_version()
+        with self.assertRaises(RuntimeError):
+            test.history[0].save()
 
+        with self.assertRaises(RuntimeError):
+            test.history[0].delete()
+
+    def test_ignored_field(self):
+        test = TestModel.objects.create(content='test',
+                                        version_author=self.user1.username)
+        test.new_version()
+        self.assertNotIn('ignored', test.versions)

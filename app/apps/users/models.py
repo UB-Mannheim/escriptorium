@@ -123,3 +123,6 @@ class Invitation(models.Model):
                           _('{username} accepted your invitation!').format(
                               username=self.recipient.username),
                           level='success')
+
+    def notify(self, message, level='info'):
+        return send_notification(self.pk, message, level=level)

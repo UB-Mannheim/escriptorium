@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from core.models import Typology, Document
+
+admin.site.register(Typology)
+admin.site.register(Document)

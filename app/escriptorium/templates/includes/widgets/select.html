@@ -1,0 +1,9 @@
+{% extends 'includes/widgets/base_field.html' %}
+{% block input %}
+<label class="my-1 mr-2" for="{{ field.name }}">{{ field.label }}</label>
+  <select name="{{ field.name }}" id="{{ field.name }}" class="form-control custom-select">
+    {% for option_id, option_label in field.field.choices %}
+    <option value="{{ option_id }}" {% if option_id == field.value %}selected{% endif %}>{{ option_label }}</option>
+    {% endfor %}
+  </select>
+{% endblock %}

@@ -22,7 +22,6 @@
     {% block styles %}
     <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
     {% comment %}<link href="{% static '/vendor/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">{% endcomment %}
-
     <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
@@ -65,7 +64,7 @@
               {% blocktrans with username=user.username %}Hello {{username}}{% endblocktrans %}
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">{% trans "My Projects" %}</a>
+              <a class="dropdown-item" href="{% url 'documents-list' %}">{% trans "My Documents" %}</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{% url 'password_change' %}">{% trans "Change password" %}</a>
               <a class="dropdown-item" href="#">{% trans "Profile" %}</a>
