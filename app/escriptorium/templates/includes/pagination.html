@@ -1,0 +1,31 @@
+{% load i18n %}
+
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination justify-content-end">
+    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+      <a class="page-link" href="{% if page_obj.has_previous %}?page={{page_obj.previous_page_number}}{% else %}#{% endif %}" tabindex="-1"><span aria-hidden="true">&laquo;</span> <span class="sr-only">{% trans "Previous" %}</span></a>
+    </li>
+
+    {% if page_obj.number > 1 %}
+    <li class="page-item">
+      <a class="page-link" title="{% trans 'First page' %}" href="?page=1">1</a>
+    </li>
+    {% endif %}
+    
+    <li class="page-item active">
+      <a class="page-link" href="#">{{page_obj.number}} <span class="sr-only">(current)</span></a>
+    </li>
+
+    {% if page_obj.number < page_obj.paginator.num_pages %}
+    <li class="page-item">
+      <a class="page-link" title="{% trans 'Last page' %}" href="?page={{page_obj.num_pages}}">{{page_obj.paginator.num_pages}}</a>
+    </li>
+    {% endif %}
+    
+    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{% if page_obj.has_next %}?page={{page_obj.next_page_number}}{% else %}#{% endif %}"><span aria-hidden="true">&raquo;</span> <span class="sr-only">{% trans "Next" %}</span></a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
