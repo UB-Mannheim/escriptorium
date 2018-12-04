@@ -5,10 +5,9 @@ from django.views.generic import CreateView, UpdateView, ListView, DetailView
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.http import HttpResponseForbidden
-from django.db.models import Q
 
 from core.models import Document
-from core.forms import DocumentForm
+from core.forms import DocumentForm, DocumentShareForm
 
 
 class Home(TemplateView):
@@ -20,13 +19,8 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-         #| Q(shared_with_groups__in=self.request.user.groups.all())
-        return Document.objects.filter(
-            Q(access=Document.ACCESS_PUBLIC) |
-            Q(owner=self.request.user)
-        ).exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
-       
-    
+        return Document.objects.for_user(self.request.user)
+
 
 class DocumentMixin():
     def get_success_url(self):
@@ -35,8 +29,9 @@ class DocumentMixin():
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request
-        return kwargs    
-    
+        return kwargs
+
+
 class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, CreateView):
     model = Document
     form_class = DocumentForm
@@ -51,23 +46,46 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
 class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
     model = Document
     form_class = DocumentForm
-
+    success_message = _("Document saved successfully!")
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
+        context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
+
+
+class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
+    model = Document
+    form_class = DocumentShareForm
+    success_message = _("Document shared successfully!")
+    
+    def get(self, request, *args, **kwargs):
+        # TODO: should be 405 method not allowed
+        raise HttpResponseForbidden
+    
+    def form_valid(self, form):
+        if form.instance.workflow_state == Document.WORKFLOW_STATE_DRAFT:
+            form.instance.workflow_state = Document.WORKFLOW_STATE_SHARED
+        return super().form_valid(form)
 
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
     fields = ['workflow_state',]
-
+    
+    def get_success_message(self, form_data):
+        if self.object.is_archived:
+            return _("Document archived successfully!")
+        else:
+            return _("Document published successfully!")
+    
     def get_success_url(self):
         if self.object.is_archived:
             return reverse('documents-list')
         else:
             return reverse('document-update', kwargs={'pk': self.object.pk})
-
+    
     def get(self, request, *args, **kwargs):
         # TODO: should be 405 method not allowed
         raise HttpResponseForbidden

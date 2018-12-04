@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -32,29 +33,44 @@ class Typology(models.Model):
         return self.name
 
 
+class DocumentManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('typology')
+    
+    def for_user(self, user):
+        # Note: Monitor this query
+        return (Document.objects
+                .filter(Q(owner=user)
+                        | (Q(workflow_state__gt=Document.WORKFLOW_STATE_DRAFT)
+                          & (Q(shared_with_users=user)
+                             | Q(shared_with_groups__in=user.groups.all())
+                          ))
+                )
+                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .prefetch_related('shared_with_groups')
+                .select_related('typology')
+                .distinct()
+        )
+
+
 class Document(models.Model):
-    WORKFLOW_STATE_UNPUBLISHED = 0
-    WORKFLOW_STATE_PUBLISHED = 1
-    WORKFLOW_STATE_ARCHIVED = 2
+    WORKFLOW_STATE_DRAFT = 0
+    WORKFLOW_STATE_SHARED = 1  # editable a viewable by shared_with people
+    WORKFLOW_STATE_PUBLISHED = 2  # viewable by the world
+    WORKFLOW_STATE_ARCHIVED = 3  # 
     WORKFLOW_STATE_CHOICES = (
-        (WORKFLOW_STATE_UNPUBLISHED, _("Unpublished")),
+        (WORKFLOW_STATE_DRAFT, _("Draft")),
+        (WORKFLOW_STATE_SHARED, _("Shared")),
         (WORKFLOW_STATE_PUBLISHED, _("Published")),
         (WORKFLOW_STATE_ARCHIVED, _("Archived")),
     )
     
-    ACCESS_PRIVATE = 0
-    ACCESS_PUBLIC = 1
-    ACCESS_CHOICES = (
-        (ACCESS_PRIVATE, _("Private")),
-        (ACCESS_PUBLIC, _("Public")),
-    )
-    
     name = models.CharField(max_length=512)
     
-    access = models.PositiveSmallIntegerField(
-        default=ACCESS_PRIVATE, choices=ACCESS_CHOICES,
-        help_text=_("A private document can be shared specifically with teams and individuals."))
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    workflow_state = models.PositiveSmallIntegerField(
+        default=WORKFLOW_STATE_DRAFT,
+        choices=WORKFLOW_STATE_CHOICES)
     shared_with_users = models.ManyToManyField(User, blank=True,
                                                verbose_name=_("Share with users"),
                                                related_name='shared_documents')
@@ -66,10 +82,9 @@ class Document(models.Model):
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    workflow_state = models.PositiveSmallIntegerField(
-        default=WORKFLOW_STATE_UNPUBLISHED,
-        choices=WORKFLOW_STATE_CHOICES)
-
+    
+    objects = DocumentManager()
+    
     class Meta:
         ordering = ('-updated_at',)
     
@@ -77,9 +92,14 @@ class Document(models.Model):
         return self.name
 
     @property
+    def is_shared(self):
+        return self.workflow_state in [self.WORKFLOW_STATE_PUBLISHED,
+                                       self.WORKFLOW_STATE_SHARED]
+    
+    @property
     def is_published(self):
         return self.workflow_state == self.WORKFLOW_STATE_PUBLISHED
-
+    
     @property
     def is_archived(self):
         return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED

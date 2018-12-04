@@ -7,10 +7,11 @@
   <div class="col-md-12 col-md-offset-4">
     {% if object %}
     {% if can_publish %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right"></form>
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right">
+    <button type="button" class="btn btn-primary float-sm-right" data-toggle="modal" data-target="#shareModal">
+      {% trans "Share" %}
+    </button>
     {% if object.is_published %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_UNPUBLISHED }}"><input type="submit" value="{% trans 'Unpublish' %}" class="btn btn-warning float-sm-right"></form>
-    {% else %}
     <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}"><input type="submit" value="{% trans 'Publish' %}" class="btn btn-success float-sm-right"></form>
     {% endif %}
     {% endif %}
@@ -25,13 +26,40 @@
       <fieldset>
         {% include 'includes/widgets/input.html' with field=form.name %}
         {% include 'includes/widgets/select.html' with field=form.typology %}
-        {% include 'includes/widgets/checkboxes.html' with field=form.shared_with_groups %}
-
+        
         {#form.shared_with_groups#}
         <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block">
       </fieldset>
     </form>
   </div>
 </div>
+
+<!-- shareModal -->
+{% if object %}
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="post" action="{% url 'document-share' pk=object.pk %}">
+        {% csrf_token %}
+        
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{% trans "Share with users or teams" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% include 'includes/widgets/checkboxes.html' with field=share_form.shared_with_groups %}
+        {# Share with users #}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+      </div>
+      </form>      
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 

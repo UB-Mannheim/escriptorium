@@ -10,4 +10,5 @@ urlpatterns = [
     path('document/create/', CreateDocument.as_view(), name='document-create'),
     path('document/update/<int:pk>/', UpdateDocument.as_view(), name='document-update'),
     path('document/publish/<int:pk>/', PublishDocument.as_view(), name='document-publish'),
+    path('document/share/<int:pk>/', ShareDocument.as_view(), name='document-share'),
 ]
