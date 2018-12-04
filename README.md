@@ -32,7 +32,10 @@ For example local_settings.py
 ```python
 from escriptorium.settings import *  
   
-DEBUG=False
+# requires pip install django-debug-toolbar  
+INSTALLED_APPS += ['debug_toolbar',]  
+MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]  
+INTERNAL_IPS += ['127.0.0.1',]  
 ```  
   
 it is recomanded to then make an alias for manage.py or set $DJANGO_SETTINGS_MODULE 

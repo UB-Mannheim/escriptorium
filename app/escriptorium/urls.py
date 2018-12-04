@@ -24,6 +24,13 @@ urlpatterns = [
     path('', include('users.urls')),
 ]
 
-# Serve static files in developement
 if settings.DEBUG:
+    try:
+        import debug_toolbar
+    except ImportError:
+        pass
+    else:
+        urlpatterns += [path('__debug__/', include(debug_toolbar.urls)),]
+    
+    # Serve static files in developement
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
