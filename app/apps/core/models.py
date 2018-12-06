@@ -24,11 +24,11 @@ class Typology(models.Model):
     TARGET_CHOICES = (
         (TARGET_DOCUMENT, 'Document'),
         (TARGET_PART, 'Part (eg Page)'),
-        (TARGET_BLOCK, 'Block (eg Paragraph)'), 
+        (TARGET_BLOCK, 'Block (eg Paragraph)'),
     )
     name = models.CharField(max_length=128)
     target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
-
+    
     def __str__(self):
         return self.name
 

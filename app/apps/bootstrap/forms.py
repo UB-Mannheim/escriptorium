@@ -11,12 +11,17 @@ class BootstrapFormMixin():
             if not field.widget.is_hidden:
                 field.widget.attrs.update({
                     'placeholder': field.label,
-                    'title': field.label,
-                    'class': 'form-control'
+                    'title': field.label
                 })
+                if 'class' in field.widget.attrs:
+                    field.widget.attrs['class'] += ' form-control'
+                else:
+                    field.widget.attrs['class'] = 'form-control'
                 if field.widget.input_type in ['select', 'checkbox']:
                     field.widget.need_label = True
-
+                if field.widget.__class__.__name__ == 'Select':
+                    field.widget.attrs['class'] += ' custom-select'
+    
     def full_clean(self):
         super().full_clean()
         if self._errors:

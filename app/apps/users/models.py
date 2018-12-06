@@ -70,7 +70,9 @@ class Invitation(models.Model):
                                   related_name='invitations_received')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)  # instance creation date
     sent_at = models.DateTimeField(editable=False, null=True)  # email send date
-    group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.SET_NULL)
+    group = models.ForeignKey(Group, blank=True, null=True,
+                              verbose_name=_("Team"),
+                              on_delete=models.SET_NULL)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     workflow_state = models.SmallIntegerField(choices=STATE_CHOICES, default=STATE_CREATED,
                                               editable=False)

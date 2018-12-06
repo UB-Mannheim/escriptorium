@@ -32,7 +32,10 @@
               {% if document.workflow_state %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}
             </big>
           </td>
-          <td><a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info float-sm-right" title="{% trans 'Edit' %}">✏</a></td>
+          <td class="text-right">
+            <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}">👁</a>
+            <a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info" title="{% trans 'Edit' %}">✎</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

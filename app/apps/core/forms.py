@@ -36,7 +36,7 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         attrs = self.fields['key'].widget.attrs
         # attrs.update({'autocomplete':"off", 'list': "metadataKeys"})
-        attrs['class'] += ' input-group-text'
+        attrs['class'] += ' input-group-text px-5'
         self.fields['key'].empty_label = '-'
         self.fields['key'].widget.need_label = False
         

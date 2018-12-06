@@ -1,34 +1,22 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n bootstrap %}
+
 {% block body %}
 <div class="row">
   <div class="col-md-6 col-md-offset-4">
-
+    
     <form method="post">
       {% csrf_token %}
       <fieldset>
-        <label class="my-1 mr-2" for="group">{% trans "Recipient's informations" %}</label>
-        <div class="form-group">
-          <input class="form-control" placeholder="Email" name="recipient_email" autofocus="" type="text" required>
-        </div>
-        <div class="form-group">
-          <input class="form-control" placeholder="First name" name="recipient_first_name" type="text">
-        </div>
-        <div class="form-group">
-          <input class="form-control" placeholder="Last name" name="recipient_last_name" type="text">
-        </div>
+        <label class="my-1" for="group">{% trans "Recipient's informations" %}</label>
+        {% render_field form.recipient_email %}
+        {% render_field form.recipient_first_name %}
+        {% render_field form.recipient_last_name %}
+        {% render_field form.group %}
         
-        <div class="form-group">
-          <label class="my-1 mr-2" for="group">{% trans "Team" %}</label>
-          <select name="group" id="group" class="form-control custom-select">
-            {% for group_id, name in form.fields.group.choices %}
-            <option value="{{ group_id }}">{{ name }}</option>
-            {% endfor %}
-          </select>
-        </div>
         <input type="submit" value="{% trans 'Send' %}" class="btn btn-lg btn-success btn-block">
       </fieldset>
-
+      
     </form>
   </div>
 </div>

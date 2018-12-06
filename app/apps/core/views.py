@@ -38,10 +38,27 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
     form_class = DocumentForm
 
     success_message = _("Document created successfully!")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['metadata_form'] = MetadataFormSet()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        metadata_form = MetadataFormSet(self.request.POST)
+        if form.is_valid() and metadata_form.is_valid():
+            return self.form_valid(form, metadata_form)
+        else:
+            return self.form_invalid(form)
     
-    def form_valid(self, form):
+    def form_valid(self, form, metadata_form):
         form.instance.owner = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # form.save() has been called, we have an object
+        metadata_form.instance = self.object
+        metadata_form.save()
+        return response
 
 
 class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
@@ -56,12 +73,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
-        if self.request.method == 'POST':
-            context['metadata_form'] = MetadataFormSet(self.request.POST, instance=self.object)
-        else:
-            context['metadata_form'] = MetadataFormSet(instance=self.object)
-
-        print(context['metadata_form'].forms[0].fields)
+        context['metadata_form'] = MetadataFormSet(instance=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
     
@@ -73,12 +85,11 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             return self.form_valid(form, metadata_form)
         else:
             return self.form_invalid(form)
-    
+        
     def form_valid(self, form, metadata_form):
         with transaction.atomic():
             response = super().form_valid(form)
             # at this point the document is saved
-            # print(metadata_form.deleted_forms)
             metadata_form.save()
         return response
 
