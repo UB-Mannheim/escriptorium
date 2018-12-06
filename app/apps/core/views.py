@@ -1,13 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import TemplateView
-from django.views.generic import CreateView, UpdateView, ListView, DetailView
+from django.db import transaction
+from django.http import HttpResponseForbidden
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.http import HttpResponseForbidden
+from django.views.generic import TemplateView
+from django.views.generic import CreateView, UpdateView, ListView, DetailView
 
 from core.models import Document
-from core.forms import DocumentForm, DocumentShareForm
+from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet
 
 
 class Home(TemplateView):
@@ -51,8 +52,31 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
+        if self.request.method == 'POST':
+            context['metadata_form'] = MetadataFormSet(self.request.POST, instance=self.object)
+        else:
+            context['metadata_form'] = MetadataFormSet(instance=self.object)
+
+        print(context['metadata_form'].forms[0].fields)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        metadata_form = MetadataFormSet(self.request.POST, instance=self.object)
+        if form.is_valid() and metadata_form.is_valid():
+            return self.form_valid(form, metadata_form)
+        else:
+            return self.form_invalid(form)
+    
+    def form_valid(self, form, metadata_form):
+        with transaction.atomic():
+            response = super().form_valid(form)
+            # at this point the document is saved
+            # print(metadata_form.deleted_forms)
+            metadata_form.save()
+        return response
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):

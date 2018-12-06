@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n staticfiles %}
+{% load i18n staticfiles bootstrap %}
 {% block head_title %}{% trans "Create a new Document" %}{% endblock %}
 
 {% block body %}
@@ -7,13 +7,15 @@
   <div class="col-md-12 col-md-offset-4">
     {% if object %}
     {% if can_publish %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right">
-    <button type="button" class="btn btn-primary float-sm-right" data-toggle="modal" data-target="#shareModal">
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right"></form>
+
+    {% if not object.is_published %}
+    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}"><input type="submit" value="{% trans 'Publish' %}" class="btn btn-success float-sm-right mr-1"></form>
+    {% endif %}
+
+    <button type="button" class="btn btn-primary float-sm-right mr-1" data-toggle="modal" data-target="#shareModal">
       {% trans "Share" %}
     </button>
-    {% if object.is_published %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}"><input type="submit" value="{% trans 'Publish' %}" class="btn btn-success float-sm-right"></form>
-    {% endif %}
     {% endif %}
     <h2>{% trans "Update document" %}</h2>
     {% else %}
@@ -22,13 +24,45 @@
     
     <form method="post">
       {% csrf_token %}
-      {{ form.errors }}
       <fieldset>
-        {% include 'includes/widgets/input.html' with field=form.name %}
-        {% include 'includes/widgets/select.html' with field=form.typology %}
+        {% render_field form.name %}
+        {% render_field form.typology %}
+
+        <div class="js-metadata-form">
+        <label class="my-1">{% trans "Metadata" %}</label>        
+        {{ metadata_form.management_form }}
+
+        {% for form in metadata_form.forms %}
+        <div class="input-group input-group-sm mb-2 js-metadata-row">
+          {{ form.id }}  {# hidden #}
+          {{ form.document }}  {# hidden #}
+          <div class="input-group-prepend">
+            {% render_field form.key is_grouped=True %}
+          </div>
+          {% render_field form.value is_grouped=True %}
+          <div class="input-group-prepend">
+            <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
+            <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
+          </div>
+        </div>
+        {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
+        {% endfor %}
+        </div>
+
+        {% comment %}
+        {# In case we rather have a text input with autocomplete #}
+        {% with choices=metadata_form.forms.0.key.field.choices %}
+        {% if choices %}
+        <datalist id="metadataKeys">
+          {% for choice in choices %}
+          <option>{{ choice.1 }}</option>
+          {% endfor %}
+        </datalist>
+        {% endif %}
+        {% endwith %}
+        {% endcomment %}
         
-        {#form.shared_with_groups#}
-        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block">
+        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block mt-5" autofocus>
       </fieldset>
     </form>
   </div>
@@ -49,7 +83,7 @@
         </button>
       </div>
       <div class="modal-body">
-        {% include 'includes/widgets/checkboxes.html' with field=share_form.shared_with_groups %}
+        {% render_field share_form.shared_with_groups %}
         {# Share with users #}
       </div>
       <div class="modal-footer">
@@ -63,3 +97,46 @@
 {% endif %}
 {% endblock %}
 
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+    $(document).ready(function() {
+        // the browser might save the state of the delete box if its not posted
+        // so we need to check its state on startup and change the button color accordingly
+        var btns = document.getElementsByClassName('js-metadata-delete');
+        for (var i=0; i < btns.length; i++) {
+            var btn = btns.item(i);
+            var input = document.getElementById(btn.attributes.for.value);
+            if (input.value == "on") {
+                btn.classList.add("btn-danger");
+                btn.classList.remove("btn-outline-secondary");
+            }
+        }
+        $('.js-metadata-delete').click(function(ev) {
+            var btn = ev.target;
+            var input = document.getElementById(btn.attributes.for.value);
+            if (input.value == "on") {
+                btn.classList.add("btn-outline-secondary");
+                btn.classList.remove("btn-danger");
+                input.value = "";
+            } else {
+                btn.classList.add("btn-danger");
+                btn.classList.remove("btn-outline-secondary");
+                input.value = "on";
+            }
+        });
+        
+        $('.js-metadata-form').on('change', '.js-metadata-row input[type=text]', function(ev) {
+            if ($(ev.target).is('.js-metadata-row:last input[type=text]')) {
+                var total = parseInt($('#id_documentmetadata_set-TOTAL_FORMS').val());
+                var $new = $('.js-metadata-row:first').clone();
+                $new.html($new.html().replace(/-0-/g, '-'+total+'-'));
+                $('input:not(#id_documentmetadata_set-0-document)', $new).removeAttr('value');
+                $('select option:selected', $new).removeAttr('selected');
+                $('.js-metadata-row:last').after($new);
+                $('#id_documentmetadata_set-TOTAL_FORMS').val(total + 1);
+            }
+        });              
+    });
+</script>
+{% endblock %}

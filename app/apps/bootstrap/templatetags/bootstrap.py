@@ -16,3 +16,11 @@ def level_to_color(tags):
         'error': 'danger'
     }
     return level_map[tags]
+
+
+@register.simple_tag
+def render_field(field, **kwargs):
+    tplt = template.loader.get_template('django/forms/widgets/field.html')
+    context = {'field': field}
+    context.update(**kwargs)
+    return tplt.render(context)  #.mark_safe()

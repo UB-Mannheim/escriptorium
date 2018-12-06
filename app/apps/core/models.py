@@ -33,6 +33,26 @@ class Typology(models.Model):
         return self.name
 
 
+class Metadata(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    cidoc_id = models.CharField(max_length=8, null=True, blank=True)
+
+    class Meta:
+        ordering = ('name',)
+    
+    def __str__(self):
+        return self.name
+
+
+class DocumentMetadata(models.Model):
+    document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
+    key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
+    value = models.CharField(max_length=512)
+    
+    def __str__(self):
+        return '%s:%s' % (self.document.name, self.key.name)
+    
+
 class DocumentManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().select_related('typology')
@@ -82,6 +102,8 @@ class Document(models.Model):
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    metadatas = models.ManyToManyField(Metadata, through=DocumentMetadata, blank=True)
     
     objects = DocumentManager()
     

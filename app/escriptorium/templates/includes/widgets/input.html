@@ -1,6 +1,0 @@
-{% extends 'includes/widgets/base_field.html' %}
-{% block input %}
-{% with widget=field.field.widget %}
-<input class="form-control {% if field.errors %}is-invalid{% endif %}" placeholder="{{ field.label }}" title="{{ field.label }}" type="{{ widget.input_type }}" name="{{ field.name }}"{% if field.value != None %} value="{{ field.value|stringformat:'s' }}"{% endif %} {% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>
-{% endwith %}
-{% endblock %}
