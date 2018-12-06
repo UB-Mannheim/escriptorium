@@ -48,6 +48,10 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     model = Document
     form_class = DocumentForm
     success_message = _("Document saved successfully!")
+
+    def get_queryset(self):
+        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
+        return Document.objects.for_user(self.request.user)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

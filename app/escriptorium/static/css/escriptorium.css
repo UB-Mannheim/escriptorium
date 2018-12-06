@@ -10,3 +10,9 @@ body {
     position: absolute;
     right: 0;
 }
+
+
+/* document form */
+.js-metadata-row:last-of-type .js-metadata-delete {
+    display: none;
+}

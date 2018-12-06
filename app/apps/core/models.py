@@ -58,6 +58,7 @@ class DocumentManager(models.Manager):
         return super().get_queryset().select_related('typology')
     
     def for_user(self, user):
+        # return the list of editable documents
         # Note: Monitor this query
         return (Document.objects
                 .filter(Q(owner=user)
