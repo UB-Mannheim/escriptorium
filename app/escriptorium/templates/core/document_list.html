@@ -19,13 +19,19 @@
         <tr>
           <th>
             <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a>
+            {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
+          </th>
+          <td title="{% trans 'Owner' %}">
+            <span >{{document.owner}}</span>
             {% with groups=document.shared_with_groups.all %}
             {% if groups %}</br><span class="text-muted"><small>{{ groups|join:', ' }}</small></span>{% endif %}
-            {% endwith %}
-          </th>
-          <th>{{ document.typology|default_if_none:'-' }}</th>
-          <th><span class="text-muted"><small>{{ document.updated_at|date }}</small></span></th>
-          <td><big>{% if document.workflow_state %}<span title="{% trans 'Published' %}" class="text-success">✓</span>{% else %}<span  title="{% trans 'Unpublished' %}"class="text-danger">✗</span>{% endif %}</big></td>
+            {% endwith %}</td>
+          <td title="{% trans 'Last modified on' %}"><span class="text-muted"><small>{{ document.updated_at|date }}</small></span></td>
+          <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>
+            <big>
+              {% if document.workflow_state %}<span class="text-success">✓</span>{% else %}<span class="text-danger">✗</span>{% endif %}
+            </big>
+          </td>
           <td><a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info float-sm-right" title="{% trans 'Edit' %}">✏</a></td>
         </tr>
         {% endfor %}
