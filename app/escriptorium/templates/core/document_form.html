@@ -107,7 +107,7 @@
       <div id="image-card-{{ part.pk }}" class="card col-sm-2 js-drag">
         <form method="post" action="{% url 'document-part-update' pk=object.pk part_pk=part.pk %}">{% csrf_token %}
         {% thumbnail part.image "183x294" crop="center" as im %}
-        <img class="card-img-top" src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
+        <img class="card-img-top{% if forloop.counter > 9 %} lazy{% endif %}" {% if forloop.counter > 9 %}data-src="{{ im.url }}"{% else %}src="{{ im.url }}"{% endif %} width="{{ im.width }}" height="{{ im.height }}">
         {% endthumbnail %}
         <div class="card-body">
           <input class="form-control form-control-sm" type="text" name="name" value="{{ part.name }}" required>
@@ -155,4 +155,5 @@
 {{ block.super }}
 <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
 <script src="{% static 'js/document_form.js' %}"></script>
+<script src="{% static 'js/lazyload.js' %}"></script>
 {% endblock %}
