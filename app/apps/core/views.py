@@ -1,14 +1,18 @@
+import json
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import TemplateView
 from django.views.generic import CreateView, UpdateView, ListView, DetailView
 
-from core.models import Document
-from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet
+from sorl.thumbnail import get_thumbnail
+
+from core.models import Document, DocumentPart
+from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
 
 
 class Home(TemplateView):
@@ -98,11 +102,8 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
     model = Document
     form_class = DocumentShareForm
     success_message = _("Document shared successfully!")
-    
-    def get(self, request, *args, **kwargs):
-        # TODO: should be 405 method not allowed
-        raise HttpResponseForbidden
-    
+    http_method_names = ('post',)
+        
     def form_valid(self, form):
         if form.instance.workflow_state == Document.WORKFLOW_STATE_DRAFT:
             form.instance.workflow_state = Document.WORKFLOW_STATE_SHARED
@@ -112,6 +113,11 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
     fields = ['workflow_state',]
+    http_method_names = ('post',)
+    
+    def get_queryset(self):
+        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
+        return Document.objects.for_user(self.request.user)
     
     def get_success_message(self, form_data):
         if self.object.is_archived:
@@ -124,12 +130,60 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             return reverse('documents-list')
         else:
             return reverse('document-update', kwargs={'pk': self.object.pk})
-    
-    def get(self, request, *args, **kwargs):
-        # TODO: should be 405 method not allowed
-        raise HttpResponseForbidden
 
-    # TODO: only owner
+
+class UploadImageAjax(LoginRequiredMixin, CreateView):
+    model = DocumentPart
+    fields = ('image',)
+    http_method_names = ('post',)
+    
+    def get_document(self):
+        try:
+            return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+        except Document.DoesNotExist:
+            raise Http404
+    
+    def form_invalid(self, form):
+        return HttpResponse(json.dumps({'status': 'error',
+                                        'error': form.errors['image']}),
+                            content_type="application/json", status=400)
+    
+    def post(self, request, *args, **kwargs):
+        self.document = self.get_document()
+        return super().post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        part = form.save(commit=False)
+        part.document = self.document
+        try:
+            part.name = part.image.file.name.split('.')[0]
+        except IndexError:
+            part.name = part.image.file.name
+        part.save()
+        im = get_thumbnail(part.image, '183x294', crop='center', quality=95)
+        return HttpResponse(json.dumps({
+            'status': 'ok',
+            'pk': part.pk,
+            'name': part.name,
+            'updateUrl': reverse('document-part-update',
+                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+            'imgUrl': im.url
+        }), content_type="application/json")
+
+
+class UpdateDocumentPart(LoginRequiredMixin, UpdateView):
+    model = DocumentPart
+    form_class = DocumentPartUpdateForm
+    http_method_names = ('post',)
+    pk_url_kwarg = 'part_pk'
+    
+    def form_invalid(self, form):
+        return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
+                            content_type="application/json", status=400)
+    
+    def form_valid(self, form):
+        form.save()
+        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
 class DocumentDetail(DetailView):

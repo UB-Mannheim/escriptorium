@@ -7,7 +7,9 @@ from django.utils.translation import gettext as _
 
 from ordered_model.models import OrderedModel
 
+from core.tasks import lossless_compress
 from versioning.models import Versioned
+
 
 User = get_user_model()
 
@@ -136,19 +138,32 @@ class Document(models.Model):
 #     created_at
 #     updated_at
 
-
+def document_images_path(instance, filename):
+    return 'documents/%d/%s' % (instance.document.pk, filename)
+    
 class DocumentPart(OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
     """
-    image = models.ImageField()
+    name = models.CharField(max_length=512)
+    image = models.ImageField(upload_to=document_images_path)
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
     
     class Meta(OrderedModel.Meta):
         pass
+    
+    def __str__(self):
+        return '%s:%s' % (self.document.name, self.name)
+    
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # send to the queue for compression
+            lossless_compress(self.image)
+            # TODO: send to the queue for kraken segmentation / ocr
+        super().save(*args, **kwargs)
 
 
 # class Block(models.Model):

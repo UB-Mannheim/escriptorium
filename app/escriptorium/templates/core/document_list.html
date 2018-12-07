@@ -21,10 +21,10 @@
             <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a>
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
           </th>
-          <td title="{% trans 'Owner' %}">
-            <span >{{document.owner}}</span>
+          <td>
+            <span title="{% trans 'Owner' %}">{{document.owner}}</span>
             {% with groups=document.shared_with_groups.all %}
-            {% if groups %}</br><span class="text-muted"><small>{{ groups|join:', ' }}</small></span>{% endif %}
+            {% if groups %}</br><span title="{% trans 'Shared with' %}" class="text-muted"><small>{{ groups|join:', ' }}</small></span>{% endif %}
             {% endwith %}</td>
           <td title="{% trans 'Last modified on' %}"><span class="text-muted"><small>{{ document.updated_at|date }}</small></span></td>
           <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>

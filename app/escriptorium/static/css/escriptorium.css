@@ -16,3 +16,42 @@ body {
 .js-metadata-row:last-of-type .js-metadata-delete {
     display: none;
 }
+
+.dropzone {
+    border: 2px dashed #0087F7;
+    border-radius: 5px;
+    background: white;
+}
+
+.dropable {
+    z-index: 2;
+    min-width: 10px;
+    opacity: 0.5;
+    /* background-color: blue; */
+    display: inline-block;
+}
+
+.drop-target {
+    /* box-sizing: border-box; */
+    padding-right: 50px;
+    padding-left: 50px;
+    margin-left: -45px;
+    margin-right: -45px;
+}
+
+.drop-accept {
+    border: 2px dashed #0087F7;
+}
+
+#cards-container {
+    overflow: auto;
+}
+
+.card {
+    padding: 0;
+    cursor: grab;
+}
+
+#card-template {
+    display: none;
+}

@@ -19,8 +19,8 @@ def level_to_color(tags):
 
 
 @register.simple_tag
-def render_field(field, **kwargs):
+def render_field(field, group=False, **kwargs):
     tplt = template.loader.get_template('django/forms/widgets/field.html')
-    context = {'field': field}
-    context.update(**kwargs)
+    field.field.widget.attrs.update(**kwargs)
+    context = {'field': field, 'group': group}
     return tplt.render(context)  #.mark_safe()

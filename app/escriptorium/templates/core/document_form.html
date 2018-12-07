@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
-{% load i18n staticfiles bootstrap %}
+{% load i18n staticfiles bootstrap thumbnail %}
 {% block head_title %}{% trans "Create a new Document" %}{% endblock %}
+
+{% block styles %}
+<link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
+<link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
+{{ block.super }}
+{% endblock %}
 
 {% block body %}
 <div class="row">
@@ -25,11 +31,15 @@
     <form method="post">
       {% csrf_token %}
       <fieldset>
+        {% if object %}
         {% render_field form.name %}
+        {% else %}
+        {% render_field form.name autofocus=1 %}
+        {% endif %}
         {% render_field form.typology %}
-
+        
         <div class="js-metadata-form">
-        <label class="my-1">{% trans "Metadata" %}</label>        
+        <label class="my-1">{% trans "Metadata" %}</label>
         {{ metadata_form.management_form }}
 
         {% for form in metadata_form.forms %}
@@ -37,9 +47,9 @@
           {{ form.id }}  {# hidden #}
           {{ form.document }}  {# hidden #}
           <div class="input-group-prepend">
-            {% render_field form.key is_grouped=True %}
+            {% render_field form.key group=True %}
           </div>
-          {% render_field form.value is_grouped=True %}
+          {% render_field form.value group=True %}
           <div class="input-group-prepend">
             <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
             <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
@@ -50,6 +60,7 @@
         </div>
 
         {% comment %}
+        {# in case we rather have a free form with autocomplete #}
         {% with choices=metadata_form.forms.0.key.field.choices %}
         {% if choices %}
         <datalist id="metadataKeys">
@@ -61,9 +72,53 @@
         {% endwith %}
         {% endcomment %}
         
-        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block mt-5" autofocus>
+        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
       </fieldset>
     </form>
+
+    {% if object %}
+    
+    <h2>{% trans "Manage images" %}</h2>
+    
+    <div id="dropzone">
+      <form action="upload-image/" class="dropzone dz-clickable" id="document-image-dropzone">
+        {% csrf_token %}
+        <div class="dz-message">{% trans "Drop images here or click to upload." %}</div>
+      </form>
+    </div>
+
+    {# template for adding #}
+    <div id="card-template">
+    <div id="image-card-{pk}" class="card col-sm-2 js-drag">
+      <form method="post" action="{updateurl}">{% csrf_token %}
+        <img class="card-img-top" src="{imgurl}" width="183" height="294">
+        <div class="card-body">
+          <input class="form-control" type="text" name="name" value="{name}">
+        </div>
+      </form>
+    </div>
+    <div class="dropable js-drop"></div>
+    </div>
+    
+    <div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap">
+      <div class="dropable js-drop"></div>
+      
+      {% for part in object.parts.all %}
+      <div id="image-card-{{ part.pk }}" class="card col-sm-2 js-drag">
+        <form method="post" action="{% url 'document-part-update' pk=object.pk part_pk=part.pk %}">{% csrf_token %}
+        {% thumbnail part.image "183x294" crop="center" as im %}
+        <img class="card-img-top" src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
+        {% endthumbnail %}
+        <div class="card-body">
+          <input class="form-control form-control-sm" type="text" name="name" value="{{ part.name }}" required>
+        </div>
+        </form>
+      </div>
+      <div class="dropable js-drop"></div>
+      {% endfor %}
+    </div>
+    
+    {% endif %}
   </div>
 </div>
 
@@ -98,5 +153,6 @@
 
 {% block scripts %}
 {{ block.super }}
+<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
 <script src="{% static 'js/document_form.js' %}"></script>
 {% endblock %}

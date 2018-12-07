@@ -42,10 +42,11 @@ INSTALLED_APPS = [
     'django.forms',
     
     'ordered_model',
-    'bootstrap',
-    'versioning',
+    'sorl.thumbnail',
     'channels',
     
+    'bootstrap',
+    'versioning',
     'users',
     'core',
 ]
@@ -152,6 +153,9 @@ CHANNEL_LAYERS = {
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 
