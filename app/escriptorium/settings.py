@@ -129,6 +129,17 @@ if DEBUG:
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "cache"
+    }
+}
+
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
 
