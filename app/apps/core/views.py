@@ -76,7 +76,8 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
-        context['metadata_form'] = MetadataFormSet(instance=self.object)
+        if 'metadata_form' not in kwargs:
+            context['metadata_form'] = MetadataFormSet(instance=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
     
@@ -87,8 +88,12 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
-            return self.form_invalid(form)
-        
+            return self.form_invalid(form, metadata_form)
+    
+    def form_invalid(self, form, metadata_form):
+        return self.render_to_response(self.get_context_data(
+            form=form, metadata_form=metadata_form))
+    
     def form_valid(self, form, metadata_form):
         with transaction.atomic():
             response = super().form_valid(form)

@@ -96,8 +96,9 @@ $(document).ready(function() {
                 .replace('{name}', data.name)
                 .replace('{updateurl}', data.updateUrl)
                 .replace('{deleteurl}', data.deleteUrl);
-            var $new = $('#cards-container').append(html);
-            $('img', $new).attr('src', data.imgUrl);  // 
+            var $new = $(html);
+            $('img', $new).attr('src', data.imgUrl);
+            $('#cards-container').append($new);
         }
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
