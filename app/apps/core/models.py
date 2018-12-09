@@ -6,10 +6,10 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.translation import gettext as _
 
 from ordered_model.models import OrderedModel
+from imagekit.models import ProcessedImageField
+from imagekit.processors import TrimBorderColor
 
-from core.tasks import lossless_compress
 from versioning.models import Versioned
-
 
 User = get_user_model()
 
@@ -147,23 +147,19 @@ class DocumentPart(OrderedModel):
     """
     name = models.CharField(max_length=512)
     image = models.ImageField(upload_to=document_images_path)
+    # image = ProcessedImageField(upload_to=document_images_path,
+    #                             # processors=[TrimBorderColor(),],
+    #                             format = 'PNG', options = {'quality': 100})
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
-    
+
     class Meta(OrderedModel.Meta):
         pass
     
     def __str__(self):
         return '%s:%s' % (self.document.name, self.name)
-    
-    def save(self, *args, **kwargs):
-        if not self.id:
-            # send to the queue for compression
-            lossless_compress(self.image)
-            # TODO: send to the queue for kraken segmentation / ocr
-        super().save(*args, **kwargs)
 
 
 # class Block(models.Model):

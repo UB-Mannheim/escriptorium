@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
-{% load i18n staticfiles %}
+{% load i18n staticfiles imagekit %}
 {% block head_title %}{% trans "My Documents" %}{% endblock %}
 
 {% block styles %}
 {{ block.super }}
 <link href="{% static '/vendor/dropzone/dropzone.min.css' %}" rel="stylesheet">
 {% endblock %}
+
+{% block nav-doc-list-class %}active{% endblock %}
 
 {% block body %}
 <div class="row">
@@ -17,6 +19,13 @@
       <tbody>
         {% for document in object_list %}
         <tr>
+          <td>
+            {% with part=document.parts.first %}
+            {% if part %}
+            {% generateimage 'core:list.thumbnail' source=part.image %}
+            {% endif %}
+            {% endwith %}
+          </td>
           <th>
             <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a>
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}

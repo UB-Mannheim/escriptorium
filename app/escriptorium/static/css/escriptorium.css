@@ -8,7 +8,8 @@ body {
 #alerts-container {
     width: 400px;
     position: absolute;
-    right: 0;
+    right: 10px;
+    z-index: 5;
 }
 
 
@@ -54,4 +55,9 @@ body {
 
 #card-template {
     display: none;
+}
+
+.js-part-delete-form button {
+    position: absolute;
+    right: 0;
 }

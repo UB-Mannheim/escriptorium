@@ -6,13 +6,12 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.views.generic import TemplateView
-from django.views.generic import CreateView, UpdateView, ListView, DetailView
-
-from sorl.thumbnail import get_thumbnail
+from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import Document, DocumentPart
 from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
+from core.tasks import generate_part_thumbnail
 
 
 class Home(TemplateView):
@@ -24,7 +23,7 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return Document.objects.for_user(self.request.user)
+        return Document.objects.for_user(self.request.user).select_related('owner')
 
 
 class DocumentMixin():
@@ -138,10 +137,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
     http_method_names = ('post',)
     
     def get_document(self):
-        try:
-            return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
-        except Document.DoesNotExist:
-            raise Http404
+        return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
     
     def form_invalid(self, form):
         return HttpResponse(json.dumps({'status': 'error',
@@ -149,7 +145,11 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                             content_type="application/json", status=400)
     
     def post(self, request, *args, **kwargs):
-        self.document = self.get_document()
+        try:
+            self.document = self.get_document()
+        except Document.DoesNotExist:
+            return HttpResponse(json.dumps({'status': 'Not Found'}),
+                                status=404, content_type="application/json")
         return super().post(request, *args, **kwargs)
     
     def form_valid(self, form):
@@ -160,18 +160,24 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         except IndexError:
             part.name = part.image.file.name
         part.save()
-        im = get_thumbnail(part.image, '183x294', crop='center', quality=95)
+        
+        # generate the thumbnail asynchronously because we don't want to generate 200 at once
+        generate_part_thumbnail.delay(part.pk)
+        # TODO: send to the queue for kraken segmentation / ocr
+        
         return HttpResponse(json.dumps({
             'status': 'ok',
             'pk': part.pk,
             'name': part.name,
             'updateUrl': reverse('document-part-update',
                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'imgUrl': im.url
+            'deleteUrl': reverse('document-part-delete',
+                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+            'imgUrl': part.image.url
         }), content_type="application/json")
 
 
-class UpdateDocumentPart(LoginRequiredMixin, UpdateView):
+class UpdateDocumentPartAjax(LoginRequiredMixin, UpdateView):
     model = DocumentPart
     form_class = DocumentPartUpdateForm
     http_method_names = ('post',)
@@ -183,6 +189,26 @@ class UpdateDocumentPart(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         form.save()
+        return HttpResponse(json.dumps({'status': 'ok'}),
+                            content_type="application/json")
+
+
+class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
+    model = DocumentPart
+    pk_url_kwarg = 'part_pk'
+    http_method_names = ('post',)
+
+    def get_object(self):
+        Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+        return super().get_object()
+    
+    def delete(self, request, *args, **kwargs):
+        try:
+            object = self.get_object()
+        except Document.DoesNotExist:
+            return HttpResponse(json.dumps({'status': 'Not Found'}),
+                                status=404, content_type="application/json")
+        object.delete()
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
