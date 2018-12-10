@@ -59,21 +59,20 @@
 
         <ul class="navbar-nav mr-right">
           {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {% block nav-doc-list-class %}{% endblock %}" href="{% url 'documents-list' %}">{% trans "My Documents" %}</a>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {% blocktrans with username=user.username %}Hello {{username}}{% endblocktrans %}
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="{% url 'documents-list' %}">{% trans "My Documents" %}</a>
-              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{% url 'password_change' %}">{% trans "Change password" %}</a>
               <a class="dropdown-item" href="#">{% trans "Profile" %}</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{% url 'send-invitation' %}">Invite</a>
+              <a class="dropdown-item" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
             </div>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
           </li>
         {% else %}
           <li class="nav-item">
@@ -85,14 +84,16 @@
     </nav>
 
     {% include 'includes/messages.html' %}
-    
+
+    <main><section>
     <div class="container">
     {% block body %}
     {% endblock body %}
     </div>
+    </section></main>
 
     {% block scripts %}
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="{% static '/vendor/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
     <script src="{% static 'js/messages.js' %}"></script>

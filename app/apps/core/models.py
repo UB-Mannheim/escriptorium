@@ -1,10 +1,13 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.translation import gettext as _
 
 from ordered_model.models import OrderedModel
+from imagekit.models import ProcessedImageField
+from imagekit.processors import TrimBorderColor
 
 from versioning.models import Versioned
 
@@ -23,38 +26,74 @@ class Typology(models.Model):
     TARGET_CHOICES = (
         (TARGET_DOCUMENT, 'Document'),
         (TARGET_PART, 'Part (eg Page)'),
-        (TARGET_BLOCK, 'Block (eg Paragraph)'), 
+        (TARGET_BLOCK, 'Block (eg Paragraph)'),
     )
     name = models.CharField(max_length=128)
     target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
-
+    
     def __str__(self):
         return self.name
 
 
+class Metadata(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    cidoc_id = models.CharField(max_length=8, null=True, blank=True)
+
+    class Meta:
+        ordering = ('name',)
+    
+    def __str__(self):
+        return self.name
+
+
+class DocumentMetadata(models.Model):
+    document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
+    key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
+    value = models.CharField(max_length=512)
+    
+    def __str__(self):
+        return '%s:%s' % (self.document.name, self.key.name)
+    
+
+class DocumentManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('typology')
+    
+    def for_user(self, user):
+        # return the list of editable documents
+        # Note: Monitor this query
+        return (Document.objects
+                .filter(Q(owner=user)
+                        | (Q(workflow_state__gt=Document.WORKFLOW_STATE_DRAFT)
+                          & (Q(shared_with_users=user)
+                             | Q(shared_with_groups__in=user.groups.all())
+                          ))
+                )
+                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .prefetch_related('shared_with_groups')
+                .select_related('typology')
+                .distinct()
+        )
+
+
 class Document(models.Model):
-    WORKFLOW_STATE_UNPUBLISHED = 0
-    WORKFLOW_STATE_PUBLISHED = 1
-    WORKFLOW_STATE_ARCHIVED = 2
+    WORKFLOW_STATE_DRAFT = 0
+    WORKFLOW_STATE_SHARED = 1  # editable a viewable by shared_with people
+    WORKFLOW_STATE_PUBLISHED = 2  # viewable by the world
+    WORKFLOW_STATE_ARCHIVED = 3  # 
     WORKFLOW_STATE_CHOICES = (
-        (WORKFLOW_STATE_UNPUBLISHED, _("Unpublished")),
+        (WORKFLOW_STATE_DRAFT, _("Draft")),
+        (WORKFLOW_STATE_SHARED, _("Shared")),
         (WORKFLOW_STATE_PUBLISHED, _("Published")),
         (WORKFLOW_STATE_ARCHIVED, _("Archived")),
     )
     
-    ACCESS_PRIVATE = 0
-    ACCESS_PUBLIC = 1
-    ACCESS_CHOICES = (
-        (ACCESS_PRIVATE, _("Private")),
-        (ACCESS_PUBLIC, _("Public")),
-    )
-    
     name = models.CharField(max_length=512)
     
-    access = models.PositiveSmallIntegerField(
-        default=ACCESS_PRIVATE, choices=ACCESS_CHOICES,
-        help_text=_("A private document can be shared specifically with teams and individuals."))
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    workflow_state = models.PositiveSmallIntegerField(
+        default=WORKFLOW_STATE_DRAFT,
+        choices=WORKFLOW_STATE_CHOICES)
     shared_with_users = models.ManyToManyField(User, blank=True,
                                                verbose_name=_("Share with users"),
                                                related_name='shared_documents')
@@ -66,10 +105,11 @@ class Document(models.Model):
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    workflow_state = models.PositiveSmallIntegerField(
-        default=WORKFLOW_STATE_UNPUBLISHED,
-        choices=WORKFLOW_STATE_CHOICES)
 
+    metadatas = models.ManyToManyField(Metadata, through=DocumentMetadata, blank=True)
+    
+    objects = DocumentManager()
+    
     class Meta:
         ordering = ('-updated_at',)
     
@@ -77,9 +117,14 @@ class Document(models.Model):
         return self.name
 
     @property
+    def is_shared(self):
+        return self.workflow_state in [self.WORKFLOW_STATE_PUBLISHED,
+                                       self.WORKFLOW_STATE_SHARED]
+    
+    @property
     def is_published(self):
         return self.workflow_state == self.WORKFLOW_STATE_PUBLISHED
-
+    
     @property
     def is_archived(self):
         return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED
@@ -93,19 +138,28 @@ class Document(models.Model):
 #     created_at
 #     updated_at
 
-
+def document_images_path(instance, filename):
+    return 'documents/%d/%s' % (instance.document.pk, filename)
+    
 class DocumentPart(OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
     """
-    image = models.ImageField()
+    name = models.CharField(max_length=512)
+    image = models.ImageField(upload_to=document_images_path)
+    # image = ProcessedImageField(upload_to=document_images_path,
+    #                             # processors=[TrimBorderColor(),],
+    #                             format = 'PNG', options = {'quality': 100})
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
-    
+
     class Meta(OrderedModel.Meta):
         pass
+    
+    def __str__(self):
+        return '%s:%s' % (self.document.name, self.name)
 
 
 # class Block(models.Model):

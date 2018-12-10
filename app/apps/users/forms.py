@@ -2,10 +2,11 @@ from django import forms
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.translation import gettext as _
 
+from bootstrap.forms import BootstrapFormMixin
 from users.models import Invitation, User
 
 
-class InvitationForm(forms.ModelForm):
+class InvitationForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Invitation
         fields = ['recipient_first_name',
@@ -27,7 +28,7 @@ class InvitationForm(forms.ModelForm):
         return invitation
 
 
-class InvitationAcceptForm(UserCreationForm):
+class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
     """
     This is a registration form since a user is created.
     """

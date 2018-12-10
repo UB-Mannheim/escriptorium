@@ -1,37 +1,185 @@
 {% extends 'base.html' %}
-{% load i18n staticfiles %}
+{% load i18n staticfiles bootstrap imagekit %}
 {% block head_title %}{% trans "Create a new Document" %}{% endblock %}
+
+{% block styles %}
+<link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
+<link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
+{{ block.super }}
+{% endblock %}
 
 {% block body %}
 <div class="row">
   <div class="col-md-12 col-md-offset-4">
-    {% if object %}
-    {% if can_publish %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}"><input type="submit" value="🗑" class="btn btn-danger float-sm-right"></form>
-    {% if object.is_published %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_UNPUBLISHED }}"><input type="submit" value="{% trans 'Unpublish' %}" class="btn btn-warning float-sm-right"></form>
-    {% else %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}<input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}"><input type="submit" value="{% trans 'Publish' %}" class="btn btn-success float-sm-right"></form>
-    {% endif %}
-    {% endif %}
-    <h2>{% trans "Update document" %}</h2>
-    {% else %}
-    <h2>{% trans "Create a new Document" %}</h2>
-    {% endif %}
-    
-    <form method="post">
-      {% csrf_token %}
-      {{ form.errors }}
-      <fieldset>
-        {% include 'includes/widgets/input.html' with field=form.name %}
-        {% include 'includes/widgets/select.html' with field=form.typology %}
-        {% include 'includes/widgets/checkboxes.html' with field=form.shared_with_groups %}
+    <nav>
+      <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">        
+        <a class="nav-item nav-link active" id="nav-doc-tab" data-toggle="tab" href="#nav-doc" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Document" %}</a>
+        <a class="nav-item nav-link{% if not object %} disabled{% endif %}" id="nav-img-tab" data-toggle="tab" href="#nav-img" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
+        <a class="nav-item nav-link disabled mr-auto" id="nav-trans-tab" data-toggle="tab" href="#nav-trans" role="tab" aria-controls="nav-trans" aria-selected="true">{% trans "Transcription" %}</a>
 
-        {#form.shared_with_groups#}
-        <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block">
-      </fieldset>
-    </form>
+        {% if object and can_publish %}
+        <div>
+          <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal">{% trans "Share" %}</button>
+        </div>
+        {% if not object.is_published %}
+        <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
+          <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
+          <input type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1">
+        </form>
+        {% endif %}
+        <form method="post" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+          <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
+          <input type="submit" value="🗑" class="nav-item btn btn-danger">
+        </form>
+        {% endif %}
+      </div>
+    </nav>
+    
+    <div class="tab-content" id="nav-tabContent">
+
+      <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
+        
+        <form method="post">
+          {% csrf_token %}
+          <fieldset>
+            {% if object %}
+            {% render_field form.name %}
+            {% else %}
+            {% render_field form.name autofocus=1 %}
+            {% endif %}
+            {% render_field form.typology %}
+            
+            <div class="js-metadata-form">
+              <label class="my-1">{% trans "Metadata" %}</label>
+              {{ metadata_form.management_form }}
+
+              {% for form in metadata_form.forms %}
+              <div class="input-group input-group-sm mb-2 js-metadata-row">
+                {{ form.id }}  {# hidden #}
+                {{ form.document }}  {# hidden #}
+                <div class="input-group-prepend">
+                  {% render_field form.key group=True %}
+                </div>
+                {% render_field form.value group=True %}
+                <div class="input-group-prepend">
+                  <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
+                  <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
+                </div>
+              </div>
+              {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
+              {% endfor %}
+            </div>
+
+            {% comment %}
+            {# in case we rather have a free form with autocomplete #}
+            {% with choices=metadata_form.forms.0.key.field.choices %}
+            {% if choices %}
+            <datalist id="metadataKeys">
+              {% for choice in choices %}
+              <option>{{ choice.1 }}</option>
+              {% endfor %}
+            </datalist>
+            {% endif %}
+            {% endwith %}
+            {% endcomment %}
+            
+            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+          </fieldset>
+        </form>
+      </div>
+      
+      {% if object %}
+      <div class="tab-pane fade show" id="nav-img" role="tabpanel" aria-labelledby="nav-img-tab">
+        <h2>{% trans "Manage images" %}</h2>
+        
+        <div id="dropzone">
+          <form action="upload-image/" class="dropzone dz-clickable" id="document-image-dropzone">
+            {% csrf_token %}
+            <div class="dz-message">{% trans "Drop images here or click to upload." %}</div>
+          </form>
+        </div>
+
+        {# when updating this markup also update the ajax template below #}
+        <div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap">
+          <div class="dropable js-drop"></div>
+          {% for part in object.parts.all %}
+          <div id="image-card-{{ part.pk }}" class="card col-sm-2 js-drag">
+            <form class="js-part-delete-form" method="post" action="{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </form>
+            {% generateimage 'core:card.thumbnail' source=part.image as im %}
+            <img class="card-img-top{% if forloop.counter > 9 %} lazy{% endif %}" {% if forloop.counter > 9 %}data-src="{{ im.url }}"{% else %}src="{{ im.url }}"{% endif %} width="{{ im.width }}" height="{{ im.height }}"/>
+            <div class="card-body">
+              <form method="post" action="{% url 'document-part-update' pk=object.pk part_pk=part.pk %}" class="js-part-update-form">{% csrf_token %}
+                <input class="form-control form-control-sm" type="text" name="name" value="{{ part.name }}" required>
+              </form>
+            </div>
+          </div>
+          <div class="dropable js-drop"></div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="tab-pane fade show active" id="nav-trans" role="tabpanel" aria-labelledby="nav-trans-tab">
+      </div>
+      {% endif %}
+      
+    </div>
   </div>
 </div>
+
+
+{% if object %}
+<!-- shareModal -->
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="post" action="{% url 'document-share' pk=object.pk %}">
+        {% csrf_token %}
+        
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{% trans "Share with users or teams" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% render_field share_form.shared_with_groups %}
+        {# Share with users #}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+      </div>
+      </form>      
+    </div>
+  </div>
+</div>
+
+{# template for adding card #}
+<div id="card-template">
+  <div id="image-card-{pk}" class="card col-sm-2 js-drag">
+    <form class="js-part-delete-form" method="post" action="{deleteurl}">
+      {% csrf_token %}
+      <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </form>
+    <img style="object-fit: cover;" width="183" height="294" class="card-img-top">
+    <div class="card-body">
+      <form method="post" action="{updateurl}" class="js-part-update-form">{% csrf_token %}
+        <input class="form-control form-control-sm" type="text" name="name" value="{name}">
+      </form>
+    </div>
+  </div>
+  <div class="dropable js-drop"></div>
+</div>
+
+{% endif %}
 {% endblock %}
 
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+<script src="{% static 'js/document_form.js' %}"></script>
+<script src="{% static 'js/lazyload.js' %}"></script>
+{% endblock %}

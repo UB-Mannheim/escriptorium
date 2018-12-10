@@ -1,5 +1,0 @@
-<div class="form-group">
-  {% block input %}{% endblock %}
-  {% if field.help_text %}<small id="emailHelp" class="form-text text-muted">{{field.help_text|safe}}</small>{% endif %}
-  {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
-</div>
