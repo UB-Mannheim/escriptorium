@@ -25,17 +25,18 @@ class NotificationConsumer(WebsocketConsumer):
                 get_group_name(self.scope['user'].pk),
                 self.channel_name)
             self.accept()
-        
+    
     def disconnect(self, close_code):
         if self.scope['user'].is_authenticated:
             async_to_sync(self.channel_layer.group_discard)(
                 get_group_name(self.scope['user'].pk),
                 self.channel_name)
             self.close()
-        
+    
     def receive(self, text_data):
         data = json.loads(text_data)
-        send_notification(data['user_pk'], data['text'], level=data['level'])
+        if self.scope['user'].is_superuser:  # DEBUG notifs
+            send_notification(data['user_pk'], data['text'], level=data['level'])
     
     def notification_message(self, event):
         self.send(json.dumps({'level': event['level'], 'text': event['text']}))

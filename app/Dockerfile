@@ -22,6 +22,8 @@ RUN apk add gcc \
 		    libc-dev \
 		    linux-headers 
 
+# install git (to install kraken from sources)
+RUN apk add git
 
 # install Pillow dependencies
 RUN apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev
@@ -33,7 +35,7 @@ RUN apk add --virtual build-deps gcc python3-dev musl-dev \
     && apk add postgresql-dev \
     && pip install psycopg2 \
     && apk del build-deps
-        
+
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt

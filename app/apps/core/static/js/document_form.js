@@ -97,6 +97,7 @@ $(document).ready(function() {
                 .replace('{updateurl}', data.updateUrl)
                 .replace('{deleteurl}', data.deleteUrl);
             var $new = $(html);
+            $new.data('part-pk', data.pk);
             $('img', $new).attr('src', data.imgUrl);
             $('#cards-container').append($new);
         }
@@ -189,6 +190,30 @@ $(document).ready(function() {
     });
     $('#cards-container').on('mouseout', 'input', function(ev) {
         $(this).parents('.js-drag').attr('draggable', true);
+    });
+    
+    // $('#cards-container').on('mouseover', '.js-segment', function(ev) {
+    //     $(this).parents('.js-drag').attr('draggable', false);
+    // });
+    // $('#cards-container').on('mouseout', '.js-segment', function(ev) {
+    //     $(this).parents('.js-drag').attr('draggable', true);
+    // });
+    $('.js-segment').click(function(ev) {
+        var $link = $(ev.target), box;
+        $('.line-box', '#segment-viewer').remove(); // cleanup
+        $.get($link.data('lines-url'), function(data) {
+            $('#segment-viewer img').attr('src', $link.data('src-img'));
+            for (i=0; i<data.length; i++) {
+                box = $('#box-tplt').clone();
+                box.css('left', data[i][0]);
+                box.css('top', data[i][1]);
+                box.css('width', data[i][2] - data[i][0]);
+                box.css('height', data[i][3] - data[i][1]);
+                box.attr('id', '');
+                box.show();
+                box.appendTo('#segment-viewer');
+            }
+        });
     });
 });
 

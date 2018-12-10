@@ -61,3 +61,13 @@ body {
     position: absolute;
     right: 0;
 }
+
+#segment-viewer {
+    position: relative;
+}
+
+.line-box {
+    position: absolute;
+    background-color: transparent;
+    border: 1px solid red;
+}
