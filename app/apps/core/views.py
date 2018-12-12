@@ -179,7 +179,11 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
             'deleteUrl': reverse('document-part-delete',
                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'imgUrl': part.image.url
+            'thumbnail': part.image.url,
+            'sourceImg': part.image.url,
+            'bwImg': None,
+            'binarized': False,
+            'segmented': False
         }), content_type="application/json")
 
 
