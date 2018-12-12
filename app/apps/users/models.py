@@ -24,6 +24,9 @@ class User(AbstractUser):
             return self.get_full_name()
         else:
             return self.username
+    
+    def notify(self, message, level='info'):
+        return send_notification(self.pk, message, level=level)
 
 
 class ResearchField(models.Model):
@@ -125,6 +128,3 @@ class Invitation(models.Model):
                           _('{username} accepted your invitation!').format(
                               username=self.recipient.username),
                           level='success')
-
-    def notify(self, message, level='info'):
-        return send_notification(self.pk, message, level=level)

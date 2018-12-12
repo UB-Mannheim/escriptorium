@@ -6,12 +6,13 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.views.generic import TemplateView, ListView, DetailView
+
+from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import Document, DocumentPart
 from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
-from core.tasks import generate_part_thumbnail
+from core.tasks import generate_part_thumbnail, segment
 
 
 class Home(TemplateView):
@@ -168,7 +169,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         
         # generate the thumbnail asynchronously because we don't want to generate 200 at once
         generate_part_thumbnail.delay(part.pk)
-        # TODO: send to the queue for kraken segmentation / ocr
+        segment.delay(part.pk, user_pk=self.request.user.pk)
         
         return HttpResponse(json.dumps({
             'status': 'ok',
@@ -217,5 +218,21 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
+class DocumentPartLinesAjax(View):
+    http_method_names = ('get',)
+
+    def get_object(self):
+        try:
+            return DocumentPart.objects.prefetch_related('lines').get(pk=self.kwargs['part_pk'])
+        except Document.DoesNotExist:
+            raise Http404
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return HttpResponse(json.dumps([
+            line.box for line in self.object.lines.all()
+        ]), content_type="application/json")
+    
+    
 class DocumentDetail(DetailView):
     model = Document

@@ -119,8 +119,7 @@ class Document(models.Model):
     @property
     def is_shared(self):
         return self.workflow_state in [self.WORKFLOW_STATE_PUBLISHED,
-                                       self.WORKFLOW_STATE_SHARED]
-    
+                                       self.WORKFLOW_STATE_SHARED]    
     @property
     def is_published(self):
         return self.workflow_state == self.WORKFLOW_STATE_PUBLISHED
@@ -137,6 +136,8 @@ class Document(models.Model):
 #     ocr_model = models.FileField()
 #     created_at
 #     updated_at
+#     advancement = %
+
 
 def document_images_path(instance, filename):
     return 'documents/%d/%s' % (instance.document.pk, filename)
@@ -144,7 +145,7 @@ def document_images_path(instance, filename):
 class DocumentPart(OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
-    """
+    """    
     name = models.CharField(max_length=512)
     image = models.ImageField(upload_to=document_images_path)
     # image = ProcessedImageField(upload_to=document_images_path,
@@ -154,7 +155,8 @@ class DocumentPart(OrderedModel):
                                  limit_choices_to={'target': Typology.TARGET_PART})
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
-
+    segmented = models.BooleanField(default=False)
+    
     class Meta(OrderedModel.Meta):
         pass
     
@@ -162,44 +164,54 @@ class DocumentPart(OrderedModel):
         return '%s:%s' % (self.document.name, self.name)
 
 
-# class Block(models.Model):
-#     """
-#     Represents a visualy close group of graphemes (characters) bound by the same semantic 
-#     example: a paragraph, a margin note or floating text
-#     A Block is not directly bound to a DocumentPart to avoid a useless join or denormalization
-#     when fetching the content of a DocumentPart.
-#     """
-#     # box = models.BoxField()  # in case we use PostGIS
-#     box = ArrayField(models.IntegerField(), size=4)
-#     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
-#                                  limit_choices_to={'target': Typology.TARGET_BLOCK})
-#     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE)
+class Block(models.Model):
+    """
+    Represents a visualy close group of graphemes (characters) bound by the same semantic 
+    example: a paragraph, a margin note or floating text
+    A Block is not directly bound to a DocumentPart to avoid a useless join or denormalization
+    when fetching the content of a DocumentPart.
+    """
+    typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
+                                 limit_choices_to={'target': Typology.TARGET_BLOCK})
+    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE)
+    
+    def box(self):
+        # TODO
+        return None
 
 
-# class Line(models.Model):  # Versioned, OrderedModel
-#     """
-#     Represents a transcripted line of a document part in a given transcription
-#     """
-#     text = models.TextField(null=True)
-#     # box = models.BoxField()  # in case we use PostGIS
-#     box = ArrayField(models.IntegerField(), size=4)
+class Line(OrderedModel):  # Versioned, 
+    """
+    Represents a segmented line from a DocumentPart
+    """
+    # box = models.BoxField()  # in case we use PostGIS
+    box = JSONField()
+    # graphs = [  # WIP
+    # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1/7}
+    # ]
+    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE, related_name='lines')
+    block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
+    script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
+    # text direction
+    order_with_respect_to = 'document_part'
+    version_ignore_fields = ('document_part', 'order')
+    
+    class Meta(OrderedModel.Meta):
+        pass
 
-#     # graphs = [  # WIP
-#     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1/7}
-#     # ]
+    def __str__(self):
+        return '%s#%d' % (self.document_part, self.order)
+    
+    # def save(self, *args, **kwargs):
+    #     # validate char_boxes
+    #     return super().save(*args, **kwargs)
+
+
+# class LineTranscription(Versioned, models.Model):
+# """
+# Represents a transcribded line of a document part in a given transcription
+# """
+#     #     text = models.TextField(null=True)
 #     graphs = JSONField()  # on postgres it maps to jsonb!
 #     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-#     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE)
-    
-#     block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
-
-#     order_with_respect_to = 'document_part'
-#     version_ignore_fields = ('transcription', 'document_part', 'order')
-        
-#     class Meta(OrderedModel.Meta):
-#         pass
-    
-#     # def save(self, *args, **kwargs):
-#     #     # validate char_boxes
-#     #     return super().save(*args, **kwargs)
-
+#     line = OneToOneField(Line, null=True, on_delete=models.SET_NULL)  # nullable in case we re-segment ??
