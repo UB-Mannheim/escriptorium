@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.7-alpine
+FROM python:3.6-stretch
 
 # EXPOSE 8000
 
@@ -14,32 +14,17 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /usr/src/app
 
 # update apk
-RUN apk update
+RUN apt-get update
 
-# install uwsgi dependencies
-# RUN apk add uwsgi-python3
-RUN apk add gcc \
-		    libc-dev \
-		    linux-headers 
+RUN addgroup --system uwsgi
+RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-# install git (to install kraken from sources)
-RUN apk add git
+RUN apt-get install netcat-traditional
 
-# install Pillow dependencies
-RUN apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev
-
-RUN addgroup -S uwsgi && adduser -S -g uwsgi uwsgi
-
-# install psycopg2
-RUN apk add --virtual build-deps gcc python3-dev musl-dev \
-    && apk add postgresql-dev \
-    && pip install psycopg2 \
-    && apk del build-deps
-
-# install dependencies
 RUN pip install --upgrade pip
+
 COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -U -r requirements.txt
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh /usr/src/app/entrypoint.sh

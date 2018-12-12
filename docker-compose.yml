@@ -28,6 +28,7 @@ services:
     image: postgres:10.5-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    env_file: .env
 
   redis:
     image: redis:3.0-alpine
@@ -68,7 +69,10 @@ services:
     depends_on:
       - db
       - redis
-    command: celery -A app.escriptorium worker -l INFO
+    volumes:
+      - static_volume:/usr/src/app/static
+      - media_volume:/usr/src/app/media
+    command: celery -E -A escriptorium worker -l INFO
 
   celerybeat:
     build:
@@ -77,7 +81,10 @@ services:
     depends_on:
       - db
       - redis
-    command: celery -A app.escriptorium beat -l INFO
+    volumes:
+      - static_volume:/usr/src/app/static
+      - media_volume:/usr/src/app/media
+    command: celery -E -A escriptorium beat -l INFO
 
 volumes:
   postgres_data:
