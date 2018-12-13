@@ -9,17 +9,18 @@
 
 Dropzone.autoDiscover = false;
 var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
+var viewer;
 
 class imageCard {
     constructor(part) {
-        // part: pk, name, updateUrl, deleteUrl, sourceImg, thumbnail, bwImg, segmented, binarized
         this.pk = part.pk;
         this.name = part.name;
-        this.thumbnail = part.thumbnail;  // TODO: use the form data to avoid a trip back
+        this.thumbnailUrl = part.thumbnailUrl;  // TODO: use the form data to avoid a trip back
         this.sourceImg = part.sourceImg;
-        this.bwImg = part.bwImg;
+        this.bwImgUrl = part.bwImgUrl;
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
+        this.linesUrl = part.linesUrl;
         this.workflow_state = part.workflow;
         this.locked = false;
         
@@ -33,7 +34,7 @@ class imageCard {
         this.dropAfter = $('.js-drop', template).clone();
         
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        $('img.card-img-top', $new).attr('data-src', this.thumbnail);
+        $('img.card-img-top', $new).attr('data-src', this.thumbnailUrl);
         this.updateForm.attr('action', this.updateUrl);
         $('input[name=name]', this.updateForm).attr('value', this.name);
         this.deleteForm.attr('action', this.deleteUrl);
@@ -56,8 +57,8 @@ class imageCard {
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
         this.setWorkflowStates();
-        this.binarizedButton.click(this.showBW);
-        this.segmentedButton.click(this.showSegmentation);
+        this.binarizedButton.click($.proxy(this.showBW, this));
+        this.segmentedButton.click($.proxy(this.showSegmentation, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
@@ -176,8 +177,32 @@ class imageCard {
             }, this));
     }
 
-    showBW() {}
-    showSegmentation() {}
+    showBW() {
+        $('.line-box', '#segment-viewer').remove(); // cleanup
+        $('img', '#viewer').attr('src', this.bwImgUrl);
+        $('#viewer').show();
+    }
+    showSegmentation() {
+        $('.line-box', '#segment-viewer').remove(); // cleanup
+        var $viewer = $('#viewer');
+        $('img', $viewer).attr('src', this.sourceImg.url);
+        $viewer.show();
+        
+        var box, ratio = $('#viewer').width() / this.sourceImg.width;
+        $.get(this.linesUrl, function(data) {
+            for (var i=0; i<data.length; i++) {
+                box = $('#box-tplt').clone();
+                box.css('left', data[i][0] * ratio);
+                box.css('top', data[i][1] * ratio );
+                box.css('width', (data[i][2] - data[i][0]) * ratio);
+                box.css('height', (data[i][3] - data[i][1]) * ratio);
+                box.attr('id', '');
+                box.show();
+                box.appendTo($viewer);
+            }
+        });
+        
+    }
 }
 
 $(document).ready(function() {
@@ -235,23 +260,5 @@ $(document).ready(function() {
                 }
             }
         }
-    });
-
-    $('.js-segment').click(function(ev) {
-        var $link = $(ev.target), box;
-        $('.line-box', '#segment-viewer').remove(); // cleanup
-        $.get($link.data('lines-url'), function(data) {
-            $('#segment-viewer img').attr('src', $link.data('src-img'));
-            for (i=0; i<data.length; i++) {
-                box = $('#box-tplt').clone();
-                box.css('left', data[i][0]);
-                box.css('top', data[i][1]);
-                box.css('width', data[i][2] - data[i][0]);
-                box.css('height', data[i][3] - data[i][1]);
-                box.attr('id', '');
-                box.show();
-                box.appendTo('#segment-viewer');
-            }
-        });
     });
 });

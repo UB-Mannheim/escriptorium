@@ -5,13 +5,14 @@ import subprocess
 
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
+from django.core.files import File
 
 from celery import shared_task
 from imagekit.cachefiles import LazyImageCacheFile
 
 from users.consumers import send_event
 from core.imagegenerators import CardThumbnail
-from core.models import DocumentPart, Line, Block
+from core.models import DocumentPart, Line, Block, document_images_path
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,8 @@ def binarize(instance_pk, user_pk=None):
         update_client_state(part)
         
         fname = os.path.basename(part.image.file.name)
-        bw_file = os.path.join(os.path.dirname(part.image.file.name), 'bw_' + fname)
+        bw_file_name = 'bw_' + fname
+        bw_file = os.path.join(os.path.dirname(part.image.file.name), bw_file_name)
         error = subprocess.check_call(["kraken", "-i", part.image.path,
                                        bw_file,
                                        'binarize'])
@@ -75,15 +77,19 @@ def binarize(instance_pk, user_pk=None):
         if user:
             user.notify(_("Something went wrong during the binarization!"),
                         id="binarization-error", level='danger')
+        update_client_state(part)
+        part.workflow_state = part.WORKFLOW_STATE_CREATED
+        part.save()
         raise
     else:
         if user:
             user.notify(_("Binarization done!"),
                         id="binarization-success", level='success')
-        part.bw_image = bw_file
+        part.bw_image = document_images_path(part, bw_file_name)
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
         update_client_state(part)
+
 
 @shared_task
 def segment(instance_pk, user_pk=None):
@@ -133,6 +139,9 @@ def segment(instance_pk, user_pk=None):
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
                         id="segmentation-error", level='danger')
+        part.workflow_state = part.WORKFLOW_STATE_BINARIZED
+        part.save()
+        update_client_state(part)
         raise
     else:
         if user:

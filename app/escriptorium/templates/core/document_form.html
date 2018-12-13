@@ -104,13 +104,12 @@
           {# card are created through the dom api (see below) #}
         </div>
 
-        <div id="segment-viewer">
-          <img />
-        </div>
+        {# viewer #}
+        <div id="viewer" class="col-lg-12 mt-2"><img width="100%" /></div>
         <div id="box-tplt" class="line-box"></div>
+      </div>
 
-        <div class="tab-pane fade show active" id="nav-trans" role="tabpanel" aria-labelledby="nav-trans-tab">
-        </div>
+      <div class="tab-pane fade show active" id="nav-trans" role="tabpanel" aria-labelledby="nav-trans-tab">
       </div>
       {% endif %}
 
@@ -152,7 +151,7 @@
       {% csrf_token %}
       <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </form>
-    <img style="object-fit: cover;" width="183" height="294" class="card-img-top lazy">
+    <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
     <div class="card-body">
       <form method="post" action="{updateurl}" class="js-part-update-form">{% csrf_token %}
         <input class="form-control form-control-sm" type="text" name="name" value="{name}" required>
@@ -188,11 +187,14 @@ $(document).ready(function() {
     new imageCard({
         pk: {{ part.pk }},
         name: "{{ part.name }}",
-        thumbnail: "{{ im.url }}",
-        sourceImg: "{{ part.image.url }}",
-        bwImg: "{{ part.bw_image.url }}",
+        thumbnailUrl: "{{ im.url }}",
+        sourceImg: {"url": "{{ part.image.url }}",
+                    "width":"{{ part.image.width }}",
+                    "height": "{{ part.image.height}}" },
+        bwImgUrl: "{{ part.bw_image.url }}",
         updateUrl: "{% url 'document-part-update' pk=object.pk part_pk=part.pk %}",
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
+        linesUrl: "{% url 'document-part-lines' pk=object.pk part_pk=part.pk %}",
         workflow: {{ part.workflow_state }}
     });
     {% endfor %}

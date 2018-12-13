@@ -103,3 +103,7 @@ body {
     height: 30px;
     font-size: 20px;
 }
+
+#box-tplt {
+    display: none;
+}

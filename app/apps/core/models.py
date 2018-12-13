@@ -145,19 +145,19 @@ def document_images_path(instance, filename):
 class DocumentPart(OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
-    """    
+    """
     name = models.CharField(max_length=512)
     image = models.ImageField(upload_to=document_images_path)
+    # image = ProcessedImageField(upload_to=document_images_path,
+    #                            format = 'PNG', options = {'quality': 100})
+
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
-    # image = ProcessedImageField(upload_to=document_images_path,
-    #                             # processors=[TrimBorderColor(),],
-    #                             format = 'PNG', options = {'quality': 100})
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
-
+    
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_BINARIZING = 1
     WORKFLOW_STATE_BINARIZED = 2

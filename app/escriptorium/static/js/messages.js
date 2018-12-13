@@ -59,7 +59,7 @@ $(document).ready(function() {
 
         if (data.type == 'message') {
             var message = data['text'];
-            Alert.add(data['id'], message);
+            Alert.add(data['id'], message, data['level']);
         } else if (data.type == 'event') {
             var $container = $('#alerts-container');
             $container.trigger(data["name"], data["data"]);

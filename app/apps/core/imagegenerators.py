@@ -9,7 +9,7 @@ class ListThumbnail(ImageSpec):
 
 
 class CardThumbnail(ImageSpec):
-    processors = [ResizeToFill(183, 294)]
+    processors = [ResizeToFill(180, 180)]
     format = 'JPEG'
     options = {'quality': 85}
 

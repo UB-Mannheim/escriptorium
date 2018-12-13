@@ -42,8 +42,8 @@
             </big>
           </td>
           <td class="text-right">
-            <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}">👁</a>
-            <a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info" title="{% trans 'Edit' %}">✎</a>
+            <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a>
+            <a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></a>
           </td>
         </tr>
         {% endfor %}
