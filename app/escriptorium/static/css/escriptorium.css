@@ -71,3 +71,27 @@ body {
     background-color: transparent;
     border: 1px solid red;
 }
+
+.card .js-binarized, .card .js-segmented {
+    display: none;
+}
+
+.card span.ongoing {
+  animation-duration: 1s;
+  animation-name: blink;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes blink{
+	from {opacity: 1;}
+    to {opacity: 0.5;}
+}
+
+.card span.done {
+    cursor: pointer;
+}
+
+.card .progress {
+    height: 30px;
+    font-size: 20px;
+}

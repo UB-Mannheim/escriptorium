@@ -1,12 +1,25 @@
 import json
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from channels.layers import get_channel_layer
+from django.conf import settings
 
 
 def get_group_name(user_pk):
     return 'notif-' + str(user_pk)
 
+def get_room_name(cls, pk):
+    return "room-%s-%d" % (cls, pk)
+
+def send_event(cls, pk, event_name, data):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        get_room_name(cls, pk),
+        {'type': 'notification_event',
+         'name': event_name,
+         'data': data},
+    )
 
 def send_notification(user_pk, message, level='info'):
     channel_layer = get_channel_layer()
@@ -20,6 +33,7 @@ def send_notification(user_pk, message, level='info'):
 
 class NotificationConsumer(WebsocketConsumer):
     def connect(self):
+        self.room = None
         if self.scope['user'].is_authenticated:
             async_to_sync(self.channel_layer.group_add)(
                 get_group_name(self.scope['user'].pk),
@@ -31,12 +45,27 @@ class NotificationConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_discard)(
                 get_group_name(self.scope['user'].pk),
                 self.channel_name)
+            if self.room:
+                async_to_sync(self.channel_layer.group_discard)(
+                    self.room,
+                    self.channel_name)
             self.close()
     
     def receive(self, text_data):
-        data = json.loads(text_data)
-        if self.scope['user'].is_superuser:  # DEBUG notifs
-            send_notification(data['user_pk'], data['text'], level=data['level'])
+        msg = json.loads(text_data)
+        if 'type' in msg:
+            if msg['type'] == 'notif' and self.scope['user'].is_superuser:  # DEBUG notifs
+                send_notification(msg['user_pk'], msg['text'], level=getattr(msg, 'level', 'info'))
+            elif msg['type'] == 'join-room':
+                self.room = get_room_name(msg['object_cls'], msg['object_pk'])
+                async_to_sync(self.channel_layer.group_add)(
+                    self.room,
+                    self.channel_name)
     
     def notification_message(self, event):
-        self.send(json.dumps({'level': event['level'], 'text': event['text']}))
+        self.send(json.dumps({'type': 'notification_message',
+                              'level': event['level'],
+                              'text': event['text']}))
+
+    def notification_event(self, event):
+        self.send(json.dumps({'type': 'event', 'name': event['name'], 'data': event['data']}))

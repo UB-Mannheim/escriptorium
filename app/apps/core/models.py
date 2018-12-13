@@ -148,6 +148,8 @@ class DocumentPart(OrderedModel):
     """    
     name = models.CharField(max_length=512)
     image = models.ImageField(upload_to=document_images_path)
+    bw_backend = models.CharField(max_length=128, default='kraken')
+    bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
     # image = ProcessedImageField(upload_to=document_images_path,
     #                             # processors=[TrimBorderColor(),],
     #                             format = 'PNG', options = {'quality': 100})
@@ -155,13 +157,43 @@ class DocumentPart(OrderedModel):
                                  limit_choices_to={'target': Typology.TARGET_PART})
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
-    segmented = models.BooleanField(default=False)
+
+    WORKFLOW_STATE_CREATED = 0
+    WORKFLOW_STATE_BINARIZING = 1
+    WORKFLOW_STATE_BINARIZED = 2
+    WORKFLOW_STATE_SEGMENTING = 3
+    WORKFLOW_STATE_SEGMENTED = 4
+    WORKFLOW_STATE_TRANSCRIBING = 5
+    WORKFLOW_STATE_CHOICES = (
+        (WORKFLOW_STATE_CREATED, _("Created")),
+        (WORKFLOW_STATE_BINARIZING, _("Binarizing")),
+        (WORKFLOW_STATE_BINARIZED, _("Binarized")),
+        (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
+        (WORKFLOW_STATE_SEGMENTED, _("Segmented")),
+        (WORKFLOW_STATE_TRANSCRIBING, _("Transcribing")),
+    )
+    workflow_state = models.PositiveSmallIntegerField(choices=WORKFLOW_STATE_CHOICES,
+                                                      default=WORKFLOW_STATE_CREATED)
     
     class Meta(OrderedModel.Meta):
         pass
     
     def __str__(self):
         return '%s:%s' % (self.document.name, self.name)
+    
+    @property
+    def binarized(self):
+        return self.workflow_state >= self.WORKFLOW_STATE_BINARIZED
+    
+    @property
+    def segmented(self):
+        return self.workflow_state >= self.WORKFLOW_STATE_SEGMENTED
+    
+    @property
+    def transcription_progress(self):
+        # number of line with transcription / number total of lines * average of char confidence * 100
+        # we might have to denormalize that
+        return 0
 
 
 class Block(models.Model):
@@ -186,9 +218,6 @@ class Line(OrderedModel):  # Versioned,
     """
     # box = models.BoxField()  # in case we use PostGIS
     box = JSONField()
-    # graphs = [  # WIP
-    # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1/7}
-    # ]
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE, related_name='lines')
     block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
@@ -212,6 +241,9 @@ class Line(OrderedModel):  # Versioned,
 # Represents a transcribded line of a document part in a given transcription
 # """
 #     #     text = models.TextField(null=True)
+# graphs = [  # WIP
+# {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1/7}
+# ]
 #     graphs = JSONField()  # on postgres it maps to jsonb!
 #     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
 #     line = OneToOneField(Line, null=True, on_delete=models.SET_NULL)  # nullable in case we re-segment ??

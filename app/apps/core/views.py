@@ -6,13 +6,14 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
-
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView
 
+from celery import chain
+
 from core.models import Document, DocumentPart
 from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
-from core.tasks import generate_part_thumbnail, segment
+from core.tasks import generate_part_thumbnail, segment, binarize
 
 
 class Home(TemplateView):
@@ -169,21 +170,23 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         
         # generate the thumbnail asynchronously because we don't want to generate 200 at once
         generate_part_thumbnail.delay(part.pk)
-        segment.delay(part.pk, user_pk=self.request.user.pk)
+        chain(binarize.si(part.pk, user_pk=self.request.user.pk),
+              segment.si(part.pk, user_pk=self.request.user.pk)).delay()
         
         return HttpResponse(json.dumps({
             'status': 'ok',
-            'pk': part.pk,
-            'name': part.name,
-            'updateUrl': reverse('document-part-update',
-                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'deleteUrl': reverse('document-part-delete',
-                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'thumbnail': part.image.url,
-            'sourceImg': part.image.url,
-            'bwImg': None,
-            'binarized': False,
-            'segmented': False
+            'part': {
+                'pk': part.pk,
+                'name': part.name,
+                'updateUrl': reverse('document-part-update',
+                                     kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'deleteUrl': reverse('document-part-delete',
+                                     kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'thumbnail': part.image.url,
+                'sourceImg': part.image.url,
+                'bwImg': None,
+                'workflow': 0
+            }
         }), content_type="application/json")
 
 
