@@ -28,7 +28,8 @@ class imageCard {
         var $new = $('.card', template).clone();
         this.$element = $new;
         this.domElement = this.$element.get(0);
-        
+
+        this.selectButton = $('.js-card-select-hdl', $new);
         this.updateForm = $('.js-part-update-form', $new);
         this.deleteForm = $('.js-part-delete-form', $new);
         this.dropAfter = $('.js-drop', template).clone();
@@ -66,10 +67,16 @@ class imageCard {
         
         // add the image element to the lazy loader
         imageObserver.observe($('img', $new).get(0));
+
+        this.defaultColor = this.$element.css('color');
         
         //************* events **************
         this.updateForm.on('change', 'input', $.proxy(function(ev) {
             this.upload();
+        }, this));
+
+        this.selectButton.on('click', $.proxy(function(ev) {
+            this.toggleSelect();
         }, this));
         
         this.deleteForm.on('submit', $.proxy(function(ev) {
@@ -78,6 +85,10 @@ class imageCard {
             this.delete();
         }, this));
 
+        this.$element.on('dblclick', $.proxy(function(ev) {
+            this.toggleSelect();
+        }, this));
+        
         // drag'n'drop
         this.$element.on('dragstart', $.proxy(function(ev) {
             ev.originalEvent.dataTransfer.setData("text/card-id", ev.target.id);
@@ -107,10 +118,16 @@ class imageCard {
     
     select() {
         this.$element.addClass('bg-dark');
+        this.$element.css({'color': 'white'});
+        $('i', this.selectButton).removeClass('fa-square');
+        $('i', this.selectButton).addClass('fa-check-square');
         this.selected = true;
     }
     unselect() {
         this.$element.removeClass('bg-dark');
+        this.$element.css({'color': this.defaultColor});
+        $('i', this.selectButton).removeClass('fa-check-square');
+        $('i', this.selectButton).addClass('fa-square');
         this.selected = false;
     }
     toggleSelect() {
@@ -122,13 +139,13 @@ class imageCard {
         this.locked = true;
         this.$element.css({opacity: 0.5});
         this.$element.attr('draggable', false);
-        $('input', this.updateForm).get(0).disabled = true;
+        // $('input', this.updateForm).get(0).disabled = true;
     }
     unlock() {
         this.locked = false;
         this.$element.css({opacity: ""});
         this.$element.attr('draggable', true);
-        $('input', this.updateForm).get(0).disabled = false;
+        // $('input', this.updateForm).get(0).disabled = false;
     }
     
     upload(data) {
@@ -145,7 +162,7 @@ class imageCard {
             }, this))
             .fail($.proxy(function(xhr) {
                 // fly it back
-                if (data.index) { this.moveTo(this.previousIndex); }
+                if (data.index) { this.moveTo(this.previousIndex, false); }
                 // show errors
                 console.log('Something went wrong :(');
             }, this))
@@ -154,14 +171,17 @@ class imageCard {
             }, this));
     }
     
-    moveTo(index) {
+    moveTo(index, upload) {
+        if (upload === undefined) upload = true;
         // store the previous index in case of error
         this.previousIndex = this.index;
-        var target = $('.js-drop')[index];
+        var target = $('#cards-container .js-drop')[index];
         this.$element.insertAfter(target);
         this.dropAfter.insertAfter(this.$element);  // drag the dropable zone with it
         if (this.previousIndex < index) { index--; }; // because the dragged card takes a room
-        this.upload({index: index});
+        if (upload) {
+            this.upload({index: index});
+        }
         this.index = index;
     }
     
@@ -201,17 +221,16 @@ class imageCard {
                 box.appendTo($viewer);
             }
         });
-        
     }
 }
 
 $(document).ready(function() {
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
-        var index = $('.js-drop').index(ev.target);
+        var index = $('#cards-container .js-drop').index(ev.target);
         var elementId = ev.originalEvent.dataTransfer.getData("text/card-id");
         if (!elementId) { elementId = g_dragged; }  // for chrome
-        var dragged_index = $('.card').index(document.getElementById(elementId));
+        var dragged_index = $('#cards-container .card').index(document.getElementById(elementId));
         var isCard = ev.originalEvent.dataTransfer.types.indexOf("text/card-id") != -1;
         if (isCard && index != dragged_index && index != dragged_index + 1) {
             $(ev.target).addClass('drop-accept');
@@ -231,7 +250,7 @@ $(document).ready(function() {
         if (!elementId) { elementId = g_dragged; }  // for chrome
         var dragged = document.getElementById(elementId);
         var card = $(dragged).data('imageCard');
-        var index = $('.js-drop', '#cards-container').index(ev.target);
+        var index = $('#cards-container .js-drop').index(ev.target);
         card.moveTo(index);
     });
 
@@ -246,6 +265,12 @@ $(document).ready(function() {
     var imageDropzone = new Dropzone('.dropzone', {
         paramName: "image",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
+    });
+    imageDropzone.on("sending", function(file, xhr, formData) {
+        formData.append("auto_process", $('input[name=auto_process]', '#dropzone').get(0).checked);
+        formData.append("text_direction", $('select[name=text_direction]', '#dropzone').val());
+        formData.append("typology", $('select[name=typology]', '#dropzone').val());
+        // formData.append("binarizer", $('select[name=binarizer]', '#dropzone').val());
     });
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {

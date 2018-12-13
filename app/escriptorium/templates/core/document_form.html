@@ -93,10 +93,30 @@
       {% if object %}
       <div class="tab-pane fade show" id="nav-img" role="tabpanel" aria-labelledby="nav-img-tab">
         <div id="dropzone">
-          <form action="upload-image/" class="dropzone dz-clickable" id="document-image-dropzone">
+          <form action="upload-image/" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
             {% csrf_token %}
             <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
           </form>
+          
+          <a data-toggle="collapse" href="#collapseForm" role="button" aria-expanded="false" aria-controls="collapseForm">
+            {% trans "Show advanced form" %}
+          </a>
+          <div class="card">
+            <div id="collapseForm" class="collapse" aria-labelledby="headingOne" data>
+              <div class="card-body form-inline">
+                {# Note this form is just for show, any fields need to be added manually to dropzone.sending #}
+                {% render_field upload_form.auto_process %}
+                {% render_field upload_form.text_direction %}
+                {% render_field upload_form.typology %}
+                {% render_field upload_form.binarizer %}
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-sm btn-info">{% trans "Select all" %}</button>
+                <button class="btn btn-sm btn-primary"><i class="fas fa-fill mr-1"></i>{% trans "Binarize" %}</button>
+                <button class="btn btn-sm btn-primary"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap">
@@ -146,14 +166,16 @@
 
 {# template for adding card #}
 <div id="card-template">
-    <div id="image-card-{pk}" class="card col-sm-2">
+  <div id="image-card-{pk}" class="card col-sm-2">
+    <button class="js-card-select-hdl"><i class="fas fa-square"></i></button>
     <form class="js-part-delete-form" method="post" action="{deleteurl}">
       {% csrf_token %}
       <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </form>
     <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
     <div class="card-body">
-      <form method="post" action="{updateurl}" class="js-part-update-form">{% csrf_token %}
+      <form method="post" action="{updateurl}" class="js-part-update-form">
+        {% csrf_token %}
         <input class="form-control form-control-sm" type="text" name="name" value="{name}" required>
       </form>
       <span class="ml-2 js-binarized" title="{% trans 'Binarized' %}"><i class="fas fa-fill"></i></span>
@@ -191,7 +213,7 @@ $(document).ready(function() {
         sourceImg: {"url": "{{ part.image.url }}",
                     "width":"{{ part.image.width }}",
                     "height": "{{ part.image.height}}" },
-        bwImgUrl: "{{ part.bw_image.url }}",
+        bwImgUrl: {% if part.bw_image %}"{{ part.bw_image.url }}"{% else %}null{% endif %},
         updateUrl: "{% url 'document-part-update' pk=object.pk part_pk=part.pk %}",
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
         linesUrl: "{% url 'document-part-lines' pk=object.pk part_pk=part.pk %}",

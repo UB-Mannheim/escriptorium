@@ -32,6 +32,10 @@ body {
     background: white;
 }
 
+#dropzone #collapseForm .form-group {
+    margin-right: 30px;
+}
+
 .dropable {
     z-index: 2;
     min-width: 10px;
@@ -56,7 +60,7 @@ body {
     overflow: auto;
 }
 
-.card {
+#cards-container .card {
     padding: 0;
     cursor: grab;
 }
@@ -68,6 +72,13 @@ body {
 .js-part-delete-form button {
     position: absolute;
     right: 0;
+}
+
+.js-card-select-hdl {
+    position: absolute;
+    left: 0;
+    background-color: transparent;
+    border: 0;
 }
 
 #segment-viewer {

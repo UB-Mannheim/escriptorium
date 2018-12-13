@@ -1,8 +1,9 @@
 from django import forms
 from django.forms.models import inlineformset_factory
+from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Document, DocumentPart, DocumentMetadata
+from core.models import Document, DocumentPart, DocumentMetadata, Typology
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -56,3 +57,24 @@ class DocumentPartUpdateForm(forms.ModelForm):
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
             self.instance.to(self.cleaned_data['index'])
         return super().save(*args, **kwargs)
+
+
+class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
+    auto_process = forms.BooleanField(initial=True, required=False,
+                                      label=_("Automatically process"))
+    text_direction = forms.ChoiceField(required=False, choices=(
+        ('vertical-lr', _("Vertical")),
+        ('horizontal-lr', _("Horizontal"))
+    ))
+    binarizer = forms.ChoiceField(required=False, choices=(
+        ('kraken', _("Kraken")),
+    ))
+    
+    class Meta:
+        model = DocumentPart
+        fields = ('image', 'auto_process', 'text_direction', 'typology', 'binarizer')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['typology'].initial = Typology.objects.get(name="Page")
+        self.fields['binarizer'].widget.attrs['disabled'] = True

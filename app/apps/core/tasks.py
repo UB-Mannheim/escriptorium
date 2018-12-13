@@ -92,7 +92,7 @@ def binarize(instance_pk, user_pk=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None):
+def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
     try:
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
@@ -121,7 +121,9 @@ def segment(instance_pk, user_pk=None):
         # kraken -i bw.png lines.json segment
         json_file = '/tmp/' + fname + '.lines.json'
         error = subprocess.check_call(["kraken", "-i", part.bw_image.file.name, json_file,
-                                        'segment'])   # -script-detection
+                                       #'--text-direction', text_direction,
+                                       # Error: no such option: --text-direction
+                                       'segment'])   # -script-detection
         if error:
             raise RuntimeError("Something went wrong during segmentation!")
         

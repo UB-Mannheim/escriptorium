@@ -1,0 +1,4 @@
+<div class="form-check form-check-inline">
+  <input type="checkbox" name="{{ widget.name }}" class="form-check-input" id="{{ widget.id }}" {% if widget.attrs.checked %}checked{% endif %}>
+  <label class="form-check-label" for="{{widget.id}}">{{ widget.label|capfirst }}</label>
+</div>

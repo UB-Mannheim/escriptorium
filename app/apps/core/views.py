@@ -12,7 +12,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 from celery import chain
 
 from core.models import Document, DocumentPart
-from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
+from core.forms import *
 from core.tasks import generate_part_thumbnail, segment, binarize
 
 
@@ -80,6 +80,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = MetadataFormSet(instance=self.object)
+        context['upload_form'] = UploadImageForm()
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
     
@@ -140,15 +141,14 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
 class UploadImageAjax(LoginRequiredMixin, CreateView):
     model = DocumentPart
-    fields = ('image',)
+    form_class = UploadImageForm
     http_method_names = ('post',)
     
     def get_document(self):
         return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
     
     def form_invalid(self, form):
-        return HttpResponse(json.dumps({'status': 'error',
-                                        'error': form.errors['image']}),
+        return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
                             content_type="application/json", status=400)
     
     def post(self, request, *args, **kwargs):
@@ -167,11 +167,13 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         except IndexError:
             part.name = part.image.file.name
         part.save()
-        
-        # generate the thumbnail asynchronously because we don't want to generate 200 at once
-        generate_part_thumbnail.delay(part.pk)
-        chain(binarize.si(part.pk, user_pk=self.request.user.pk),
-              segment.si(part.pk, user_pk=self.request.user.pk)).delay()
+
+        if form.cleaned_data['auto_process']:
+            # generate the thumbnail asynchronously because we don't want to generate 200 at once
+            generate_part_thumbnail.delay(part.pk)
+            chain(binarize.si(part.pk, user_pk=self.request.user.pk),
+                  segment.si(part.pk, user_pk=self.request.user.pk,
+                             text_direction=form.cleaned_data['text_direction'])).delay()
         
         return HttpResponse(json.dumps({
             'status': 'ok',
