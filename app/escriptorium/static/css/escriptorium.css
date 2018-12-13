@@ -7,11 +7,19 @@ body {
 /* alerts */
 #alerts-container {
     width: 400px;
-    position: absolute;
+    position: fixed;
     right: 10px;
+    top: 60px;
     z-index: 5;
 }
 
+#alert-tplt {
+    display: none;
+}
+
+#alerts-container .separator, #alerts-container .additional {
+    display: none;
+}
 
 /* document form */
 .js-metadata-row:last-of-type .js-metadata-delete {

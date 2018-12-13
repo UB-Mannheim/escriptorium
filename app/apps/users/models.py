@@ -23,8 +23,8 @@ class User(AbstractUser):
         else:
             return self.username
     
-    def notify(self, message, level='info'):
-        return send_notification(self.pk, message, level=level)
+    def notify(self, message, id=None, level='info'):
+        return send_notification(self.pk, message, id=id, level=level)
 
 
 class ResearchField(models.Model):

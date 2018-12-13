@@ -147,7 +147,7 @@
 
 {# template for adding card #}
 <div id="card-template">
-  <div id="image-card-{pk}" class="card col-sm-2">
+    <div id="image-card-{pk}" class="card col-sm-2">
     <form class="js-part-delete-form" method="post" action="{deleteurl}">
       {% csrf_token %}
       <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -183,7 +183,6 @@ $(document).ready(function() {
         msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
     });
 
-    // 
     {% for part in object.parts.all %}
     {% generateimage 'core:card.thumbnail' source=part.image as im %}
     new imageCard({
@@ -191,7 +190,7 @@ $(document).ready(function() {
         name: "{{ part.name }}",
         thumbnail: "{{ im.url }}",
         sourceImg: "{{ part.image.url }}",
-        bwImg: null,
+        bwImg: "{{ part.bw_image.url }}",
         updateUrl: "{% url 'document-part-update' pk=object.pk part_pk=part.pk %}",
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
         workflow: {{ part.workflow_state }}

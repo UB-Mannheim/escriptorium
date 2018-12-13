@@ -21,11 +21,12 @@ def send_event(cls, pk, event_name, data):
          'data': data},
     )
 
-def send_notification(user_pk, message, level='info'):
+def send_notification(user_pk, message, id=None, level='info'):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         get_group_name(user_pk),
         {'type': 'notification_message',
+         'id': id,
          'level': level,
          'text': message},
     )
@@ -63,7 +64,8 @@ class NotificationConsumer(WebsocketConsumer):
                     self.channel_name)
     
     def notification_message(self, event):
-        self.send(json.dumps({'type': 'notification_message',
+        self.send(json.dumps({'type': 'message',
+                              'id': event['id'],
                               'level': event['level'],
                               'text': event['text']}))
 

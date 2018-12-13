@@ -21,6 +21,7 @@ class imageCard {
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
         this.workflow_state = part.workflow;
+        this.locked = false;
         
         var template = document.getElementById('card-template');
         var $new = $('.card', template).clone();
@@ -96,6 +97,11 @@ class imageCard {
         if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
         if (this.segmented) { this.segmentedButton.removeClass('ongoing').addClass('done').show(); }
+        if (this.binarizing || this.segmenting) {
+            this.lock();
+        } else {
+            this.unlock();
+        }
     }
     
     select() {
@@ -112,19 +118,20 @@ class imageCard {
     }
 
     lock() {
+        this.locked = true;
         this.$element.css({opacity: 0.5});
-        // TODO: lock on other clients via channels
         this.$element.attr('draggable', false);
+        $('input', this.updateForm).get(0).disabled = true;
     }
     unlock() {
+        this.locked = false;
         this.$element.css({opacity: ""});
-        // TODO: unlock on other clients via channels
         this.$element.attr('draggable', true);
+        $('input', this.updateForm).get(0).disabled = false;
     }
     
     upload(data) {
         this.lock();
-        // visual feedback for the background post
         if (data === undefined) { data = {}; }
         var post = {};
         this.updateForm.serializeArray().map(function(x){post[x.name] = x.value;});

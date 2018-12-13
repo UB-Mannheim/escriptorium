@@ -41,4 +41,14 @@ $(document).ready(function() {
             $('#id_documentmetadata_set-TOTAL_FORMS').val(total + 1);
         }
     });
+
+
+    // link tabs
+    var hash = window.location.hash;
+    hash && $('div.nav.nav-tabs a[href="' + hash + '"]').tab('show'); 
+    $('div.nav.nav-tabs a').click(function (e) {
+        $(this).tab('show');
+        var scrollmem = $('body').scrollTop();
+        window.location.hash = this.hash;
+    });
 });

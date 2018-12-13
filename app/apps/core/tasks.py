@@ -73,11 +73,13 @@ def binarize(instance_pk, user_pk=None):
         
     except:
         if user:
-            user.notify(_("Something went wrong during the binarization!"), level='danger')
+            user.notify(_("Something went wrong during the binarization!"),
+                        id="binarization-error", level='danger')
         raise
     else:
         if user:
-            user.notify(_("Binarization done!"), level='success')
+            user.notify(_("Binarization done!"),
+                        id="binarization-success", level='success')
         part.bw_image = bw_file
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
@@ -129,11 +131,13 @@ def segment(instance_pk, user_pk=None):
                     box=line)
     except:
         if user:
-            user.notify(_("Something went wrong during the segmentation!"), level='danger')
+            user.notify(_("Something went wrong during the segmentation!"),
+                        id="segmentation-error", level='danger')
         raise
     else:
         if user:
-            user.notify(_("Segmentation done!"), level='success')
+            user.notify(_("Segmentation done!"),
+                        id="segmentation-success", level='success')
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
         update_client_state(part)
