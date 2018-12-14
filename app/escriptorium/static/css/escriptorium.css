@@ -32,8 +32,12 @@ body {
     background: white;
 }
 
-#dropzone #collapseForm .form-group {
+#dropzone #advancedForm .form-group {
     margin-right: 30px;
+}
+
+#dropzone #advancedForm .card-footer {
+    display: flex;
 }
 
 .dropable {
@@ -63,6 +67,8 @@ body {
 #cards-container .card {
     padding: 0;
     cursor: grab;
+    width: 183px;
+    min-width: 150px;
 }
 
 #card-template {
@@ -81,8 +87,8 @@ body {
     border: 0;
 }
 
-#segment-viewer {
-    position: relative;
+#viewer {
+    padding: 0;
 }
 
 .line-box {
@@ -103,7 +109,7 @@ body {
 }
 @keyframes blink{
 	from {opacity: 1;}
-    to {opacity: 0.5;}
+    to {opacity: 0.3;}
 }
 
 .card span.done {

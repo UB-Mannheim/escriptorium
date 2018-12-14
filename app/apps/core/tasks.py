@@ -152,3 +152,8 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
         update_client_state(part)
+
+
+@shared_task
+def transcribe(part_pk, user_pk=None, model=None):
+    pass

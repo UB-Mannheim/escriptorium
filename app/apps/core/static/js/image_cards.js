@@ -9,9 +9,9 @@
 
 Dropzone.autoDiscover = false;
 var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
-var viewer;
+var viewer, lastSelected = null;
 
-class imageCard {
+class partCard {
     constructor(part) {
         this.pk = part.pk;
         this.name = part.name;
@@ -20,9 +20,10 @@ class imageCard {
         this.bwImgUrl = part.bwImgUrl;
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
-        this.linesUrl = part.linesUrl;
+        this.partUrl = part.partUrl;
         this.workflow_state = part.workflow;
         this.locked = false;
+        this.lines = null;
         
         var template = document.getElementById('card-template');
         var $new = $('.card', template).clone();
@@ -58,12 +59,12 @@ class imageCard {
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
         this.setWorkflowStates();
-        this.binarizedButton.click($.proxy(this.showBW, this));
-        this.segmentedButton.click($.proxy(this.showSegmentation, this));
+        this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
+        this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
-        $new.data('imageCard', this);
+        $new.data('partCard', this);
         
         // add the image element to the lazy loader
         imageObserver.observe($('img', $new).get(0));
@@ -76,7 +77,16 @@ class imageCard {
         }, this));
 
         this.selectButton.on('click', $.proxy(function(ev) {
-            this.toggleSelect();
+            if (ev.shiftKey) {
+                if (lastSelected) {
+                    var cards = partCard.getRange(lastSelected.index, this.index);
+                    cards.each(function(i, el) {
+                        $(el).data('partCard').select();
+                    });
+                }
+            } else {
+                this.toggleSelect();
+            }
         }, this));
         
         this.deleteForm.on('submit', $.proxy(function(ev) {
@@ -110,6 +120,8 @@ class imageCard {
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
         if (this.segmented) { this.segmentedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.binarizing || this.segmenting) {
+            this.bwImgUrl = null;
+            this.lines = null;
             this.lock();
         } else {
             this.unlock();
@@ -117,6 +129,7 @@ class imageCard {
     }
     
     select() {
+        lastSelected = this;
         this.$element.addClass('bg-dark');
         this.$element.css({'color': 'white'});
         $('i', this.selectButton).removeClass('fa-square');
@@ -124,6 +137,7 @@ class imageCard {
         this.selected = true;
     }
     unselect() {
+        lastSelected = null;
         this.$element.removeClass('bg-dark');
         this.$element.css({'color': this.defaultColor});
         $('i', this.selectButton).removeClass('fa-check-square');
@@ -198,29 +212,71 @@ class imageCard {
     }
 
     showBW() {
-        $('.line-box', '#segment-viewer').remove(); // cleanup
-        $('img', '#viewer').attr('src', this.bwImgUrl);
-        $('#viewer').show();
+        // Note: have to recreate an image because webkit never really delete the boxes otherwise
+        var $viewer = $('#viewer');
+        $viewer.empty();
+
+        if (!this.bwImgUrl) {
+            $.get(this.partUrl, $.proxy(function(data) {
+                this.bwImgUrl = data.bwImgUrl;
+                var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
+                $viewer.append($img);
+            }, this));
+        } else {
+            var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
+            $viewer.append($img);
+        }
+    }
+
+    showLines() {
+        var box, line, ratio = $('#viewer-img').width() / this.sourceImg.width;        
+        for (var i=0; i<this.lines.length; i++) {
+            line = this.lines[i];
+            box = $('<div class="line-box"></div>');
+            box.css({'left': line[0] * ratio,
+                     'top': line[1] * ratio,
+                     'width': (line[2] - line[0]) * ratio,
+                     'height': (line[3] - line[1]) * ratio});
+            box.removeAttr('id');
+            box.show();
+            box.appendTo($('#viewer'));
+        }
     }
     showSegmentation() {
-        $('.line-box', '#segment-viewer').remove(); // cleanup
         var $viewer = $('#viewer');
-        $('img', $viewer).attr('src', this.sourceImg.url);
-        $viewer.show();
-        
-        var box, ratio = $('#viewer').width() / this.sourceImg.width;
-        $.get(this.linesUrl, function(data) {
-            for (var i=0; i<data.length; i++) {
-                box = $('#box-tplt').clone();
-                box.css('left', data[i][0] * ratio);
-                box.css('top', data[i][1] * ratio );
-                box.css('width', (data[i][2] - data[i][0]) * ratio);
-                box.css('height', (data[i][3] - data[i][1]) * ratio);
-                box.attr('id', '');
-                box.show();
-                box.appendTo($viewer);
+        $viewer.empty();
+        var $img = $('<img id="viewer-img" width="100%" src="'+this.sourceImg.url+'"/>');
+        $viewer.append($img);
+        $('#viewer-img').on('load', $.proxy(function(ev) {
+            if (this.lines) {
+                this.showLines();
+            } else {
+                $.get(this.partUrl, $.proxy(function(data) {
+                    this.lines = data.lines;
+                    this.showLines();
+                }, this));
+            }
+        }, this));
+    }
+
+    static fromPk(pk) {
+        return $('#image-card-'+pk).data('partCard');
+    }
+    static getRange(from_, to_) {
+        var from, to;
+        if (from_ < to_) from = from_, to = to_;
+        else from = to_, to = from_;
+        return $('#cards-container .card').slice(from, to+1);
+    }
+    static getSelectedPks() {
+        var pks = [];
+        $('#cards-container .card').each(function(i, el) {
+            var ic = $(el).data('partCard');
+            if (ic.selected) {
+                pks.push(ic.pk);
             }
         });
+        return pks;
     }
 }
 
@@ -249,14 +305,14 @@ $(document).ready(function() {
         var elementId = ev.originalEvent.dataTransfer.getData("text/card-id");
         if (!elementId) { elementId = g_dragged; }  // for chrome
         var dragged = document.getElementById(elementId);
-        var card = $(dragged).data('imageCard');
+        var card = $(dragged).data('partCard');
         var index = $('#cards-container .js-drop').index(ev.target);
         card.moveTo(index);
     });
 
     // update workflow icons
     $('#alerts-container').on('part:workflow', function(ev, data) {
-        var card = $('#image-card-'+data.id).data('imageCard');
+        var card = partCard.fromPk(data.id);
         card.workflow_state = data.value;
         card.setWorkflowStates();
     });
@@ -275,7 +331,7 @@ $(document).ready(function() {
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
         if (data.status === 'ok') {
-            var card = new imageCard(data.part);
+            var card = new partCard(data.part);
         }
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
@@ -285,5 +341,40 @@ $(document).ready(function() {
                 }
             }
         }
+    });
+
+    // processor buttons
+    $('#select-all').click(function(ev) {
+        var cards = partCard.getRange(0, $('#cards-container .card').length);
+        cards.each(function(i, el) {
+            $(el).data('partCard').select();
+        });
+    });
+    $('#unselect-all').click(function(ev) {
+        var cards = partCard.getRange(0, $('#cards-container .card').length);
+        cards.each(function(i, el) {
+            $(el).data('partCard').unselect();
+        });
+    });
+    $('#binarize-selected').click(function(ev) {
+        $.post(processDocumentPartsUrl, {
+            'parts': partCard.getSelectedPks(),
+            'process': 'binarize'
+        }).done(function(data) {
+            console.log('binarization process', data.status);
+        }).fail(function(xhr) {
+            console.log('Something went wrong :(');
+        });
+    });
+    $('#segment-selected').click(function(ev) {
+        // $('select[name=text_direction]', '#dropzone').val()
+        $.post(processDocumentPartsUrl, {
+            'parts': partCard.getSelectedPks(),
+            'process': 'segment'
+        }).done(function(data) {
+            console.log('binarization process', data.status);
+        }).fail(function(xhr) {
+            console.log('Something went wrong :(');
+        });
     });
 });

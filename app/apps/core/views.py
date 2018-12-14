@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 
 from celery import chain
 
@@ -189,8 +189,8 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'deleteUrl': reverse('document-part-delete',
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-                'linesUrl': reverse('document-part-lines',
-                                     kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'partUrl': reverse('document-part',
+                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
 
                 'workflow': 0
             }
@@ -232,7 +232,7 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
-class DocumentPartLinesAjax(View):
+class DocumentPartAjax(View):
     http_method_names = ('get',)
 
     def get_object(self):
@@ -243,10 +243,50 @@ class DocumentPartLinesAjax(View):
     
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        return HttpResponse(json.dumps([
-            line.box for line in self.object.lines.all()
-        ]), content_type="application/json")
+        return HttpResponse(json.dumps({
+            'bwImgUrl': getattr(self.object.bw_image, 'url'),
+            'lines': [line.box for line in self.object.lines.all()]
+        }), content_type="application/json")
     
+
+class DocumentPartsProcessAjax(LoginRequiredMixin, View):
+    # TODO: form ?
+    http_method_names = ('post',)
     
+    def get_document(self):
+        return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+
+    def post(self, request, *args, **kwargs):
+        try:
+            document = self.get_document()
+        except (Document.DoesNotExist, DocumentPart.DoesNotExist):
+            return HttpResponse(json.dumps({'status': 'Not Found'}),
+                                status=404, content_type="application/json")
+
+        pks = self.request.POST.getlist('parts[]')
+        process = self.request.POST['process']
+        if process == 'binarize':
+            for pk in pks:
+                binarize.delay(pk, user_pk=self.request.user.pk)
+        elif process == 'segment':
+            parts = DocumentPart.objects.filter(pk__in=pks)
+            text_direction = self.request.POST.get('text_direction')
+            for part in parts:
+                if part.workflow_state < part.WORKFLOW_STATE_BINARIZED:
+                    chain(binarize.si(part.pk, user_pk=self.request.user.pk),
+                          segment.si(part.pk, user_pk=self.request.user.pk,
+                                     text_direction=text_direction)).delay()
+                else:
+                    segment.delay(part.pk, user_pk=self.request.user.pk,
+                                  text_direction=text_direction)
+        elif process == 'transcribe':
+            pass
+        else:
+            self.request.user.notify("Ewww", level="danger")
+            raise ValueError
+        
+        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+
+
 class DocumentDetail(DetailView):
     model = Document

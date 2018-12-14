@@ -62,13 +62,12 @@ class DocumentPartUpdateForm(forms.ModelForm):
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
     auto_process = forms.BooleanField(initial=True, required=False,
                                       label=_("Automatically process"))
-    text_direction = forms.ChoiceField(required=False, choices=(
-        ('vertical-lr', _("Vertical")),
-        ('horizontal-lr', _("Horizontal"))
-    ))
-    binarizer = forms.ChoiceField(required=False, choices=(
-        ('kraken', _("Kraken")),
-    ))
+    text_direction = forms.ChoiceField(required=False, initial='horizontal-lr',
+                                       label=_("Text direction"),
+                                       choices=(('horizontal-lr', _("Horizontal")),
+                                                ('vertical-lr', _("Vertical"))))
+    binarizer = forms.ChoiceField(required=False, label=_("Binarizer"),
+                                  choices=(('kraken', _("Kraken")),))
     
     class Meta:
         model = DocumentPart

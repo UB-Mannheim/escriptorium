@@ -95,6 +95,8 @@
     <script src="{% static '/vendor/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
     <script src="{% static '/js/reconnecting-websocket.min.js' %}"></script>
+    <script src="{% static '/js/js.cookie-2.2.0.min.js' %}"></script>
+    <script src="{% static '/js/ajax.js' %}"></script>
     <script type="text/javascript">var DEBUG = {% if debug %}true{% else %}false{% endif %};</script>
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
     <script src="{% static 'js/messages.js' %}"></script>
