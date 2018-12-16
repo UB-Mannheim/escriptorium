@@ -1,10 +1,17 @@
-{% load bootstrap %}<div id="alerts-container">
-{% for message in messages %}
-<div class="alert alert-{{message.tags|level_to_color}} alert-dismissible fade show" role="alert">
-  {{ message }}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
+{% load bootstrap %}<div id="alert-tplt">
+  <div class="alert alert-dismissible fade show" role="alert">
+    <p class="m-0"><span class="message"></span> <span class="counter"></span></p>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <hr class="separator">
+    <p class="additional"></p>
+  </div>
 </div>
-{% endfor %}
-</div>
+
+<div id="alerts-container"></div>
+{% if messages %}
+<script type="text/javascript">
+{% for message in messages %}Alert.add(null, "{{ message }}", "{{ message.tags|level_to_color }}");{% endfor %}
+</script>
+{% endif %}

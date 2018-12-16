@@ -1,23 +1,74 @@
 var msgSocket;
+
+var alerts = {};
+class Alert {
+    constructor(id, message, level, url) {
+        this.id = id;
+        this.count = 1;
+        this.message = message;
+        this.level = level || 'info';
+        this.url = url;
+
+        var $new = $('.alert', '#alert-tplt').clone();
+        $new.addClass('alert-' + this.level);
+        $('.message', $new).html(message);
+        if (this.url) {
+            $('.additional', $new).html('<a href="'+this.url+'" />').show();
+            $('.separator', $new).show();
+        }
+        this.$element = $new;
+        $('#alerts-container').append($new);
+        $new.show();
+
+        this.$element.on('closed.bs.alert', $.proxy(function () {
+            delete alerts[this.id];
+        }, this));
+    }
+
+    static add(id, message, url) {
+        var id_ = id || new Date().getTime();
+        if (alerts[id_] === undefined) {
+            alerts[id_] = new Alert(id_, message, url);
+        } else {
+            alerts[id_].incrementCounter();
+        }
+    }
+
+    incrementCounter() {
+        this.count++;
+        $('.counter', this.$element).text('('+this.count+')').show();
+    }
+}
+
 $(document).ready(function() {
-    msgSocket = new WebSocket('ws://' + window.location.host + '/ws/notif/');
-
-    msgSocket.onopen = function(e) {
-        console.log('Connected to notification socket');
-    };
+    msgSocket = new ReconnectingWebSocket('ws://' + window.location.host + '/ws/notif/');
+    msgSocket.maxReconnectAttempts = 3;
     
-    msgSocket.onmessage = function(e) {
+    msgSocket.addEventListener('open', function(e) {
+        if (DEBUG) {
+            console.log('Connected to notification socket');
+        }
+    });
+    
+    msgSocket.addEventListener('message', function(e) {
         var data = JSON.parse(e.data);
-        var message = data['text'];
-        console.log('Received notification: ' + message);
 
-        $container = $('#alerts-container');
-        // TODO: not dry
-        alert = '<div class="alert alert-' + data["level"] + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>';
-        $container.append(alert);
-    };
+        if (DEBUG) {
+            console.log('Received ws message: ', data);
+        }
+
+        if (data.type == 'message') {
+            var message = data['text'];
+            Alert.add(data['id'], message, data['level']);
+        } else if (data.type == 'event') {
+            var $container = $('#alerts-container');
+            $container.trigger(data["name"], data["data"]);
+        }
+    });
     
-    msgSocket.onclose = function(e) {
-        console.error('Notification socket closed unexpectedly');
-    };
+    msgSocket.addEventListener('close', function(e) {
+        if (DEBUG) {
+            console.error('Notification socket closed unexpectedly');
+        }
+    });
 });

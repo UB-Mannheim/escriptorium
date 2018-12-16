@@ -6,13 +6,14 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponse
 from django.utils.translation import gettext as _
 from django.urls import reverse
-
 from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView, FormView
+
+from celery import chain
 
 from core.models import Document, DocumentPart
-from core.forms import DocumentForm, DocumentShareForm, MetadataFormSet, DocumentPartUpdateForm
-from core.tasks import generate_part_thumbnail, segment
+from core.forms import *
+from core.tasks import generate_part_thumbnail, segment, binarize
 
 
 class Home(TemplateView):
@@ -79,6 +80,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = MetadataFormSet(instance=self.object)
+        context['upload_form'] = UploadImageForm()
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
     
@@ -139,15 +141,14 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
 class UploadImageAjax(LoginRequiredMixin, CreateView):
     model = DocumentPart
-    fields = ('image',)
+    form_class = UploadImageForm
     http_method_names = ('post',)
     
     def get_document(self):
         return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
     
     def form_invalid(self, form):
-        return HttpResponse(json.dumps({'status': 'error',
-                                        'error': form.errors['image']}),
+        return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
                             content_type="application/json", status=400)
     
     def post(self, request, *args, **kwargs):
@@ -166,27 +167,40 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         except IndexError:
             part.name = part.image.file.name
         part.save()
-        
-        # generate the thumbnail asynchronously because we don't want to generate 200 at once
-        generate_part_thumbnail.delay(part.pk)
-        segment.delay(part.pk, user_pk=self.request.user.pk)
+
+        if form.cleaned_data['auto_process']:
+            # generate the thumbnail asynchronously because we don't want to generate 200 at once
+            generate_part_thumbnail.delay(part.pk)
+            chain(binarize.si(part.pk, user_pk=self.request.user.pk),
+                  segment.si(part.pk, user_pk=self.request.user.pk,
+                             text_direction=form.cleaned_data['text_direction'])).delay()
         
         return HttpResponse(json.dumps({
             'status': 'ok',
-            'pk': part.pk,
-            'name': part.name,
-            'updateUrl': reverse('document-part-update',
-                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'deleteUrl': reverse('document-part-delete',
-                                  kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-            'imgUrl': part.image.url
+            'part': {
+                'pk': part.pk,
+                'name': part.name,
+                'thumbnailUrl': part.image.url,
+                'sourceImg': {'url': part.image.url,
+                              'width': part.image.width,
+                              'height': part.image.height},
+                'bwImgUrl': None,
+                'updateUrl': reverse('document-part-update',
+                                     kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'deleteUrl': reverse('document-part-delete',
+                                     kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'partUrl': reverse('document-part',
+                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+
+                'workflow': 0
+            }
         }), content_type="application/json")
 
 
-class UpdateDocumentPartAjax(LoginRequiredMixin, UpdateView):
+class DocumentPartAjax(LoginRequiredMixin, UpdateView):
     model = DocumentPart
     form_class = DocumentPartUpdateForm
-    http_method_names = ('post',)
+    http_method_names = ('get', 'post',)
     pk_url_kwarg = 'part_pk'
     
     def form_invalid(self, form):
@@ -197,6 +211,15 @@ class UpdateDocumentPartAjax(LoginRequiredMixin, UpdateView):
         form.save()
         return HttpResponse(json.dumps({'status': 'ok'}),
                             content_type="application/json")
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return HttpResponse(json.dumps({
+            'pk': self.object.pk,
+            'bwImgUrl': getattr(self.object.bw_image, 'url'),
+            'lines': [{'pk': line.pk, 'box': line.box}
+                      for line in self.object.lines.all()]
+        }), content_type="application/json")
 
 
 class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
@@ -218,21 +241,44 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
-class DocumentPartLinesAjax(View):
-    http_method_names = ('get',)
+class DocumentPartsProcessAjax(LoginRequiredMixin, View):
+    # TODO: form ?
+    http_method_names = ('post',)
+    
+    def get_document(self):
+        return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
 
-    def get_object(self):
+    def post(self, request, *args, **kwargs):
         try:
-            return DocumentPart.objects.prefetch_related('lines').get(pk=self.kwargs['part_pk'])
-        except Document.DoesNotExist:
-            raise Http404
-    
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return HttpResponse(json.dumps([
-            line.box for line in self.object.lines.all()
-        ]), content_type="application/json")
-    
-    
+            document = self.get_document()
+        except (Document.DoesNotExist, DocumentPart.DoesNotExist):
+            return HttpResponse(json.dumps({'status': 'Not Found'}),
+                                status=404, content_type="application/json")
+
+        pks = self.request.POST.getlist('parts[]')
+        process = self.request.POST['process']
+        if process == 'binarize':
+            for pk in pks:
+                binarize.delay(pk, user_pk=self.request.user.pk)
+        elif process == 'segment':
+            parts = DocumentPart.objects.filter(pk__in=pks)
+            text_direction = self.request.POST.get('text_direction')
+            for part in parts:
+                if part.workflow_state < part.WORKFLOW_STATE_BINARIZED:
+                    chain(binarize.si(part.pk, user_pk=self.request.user.pk),
+                          segment.si(part.pk, user_pk=self.request.user.pk,
+                                     text_direction=text_direction)).delay()
+                else:
+                    segment.delay(part.pk, user_pk=self.request.user.pk,
+                                  text_direction=text_direction)
+        elif process == 'transcribe':
+            pass
+        else:
+            self.request.user.notify("Ewww", level="danger")
+            raise ValueError
+        
+        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+
+
 class DocumentDetail(DetailView):
     model = Document
