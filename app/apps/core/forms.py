@@ -1,9 +1,11 @@
+import json
+
 from django import forms
 from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Document, DocumentPart, DocumentMetadata, Typology
+from core.models import Document, DocumentPart, DocumentMetadata, Typology, Line
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -45,9 +47,9 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
 MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=MetadataForm,
                                         extra=1, can_delete=True)
 
-
 class DocumentPartUpdateForm(forms.ModelForm):
     index = forms.IntegerField(required=False, min_value=0)
+    lines = forms.CharField(required=False)
     
     class Meta:
         model = DocumentPart
@@ -56,6 +58,20 @@ class DocumentPartUpdateForm(forms.ModelForm):
     def save(self, *args, **kwargs):
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
             self.instance.to(self.cleaned_data['index'])
+        if 'lines' in self.cleaned_data and self.cleaned_data['lines']:
+            lines = json.loads(self.cleaned_data['lines'])
+            for line_ in lines:
+                if line_['pk'] is None:
+                    Line.objects.create(document_part=self.instance,
+                                        box = line_['box'])
+                else:
+                    line = Line.objects.get(pk=line_['pk'])
+                    if 'delete' in line_ and line_['delete'] is True:
+                        line.delete()
+                    else:
+                        line.box = line_['box']
+                        line.save()
+        
         return super().save(*args, **kwargs)
 
 

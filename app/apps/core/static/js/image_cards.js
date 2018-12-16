@@ -34,7 +34,8 @@ class partCard {
         this.updateForm = $('.js-part-update-form', $new);
         this.deleteForm = $('.js-part-delete-form', $new);
         this.dropAfter = $('.js-drop', template).clone();
-        
+
+        // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         $('img.card-img-top', $new).attr('data-src', this.thumbnailUrl);
         this.updateForm.attr('action', this.updateUrl);
@@ -91,7 +92,7 @@ class partCard {
         
         this.deleteForm.on('submit', $.proxy(function(ev) {
             ev.preventDefault();
-            if (!confirm("Are you sure?")) { return; }
+            if (!confirm("Do you really want to delete this image?")) { return; }
             this.delete();
         }, this));
 
@@ -228,34 +229,42 @@ class partCard {
         }
     }
 
-    showLines() {
-        var box, line, ratio = $('#viewer-img').width() / this.sourceImg.width;        
+    showLines(ratio) {
+        var line;
         for (var i=0; i<this.lines.length; i++) {
             line = this.lines[i];
-            box = $('<div class="line-box"></div>');
-            box.css({'left': line[0] * ratio,
-                     'top': line[1] * ratio,
-                     'width': (line[2] - line[0]) * ratio,
-                     'height': (line[3] - line[1]) * ratio});
-            box.removeAttr('id');
-            box.show();
-            box.appendTo($('#viewer'));
+            new lineBox(this, line, ratio);
         }
     }
     showSegmentation() {
+        var ratio;
         var $viewer = $('#viewer');
         $viewer.empty();
         var $img = $('<img id="viewer-img" width="100%" src="'+this.sourceImg.url+'"/>');
         $viewer.append($img);
         $('#viewer-img').on('load', $.proxy(function(ev) {
+            ratio = $('#viewer-img').width() / this.sourceImg.width;
             if (this.lines) {
-                this.showLines();
+                this.showLines(ratio);
             } else {
                 $.get(this.partUrl, $.proxy(function(data) {
                     this.lines = data.lines;
-                    this.showLines();
+                    this.showLines(ratio);
                 }, this));
             }
+        }, this));
+
+        // create a new line
+        $img.on('dblclick', $.proxy(function(ev) {
+            var box = [
+                Math.max(0, ev.pageX - $img.offset().left -30),
+                Math.max(0, ev.pageY - $img.offset().top -20),
+                Math.min($img.width(), ev.pageX - $img.offset().left +30),
+                Math.min($img.height(), ev.pageY - $img.offset().top +20)
+            ];
+            console.log(ev.pageX, $img.offset().left);
+            var box_ = new lineBox(this, {pk: null, box: box}, ratio);
+            console.log(box, box_);
         }, this));
     }
 
@@ -277,6 +286,99 @@ class partCard {
             }
         });
         return pks;
+    }
+}
+
+class lineBox {
+    constructor(part, line, imgRatio) {
+        this.part = part;
+        this.pk = line.pk;
+        this.imgRatio = imgRatio;
+        this.changed = false;
+        var $box = $('<div class="line-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
+        $box.css({'left': line.box[0] * imgRatio,
+                  'top': line.box[1] * imgRatio,
+                  'width': (line.box[2] - line.box[0]) * imgRatio,
+                  'height': (line.box[3] - line.box[1]) * imgRatio});
+        $box.draggable({
+            disabled: true,
+            containment: 'parent',
+            cursor: "grab",
+            stop: $.proxy(function(ev) { this.changed = true; }, this)
+        });
+        $box.resizable({
+            disabled: true,
+            stop: $.proxy(function(ev) { this.changed = true; }, this)
+        });
+        
+        $box.data('lineBox', this);
+        $box.appendTo($('#viewer'));  
+        this.$element = $box;
+        // we need to keep references to be able to unbind it
+        this.proxyUnselect = $.proxy(this.unselect, this);
+        this.proxyKeyboard = $.proxy(this.keyboard, this);
+
+        // select a new line
+        if (this.pk === null) this.select();
+        
+        $box.click($.proxy(function(ev) {
+            ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
+            this.select();
+        }, this));
+
+        $('.close', this.$element).click($.proxy(function(ev) {
+            ev.stopPropagation();
+            this.delete();
+        }, this));
+    }
+
+    getBox() {
+        var x1 = parseInt(this.$element.position().left / this.imgRatio);
+        var y1 = parseInt(this.$element.position().top / this.imgRatio);
+        var x2 = parseInt((this.$element.position().left + this.$element.width()) / this.imgRatio);
+        var y2 = parseInt((this.$element.position().top + this.$element.height()) / this.imgRatio);
+        return [x1, y1, x2, y2];
+    }
+    keyboard(ev) {
+        if(!this.$element.is('.selected')) return;
+        if (ev.keyCode == 46) {
+            this.delete();
+        }
+        else if (ev.keyCode == 37) { this.$element.animate({'left': '-=1px'}); }
+        else if (ev.keyCode == 38) { this.$element.animate({'top': '-=1px'}); }
+        else if (ev.keyCode == 39) { this.$element.animate({'left': '+=1px'}); }
+        else if (ev.keyCode == 40) { this.$element.animate({'top': '+=1px'}); }
+    }
+    select() {
+        if (this.$element.is('.selected')) return;
+        var previous = $('.line-box.selected');
+        if (previous.length) { console.log(previous.data('lineBox')); previous.data('lineBox').unselect(); }
+        this.$element.addClass('selected');
+        this.$element.draggable('enable');
+        this.$element.resizable('enable');
+        $(document).on('click', this.proxyUnselect);
+        $(document).on('keyup', this.proxyKeyboard);
+    }
+    unselect() {
+        $(document).off('keyup', this.proxykeyboard);
+        $(document).off('click', this.proxyUnselect);
+        this.$element.removeClass('selected');
+        this.$element.draggable('disable');
+        this.$element.resizable('disable');
+        if (this.changed) {
+            this.part.upload({lines: JSON.stringify([{pk: this.pk, box: this.getBox()}])});
+            this.changed = false;
+        }
+    }
+    delete() {
+        if (!confirm("Do you really want to delete this line?")) { return; }
+        if (this.pk !== null) { 
+            this.part.upload({lines: JSON.stringify([{pk: this.pk, delete: true}])});
+        }
+        $(document).unbind('keyup', this.proxykeyboard);
+        $(document).off('click', this.proxyUnselect);
+        this.$element.unbind();
+        this.$element.remove();
     }
 }
 
@@ -310,7 +412,7 @@ $(document).ready(function() {
         card.moveTo(index);
     });
 
-    // update workflow icons
+    // update workflow icons, send by notification through web socket
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
         card.workflow_state = data.value;
@@ -342,7 +444,6 @@ $(document).ready(function() {
             }
         }
     });
-
     // processor buttons
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);

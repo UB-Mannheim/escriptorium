@@ -89,12 +89,26 @@ body {
 
 #viewer {
     padding: 0;
+    position: relative;
 }
 
 .line-box {
     position: absolute;
     background-color: transparent;
     border: 1px solid red;
+}
+.line-box .close {
+    display: none;
+}
+
+.line-box.selected {
+    border: 2px dashed red;
+    /* backdrop-filter: none; */
+    /* background-attachment: scroll; */
+    background-repeat: none;
+}
+.line-box.selected .close {
+    display: inline;
 }
 
 .card .js-binarized, .card .js-segmented {
@@ -119,8 +133,4 @@ body {
 .card .progress {
     height: 30px;
     font-size: 20px;
-}
-
-#box-tplt {
-    display: none;
 }

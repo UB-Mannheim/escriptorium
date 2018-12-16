@@ -14,6 +14,5 @@ urlpatterns = [
     path('document/<int:pk>/update/upload-image/', UploadImageAjax.as_view(), name='document-upload-image'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(), name='document-parts-process'),
     path('document/<int:pk>/part/<int:part_pk>/', DocumentPartAjax.as_view(), name='document-part'),
-    path('document/<int:pk>/part/<int:part_pk>/update/', UpdateDocumentPartAjax.as_view(), name='document-part-update'),
     path('document/<int:pk>/part/<int:part_pk>/delete/', DeleteDocumentPartAjax.as_view(), name='document-part-delete'),
 ]

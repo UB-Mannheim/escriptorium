@@ -197,10 +197,10 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         }), content_type="application/json")
 
 
-class UpdateDocumentPartAjax(LoginRequiredMixin, UpdateView):
+class DocumentPartAjax(LoginRequiredMixin, UpdateView):
     model = DocumentPart
     form_class = DocumentPartUpdateForm
-    http_method_names = ('post',)
+    http_method_names = ('get', 'post',)
     pk_url_kwarg = 'part_pk'
     
     def form_invalid(self, form):
@@ -211,6 +211,15 @@ class UpdateDocumentPartAjax(LoginRequiredMixin, UpdateView):
         form.save()
         return HttpResponse(json.dumps({'status': 'ok'}),
                             content_type="application/json")
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return HttpResponse(json.dumps({
+            'pk': self.object.pk,
+            'bwImgUrl': getattr(self.object.bw_image, 'url'),
+            'lines': [{'pk': line.pk, 'box': line.box}
+                      for line in self.object.lines.all()]
+        }), content_type="application/json")
 
 
 class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
@@ -231,23 +240,6 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         object.delete()
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
-
-class DocumentPartAjax(View):
-    http_method_names = ('get',)
-
-    def get_object(self):
-        try:
-            return DocumentPart.objects.prefetch_related('lines').get(pk=self.kwargs['part_pk'])
-        except Document.DoesNotExist:
-            raise Http404
-    
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return HttpResponse(json.dumps({
-            'bwImgUrl': getattr(self.object.bw_image, 'url'),
-            'lines': [line.box for line in self.object.lines.all()]
-        }), content_type="application/json")
-    
 
 class DocumentPartsProcessAjax(LoginRequiredMixin, View):
     # TODO: form ?
