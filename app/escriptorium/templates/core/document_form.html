@@ -107,7 +107,7 @@
           </form>
           
           <a data-toggle="collapse" href="#advancedForm" role="button" aria-expanded="false" aria-controls="collapseForm">
-            {% trans "Show advanced form" %}
+            {% trans "Show advanced options" %}
           </a>
           <div class="card">
             <div id="advancedForm" class="collapse" aria-labelledby="headingOne" data>
@@ -207,6 +207,7 @@
 <script src="{% static 'js/document_form.js' %}"></script>
 <script src="{% static 'js/image_cards.js' %}"></script>
 <script src="{% static 'js/lazyload.js' %}"></script>
+{% if object %}
 <script type="text/javascript">
 'use strict';
 var processDocumentPartsUrl = "{% url 'document-parts-process' pk=object.pk %}";
@@ -234,4 +235,5 @@ $(document).ready(function() {
     {% endfor %}
 });
 </script>
+{% endif %}
 {% endblock %}
