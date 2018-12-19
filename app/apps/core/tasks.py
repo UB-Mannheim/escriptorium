@@ -20,7 +20,7 @@ User = get_user_model()
 
 
 @shared_task
-def generate_part_thumbnail(instance_pk):
+def generate_part_thumbnails(instance_pk):
     try:
         instance = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
@@ -28,10 +28,12 @@ def generate_part_thumbnail(instance_pk):
         return False
 
     try:
-        file = LazyImageCacheFile('core:card.thumbnail', source=instance.image)
+        file = LazyImageCacheFile('core:card.thumbnail', source=instance.image_source)
+        file.generate()
+        file = LazyImageCacheFile('core:list.thumbnail', source=instance.image_source)
         file.generate()
     except:
-        logger.exception('Error while trying to generate thumbnail.')
+        logger.exception('Error while trying to generate thumbnails.')
     # we can fail silently, the thumbnail will be generated on the fly and we have logs
     return True
 
@@ -64,10 +66,10 @@ def binarize(instance_pk, user_pk=None):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image.file.name)
+        fname = os.path.basename(part.image_source.file.name)
         bw_file_name = 'bw_' + fname
-        bw_file = os.path.join(os.path.dirname(part.image.file.name), bw_file_name)
-        error = subprocess.check_call(["kraken", "-i", part.image.path,
+        bw_file = os.path.join(os.path.dirname(part.image_source.file.name), bw_file_name)
+        error = subprocess.check_call(["kraken", "-i", part.image_source.path,
                                        bw_file,
                                        'binarize'])
         if error:
@@ -116,7 +118,7 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image.file.name)
+        fname = os.path.basename(part.image_source.file.name)
         
         # kraken -i bw.png lines.json segment
         json_file = '/tmp/' + fname + '.lines.json'

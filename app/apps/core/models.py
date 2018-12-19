@@ -6,8 +6,8 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.translation import gettext as _
 
 from ordered_model.models import OrderedModel
-from imagekit.models import ProcessedImageField
-from imagekit.processors import TrimBorderColor
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFit
 
 from versioning.models import Versioned
 
@@ -147,10 +147,10 @@ class DocumentPart(OrderedModel):
     Represents a physical part of a larger document that is usually a page
     """
     name = models.CharField(max_length=512)
-    image = models.ImageField(upload_to=document_images_path)
-    # image = ProcessedImageField(upload_to=document_images_path,
-    #                            format = 'PNG', options = {'quality': 100})
-
+    image_source = models.ImageField(upload_to=document_images_path)
+    image = ImageSpecField(source='image_source',
+                           processors=[ResizeToFit(1110, upscale=False)],
+                           format = 'PNG', options = {'quality': 90})
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,

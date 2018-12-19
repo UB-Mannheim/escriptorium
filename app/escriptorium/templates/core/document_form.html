@@ -218,7 +218,7 @@ $(document).ready(function() {
     });
 
     {% for part in object.parts.all %}
-    {% generateimage 'core:card.thumbnail' source=part.image as im %}
+    {% generateimage 'core:card.thumbnail' source=part.image_source as im %}
     new partCard({
         pk: {{ part.pk }},
         name: "{{ part.name }}",

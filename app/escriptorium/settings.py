@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.forms',
-    
+
+    'django_cleanup',
     'ordered_model',
     'imagekit',
     'channels',
