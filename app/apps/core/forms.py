@@ -87,7 +87,7 @@ class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
     
     class Meta:
         model = DocumentPart
-        fields = ('image', 'auto_process', 'text_direction', 'typology', 'binarizer')
+        fields = ('image_source', 'auto_process', 'text_direction', 'typology', 'binarizer')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

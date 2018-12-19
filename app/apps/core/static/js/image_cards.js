@@ -130,6 +130,7 @@ class partCard {
     }
     
     select() {
+        if (this.locked) return;
         lastSelected = this;
         this.$element.addClass('bg-dark');
         this.$element.css({'color': 'white'});
@@ -421,7 +422,7 @@ $(document).ready(function() {
     
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
-        paramName: "image",
+        paramName: "image_source",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
     imageDropzone.on("sending", function(file, xhr, formData) {

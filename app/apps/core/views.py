@@ -13,7 +13,7 @@ from celery import chain
 
 from core.models import Document, DocumentPart
 from core.forms import *
-from core.tasks import generate_part_thumbnail, segment, binarize
+from core.tasks import generate_part_thumbnails, segment, binarize
 
 
 class Home(TemplateView):
@@ -23,7 +23,7 @@ class Home(TemplateView):
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
     paginate_by = 20
-
+    
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).select_related('owner')
 
@@ -163,14 +163,15 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         part = form.save(commit=False)
         part.document = self.document
         try:
-            part.name = part.image.file.name.split('.')[0]
+            part.name = part.image_source.file.name.split('.')[0]
         except IndexError:
-            part.name = part.image.file.name
+            part.name = part.image_source.file.name
         part.save()
 
         if form.cleaned_data['auto_process']:
-            # generate the thumbnail asynchronously because we don't want to generate 200 at once
-            generate_part_thumbnail.delay(part.pk)
+            # generate the thumbnails asynchronously
+            # because we don't want to generate 200 at once
+            generate_part_thumbnails.delay(part.pk)
             chain(binarize.si(part.pk, user_pk=self.request.user.pk),
                   segment.si(part.pk, user_pk=self.request.user.pk,
                              text_direction=form.cleaned_data['text_direction'])).delay()
@@ -185,7 +186,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                               'width': part.image.width,
                               'height': part.image.height},
                 'bwImgUrl': None,
-                'updateUrl': reverse('document-part-update',
+                'updateUrl': reverse('document-part',
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'deleteUrl': reverse('document-part-delete',
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),

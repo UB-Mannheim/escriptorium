@@ -13,6 +13,7 @@ class CardThumbnail(ImageSpec):
     format = 'JPEG'
     options = {'quality': 85}
 
+    
 register.generator('core:list.thumbnail', ListThumbnail)
 register.generator('core:card.thumbnail', CardThumbnail)
 
