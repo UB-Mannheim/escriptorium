@@ -9,11 +9,8 @@ from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 
-from celery import chain
-
-from core.models import Document, DocumentPart
-from core.forms import *
-from core.tasks import generate_part_thumbnails, segment, binarize
+from .models import Document, DocumentPart
+from .forms import *
 
 
 class Home(TemplateView):
@@ -80,8 +77,9 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = MetadataFormSet(instance=self.object)
-        context['upload_form'] = UploadImageForm()
+        context['upload_form'] = UploadImageForm(document=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
+        context['settings_form'] = DocumentProcessSettingsForm(instance=self.object.process_settings)
         return context
     
     def post(self, request, *args, **kwargs):
@@ -151,6 +149,11 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
                             content_type="application/json", status=400)
     
+    def get_form_kwargs(self, **kwargs):
+        args = super().get_form_kwargs(**kwargs)
+        args['document'] = self.document
+        return args
+    
     def post(self, request, *args, **kwargs):
         try:
             self.document = self.get_document()
@@ -161,26 +164,23 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         part = form.save(commit=False)
-        part.document = self.document
         try:
             part.name = part.image_source.file.name.split('.')[0]
         except IndexError:
             part.name = part.image_source.file.name
+        part.typology = self.document.process_settings.typology
         part.save()
-
-        if form.cleaned_data['auto_process']:
-            # generate the thumbnails asynchronously
-            # because we don't want to generate 200 at once
-            generate_part_thumbnails.delay(part.pk)
-            chain(binarize.si(part.pk, user_pk=self.request.user.pk),
-                  segment.si(part.pk, user_pk=self.request.user.pk,
-                             text_direction=form.cleaned_data['text_direction'])).delay()
+        
+        if self.document.process_settings.auto_process:
+            part.transcribe(user_pk=self.request.user.pk)
         
         return HttpResponse(json.dumps({
             'status': 'ok',
             'part': {
                 'pk': part.pk,
                 'name': part.name,
+                'title': part.title,
+                'typology': part.typology and part.typology.pk or None,
                 'thumbnailUrl': part.image.url,
                 'sourceImg': {'url': part.image.url,
                               'width': part.image.width,
@@ -192,8 +192,8 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'partUrl': reverse('document-part',
                                    kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-
-                'workflow': 0
+                'workflow': 0,
+                'progress': 0
             }
         }), content_type="application/json")
 
@@ -242,8 +242,29 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
+class DocumentProcessSettingsUpdateAjax(LoginRequiredMixin, UpdateView):
+    model = DocumentProcessSettings
+    form_class = DocumentProcessSettingsForm
+    http_method_names = ('post',)
+
+    def get_object(self):
+        try:
+            document = Document.objects.get(pk=self.kwargs['pk'])
+        except Document.DoesNotExist:
+            raise Http404
+        settings, created = DocumentProcessSettings.objects.get_or_create(document=document)
+        return settings
+    
+    def form_invalid(self, form):
+        return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
+                            content_type="application/json", status=400)
+    
+    def form_valid(self, form):
+        form.save()
+        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+
+
 class DocumentPartsProcessAjax(LoginRequiredMixin, View):
-    # TODO: form ?
     http_method_names = ('post',)
     
     def get_document(self):
@@ -257,26 +278,18 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
                                 status=404, content_type="application/json")
 
         pks = self.request.POST.getlist('parts[]')
+        # Note: necessary to check permissions to process said part
+        parts = DocumentPart.objects.filter(document=document, pk__in=pks)
         process = self.request.POST['process']
         if process == 'binarize':
-            for pk in pks:
-                binarize.delay(pk, user_pk=self.request.user.pk)
-        elif process == 'segment':
-            parts = DocumentPart.objects.filter(pk__in=pks)
-            text_direction = self.request.POST.get('text_direction')
             for part in parts:
-                if part.workflow_state < part.WORKFLOW_STATE_BINARIZED:
-                    chain(binarize.si(part.pk, user_pk=self.request.user.pk),
-                          segment.si(part.pk, user_pk=self.request.user.pk,
-                                     text_direction=text_direction)).delay()
-                else:
-                    segment.delay(part.pk, user_pk=self.request.user.pk,
-                                  text_direction=text_direction)
+                part.binarize(user_pk=self.request.user.pk)
+        elif process == 'segment':
+            for part in parts:
+                part.segment(user_pk=self.request.user.pk)
         elif process == 'transcribe':
-            pass
-        else:
-            self.request.user.notify("Ewww", level="danger")
-            raise ValueError
+            for part in parts:
+                part.transcribe(user_pk=self.request.user.pk)
         
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 

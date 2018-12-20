@@ -43,7 +43,7 @@ class Versioned(models.Model):
     
     # this is a stack, more recents to the top
     # on postgres it's stored as jsonb, super fast and indexable!
-    versions = JSONField(editable=False, default='[]')
+    versions = JSONField(editable=False, default=list)
     version_ignore_fields = ()
     
     def pack(self):
@@ -70,10 +70,11 @@ class Versioned(models.Model):
         """
         Create an instance (not saved in db) from a dict (usually coming from the history)
         """
-        fields = version.pop('data')
-        fields['revision'] = uuid.UUID(version.pop('revision'))
+        v = version.copy()
+        fields = v.pop('data')
+        fields['revision'] = uuid.UUID(v.pop('revision'))
         # version_source, version_author, version_created_at, version_updated_at
-        fields.update(**{'version_%s' % key: value for key, value in version.items()})
+        fields.update(**{'version_%s' % key: value for key, value in v.items()})
         instance = self._meta.model(**fields)
         # disable database operations
         instance.save = _dummy_db
@@ -81,10 +82,7 @@ class Versioned(models.Model):
         return instance
     
     def new_version(self):
-        history = json.loads(self.versions)
-        history.insert(0, self.pack())
-        self.versions = json.dumps(history)
-        
+        self.versions.insert(0, self.pack())
         self.revision = uuid.uuid4()  # new revision number
         self.version_created_at = datetime.utcnow()
         self.version_updated_at = datetime.utcnow()
@@ -94,15 +92,12 @@ class Versioned(models.Model):
         revision is a hex of the uuid field as stored in the history
         does not save to base
         """
-        history = json.loads(self.versions)
-        
-        for version in history:
+        for version in self.versions:
             if version['revision'] == revision:
                 # insert current state
-                history.insert(0, self.pack())
+                self.versions.insert(0, self.pack())
                 # pop revision
-                history.pop(history.index(version))
-                self.version = json.dumps(history)
+                self.versions.pop(self.versions.index(version))
                 
                 # load its data
                 self.revision = uuid.UUID(revision)
@@ -114,7 +109,6 @@ class Versioned(models.Model):
                 self.version_created_at = datetime.strptime(
                     version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
                 self.version_updated_at = datetime.utcnow()
-                self.versions = json.dumps(history)
                 break
         else:
             # get here if we don't break
@@ -122,8 +116,7 @@ class Versioned(models.Model):
     
     @property
     def history(self):
-        versions = json.loads(self.versions)
-        return [self.unpack(version) for version in versions]
+        return [self.unpack(version) for version in self.versions]
     
     class Meta:
         abstract = True

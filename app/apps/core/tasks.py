@@ -3,16 +3,15 @@ import json
 import os.path
 import subprocess
 
-from django.utils.translation import gettext as _
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.files import File
+from django.utils.translation import gettext as _
 
 from celery import shared_task
 from imagekit.cachefiles import LazyImageCacheFile
 
 from users.consumers import send_event
-from core.imagegenerators import CardThumbnail
-from core.models import DocumentPart, Line, Block, document_images_path
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +21,7 @@ User = get_user_model()
 @shared_task
 def generate_part_thumbnails(instance_pk):
     try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
         instance = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to generate thumbnail for innexistant DocumentPart : %d', instance_pk)
@@ -48,6 +48,7 @@ def update_client_state(part):
 @shared_task
 def binarize(instance_pk, user_pk=None):
     try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to binarize innexistant DocumentPart : %d', instance_pk)
@@ -87,15 +88,21 @@ def binarize(instance_pk, user_pk=None):
         if user:
             user.notify(_("Binarization done!"),
                         id="binarization-success", level='success')
+        
+        from core.models import document_images_path  # meh
         part.bw_image = document_images_path(part, bw_file_name)
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
         update_client_state(part)
+        
+        file = LazyImageCacheFile('core:large', source=part.bw_image)
+        file.generate()
 
 
 @shared_task
-def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
+def segment(instance_pk, user_pk=None):
     try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
@@ -110,6 +117,8 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
         user = None
     
     try:
+        Block = apps.get_model('core', 'Block')
+        Line = apps.get_model('core', 'Line')
         # cleanup pre-existing
         part.lines.all().delete()
         Block.objects.filter(document_part=part).delete()
@@ -157,5 +166,27 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
 
 
 @shared_task
-def transcribe(part_pk, user_pk=None, model=None):
-    pass
+def transcribe(part_pk, user_pk=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=part_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
+        return False
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    Transcription.objects.get_or_create(name='default', document=part.document)
+    part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+    part.save()
+    update_client_state(part)
+    
+    # model = part.select_model()
+    #if model:
+    #    TODO: kraken ocr

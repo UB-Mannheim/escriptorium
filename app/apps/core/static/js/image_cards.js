@@ -1,11 +1,4 @@
 'use strict';
-/**** Image cards drag n drop stuff ****/
-/* TODOList
-* icons bw, segmented (linked to messages)
-* select
-* api for hooks with advanced form
-* locking (can't run another job while one is already running)
-*/
 
 Dropzone.autoDiscover = false;
 var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
@@ -15,13 +8,16 @@ class partCard {
     constructor(part) {
         this.pk = part.pk;
         this.name = part.name;
+        this.title = part.title;
+        this.typology = part.typology;
         this.thumbnailUrl = part.thumbnailUrl;  // TODO: use the form data to avoid a trip back
-        this.sourceImg = part.sourceImg;
+        this.image = part.image;
         this.bwImgUrl = part.bwImgUrl;
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
         this.partUrl = part.partUrl;
         this.workflow_state = part.workflow;
+        this.progress = part.progress;
         this.locked = false;
         this.lines = null;
         
@@ -38,8 +34,10 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         $('img.card-img-top', $new).attr('data-src', this.thumbnailUrl);
+        $('img.card-img-top', $new).attr('title', this.title);
         this.updateForm.attr('action', this.updateUrl);
         $('input[name=name]', this.updateForm).attr('value', this.name);
+        $('select[name=typology] option[value='+this.typology+']', this.updateForm).attr('selected', 'true');
         this.deleteForm.attr('action', this.deleteUrl);
 
         $new.attr('draggable', true);
@@ -59,6 +57,9 @@ class partCard {
         // workflow icons & progress
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
+        this.progressBar = $('.js-trans-progress .progress-bar', this.$element);
+        this.progressBar.css('width', this.progress + '%');
+        this.progressBar.text(this.progress + '%');
         this.setWorkflowStates();
         this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
@@ -69,11 +70,12 @@ class partCard {
         
         // add the image element to the lazy loader
         imageObserver.observe($('img', $new).get(0));
-
+        
         this.defaultColor = this.$element.css('color');
         
         //************* events **************
-        this.updateForm.on('change', 'input', $.proxy(function(ev) {
+        $('.js-edit', this.$element).click($.proxy(function(ev) { this.updateForm.toggle(); }, this));
+        this.updateForm.on('change', 'input,select', $.proxy(function(ev) {
             this.upload();
         }, this));
 
@@ -116,6 +118,7 @@ class partCard {
         this.binarized = this.workflow_state >= 2;
         this.segmenting = this.workflow_state == 3;
         this.segmented = this.workflow_state >= 4;
+        this.transcribing = this.workflow_state == 5;
         if (this.binarizing) { this.binarizedButton.addClass('ongoing').show(); }
         if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
@@ -126,6 +129,10 @@ class partCard {
             this.lock();
         } else {
             this.unlock();
+        }
+        if (this.transcribing) {
+            $('#nav-trans-tab').removeClass('disabled');
+            this.progressBar.parent().css('display', 'inline-block');
         }
     }
     
@@ -241,10 +248,10 @@ class partCard {
         var ratio;
         var $viewer = $('#viewer');
         $viewer.empty();
-        var $img = $('<img id="viewer-img" width="100%" src="'+this.sourceImg.url+'"/>');
+        var $img = $('<img id="viewer-img" width="100%" src="'+this.image.url+'"/>');
         $viewer.append($img);
         $('#viewer-img').on('load', $.proxy(function(ev) {
-            ratio = $('#viewer-img').width() / this.sourceImg.width;
+            ratio = $('#viewer-img').width() / this.image.width;
             if (this.lines) {
                 this.showLines(ratio);
             } else {
@@ -425,12 +432,6 @@ $(document).ready(function() {
         paramName: "image_source",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
-    imageDropzone.on("sending", function(file, xhr, formData) {
-        formData.append("auto_process", $('input[name=auto_process]', '#dropzone').get(0).checked);
-        formData.append("text_direction", $('select[name=text_direction]', '#dropzone').val());
-        formData.append("typology", $('select[name=typology]', '#dropzone').val());
-        // formData.append("binarizer", $('select[name=binarizer]', '#dropzone').val());
-    });
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
         if (data.status === 'ok') {
@@ -445,6 +446,13 @@ $(document).ready(function() {
             }
         }
     });
+    
+    // settings form update
+    $('#advancedForm input,select').change(function(ev) {
+        var $form = $(ev.target).parents('form');
+        $.post($form.attr('action'), $form.serialize());
+    });
+    
     // processor buttons
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
@@ -479,4 +487,16 @@ $(document).ready(function() {
             console.log('Something went wrong :(');
         });
     });
+    $('#transcribe-selected').click(function(ev) {
+        // $('select[name=text_direction]', '#dropzone').val()
+        $.post(processDocumentPartsUrl, {
+            'parts': partCard.getSelectedPks(),
+            'process': 'transcribe'
+        }).done(function(data) {
+            console.log('transcription process', data.status);
+        }).fail(function(xhr) {
+            console.log('Something went wrong :(');
+        });
+    });
+
 });

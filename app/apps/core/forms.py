@@ -5,7 +5,7 @@ from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Document, DocumentPart, DocumentMetadata, Typology, Line
+from core.models import *
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -53,7 +53,7 @@ class DocumentPartUpdateForm(forms.ModelForm):
     
     class Meta:
         model = DocumentPart
-        fields = ('name', 'index')
+        fields = ('name', 'typology', 'index')
         
     def save(self, *args, **kwargs):
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
@@ -75,21 +75,32 @@ class DocumentPartUpdateForm(forms.ModelForm):
         return super().save(*args, **kwargs)
 
 
-class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
-    auto_process = forms.BooleanField(initial=True, required=False,
-                                      label=_("Automatically process"))
-    text_direction = forms.ChoiceField(required=False, initial='horizontal-lr',
-                                       label=_("Text direction"),
-                                       choices=(('horizontal-lr', _("Horizontal")),
-                                                ('vertical-lr', _("Vertical"))))
-    binarizer = forms.ChoiceField(required=False, label=_("Binarizer"),
-                                  choices=(('kraken', _("Kraken")),))
-    
+class DocumentProcessSettingsForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
-        model = DocumentPart
-        fields = ('image_source', 'auto_process', 'text_direction', 'typology', 'binarizer')
-    
+        model = DocumentProcessSettings
+        fields = '__all__'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['document'].widget = forms.HiddenInput()
         self.fields['typology'].initial = Typology.objects.get(name="Page")
+        self.fields['typology'].widget.attrs['title'] = _("Default Typology")
         self.fields['binarizer'].widget.attrs['disabled'] = True
+        self.fields['binarizer'].required = False
+
+
+class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = DocumentPart
+        fields = ('image_source',)
+    
+    def __init__(self, *args, **kwargs):
+        self.document = kwargs.pop('document')
+        super().__init__(*args, **kwargs)
+    
+    def save(self, commit=True):
+        part = super().save(commit=False)
+        part.document = self.document
+        if commit:
+            part.save()
+        return part

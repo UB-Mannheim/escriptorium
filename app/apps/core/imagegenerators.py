@@ -1,5 +1,5 @@
 from imagekit import ImageSpec, register
-from imagekit.processors import ResizeToFill
+from imagekit.processors import ResizeToFill, ResizeToFit
 
 
 class ListThumbnail(ImageSpec):
@@ -14,6 +14,11 @@ class CardThumbnail(ImageSpec):
     options = {'quality': 85}
 
     
+class Large(ImageSpec):
+    processors = [ResizeToFit(1110, upscale=False)]
+    options = {'quality': 90}
+
+    
 register.generator('core:list.thumbnail', ListThumbnail)
 register.generator('core:card.thumbnail', CardThumbnail)
-
+register.generator('core:large', Large)
