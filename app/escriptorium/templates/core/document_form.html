@@ -1,261 +1,63 @@
-{% extends 'base.html' %}
+{% extends 'core/document_nav.html' %}
 {% load i18n staticfiles bootstrap imagekit %}
-{% block head_title %}{% trans "Create a new Document" %}{% endblock %}
+{% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
-{% block styles %}
-<link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
-<link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
+{% block nav-doc-active %}active{% endblock %}
 
-{# custom jquery ui build with draggable and resizable only #}
-<link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
-{% comment %}
-<link href="{% static 'vendor/jquery/jquery-ui.structure.min.css' %}" rel="stylesheet" type="text/css">
-<link href="{% static 'vendor/jquery/jquery-ui.theme.min.css' %}" rel="stylesheet" type="text/css">
-{% endcomment %}
-
-{{ block.super }}
-{% endblock %}
-
-{% block body %}
-<div class="row">
-  <div class="col-md-12 col-md-offset-4">
-    <nav>
-      <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">        
-        <a class="nav-item nav-link active" id="nav-doc-tab" data-toggle="tab" href="#nav-doc" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Document" %}</a>
-        <a class="nav-item nav-link{% if not object %} disabled{% endif %}" id="nav-img-tab" data-toggle="tab" href="#nav-img" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
-        <a class="nav-item nav-link disabled mr-auto" id="nav-trans-tab" data-toggle="tab" href="#nav-trans" role="tab" aria-controls="nav-trans" aria-selected="true">{% trans "Transcription" %}</a>
-
-        {% if object and can_publish %}
-        <div>
-          <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
-        </div>
-        {% if not object.is_published %}
-        <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
-          <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
-          <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
-            <i class="fas fa-globe-europe"></i>
-          </button>
-        </form>
-        {% endif %}
-        <form method="post" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-          <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
-          <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-        </form>
-        {% endif %}
-      </div>
-    </nav>
-    
-    <div class="tab-content" id="nav-tabContent">
-
-      <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
-        
-        <form method="post">
-          {% csrf_token %}
-          <fieldset>
-            {% if object %}
-            {% render_field form.name %}
-            {% else %}
-            {% render_field form.name autofocus=1 %}
-            {% endif %}
-            {% render_field form.typology %}
-            
-            <div class="js-metadata-form">
-              <label class="my-1">{% trans "Metadata" %}</label>
-              {{ metadata_form.management_form }}
-
-              {% for form in metadata_form.forms %}
-              <div class="input-group input-group-sm mb-2 js-metadata-row">
-                {{ form.id }}  {# hidden #}
-                {{ form.document }}  {# hidden #}
-                <div class="input-group-prepend">
-                  {% render_field form.key group=True %}
-                </div>
-                {% render_field form.value group=True %}
-                <div class="input-group-prepend">
-                  <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
-                  <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
-                </div>
-              </div>
-              {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
-              {% endfor %}
-            </div>
-
-            {% comment %}
-            {# in case we rather have a free form with autocomplete #}
-            {% with choices=metadata_form.forms.0.key.field.choices %}
-            {% if choices %}
-            <datalist id="metadataKeys">
-              {% for choice in choices %}
-              <option>{{ choice.1 }}</option>
-              {% endfor %}
-            </datalist>
-            {% endif %}
-            {% endwith %}
-            {% endcomment %}
-            
-            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
-          </fieldset>
-        </form>
-      </div>
-      
+{% block nav_content %}
+<div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
+  
+  <form method="post">
+    {% csrf_token %}
+    <fieldset>
       {% if object %}
-      <div class="tab-pane fade show" id="nav-img" role="tabpanel" aria-labelledby="nav-img-tab">
-        <div id="dropzone">
-          <form action="upload-image/" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
-            {% csrf_token %}
-            <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
-          </form>
-          
-          <a data-toggle="collapse" href="#advancedForm" role="button" aria-expanded="false" aria-controls="collapseForm">
-            {% trans "Show advanced options" %}
-          </a>
-          <div class="card">
-            <div id="advancedForm" class="collapse" aria-labelledby="headingOne" data>
-              <form method="post" action="{% url 'document-process-settings-update' pk=object.pk %}">
-              <div class="card-body form-inline">                
-                  {% csrf_token %}
-                  {{ settings_form.document }}
-                  {% render_field settings_form.auto_process %}
-                  {% render_field settings_form.text_direction %}
-                  {# render_field settings_form.typology #}
-                  {% render_field settings_form.binarizer %}
-                  {% render_field settings_form.ocrmodel %}
-              </div>
-              </form>
-              <div class="card-footer">
-                <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
-                <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
-                <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
-                <button id="segment-selected" class="btn btn-sm btn-primary mr-1" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
-                <button id="transcribe-selected" class="btn btn-sm btn-success mr-1" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Ready" %}</button>
-              </div>
-            </div>
+      {% render_field form.name %}
+      {% else %}
+      {% render_field form.name autofocus=1 %}
+      {% endif %}
+      {% render_field form.typology %}
+      
+      <div class="js-metadata-form">
+        <label class="my-1">{% trans "Metadata" %}</label>
+        {{ metadata_form.management_form }}
+
+        {% for form in metadata_form.forms %}
+        <div class="input-group input-group-sm mb-2 js-metadata-row">
+          {{ form.id }}  {# hidden #}
+          {{ form.document }}  {# hidden #}
+          <div class="input-group-prepend">
+            {% render_field form.key group=True %}
+          </div>
+          {% render_field form.value group=True %}
+          <div class="input-group-prepend">
+            <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
+            <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
           </div>
         </div>
-
-        <div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap">
-          <div class="dropable js-drop"></div>
-          {# card are created through the dom api (see below) #}
-        </div>
-
-        {# viewer #}
-        <div id="viewer" class="col-12 mt-2"><img id="viewer-img" width="100%"/></div>
+        {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
+        {% endfor %}
       </div>
 
-      <div class="tab-pane fade show" id="nav-trans" role="tabpanel" aria-labelledby="nav-trans-tab">
-      </div>
-      {% endif %}
-
-    </div>
-  </div>
-</div>
-
-{% if object %}
-<!-- shareModal -->
-<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form method="post" action="{% url 'document-share' pk=object.pk %}">
-        {% csrf_token %}
-        
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">{% trans "Share with users or teams" %}</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        {% render_field share_form.shared_with_groups %}
-        {# Share with users #}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-      </div>
-      </form>      
-    </div>
-  </div>
-</div>
-
-{# template for adding card #}
-<div id="card-template">
-  <div id="image-card-{pk}" class="card">
-    <div style="position: relative;">
-      <button class="js-card-select-hdl"><i class="fas fa-square"></i></button>
-      <form class="js-part-delete-form" method="post" action="{deleteurl}">
-        {% csrf_token %}
-        <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </form>
-      <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
       {% comment %}
-      <button class="btn btn-sm btn-secondary js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
+      {# in case we rather have a free form with autocomplete #}
+      {% with choices=metadata_form.forms.0.key.field.choices %}
+      {% if choices %}
+      <datalist id="metadataKeys">
+        {% for choice in choices %}
+        <option>{{ choice.1 }}</option>
+        {% endfor %}
+      </datalist>
+      {% endif %}
+      {% endwith %}
       {% endcomment %}
-    </div>
-    <div class="card-body">
-      <form method="post" action="{updateurl}" class="js-part-update-form">      
-        {# csrf_token #}
-        {% comment %}
-        {# TODO doesn't really work, use a modal instead ? #}
-        <select name="typology" title="Typology" class="form-control form-control-sm custom-select" id="id_typology">
-          {% for choice in settings_form.typology.field.choices %}
-          {% if choice.0 %}<option value="{{ choice.0 }}">{{ choice.1 }}</option>{% endif %}
-          {% endfor %}
-        </select>
-        <input class="form-control form-control-sm mt-1" type="text" name="name" value="{name}" placeholder="Name" title="Name">
-        {% endcomment %}
-      </form>
-      <div class="d-flex mt-2">
-        <span class="js-binarized" title="{% trans 'Binarized' %}"><i class="fas fa-adjust"></i></span>
-        <span class="ml-2 js-segmented" title="{% trans 'Segmented' %}"><i class="fas fa-align-left"></i></span>
-        <span class="progress ml-2 js-trans-progress" title="{% trans 'Transcription progress' %}">
-          <span class="progress-bar text-dark" title="{% trans 'Transcription progress' %}" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
-        </span>
-      </div>
-    </div>
-  </div>
-  <div class="dropable js-drop"></div>
+      
+      <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+    </fieldset>
+  </form>
 </div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
-<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 <script src="{% static 'js/document_form.js' %}"></script>
-<script src="{% static 'js/image_cards.js' %}"></script>
-<script src="{% static 'js/lazyload.js' %}"></script>
-{% if object %}
-<script type="text/javascript">
-'use strict';
-var processDocumentPartsUrl = "{% url 'document-parts-process' pk=object.pk %}";
-$(document).ready(function() {
-    // join the ws room
-    msgSocket.addEventListener('open', function(ev) {
-        msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
-    });
-
-    {% for part in object.parts.all %}
-    {% generateimage 'core:card.thumbnail' source=part.image_source as thumb %}
-    {% if part.bw_image %}{% generateimage 'core:large' source=part.bw_image as bw %}{% endif %}
-    new partCard({
-        pk: {{ part.pk }},
-        name: "{{ part.name }}",
-        title: "{{ part.title }}",
-        typology: {{ part.typology.pk|default:'null' }},
-        image: {"url": "{{ part.image.url }}",
-                "width":"{{ part.image.width }}",
-                "height": "{{ part.image.height}}" },
-        thumbnailUrl: "{{ thumb.url }}",
-        bwImgUrl: {% if part.bw_image %}"{{ bw.url }}"{% else %}null{% endif %},
-        updateUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
-        deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
-        partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
-        workflow: {{ part.workflow_state }},
-        progress: {{ part.transcription_progress }}
-    });
-    {% endfor %}
-});
-</script>
-{% endif %}
 {% endblock %}

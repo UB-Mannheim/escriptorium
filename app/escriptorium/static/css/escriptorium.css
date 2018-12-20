@@ -105,7 +105,7 @@ body {
 }
 
 .line-box {
-    position: absolute;
+    position: absolute !important;
     background-color: transparent;
     border: 1px solid red;
 }
@@ -121,6 +121,10 @@ body {
 }
 .line-box.selected .close {
     display: inline;
+}
+
+.card .progress {
+    cursor: pointer;
 }
 
 .card .js-binarized, .card .js-segmented, .card .js-trans-progress {
@@ -142,4 +146,44 @@ body {
 
 .card span.done {
     cursor: pointer;
+}
+
+/* transcription interface  */
+.nav-btn {
+    position: absolute;
+    font-size: 50px;
+}
+
+.nav-btn.nav-prev {
+    left: -30px;
+}
+
+.nav-btn.nav-next {
+    right: -30px;
+}
+
+#trans-container, #img-container {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid lightgrey;
+    width: 100%;
+    height: 100%;
+}
+
+#part-trans {
+    /* overflow: hidden; */
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    transform-origin:top left;
+}
+
+#overlay {
+    display: none;
+    position: absolute;
+    transform-origin:top left;
+    background-color: red;
+    opacity: 0.5;
 }

@@ -67,7 +67,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     model = Document
     form_class = DocumentForm
     success_message = _("Document saved successfully!")
-
+    
     def get_queryset(self):
         # will raise a 404 instead of a 403 if user can't edit, but avoids a query
         return Document.objects.for_user(self.request.user)
@@ -77,9 +77,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = MetadataFormSet(instance=self.object)
-        context['upload_form'] = UploadImageForm(document=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
-        context['settings_form'] = DocumentProcessSettingsForm(instance=self.object.process_settings)
         return context
     
     def post(self, request, *args, **kwargs):
@@ -101,6 +99,52 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             # at this point the document is saved
             metadata_form.save()
         return response
+
+
+class DocumentImages(LoginRequiredMixin, DetailView):
+    model = Document
+    template_name = "core/document_images.html"
+    
+    def get_queryset(self):
+        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
+        return Document.objects.for_user(self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['upload_form'] = UploadImageForm(document=self.object)
+        context['settings_form'] = DocumentProcessSettingsForm(instance=self.object.process_settings)
+        return context
+
+
+class DocumentTranscription(LoginRequiredMixin, DetailView):
+    model = DocumentPart
+    pk_url_kwarg = 'part_pk'
+    template_name = "core/document_transcription.html"
+    
+    def get_queryset(self):
+        if not hasattr(self, 'document'):
+            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('pk'))
+        return DocumentPart.objects.filter(
+            document=self.document,
+            workflow_state=DocumentPart.WORKFLOW_STATE_TRANSCRIBING)
+
+    def get_object(self):
+        if not 'part_pk' in self.kwargs:
+            return self.get_queryset()[0]
+        else:
+            return super().get_object()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        # Note: a bit confusing but this view uses the same base template than UpdateDocument
+        # so we need context['object'] = document
+        context['object'] = self.document
+        context['part'] = self.object
+        
+        # Note .next() and .previous() don't work because can't filter against it
+        context['previous'] = self.get_queryset().filter(order__lt=self.object.order).order_by('-order').first()
+        context['next'] = self.get_queryset().filter(order__gt=self.object.order).order_by('order').first()
+        return context
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
@@ -182,15 +226,17 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                 'title': part.title,
                 'typology': part.typology and part.typology.pk or None,
                 'thumbnailUrl': part.image.url,
-                'sourceImg': {'url': part.image.url,
-                              'width': part.image.width,
-                              'height': part.image.height},
+                'image': {'url': part.image.url,
+                          'width': part.image.width,
+                          'height': part.image.height},
                 'bwImgUrl': None,
                 'updateUrl': reverse('document-part',
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'deleteUrl': reverse('document-part-delete',
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'partUrl': reverse('document-part',
+                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'partUrl': reverse('document-transcription',
                                    kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'workflow': 0,
                 'progress': 0

@@ -148,7 +148,8 @@ class DocumentPart(OrderedModel):
     image = ImageSpecField(source='image_source', id='core:large')
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
-    typology = models.ForeignKey(Typology, null=True, blank=True, on_delete=models.SET_NULL,
+    typology = models.ForeignKey(Typology, null=True, blank=True,
+                                 on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
@@ -213,11 +214,10 @@ class DocumentPart(OrderedModel):
     
     def segment(self, user_pk=None):
         if not self.binarized:
-            chain(binarize.si(part.pk, user_pk=self.request.user.pk),
-                  segment.si(part.pk, user_pk=self.request.user.pk)).delay()
+            chain(binarize.si(self.pk, user_pk=user_pk),
+                  segment.si(self.pk, user_pk=user_pk)).delay()
         else:
-            segment.delay(self.pk, user_pk=user_pk,
-                          text_direction=text_direction)
+            segment.delay(self.pk, user_pk=user_pk)
     
     def transcribe(self, user_pk=None):
         if not self.segmented:

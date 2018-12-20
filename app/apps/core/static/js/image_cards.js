@@ -15,6 +15,7 @@ class partCard {
         this.bwImgUrl = part.bwImgUrl;
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
+        this.transcripionUrl = part.transcriptionUrl;
         this.partUrl = part.partUrl;
         this.workflow_state = part.workflow;
         this.progress = part.progress;
@@ -63,6 +64,9 @@ class partCard {
         this.setWorkflowStates();
         this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
+        this.progressBar.parent().click($.proxy(function(ev) {
+            window.location.replace(this.transcripionUrl);
+        }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
@@ -307,7 +311,8 @@ class lineBox {
         $box.css({'left': line.box[0] * imgRatio,
                   'top': line.box[1] * imgRatio,
                   'width': (line.box[2] - line.box[0]) * imgRatio,
-                  'height': (line.box[3] - line.box[1]) * imgRatio});
+                  'height': (line.box[3] - line.box[1]) * imgRatio
+                 });
         $box.draggable({
             disabled: true,
             containment: 'parent',
@@ -325,7 +330,7 @@ class lineBox {
         // we need to keep references to be able to unbind it
         this.proxyUnselect = $.proxy(this.unselect, this);
         this.proxyKeyboard = $.proxy(this.keyboard, this);
-
+        
         // select a new line
         if (this.pk === null) this.select();
         
