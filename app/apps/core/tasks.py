@@ -1,15 +1,17 @@
-import logging
 import json
+import logging
 import os.path
+import redis
 import subprocess
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.utils.translation import gettext as _
 
 from celery import shared_task
-from imagekit.cachefiles import LazyImageCacheFile
+from easy_thumbnails.files import generate_all_aliases
 
 from users.consumers import send_event
 
@@ -17,25 +19,47 @@ from users.consumers import send_event
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+
 
 @shared_task
-def generate_part_thumbnails(instance_pk):
+def generate_part_thumbnails(model, pk, field):
+    instance = model._default_manager.get(pk=pk)
+    fieldfile = getattr(instance, field)
+    generate_all_aliases(fieldfile, include_global=True)
+
+
+@shared_task(bind=True)
+def lossless_compression(self, instance_pk):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
-        instance = DocumentPart.objects.get(pk=instance_pk)
+        part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to generate thumbnail for innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
         return False
-
-    try:
-        file = LazyImageCacheFile('core:card.thumbnail', source=instance.image_source)
-        file.generate()
-        file = LazyImageCacheFile('core:list.thumbnail', source=instance.image_source)
-        file.generate()
-    except:
-        logger.exception('Error while trying to generate thumbnails.')
-    # we can fail silently, the thumbnail will be generated on the fly and we have logs
-    return True
+    
+    convert = False
+    old_name = part.image.file.name
+    filename, extension = os.path.splitext(old_name)
+    if extension != ".png":
+        convert = True
+        new_name = filename + ".png"
+        error = subprocess.check_call(["convert", old_name, new_name])
+        if error:
+            raise RuntimeError("Error trying to convert file(%s) to png.")
+    else:
+        new_name = old_name
+    
+    opti_name = filename + '_opti.png'
+    # Note: leave it fail if need be
+    subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
+    os.rename(opti_name, new_name)
+    if convert:
+        part.image = new_name.split(settings.MEDIA_ROOT)[1][1:]
+        os.remove(old_name)
+    if part.workflow_state < part.WORKFLOW_STATE_COMPRESSED:
+        part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
+        part.save()
 
 
 def update_client_state(part):
@@ -43,7 +67,6 @@ def update_client_state(part):
         "id": part.pk,
         "value": part.workflow_state
     })
-
 
 @shared_task
 def binarize(instance_pk, user_pk=None):
@@ -67,10 +90,10 @@ def binarize(instance_pk, user_pk=None):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image_source.file.name)
+        fname = os.path.basename(part.image.file.name)
         bw_file_name = 'bw_' + fname
-        bw_file = os.path.join(os.path.dirname(part.image_source.file.name), bw_file_name)
-        error = subprocess.check_call(["kraken", "-i", part.image_source.path,
+        bw_file = os.path.join(os.path.dirname(part.image.file.name), bw_file_name)
+        error = subprocess.check_call(["kraken", "-i", part.image.path,
                                        bw_file,
                                        'binarize'])
         if error:
@@ -80,9 +103,9 @@ def binarize(instance_pk, user_pk=None):
         if user:
             user.notify(_("Something went wrong during the binarization!"),
                         id="binarization-error", level='danger')
-        update_client_state(part)
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
+        update_client_state(part)
         raise
     else:
         if user:
@@ -94,9 +117,6 @@ def binarize(instance_pk, user_pk=None):
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
         update_client_state(part)
-        
-        file = LazyImageCacheFile('core:large', source=part.bw_image)
-        file.generate()
 
 
 @shared_task
@@ -127,7 +147,7 @@ def segment(instance_pk, user_pk=None):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image_source.file.name)
+        fname = os.path.basename(part.image.file.name)
         
         # kraken -i bw.png lines.json segment
         json_file = '/tmp/' + fname + '.lines.json'
@@ -182,6 +202,7 @@ def transcribe(part_pk, user_pk=None):
     else:
         user = None
 
+    Transcription = apps.get_model('core', 'Transcription')
     Transcription.objects.get_or_create(name='default', document=part.document)
     part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
     part.save()

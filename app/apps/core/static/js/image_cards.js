@@ -118,11 +118,11 @@ class partCard {
     }
 
     setWorkflowStates() {
-        this.binarizing = this.workflow_state == 1; // meh
-        this.binarized = this.workflow_state >= 2;
-        this.segmenting = this.workflow_state == 3;
-        this.segmented = this.workflow_state >= 4;
-        this.transcribing = this.workflow_state == 5;
+        this.binarizing = this.workflow_state == 2; // meh
+        this.binarized = this.workflow_state >= 3;
+        this.segmenting = this.workflow_state == 4;
+        this.segmented = this.workflow_state >= 5;
+        this.transcribing = this.workflow_state == 6;
         if (this.binarizing) { this.binarizedButton.addClass('ongoing').show(); }
         if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
@@ -434,7 +434,7 @@ $(document).ready(function() {
     
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
-        paramName: "image_source",
+        paramName: "image",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
     //************* New card creation **************

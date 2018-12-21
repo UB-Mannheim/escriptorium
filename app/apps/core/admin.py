@@ -11,6 +11,6 @@ class DocumentAdmin(admin.ModelAdmin):
 
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentProcessSettings)
-admin.site.register(DocumentPart)    
+admin.site.register(DocumentPart)
 admin.site.register(Typology)
 admin.site.register(Metadata)

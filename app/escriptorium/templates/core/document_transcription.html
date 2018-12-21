@@ -1,17 +1,16 @@
 {% extends 'core/document_nav.html' %}
-{% load i18n staticfiles %}
+{% load i18n staticfiles thumbnail %}
 
 {% block nav-trans-active %}active{% endblock %}
 
 {% block nav_content %}
-
 <div class="row" style="position: relative;">
   {% if previous %}<a class="nav-btn nav-prev" href="{% url 'document-transcription' pk=object.pk part_pk=previous.pk %}" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>{% endif %}
   {% if next %}<a class="nav-btn nav-next" href="{% url 'document-transcription' pk=object.pk part_pk=next.pk %}" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>{% endif %}
   
   <div class="col-6">
     <div id="img-container">
-    <img id="part-img" src="{{ part.image.url }}" width="100%"/>
+      <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
     <div id="overlay"></div>
     </div>
   </div>

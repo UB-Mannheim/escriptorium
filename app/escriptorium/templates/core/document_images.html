@@ -1,5 +1,5 @@
 {% extends 'core/document_nav.html' %}
-{% load i18n staticfiles bootstrap imagekit %}
+{% load i18n staticfiles bootstrap thumbnail %}
 
 {% block styles %}
 <link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
@@ -30,7 +30,7 @@
           {{ settings_form.document }}
           {% render_field settings_form.auto_process %}
           {% render_field settings_form.text_direction %}
-          {# render_field settings_form.typology #}
+          {% render_field settings_form.typology %}
           {% render_field settings_form.binarizer %}
           {% render_field settings_form.ocrmodel %}
         </div>
@@ -113,18 +113,16 @@ $(document).ready(function() {
     });
 
     {% for part in object.parts.all %}
-    {% generateimage 'core:card.thumbnail' source=part.image_source as thumb %}
-    {% if part.bw_image %}{% generateimage 'core:large' source=part.bw_image as bw %}{% endif %}
     new partCard({
         pk: {{ part.pk }},
         name: "{{ part.name }}",
         title: "{{ part.title }}",
         typology: {{ part.typology.pk|default:'null' }},
-        image: {"url": "{{ part.image.url }}",
+        image: {"url": "{{ part.image|thumbnail_url:'large' }}",
                 "width":"{{ part.image.width }}",
                 "height": "{{ part.image.height}}" },
-        thumbnailUrl: "{{ thumb.url }}",
-        bwImgUrl: {% if part.bw_image %}"{{ bw.url }}"{% else %}null{% endif %},
+        thumbnailUrl: "{{ part.image|thumbnail_url:'card' }}",
+        bwImgUrl: {% if part.bw_image %}"{{ part.bw_image|thumbnail_url:'large' }}"{% else %}null{% endif %},
         updateUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
         partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",

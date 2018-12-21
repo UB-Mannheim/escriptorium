@@ -43,7 +43,7 @@ INSTALLED_APPS = [
 
     'django_cleanup',
     'ordered_model',
-    'imagekit',
+    'easy_thumbnails',
     'channels',
     
     'bootstrap',
@@ -168,6 +168,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+THUMBNAIL_ALIASES = {
+    '': {
+        'list': {'size': (50, 50), 'crop': 'scale'},
+        'card': {'size': (180, 180), 'crop': 'scale'},
+        'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
+    }
+}
 
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 

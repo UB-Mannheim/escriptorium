@@ -37,7 +37,7 @@ class TranscriptionLine {
 
 $(document).ready(function() {
     var img = document.querySelector('#part-img');
-    wheelzoom(img);
+    wheelzoom(img);    
     img.addEventListener('wheelzoom.update', function(ev) {
         $('#part-trans').css({
             left: ev.detail.posX + 'px',

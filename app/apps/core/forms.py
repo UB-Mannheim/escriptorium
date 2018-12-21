@@ -83,6 +83,7 @@ class DocumentProcessSettingsForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['document'].widget = forms.HiddenInput()
+        self.fields['typology'].widget = forms.HiddenInput()  # for now
         self.fields['typology'].initial = Typology.objects.get(name="Page")
         self.fields['typology'].widget.attrs['title'] = _("Default Typology")
         self.fields['binarizer'].widget.attrs['disabled'] = True
@@ -92,7 +93,7 @@ class DocumentProcessSettingsForm(BootstrapFormMixin, forms.ModelForm):
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = DocumentPart
-        fields = ('image_source',)
+        fields = ('image',)
     
     def __init__(self, *args, **kwargs):
         self.document = kwargs.pop('document')

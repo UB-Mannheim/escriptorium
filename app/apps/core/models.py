@@ -6,16 +6,16 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.translation import gettext as _
 from django.core.files.storage import FileSystemStorage
 from django.core.validators import FileExtensionValidator
+from django.dispatch import receiver
 
 import click
 import celery
 from celery import chain
+from easy_thumbnails.signals import saved_file
 from ordered_model.models import OrderedModel
-from imagekit.models import ImageSpecField
-from imagekit.processors import ResizeToFit
 
 from versioning.models import Versioned
-from .tasks import generate_part_thumbnails, segment, binarize, transcribe
+from .tasks import *
 
 User = get_user_model()
 
@@ -144,8 +144,7 @@ class DocumentPart(OrderedModel):
     Represents a physical part of a larger document that is usually a page
     """
     name = models.CharField(max_length=512, blank=True)
-    image_source = models.ImageField(upload_to=document_images_path)
-    image = ImageSpecField(source='image_source', id='core:large')
+    image = models.ImageField(upload_to=document_images_path)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
     typology = models.ForeignKey(Typology, null=True, blank=True,
@@ -155,13 +154,15 @@ class DocumentPart(OrderedModel):
     order_with_respect_to = 'document'
     
     WORKFLOW_STATE_CREATED = 0
-    WORKFLOW_STATE_BINARIZING = 1
-    WORKFLOW_STATE_BINARIZED = 2
-    WORKFLOW_STATE_SEGMENTING = 3
-    WORKFLOW_STATE_SEGMENTED = 4
-    WORKFLOW_STATE_TRANSCRIBING = 5
+    WORKFLOW_STATE_COMPRESSED = 1
+    WORKFLOW_STATE_BINARIZING = 2
+    WORKFLOW_STATE_BINARIZED = 3
+    WORKFLOW_STATE_SEGMENTING = 4
+    WORKFLOW_STATE_SEGMENTED = 5
+    WORKFLOW_STATE_TRANSCRIBING = 6
     WORKFLOW_STATE_CHOICES = (
         (WORKFLOW_STATE_CREATED, _("Created")),
+        (WORKFLOW_STATE_COMPRESSED, _("Compressed")),
         (WORKFLOW_STATE_BINARIZING, _("Binarizing")),
         (WORKFLOW_STATE_BINARIZED, _("Binarized")),
         (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
@@ -171,7 +172,7 @@ class DocumentPart(OrderedModel):
     workflow_state = models.PositiveSmallIntegerField(choices=WORKFLOW_STATE_CHOICES,
                                                       default=WORKFLOW_STATE_CREATED)
     
-    # this is denormalization because, it's too 
+    # this is denormalization because, it's too heavy to calculate on the fly
     transcription_progress = models.PositiveSmallIntegerField(default=0)
     
     class Meta(OrderedModel.Meta):
@@ -181,10 +182,14 @@ class DocumentPart(OrderedModel):
         if self.name:
             return self.name
         return '%s %d' % (self.typology or _("Element"), self.order + 1)
-
+    
     @property
     def title(self):
         return str(self)
+    
+    @property
+    def compressed(self):
+        return self.workflow_state >= self.WORKFLOW_STATE_COMPRESSED
     
     @property
     def binarized(self):
@@ -195,6 +200,8 @@ class DocumentPart(OrderedModel):
         return self.workflow_state >= self.WORKFLOW_STATE_SEGMENTED
     
     def calculate_progress(self):
+        if self.workflow_state < self.WORKFLOW_STATE_TRANSCRIBING:
+            return 0
         transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         total = Line.objects.filter(document_part=self).count()
         if not total:
@@ -202,31 +209,38 @@ class DocumentPart(OrderedModel):
         return int(transcribed / total * 100)
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            # generate the thumbnails asynchronously
-            # because we don't want to generate 200 at once
-            generate_part_thumbnails.delay(self.pk)
         self.calculate_progress()
         return super().save(*args, **kwargs)
+
+    def compress(self):
+        lossless_compression.delay(self.pk)
     
     def binarize(self, user_pk=None):
-        binarize.delay(self.pk, user_pk=user_pk)
+        if not self.compressed:
+            chain(lossless_compression.si(self.pk),
+                  binarize.si(self.pk, user_pk=user_pk)).delay()
+        else:
+            binarize.delay(self.pk, user_pk=user_pk)
     
     def segment(self, user_pk=None):
+        tasks = []
+        if not self.compressed:
+            tasks.append(lossless_compression.si(self.pk))
         if not self.binarized:
-            chain(binarize.si(self.pk, user_pk=user_pk),
-                  segment.si(self.pk, user_pk=user_pk)).delay()
-        else:
-            segment.delay(self.pk, user_pk=user_pk)
+            tasks.append(binarize.si(self.pk, user_pk=user_pk))
+        tasks.append(segment.si(self.pk, user_pk=user_pk))
+        chain(*tasks).delay()
     
     def transcribe(self, user_pk=None):
+        tasks = []
+        if not self.compressed:
+            tasks.append(lossless_compression.si(self.pk))
+        if not self.binarized:
+            tasks.append(binarize.si(self.pk, user_pk=user_pk))
         if not self.segmented:
-            chain(binarize.si(self.pk, user_pk=user_pk),
-                  segment.si(self.pk, user_pk=user_pk),
-                  transcribe.si(self.pk, user_pk=user_pk)).delay()
-        else:
-            transcribe.delay(self.pk, user_pk=user_pk)
-
+            tasks.append(segment.si(self.pk, user_pk=user_pk))
+        tasks.append(transcribe.si(self.pk, user_pk=user_pk))
+        chain(*tasks).delay()
 
 class Block(models.Model):
     """
@@ -323,6 +337,13 @@ class DocumentProcessSettings(models.Model):
     typology = models.ForeignKey(Typology,
                                  null=True, blank=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
-
+    
     def __str__(self):
         return 'Processing settings for %s' % self.document
+
+
+@receiver(saved_file)
+def generate_thumbnails_async(sender, fieldfile, **kwargs):
+    generate_thumbnails.delay(
+        model=sender, pk=fieldfile.instance.pk,
+        field=fieldfile.field.name)

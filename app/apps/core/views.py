@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 
+from easy_thumbnails.files import get_thumbnailer
+
 from .models import Document, DocumentPart
 from .forms import *
 
@@ -209,15 +211,20 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         part = form.save(commit=False)
         try:
-            part.name = part.image_source.file.name.split('.')[0]
+            part.name = part.image.file.name.split('.')[0]
         except IndexError:
-            part.name = part.image_source.file.name
+            part.name = part.image.file.name
         part.typology = self.document.process_settings.typology
         part.save()
         
         if self.document.process_settings.auto_process:
             part.transcribe(user_pk=self.request.user.pk)
+        else:
+            part.compress()
         
+        # generate card thumbnail inline because we need it right away
+        thumbnail_url = get_thumbnailer(part.image)['card'].url
+            
         return HttpResponse(json.dumps({
             'status': 'ok',
             'part': {
@@ -225,7 +232,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                 'name': part.name,
                 'title': part.title,
                 'typology': part.typology and part.typology.pk or None,
-                'thumbnailUrl': part.image.url,
+                'thumbnailUrl': thumbnail_url,
                 'image': {'url': part.image.url,
                           'width': part.image.width,
                           'height': part.image.height},
@@ -236,8 +243,8 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                                      kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'partUrl': reverse('document-part',
                                    kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
-                'partUrl': reverse('document-transcription',
-                                   kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'transcriptionUrl': reverse('document-transcription',
+                                             kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'workflow': 0,
                 'progress': 0
             }

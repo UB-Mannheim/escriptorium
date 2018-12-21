@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n staticfiles imagekit %}
+{% load i18n staticfiles thumbnail %}
 {% block head_title %}{% trans "My Documents" %}{% endblock %}
 
 {% block styles %}
@@ -22,7 +22,7 @@
           <td>
             {% with part=document.parts.first %}
             {% if part %}
-            {% generateimage 'core:list.thumbnail' source=part.image %}
+            <img src="{{ part.image|thumbnail:'list' }}" />
             {% endif %}
             {% endwith %}
           </td>
