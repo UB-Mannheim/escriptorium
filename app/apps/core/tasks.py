@@ -1,7 +1,6 @@
 import json
 import logging
 import os.path
-import redis
 import subprocess
 
 from django.apps import apps
@@ -18,8 +17,6 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-
-r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
 
 @shared_task
