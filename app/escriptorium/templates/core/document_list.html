@@ -22,7 +22,7 @@
           <td>
             {% with part=document.parts.first %}
             {% if part %}
-            <img src="{{ part.image|thumbnail:'list' }}" />
+            <img src="{{ part.image|thumbnail_url:'list' }}" />
             {% endif %}
             {% endwith %}
           </td>
