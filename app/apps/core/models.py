@@ -1,12 +1,15 @@
+import re
+
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.utils.translation import gettext as _
 from django.core.files.storage import FileSystemStorage
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
 
 import click
 import celery
@@ -134,7 +137,11 @@ class Document(models.Model):
     def is_archived(self):
         return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED
 
-    
+    @cached_property
+    def is_transcribing(self):
+        return self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).first() is not None
+
+
 def document_images_path(instance, filename):
     return 'documents/%d/%s' % (instance.document.pk, filename)
 
@@ -284,7 +291,8 @@ class Line(OrderedModel):  # Versioned,
 
 class Transcription(models.Model):
     name = models.CharField(max_length=512)
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE,
+                                 related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -297,15 +305,23 @@ class LineTranscription(Versioned, models.Model):
     Represents a transcribded line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-    text = models.CharField(null=True, max_length=2048)
+    content = models.CharField(null=True, max_length=2048)
     # graphs = [  # WIP
     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
     # ]
     graphs = JSONField(null=True, blank=True)  # on postgres it maps to jsonb!
     
     # nullable in case we re-segment ?? for now we lose data.
-    line = models.OneToOneField(Line, null=True, on_delete=models.SET_NULL)
+    line = models.ForeignKey(Line, null=True, on_delete=models.SET_NULL, related_name='transcriptions')
     version_ignore_fields = ('line', 'transcription')
+    
+    class Meta:
+        unique_together = (('line', 'transcription'),)
+
+    @property
+    def text(self):
+        # TODO: strip of html
+        return re.sub('<[^<]+?>', '', self.content)
 
 
 kraken_storage = FileSystemStorage(location=click.get_app_dir('kraken'))

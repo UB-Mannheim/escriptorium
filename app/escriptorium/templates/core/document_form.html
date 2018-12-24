@@ -4,6 +4,26 @@
 
 {% block nav-doc-active %}active{% endblock %}
 
+{% block extra_nav %}
+{% if object and can_publish %}
+<div>
+  <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
+</div>
+{% if not object.is_published %}
+<form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
+  <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
+  <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
+    <i class="fas fa-globe-europe"></i>
+  </button>
+</form>
+{% endif %}
+<form method="post" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+  <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
+  <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+</form>
+{% endif %}
+{% endblock %}
+
 {% block nav_content %}
 <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
   
@@ -55,6 +75,36 @@
     </fieldset>
   </form>
 </div>
+{% endblock %}
+
+{% block modals %}
+{% if share_form %}
+<!-- shareModal -->
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="post" action="{% url 'document-share' pk=object.pk %}">
+        {% csrf_token %}
+        
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{% trans "Share with users or teams" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% render_field share_form.shared_with_groups %}
+        {# Share with users #}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+      </div>
+      </form>      
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

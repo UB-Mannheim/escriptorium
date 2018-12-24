@@ -187,3 +187,34 @@ body {
     background-color: red;
     opacity: 0.5;
 }
+
+#modal-img-container {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+#modal-img-container #line-img {
+    position: absolute;
+}
+
+#trans-modal #trans-input {
+    width: 100%;
+}
+
+.trans-box {
+    position: absolute !important;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+.trans-box span {
+    white-space: nowrap;
+    display: inline-block;
+    transform-origin: top left;
+}
+.trans-box span:empty {
+    width: 100%;
+    height: 100%;
+    border: 1px solid lightgrey;
+}

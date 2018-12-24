@@ -122,13 +122,15 @@ class DocumentTranscription(LoginRequiredMixin, DetailView):
     model = DocumentPart
     pk_url_kwarg = 'part_pk'
     template_name = "core/document_transcription.html"
+    http_method_names = ('get',)
     
     def get_queryset(self):
         if not hasattr(self, 'document'):
             self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('pk'))
         return DocumentPart.objects.filter(
             document=self.document,
-            workflow_state=DocumentPart.WORKFLOW_STATE_TRANSCRIBING)
+            workflow_state=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).prefetch_related(
+                'lines', 'lines__transcriptions', 'lines__transcriptions__transcription')
 
     def get_object(self):
         if not 'part_pk' in self.kwargs:
@@ -147,6 +149,28 @@ class DocumentTranscription(LoginRequiredMixin, DetailView):
         context['previous'] = self.get_queryset().filter(order__lt=self.object.order).order_by('-order').first()
         context['next'] = self.get_queryset().filter(order__gt=self.object.order).order_by('order').first()
         return context
+
+
+class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
+    http_method_names = ('post',)
+
+    def post(self, request, *args, **kwargs):
+        line = Line.objects.get(pk=request.POST['line'])
+        transcription = Transcription.objects.get(pk=request.POST['transcription'])
+        try:
+            lt = line.transcriptions.get(transcription=transcription)
+        except LineTranscription.DoesNotExist:
+            LineTranscription.objects.create(
+                line=line,
+                transcription=transcription,
+                version_author=self.request.user.username,
+                text=request.POST['text'])
+        else:
+            if lt.version_author != self.request.user.username:
+                lt.new_version()
+            lt.content = request.POST['content']
+            lt.save()
+        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):

@@ -7,63 +7,16 @@
 <nav>
   <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">        
     <a href="{% if object %}{% url 'document-update' pk=object.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Document" %}</a>
-    <a href="{% if object %}{% url 'document-images' pk=object.pk %}{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>        
-    <a href="{% if object %}{% url 'document-transcription' pk=object.pk %}{% endif %}" class="nav-item nav-link {% block nav-trans-active %}{% endblock %} disabled mr-auto" id="nav-trans-tab" role="tab" aria-controls="nav-trans" aria-selected="true">{% trans "Transcription" %}</a>
-
-    {% if share_form %}
-    {% if object and can_publish %}
-    <div>
-      <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
-    </div>
-    {% if not object.is_published %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
-      <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
-      <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
-        <i class="fas fa-globe-europe"></i>
-      </button>
-    </form>
-    {% endif %}
-    <form method="post" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-      <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
-      <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-    </form>
-    {% endif %}
-    {% endif %}
+    <a href="{% if object %}{% url 'document-images' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>        
+    <a href="{% if object %}{% url 'document-transcription' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-trans-active %}{% endblock %}{% if not object.is_transcribing %}disabled{% endif %} mr-auto" id="nav-trans-tab" role="tab" aria-controls="nav-trans" aria-selected="true">{% trans "Transcription" %}</a>
+    
+    {% block extra_nav %}{% endblock %}
   </div>
 </nav>
 
 <div class="tab-content" id="nav-tabContent">      
-  {% block nav_content %}
-  {% endblock %}
+  {% block nav_content %}{% endblock %}
 </div>
 
-{% block modals %}
-{% if share_form %}
-<!-- shareModal -->
-<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form method="post" action="{% url 'document-share' pk=object.pk %}">
-        {% csrf_token %}
-        
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">{% trans "Share with users or teams" %}</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        {% render_field share_form.shared_with_groups %}
-        {# Share with users #}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-      </div>
-      </form>      
-    </div>
-  </div>
-</div>
-{% endif %}
-{% endblock %}
+{% block modals %}{% endblock %}
 {% endblock %}
