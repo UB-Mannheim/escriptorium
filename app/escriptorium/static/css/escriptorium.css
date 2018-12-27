@@ -116,6 +116,7 @@ body {
     position: absolute !important;
     background-color: transparent;
     border: 1px solid red;
+    overflow: hidden;
 }
 .line-box .close {
     display: none;

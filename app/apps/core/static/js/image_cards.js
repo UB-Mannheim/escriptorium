@@ -2,7 +2,7 @@
 
 Dropzone.autoDiscover = false;
 var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
-var viewer, lastSelected = null;
+var wz, lastSelected = null;
 
 class partCard {
     constructor(part) {
@@ -229,7 +229,6 @@ class partCard {
         // Note: have to recreate an image because webkit never really delete the boxes otherwise
         var $viewer = $('#viewer');
         $viewer.empty();
-
         if (!this.bwImgUrl) {
             $.get(this.partUrl, $.proxy(function(data) {
                 this.bwImgUrl = data.bwImgUrl;
@@ -240,6 +239,9 @@ class partCard {
             var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
             $viewer.append($img);
         }
+        $('#viewer-img').on('load', $.proxy(function(ev) {
+            $('#viewer-container').trigger('wheelzoom.reset');
+        }, this));
     }
 
     showLines(ratio) {
@@ -253,9 +255,11 @@ class partCard {
         var ratio;
         var $viewer = $('#viewer');
         $viewer.empty();
+        
         var $img = $('<img id="viewer-img" width="100%" src="'+this.image.url+'"/>');
         $viewer.append($img);
         $('#viewer-img').on('load', $.proxy(function(ev) {
+            $('#viewer-container').trigger('wheelzoom.reset');
             ratio = $('#viewer-img').width() / this.image.width;
             if (this.lines) {
                 this.showLines(ratio);
@@ -277,8 +281,6 @@ class partCard {
             ];
             var box_ = new lineBox(this, {pk: null, box: box}, ratio);
         }, this));
-        
-        
     }
 
     static fromPk(pk) {
@@ -308,32 +310,63 @@ class lineBox {
         this.pk = line.pk;
         this.imgRatio = imgRatio;
         this.changed = false;
+        this.click = {x: null, y:null};
+        this.originalWidth = (line.box[2] - line.box[0]) * imgRatio;
         var $box = $('<div class="line-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
         $box.css({'left': line.box[0] * imgRatio,
                   'top': line.box[1] * imgRatio,
                   'width': (line.box[2] - line.box[0]) * imgRatio,
-                  'height': (line.box[3] - line.box[1]) * imgRatio
-                 });
+                  'height': (line.box[3] - line.box[1]) * imgRatio});
         $box.draggable({
             disabled: true,
             containment: 'parent',
             cursor: "grab",
-            stop: $.proxy(function(ev) { this.changed = true; }, this)
+            stop: $.proxy(function(ev) {
+                this.changed = true;
+                $('#viewer-container').trigger('wheelzoom.enable');
+            }, this),
+            // this is necessary because WheelZoom make it jquery-ui drag jump around
+            start: $.proxy(function(event) {
+                this.click.x = event.clientX;
+                this.click.y = event.clientY;
+                $('#viewer-container').trigger('wheelzoom.disable');
+            }, this),
+            drag: $.proxy(function(event, ui) {
+                var original = ui.originalPosition;
+                ui.position = {
+                    left: (event.clientX - this.click.x + original.left) / wz.scale,
+                    top:  (event.clientY - this.click.y + original.top ) / wz.scale
+                };
+            }, this)
         });
         $box.resizable({
             disabled: true,
-            stop: $.proxy(function(ev) { this.changed = true; }, this)
+            stop: $.proxy(function(ev) {
+                this.changed = true;
+                $('#viewer-container').trigger('wheelzoom.enable');
+            }, this),
+            start: function(ev) {
+                $('#viewer-container').trigger('wheelzoom.disable');
+            }
         });
         
         $box.data('lineBox', this);
-        $box.appendTo($('#viewer'));  
+        $box.appendTo($('#viewer'));
         this.$element = $box;
         // we need to keep references to be able to unbind it
-        this.proxyUnselect = $.proxy(this.unselect, this);
+        this.proxyUnselect = $.proxy(function(ev) {
+            // click in the img doesn't unselect ?!
+            if ($(ev.target).parents('#viewer').length) { return; }
+            this.unselect();
+        }, this);
         this.proxyKeyboard = $.proxy(this.keyboard, this);
         
         // select a new line
         if (this.pk === null) this.select();
+
+        // avoid jquery-ui jumping
+        $box.on('mousedown', function(ev) { ev.currentTarget.style.position = 'relative'; });
+        $box.on('mouseup', function(ev) { ev.currentTarget.style.position = 'absolute'; });
         
         $box.click($.proxy(function(ev) {
             ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
@@ -347,10 +380,10 @@ class lineBox {
     }
 
     getBox() {
-        var x1 = parseInt(this.$element.position().left / this.imgRatio);
-        var y1 = parseInt(this.$element.position().top / this.imgRatio);
-        var x2 = parseInt((this.$element.position().left + this.$element.width()) / this.imgRatio);
-        var y2 = parseInt((this.$element.position().top + this.$element.height()) / this.imgRatio);
+        var x1 = parseInt((this.$element.position().left) / wz.scale / this.imgRatio);
+        var y1 = parseInt((this.$element.position().top) / wz.scale / this.imgRatio);
+        var x2 = parseInt(((this.$element.position().left) / wz.scale + this.$element.width()) / this.imgRatio);
+        var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.imgRatio);
         return [x1, y1, x2, y2];
     }
     keyboard(ev) {
@@ -365,8 +398,6 @@ class lineBox {
     }
     select() {
         if (this.$element.is('.selected')) return;
-        document.getElementById('viewer').dispatchEvent(ev);
-        
         var previous = $('.line-box.selected');
         if (previous.length) { previous.data('lineBox').unselect(); }
         this.$element.addClass('selected');
@@ -376,8 +407,6 @@ class lineBox {
         $(document).on('keyup', this.proxyKeyboard);
     }
     unselect() {
-        document.getElementById('viewer').dispatchEvent(ev);
-        
         $(document).off('keyup', this.proxykeyboard);
         $(document).off('click', this.proxyUnselect);
         this.$element.removeClass('selected');
@@ -509,4 +538,5 @@ $(document).ready(function() {
         });
     });
 
+    wz = WheelZoom($('#viewer-container'));
 });
