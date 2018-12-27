@@ -235,3 +235,10 @@ body {
     height: 100%;
     border: 1px solid lightgrey;
 }
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}

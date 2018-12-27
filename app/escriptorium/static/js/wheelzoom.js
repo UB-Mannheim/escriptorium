@@ -63,6 +63,7 @@ function WheelZoom(container, initial_scale, max_scale){
 	}
 
 	function removeDrag() {
+        target.removeClass('notransition');
 		target.off('mouseup', removeDrag);
 		target.off('mousemove', drag);
 	}
@@ -70,6 +71,8 @@ function WheelZoom(container, initial_scale, max_scale){
 	function draggable(e) {
 		e.preventDefault();
 		previousEvent = e;
+        // disable transition while dragging
+        target.addClass('notransition');
 		target.on('mousemove', drag);
 		target.on('mouseup', removeDrag);
 	}
@@ -81,6 +84,8 @@ function WheelZoom(container, initial_scale, max_scale){
 	    if(api.pos.y>0) api.pos.y = 0;
 	    if(api.pos.y+size.h*api.scale<size.h) api.pos.y = -size.h*(api.scale-1);
 
+        // apply scale first for transition effect
+        target.css('transform','scale('+api.scale+')');
 		target.css('transform','translate('+(api.pos.x)+'px,'+(api.pos.y)+'px) scale('+api.scale+')');
 
         var event = new CustomEvent('wheelzoom.update', {detail: {
