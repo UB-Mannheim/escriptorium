@@ -43,6 +43,7 @@ class partCard {
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
+        $('img', $new).attr('selectable', false);
         // disable dragging when over input because firefox gets confused
         $('input', this.$element).on('mouseover', $.proxy(function(ev) {
             this.$element.attr('draggable', false);
@@ -274,10 +275,10 @@ class partCard {
                 Math.min($img.width(), ev.pageX - $img.offset().left +30),
                 Math.min($img.height(), ev.pageY - $img.offset().top +20)
             ];
-            console.log(ev.pageX, $img.offset().left);
             var box_ = new lineBox(this, {pk: null, box: box}, ratio);
-            console.log(box, box_);
         }, this));
+        
+        
     }
 
     static fromPk(pk) {
@@ -364,8 +365,10 @@ class lineBox {
     }
     select() {
         if (this.$element.is('.selected')) return;
+        document.getElementById('viewer').dispatchEvent(ev);
+        
         var previous = $('.line-box.selected');
-        if (previous.length) { console.log(previous.data('lineBox')); previous.data('lineBox').unselect(); }
+        if (previous.length) { previous.data('lineBox').unselect(); }
         this.$element.addClass('selected');
         this.$element.draggable('enable');
         this.$element.resizable('enable');
@@ -373,6 +376,8 @@ class lineBox {
         $(document).on('keyup', this.proxyKeyboard);
     }
     unselect() {
+        document.getElementById('viewer').dispatchEvent(ev);
+        
         $(document).off('keyup', this.proxykeyboard);
         $(document).off('click', this.proxyUnselect);
         this.$element.removeClass('selected');

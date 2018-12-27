@@ -26,8 +26,10 @@
   
   <div class="col-6">
     <div id="img-container">
-      <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
-    <div id="overlay"></div>
+      <div>
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <div id="overlay"></div>
+      </div>
     </div>
   </div>
   <div class="col-6">

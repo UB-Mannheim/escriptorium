@@ -52,9 +52,10 @@
 </div>
 
 {# viewer #}
-<div id="viewer" class="col-12 mt-2"><img id="viewer-img" width="100%"/></div>
+<div id="viewer-container" class="col-12 mt-3">
+  <div id="viewer"><img id="viewer-img" width="100%"/></div>
+</div>
 {% endblock %}
-
 
 {% block modals %}
 {# template for adding card #}
@@ -103,6 +104,7 @@
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 <script src="{% static 'js/image_cards.js' %}"></script>
 <script src="{% static 'js/lazyload.js' %}"></script>
+<script src="{% static 'js/wheelzoom.js' %}"></script>
 <script type="text/javascript">
 'use strict';
 var processDocumentPartsUrl = "{% url 'document-parts-process' pk=object.pk %}";

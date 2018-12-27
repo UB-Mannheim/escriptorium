@@ -213,7 +213,7 @@ class DocumentPart(OrderedModel):
         total = Line.objects.filter(document_part=self).count()
         if not total:
             return 0
-        return int(transcribed / total * 100)
+        self.transcription_progress = int(transcribed / total * 100)
 
     def save(self, *args, **kwargs):
         self.calculate_progress()
@@ -248,6 +248,7 @@ class DocumentPart(OrderedModel):
             tasks.append(segment.si(self.pk, user_pk=user_pk))
         tasks.append(transcribe.si(self.pk, user_pk=user_pk))
         chain(*tasks).delay()
+
 
 class Block(models.Model):
     """

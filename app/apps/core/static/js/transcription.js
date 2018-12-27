@@ -31,11 +31,9 @@ class TranscriptionLine {
         $('#part-trans').append($el);
 
         $el.on('mouseover', $.proxy(function(ev) {
-            var x = this.$element.position().left + this.$element.parent().position().left;
-            var y = this.$element.position().top + this.$element.parent().position().top;
             $('#overlay').css({
-                left: x + 'px',
-                top: y + 'px',
+                left: this.box[0]*this.ratio + 'px',
+                top: this.box[1]*this.ratio + 'px',
                 width: (this.box[2] - this.box[0])*this.ratio + 'px',
                 height: (this.box[3] - this.box[1])*this.ratio + 'px'
             }).show();
@@ -102,29 +100,25 @@ class TranscriptionLine {
 
     save() {
         var selectedTranscription = $('#document-transcriptions').val();
-        this.transcriptions[selectedTranscription] = $('#trans-input', $form).val();
-        this.textContainer.html($('#trans-input', $form).val());
-        this.textContainer.ready($.proxy(function(ev) {
-            this.scaleContent();
-        }, this));
-        var $form = $('#trans-modal #line-transcription-form');
-        $.post($form.attr('action'), $form.serialize());
+        if (this.transcriptions[selectedTranscription] != $('#trans-input', $form).val()) {
+            // content changed
+            this.transcriptions[selectedTranscription] = $('#trans-input', $form).val();
+            this.textContainer.html($('#trans-input', $form).val());
+            this.textContainer.ready($.proxy(function(ev) {
+                this.scaleContent();
+            }, this));
+            var $form = $('#trans-modal #line-transcription-form');
+            $.post($form.attr('action'), $form.serialize());
+        }
     }
 }
 
 $(document).ready(function() {
-    var img = document.querySelector('#part-img');
-    wheelzoom(img);
-    img.addEventListener('wheelzoom.update', function(ev) {
+    var $container = $('#img-container');
+    ScrollZoom($container);
+    $container.on('wheelzoom', function(ev) {
         $('#part-trans').css({
-            left: ev.detail.posX + 'px',
-            top: ev.detail.posY + 'px',
-            width: ev.detail.width + 'px',
-            height: ev.detail.height + 'px',
-            transform: 'scale('+ev.detail.width / ev.detail.originalWidth+')'
-        });
-        $('#overlay').css({
-            transform: 'scale('+ev.detail.width / ev.detail.originalWidth+')'
+            transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
         });
     });
     
@@ -140,5 +134,5 @@ $(document).ready(function() {
 
     $('#trans-input').on('froalaEditor.blur', function (e, editor) {
         currentLine.save();
-    });
+    });    
 });

@@ -164,12 +164,14 @@ class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
                 line=line,
                 transcription=transcription,
                 version_author=self.request.user.username,
-                text=request.POST['text'])
+                content=request.POST['content'])
         else:
             if lt.version_author != self.request.user.username:
                 lt.new_version()
             lt.content = request.POST['content']
             lt.save()
+        line.document_part.calculate_progress()
+        line.document_part.save()
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 

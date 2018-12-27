@@ -1,212 +1,82 @@
-/*!
-	Wheelzoom 4.0.0
-	license: MIT
-	http://www.jacklmoore.com/wheelzoom
-*/
-// 'use strict';
-window.wheelzoom = (function(){
-	var defaults = {
-		zoom: 0.10,
-		maxZoom: false,
-		initialZoom: 1
-	};
+'use strict';
 
-	var main = function(img, options){
-		if (!img || !img.nodeName || img.nodeName !== 'IMG') { return; }
+function ScrollZoom(container, max_scale){
+    var factor = 0.2;
+	var target = container.children().first();
+	var size = {w:target.width(),h:target.height()};
+	var pos = {x:0,y:0};
+	var zoom_target = {x:0,y:0};
+	var zoom_point = {x:0,y:0};
+	var scale = 1;
+    var previousEvent;
+	target.css('transform-origin','0 0');
+	target.on("mousewheel DOMMouseScroll", scrolled);
+    target.on('mousedown', draggable);
 
-		var settings = {};
-		var width;
-		var height;
-		var bgWidth;
-		var bgHeight;
-		var bgPosX;
-		var bgPosY;
-		var previousEvent;
-		var cachedDataUrl;
+	function scrolled(e){
+		var offset = container.offset();
+    
+		zoom_point.x = e.originalEvent.pageX - offset.left;
+		zoom_point.y = e.originalEvent.pageY - offset.top;
+		e.preventDefault();
+		var delta = e.delta || e.originalEvent.wheelDelta;
+		if (delta === undefined) {
+	      //we are on firefox
+	      delta = -e.originalEvent.detail;
+	    }
+	    delta = Math.max(-1,Math.min(1,delta)); // cap the delta to [-1,1] for cross browser consistency
 
-		function setSrcToBackground(img) {
-			img.style.backgroundRepeat = 'no-repeat';
-			img.style.backgroundImage = 'url("'+img.src+'")';
-			cachedDataUrl = 'data:image/svg+xml;base64,'+window.btoa('<svg xmlns="http://www.w3.org/2000/svg" width="'+img.naturalWidth+'" height="'+img.naturalHeight+'"></svg>');
-			img.src = cachedDataUrl;
-		}
+	    // determine the point on where the slide is zoomed in
+	    zoom_target.x = (zoom_point.x - pos.x)/scale;
+	    zoom_target.y = (zoom_point.y - pos.y)/scale;
+      
+	    // apply zoom
+	    scale += delta * factor * scale;
+	    scale = Math.max(1, scale);
+        if (max_scale) {
+            Math.min(max_scale, scale);
+        }
 
-		function updateBgStyle() {
-			if (bgPosX > 0) {
-				bgPosX = 0;
-			} else if (bgPosX < width - bgWidth) {
-				bgPosX = width - bgWidth;
-			}
+	    // calculate x and y based on zoom
+	    pos.x = -zoom_target.x * scale + zoom_point.x;
+	    pos.y = -zoom_target.y * scale + zoom_point.y;
 
-			if (bgPosY > 0) {
-				bgPosY = 0;
-			} else if (bgPosY < height - bgHeight) {
-				bgPosY = height - bgHeight;
-			}
-
-			img.style.backgroundSize = bgWidth+'px '+bgHeight+'px';
-			img.style.backgroundPosition = bgPosX+'px '+bgPosY+'px';
-
-            var event = new CustomEvent('wheelzoom.update', {detail:{
-                posX: bgPosX,
-                posY: bgPosY,
-                width: bgWidth,
-                height: bgHeight,
-                originalWidth: width
-            }});
-            img.dispatchEvent(event);
-		}
-
-		function reset() {
-			bgWidth = width;
-			bgHeight = height;
-			bgPosX = bgPosY = 0;
-			updateBgStyle();
-		}
-
-		function onwheel(e) {
-			var deltaY = 0;
-
-			e.preventDefault();
-
-			if (e.deltaY) { // FireFox 17+ (IE9+, Chrome 31+?)
-				deltaY = e.deltaY;
-			} else if (e.wheelDelta) {
-				deltaY = -e.wheelDelta;
-			}
-
-			// As far as I know, there is no good cross-browser way to get the cursor position relative to the event target.
-			// We have to calculate the target element's position relative to the document, and subtrack that from the
-			// cursor's position relative to the document.
-			var rect = img.getBoundingClientRect();
-			var offsetX = e.pageX - rect.left - window.pageXOffset;
-			var offsetY = e.pageY - rect.top - window.pageYOffset;
-
-			// Record the offset between the bg edge and cursor:
-			var bgCursorX = offsetX - bgPosX;
-			var bgCursorY = offsetY - bgPosY;
-			
-			// Use the previous offset to get the percent offset between the bg edge and cursor:
-			var bgRatioX = bgCursorX/bgWidth;
-			var bgRatioY = bgCursorY/bgHeight;
-
-			// Update the bg size:
-			if (deltaY < 0) {
-				bgWidth += bgWidth*settings.zoom;
-				bgHeight += bgHeight*settings.zoom;
-			} else {
-				bgWidth -= bgWidth*settings.zoom;
-				bgHeight -= bgHeight*settings.zoom;
-			}
-
-			if (settings.maxZoom) {
-				bgWidth = Math.min(width*settings.maxZoom, bgWidth);
-				bgHeight = Math.min(height*settings.maxZoom, bgHeight);
-			}
-
-			// Take the percent offset and apply it to the new size:
-			bgPosX = offsetX - (bgWidth * bgRatioX);
-			bgPosY = offsetY - (bgHeight * bgRatioY);
-
-			// Prevent zooming out beyond the starting size
-			if (bgWidth <= width || bgHeight <= height) {
-				reset();
-			} else {
-				updateBgStyle();
-			}
-		}
-
-		function drag(e) {
-			e.preventDefault();
-			bgPosX += (e.pageX - previousEvent.pageX);
-			bgPosY += (e.pageY - previousEvent.pageY);
-			previousEvent = e;
-			updateBgStyle();
-		}
-
-		function removeDrag() {
-			document.removeEventListener('mouseup', removeDrag);
-			document.removeEventListener('mousemove', drag);
-		}
-
-		// Make the background draggable
-		function draggable(e) {
-			e.preventDefault();
-			previousEvent = e;
-			document.addEventListener('mousemove', drag);
-			document.addEventListener('mouseup', removeDrag);
-		}
-
-		function load() {
-			var initial = Math.max(settings.initialZoom, 1);
-
-			if (img.src === cachedDataUrl) return;
-
-			var computedStyle = window.getComputedStyle(img, null);
-
-			width = parseInt(computedStyle.width, 10);
-			height = parseInt(computedStyle.height, 10);
-			bgWidth = width * initial;
-			bgHeight = height * initial;
-			bgPosX = -(bgWidth - width)/2;
-			bgPosY = -(bgHeight - height)/2;;
-
-			setSrcToBackground(img);
-
-			img.style.backgroundSize = bgWidth+'px '+bgHeight+'px';
-			img.style.backgroundPosition = bgPosX+'px '+bgPosY+'px';
-			img.addEventListener('wheelzoom.reset', reset);
-
-			img.addEventListener('wheel', onwheel);
-			img.addEventListener('mousedown', draggable);
-		}
-
-		var destroy = function (originalProperties) {
-			img.removeEventListener('wheelzoom.destroy', destroy);
-			img.removeEventListener('wheelzoom.reset', reset);
-			img.removeEventListener('load', load);
-			img.removeEventListener('mouseup', removeDrag);
-			img.removeEventListener('mousemove', drag);
-			img.removeEventListener('mousedown', draggable);
-			img.removeEventListener('wheel', onwheel);
-
-			img.style.backgroundImage = originalProperties.backgroundImage;
-			img.style.backgroundRepeat = originalProperties.backgroundRepeat;
-			img.src = originalProperties.src;
-		}.bind(null, {
-			backgroundImage: img.style.backgroundImage,
-			backgroundRepeat: img.style.backgroundRepeat,
-			src: img.src
-		});
-
-		img.addEventListener('wheelzoom.destroy', destroy);
-
-		options = options || {};
-
-		Object.keys(defaults).forEach(function(key){
-			settings[key] = options[key] !== undefined ? options[key] : defaults[key];
-		});
-
-		if (img.complete) {
-			load();
-		}
-
-		img.addEventListener('load', load);
-	};
-
-	// Do nothing in IE9 or below
-	if (typeof window.btoa !== 'function') {
-		return function(elements) {
-			return elements;
-		};
-	} else {
-		return function(elements, options) {
-			if (elements && elements.length) {
-				Array.prototype.forEach.call(elements, main, options);
-			} else if (elements && elements.nodeName) {
-				main(elements, options);
-			}
-			return elements;
-		};
+	    updateStyle();
 	}
-}());
+
+	function drag(e) {
+		e.preventDefault();
+		pos.x += (e.pageX - previousEvent.pageX);
+		pos.y += (e.pageY - previousEvent.pageY);
+		previousEvent = e;
+		updateStyle();
+	}
+
+	function removeDrag() {
+		target.off('mouseup', removeDrag);
+		target.off('mousemove', drag);
+	}
+
+	function draggable(e) {
+		e.preventDefault();
+		previousEvent = e;
+		target.on('mousemove', drag);
+		target.on('mouseup', removeDrag);
+	}
+    
+	function updateStyle(){
+	    // Make sure the slide stays in its container area when zooming out
+	    if(pos.x>0) pos.x = 0;
+	    if(pos.x+size.w*scale<size.w) pos.x = -size.w*(scale-1);
+	    if(pos.y>0) pos.y = 0;
+	    if(pos.y+size.h*scale<size.h) pos.y = -size.h*(scale-1);
+        
+		target.css('transform','translate('+(pos.x)+'px,'+(pos.y)+'px) scale('+scale+')');
+
+        container.get(0).dispatchEvent(new CustomEvent('wheelzoom', {detail: {
+            scale: scale,
+            translate: pos,
+            originalWidth: size.w
+        }}));
+	}
+}
