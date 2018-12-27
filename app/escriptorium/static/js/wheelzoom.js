@@ -8,7 +8,7 @@ function WheelZoom(container, initial_scale, max_scale){
 	var zoom_point = {x:0, y:0};
     var previousEvent;
     var disabled = false;
-	target.css({transformOrigin: '0 0'});
+	target.css({transformOrigin: '0 0', transition: 'transform 0.3s'});
 	target.on("mousewheel DOMMouseScroll", scrolled);
     target.on('mousedown', draggable);
     container.on('wheelzoom.reset', reset);
@@ -47,8 +47,8 @@ function WheelZoom(container, initial_scale, max_scale){
         }
 
         // calculate x and y based on zoom
-	    api.pos.x = -zoom_target.x * api.scale + zoom_point.x;
-	    api.pos.y = -zoom_target.y * api.scale + zoom_point.y;
+	    api.pos.x = Math.round(-zoom_target.x * api.scale + zoom_point.x);
+	    api.pos.y = Math.round(-zoom_target.y * api.scale + zoom_point.y);
 
 	    updateStyle();
 	}
@@ -83,17 +83,18 @@ function WheelZoom(container, initial_scale, max_scale){
 
 		target.css('transform','translate('+(api.pos.x)+'px,'+(api.pos.y)+'px) scale('+api.scale+')');
 
-        container.get(0).dispatchEvent(new CustomEvent('wheelzoom.update', {detail: {
+        var event = new CustomEvent('wheelzoom.update', {detail: {
             scale: api.scale,
             translate: api.pos,
             originalWidth: size.w
-        }}));
+        }});
+        container.get(0).dispatchEvent(event);
 	}
 
     function reset() {
         api.pos = {x:0, y:0};
 	    api.scale = initial_scale || 1;
-        size = {w:target.width(), h:target.height()};
+        size = {w: target.width(), h: target.height()};
         updateStyle();
     }
 

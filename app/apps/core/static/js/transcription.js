@@ -116,7 +116,7 @@ class TranscriptionLine {
 $(document).ready(function() {
     var $container = $('#img-container');
     WheelZoom($container);
-    $container.on('wheelzoom.update', function(ev) {
+    $container.get(0).addEventListener('wheelzoom.update', function(ev) {
         $('#part-trans').css({
             transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
         });
