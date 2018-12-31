@@ -12,6 +12,10 @@ def _dummy_db(*args, **kwargs):
     raise RuntimeError("Can not save/delete an old version.")
 
 
+class NoChangeException(Exception):
+    pass
+
+
 class Versioned(models.Model):
     """
     Allows the flat versioning of a model instance, every revisions is stored in the versions field
@@ -82,6 +86,11 @@ class Versioned(models.Model):
         return instance
     
     def new_version(self):
+        packed = self.pack()
+        if self.versions:
+            last = self.versions[0]
+            if packed['data'] == last['data']:
+                raise NoChangeException
         self.versions.insert(0, self.pack())
         self.revision = uuid.uuid4()  # new revision number
         self.version_created_at = datetime.utcnow()

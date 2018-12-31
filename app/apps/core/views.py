@@ -11,6 +11,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 
 from easy_thumbnails.files import get_thumbnailer
 
+from versioning.models import NoChangeException
 from .models import Document, DocumentPart
 from .forms import *
 
@@ -166,13 +167,19 @@ class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
                 version_author=self.request.user.username,
                 content=request.POST['content'])
         else:
-            if lt.version_author != self.request.user.username:
-                lt.new_version()
-            lt.content = request.POST['content']
+            if lt.version_author != self.request.user.username or request.POST.get('new_version'):
+                try:
+                    lt.new_version()
+                except NoChangeException:
+                    return HttpResponse(json.dumps({'status': 'error', 'msg': _('No changes detected.')}),
+                                        content_type="application/json")
+            if 'content' in request.POST:
+                lt.content = request.POST['content']
             lt.save()
         line.document_part.calculate_progress()
         line.document_part.save()
-        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+        return HttpResponse(json.dumps({'status': 'ok', 'transcription': lt.pack()}),
+                            content_type="application/json")
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):

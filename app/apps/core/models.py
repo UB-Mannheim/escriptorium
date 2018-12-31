@@ -318,10 +318,9 @@ class LineTranscription(Versioned, models.Model):
     
     class Meta:
         unique_together = (('line', 'transcription'),)
-
+    
     @property
     def text(self):
-        # TODO: strip of html
         return re.sub('<[^<]+?>', '', self.content)
 
 

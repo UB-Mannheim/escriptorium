@@ -1,5 +1,5 @@
 {% extends 'core/document_nav.html' %}
-{% load i18n staticfiles thumbnail %}
+{% load i18n staticfiles thumbnail json %}
 
 {% block styles %}
 {{ block.super }}
@@ -63,15 +63,22 @@
           <input type="hidden" name="transcription"/>
           <input type="hidden" name="line"/>
           <textarea id="trans-input" name="content" class="form-control mt-2"></textarea>
-          {# history #}
+
+          <hr>
+          <h5>{% trans "History" %}
+            <button type="button" data-toggle="collapse" data-target="#history" class="btn btn-sm btn-secondary" title="{% trans "Show history" %}"><i class="fas fa-eye"></i></button>
+            <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
+          </h5>
+          <table id="history" class="table table-sm table-striped collapse">
+            <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
-        {% comment %}
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <input type="submit" value="{% trans 'Save & Continue' %}" class="btn btn-primary">
-          <input type="submit" value="{% trans 'Save' %}" title="" class="btn btn-primary">
+          <button id="save-continue-btn" type="button" class="btn btn-success">{% trans 'Save & Continue' %}</button>
+          <button id="save-btn" type="button" class="btn btn-success">{% trans 'Save' %}</button>
         </div>
-        {% endcomment %}
       </form>
     </div>
   </div>
@@ -82,11 +89,14 @@
 {{ block.super }}
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 <script src="{% static 'vendor/froala/froala_editor.min.js' %}"></script>
+<script src="{% static 'vendor/froala/colors.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>
 <script src="{% static 'js/transcription.js' %}"></script>
 <script type="text/javascript">
-$(document).ready(function() {  
-    {% for line in part.lines.all %}lines.push(new TranscriptionLine({{line.id}}, {{line.order}}, {{line.box}}, { {% for trans in line.transcriptions.all %}{{trans.transcription.pk}}: "{{trans.content|safe}}"{% endfor %} }, {{ part.image.width }}));
+  $(document).ready(function() {
+    {% for line in part.lines.all %}lines.push(new TranscriptionLine({{line.id}}, {{line.order}}, {{line.box}}, { {% for trans in line.transcriptions.all %}{{trans.transcription.pk}}: {content: "{{trans.content|escapejs}}", versions: {{ trans.versions|jsond|safe|default:"[]" }} }{% endfor %} }, {{ part.image.width }}));
     {% endfor %}
     // TODO: automatic zoom ?
     $('#trans-input').froalaEditor({

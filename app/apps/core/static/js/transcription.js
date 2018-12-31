@@ -1,5 +1,6 @@
 'use strict';
 var lines = [], currentLine = null;
+var my_zone = moment.tz.guess();
 
 class TranscriptionLine {
     constructor (pk, order, box, transcriptions, imgWidth) {
@@ -11,7 +12,7 @@ class TranscriptionLine {
 
         var $el = $('<div class="trans-box"><span></span></div>');
         this.$element = $el;
-
+        
         this.ratio = $('#part-img').width() / this.imgWidth;
         $el.css({
             left: this.box[0]*this.ratio + 'px',
@@ -49,7 +50,11 @@ class TranscriptionLine {
 
     getText() {
         var selectedTranscription = $('#document-transcriptions').val();
-        return this.transcriptions[selectedTranscription];
+        if (this.transcriptions[selectedTranscription] !== undefined) {
+            return this.transcriptions[selectedTranscription].content;
+        } else {
+            return '';
+        }
     }
 
     scaleContent() {
@@ -63,7 +68,8 @@ class TranscriptionLine {
     edit () {
         currentLine = this;
         // form hidden values
-        $('#line-transcription-form [name=transcription]').val($('#document-transcriptions').val());
+        var selectedTranscription = $('#document-transcriptions').val();
+        $('#line-transcription-form [name=transcription]').val(selectedTranscription);
         $('#line-transcription-form [name=line]').val(this.pk);
         
         if (this.order == 0) { $("#trans-modal #prev-btn").attr('disabled', true); }
@@ -74,6 +80,27 @@ class TranscriptionLine {
         // reset width to recalculate ratio
         $('#modal-img-container').css({width: '100%'});
         $('#trans-modal #trans-input').froalaEditor('html.set', this.getText());
+
+        // fill the history
+        var $container = $('#trans-modal #history tbody');
+        $container.empty();
+        if (this.transcriptions[selectedTranscription] !== undefined) {
+            $('#new-version-btn').prop('disabled', false);
+            var versions = this.transcriptions[selectedTranscription].versions;
+            if (versions && versions.length > 0) {
+                $('#no-versions').hide();
+                for (var i=versions.length-1; i>=0; i--) {
+                    this.addVersionLine(versions[i]);
+                }
+            } else {
+                $('#no-versions').show();
+            }
+        } else {
+            $('#no-versions').show();
+            $('#new-version-btn').prop('disabled', true);
+        }
+        
+        // need to show the modal before calculating sizes
         $('#trans-modal').modal('show');
         var originalWidth = (this.box[2] - this.box[0]);
         var originalHeight = (this.box[3] - this.box[1]);
@@ -90,7 +117,6 @@ class TranscriptionLine {
         });
         $('#trans-modal #modal-img-container').css({
             width: originalWidth * ratio + 'px'});
-        
         $('#trans-modal #line-img').animate({
             left: '-'+this.box[0]*ratio+'px',
             top: '-'+this.box[1]*ratio+'px',
@@ -98,17 +124,63 @@ class TranscriptionLine {
         });
     }
 
+    addVersionLine(version) {
+        var $container = $('#trans-modal #history tbody');
+        var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
+        date = date.substring(0, 23) + date.substring(26);
+        var $version = $('<tr id="rev-'+version.revision+'">'+
+                         '<th class="js-version-content w-75">'+version.data.content+'</th>'+
+                         '<td>'+version.author+'</td>'+
+                         '<td class="js-version-date" data-date="'+date+'"></td>'+
+                         '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
+                              '<i class="fas fa-file-upload"></i></button></td>'+
+                         '</tr>');
+        var $date = $('.js-version-date', $version);
+        var mom = moment.tz($date.data('date'), my_zone);
+        $date.html(mom.fromNow());
+        $date.attr('title', "Last changed: "+mom.format('LLLL'));
+        $container.prepend($version);
+    }
+    
+    pushVersion() {
+        var selectedTranscription = $('#document-transcriptions').val();
+        var $form = $('#trans-modal #line-transcription-form');
+        $.post($form.attr('action'), {
+            transcription: selectedTranscription,
+            line: this.pk,
+            new_version: true
+        }).done($.proxy(function(data) {
+            if (data.status == 'ok') {
+                $('#no-versions').hide();
+                this.addVersionLine(data.transcription);
+            } else {
+                alert(data.msg);
+            }
+        }, this)).fail(function(data) {
+            console.log('damit.');
+        });
+    }
+    
     save() {
         var selectedTranscription = $('#document-transcriptions').val();
-        if (this.transcriptions[selectedTranscription] != $('#trans-input', $form).val()) {
-            // content changed
-            this.transcriptions[selectedTranscription] = $('#trans-input', $form).val();
-            this.textContainer.html($('#trans-input', $form).val());
-            this.textContainer.ready($.proxy(function(ev) {
-                this.scaleContent();
-            }, this));
+        var new_content = $('#trans-modal #trans-input').froalaEditor('html.get');
+        if (this.transcriptions[selectedTranscription] != new_content) {
             var $form = $('#trans-modal #line-transcription-form');
-            $.post($form.attr('action'), $form.serialize());
+            $.post($form.attr('action'), {
+                transcription: selectedTranscription,
+                line: this.pk,
+                content: new_content
+            })
+                .done($.proxy(function(data){
+                    this.transcriptions[selectedTranscription].content = new_content;
+                    this.textContainer.html(new_content);
+                    this.textContainer.ready($.proxy(function(ev) {
+                        this.scaleContent();
+                    }, this));
+                }, this))
+                .fail(function(data) {
+                    console.log('damit.');
+                });
         }
     }
 }
@@ -131,8 +203,21 @@ $(document).ready(function() {
     $("#trans-modal #next-btn").click(function(ev) {
         lines[currentLine.order+1].edit();
     });
-
-    $('#trans-input').on('froalaEditor.blur', function (e, editor) {
+    $('#trans-modal #new-version-btn').on('click', function (e, editor) {
+        currentLine.pushVersion();
+        $('#history').addClass('show');
+    });
+    $('#trans-modal #save-btn').on('click', function (e, editor) {
         currentLine.save();
-    });    
+        $('#trans-modal').modal('hide');
+    });
+    $('#trans-modal #save-continue-btn').on('click', function (e, editor) {
+        currentLine.save();
+        lines[currentLine.order+1].edit();
+    });
+    $('#trans-modal').on('click', '.js-pull-state', function(ev) {
+        ev.preventDefault();
+        var $tr = 'tr#'+$(ev.target).data('rev');
+        $('#trans-modal #trans-input').froalaEditor('html.set', $('.js-version-content', $tr).html());
+    });
 });
