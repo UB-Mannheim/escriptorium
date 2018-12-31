@@ -9,7 +9,8 @@ class TranscriptionLine {
         this.box = box;
         this.transcriptions = transcriptions;
         this.imgWidth = imgWidth;
-
+        this.editing = false;
+        
         var $el = $('<div class="trans-box"><span></span></div>');
         this.$element = $el;
         
@@ -32,22 +33,25 @@ class TranscriptionLine {
         $('#part-trans').append($el);
 
         $el.on('mouseover', $.proxy(function(ev) {
-            $('#overlay').css({
-                left: this.box[0]*this.ratio + 'px',
-                top: this.box[1]*this.ratio + 'px',
-                width: (this.box[2] - this.box[0])*this.ratio + 'px',
-                height: (this.box[3] - this.box[1])*this.ratio + 'px'
-            }).show();
+            this.showOverlay();
         }, this));
-        $el.on('mouseleave', function(ev) {
-            $('#overlay').hide();
-        });
-
+        $el.on('mouseleave', $.proxy(function(ev) {
+            if (!this.editing) $('#overlay').hide();
+        }, this));
         $el.on('click', $.proxy(function(ev) {
             this.edit();
         }, this));
     }
-
+    
+    showOverlay() {
+        $('#overlay').css({
+            left: this.box[0]*this.ratio + 'px',
+            top: this.box[1]*this.ratio + 'px',
+            width: (this.box[2] - this.box[0])*this.ratio + 'px',
+            height: (this.box[3] - this.box[1])*this.ratio + 'px'
+        }).show();
+    }
+    
     getText() {
         var selectedTranscription = $('#document-transcriptions').val();
         if (this.transcriptions[selectedTranscription] !== undefined) {
@@ -56,7 +60,7 @@ class TranscriptionLine {
             return '';
         }
     }
-
+    
     scaleContent() {
         var scaleX = ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width();
         //var scaleY = this.textContainer.height() / ((this.box[3] - this.box[1])*this.ratio);
@@ -66,6 +70,10 @@ class TranscriptionLine {
     }
     
     edit () {
+        if (currentLine) currentLine.editing = false;
+        this.editing = true;
+        this.showOverlay();
+        
         currentLine = this;
         // form hidden values
         var selectedTranscription = $('#document-transcriptions').val();
@@ -196,6 +204,10 @@ $(document).ready(function() {
     
     $("#trans-modal").draggable({
         handle: ".modal-header"
+    });
+    $("#trans-modal").on('hide.bs.modal', function(ev) {
+        currentLine.editing = false;
+        $('#overlay').hide();
     });
     $("#trans-modal #prev-btn").click(function(ev) {
         lines[currentLine.order-1].edit();

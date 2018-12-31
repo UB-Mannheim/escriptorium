@@ -65,19 +65,17 @@
           <textarea id="trans-input" name="content" class="form-control mt-2"></textarea>
 
           <hr>
-          <h5>{% trans "History" %}
-            <button type="button" data-toggle="collapse" data-target="#history" class="btn btn-sm btn-secondary" title="{% trans "Show history" %}"><i class="fas fa-eye"></i></button>
-            <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
-          </h5>
+          <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
+          <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
           <table id="history" class="table table-sm table-striped collapse">
             <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button id="save-continue-btn" type="button" class="btn btn-success">{% trans 'Save & Continue' %}</button>
-          <button id="save-btn" type="button" class="btn btn-success">{% trans 'Save' %}</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+          <button id="save-continue-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save & Continue' %}</button>
+          <button id="save-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save' %}</button>
         </div>
       </form>
     </div>
