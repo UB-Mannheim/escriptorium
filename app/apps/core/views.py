@@ -3,7 +3,7 @@ import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
-from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseForbidden, HttpResponse, Http404
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
@@ -135,7 +135,10 @@ class DocumentTranscription(LoginRequiredMixin, DetailView):
 
     def get_object(self):
         if not 'part_pk' in self.kwargs:
-            return self.get_queryset()[0]
+            try:
+                return self.get_queryset()[0]
+            except IndexError:
+                raise Http404
         else:
             return super().get_object()
 
@@ -161,7 +164,7 @@ class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
         try:
             lt = line.transcriptions.get(transcription=transcription)
         except LineTranscription.DoesNotExist:
-            LineTranscription.objects.create(
+            lt = LineTranscription.objects.create(
                 line=line,
                 transcription=transcription,
                 version_author=self.request.user.username,
@@ -244,20 +247,24 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         part = form.save(commit=False)
         try:
-            part.name = part.image.file.name.split('.')[0]
+            part.name = ''.join(part.image.file.name.split('.')[:-1])
         except IndexError:
             part.name = part.image.file.name
         part.typology = self.document.process_settings.typology
         part.save()
-        
-        if self.document.process_settings.auto_process:
-            part.transcribe(user_pk=self.request.user.pk)
-        else:
-            part.compress()
+
+        try:
+            if self.document.process_settings.auto_process:
+                part.transcribe(user_pk=self.request.user.pk)
+            else:
+                part.compress(user_pk=self.request.user.pk)
+        except:
+            # asynchrone stuff should not raise an error here
+            self.request.user.notify(_("Automatic processing failed."), level='danger')
         
         # generate card thumbnail inline because we need it right away
         thumbnail_url = get_thumbnailer(part.image)['card'].url
-            
+        
         return HttpResponse(json.dumps({
             'status': 'ok',
             'part': {
@@ -278,6 +285,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                                    kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'transcriptionUrl': reverse('document-transcription',
                                              kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
+                'inQueue': True,
                 'workflow': 0,
                 'progress': 0
             }
@@ -367,15 +375,19 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
         # Note: necessary to check permissions to process said part
         parts = DocumentPart.objects.filter(document=document, pk__in=pks)
         process = self.request.POST['process']
-        if process == 'binarize':
-            for part in parts:
-                part.binarize(user_pk=self.request.user.pk)
-        elif process == 'segment':
-            for part in parts:
-                part.segment(user_pk=self.request.user.pk)
-        elif process == 'transcribe':
-            for part in parts:
-                part.transcribe(user_pk=self.request.user.pk)
+        try:
+            if process == 'binarize':
+                for part in parts:
+                    part.binarize(user_pk=self.request.user.pk)
+            elif process == 'segment':
+                for part in parts:
+                    part.segment(user_pk=self.request.user.pk)
+            elif process == 'transcribe':
+                for part in parts:
+                    part.transcribe(user_pk=self.request.user.pk)
+        except AlreadyProcessingException:
+            return HttpResponse(json.dumps({'status': 'error', 'error': 'Already processing.'}),
+                                content_type="application/json", status=400)
         
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 

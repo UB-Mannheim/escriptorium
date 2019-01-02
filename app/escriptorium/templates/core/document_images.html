@@ -86,6 +86,7 @@
         {% endcomment %}
       </form>
       <div class="d-flex mt-2">
+        <span class="js-queued" title="{% trans "Queued" %}">{% trans "Queued" %}</span>
         <span class="js-binarized" title="{% trans 'Binarized' %}"><i class="fas fa-adjust"></i></span>
         <span class="ml-2 js-segmented" title="{% trans 'Segmented' %}"><i class="fas fa-align-left"></i></span>
         <span class="progress ml-2 js-trans-progress" title="{% trans 'Transcription progress' %}">
@@ -130,6 +131,7 @@ $(document).ready(function() {
         partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
         transcriptionUrl: "{% url 'document-transcription' pk=object.pk part_pk=part.pk %}",
         workflow: {{ part.workflow_state }},
+        inQueue: {% if part.in_queue %}true{% else %}false{% endif %},
         progress: {{ part.transcription_progress }}
     });
     {% endfor %}

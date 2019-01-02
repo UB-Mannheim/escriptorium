@@ -160,6 +160,7 @@ class TranscriptionLine {
         }).done($.proxy(function(data) {
             if (data.status == 'ok') {
                 $('#no-versions').hide();
+                this.transcriptions[selectedTranscription].versions.splice(0, 0, data.transcription);
                 this.addVersionLine(data.transcription);
             } else {
                 alert(data.msg);
@@ -180,7 +181,11 @@ class TranscriptionLine {
                 content: new_content
             })
                 .done($.proxy(function(data){
-                    this.transcriptions[selectedTranscription].content = new_content;
+                    if (this.transcriptions[selectedTranscription] === undefined) {
+                        this.transcriptions[selectedTranscription] = {content: new_content, versions: []};
+                    } else {
+                        this.transcriptions[selectedTranscription].content = new_content;
+                    }
                     this.textContainer.html(new_content);
                     this.textContainer.ready($.proxy(function(ev) {
                         this.scaleContent();

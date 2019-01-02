@@ -2,6 +2,7 @@ import json
 import logging
 import os.path
 import subprocess
+import redis
 
 from django.apps import apps
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.core.files import File
 from django.utils.translation import gettext as _
 
 from celery import shared_task
+from celery.signals import after_task_publish
 from easy_thumbnails.files import generate_all_aliases
 
 from users.consumers import send_event
@@ -17,13 +19,26 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+redis_ = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
 
 @shared_task
-def generate_part_thumbnails(model, pk, field):
-    instance = model._default_manager.get(pk=pk)
-    fieldfile = getattr(instance, field)
-    generate_all_aliases(fieldfile, include_global=True)
+def generate_part_thumbnails(instance_pk):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
+        raise
+    
+    generate_all_aliases(part.image, include_global=True)
+
+
+def update_client_state(part):
+    send_event('document', part.document.pk, "part:workflow", {
+        "id": part.pk,
+        "value": part.workflow_state
+    })
 
 
 @shared_task(bind=True)
@@ -33,8 +48,12 @@ def lossless_compression(self, instance_pk):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
-        return False
-    
+        raise
+
+    part.workflow_state = part.WORKFLOW_STATE_COMPRESSING
+    part.save()
+    update_client_state(part)
+        
     convert = False
     old_name = part.image.file.name
     filename, extension = os.path.splitext(old_name)
@@ -46,9 +65,8 @@ def lossless_compression(self, instance_pk):
             raise RuntimeError("Error trying to convert file(%s) to png.")
     else:
         new_name = old_name
-    
     opti_name = filename + '_opti.png'
-    # Note: leave it fail if need be
+    # Note: leave it fail it's fine
     subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
     os.rename(opti_name, new_name)
     if convert:
@@ -57,13 +75,8 @@ def lossless_compression(self, instance_pk):
     if part.workflow_state < part.WORKFLOW_STATE_COMPRESSED:
         part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
         part.save()
+        update_client_state(part)
 
-
-def update_client_state(part):
-    send_event('document', part.document.pk, "part:workflow", {
-        "id": part.pk,
-        "value": part.workflow_state
-    })
 
 @shared_task
 def binarize(instance_pk, user_pk=None):
@@ -72,7 +85,7 @@ def binarize(instance_pk, user_pk=None):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to binarize innexistant DocumentPart : %d', instance_pk)
-        return False
+        raise
     
     if user_pk:
         try:
@@ -123,7 +136,7 @@ def segment(instance_pk, user_pk=None):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
-        return False
+        raise
 
     if user_pk:
         try:
@@ -183,13 +196,13 @@ def segment(instance_pk, user_pk=None):
 
 
 @shared_task
-def transcribe(part_pk, user_pk=None):
+def transcribe(instance_pk, user_pk=None):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
-        part = DocumentPart.objects.get(pk=part_pk)
+        part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
-        return False
+        raise
 
     if user_pk:
         try:
@@ -208,3 +221,8 @@ def transcribe(part_pk, user_pk=None):
     # model = part.select_model()
     #if model:
     #    TODO: kraken ocr
+
+
+@after_task_publish.connect
+def update_state(sender=None, body=None, **kwargs):
+    redis_.set('process-%d' % body[0][0], kwargs['headers']['id'])

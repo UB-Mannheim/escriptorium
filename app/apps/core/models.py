@@ -10,11 +10,13 @@ from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.db.models.signals import pre_delete
+
 
 import click
-import celery
+from celery.result import AsyncResult
 from celery import chain
-from easy_thumbnails.signals import saved_file
+from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
 
 from versioning.models import Versioned
@@ -22,6 +24,9 @@ from .tasks import *
 
 User = get_user_model()
 
+
+class AlreadyProcessingException(Exception):
+    pass
 
 class Typology(models.Model):
     """
@@ -47,7 +52,7 @@ class Typology(models.Model):
 class Metadata(models.Model):
     name = models.CharField(max_length=128, unique=True)
     cidoc_id = models.CharField(max_length=8, null=True, blank=True)
-
+    
     class Meta:
         ordering = ('name',)
     
@@ -161,14 +166,16 @@ class DocumentPart(OrderedModel):
     order_with_respect_to = 'document'
     
     WORKFLOW_STATE_CREATED = 0
-    WORKFLOW_STATE_COMPRESSED = 1
-    WORKFLOW_STATE_BINARIZING = 2
-    WORKFLOW_STATE_BINARIZED = 3
-    WORKFLOW_STATE_SEGMENTING = 4
-    WORKFLOW_STATE_SEGMENTED = 5
-    WORKFLOW_STATE_TRANSCRIBING = 6
+    WORKFLOW_STATE_COMPRESSING = 1
+    WORKFLOW_STATE_COMPRESSED = 2
+    WORKFLOW_STATE_BINARIZING = 3
+    WORKFLOW_STATE_BINARIZED = 4
+    WORKFLOW_STATE_SEGMENTING = 5
+    WORKFLOW_STATE_SEGMENTED = 6
+    WORKFLOW_STATE_TRANSCRIBING = 7
     WORKFLOW_STATE_CHOICES = (
         (WORKFLOW_STATE_CREATED, _("Created")),
+        (WORKFLOW_STATE_COMPRESSING, _("Compressing")),
         (WORKFLOW_STATE_COMPRESSED, _("Compressed")),
         (WORKFLOW_STATE_BINARIZING, _("Binarizing")),
         (WORKFLOW_STATE_BINARIZED, _("Binarized")),
@@ -179,7 +186,7 @@ class DocumentPart(OrderedModel):
     workflow_state = models.PositiveSmallIntegerField(choices=WORKFLOW_STATE_CHOICES,
                                                       default=WORKFLOW_STATE_CREATED)
     
-    # this is denormalization because, it's too heavy to calculate on the fly
+    # this is denormalized because it's too heavy to calculate on the fly
     transcription_progress = models.PositiveSmallIntegerField(default=0)
     
     class Meta(OrderedModel.Meta):
@@ -214,34 +221,75 @@ class DocumentPart(OrderedModel):
         if not total:
             return 0
         self.transcription_progress = int(transcribed / total * 100)
-
+    
     def save(self, *args, **kwargs):
         self.calculate_progress()
         return super().save(*args, **kwargs)
-
+    
+    @cached_property
+    def task_id(self):
+        return redis_.get('process-%d' % self.pk)
+    
+    def check_processing_state(self):
+        if not self.task_id:
+            return None  # Not processing anything
+        return AsyncResult(self.task_id).status
+    
+    def in_queue(self):
+        if self.task_id is None:
+            return False
+        return AsyncResult(self.task_id).status == 'PENDING'
+    
+    def recover(self):
+        if self.task_id and AsyncResult(self.task_id).failed():
+            if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
+                self.workflow_state = self.WORFLOW_STATE_CREATED
+            elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
+                self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+            elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
+                self.workflow_state = self.WORFLOW_STATE_BINARIZED
+            self.save()
+    
     def compress(self):
-        lossless_compression.delay(self.pk)
+        if self.task_id and not AsyncResult(self.task_id).ready():
+            raise AlreadyProcessingException
+        
+        chain(lossless_compression.si(self.pk),
+              generate_part_thumbnails.si(self.pk)).delay()
+
     
     def binarize(self, user_pk=None):
+        if self.task_id and not AsyncResult(self.task_id).ready():
+            raise AlreadyProcessingException
+        
         if not self.compressed:
             chain(lossless_compression.si(self.pk),
-                  binarize.si(self.pk, user_pk=user_pk)).delay()
+                       generate_part_thumbnails.si(self.pk),
+                       binarize.si(self.pk, user_pk=user_pk)).delay()
         else:
             binarize.delay(self.pk, user_pk=user_pk)
     
     def segment(self, user_pk=None):
+        if self.task_id and not AsyncResult(self.task_id).ready():
+            raise AlreadyProcessingException
+        
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
+            tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         tasks.append(segment.si(self.pk, user_pk=user_pk))
         chain(*tasks).delay()
     
     def transcribe(self, user_pk=None):
+        if self.task_id and not AsyncResult(self.task_id).ready():
+            raise AlreadyProcessingException
+        
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
+            tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         if not self.segmented:
@@ -358,8 +406,8 @@ class DocumentProcessSettings(models.Model):
         return 'Processing settings for %s' % self.document
 
 
-@receiver(saved_file)
-def generate_thumbnails_async(sender, fieldfile, **kwargs):
-    generate_thumbnails.delay(
-        model=sender, pk=fieldfile.instance.pk,
-        field=fieldfile.field.name)
+@receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')
+def delete_thumbnails(sender, instance, using, **kwargs):
+    thumbnailer = get_thumbnailer(instance.image)
+    thumbnailer.delete_thumbnails()
+

@@ -1,7 +1,7 @@
 'use strict';
 
 Dropzone.autoDiscover = false;
-var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
+var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var wz, lastSelected = null;
 
 class partCard {
@@ -17,6 +17,7 @@ class partCard {
         this.deleteUrl = part.deleteUrl;
         this.transcripionUrl = part.transcriptionUrl;
         this.partUrl = part.partUrl;
+        this.inQueue = part.inQueue;
         this.workflow_state = part.workflow;
         this.progress = part.progress;
         this.locked = false;
@@ -59,6 +60,7 @@ class partCard {
         // workflow icons & progress
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
+        this.queuedButton = $('.js-queued', this.$element);
         this.progressBar = $('.js-trans-progress .progress-bar', this.$element);
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
@@ -109,6 +111,7 @@ class partCard {
         
         // drag'n'drop
         this.$element.on('dragstart', $.proxy(function(ev) {
+            if (this.locked) return;
             ev.originalEvent.dataTransfer.setData("text/card-id", ev.target.id);
             g_dragged = ev.target.id;  // chrome gets confused with dataTransfer, so we use a global
             $('.js-drop').addClass('drop-target');
@@ -119,11 +122,11 @@ class partCard {
     }
 
     setWorkflowStates() {
-        this.binarizing = this.workflow_state == 2; // meh
-        this.binarized = this.workflow_state >= 3;
-        this.segmenting = this.workflow_state == 4;
-        this.segmented = this.workflow_state >= 5;
-        this.transcribing = this.workflow_state == 6;
+        this.binarizing = this.workflow_state >= 1 && this.workflow_state <= 3;  // user doesn't need to know about compression :p
+        this.binarized = this.workflow_state >= 4;
+        this.segmenting = this.workflow_state == 5;
+        this.segmented = this.workflow_state >= 6;
+        this.transcribing = this.workflow_state == 7;
         if (this.binarizing) { this.binarizedButton.addClass('ongoing').show(); }
         if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
@@ -132,9 +135,17 @@ class partCard {
             this.bwImgUrl = null;
             this.lines = null;
             this.lock();
+            this.queuedButton.hide();
         } else {
-            this.unlock();
+            if (this.inQueue) {
+                this.lock();
+                this.queuedButton.show();
+            } else {
+                this.unlock();
+                this.queuedButton.hide();
+            }
         }
+        
         if (this.transcribing) {
             $('#nav-trans-tab').removeClass('disabled');
             this.progressBar.parent().css('display', 'inline-block');
@@ -434,7 +445,7 @@ $(document).ready(function() {
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
         var index = $('#cards-container .js-drop').index(ev.target);
         var elementId = ev.originalEvent.dataTransfer.getData("text/card-id");
-        if (!elementId) { elementId = g_dragged; }  // for chrome
+        if (!elementId && g_dragged != null) { elementId = g_dragged; }  // for chrome
         var dragged_index = $('#cards-container .card').index(document.getElementById(elementId));
         var isCard = ev.originalEvent.dataTransfer.types.indexOf("text/card-id") != -1;
         if (isCard && index != dragged_index && index != dragged_index + 1) {
@@ -457,13 +468,22 @@ $(document).ready(function() {
         var card = $(dragged).data('partCard');
         var index = $('#cards-container .js-drop').index(ev.target);
         card.moveTo(index);
+        g_dragged = null;
     });
 
     // update workflow icons, send by notification through web socket
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
-        card.workflow_state = data.value;
-        card.setWorkflowStates();
+        if (card) {
+            card.workflow_state = data.value;
+            card.inQueue = false;
+            card.setWorkflowStates();
+        } else {
+            // we probably received the event before the card was created, retrigger ev in a sec
+            setTimeout(function() {
+                $('#alerts-container').trigger(ev, data);
+            }, 1000);
+        }
     });
     
     // create & configure dropzone
@@ -512,7 +532,9 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('binarization process', data.status);
         }).fail(function(xhr) {
-            console.log('Something went wrong :(');
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
+            console.log('Something went wrong :(', data);
         });
     });
     $('#segment-selected').click(function(ev) {
@@ -523,6 +545,8 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('binarization process', data.status);
         }).fail(function(xhr) {
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
             console.log('Something went wrong :(');
         });
     });
@@ -534,6 +558,8 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('transcription process', data.status);
         }).fail(function(xhr) {
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
             console.log('Something went wrong :(');
         });
     });
