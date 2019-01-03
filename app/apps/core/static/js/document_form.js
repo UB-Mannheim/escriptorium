@@ -47,8 +47,10 @@ $(document).ready(function() {
     var hash = window.location.hash;
     hash && $('div.nav.nav-tabs a[href="' + hash + '"]').tab('show'); 
     $('div.nav.nav-tabs a').click(function (e) {
-        $(this).tab('show');
-        var scrollmem = $('body').scrollTop();
-        window.location.hash = this.hash;
+        if (!$(this).is('.disabled')) {
+            $(this).tab('show');
+            var scrollmem = $('body').scrollTop();
+            window.location.hash = this.hash;
+        }
     });
 });

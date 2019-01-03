@@ -26,6 +26,8 @@ class User(AbstractUser):
             return self.username
     
     def notify(self, message, id=None, level='info'):
+        if id is None:
+            id = hash(message)
         return send_notification(self.pk, message, id=id, level=level)
 
 

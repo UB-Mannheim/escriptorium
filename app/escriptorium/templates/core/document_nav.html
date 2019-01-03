@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load i18n bootstrap %}
+{% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
+
+{% block body %}
+
+<nav>
+  <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">        
+    <a href="{% if object %}{% url 'document-update' pk=object.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Document" %}</a>
+    <a href="{% if object %}{% url 'document-images' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>        
+    <a href="{% if object %}{% url 'document-transcription' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-trans-active %}{% endblock %}{% if not object.is_transcribing %}disabled{% endif %} mr-auto" id="nav-trans-tab" role="tab" aria-controls="nav-trans" aria-selected="true">{% trans "Transcription" %}</a>
+    
+    {% block extra_nav %}{% endblock %}
+  </div>
+</nav>
+
+<div class="tab-content" id="nav-tabContent">      
+  {% block nav_content %}{% endblock %}
+</div>
+
+{% block modals %}{% endblock %}
+{% endblock %}

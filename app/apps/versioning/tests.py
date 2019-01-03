@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 
-from versioning.models import TestModel
+from versioning.models import TestModel, NoChangeException
 
 User = get_user_model()
 
@@ -66,3 +66,11 @@ class VersioningTest(TestCase):
                                         version_author=self.user1.username)
         test.new_version()
         self.assertNotIn('ignored', test.versions)
+
+
+    def test_no_change(self):
+        test = TestModel.objects.create(content='test',
+                                        version_author=self.user1.username)
+        test.new_version()
+        with self.assertRaises(NoChangeException):
+            test.new_version()

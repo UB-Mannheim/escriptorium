@@ -1,27 +1,25 @@
 'use strict';
-/**** Image cards drag n drop stuff ****/
-/* TODOList
-* icons bw, segmented (linked to messages)
-* select
-* api for hooks with advanced form
-* locking (can't run another job while one is already running)
-*/
 
 Dropzone.autoDiscover = false;
-var g_dragged;  // Note: chrome doesn't understand dataTransfer very well
-var viewer, lastSelected = null;
+var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
+var wz, lastSelected = null;
 
 class partCard {
     constructor(part) {
         this.pk = part.pk;
         this.name = part.name;
+        this.title = part.title;
+        this.typology = part.typology;
         this.thumbnailUrl = part.thumbnailUrl;  // TODO: use the form data to avoid a trip back
-        this.sourceImg = part.sourceImg;
+        this.image = part.image;
         this.bwImgUrl = part.bwImgUrl;
         this.updateUrl = part.updateUrl;
         this.deleteUrl = part.deleteUrl;
+        this.transcripionUrl = part.transcriptionUrl;
         this.partUrl = part.partUrl;
+        this.inQueue = part.inQueue;
         this.workflow_state = part.workflow;
+        this.progress = part.progress;
         this.locked = false;
         this.lines = null;
         
@@ -38,12 +36,15 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         $('img.card-img-top', $new).attr('data-src', this.thumbnailUrl);
+        $('img.card-img-top', $new).attr('title', this.title);
         this.updateForm.attr('action', this.updateUrl);
         $('input[name=name]', this.updateForm).attr('value', this.name);
+        $('select[name=typology] option[value='+this.typology+']', this.updateForm).attr('selected', 'true');
         this.deleteForm.attr('action', this.deleteUrl);
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
+        $('img', $new).attr('selectable', false);
         // disable dragging when over input because firefox gets confused
         $('input', this.$element).on('mouseover', $.proxy(function(ev) {
             this.$element.attr('draggable', false);
@@ -59,9 +60,16 @@ class partCard {
         // workflow icons & progress
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
+        this.queuedButton = $('.js-queued', this.$element);
+        this.progressBar = $('.js-trans-progress .progress-bar', this.$element);
+        this.progressBar.css('width', this.progress + '%');
+        this.progressBar.text(this.progress + '%');
         this.setWorkflowStates();
         this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
+        this.progressBar.parent().click($.proxy(function(ev) {
+            window.location.assign(this.transcripionUrl);
+        }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
@@ -69,11 +77,12 @@ class partCard {
         
         // add the image element to the lazy loader
         imageObserver.observe($('img', $new).get(0));
-
+        
         this.defaultColor = this.$element.css('color');
         
         //************* events **************
-        this.updateForm.on('change', 'input', $.proxy(function(ev) {
+        $('.js-edit', this.$element).click($.proxy(function(ev) { this.updateForm.toggle(); }, this));
+        this.updateForm.on('change', 'input,select', $.proxy(function(ev) {
             this.upload();
         }, this));
 
@@ -102,6 +111,7 @@ class partCard {
         
         // drag'n'drop
         this.$element.on('dragstart', $.proxy(function(ev) {
+            if (this.locked) return;
             ev.originalEvent.dataTransfer.setData("text/card-id", ev.target.id);
             g_dragged = ev.target.id;  // chrome gets confused with dataTransfer, so we use a global
             $('.js-drop').addClass('drop-target');
@@ -112,10 +122,11 @@ class partCard {
     }
 
     setWorkflowStates() {
-        this.binarizing = this.workflow_state == 1; // meh
-        this.binarized = this.workflow_state >= 2;
-        this.segmenting = this.workflow_state == 3;
-        this.segmented = this.workflow_state >= 4;
+        this.binarizing = this.workflow_state >= 1 && this.workflow_state <= 3;  // user doesn't need to know about compression :p
+        this.binarized = this.workflow_state >= 4;
+        this.segmenting = this.workflow_state == 5;
+        this.segmented = this.workflow_state >= 6;
+        this.transcribing = this.workflow_state == 7;
         if (this.binarizing) { this.binarizedButton.addClass('ongoing').show(); }
         if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
@@ -124,8 +135,20 @@ class partCard {
             this.bwImgUrl = null;
             this.lines = null;
             this.lock();
+            this.queuedButton.hide();
         } else {
-            this.unlock();
+            if (this.inQueue) {
+                this.lock();
+                this.queuedButton.show();
+            } else {
+                this.unlock();
+                this.queuedButton.hide();
+            }
+        }
+        
+        if (this.transcribing) {
+            $('#nav-trans-tab').removeClass('disabled');
+            this.progressBar.parent().css('display', 'inline-block');
         }
     }
     
@@ -217,10 +240,11 @@ class partCard {
         // Note: have to recreate an image because webkit never really delete the boxes otherwise
         var $viewer = $('#viewer');
         $viewer.empty();
-
         if (!this.bwImgUrl) {
             $.get(this.partUrl, $.proxy(function(data) {
+                this.lines = data.lines;
                 this.bwImgUrl = data.bwImgUrl;
+                this.image = data.image;
                 var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
                 $viewer.append($img);
             }, this));
@@ -228,6 +252,9 @@ class partCard {
             var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
             $viewer.append($img);
         }
+        $('#viewer-img').on('load', $.proxy(function(ev) {
+            $('#viewer-container').trigger('wheelzoom.reset');
+        }, this));
     }
 
     showLines(ratio) {
@@ -238,35 +265,41 @@ class partCard {
         }
     }
     showSegmentation() {
-        var ratio;
-        var $viewer = $('#viewer');
-        $viewer.empty();
-        var $img = $('<img id="viewer-img" width="100%" src="'+this.sourceImg.url+'"/>');
-        $viewer.append($img);
-        $('#viewer-img').on('load', $.proxy(function(ev) {
-            ratio = $('#viewer-img').width() / this.sourceImg.width;
-            if (this.lines) {
-                this.showLines(ratio);
-            } else {
-                $.get(this.partUrl, $.proxy(function(data) {
-                    this.lines = data.lines;
-                    this.showLines(ratio);
-                }, this));
-            }
-        }, this));
+        var $img, ratio;
+        
+        if (this.lines) {
+            update_(this);
+        } else {
+            $.get(this.partUrl, $.proxy(function(data) {
+                this.lines = data.lines;
+                this.bwImgUrl = data.bwImgUrl;
+                this.image = data.image;
+                update_(this);
+            }, this));
+        }
 
-        // create a new line
-        $img.on('dblclick', $.proxy(function(ev) {
-            var box = [
-                Math.max(0, ev.pageX - $img.offset().left -30),
-                Math.max(0, ev.pageY - $img.offset().top -20),
-                Math.min($img.width(), ev.pageX - $img.offset().left +30),
-                Math.min($img.height(), ev.pageY - $img.offset().top +20)
-            ];
-            console.log(ev.pageX, $img.offset().left);
-            var box_ = new lineBox(this, {pk: null, box: box}, ratio);
-            console.log(box, box_);
-        }, this));
+        function update_(this_) {
+            var $viewer = $('#viewer');
+            $viewer.empty();
+            $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
+            $viewer.append($img);
+            $('#viewer-img').on('load', $.proxy(function(ev) {
+                $('#viewer-container').trigger('wheelzoom.reset');
+                ratio = $('#viewer-img').width() / this_.image.width;
+
+                this_.showLines(ratio);
+                // create a new line
+                $('#viewer-img').on('dblclick', function(ev) {
+                    var box = [
+                        Math.max(0, ev.pageX - $img.offset().left -30) / ratio / wz.scale,
+                        Math.max(0, ev.pageY - $img.offset().top -20) / ratio / wz.scale,
+                        Math.min($img.width() * ratio * wz.scale, ev.pageX - $img.offset().left +30) / ratio / wz.scale,
+                        Math.min($img.height() * ratio * wz.scale, ev.pageY - $img.offset().top +20) / ratio / wz.scale
+                    ];
+                    var box_ = new lineBox(this_, {pk: null, box: box}, ratio);
+                });
+            }, this_));
+        }
     }
 
     static fromPk(pk) {
@@ -296,6 +329,8 @@ class lineBox {
         this.pk = line.pk;
         this.imgRatio = imgRatio;
         this.changed = false;
+        this.click = {x: null, y:null};
+        this.originalWidth = (line.box[2] - line.box[0]) * imgRatio;
         var $box = $('<div class="line-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
         $box.css({'left': line.box[0] * imgRatio,
                   'top': line.box[1] * imgRatio,
@@ -305,22 +340,52 @@ class lineBox {
             disabled: true,
             containment: 'parent',
             cursor: "grab",
-            stop: $.proxy(function(ev) { this.changed = true; }, this)
+            stop: $.proxy(function(ev) {
+                this.changed = true;
+                $('#viewer-container').trigger('wheelzoom.enable');
+            }, this),
+            // this is necessary because WheelZoom make it jquery-ui drag jump around
+            start: $.proxy(function(event) {
+                this.click.x = event.clientX;
+                this.click.y = event.clientY;
+                $('#viewer-container').trigger('wheelzoom.disable');
+            }, this),
+            drag: $.proxy(function(event, ui) {
+                var original = ui.originalPosition;
+                ui.position = {
+                    left: (event.clientX - this.click.x + original.left) / wz.scale,
+                    top:  (event.clientY - this.click.y + original.top ) / wz.scale
+                };
+            }, this)
         });
         $box.resizable({
             disabled: true,
-            stop: $.proxy(function(ev) { this.changed = true; }, this)
+            stop: $.proxy(function(ev) {
+                this.changed = true;
+                $('#viewer-container').trigger('wheelzoom.enable');
+            }, this),
+            start: function(ev) {
+                $('#viewer-container').trigger('wheelzoom.disable');
+            }
         });
         
         $box.data('lineBox', this);
-        $box.appendTo($('#viewer'));  
+        $box.appendTo($('#viewer'));
         this.$element = $box;
         // we need to keep references to be able to unbind it
-        this.proxyUnselect = $.proxy(this.unselect, this);
+        this.proxyUnselect = $.proxy(function(ev) {
+            // click in the img doesn't unselect ?!
+            if ($(ev.target).parents('#viewer').length) { return; }
+            this.unselect();
+        }, this);
         this.proxyKeyboard = $.proxy(this.keyboard, this);
-
+        
         // select a new line
         if (this.pk === null) this.select();
+
+        // avoid jquery-ui jumping
+        $box.on('mousedown', function(ev) { ev.currentTarget.style.position = 'relative'; });
+        $box.on('mouseup', function(ev) { ev.currentTarget.style.position = 'absolute'; });
         
         $box.click($.proxy(function(ev) {
             ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
@@ -334,10 +399,10 @@ class lineBox {
     }
 
     getBox() {
-        var x1 = parseInt(this.$element.position().left / this.imgRatio);
-        var y1 = parseInt(this.$element.position().top / this.imgRatio);
-        var x2 = parseInt((this.$element.position().left + this.$element.width()) / this.imgRatio);
-        var y2 = parseInt((this.$element.position().top + this.$element.height()) / this.imgRatio);
+        var x1 = parseInt((this.$element.position().left) / wz.scale / this.imgRatio);
+        var y1 = parseInt((this.$element.position().top) / wz.scale / this.imgRatio);
+        var x2 = parseInt(((this.$element.position().left) / wz.scale + this.$element.width()) / this.imgRatio);
+        var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.imgRatio);
         return [x1, y1, x2, y2];
     }
     keyboard(ev) {
@@ -353,7 +418,7 @@ class lineBox {
     select() {
         if (this.$element.is('.selected')) return;
         var previous = $('.line-box.selected');
-        if (previous.length) { console.log(previous.data('lineBox')); previous.data('lineBox').unselect(); }
+        if (previous.length) { previous.data('lineBox').unselect(); }
         this.$element.addClass('selected');
         this.$element.draggable('enable');
         this.$element.resizable('enable');
@@ -388,7 +453,7 @@ $(document).ready(function() {
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
         var index = $('#cards-container .js-drop').index(ev.target);
         var elementId = ev.originalEvent.dataTransfer.getData("text/card-id");
-        if (!elementId) { elementId = g_dragged; }  // for chrome
+        if (!elementId && g_dragged != null) { elementId = g_dragged; }  // for chrome
         var dragged_index = $('#cards-container .card').index(document.getElementById(elementId));
         var isCard = ev.originalEvent.dataTransfer.types.indexOf("text/card-id") != -1;
         if (isCard && index != dragged_index && index != dragged_index + 1) {
@@ -411,25 +476,28 @@ $(document).ready(function() {
         var card = $(dragged).data('partCard');
         var index = $('#cards-container .js-drop').index(ev.target);
         card.moveTo(index);
+        g_dragged = null;
     });
 
     // update workflow icons, send by notification through web socket
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
-        card.workflow_state = data.value;
-        card.setWorkflowStates();
+        if (card) {
+            card.workflow_state = data.value;
+            card.inQueue = false;
+            card.setWorkflowStates();
+        } else {
+            // we probably received the event before the card was created, retrigger ev in a sec
+            setTimeout(function() {
+                $('#alerts-container').trigger(ev, data);
+            }, 1000);
+        }
     });
     
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
-        paramName: "image_source",
+        paramName: "image",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
-    });
-    imageDropzone.on("sending", function(file, xhr, formData) {
-        formData.append("auto_process", $('input[name=auto_process]', '#dropzone').get(0).checked);
-        formData.append("text_direction", $('select[name=text_direction]', '#dropzone').val());
-        formData.append("typology", $('select[name=typology]', '#dropzone').val());
-        // formData.append("binarizer", $('select[name=binarizer]', '#dropzone').val());
     });
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
@@ -445,6 +513,13 @@ $(document).ready(function() {
             }
         }
     });
+    
+    // settings form update
+    $('#advancedForm input,select').change(function(ev) {
+        var $form = $(ev.target).parents('form');
+        $.post($form.attr('action'), $form.serialize());
+    });
+    
     // processor buttons
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
@@ -465,7 +540,9 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('binarization process', data.status);
         }).fail(function(xhr) {
-            console.log('Something went wrong :(');
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
+            console.log('Something went wrong :(', data);
         });
     });
     $('#segment-selected').click(function(ev) {
@@ -476,7 +553,24 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log('binarization process', data.status);
         }).fail(function(xhr) {
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
             console.log('Something went wrong :(');
         });
     });
+    $('#transcribe-selected').click(function(ev) {
+        // $('select[name=text_direction]', '#dropzone').val()
+        $.post(processDocumentPartsUrl, {
+            'parts': partCard.getSelectedPks(),
+            'process': 'transcribe'
+        }).done(function(data) {
+            console.log('transcription process', data.status);
+        }).fail(function(xhr) {
+            var data = xhr.responseJSON;
+            if (data.status == 'error') { alert(data.error); }
+            console.log('Something went wrong :(');
+        });
+    });
+
+    wz = WheelZoom($('#viewer-container'));
 });

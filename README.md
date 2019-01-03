@@ -1,10 +1,10 @@
 ### Docker
-Install docker and docker-compose  
+Install git, docker and docker-compose  
 Fetch the source:  
 > $ git clone git@gitlab.inria.fr:scripta/escriptorium.git  
 
 Copy the environement variables file  
-> $ cd escriptorium && cp .env_example .env  
+> $ cd escriptorium && cp variables.env_example variables.env  
 
 change some of those if you wish to  
 Build and run the docker containers  

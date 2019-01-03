@@ -1,41 +1,37 @@
-import logging
 import json
+import logging
 import os.path
 import subprocess
+import redis
 
-from django.utils.translation import gettext as _
+from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files import File
+from django.utils.translation import gettext as _
 
 from celery import shared_task
-from imagekit.cachefiles import LazyImageCacheFile
+from celery.signals import before_task_publish
+from easy_thumbnails.files import generate_all_aliases
 
 from users.consumers import send_event
-from core.imagegenerators import CardThumbnail
-from core.models import DocumentPart, Line, Block, document_images_path
 
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+redis_ = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
 
 @shared_task
 def generate_part_thumbnails(instance_pk):
     try:
-        instance = DocumentPart.objects.get(pk=instance_pk)
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to generate thumbnail for innexistant DocumentPart : %d', instance_pk)
-        return False
-
-    try:
-        file = LazyImageCacheFile('core:card.thumbnail', source=instance.image_source)
-        file.generate()
-        file = LazyImageCacheFile('core:list.thumbnail', source=instance.image_source)
-        file.generate()
-    except:
-        logger.exception('Error while trying to generate thumbnails.')
-    # we can fail silently, the thumbnail will be generated on the fly and we have logs
-    return True
+        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
+        raise
+    
+    generate_all_aliases(part.image, include_global=True)
 
 
 def update_client_state(part):
@@ -45,13 +41,51 @@ def update_client_state(part):
     })
 
 
+@shared_task(bind=True)
+def lossless_compression(self, instance_pk):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
+        raise
+
+    part.workflow_state = part.WORKFLOW_STATE_COMPRESSING
+    part.save()
+    update_client_state(part)
+        
+    convert = False
+    old_name = part.image.file.name
+    filename, extension = os.path.splitext(old_name)
+    if extension != ".png":
+        convert = True
+        new_name = filename + ".png"
+        error = subprocess.check_call(["convert", old_name, new_name])
+        if error:
+            raise RuntimeError("Error trying to convert file(%s) to png.")
+    else:
+        new_name = old_name
+    opti_name = filename + '_opti.png'
+    # Note: leave it fail it's fine
+    subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
+    os.rename(opti_name, new_name)
+    if convert:
+        part.image = new_name.split(settings.MEDIA_ROOT)[1][1:]
+        os.remove(old_name)
+    if part.workflow_state < part.WORKFLOW_STATE_COMPRESSED:
+        part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
+        part.save()
+        update_client_state(part)
+
+
 @shared_task
 def binarize(instance_pk, user_pk=None):
     try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to binarize innexistant DocumentPart : %d', instance_pk)
-        return False
+        raise
     
     if user_pk:
         try:
@@ -66,10 +100,10 @@ def binarize(instance_pk, user_pk=None):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image_source.file.name)
+        fname = os.path.basename(part.image.file.name)
         bw_file_name = 'bw_' + fname
-        bw_file = os.path.join(os.path.dirname(part.image_source.file.name), bw_file_name)
-        error = subprocess.check_call(["kraken", "-i", part.image_source.path,
+        bw_file = os.path.join(os.path.dirname(part.image.file.name), bw_file_name)
+        error = subprocess.check_call(["kraken", "-i", part.image.path,
                                        bw_file,
                                        'binarize'])
         if error:
@@ -79,14 +113,16 @@ def binarize(instance_pk, user_pk=None):
         if user:
             user.notify(_("Something went wrong during the binarization!"),
                         id="binarization-error", level='danger')
-        update_client_state(part)
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
+        update_client_state(part)
         raise
     else:
         if user:
             user.notify(_("Binarization done!"),
                         id="binarization-success", level='success')
+        
+        from core.models import document_images_path  # meh
         part.bw_image = document_images_path(part, bw_file_name)
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
@@ -94,12 +130,13 @@ def binarize(instance_pk, user_pk=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
+def segment(instance_pk, user_pk=None):
     try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
-        return False
+        raise
 
     if user_pk:
         try:
@@ -110,6 +147,8 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
         user = None
     
     try:
+        Block = apps.get_model('core', 'Block')
+        Line = apps.get_model('core', 'Line')
         # cleanup pre-existing
         part.lines.all().delete()
         Block.objects.filter(document_part=part).delete()
@@ -118,7 +157,7 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
         part.save()
         update_client_state(part)
         
-        fname = os.path.basename(part.image_source.file.name)
+        fname = os.path.basename(part.image.file.name)
         
         # kraken -i bw.png lines.json segment
         json_file = '/tmp/' + fname + '.lines.json'
@@ -157,5 +196,39 @@ def segment(instance_pk, user_pk=None, text_direction='horizontal-lr'):
 
 
 @shared_task
-def transcribe(part_pk, user_pk=None, model=None):
-    pass
+def transcribe(instance_pk, user_pk=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
+        raise
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    Transcription = apps.get_model('core', 'Transcription')
+    Transcription.objects.get_or_create(name='default', document=part.document)
+    part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+    part.save()
+    update_client_state(part)
+    
+    # model = part.select_model()
+    #if model:
+    #    TODO: kraken ocr
+
+
+@before_task_publish.connect
+def update_state(sender=None, body=None, **kwargs):
+    redis_.set('process-%d' % body[0][0], kwargs['headers']['id'], ex=60*60*24)
+
+# task_prerun
+# task_postrun
+# task_retry
+# task_success
+# task_failure

@@ -1,0 +1,120 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles thumbnail json %}
+
+{% block styles %}
+{{ block.super }}
+{# custom jquery ui build with draggable and resizable only #}
+    <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'vendor/froala/froala_editor.pkgd.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'vendor/froala/froala_editor.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'vendor/froala/dark.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'vendor/froala/colors.min.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block nav-trans-active %}active{% endblock %}
+
+{% block nav_content %}
+<select id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
+  {% for transcription in object.transcriptions.all %}
+  <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
+  {% endfor %}
+</select>
+
+<div class="row" style="position: relative;">
+  {% if previous %}<a class="nav-btn nav-prev" href="{% url 'document-transcription' pk=object.pk part_pk=previous.pk %}" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>{% endif %}
+  {% if next %}<a class="nav-btn nav-next" href="{% url 'document-transcription' pk=object.pk part_pk=next.pk %}" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>{% endif %}
+  
+  <div class="col-6">
+    <div id="img-container">
+      <div>
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <div id="overlay"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6">
+    <div id="trans-container">
+      <div id="part-trans"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal" id="trans-modal" tabindex="-1" role="dialog" aria-labelledby="transModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="line-transcription-form" method="post" action="{% url 'document-line-transcription' pk=object.pk part_pk=part.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          {% comment %}<h5 class="modal-title mx-2" id="modal-label">{% trans "Line" %}</h5>{% endcomment %}
+          <button type="button" id="prev-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-left"></i></button>
+          <button type="button" id="next-btn" class="btn btn-sm btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-right"></i></button>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="modal-img-container">
+            <img id="line-img" src="{{ part.image.url }}" draggable="false" selectable="false"/>
+            {# show context #}
+          </div>
+          
+          <input type="hidden" name="transcription"/>
+          <input type="hidden" name="line"/>
+          <textarea id="trans-input" name="content" class="form-control"></textarea>
+
+          <hr>
+          <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
+          <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
+          <table id="history" class="table table-sm table-striped collapse">
+            <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+          <button id="save-continue-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save & Continue' %}</button>
+          <button id="save-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save' %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+<script src="{% static 'vendor/froala/froala_editor.min.js' %}"></script>
+<script src="{% static 'vendor/froala/colors.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
+<script src="{% static 'js/wheelzoom.js' %}"></script>
+<script src="{% static 'js/transcription.js' %}"></script>
+<script type="text/javascript">
+  $(document).ready(function() {
+    {% for line in part.lines.all %}lines.push(new TranscriptionLine({{line.id}}, {{line.order}}, {{line.box}}, { {% for trans in line.transcriptions.all %}{{trans.transcription.pk}}: {content: "{{trans.content|escapejs}}", versions: {{ trans.versions|jsond|safe|default:"[]" }} }{% endfor %} }, {{ part.image.width }}));
+    {% endfor %}
+    // TODO: automatic zoom ?
+    $('#trans-input').froalaEditor({
+        editInPopup: false,
+        multiLine: false,
+        toolbarInline: true,
+        // charCounterCount: false,
+        enter: $.FroalaEditor.ENTER_BR,
+        toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'color', 'undo', 'redo'],
+        toolbarVisibleWithoutSelection: false,
+        editorClass: 'form-control mt-2',
+        zIndex: 3000,
+        iconsTemplate: 'font_awesome_5',
+        codeBeautifierOptions: {
+            end_with_newline: true,
+        },
+        pluginsEnabled: ['colors'],
+        theme: "dark"
+    });
+
+});
+</script>
+{% endblock %}

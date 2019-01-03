@@ -75,6 +75,18 @@ body {
     display: none;
 }
 
+.card .js-edit {
+    opacity: 0.5;
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    left:0;
+}
+
+.card .js-part-update-form {
+    display: none;
+}
+
 .js-part-delete-form button {
     position: absolute;
     right: 0;
@@ -87,22 +99,33 @@ body {
     border: 0;
 }
 
+#viewer-container {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 #viewer {
     padding: 0;
+    margin: 0;
     position: relative;
+    transform-origin: top left;
 }
 
 .line-box {
-    position: absolute;
+    position: absolute !important;
     background-color: transparent;
     border: 1px solid red;
+    cursor: pointer;
+    overflow: hidden;
 }
 .line-box .close {
     display: none;
 }
 
 .line-box.selected {
-    border: 2px dashed red;
+    border: 0;
+    outline: 9999px solid rgba(0, 0, 0, 0.3); 
     /* backdrop-filter: none; */
     /* background-attachment: scroll; */
     background-repeat: none;
@@ -111,26 +134,124 @@ body {
     display: inline;
 }
 
-.card .js-binarized, .card .js-segmented {
-    display: none;
+.card .progress {
+    cursor: pointer;
 }
 
+.card .js-binarized, .card .js-segmented, .card .js-queued, .card .js-trans-progress  {
+    display: none;
+}
+.card .js-trans-progress { width: 100%; height: 24px; }
+.card .js-trans-progress .progress-bar { line-height: 24px; }
+
 .card span.ongoing {
-  animation-duration: 1s;
-  animation-name: blink;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
+    color: green;
+    animation-duration: 1s;
+    animation-name: blink;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
 }
 @keyframes blink{
 	from {opacity: 1;}
-    to {opacity: 0.3;}
+    to {opacity: 0.2;}
 }
 
 .card span.done {
     cursor: pointer;
 }
 
-.card .progress {
-    height: 30px;
-    font-size: 20px;
+.ui-resizable-s {
+    bottom: 0;  /* mess with outline */
+}
+.ui-resizable-e {
+    right: 0;  /* mess with outline */
+}
+
+/* transcription interface  */
+.nav-btn {
+    position: absolute;
+    font-size: 50px;
+}
+
+.nav-btn.nav-prev {
+    left: -30px;
+}
+
+.nav-btn.nav-next {
+    right: -30px;
+}
+
+#trans-container, #img-container {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid lightgrey;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+}
+
+#part-trans, #part-img {
+    overflow: hidden;
+    /* position: absolute; */
+    width: 100%;
+    height: 100%;
+    transform-origin:top left;
+}
+
+#overlay {
+    top: 0;
+    left: 0;
+    display: none;
+    position: absolute;
+    background-color: transparent;
+    outline: 9999px solid rgba(0, 0, 0, 0.3);
+}
+
+#modal-img-container {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+#modal-img-container #line-img {
+    position: absolute;
+}
+
+#trans-modal #trans-input {
+    width: 100%;
+}
+
+#trans-modal .fr-box {
+    padding: 0 0 0 8px;
+}
+#trans-modal .fr-box .fr-element {
+    white-space: nowrap;
+    overflow-x: scroll;
+    padding-right: 20px;
+    transform-origin: 0 0;
+}
+
+.trans-box {
+    position: absolute !important;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+.trans-box span {
+    white-space: nowrap;
+    display: inline-block;
+    transform-origin: top left;
+}
+.trans-box span:empty {
+    width: 100%;
+    height: 100%;
+    border: 1px solid lightgrey;
+}
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
 }
