@@ -309,8 +309,12 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
     
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
+        image_url = get_thumbnailer(self.object.image)['large'].url
         return HttpResponse(json.dumps({
             'pk': self.object.pk,
+            'image': {'url': image_url,
+                      'width': self.object.image.width,
+                      'height': self.object.image.height},
             'bwImgUrl': getattr(self.object.bw_image, 'url'),
             'lines': [{'pk': line.pk, 'box': line.box}
                       for line in self.object.lines.all()]

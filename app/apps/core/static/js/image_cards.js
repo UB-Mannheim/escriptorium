@@ -68,7 +68,7 @@ class partCard {
         this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
         this.progressBar.parent().click($.proxy(function(ev) {
-            window.location.replace(this.transcripionUrl);
+            window.location.assign(this.transcripionUrl);
         }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -242,7 +242,9 @@ class partCard {
         $viewer.empty();
         if (!this.bwImgUrl) {
             $.get(this.partUrl, $.proxy(function(data) {
+                this.lines = data.lines;
                 this.bwImgUrl = data.bwImgUrl;
+                this.image = data.image;
                 var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
                 $viewer.append($img);
             }, this));
@@ -263,35 +265,41 @@ class partCard {
         }
     }
     showSegmentation() {
-        var ratio;
-        var $viewer = $('#viewer');
-        $viewer.empty();
+        var $img, ratio;
         
-        var $img = $('<img id="viewer-img" width="100%" src="'+this.image.url+'"/>');
-        $viewer.append($img);
-        $('#viewer-img').on('load', $.proxy(function(ev) {
-            $('#viewer-container').trigger('wheelzoom.reset');
-            ratio = $('#viewer-img').width() / this.image.width;
-            if (this.lines) {
-                this.showLines(ratio);
-            } else {
-                $.get(this.partUrl, $.proxy(function(data) {
-                    this.lines = data.lines;
-                    this.showLines(ratio);
-                }, this));
-            }
-        }, this));
+        if (this.lines) {
+            update_(this);
+        } else {
+            $.get(this.partUrl, $.proxy(function(data) {
+                this.lines = data.lines;
+                this.bwImgUrl = data.bwImgUrl;
+                this.image = data.image;
+                update_(this);
+            }, this));
+        }
 
-        // create a new line
-        $img.on('dblclick', $.proxy(function(ev) {
-            var box = [
-                Math.max(0, ev.pageX - $img.offset().left -30),
-                Math.max(0, ev.pageY - $img.offset().top -20),
-                Math.min($img.width(), ev.pageX - $img.offset().left +30),
-                Math.min($img.height(), ev.pageY - $img.offset().top +20)
-            ];
-            var box_ = new lineBox(this, {pk: null, box: box}, ratio);
-        }, this));
+        function update_(this_) {
+            var $viewer = $('#viewer');
+            $viewer.empty();
+            $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
+            $viewer.append($img);
+            $('#viewer-img').on('load', $.proxy(function(ev) {
+                $('#viewer-container').trigger('wheelzoom.reset');
+                ratio = $('#viewer-img').width() / this_.image.width;
+
+                this_.showLines(ratio);
+                // create a new line
+                $('#viewer-img').on('dblclick', function(ev) {
+                    var box = [
+                        Math.max(0, ev.pageX - $img.offset().left -30) / ratio / wz.scale,
+                        Math.max(0, ev.pageY - $img.offset().top -20) / ratio / wz.scale,
+                        Math.min($img.width() * ratio * wz.scale, ev.pageX - $img.offset().left +30) / ratio / wz.scale,
+                        Math.min($img.height() * ratio * wz.scale, ev.pageY - $img.offset().top +20) / ratio / wz.scale
+                    ];
+                    var box_ = new lineBox(this_, {pk: null, box: box}, ratio);
+                });
+            }, this_));
+        }
     }
 
     static fromPk(pk) {

@@ -73,7 +73,8 @@ class TranscriptionLine {
         if (currentLine) currentLine.editing = false;
         this.editing = true;
         this.showOverlay();
-        
+
+        var content = this.getText();
         currentLine = this;
         // form hidden values
         var selectedTranscription = $('#document-transcriptions').val();
@@ -85,9 +86,7 @@ class TranscriptionLine {
         if (this.order == (lines.length-1)) { $("#trans-modal #next-btn").attr('disabled', true); }
         else { $("#trans-modal #next-btn").attr('disabled', false); }
 
-        // reset width to recalculate ratio
-        $('#modal-img-container').css({width: '100%'});
-        $('#trans-modal #trans-input').froalaEditor('html.set', this.getText());
+        $('#trans-modal #trans-input').froalaEditor('html.set', content);
 
         // fill the history
         var $container = $('#trans-modal #history tbody');
@@ -107,6 +106,9 @@ class TranscriptionLine {
             $('#no-versions').show();
             $('#new-version-btn').prop('disabled', true);
         }
+
+        // reset width to recalculate ratio
+        $('#modal-img-container').css({width: '80%'});
         
         // need to show the modal before calculating sizes
         $('#trans-modal').modal('show');
@@ -119,12 +121,35 @@ class TranscriptionLine {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
         $('#trans-modal #modal-img-container').animate({  // , #trans-modal .fr-box
+            height: originalHeight * ratio + 'px',
+            width: originalWidth * ratio + 'px'
+        });
+
+        $('#trans-modal .fr-box').css({
             fontSize: originalHeight * ratio * 0.7 + 'px',
             lineHeight: originalHeight * ratio + 'px',
             height: originalHeight * ratio + 'px'
         });
-        $('#trans-modal #modal-img-container').css({
-            width: originalWidth * ratio + 'px'});
+
+        var $el = $('#trans-modal .fr-box div.fr-element');
+        $el.css({display: 'inline-block'}); // change to inline-block temporarily to calculate width
+        if (content) {
+            $el.css({
+                transform: 'scaleX('+ originalWidth * ratio / $el.width() +')'
+            });
+        } else {
+            $('#trans-modal .fr-box .fr-placeholder').css({
+                fontSize: originalHeight * ratio * 0.7 + 'px',
+                lineHeight: originalHeight * ratio + 'px',
+                height: originalHeight * ratio + 'px'
+            });
+
+            $el.css({
+                transform: 'none'
+            });
+        }
+        $el.css({display: 'block'});
+        
         $('#trans-modal #line-img').animate({
             left: '-'+this.box[0]*ratio+'px',
             top: '-'+this.box[1]*ratio+'px',

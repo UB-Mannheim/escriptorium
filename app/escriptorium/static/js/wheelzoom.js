@@ -8,7 +8,7 @@ function WheelZoom(container, initial_scale, max_scale){
 	var zoom_point = {x:0, y:0};
     var previousEvent;
     var disabled = false;
-	target.css({transformOrigin: '0 0', transition: 'transform 0.3s'});
+	target.css({transformOrigin: '0 0', transition: 'transform 0.3s', cursor: 'zoom-in'});
 	target.on("mousewheel DOMMouseScroll", scrolled);
     target.on('mousedown', draggable);
     container.on('wheelzoom.reset', reset);

@@ -116,6 +116,7 @@ body {
     position: absolute !important;
     background-color: transparent;
     border: 1px solid red;
+    cursor: pointer;
     overflow: hidden;
 }
 .line-box .close {
@@ -220,11 +221,22 @@ body {
     width: 100%;
 }
 
+#trans-modal .fr-box {
+    padding: 0 0 0 8px;
+}
+#trans-modal .fr-box .fr-element {
+    white-space: nowrap;
+    overflow-x: scroll;
+    padding-right: 20px;
+    transform-origin: 0 0;
+}
+
 .trans-box {
     position: absolute !important;
     background-color: transparent;
     margin: 0;
     padding: 0;
+    cursor: pointer;
 }
 .trans-box span {
     white-space: nowrap;

@@ -410,4 +410,5 @@ class DocumentProcessSettings(models.Model):
 def delete_thumbnails(sender, instance, using, **kwargs):
     thumbnailer = get_thumbnailer(instance.image)
     thumbnailer.delete_thumbnails()
-
+    thumbnailer = get_thumbnailer(instance.bw_image)
+    thumbnailer.delete_thumbnails()

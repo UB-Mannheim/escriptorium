@@ -126,6 +126,7 @@ $(document).ready(function() {
                 "height": "{{ part.image.height}}" },
         thumbnailUrl: "{{ part.image|thumbnail_url:'card' }}",
         bwImgUrl: {% if part.bw_image %}"{{ part.bw_image|thumbnail_url:'large' }}"{% else %}null{% endif %},
+
         updateUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
         partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",

@@ -11,7 +11,7 @@ from django.core.files import File
 from django.utils.translation import gettext as _
 
 from celery import shared_task
-from celery.signals import after_task_publish
+from celery.signals import before_task_publish
 from easy_thumbnails.files import generate_all_aliases
 
 from users.consumers import send_event
@@ -223,6 +223,12 @@ def transcribe(instance_pk, user_pk=None):
     #    TODO: kraken ocr
 
 
-@after_task_publish.connect
+@before_task_publish.connect
 def update_state(sender=None, body=None, **kwargs):
-    redis_.set('process-%d' % body[0][0], kwargs['headers']['id'])
+    redis_.set('process-%d' % body[0][0], kwargs['headers']['id'], ex=60*60*24)
+
+# task_prerun
+# task_postrun
+# task_retry
+# task_success
+# task_failure
