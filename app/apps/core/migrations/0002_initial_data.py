@@ -31,7 +31,7 @@ def backward(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0011_auto_20181212_1730'),
+        ('core', '0001_initial'),
     ]
     
     operations = [
