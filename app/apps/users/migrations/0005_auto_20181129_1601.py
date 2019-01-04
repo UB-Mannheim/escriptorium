@@ -15,4 +15,13 @@ class Migration(migrations.Migration):
             name='email',
             field=models.EmailField(max_length=255, unique=True, verbose_name='email address'),
         ),
+        migrations.AlterModelOptions(
+            name='user',
+            options={},
+        ),
+        migrations.AlterField(
+            model_name='invitation',
+            name='group',
+            field=models.ForeignKey(blank=True, null=True, on_delete=models.deletion.SET_NULL, to='auth.Group', verbose_name='Team'),
+        )
     ]
