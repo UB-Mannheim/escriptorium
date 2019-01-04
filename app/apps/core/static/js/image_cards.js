@@ -21,7 +21,7 @@ class partCard {
         this.workflow_state = part.workflow;
         this.progress = part.progress;
         this.locked = false;
-        this.lines = null;
+        this.lines = [];
         
         var template = document.getElementById('card-template');
         var $new = $('.card', template).clone();
@@ -267,7 +267,7 @@ class partCard {
     showSegmentation() {
         var $img, ratio;
         
-        if (this.lines) {
+        if (this.lines.length) {
             update_(this);
         } else {
             $.get(this.partUrl, $.proxy(function(data) {

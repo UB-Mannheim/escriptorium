@@ -67,7 +67,10 @@ def lossless_compression(self, instance_pk):
         new_name = old_name
     opti_name = filename + '_opti.png'
     # Note: leave it fail it's fine
-    subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
+    try:
+        subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
+    except Exception as e:
+        logger.exception("png optimization failed.")
     os.rename(opti_name, new_name)
     if convert:
         part.image = new_name.split(settings.MEDIA_ROOT)[1][1:]

@@ -19,7 +19,7 @@ RUN apt-get update
 RUN addgroup --system uwsgi
 RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-RUN apt-get install netcat-traditional
+RUN apt-get install netcat-traditional pngcrush
 
 RUN pip install --upgrade pip
 
