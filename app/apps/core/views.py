@@ -115,7 +115,8 @@ class DocumentImages(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
-        context['settings_form'] = DocumentProcessSettingsForm(instance=self.object.process_settings)
+        settings, created = DocumentProcessSettings.objects.get_or_create(document=self.object)
+        context['settings_form'] = DocumentProcessSettingsForm(instance=settings)
         return context
 
 
