@@ -14,12 +14,13 @@ def initial_data(apps, schema_editor):
 
     # fetching kraken default models
     OcrModel = apps.get_model('core', 'OcrModel')
-    error = subprocess.check_call(["kraken", "get", "default"])
-
-    # TODO: ask for ben@kraken to give a higher level function that returns the name of the model
-    default = OcrModel.objects.create(name='default', file='en-default.pronn')
-    if error:
-        raise RuntimeError("Something went wrong during the fetching of kraken models!")
+    try:
+        error = subprocess.check_call(["kraken", "get", "default"])
+    except:
+        pass
+    else:
+        # TODO: ask for ben@kraken to give a higher level function that returns the name of the model
+        default = OcrModel.objects.create(name='default', file='en-default.pronn')
 
 
 def backward(apps, schema_editor):
