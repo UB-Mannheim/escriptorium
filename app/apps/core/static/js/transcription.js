@@ -125,30 +125,24 @@ class TranscriptionLine {
             width: originalWidth * ratio + 'px'
         });
 
-        $('#trans-modal .fr-box').css({
+        // try to make the input match the image
+        $('#trans-modal .fr-box, #trans-modal .fr-box .fr-placeholder').css({
             fontSize: originalHeight * ratio * 0.7 + 'px',
             lineHeight: originalHeight * ratio + 'px',
             height: originalHeight * ratio + 'px'
         });
-
         var $el = $('#trans-modal .fr-box div.fr-element');
-        $el.css({display: 'inline-block'}); // change to inline-block temporarily to calculate width
+        $el.css({width: 'initial', display: 'inline-block'}); // change to inline-block temporarily to calculate width
         if (content) {
+            var scaleX = originalWidth * ratio / $el.width();
             $el.css({
-                transform: 'scaleX('+ originalWidth * ratio / $el.width() +')'
+                transform: 'scaleX('+ scaleX +')',
+                width: 100/scaleX + '%' // fit in the container
             });
         } else {
-            $('#trans-modal .fr-box .fr-placeholder').css({
-                fontSize: originalHeight * ratio * 0.7 + 'px',
-                lineHeight: originalHeight * ratio + 'px',
-                height: originalHeight * ratio + 'px'
-            });
-
-            $el.css({
-                transform: 'none'
-            });
+            $el.css({transform: 'none'});
         }
-        $el.css({display: 'block'});
+        $el.css({display: 'block'}); // revert to block to take the full space available
         
         $('#trans-modal #line-img').animate({
             left: '-'+this.box[0]*ratio+'px',
