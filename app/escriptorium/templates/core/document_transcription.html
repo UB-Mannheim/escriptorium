@@ -96,25 +96,6 @@
   $(document).ready(function() {
     {% for line in part.lines.all %}lines.push(new TranscriptionLine({{line.id}}, {{line.order}}, {{line.box}}, { {% for trans in line.transcriptions.all %}{{trans.transcription.pk}}: {content: "{{trans.content|escapejs}}", versions: {{ trans.versions|jsond|safe|default:"[]" }} }{% endfor %} }, {{ part.image.width }}));
     {% endfor %}
-    // TODO: automatic zoom ?
-    $('#trans-input').froalaEditor({
-        editInPopup: false,
-        multiLine: false,
-        toolbarInline: true,
-        // charCounterCount: false,
-        enter: $.FroalaEditor.ENTER_BR,
-        toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'color', 'undo', 'redo'],
-        toolbarVisibleWithoutSelection: false,
-        editorClass: 'form-control mt-2',
-        zIndex: 3000,
-        iconsTemplate: 'font_awesome_5',
-        codeBeautifierOptions: {
-            end_with_newline: true,
-        },
-        pluginsEnabled: ['colors'],
-        theme: "dark"
-    });
-
 });
 </script>
 {% endblock %}

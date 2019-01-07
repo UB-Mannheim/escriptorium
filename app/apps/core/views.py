@@ -171,12 +171,18 @@ class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
                 version_author=self.request.user.username,
                 content=request.POST['content'])
         else:
-            if lt.version_author != self.request.user.username or request.POST.get('new_version'):
+            if request.POST.get('new_version'):
                 try:
                     lt.new_version()
                 except NoChangeException:
                     return HttpResponse(json.dumps({'status': 'error', 'msg': _('No changes detected.')}),
                                         content_type="application/json")
+                else:
+                    return HttpResponse(json.dumps({'status': 'ok', 'transcription': lt.versions[0]}),
+                                        content_type="application/json")
+                
+            if lt.version_author != self.request.user.username:
+                lt.new_version()
             if 'content' in request.POST:
                 lt.content = request.POST['content']
             lt.save()

@@ -256,4 +256,29 @@ $(document).ready(function() {
         var $tr = 'tr#'+$(ev.target).data('rev');
         $('#trans-modal #trans-input').froalaEditor('html.set', $('.js-version-content', $tr).html());
     });
+
+    // TODO: automatic zoom ?
+    $('#trans-input').froalaEditor({
+        editInPopup: false,
+        multiLine: false,
+        toolbarInline: true,
+        // charCounterCount: false,
+        enter: $.FroalaEditor.ENTER_BR,
+        toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'color', 'undo', 'redo'],
+        toolbarVisibleWithoutSelection: false,
+        editorClass: 'form-control mt-2',
+        zIndex: 3000,
+        iconsTemplate: 'font_awesome_5',
+        codeBeautifierOptions: { end_with_newline: false },
+        pluginsEnabled: ['colors'],
+        theme: "dark"
+    });
+    // ugly: hijack enter key
+    $('#trans-input').froalaEditor('events.on', 'keydown', (e) => {
+        if(e.keyCode == 13) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('#trans-modal #save-continue-btn').click();
+        }
+    }, true);
 });
