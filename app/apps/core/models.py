@@ -226,51 +226,63 @@ class DocumentPart(OrderedModel):
         self.calculate_progress()
         return super().save(*args, **kwargs)
     
-    @cached_property
-    def task_id(self):
-        return redis_.get('process-%d' % self.pk)
+    @property
+    def tasks(self):
+        try:
+            return json.loads(redis_.get('process-%d' % self.pk) or '{}')
+        except json.JSONDecodeError:
+            return []
     
-    def check_processing_state(self):
-        if not self.task_id:
-            return None  # Not processing anything
-        return AsyncResult(self.task_id).status
+    def tasks_finished(self):
+        try:
+            return len([t['status'] not in ['task_success', 'task_failure']
+                        for t in self.tasks.values()]) == 0
+        except (KeyError, TypeError):
+            # self.recover()
+            return True
     
     def in_queue(self):
-        if self.task_id is None:
+        try:
+            return len([t for t in self.tasks.values()
+                        if t['status'] in ['pending', 'before_task_publish']]) > 0
+        except (KeyError, TypeError):
+            # self.recover()
             return False
-        return AsyncResult(self.task_id).status == 'PENDING'
     
     def recover(self):
-        if self.task_id and AsyncResult(self.task_id).failed():
-            if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
-                self.workflow_state = self.WORFLOW_STATE_CREATED
-            elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-                self.workflow_state = self.WORFLOW_STATE_COMPRESSED
-            elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
-                self.workflow_state = self.WORFLOW_STATE_BINARIZED
-            self.save()
+        redis_.delete('process-%d' % self.pk)
+        if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
+            self.workflow_state = self.WORFLOW_STATE_CREATED
+        elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
+            self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+        elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
+            self.workflow_state = self.WORFLOW_STATE_BINARIZED
+        self.save()
+    
+    def chain_tasks(self, *tasks):
+        chain(*tasks).delay()
+        redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
     
     def compress(self):
-        if self.task_id and not AsyncResult(self.task_id).ready():
+        if not self.tasks_finished():
             raise AlreadyProcessingException
         
-        chain(lossless_compression.si(self.pk),
-              generate_part_thumbnails.si(self.pk)).delay()
-
+        self.chain_tasks(lossless_compression.si(self.pk),
+                         generate_part_thumbnails.si(self.pk))
     
     def binarize(self, user_pk=None):
-        if self.task_id and not AsyncResult(self.task_id).ready():
+        if not self.tasks_finished():
             raise AlreadyProcessingException
-        
+
+        tasks = []
         if not self.compressed:
-            chain(lossless_compression.si(self.pk),
-                       generate_part_thumbnails.si(self.pk),
-                       binarize.si(self.pk, user_pk=user_pk)).delay()
-        else:
-            binarize.delay(self.pk, user_pk=user_pk)
+            tasks.append(lossless_compression.si(self.pk))
+            tasks.append(generate_part_thumbnails.si(self.pk))
+        tasks.append(binarize.si(self.pk, user_pk=user_pk))
+        self.chain_tasks(*tasks)
     
     def segment(self, user_pk=None):
-        if self.task_id and not AsyncResult(self.task_id).ready():
+        if not self.tasks_finished():
             raise AlreadyProcessingException
         
         tasks = []
@@ -280,10 +292,10 @@ class DocumentPart(OrderedModel):
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         tasks.append(segment.si(self.pk, user_pk=user_pk))
-        chain(*tasks).delay()
+        self.chain_tasks(*tasks)
     
     def transcribe(self, user_pk=None):
-        if self.task_id and not AsyncResult(self.task_id).ready():
+        if not self.tasks_finished():
             raise AlreadyProcessingException
         
         tasks = []
@@ -295,7 +307,7 @@ class DocumentPart(OrderedModel):
         if not self.segmented:
             tasks.append(segment.si(self.pk, user_pk=user_pk))
         tasks.append(transcribe.si(self.pk, user_pk=user_pk))
-        chain(*tasks).delay()
+        self.chain_tasks(*tasks)
 
 
 class Block(models.Model):

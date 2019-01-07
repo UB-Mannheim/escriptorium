@@ -259,8 +259,11 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                 part.transcribe(user_pk=self.request.user.pk)
             else:
                 part.compress(user_pk=self.request.user.pk)
-        except:
+        except Exception as e:
             # asynchrone stuff should not raise an error here
+            if settings.DEBUG:
+                raise
+            logger.exception("Automatic processing failed.")
             self.request.user.notify(_("Automatic processing failed."), level='danger')
         
         # generate card thumbnail inline because we need it right away

@@ -11,7 +11,7 @@ from django.core.files import File
 from django.utils.translation import gettext as _
 
 from celery import shared_task
-from celery.signals import before_task_publish
+from celery.signals import *
 from easy_thumbnails.files import generate_all_aliases
 
 from users.consumers import send_event
@@ -227,11 +227,22 @@ def transcribe(instance_pk, user_pk=None):
 
 
 @before_task_publish.connect
-def update_state(sender=None, body=None, **kwargs):
-    redis_.set('process-%d' % body[0][0], kwargs['headers']['id'], ex=60*60*24)
+def before_publish_state(sender=None, body=None, **kwargs):
+    instance_id = body[0][0]
+    data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    data[sender] = {
+        "task_id": kwargs['headers']['id'],
+        "status": 'before_task_publish'
+    }
+    redis_.set('process-%d' % instance_id, json.dumps(data))
 
-# task_prerun
-# task_postrun
-# task_retry
-# task_success
-# task_failure
+@task_success.connect
+@task_failure.connect
+def done_state(sender=None, body=None, **kwargs):
+    instance_id = sender.request.args[0]
+    data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    data[sender.name] = {
+        "task_id": sender.request.id,
+        "status": kwargs['signal'].name
+    }
+    redis_.set('process-%d' % instance_id, json.dumps(data))

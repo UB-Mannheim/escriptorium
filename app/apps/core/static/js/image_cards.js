@@ -133,7 +133,7 @@ class partCard {
         if (this.segmented) { this.segmentedButton.removeClass('ongoing').addClass('done').show(); }
         if (this.binarizing || this.segmenting) {
             this.bwImgUrl = null;
-            this.lines = null;
+            this.lines = [];
             this.lock();
             this.queuedButton.hide();
         } else {
