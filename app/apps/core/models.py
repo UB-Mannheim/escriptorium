@@ -235,8 +235,8 @@ class DocumentPart(OrderedModel):
     
     def tasks_finished(self):
         try:
-            return len([t['status'] not in ['task_success', 'task_failure']
-                        for t in self.tasks.values()]) == 0
+            return len([t for t in self.tasks.values()
+                        if t['status'] not in ['task_success', 'task_failure']]) == 0
         except (KeyError, TypeError):
             # self.recover()
             return True
