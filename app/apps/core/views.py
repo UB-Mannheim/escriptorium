@@ -296,7 +296,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
                 'transcriptionUrl': reverse('document-transcription',
                                              kwargs={'pk': self.document.pk, 'part_pk': part.pk}),
                 'inQueue': True,
-                'workflow': 0,
+                'workflow': {},
                 'progress': 0
             }
         }), content_type="application/json")

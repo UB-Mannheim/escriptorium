@@ -17,8 +17,7 @@ class partCard {
         this.deleteUrl = part.deleteUrl;
         this.transcripionUrl = part.transcriptionUrl;
         this.partUrl = part.partUrl;
-        this.inQueue = part.inQueue;
-        this.workflow_state = part.workflow;
+        this.workflow = part.workflow;
         this.progress = part.progress;
         this.locked = false;
         this.lines = [];
@@ -60,15 +59,17 @@ class partCard {
         // workflow icons & progress
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
-        this.queuedButton = $('.js-queued', this.$element);
-        this.progressBar = $('.js-trans-progress .progress-bar', this.$element);
+        this.transcribeButton = $('.js-trans-progress', this.$element);
+        this.progressBar = $('.progress-bar', this.transcribeButton);
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
-        this.setWorkflowStates();
+        this.updateWorkflowIcons();
         this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
-        this.progressBar.parent().click($.proxy(function(ev) {
-            window.location.assign(this.transcripionUrl);
+        this.transcribeButton.click($.proxy(function(ev) {
+            if (this.workflow['transcribe'] == 'done') {
+                window.location.assign(this.transcripionUrl);
+            }
         }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -121,34 +122,49 @@ class partCard {
         }, this));        
     }
 
-    setWorkflowStates() {
-        this.binarizing = this.workflow_state >= 1 && this.workflow_state <= 3;  // user doesn't need to know about compression :p
-        this.binarized = this.workflow_state >= 4;
-        this.segmenting = this.workflow_state == 5;
-        this.segmented = this.workflow_state >= 6;
-        this.transcribing = this.workflow_state == 7;
-        if (this.binarizing) { this.binarizedButton.addClass('ongoing').show(); }
-        if (this.binarized) { this.binarizedButton.removeClass('ongoing').addClass('done').show(); }
-        if (this.segmenting) { this.segmentedButton.addClass('ongoing').show(); }
-        if (this.segmented) { this.segmentedButton.removeClass('ongoing').addClass('done').show(); }
-        if (this.binarizing || this.segmenting) {
-            this.bwImgUrl = null;
-            this.lines = [];
-            this.lock();
-            this.queuedButton.hide();
-        } else {
-            if (this.inQueue) {
-                this.lock();
-                this.queuedButton.show();
+    inQueue() {
+        return ((this.workflow['binarize'] == 'pending' ||
+                 this.workflow['segment'] == 'pending' ||
+                 this.workflow['transcribe'] == 'pending') &&
+                !this.working());
+    }
+
+    working() {
+        return (this.workflow['binarize'] == 'ongoing' ||
+                this.workflow['segment'] == 'ongoing' ||
+                this.workflow['transcribe'] == 'ongoing');
+    }
+    
+    updateWorkflowIcons() {
+        var map = [['binarize', this.binarizedButton],
+                   ['segment', this.segmentedButton],
+                   ['transcribe', this.transcribeButton]];
+        for (var i=0; i < map.length; i++) {
+            var proc = map[i][0], btn = map[i][1];
+            if (this.workflow[proc] == undefined) {
+                btn.hide();
             } else {
-                this.unlock();
-                this.queuedButton.hide();
-            }
+                btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
+                btn.addClass(this.workflow[proc]).show();
+                btn.attr('title', btn.data('title') + ' ('+this.workflow[proc]+')');
+            }            
         }
         
-        if (this.transcribing) {
+        if (this.workflow['binarize'] == 'ongoing' ||
+            this.workflow['segment'] == 'ongoing' ||
+            this.workflow['transcribe'] == 'ongoing') {
+            this.lock();
+        }
+        
+        if (this.inQueue() || this.working()) {
+            this.lock();
+        } else {
+            this.unlock();
+        }
+        
+        if (this.workflow['transcribe'] == 'done') {
             $('#nav-trans-tab').removeClass('disabled');
-            this.progressBar.parent().css('display', 'inline-block');
+            // this.progressBar.parent().css('display', 'inline-block');
         }
     }
     
@@ -483,9 +499,8 @@ $(document).ready(function() {
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
         if (card) {
-            card.workflow_state = data.value;
-            card.inQueue = false;
-            card.setWorkflowStates();
+            card.workflow[data.process] = data.status;
+            card.updateWorkflowIcons();
         } else {
             // we probably received the event before the card was created, retrigger ev in a sec
             setTimeout(function() {

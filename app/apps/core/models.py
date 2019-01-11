@@ -221,7 +221,7 @@ class DocumentPart(OrderedModel):
         if not total:
             return 0
         self.transcription_progress = int(transcribed / total * 100)
-    
+        
     def save(self, *args, **kwargs):
         self.calculate_progress()
         return super().save(*args, **kwargs)
@@ -231,7 +231,39 @@ class DocumentPart(OrderedModel):
         try:
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
-            return []
+            return {}
+        
+    @property
+    def workflow(self):
+        w = {}
+        tasks = self.tasks  # its not cached
+
+        if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
+            w['binarize'] = 'ongoing'        
+        if self.workflow_state > self.WORKFLOW_STATE_BINARIZING:
+            w['binarize'] = 'done'
+        if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
+            w['segment'] = 'ongoing'
+        if self.workflow_state > self.WORKFLOW_STATE_SEGMENTING:
+            w['segment'] = 'done'
+        if self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
+            w['transcribe'] = 'done'
+        
+        # check on redis for reruns
+        for task_name in ['core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
+            if task_name in tasks and tasks[task_name]['status'] == 'pending':
+                w[task_name.split('.')[-1]] = 'pending'
+            if task_name in tasks and tasks[task_name]['status'] == 'before_task_publish':
+                w[task_name.split('.')[-1]] = 'ongoing'
+            elif task_name in tasks and tasks[task_name]['status'] == 'task_failure':
+                w[task_name.split('.')[-1]] = 'error'
+        
+        # client doesnt know about compression
+        if ('core.tasks.lossless_compression' in tasks and
+            tasks['core.tasks.lossless_compression']['status'] == 'before_task_publish'):
+            w['binarize'] = 'ongoing'
+        
+        return w
     
     def tasks_finished(self):
         try:
@@ -242,9 +274,11 @@ class DocumentPart(OrderedModel):
             return True
     
     def in_queue(self):
+        statuses = self.tasks.values()
         try:
-            return len([t for t in self.tasks.values()
-                        if t['status'] in ['pending', 'before_task_publish']]) > 0
+            return (len([t for t in statuses if t['status'] == 'ongoing']) == 0 and
+                    len([t for t in statuses if t['status']
+                         in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
             # self.recover()
             return False
@@ -402,8 +436,10 @@ class DocumentProcessSettings(models.Model):
                                     related_name='process_settings')
     auto_process = models.BooleanField(default=True)
     text_direction = models.CharField(max_length=64, default='horizontal-lr',
-                                      choices=(('horizontal-lr', _("Horizontal")),
-                                               ('vertical-lr', _("Vertical"))))
+                                      choices=(('horizontal-lr', _("Horizontal l2r")),
+                                               ('horizontal-rl', _("Horizontal r2l")),
+                                               ('vertical-lr', _("Vertical l2r")),
+                                               ('vertical-lr', _("Vertical r2l"))))
     binarizer = models.CharField(max_length=64,
                                  choices=(('kraken', _("Kraken")),),
                                  default='kraken')

@@ -134,18 +134,21 @@ body {
     display: inline;
 }
 
-.card .progress {
-    cursor: pointer;
-}
-
 .card .js-binarized, .card .js-segmented, .card .js-queued, .card .js-trans-progress  {
     display: none;
 }
-.card .js-trans-progress { width: 100%; height: 24px; }
-.card .js-trans-progress .progress-bar { line-height: 24px; }
+.card .js-trans-progress {
+    width: 100%;
+    background-color: #EEEEEE;
+    border-radius: 5px;
+}
 
-.card span.ongoing {
-    color: green;
+.card .js-trans-progress .progress-bar {
+    color: var(--dark);
+}
+
+.card .proc.ongoing {
+    color: var(--info);
     animation-duration: 1s;
     animation-name: blink;
     animation-iteration-count: infinite;
@@ -155,9 +158,18 @@ body {
 	from {opacity: 1;}
     to {opacity: 0.2;}
 }
-
-.card span.done {
+.card .proc.error {
+    color: var(--danger);
+}
+.card .proc.pending {
+    color: var(--secondary);
+}
+.card .proc.done {
     cursor: pointer;
+}
+
+.card .proc.done:hover {
+    color: var(--primary);
 }
 
 .ui-resizable-s {

@@ -3,6 +3,7 @@ import logging
 import os.path
 import subprocess
 import redis
+from PIL import Image
 
 from django.apps import apps
 from django.conf import settings
@@ -13,6 +14,7 @@ from django.utils.translation import gettext as _
 from celery import shared_task
 from celery.signals import *
 from easy_thumbnails.files import generate_all_aliases
+from kraken import binarization, pageseg
 
 from users.consumers import send_event
 
@@ -34,10 +36,20 @@ def generate_part_thumbnails(instance_pk):
     generate_all_aliases(part.image, include_global=True)
 
 
-def update_client_state(part):
+def update_client_state(part_id, task, status):
+    if task == 'core.tasks.generate_part_thumbnails':
+        return
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=part_id)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
+        raise
+    task_name = task.split('.')[-1]
     send_event('document', part.document.pk, "part:workflow", {
         "id": part.pk,
-        "value": part.workflow_state
+        "process": 'binarize' if task_name == 'lossless_compression' else task_name,
+        "status": status
     })
 
 
@@ -50,9 +62,9 @@ def lossless_compression(self, instance_pk):
         logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
         raise
 
-    part.workflow_state = part.WORKFLOW_STATE_COMPRESSING
-    part.save()
-    update_client_state(part)
+    if part.workflow_state < part.WORKFLOW_STATE_COMPRESSING:
+        part.workflow_state = part.WORKFLOW_STATE_COMPRESSING
+        part.save()
         
     convert = False
     old_name = part.image.file.name
@@ -78,7 +90,6 @@ def lossless_compression(self, instance_pk):
     if part.workflow_state < part.WORKFLOW_STATE_COMPRESSED:
         part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
         part.save()
-        update_client_state(part)
 
 
 @shared_task
@@ -99,26 +110,31 @@ def binarize(instance_pk, user_pk=None):
         user = None
     
     try:
-        part.workflow_state = part.WORKFLOW_STATE_BINARIZING
-        part.save()
-        update_client_state(part)
+        if part.workflow_state < part.WORKFLOW_STATE_BINARIZING:
+            part.workflow_state = part.WORKFLOW_STATE_BINARIZING
+            part.save()
         
         fname = os.path.basename(part.image.file.name)
+        # should be formated to png already by by lossless_compression but better safe than sorry
+        form = None
+        f_, ext = os.path.splitext(part.image.file.name)
+        if ext[1] in ['.jpg', '.jpeg', '.JPG', '.JPEG', '']:
+            if ext:
+                logger.warning('jpeg does not support 1bpp images. Forcing to png.')
+            form = 'png'
+            fname = '%s.%s' % (f_, form)
         bw_file_name = 'bw_' + fname
         bw_file = os.path.join(os.path.dirname(part.image.file.name), bw_file_name)
-        error = subprocess.check_call(["kraken", "-i", part.image.path,
-                                       bw_file,
-                                       'binarize'])
-        if error:
-            raise RuntimeError("Something went wrong during binarization!")
-        
+        with Image.open(part.image.path) as im:
+            # threshold, zoom, escale, border, perc, range, low, high
+            res = binarization.nlbin(im)
+            res.save(bw_file, format=form)
     except:
         if user:
             user.notify(_("Something went wrong during the binarization!"),
                         id="binarization-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
-        update_client_state(part)
         raise
     else:
         if user:
@@ -127,9 +143,9 @@ def binarize(instance_pk, user_pk=None):
         
         from core.models import document_images_path  # meh
         part.bw_image = document_images_path(part, bw_file_name)
-        part.workflow_state = part.WORKFLOW_STATE_BINARIZED
-        part.save()
-        update_client_state(part)
+        if part.workflow_state < part.WORKFLOW_STATE_BINARIZED:
+            part.workflow_state = part.WORKFLOW_STATE_BINARIZED
+            part.save()
 
 
 @shared_task
@@ -158,28 +174,19 @@ def segment(instance_pk, user_pk=None):
         
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTING
         part.save()
-        update_client_state(part)
         
-        fname = os.path.basename(part.image.file.name)
-        
-        # kraken -i bw.png lines.json segment
-        json_file = '/tmp/' + fname + '.lines.json'
-        error = subprocess.check_call(["kraken", "-i", part.bw_image.file.name, json_file,
-                                       #'--text-direction', text_direction,
-                                       # Error: no such option: --text-direction
-                                       'segment'])   # -script-detection
-        if error:
-            raise RuntimeError("Something went wrong during segmentation!")
-        
-        with open(json_file, 'r') as fh:
-            data = json.loads(fh.read())
-            for line in data['boxes']:
+        with Image.open(part.bw_image.file.name) as im:
+            # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
+            res = pageseg.segment(im)
+            # if script_detect:
+            #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
+            for line in res['boxes']:
                 # block = Block.objects.create(document_part=part)
                 # for line in block_:
                 Line.objects.create(
                     document_part=part,
-                #     # block=block,
-                #     # script=script,
+                    #     # block=block,
+                    #     # script=selfcript,
                     box=line)
     except:
         if user:
@@ -187,7 +194,6 @@ def segment(instance_pk, user_pk=None):
                         id="segmentation-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
-        update_client_state(part)
         raise
     else:
         if user:
@@ -195,7 +201,6 @@ def segment(instance_pk, user_pk=None):
                         id="segmentation-success", level='success')
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
-        update_client_state(part)
 
 
 @shared_task
@@ -219,7 +224,6 @@ def transcribe(instance_pk, user_pk=None):
     Transcription.objects.get_or_create(name='default', document=part.document)
     part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
     part.save()
-    update_client_state(part)
     
     # model = part.select_model()
     #if model:
@@ -235,14 +239,28 @@ def before_publish_state(sender=None, body=None, **kwargs):
         "status": 'before_task_publish'
     }
     redis_.set('process-%d' % instance_id, json.dumps(data))
+    update_client_state(instance_id, sender, 'pending')
 
+
+@task_prerun.connect
 @task_success.connect
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
     instance_id = sender.request.args[0]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    signal_name = kwargs['signal'].name
     data[sender.name] = {
         "task_id": sender.request.id,
-        "status": kwargs['signal'].name
+        "status": signal_name
     }
-    redis_.set('process-%d' % instance_id, json.dumps(data))
+    status = {
+        'task_success': 'done',
+        'task_failure': 'error',
+        'task_prerun': 'ongoing'
+    }[signal_name]
+    if status == 'error':
+        # remove any pending task down the chain
+        data = {k:v for k,v in data.items() if v['status'] != 'pending'}
+    
+    redis_.set('process-%d' % instance_id, json.dumps(data))    
+    update_client_state(instance_id, sender.name, status)

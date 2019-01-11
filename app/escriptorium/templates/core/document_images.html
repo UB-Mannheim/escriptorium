@@ -86,11 +86,10 @@
         {% endcomment %}
       </form>
       <div class="d-flex mt-2">
-        <span class="js-queued" title="{% trans "Queued" %}">{% trans "Queued" %}</span>
-        <span class="js-binarized" title="{% trans 'Binarized' %}"><i class="fas fa-adjust"></i></span>
-        <span class="ml-2 js-segmented" title="{% trans 'Segmented' %}"><i class="fas fa-align-left"></i></span>
-        <span class="progress ml-2 js-trans-progress" title="{% trans 'Transcription progress' %}">
-          <span class="progress-bar text-dark" title="{% trans 'Transcription progress' %}" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
+        <span class="proc js-binarized" data-title="{% trans 'Binarization' %}"><i class="fas fa-adjust"></i></span>
+        <span class="proc ml-2 js-segmented" data-title="{% trans 'Segmentation' %}"><i class="fas fa-align-left"></i></span>
+        <span class="proc ml-2 js-trans-progress" data-title="{% trans 'Transcription' %}">
+          <span class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
         </span>
       </div>
     </div>
@@ -131,8 +130,7 @@ $(document).ready(function() {
         deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
         partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
         transcriptionUrl: "{% url 'document-transcription' pk=object.pk part_pk=part.pk %}",
-        workflow: {{ part.workflow_state }},
-        inQueue: {% if part.in_queue %}true{% else %}false{% endif %},
+        workflow: {{ part.workflow|safe }},
         progress: {{ part.transcription_progress }}
     });
     {% endfor %}
