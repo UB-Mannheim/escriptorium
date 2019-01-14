@@ -269,7 +269,7 @@ class partCard {
             $viewer.append($img);
         }
         $('#viewer-img').on('load', $.proxy(function(ev) {
-            $('#viewer-container').trigger('wheelzoom.reset');
+            $('#viewer-container').trigger('wheelzoom.refresh');
         }, this));
     }
 
@@ -300,7 +300,7 @@ class partCard {
             $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
             $viewer.append($img);
             $('#viewer-img').on('load', $.proxy(function(ev) {
-                $('#viewer-container').trigger('wheelzoom.reset');
+                $('#viewer-container').trigger('wheelzoom.refresh');
                 ratio = $('#viewer-img').width() / this_.image.width;
 
                 this_.showLines(ratio);
@@ -587,5 +587,5 @@ $(document).ready(function() {
         });
     });
 
-    wz = WheelZoom($('#viewer-container'));
+    wz = WheelZoom($('#viewer-container'), 1);
 });

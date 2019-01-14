@@ -1,23 +1,27 @@
 'use strict';
 
-function WheelZoom(container, initial_scale, max_scale){
+function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
     var factor = 0.2;
 	var target = container.children().first();
-	var size = {w:target.width(), h:target.height()};
+    initial_scale = initial_scale || 1;
+    var min_scale = min_scale_opt || Math.min($(window).width() / target.width() * initial_scale * 0.9,
+                                              $(window).height() / target.height() * initial_scale * 0.9);
+	var size = {w:target.width() * initial_scale, h:target.height() * initial_scale};
 	var zoom_target = {x:0, y:0};
 	var zoom_point = {x:0, y:0};
     var previousEvent;
     var disabled = false;
 	target.css({transformOrigin: '0 0', transition: 'transform 0.3s', cursor: 'zoom-in'});
-	target.on("mousewheel DOMMouseScroll", scrolled);
-    target.on('mousedown', draggable);
+	container.on("mousewheel DOMMouseScroll", scrolled);
+    container.on('mousedown', draggable);
     container.on('wheelzoom.reset', reset);
+    container.on('wheelzoom.refresh', refresh);
     container.on('wheelzoom.destroy', destroy);
     container.on('wheelzoom.disable', disable);
     container.on('wheelzoom.enable', enable);
 
     var api = {
-        scale: initial_scale || 1,
+        scale: initial_scale,
         pos: {x:0, y:0}
     };
     
@@ -33,15 +37,15 @@ function WheelZoom(container, initial_scale, max_scale){
 	      delta = -e.originalEvent.detail;
 	    }
         // cap the delta to [-1,1] for cross browser consistency
-	    delta = Math.max(-1,Math.min(1,delta)); 
-
+	    delta = Math.max(-1, Math.min(1, delta));
+        
 	    // determine the point on where the slide is zoomed in
 	    zoom_target.x = (zoom_point.x - api.pos.x)/ api.scale;
 	    zoom_target.y = (zoom_point.y - api.pos.y)/ api.scale;
       
 	    // apply zoom
 	    api.scale += delta * factor * api.scale;
-	    api.scale = Math.max(1, api.scale);
+	    api.scale = Math.max(min_scale, api.scale);
         if (max_scale) {
             Math.min(max_scale, api.scale);
         }
@@ -64,8 +68,8 @@ function WheelZoom(container, initial_scale, max_scale){
 
 	function removeDrag() {
         target.removeClass('notransition');
-		target.off('mouseup', removeDrag);
-		target.off('mousemove', drag);
+		container.off('mouseup', removeDrag);
+		container.off('mousemove', drag);
 	}
 
 	function draggable(e) {
@@ -73,17 +77,27 @@ function WheelZoom(container, initial_scale, max_scale){
 		previousEvent = e;
         // disable transition while dragging
         target.addClass('notransition');
-		target.on('mousemove', drag);
-		target.on('mouseup', removeDrag);
+		container.on('mousemove', drag);
+		container.on('mouseup', removeDrag);
 	}
     
 	function updateStyle() {
-	    // Make sure the slide stays in its container area when zooming out
-	    if(api.pos.x>0) api.pos.x = 0;
-	    if(api.pos.x+size.w*api.scale<size.w) api.pos.x = -size.w*(api.scale-1);
-	    if(api.pos.y>0) api.pos.y = 0;
-	    if(api.pos.y+size.h*api.scale<size.h) api.pos.y = -size.h*(api.scale-1);
-
+	    // Make sure the slide stays in its container area when zooming in/out
+        if (api.scale > 1) {
+	        if(api.pos.x > 0) { api.pos.x = 0; }
+	        if(api.pos.x+size.w*api.scale < container.width()) { api.pos.x = -size.w*(api.scale-1); }
+            if(api.pos.y > 0) { api.pos.y = 0; }
+	        if(api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
+        } else {
+	        if(api.pos.x < 0) { api.pos.x = 0; }
+	        if(api.pos.x+size.w*api.scale > container.width()) { api.pos.x = -size.w*(api.scale-1); }
+            
+            if(size.h*api.scale >= container.height() && api.pos.y > 0) { api.pos.y = 0; }
+            if(size.h*api.scale <= container.height() && api.pos.y < 0) { api.pos.y = 0; }
+	        if(size.h*api.scale >= container.height() && api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
+            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }
+        }
+          
         // apply scale first for transition effect
         target.css('transform','scale('+api.scale+')');
 		target.css('transform','translate('+(api.pos.x)+'px,'+(api.pos.y)+'px) scale('+api.scale+')');
@@ -96,13 +110,20 @@ function WheelZoom(container, initial_scale, max_scale){
         container.get(0).dispatchEvent(event);
 	}
 
+    function refresh() {
+        size = {w: target.width(), h: target.height()};
+        min_scale = min_scale_opt || Math.min($(window).width() / target.width() * initial_scale * 0.9,
+                                              $(window).height() / target.height() * initial_scale * 0.9);
+        updateStyle();
+    }
+    
     function reset() {
         api.pos = {x:0, y:0};
 	    api.scale = initial_scale || 1;
         size = {w: target.width(), h: target.height()};
         updateStyle();
     }
-
+    
     function disable() {
         disabled = true;
     }
@@ -112,9 +133,10 @@ function WheelZoom(container, initial_scale, max_scale){
     }
     
     function destroy() {
-        target.off("mousewheel DOMMouseScroll", scrolled);
-        target.off('mousedown', draggable);
+        container.off("mousewheel DOMMouseScroll", scrolled);
+        container.off('mousedown', draggable);
         container.off('wheelzoom.reset', reset);
+        container.off('wheelzoom.refresh', refresh);
         container.off('wheelzoom.destroy', destroy);
         container.off('wheelzoom.disable', disable);
         container.off('wheelzoom.enable', enable);
