@@ -107,6 +107,16 @@ body {
     border: 1px solid rgba(0,0,0,.125);
     /* height: calc(100vh - 80px); */
 }
+#viewer-buttons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    opacity: 0.3;
+}
+#viewer-buttons:hover {
+    opacity: 1;
+}
 
 #viewer {
     padding: 0;

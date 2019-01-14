@@ -14,21 +14,21 @@
 
 {% block nav_content %}
 <div id="dropzone">
-  {% render_field settings_form.auto_process class="js-proc-settings" data_document=object.pk %}
+  {% render_field settings_form.auto_process class="js-proc-settings" data_document=object.pk group=True %}
   {# render_field settings_form.typology class="js-proc-settings" data_document=object.pk #}
     
   <form action="{% url 'document-upload-image' pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
     <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
   </form>
-
+  
   <div class="d-flex">
     <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
     <button id="train-selected" class="btn btn-sm btn-success mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
-    <button id="transcribe-selected" class="btn btn-sm btn-success mr-1 js-proc-selected" data-proc="transcribe" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
+    <button id="transcribe-selected" class="btn btn-sm btn-success js-proc-selected" data-proc="transcribe" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
   </div>
 </div>
 
@@ -38,8 +38,16 @@
 </div>
 
 {# viewer #}
-<div id="viewer-container" class="col-12 my-3">
+<div id="viewer-container" class="col-12 my-3">  
   <div id="viewer"><img id="viewer-img" width="100%"/></div>
+  <div id="viewer-buttons" class="d-flex m-2">
+    <button id="viewer-prev" title="{% trans 'Previous' %}" class="btn btn-sm btn-secondary mr-1"><i class="fas fa-arrow-left"></i></button>
+    <button id="viewer-next" title="{% trans 'Next' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-arrow-right"></i></button>
+    <button id="viewer-reset" title="{% trans 'Reset zoom' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-home"></i></button>
+    <button id="viewer-binarization" title="{% trans 'See binarization.' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-adjust"></i></button>
+    <button id="viewer-segmentation" title="{% trans 'See segmentation.' %}" class="btn btn-sm btn-secondary mr-1"><i class="fas fa-align-left"></i></button>
+    <button id="viewer-create-line" title="{% trans 'Create a new line.' %}" class="btn btn-sm btn-primary mr-1"><i class="fas fa-plus-circle"></i></button>
+  </div>
 </div>
 {% endblock %}
 
@@ -108,7 +116,7 @@ $(document).ready(function() {
         msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
     });
 
-    {% for part in object.parts.all %}
+    {% for part in object.parts.all %}{% spaceless %}
     new partCard({
         pk: {{ part.pk }},
         name: "{{ part.name }}",
@@ -127,7 +135,7 @@ $(document).ready(function() {
         workflow: {{ part.workflow|safe }},
         progress: {{ part.transcription_progress }}
     });
-    {% endfor %}
+    {% endspaceless %}{% endfor %}
 });
 </script>
 {% endblock %}

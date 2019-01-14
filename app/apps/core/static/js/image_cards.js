@@ -2,7 +2,7 @@
 
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
-var wz, lastSelected = null;
+var wz, lastSelected = null, viewing=null;
 
 class partCard {
     constructor(part) {
@@ -268,6 +268,15 @@ class partCard {
             var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
             $viewer.append($img);
         }
+        viewing = {index: this.index, mode:'bw'};
+        if (this.index == 0) { $('#viewer-prev').attr('disabled', true); }
+        else { $('#viewer-prev').attr('disabled', false); }
+        if (this.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
+        else { $('#viewer-next').attr('disabled', false); }
+        $('#viewer-create-line').hide();
+        $('#viewer-binarization').hide();
+        $('#viewer-segmentation').show();
+        
         $('#viewer-img').on('load', $.proxy(function(ev) {
             $('#viewer-container').trigger('wheelzoom.refresh');
         }, this));
@@ -293,16 +302,25 @@ class partCard {
                 update_(this);
             }, this));
         }
-
+        
         function update_(this_) {
             var $viewer = $('#viewer');
             $viewer.empty();
             $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
             $viewer.append($img);
+            
+            viewing = {index: this_.index, mode:'seg'};
+            if (this_.index == 0) { $('#viewer-prev').attr('disabled', true); }
+            else { $('#viewer-prev').attr('disabled', false); }
+            if (this_.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
+            else { $('#viewer-next').attr('disabled', false); }
+            $('#viewer-create-line').show();
+            $('#viewer-binarization').show();
+            $('#viewer-segmentation').hide();
+            
             $('#viewer-img').on('load', $.proxy(function(ev) {
                 $('#viewer-container').trigger('wheelzoom.refresh');
                 ratio = $('#viewer-img').width() / this_.image.width;
-
                 this_.showLines(ratio);
                 // create a new line
                 $('#viewer-img').on('dblclick', function(ev) {
@@ -578,5 +596,38 @@ $(document).ready(function() {
         });
     });
 
+    // zoom
     wz = WheelZoom($('#viewer-container'), 1);
+
+    // viewer buttons
+    $('#viewer-prev').click(function(ev) {
+        if (viewing && viewing.index > 0) {
+            var card = $('#cards-container .card:eq('+(viewing.index-1)+')').data('partCard');
+            if (viewing.mode == 'bw') { card.showBW(); }
+            else if(viewing.mode == 'seg') { card.showSegmentation(); }
+        }
+    });
+    $('#viewer-next').click(function(ev) {
+        if (viewing && viewing.index < $('#cards-container .card').length) {
+            var card = $('#cards-container .card:nth('+(viewing.index+1)+')').data('partCard');
+            if (viewing.mode == 'bw') { card.showBW(); }
+            else if(viewing.mode == 'seg') { card.showSegmentation(); }
+        }
+    });
+    $('#viewer-reset').click(function(ev) {
+        $('#viewer-container').trigger('wheelzoom.reset');
+    });
+    $('#viewer-binarization').click(function(ev) {
+        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
+        if (viewing.mode != 'bw') { card.showBW(); }
+    });
+    $('#viewer-segmentation').click(function(ev) {
+        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
+        if(viewing.mode != 'seg') { card.showSegmentation(); }
+    });
+    $('#viewer-create-line').click(function(ev) {
+        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
+        var lb = new lineBox(card, {pk: null, box: [50, 100, 400, 200]}, $('#viewer-img').width() / card.image.width);
+        lb.select();
+    });
 });
