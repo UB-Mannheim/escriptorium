@@ -14,35 +14,21 @@
 
 {% block nav_content %}
 <div id="dropzone">
+  {% render_field settings_form.auto_process class="js-proc-settings" data_document=object.pk %}
+  {# render_field settings_form.typology class="js-proc-settings" data_document=object.pk #}
+    
   <form action="{% url 'document-upload-image' pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
     <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
   </form>
-  
-  <a data-toggle="collapse" href="#advancedForm" role="button" aria-expanded="false" aria-controls="collapseForm">
-    {% trans "Show advanced options" %}
-  </a>
-  <div class="card">
-    <div id="advancedForm" class="collapse" aria-labelledby="headingOne" data>
-      <form method="post" action="{% url 'document-process-settings-update' pk=object.pk %}">
-        <div class="card-body form-inline">                
-          {% csrf_token %}
-          {{ settings_form.document }}
-          {% render_field settings_form.auto_process %}
-          {% render_field settings_form.text_direction %}
-          {% render_field settings_form.typology %}
-          {% render_field settings_form.binarizer %}
-          {% render_field settings_form.ocrmodel %}
-        </div>
-      </form>
-      <div class="card-footer">
-        <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
-        <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
-        <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
-        <button id="segment-selected" class="btn btn-sm btn-primary mr-1" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
-        <button id="transcribe-selected" class="btn btn-sm btn-success mr-1" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Ready" %}</button>
-      </div>
-    </div>
+
+  <div class="d-flex">
+    <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
+    <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
+    <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
+    <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
+    <button id="train-selected" class="btn btn-sm btn-success mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <button id="transcribe-selected" class="btn btn-sm btn-success mr-1 js-proc-selected" data-proc="transcribe" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
   </div>
 </div>
 
@@ -96,6 +82,12 @@
   </div>
   <div class="dropable js-drop"></div>
 </div>
+
+{# Process wizards #}
+{% include 'core/wizards/binarize.html' with proc='binarize' %}
+{% include 'core/wizards/segment.html' with proc='segment' %}
+{% include 'core/wizards/train.html' with proc='train' %}
+{% include 'core/wizards/transcribe.html' with proc='transcribe' %}
 {% endblock %}
 
 {% block scripts %}
@@ -107,7 +99,9 @@
 <script src="{% static 'js/wheelzoom.js' %}"></script>
 <script type="text/javascript">
 'use strict';
+var processSettingsUrl = "{% url 'document-process-settings-update' pk=object.pk %}";
 var processDocumentPartsUrl = "{% url 'document-parts-process' pk=object.pk %}";
+
 $(document).ready(function() {
     // join the ws room
     msgSocket.addEventListener('open', function(ev) {

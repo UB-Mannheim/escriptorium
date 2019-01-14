@@ -434,7 +434,7 @@ class OcrModel(models.Model):
 class DocumentProcessSettings(models.Model):
     document = models.OneToOneField(Document, on_delete=models.CASCADE,
                                     related_name='process_settings')
-    auto_process = models.BooleanField(default=True)
+    auto_process = models.BooleanField(default=False)
     text_direction = models.CharField(max_length=64, default='horizontal-lr',
                                       choices=(('horizontal-lr', _("Horizontal l2r")),
                                                ('horizontal-rl', _("Horizontal r2l")),

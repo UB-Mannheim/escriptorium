@@ -13,15 +13,17 @@ class BootstrapFormMixin():
                     'placeholder': field.label,
                     'title': field.label
                 })
-                if 'class' in field.widget.attrs:
-                    field.widget.attrs['class'] += ' form-control'
+                class_ = field.widget.attrs.get('class', '')
+                if field.widget.__class__.__name__ == 'CheckboxInput':
+                    class_ += ' form-check-input'
                 else:
-                    field.widget.attrs['class'] = 'form-control'
-                if field.widget.input_type in ['select', 'checkbox']:
+                    class_ += ' form-control'
+                    if field.widget.__class__.__name__ == 'Select':
+                        class_  += ' custom-select'
+                if field.widget.input_type == 'select':
                     field.widget.need_label = True
-                if field.widget.__class__.__name__ == 'Select':
-                    field.widget.attrs['class'] += ' custom-select'
-    
+
+                field.widget.attrs['class'] = class_
     def full_clean(self):
         super().full_clean()
         if self._errors:

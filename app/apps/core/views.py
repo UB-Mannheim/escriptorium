@@ -264,7 +264,7 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
             if self.document.process_settings.auto_process:
                 part.transcribe(user_pk=self.request.user.pk)
             else:
-                part.compress(user_pk=self.request.user.pk)
+                part.compress()
         except Exception as e:
             # asynchrone stuff should not raise an error here
             if settings.DEBUG:
@@ -354,7 +354,7 @@ class DocumentProcessSettingsUpdateAjax(LoginRequiredMixin, UpdateView):
     model = DocumentProcessSettings
     form_class = DocumentProcessSettingsForm
     http_method_names = ('post',)
-
+    
     def get_object(self):
         try:
             document = Document.objects.get(pk=self.kwargs['pk'])

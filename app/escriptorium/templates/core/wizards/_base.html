@@ -1,0 +1,24 @@
+{% load i18n %}
+<div class="modal fade" id="{{proc}}-wizard" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      {% comment %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{% block wizard_title %}{% endblock %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endcomment %}
+      <div class="modal-body">
+        <p class="text-help"><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
+        {% block wizard_help %}{% endblock %}
+        {% block wizard_fields %}{% endblock %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <input data-proc="{{ proc }}" type="submit" value="{% block wizard_submit %}{% endblock %}" class="btn btn-primary js-submit-proc">
+      </div>
+    </div>
+  </div>
+</div>

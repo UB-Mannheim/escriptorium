@@ -530,9 +530,12 @@ $(document).ready(function() {
     });
     
     // settings form update
-    $('#advancedForm input,select').change(function(ev) {
-        var $form = $(ev.target).parents('form');
-        $.post($form.attr('action'), $form.serialize());
+    $('input.js-proc-settings, select.js-proc-settings').change(function(ev) {
+        var $input = $(ev.target);
+        var post = {};
+        post['document'] = $input.data('document');
+        post[$input.attr('name')] = $input.val();
+        $.post(processSettingsUrl, post);
     });
     
     // processor buttons
@@ -548,42 +551,30 @@ $(document).ready(function() {
             $(el).data('partCard').unselect();
         });
     });
-    $('#binarize-selected').click(function(ev) {
+
+    $('.js-proc-selected').click(function(ev) {
+        var proc = $(ev.target).data('proc');
+        var selected_num = partCard.getSelectedPks().length;
+        if(selected_num > 0) {
+            // update selected count
+            $('#selected-num', '#'+proc+'-wizard').text(selected_num);
+            $('#'+proc+'-wizard').modal('show');
+        } else {
+            alert('Select at least one image.');
+        }
+    });
+    $('.js-submit-proc').click(function(ev) {
+        var proc = $(ev.target).data('proc');
+        $('#'+proc+'-wizard').modal('hide');
         $.post(processDocumentPartsUrl, {
             'parts': partCard.getSelectedPks(),
-            'process': 'binarize'
+            'process': proc
         }).done(function(data) {
-            console.log('binarization process', data.status);
+            console.log(proc+' process', data.status);
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
             if (data.status == 'error') { alert(data.error); }
             console.log('Something went wrong :(', data);
-        });
-    });
-    $('#segment-selected').click(function(ev) {
-        // $('select[name=text_direction]', '#dropzone').val()
-        $.post(processDocumentPartsUrl, {
-            'parts': partCard.getSelectedPks(),
-            'process': 'segment'
-        }).done(function(data) {
-            console.log('binarization process', data.status);
-        }).fail(function(xhr) {
-            var data = xhr.responseJSON;
-            if (data.status == 'error') { alert(data.error); }
-            console.log('Something went wrong :(');
-        });
-    });
-    $('#transcribe-selected').click(function(ev) {
-        // $('select[name=text_direction]', '#dropzone').val()
-        $.post(processDocumentPartsUrl, {
-            'parts': partCard.getSelectedPks(),
-            'process': 'transcribe'
-        }).done(function(data) {
-            console.log('transcription process', data.status);
-        }).fail(function(xhr) {
-            var data = xhr.responseJSON;
-            if (data.status == 'error') { alert(data.error); }
-            console.log('Something went wrong :(');
         });
     });
 

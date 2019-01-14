@@ -87,6 +87,7 @@ class DocumentProcessSettingsForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['typology'].initial = Typology.objects.get(name="Page")
         self.fields['typology'].widget.attrs['title'] = _("Default Typology")
         self.fields['binarizer'].widget.attrs['disabled'] = True
+        self.fields['text_direction'].required = False
         self.fields['binarizer'].required = False
 
 
