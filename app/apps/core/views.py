@@ -116,7 +116,7 @@ class DocumentImages(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
         settings, created = DocumentProcessSettings.objects.get_or_create(document=self.object)
-        context['settings_form'] = DocumentProcessSettingsForm(instance=settings)
+        context['settings_form'] = DocumentProcessForm(instance=settings, user=self.request.user)
         return context
 
 
@@ -350,28 +350,6 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
         return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
 
 
-class DocumentProcessSettingsUpdateAjax(LoginRequiredMixin, UpdateView):
-    model = DocumentProcessSettings
-    form_class = DocumentProcessSettingsForm
-    http_method_names = ('post',)
-    
-    def get_object(self):
-        try:
-            document = Document.objects.get(pk=self.kwargs['pk'])
-        except Document.DoesNotExist:
-            raise Http404
-        settings, created = DocumentProcessSettings.objects.get_or_create(document=document)
-        return settings
-    
-    def form_invalid(self, form):
-        return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
-                            content_type="application/json", status=400)
-    
-    def form_valid(self, form):
-        form.save()
-        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
-
-
 class DocumentPartsProcessAjax(LoginRequiredMixin, View):
     http_method_names = ('post',)
     
@@ -384,26 +362,20 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
         except (Document.DoesNotExist, DocumentPart.DoesNotExist):
             return HttpResponse(json.dumps({'status': 'Not Found'}),
                                 status=404, content_type="application/json")
-
-        pks = self.request.POST.getlist('parts[]')
-        # Note: necessary to check permissions to process said part
-        parts = DocumentPart.objects.filter(document=document, pk__in=pks)
-        process = self.request.POST['process']
-        try:
-            if process == 'binarize':
-                for part in parts:
-                    part.binarize(user_pk=self.request.user.pk)
-            elif process == 'segment':
-                for part in parts:
-                    part.segment(user_pk=self.request.user.pk)
-            elif process == 'transcribe':
-                for part in parts:
-                    part.transcribe(user_pk=self.request.user.pk)
-        except AlreadyProcessingException:
-            return HttpResponse(json.dumps({'status': 'error', 'error': 'Already processing.'}),
-                                content_type="application/json", status=400)
         
-        return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+        settings, created = DocumentProcessSettings.objects.get_or_create(document=document)
+        form = DocumentProcessForm(self.request.user, self.request.POST, self.request.FILES,
+                                   instance=settings)
+        if form.is_valid():
+            try:
+                form.process()
+            except AlreadyProcessingException:
+                return HttpResponse(json.dumps({'status': 'error', 'error': 'Already processing.'}),
+                                    content_type="application/json", status=400)
+            return HttpResponse(json.dumps({'status': 'ok'}), content_type="application/json")
+        else:
+            return HttpResponse(json.dumps({'status': 'error', 'error': json.dumps(form.errors)}),
+                                content_type="application/json", status=400)
 
 
 class DocumentDetail(DetailView):

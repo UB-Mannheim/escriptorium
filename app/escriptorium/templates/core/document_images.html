@@ -107,9 +107,6 @@
 <script src="{% static 'js/wheelzoom.js' %}"></script>
 <script type="text/javascript">
 'use strict';
-var processSettingsUrl = "{% url 'document-process-settings-update' pk=object.pk %}";
-var processDocumentPartsUrl = "{% url 'document-parts-process' pk=object.pk %}";
-
 $(document).ready(function() {
     // join the ws room
     msgSocket.addEventListener('open', function(ev) {

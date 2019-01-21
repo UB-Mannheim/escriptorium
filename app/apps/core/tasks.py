@@ -93,7 +93,7 @@ def lossless_compression(self, instance_pk):
 
 
 @shared_task
-def binarize(instance_pk, user_pk=None):
+def binarize(instance_pk, user_pk=None, binarizer=None):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -149,7 +149,7 @@ def binarize(instance_pk, user_pk=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None):
+def segment(instance_pk, user_pk=None, text_direction=None):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -177,7 +177,10 @@ def segment(instance_pk, user_pk=None):
         
         with Image.open(part.bw_image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
-            res = pageseg.segment(im)
+            options = {}
+            if text_direction:
+                options['text_direction'] = text_direction
+            res = pageseg.segment(im, **options)
             # if script_detect:
             #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
             for line in res['boxes']:

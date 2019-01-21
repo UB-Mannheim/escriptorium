@@ -192,13 +192,13 @@ class partCard {
 
     lock() {
         this.locked = true;
-        this.$element.css({opacity: 0.5});
+        this.$element.addClass('locked');
         this.$element.attr('draggable', false);
         // $('input', this.updateForm).get(0).disabled = true;
     }
     unlock() {
         this.locked = false;
-        this.$element.css({opacity: ""});
+        this.$element.removeClass('locked');
         this.$element.attr('draggable', true);
         // $('input', this.updateForm).get(0).disabled = false;
     }
@@ -547,15 +547,6 @@ $(document).ready(function() {
         }
     });
     
-    // settings form update
-    $('input.js-proc-settings, select.js-proc-settings').change(function(ev) {
-        var $input = $(ev.target);
-        var post = {};
-        post['document'] = $input.data('document');
-        post[$input.attr('name')] = $input.val();
-        $.post(processSettingsUrl, post);
-    });
-    
     // processor buttons
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
@@ -569,33 +560,46 @@ $(document).ready(function() {
             $(el).data('partCard').unselect();
         });
     });
-
+    
     $('.js-proc-selected').click(function(ev) {
         var proc = $(ev.target).data('proc');
         var selected_num = partCard.getSelectedPks().length;
         if(selected_num > 0) {
             // update selected count
             $('#selected-num', '#'+proc+'-wizard').text(selected_num);
+            if (selected_num != 1) { $('#id_bw_image').attr('disabled', true); }
+            else { $('#id_bw_image').attr('disabled', false); }
+            
+            // Reset the form
+            $('.process-part-form', '#'+proc+'-wizard').get(0).reset();
+            
             $('#'+proc+'-wizard').modal('show');
         } else {
             alert('Select at least one image.');
         }
     });
-    $('.js-submit-proc').click(function(ev) {
-        var proc = $(ev.target).data('proc');
+    $('.process-part-form').submit(function(ev) {
+        ev.preventDefault();
+        var $form = $(ev.target);
+        var proc = $form.data('proc');
+        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         $('#'+proc+'-wizard').modal('hide');
-        $.post(processDocumentPartsUrl, {
-            'parts': partCard.getSelectedPks(),
-            'process': proc
+        console.log($form, $form.get(0));
+
+        $.ajax({
+            url : $form.attr('action'),
+            type: "POST",
+            data : new FormData($form.get(0)),
+            processData: false,
+            contentType: false
         }).done(function(data) {
             console.log(proc+' process', data.status);
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
             if (data.status == 'error') { alert(data.error); }
-            console.log('Something went wrong :(', data);
         });
     });
-
+    
     // zoom
     wz = WheelZoom($('#viewer-container'), 1);
 

@@ -17,7 +17,7 @@ urlpatterns = [
     path('document/<int:pk>/share/', ShareDocument.as_view(), name='document-share'),
     path('document/<int:pk>/update/upload-image/', UploadImageAjax.as_view(), name='document-upload-image'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(), name='document-parts-process'),
-    path('document/<int:pk>/process/settings/', DocumentProcessSettingsUpdateAjax.as_view(), name='document-process-settings-update'),
+    # path('document/<int:pk>/process/settings/', DocumentProcessSettingsUpdateAjax.as_view(), name='document-process-settings-update'),
     path('document/<int:pk>/part/<int:part_pk>/', DocumentPartAjax.as_view(), name='document-part'),
     path('document/<int:pk>/part/<int:part_pk>/delete/', DeleteDocumentPartAjax.as_view(), name='document-part-delete'),
 ]

@@ -2,7 +2,14 @@
 {% load i18n bootstrap %}
 
 {% block wizard_fields %}
-{% render_field settings_form.binarizer class="js-proc-settings" data_document=object.pk %}
+<div class="form-group">
+  <h5>{% trans "Manually" %}</h5>
+  {% render_field settings_form.bw_image class="js-proc-settings" %}
+</div>
+<div class="form-group">
+  <h5>{% trans "Or automatically" %}</h5>
+  {% render_field settings_form.binarizer class="js-proc-settings" %}
+</div>
 {% endblock %}
 
-{% block wizard_submit %}{% trans "Binarize" %}{% endblock %}
+{% block wizard_submit %}{% trans "Upload or Binarize" %}{% endblock %}

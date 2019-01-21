@@ -237,9 +237,9 @@ class DocumentPart(OrderedModel):
     def workflow(self):
         w = {}
         tasks = self.tasks  # its not cached
-
+        
         if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            w['binarize'] = 'ongoing'        
+            w['binarize'] = 'ongoing'
         if self.workflow_state > self.WORKFLOW_STATE_BINARIZING:
             w['binarize'] = 'done'
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
@@ -253,14 +253,14 @@ class DocumentPart(OrderedModel):
         for task_name in ['core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
             if task_name in tasks and tasks[task_name]['status'] == 'pending':
                 w[task_name.split('.')[-1]] = 'pending'
-            if task_name in tasks and tasks[task_name]['status'] == 'before_task_publish':
+            if task_name in tasks and tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
                 w[task_name.split('.')[-1]] = 'ongoing'
             elif task_name in tasks and tasks[task_name]['status'] == 'task_failure':
                 w[task_name.split('.')[-1]] = 'error'
         
         # client doesnt know about compression
         if ('core.tasks.lossless_compression' in tasks and
-            tasks['core.tasks.lossless_compression']['status'] == 'before_task_publish'):
+            tasks['core.tasks.lossless_compression']['status'] in ['before_task_publish', 'task_prerun']):
             w['binarize'] = 'ongoing'
         
         return w
@@ -304,18 +304,18 @@ class DocumentPart(OrderedModel):
         self.chain_tasks(lossless_compression.si(self.pk),
                          generate_part_thumbnails.si(self.pk))
     
-    def binarize(self, user_pk=None):
+    def binarize(self, user_pk=None, binarizer=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
-
+        
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
             tasks.append(generate_part_thumbnails.si(self.pk))
-        tasks.append(binarize.si(self.pk, user_pk=user_pk))
+        tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
-    def segment(self, user_pk=None):
+    def segment(self, user_pk=None, text_direction=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -325,7 +325,7 @@ class DocumentPart(OrderedModel):
             tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
-        tasks.append(segment.si(self.pk, user_pk=user_pk))
+        tasks.append(segment.si(self.pk, user_pk=user_pk, text_direction=text_direction))
         self.chain_tasks(*tasks)
     
     def transcribe(self, user_pk=None):

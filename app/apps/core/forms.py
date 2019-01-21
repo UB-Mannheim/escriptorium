@@ -75,20 +75,57 @@ class DocumentPartUpdateForm(forms.ModelForm):
         return super().save(*args, **kwargs)
 
 
-class DocumentProcessSettingsForm(BootstrapFormMixin, forms.ModelForm):
+class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
+    task = forms.ChoiceField(choices=(
+        ('binarize', 'test'),
+        ('segment', 'test'),
+        ('train', 'test'),
+        ('transcribe', 'test')))
+    parts = forms.CharField()
+    bw_image = forms.ImageField(required=False)
+    
     class Meta:
         model = DocumentProcessSettings
         fields = '__all__'
-
-    def __init__(self, *args, **kwargs):
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
         self.fields['document'].widget = forms.HiddenInput()
         self.fields['typology'].widget = forms.HiddenInput()  # for now
         self.fields['typology'].initial = Typology.objects.get(name="Page")
         self.fields['typology'].widget.attrs['title'] = _("Default Typology")
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['text_direction'].required = False
         self.fields['binarizer'].required = False
+        self.fields['text_direction'].required = False
+    
+    def clean_bw_img(self):
+        img = self.cleaned_data.get('bw_image')
+        with Image.open(img) as fh:
+            if fh.mode not in ['1', 'L']:
+                raise forms.ValidationError(_("Uploaded image should be black and white."))
+        return img
+    
+    def process(self):
+        self.save()  # save settings
+        task = self.cleaned_data.get('task')
+        document = self.cleaned_data.get('document')
+        pks = json.loads(self.cleaned_data.get('parts'))
+        parts = DocumentPart.objects.filter(document=document, pk__in=pks)
+        if task == 'binarize':
+            if len(parts) == 1 and self.cleaned_data.get('bw_image'):
+                parts[0].bw_image = self.cleaned_data['bw_image']
+                parts[0].save()
+            else:
+                for part in parts:
+                    part.binarize(user_pk=self.user.pk)
+        elif task == 'segment':
+            for part in parts:
+                part.segment(user_pk=self.user.pk,
+                             text_direction=self.cleaned_data['text_direction'])
+        elif task == 'transcribe':
+            for part in parts:
+                part.transcribe(user_pk=self.user.pk)
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):

@@ -10,15 +10,20 @@
         </button>
       </div>
       {% endcomment %}
-      <div class="modal-body">
-        <p class="text-help"><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
-        {% block wizard_help %}{% endblock %}
-        {% block wizard_fields %}{% endblock %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <input data-proc="{{ proc }}" type="submit" value="{% block wizard_submit %}{% endblock %}" class="btn btn-primary js-submit-proc">
-      </div>
+      <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="process-part-form" method="post" action="{% url 'document-parts-process' pk=object.pk %}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <p class="text-help"><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
+          {% block wizard_help %}{% endblock %}
+          <input type="hidden" name="document" value="{{ object.pk }}"/>
+          <input type="hidden" name="parts" value=""/>
+          <input type="hidden" name="task" value="{{ proc }}"/>
+          {% block wizard_fields %}{% endblock %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <input type="submit" value="{% block wizard_submit %}{% endblock %}" class="btn btn-primary js-submit-proc">
+        </div>
+      </form>
     </div>
   </div>
 </div>

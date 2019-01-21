@@ -75,6 +75,10 @@ body {
     display: none;
 }
 
+.card.locked {
+    border: 2px solid var(--dark);
+}
+
 .card .js-edit {
     opacity: 0.5;
     position: absolute;
@@ -97,6 +101,11 @@ body {
     left: 0;
     background-color: transparent;
     border: 0;
+}
+
+.process-part-form h5 {
+    color: var(--secondary);
+    text-align: center;
 }
 
 #viewer-container {

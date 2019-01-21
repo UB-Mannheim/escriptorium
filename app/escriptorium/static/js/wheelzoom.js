@@ -4,8 +4,9 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
     var factor = 0.2;
 	var target = container.children().first();
     initial_scale = initial_scale || 1;
-    var min_scale = min_scale_opt || Math.min($(window).width() / target.width() * initial_scale * 0.9,
-                                              $(window).height() / target.height() * initial_scale * 0.9);
+    var min_scale = min_scale_opt || Math.min(
+        $(window).width() / target.width() * initial_scale * 0.9,
+        $(window).height() / target.height() * initial_scale * 0.9);
 	var size = {w:target.width() * initial_scale, h:target.height() * initial_scale};
 	var zoom_target = {x:0, y:0};
 	var zoom_point = {x:0, y:0};
@@ -112,8 +113,9 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
 
     function refresh() {
         size = {w: target.width(), h: target.height()};
-        min_scale = min_scale_opt || Math.min($(window).width() / target.width() * initial_scale * 0.9,
-                                              $(window).height() / target.height() * initial_scale * 0.9);
+        min_scale = min_scale_opt || Math.min(
+            $(window).width() / (size.w * initial_scale) * 0.9,
+            $(window).height() / (size.h * initial_scale) * 0.9);
         updateStyle();
     }
     
