@@ -107,6 +107,9 @@ body {
     color: var(--secondary);
     text-align: center;
 }
+.process-part-form .help-text {
+    padding: 0.5rem;
+}
 
 #viewer-container {
     margin: 0;

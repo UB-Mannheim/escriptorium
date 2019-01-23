@@ -82,14 +82,20 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         ('train', 'test'),
         ('transcribe', 'test')))
     parts = forms.CharField()
+    # binarization
     bw_image = forms.ImageField(required=False)
+    # training
+    new_model = forms.CharField(required=False, label=_('Name'))
+    upload_model = forms.FileField(required=False)
+    train_model = forms.ModelChoiceField(required=False, queryset=None)
     
     class Meta:
         model = DocumentProcessSettings
         fields = '__all__'
     
-    def __init__(self, user, *args, **kwargs):
+    def __init__(self, document, user, *args, **kwargs):
         self.user = user
+        self.document = document
         super().__init__(*args, **kwargs)
         self.fields['document'].widget = forms.HiddenInput()
         self.fields['typology'].widget = forms.HiddenInput()  # for now
@@ -98,6 +104,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['binarizer'].widget.attrs['disabled'] = True
         self.fields['binarizer'].required = False
         self.fields['text_direction'].required = False
+        self.fields['train_model'].queryset = OcrModel.objects.filter(document=self.document)
     
     def clean_bw_img(self):
         img = self.cleaned_data.get('bw_image')
@@ -109,9 +116,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     def process(self):
         self.save()  # save settings
         task = self.cleaned_data.get('task')
-        document = self.cleaned_data.get('document')
         pks = json.loads(self.cleaned_data.get('parts'))
-        parts = DocumentPart.objects.filter(document=document, pk__in=pks)
+        parts = DocumentPart.objects.filter(document=self.document, pk__in=pks)
         if task == 'binarize':
             if len(parts) == 1 and self.cleaned_data.get('bw_image'):
                 parts[0].bw_image = self.cleaned_data['bw_image']
@@ -123,6 +129,16 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
             for part in parts:
                 part.segment(user_pk=self.user.pk,
                              text_direction=self.cleaned_data['text_direction'])
+        elif task == 'train':
+            if self.cleaned_data.get('upload_model'):
+                # create corresponding OcrModel
+                pass
+            elif self.cleaned_data.get('new_model'):
+                # create model and corresponding OcrModel
+                pass
+            elif self.cleaned_data.get('train_model'):
+                pass
+            # part.train(user_pk=self.user.pk, model=None)
         elif task == 'transcribe':
             for part in parts:
                 part.transcribe(user_pk=self.user.pk)

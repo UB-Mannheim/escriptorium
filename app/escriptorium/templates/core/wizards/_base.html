@@ -12,9 +12,13 @@
       {% endcomment %}
       <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="process-part-form" method="post" action="{% url 'document-parts-process' pk=object.pk %}" enctype="multipart/form-data">
         <div class="modal-body">
-          <p class="text-help"><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
-          {% block wizard_help %}{% endblock %}
-          <input type="hidden" name="document" value="{{ object.pk }}"/>
+          <p><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
+          <div class="alert alert-primary help-text">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            {% block wizard_help %}{% endblock %}
+          </div>
           <input type="hidden" name="parts" value=""/>
           <input type="hidden" name="task" value="{{ proc }}"/>
           {% block wizard_fields %}{% endblock %}

@@ -116,7 +116,8 @@ class DocumentImages(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
         settings, created = DocumentProcessSettings.objects.get_or_create(document=self.object)
-        context['settings_form'] = DocumentProcessForm(instance=settings, user=self.request.user)
+        context['settings_form'] = DocumentProcessForm(self.object, self.request.user,
+                                                       instance=settings)
         return context
 
 
@@ -364,7 +365,8 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
                                 status=404, content_type="application/json")
         
         settings, created = DocumentProcessSettings.objects.get_or_create(document=document)
-        form = DocumentProcessForm(self.request.user, self.request.POST, self.request.FILES,
+        form = DocumentProcessForm(document, self.request.user, 
+                                   self.request.POST, self.request.FILES,
                                    instance=settings)
         if form.is_valid():
             try:

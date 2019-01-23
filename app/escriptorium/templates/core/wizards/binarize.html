@@ -1,6 +1,12 @@
 {% extends 'core/wizards/_base.html' %}
 {% load i18n bootstrap %}
 
+{% block wizard_help %}
+<p>{% blocktrans %}Binarization is a mandatory step before segmentation, the output is a black and white image.{% endblocktrans %}</p>
+<hr>
+(TODO: PLACEHOLDER)
+{% endblock %}
+
 {% block wizard_fields %}
 <div class="form-group">
   <h5>{% trans "Manually" %}</h5>

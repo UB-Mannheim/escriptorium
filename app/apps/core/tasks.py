@@ -205,7 +205,11 @@ def segment(instance_pk, user_pk=None, text_direction=None):
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
 
+@shared_task
+def train(model, pks, user_pk=None):
+    pass
 
+ 
 @shared_task
 def transcribe(instance_pk, user_pk=None):
     try:

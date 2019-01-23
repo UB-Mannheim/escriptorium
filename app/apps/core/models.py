@@ -426,6 +426,8 @@ class OcrModel(models.Model):
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['clstm', 'pronn'])])
     trained = models.BooleanField(default=False)
+    document = models.ForeignKey(Document, null=True, default=None,
+                                 on_delete=models.SET_NULL)
     
     def __str__(self):
         return self.name

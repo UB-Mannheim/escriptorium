@@ -1,6 +1,10 @@
 {% extends 'core/wizards/_base.html' %}
 {% load i18n bootstrap %}
 
+{% block wizard_help %}
+(TODO: PLACEHOLDER)
+{% endblock %}
+
 {% block wizard_fields %}
 {% render_field settings_form.ocrmodel class="js-proc-settings" data_document=object.pk %}
 {% endblock %}
