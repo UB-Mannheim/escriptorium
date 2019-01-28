@@ -284,6 +284,8 @@ class partCard {
         $('#viewer-img').on('load', $.proxy(function(ev) {
             $('#viewer-container').trigger('wheelzoom.refresh');
         }, this));
+
+        $viewer.parent().show();
     }
 
     showLines(ratio) {
@@ -362,6 +364,8 @@ class partCard {
                     newBox(ev, 'line'); });
             }, this_));
         }
+
+        $('#viewer').parent().show();
     }
 
     static fromPk(pk) {

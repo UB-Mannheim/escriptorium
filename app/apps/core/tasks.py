@@ -149,7 +149,13 @@ def binarize(instance_pk, user_pk=None, binarizer=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None, text_direction=None):
+def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
+    """
+    steps can be either 'regions', 'lines' or 'both'
+    """
+    if steps not in ['regions', 'lines', 'both']:
+         raise ValueError("Invalid value for argument 'steps'.")
+    
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -168,9 +174,12 @@ def segment(instance_pk, user_pk=None, text_direction=None):
     try:
         Block = apps.get_model('core', 'Block')
         Line = apps.get_model('core', 'Line')
+        
+        blocks = Block.objects.filter(document_part=part)
         # cleanup pre-existing
         part.lines.all().delete()
-        Block.objects.filter(document_part=part).delete()
+        if steps in ['regions', 'lines']:
+            blocks.delete()
         
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTING
         part.save()
@@ -180,17 +189,24 @@ def segment(instance_pk, user_pk=None, text_direction=None):
             options = {}
             if text_direction:
                 options['text_direction'] = text_direction
-            res = pageseg.segment(im, **options)
-            # if script_detect:
-            #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
-            for line in res['boxes']:
-                # block = Block.objects.create(document_part=part)
-                # for line in block_:
-                Line.objects.create(
-                    document_part=part,
-                    #     # block=block,
-                    #     # script=selfcript,
-                    box=line)
+            
+            if blocks:
+                for block in blocks:
+                    ic = im.crop(block.box)
+                    res = pageseg.segment(ic, **options)
+                    # if script_detect:
+                    #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
+                    for line in res['boxes']:
+                        Line.objects.create(document_part=part, block=block,
+                                            box=(line[0]+block.box[0], line[1]+block.box[1],
+                                                 line[2]+block.box[0], line[3]+block.box[1]))
+            else:
+                res = pageseg.segment(im, **options)
+                res['block'] = None
+                for line in res['boxes']:
+                    Line.objects.create(document_part=part, box=line)
+                    
+
     except:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),

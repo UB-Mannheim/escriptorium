@@ -379,7 +379,7 @@ class Line(OrderedModel):  # Versioned,
     
     class Meta(OrderedModel.Meta):
         pass
-
+    
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
     
