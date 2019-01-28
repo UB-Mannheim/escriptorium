@@ -137,29 +137,33 @@ body {
     transform-origin: top left;
 }
 
-.line-box {
+.box {
     position: absolute !important;
-    background-color: transparent;
-    border: 1px solid red;
     cursor: pointer;
     overflow: hidden;
 }
-.line-box .close {
+.box .close {
     display: none;
 }
 
-.line-box.selected {
-    border: 0;
-    outline: 9999px solid rgba(0, 0, 0, 0.3); 
-    /* backdrop-filter: none; */
-    /* background-attachment: scroll; */
-    background-repeat: none;
+.block-box {
+    opacity: 0.2;
+    z-index: 2;
 }
-.line-box.selected .close {
+.line-box {
+    z-index: 3;
+}
+
+.box.selected {
+    border: 1px dashed;
+    outline: 9999px solid rgba(0, 0, 0, 0.5);
+}
+
+.box.selected .close {
     display: inline;
 }
 
-.card .js-binarized, .card .js-segmented, .card .js-queued, .card .js-trans-progress  {
+.card .js-binarized, .card .js-trans-progress  {
     display: none;
 }
 .card .js-trans-progress {
@@ -189,7 +193,7 @@ body {
 .card .proc.pending {
     color: var(--secondary);
 }
-.card .proc.done {
+.card .proc.js-segmented, .card .proc.done {
     cursor: pointer;
 }
 

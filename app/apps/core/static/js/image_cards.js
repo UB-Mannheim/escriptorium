@@ -3,6 +3,7 @@
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var wz, lastSelected = null, viewing=null;
+var boxMode = 'block';
 
 class partCard {
     constructor(part) {
@@ -20,6 +21,7 @@ class partCard {
         this.workflow = part.workflow;
         this.progress = part.progress;
         this.locked = false;
+        this.blocks = [];
         this.lines = [];
         
         var template = document.getElementById('card-template');
@@ -142,7 +144,8 @@ class partCard {
         for (var i=0; i < map.length; i++) {
             var proc = map[i][0], btn = map[i][1];
             if (this.workflow[proc] == undefined) {
-                btn.hide();
+                btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
+                btn.attr('title', btn.data('title'));
             } else {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.addClass(this.workflow[proc]).show();
@@ -258,6 +261,7 @@ class partCard {
         $viewer.empty();
         if (!this.bwImgUrl) {
             $.get(this.partUrl, $.proxy(function(data) {
+                this.blocks = data.blocks;
                 this.lines = data.lines;
                 this.bwImgUrl = data.bwImgUrl;
                 this.image = data.image;
@@ -274,7 +278,7 @@ class partCard {
         if (this.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
         else { $('#viewer-next').attr('disabled', false); }
         $('#viewer-create-line').hide();
-        $('#viewer-binarization').hide();
+        $('#viewer-binarization, #viewer-blocks-lines').hide();
         $('#viewer-segmentation').show();
         
         $('#viewer-img').on('load', $.proxy(function(ev) {
@@ -283,10 +287,13 @@ class partCard {
     }
 
     showLines(ratio) {
-        var line;
         for (var i=0; i<this.lines.length; i++) {
-            line = this.lines[i];
-            new lineBox(this, line, ratio);
+            new Box('line', this, this.lines[i], ratio);
+        }
+    }
+    showBlocks(ratio) {
+        for (var i=0; i<this.blocks.length; i++) {
+            new Box('block', this, this.blocks[i], ratio);
         }
     }
     showSegmentation() {
@@ -296,6 +303,7 @@ class partCard {
             update_(this);
         } else {
             $.get(this.partUrl, $.proxy(function(data) {
+                this.blocks = data.blocks;
                 this.lines = data.lines;
                 this.bwImgUrl = data.bwImgUrl;
                 this.image = data.image;
@@ -315,23 +323,43 @@ class partCard {
             if (this_.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
             else { $('#viewer-next').attr('disabled', false); }
             $('#viewer-create-line').show();
-            $('#viewer-binarization').show();
+            if (this_.bwImgUrl) {
+                $('#viewer-binarization').show();
+            } else {
+                $('#viewer-binarization').hide();
+            }
+            $('#viewer-blocks-lines').show();
             $('#viewer-segmentation').hide();
             
             $('#viewer-img').on('load', $.proxy(function(ev) {
                 $('#viewer-container').trigger('wheelzoom.refresh');
                 ratio = $('#viewer-img').width() / this_.image.width;
+                this_.showBlocks(ratio);
                 this_.showLines(ratio);
-                // create a new line
-                $('#viewer-img').on('dblclick', function(ev) {
+                // create a new block/line
+                function newBox(ev, mode) {
                     var box = [
                         Math.max(0, ev.pageX - $img.offset().left -30) / ratio / wz.scale,
                         Math.max(0, ev.pageY - $img.offset().top -20) / ratio / wz.scale,
                         Math.min($img.width() * ratio * wz.scale, ev.pageX - $img.offset().left +30) / ratio / wz.scale,
                         Math.min($img.height() * ratio * wz.scale, ev.pageY - $img.offset().top +20) / ratio / wz.scale
                     ];
-                    var box_ = new lineBox(this_, {pk: null, box: box}, ratio);
-                });
+                    var block = null;
+                    if ($(ev.target).is('.block-box')) { block = $(ev.target).data('Box').pk; };
+                    var box_ = new Box(mode, this_, {pk: null, order: this_.blocks.length,
+                                                     box: box, block: block}, ratio);
+                    if (mode == 'block') {
+                        this_.blocks.push(box_);
+                    } else if (mode == 'line') {
+                        this_.lines.push(box_);
+                    }
+                }
+                
+                $('#viewer').on('dblclick', function(ev) {
+                    newBox(ev, boxMode); });
+                $('.block-box', '#viewer').on('dblclick', function(ev) {
+                    ev.stopPropagation();
+                    newBox(ev, 'line'); });
             }, this_));
         }
     }
@@ -357,19 +385,42 @@ class partCard {
     }
 }
 
-class lineBox {
-    constructor(part, line, imgRatio) {
+// TODO: choose colors based on average color of image
+var colors = ['blue', 'green', 'cyan', 'indigo', 'purple', 'pink', 'orange', 'yellow', 'teal'];
+class Box {
+    constructor(type, part, obj, imgRatio) {
+        this.type = type; // can be either block or line
         this.part = part;
-        this.pk = line.pk;
+        this.pk = obj.pk;
+        this.order = obj.order;
+        if (this.type == 'line') {
+            for (var i=0; i<this.part.blocks.length; i++) {
+                if (obj.block == this.part.blocks[i].pk) {
+                    this.block = this.part.blocks[i];
+                    break;
+                }
+            }
+        } else {
+            this.block = null;
+        }
         this.imgRatio = imgRatio;
         this.changed = false;
         this.click = {x: null, y:null};
-        this.originalWidth = (line.box[2] - line.box[0]) * imgRatio;
-        var $box = $('<div class="line-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
-        $box.css({'left': line.box[0] * imgRatio,
-                  'top': line.box[1] * imgRatio,
-                  'width': (line.box[2] - line.box[0]) * imgRatio,
-                  'height': (line.box[3] - line.box[1]) * imgRatio});
+        this.originalWidth = (obj.box[2] - obj.box[0]) * imgRatio;
+        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
+        $box.css({'left': obj.box[0] * imgRatio,
+                  'top': obj.box[1] * imgRatio,
+                  'width': (obj.box[2] - obj.box[0]) * imgRatio,
+                  'height': (obj.box[3] - obj.box[1]) * imgRatio});
+        var color;
+        if (this.type == 'block') {
+            color = colors[this.order % colors.length];
+            $box.css({backgroundColor: color});
+        } else if (this.type == 'line') {
+            if (this.block == null) { color = 'red'; }
+            else { color = colors[this.block.order % colors.length]; }
+            $box.css({border: '2px solid '+color});
+        }
         $box.draggable({
             disabled: true,
             containment: 'parent',
@@ -403,7 +454,7 @@ class lineBox {
             }
         });
         
-        $box.data('lineBox', this);
+        $box.data('Box', this);
         $box.appendTo($('#viewer'));
         this.$element = $box;
         // we need to keep references to be able to unbind it
@@ -451,8 +502,8 @@ class lineBox {
     }
     select() {
         if (this.$element.is('.selected')) return;
-        var previous = $('.line-box.selected');
-        if (previous.length) { previous.data('lineBox').unselect(); }
+        var previous = $('.box.selected');
+        if (previous.length) { previous.data('Box').unselect(); }
         this.$element.addClass('selected');
         this.$element.draggable('enable');
         this.$element.resizable('enable');
@@ -466,14 +517,25 @@ class lineBox {
         this.$element.draggable('disable');
         this.$element.resizable('disable');
         if (this.changed) {
-            this.part.upload({lines: JSON.stringify([{pk: this.pk, box: this.getBox()}])});
+            if (this.type == 'block') {
+                this.part.upload({blocks: JSON.stringify([{pk: this.pk,
+                                                           box: this.getBox()}])});
+            } else if (this.type == 'line') {
+                this.part.upload({lines: JSON.stringify([{pk: this.pk,
+                                                          block: this.block.pk,
+                                                          box: this.getBox()}])});
+            }
             this.changed = false;
         }
     }
     delete() {
         if (!confirm("Do you really want to delete this line?")) { return; }
-        if (this.pk !== null) { 
-            this.part.upload({lines: JSON.stringify([{pk: this.pk, delete: true}])});
+        if (this.pk !== null) {
+            if (this.type == 'block') {
+                this.part.upload({blocks: JSON.stringify([{pk: this.pk, delete: true}])});
+            } else if (this.type == 'line') {
+                this.part.upload({lines: JSON.stringify([{pk: this.pk, delete: true}])});
+            }
         }
         $(document).unbind('keyup', this.proxykeyboard);
         $(document).off('click', this.proxyUnselect);
@@ -584,8 +646,6 @@ $(document).ready(function() {
         var proc = $form.data('proc');
         $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         $('#'+proc+'-wizard').modal('hide');
-        console.log($form, $form.get(0));
-
         $.ajax({
             url : $form.attr('action'),
             type: "POST",
@@ -629,9 +689,22 @@ $(document).ready(function() {
         var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
         if(viewing.mode != 'seg') { card.showSegmentation(); }
     });
+    $('#viewer-blocks').click(function(ev) {
+        $('.block-box').toggle();
+        $('#viewer-blocks').toggleClass('btn-primary').toggleClass('btn-secondary');
+    });
+    $('#viewer-lines').click(function(ev) {
+        $('.line-box').toggle();
+        $('#viewer-lines').toggleClass('btn-primary').toggleClass('btn-secondary');
+    });
+    $('#viewer-create-block').click(function(ev) {
+        $('#viewer-create-line').removeClass('btn-success').addClass('btn-secondary');
+        $('#viewer-create-block').removeClass('btn-secondary').addClass('btn-success');
+        boxMode = 'block';
+    });
     $('#viewer-create-line').click(function(ev) {
-        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
-        var lb = new lineBox(card, {pk: null, box: [50, 100, 400, 200]}, $('#viewer-img').width() / card.image.width);
-        lb.select();
+        $('#viewer-create-block').removeClass('btn-success').addClass('btn-secondary');
+        $('#viewer-create-line').removeClass('btn-secondary').addClass('btn-success');
+        boxMode = 'line';
     });
 });

@@ -326,8 +326,12 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
             'image': {'url': image_url,
                       'width': self.object.image.width,
                       'height': self.object.image.height},
-            'bwImgUrl': getattr(self.object.bw_image, 'url'),
-            'lines': [{'pk': line.pk, 'box': line.box}
+            'bwImgUrl': self.object.bw_image and  self.object.bw_image.url or None,
+            'blocks': [{'pk': block.pk, 'order': block.order, 'box': block.box}
+                       for block in self.object.blocks.all()],
+            'lines': [{'pk': line.pk, 'order': line.order,
+                       'block': line.block and line.block.pk or None,
+                       'box': line.box}
                       for line in self.object.lines.all()]
         }), content_type="application/json")
 

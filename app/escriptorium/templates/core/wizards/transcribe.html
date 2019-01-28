@@ -2,11 +2,19 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-(TODO: PLACEHOLDER)
+<p>{% blocktrans %}{% endblocktrans %}</p>
 {% endblock %}
 
 {% block wizard_fields %}
-{% render_field settings_form.ocrmodel class="js-proc-settings" data_document=object.pk %}
+<div class="form-group">
+  <h5>{% trans "New model" %}</h5>
+  {% render_field settings_form.upload_model class="js-proc-settings" data_document=object.pk %}
+</div>
+
+<div class="form-group">
+  <h5>{% trans "Or existing model" %}</h5>
+  {% render_field settings_form.ocr_model class="js-proc-settings" data_document=object.pk %}
+</div>
 {% endblock %}
 
 {% block wizard_submit %}{% trans "Transcribe" %}{% endblock %}

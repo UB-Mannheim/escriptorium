@@ -6,7 +6,8 @@
 {% endblock %}
 
 {% block wizard_fields %}
-{% render_field settings_form.text_direction class="js-proc-settings" data_document=object.pk %}
+{% render_field settings_form.segmentation_steps class="js-proc-settings" %}
+{% render_field settings_form.text_direction class="js-proc-settings" %}
 {% endblock %}
 
 {% block wizard_submit %}{% trans "Segment" %}{% endblock %}

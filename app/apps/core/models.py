@@ -158,7 +158,9 @@ class DocumentPart(OrderedModel):
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
     bw_backend = models.CharField(max_length=128, default='kraken')
-    bw_image = models.ImageField(upload_to=document_images_path, null=True, blank=True)
+    bw_image = models.ImageField(upload_to=document_images_path,
+                                 null=True, blank=True,
+                                 help_text=_("Binarized image needs to be the same size as original image."))
     typology = models.ForeignKey(Typology, null=True, blank=True,
                                  on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
@@ -344,20 +346,21 @@ class DocumentPart(OrderedModel):
         self.chain_tasks(*tasks)
 
 
-class Block(models.Model):
+class Block(OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic 
     example: a paragraph, a margin note or floating text
-    A Block is not directly bound to a DocumentPart to avoid a useless join or denormalization
-    when fetching the content of a DocumentPart.
     """
+    # box = models.BoxField()  # in case we use PostGIS
+    box = JSONField()
     typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_BLOCK})
-    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE)
-    
-    def box(self):
-        # TODO
-        return None
+    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
+                                      related_name='blocks')
+    order_with_respect_to = 'document_part'
+
+    class Meta(OrderedModel.Meta):
+        pass
 
 
 class Line(OrderedModel):  # Versioned, 
@@ -366,7 +369,8 @@ class Line(OrderedModel):  # Versioned,
     """
     # box = models.BoxField()  # in case we use PostGIS
     box = JSONField()
-    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE, related_name='lines')
+    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
+                                      related_name='lines')
     block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
@@ -445,9 +449,12 @@ class DocumentProcessSettings(models.Model):
     binarizer = models.CharField(max_length=64,
                                  choices=(('kraken', _("Kraken")),),
                                  default='kraken')
-    ocrmodel = models.ForeignKey(OcrModel, verbose_name=_("Model"),
-                                 null=True, blank=True, on_delete=models.SET_NULL,
-                                 limit_choices_to={'trained': True})
+    ocr_model = models.ForeignKey(OcrModel, verbose_name=_("Model"),
+                                  related_name='settings_ocr',
+                                  null=True, blank=True, on_delete=models.SET_NULL)
+    train_model = models.ForeignKey(OcrModel, verbose_name=_("Model"),
+                                    related_name='settings_train',
+                                    null=True, blank=True, on_delete=models.SET_NULL)
     typology = models.ForeignKey(Typology,
                                  null=True, blank=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_PART})
