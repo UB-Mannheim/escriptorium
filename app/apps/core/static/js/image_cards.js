@@ -598,6 +598,10 @@ $(document).ready(function() {
         paramName: "image",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
+    imageDropzone.on('sending', function(file, xhr, formData){
+        formData.append('auto_process', $('#auto_process').get(0).checked);
+    });
+    
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
         if (data.status === 'ok') {

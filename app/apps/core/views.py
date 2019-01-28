@@ -262,7 +262,8 @@ class UploadImageAjax(LoginRequiredMixin, CreateView):
         part.save()
 
         try:
-            if self.document.process_settings.auto_process:
+            auto_process = self.request.POST.get('auto_process', False)
+            if auto_process != 'false':  # meh
                 part.transcribe(user_pk=self.request.user.pk)
             else:
                 part.compress()

@@ -48,7 +48,7 @@ def update_client_state(part_id, task, status):
     task_name = task.split('.')[-1]
     send_event('document', part.document.pk, "part:workflow", {
         "id": part.pk,
-        "process": 'binarize' if task_name == 'lossless_compression' else task_name,
+        "process": task_name,
         "status": status
     })
 
