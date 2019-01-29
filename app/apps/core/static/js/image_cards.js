@@ -217,6 +217,9 @@ class partCard {
             .done($.proxy(function(data) {
                 // we moved it optimistically
                 this.previousIndex = null;
+                // update client block/line pk and order
+                this.blocks = data.blocks;
+                this.lines = data.lines;
             }, this))
             .fail($.proxy(function(xhr) {
                 // fly it back
@@ -288,30 +291,27 @@ class partCard {
         $viewer.parent().show();
     }
 
-    showLines(ratio) {
-        for (var i=0; i<this.lines.length; i++) {
-            new Box('line', this, this.lines[i], ratio);
-        }
-    }
     showBlocks(ratio) {
-        for (var i=0; i<this.blocks.length; i++) {
-            new Box('block', this, this.blocks[i], ratio);
-        }
+        Object.keys(this.blocks).forEach($.proxy(function(pk) {
+            new Box('block', this, pk, this.blocks[pk], ratio);
+        }, this));
     }
+    showLines(ratio) {
+        Object.keys(this.lines).forEach($.proxy(function(pk) {
+            new Box('line', this, pk, this.lines[pk], ratio);
+        }, this));
+    }
+    
     showSegmentation() {
         var $img, ratio;
         
-        if (this.lines.length) {
+        $.get(this.partUrl, $.proxy(function(data) {
+            this.blocks = data.blocks;
+            this.lines = data.lines;
+            this.bwImgUrl = data.bwImgUrl;
+            this.image = data.image;
             update_(this);
-        } else {
-            $.get(this.partUrl, $.proxy(function(data) {
-                this.blocks = data.blocks;
-                this.lines = data.lines;
-                this.bwImgUrl = data.bwImgUrl;
-                this.image = data.image;
-                update_(this);
-            }, this));
-        }
+        }, this));
         
         function update_(this_) {
             var $viewer = $('#viewer');
@@ -339,7 +339,7 @@ class partCard {
                 this_.showBlocks(ratio);
                 this_.showLines(ratio);
                 // create a new block/line
-                function newBox(ev, mode) {
+                function createBox(ev, mode) {
                     var box = [
                         Math.max(0, ev.pageX - $img.offset().left -30) / ratio / wz.scale,
                         Math.max(0, ev.pageY - $img.offset().top -20) / ratio / wz.scale,
@@ -347,21 +347,21 @@ class partCard {
                         Math.min($img.height() * ratio * wz.scale, ev.pageY - $img.offset().top +20) / ratio / wz.scale
                     ];
                     var block = null;
-                    if ($(ev.target).is('.block-box')) { block = $(ev.target).data('Box').pk; };
-                    var box_ = new Box(mode, this_, {pk: null, order: this_.blocks.length,
-                                                     box: box, block: block}, ratio);
-                    if (mode == 'block') {
-                        this_.blocks.push(box_);
-                    } else if (mode == 'line') {
-                        this_.lines.push(box_);
-                    }
+                    if ($(ev.target).is('.block-box')) {
+                        block = $(ev.target).data('Box').pk;
+                    };
+                    var box_ = new Box(mode, this_, null, {
+                        order: Object.keys(this_.blocks).length,
+                        box: box,
+                        block: block}, ratio);
+                    box_.changed = true;  // makes sure it's saved
                 }
                 
                 $('#viewer').on('dblclick', function(ev) {
-                    newBox(ev, boxMode); });
-                $('.block-box', '#viewer').on('dblclick', function(ev) {
+                    createBox(ev, boxMode); });
+                $('#viewer').on('dblclick', '.block-box', function(ev) {
                     ev.stopPropagation();
-                    newBox(ev, 'line'); });
+                    createBox(ev, 'line'); });
             }, this_));
         }
 
@@ -392,21 +392,12 @@ class partCard {
 // TODO: choose colors based on average color of image
 var colors = ['blue', 'green', 'cyan', 'indigo', 'purple', 'pink', 'orange', 'yellow', 'teal'];
 class Box {
-    constructor(type, part, obj, imgRatio) {
+    constructor(type, part, pk, obj, imgRatio) {
         this.type = type; // can be either block or line
         this.part = part;
-        this.pk = obj.pk;
+        this.pk = pk;
         this.order = obj.order;
-        if (this.type == 'line') {
-            for (var i=0; i<this.part.blocks.length; i++) {
-                if (obj.block == this.part.blocks[i].pk) {
-                    this.block = this.part.blocks[i];
-                    break;
-                }
-            }
-        } else {
-            this.block = null;
-        }
+        this.block = obj.block;
         this.imgRatio = imgRatio;
         this.changed = false;
         this.click = {x: null, y:null};
@@ -422,7 +413,7 @@ class Box {
             $box.css({backgroundColor: color});
         } else if (this.type == 'line') {
             if (this.block == null) { color = 'red'; }
-            else { color = colors[this.block.order % colors.length]; }
+            else { color = colors[this.part.blocks[this.block].order % colors.length]; }
             $box.css({border: '2px solid '+color});
         }
         $box.draggable({
@@ -526,7 +517,7 @@ class Box {
                                                            box: this.getBox()}])});
             } else if (this.type == 'line') {
                 this.part.upload({lines: JSON.stringify([{pk: this.pk,
-                                                          block: this.block.pk,
+                                                          block: this.block,
                                                           box: this.getBox()}])});
             }
             this.changed = false;

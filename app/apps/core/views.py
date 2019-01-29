@@ -313,14 +313,8 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
     def form_invalid(self, form):
         return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
                             content_type="application/json", status=400)
-    
-    def form_valid(self, form):
-        form.save()
-        return HttpResponse(json.dumps({'status': 'ok'}),
-                            content_type="application/json")
-    
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
+
+    def get_response(self):
         image_url = get_thumbnailer(self.object.image)['large'].url
         return HttpResponse(json.dumps({
             'pk': self.object.pk,
@@ -328,13 +322,21 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
                       'width': self.object.image.width,
                       'height': self.object.image.height},
             'bwImgUrl': self.object.bw_image and  self.object.bw_image.url or None,
-            'blocks': [{'pk': block.pk, 'order': block.order, 'box': block.box}
-                       for block in self.object.blocks.all()],
-            'lines': [{'pk': line.pk, 'order': line.order,
-                       'block': line.block and line.block.pk or None,
-                       'box': line.box}
-                      for line in self.object.lines.all()]
+            'blocks': {block.pk: {'order': block.order, 'box': block.box}
+                       for block in self.object.blocks.all()},
+            'lines': {line.pk: {'order': line.order,
+                                'block': line.block and line.block.pk or None,
+                                'box': line.box}
+                      for line in self.object.lines.all()}
         }), content_type="application/json")
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        return self.get_response()
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.get_response()
 
 
 class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
