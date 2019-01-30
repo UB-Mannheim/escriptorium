@@ -3,7 +3,7 @@
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var wz, lastSelected = null, viewing=null;
-var boxMode = 'block';
+var boxMode = 'block', seeBlocks = true, seeLines = true;
 
 class partCard {
     constructor(part) {
@@ -217,9 +217,10 @@ class partCard {
             .done($.proxy(function(data) {
                 // we moved it optimistically
                 this.previousIndex = null;
-                // update client block/line pk and order
                 this.blocks = data.blocks;
                 this.lines = data.lines;
+                // update client block/line pk and order
+                this.showSegmentation();
             }, this))
             .fail($.proxy(function(xhr) {
                 // fly it back
@@ -295,11 +296,13 @@ class partCard {
         Object.keys(this.blocks).forEach($.proxy(function(pk) {
             new Box('block', this, pk, this.blocks[pk], ratio);
         }, this));
+        if (!seeBlocks) $('.block-box').hide();
     }
     showLines(ratio) {
         Object.keys(this.lines).forEach($.proxy(function(pk) {
             new Box('line', this, pk, this.lines[pk], ratio);
         }, this));
+        if (!seeLines) $('.line-box').hide();
     }
     
     showSegmentation() {
@@ -689,12 +692,16 @@ $(document).ready(function() {
         if(viewing.mode != 'seg') { card.showSegmentation(); }
     });
     $('#viewer-blocks').click(function(ev) {
-        $('.block-box').toggle();
         $('#viewer-blocks').toggleClass('btn-primary').toggleClass('btn-secondary');
+        seeBlocks = !seeBlocks;
+        if (seeBlocks) $('.block-box').show();
+        else $('.block-box').hide();
     });
     $('#viewer-lines').click(function(ev) {
-        $('.line-box').toggle();
         $('#viewer-lines').toggleClass('btn-primary').toggleClass('btn-secondary');
+        seeLines = !seeLines;
+        if (seeLines) $('.line-box').show();
+        else $('.line-box').hide();
     });
     $('#viewer-create-block').click(function(ev) {
         $('#viewer-create-line').removeClass('btn-success').addClass('btn-secondary');
