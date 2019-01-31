@@ -314,9 +314,9 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
         return HttpResponse(json.dumps({'status': 'error', 'errors': form.errors}),
                             content_type="application/json", status=400)
 
-    def get_response(self):
+    def get_response(self, form=None):
         image_url = get_thumbnailer(self.object.image)['large'].url
-        return HttpResponse(json.dumps({
+        data = {
             'pk': self.object.pk,
             'image': {'url': image_url,
                       'width': self.object.image.width,
@@ -328,11 +328,15 @@ class DocumentPartAjax(LoginRequiredMixin, UpdateView):
                                 'block': line.block and line.block.pk or None,
                                 'box': line.box}
                       for line in self.object.lines.all()}
-        }), content_type="application/json")
+        }
+        # Note: can only create one box at a time
+        if form and form.created:
+            data['created'] = form.created.pk
+        return HttpResponse(json.dumps(data), content_type="application/json")
     
     def form_valid(self, form):
         self.object = form.save()
-        return self.get_response()
+        return self.get_response(form)
     
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()

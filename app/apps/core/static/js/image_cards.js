@@ -23,6 +23,7 @@ class partCard {
         this.locked = false;
         this.blocks = [];
         this.lines = [];
+        this.ratio = null;
         
         var template = document.getElementById('card-template');
         var $new = $('.card', template).clone();
@@ -206,7 +207,7 @@ class partCard {
         // $('input', this.updateForm).get(0).disabled = false;
     }
     
-    upload(data) {
+    upload(data, successCallback) {
         this.lock();
         if (data === undefined) { data = {}; }
         var post = {};
@@ -219,8 +220,7 @@ class partCard {
                 this.previousIndex = null;
                 this.blocks = data.blocks;
                 this.lines = data.lines;
-                // update client block/line pk and order
-                this.showSegmentation();
+                if (successCallback) { successCallback(data); }
             }, this))
             .fail($.proxy(function(xhr) {
                 // fly it back
@@ -292,22 +292,39 @@ class partCard {
         $viewer.parent().show();
     }
 
-    showBlocks(ratio) {
+    showBlocks() {
         Object.keys(this.blocks).forEach($.proxy(function(pk) {
-            new Box('block', this, pk, this.blocks[pk], ratio);
+            new Box('block', this, pk, this.blocks[pk], this.ratio);
         }, this));
         if (!seeBlocks) $('.block-box').hide();
     }
-    showLines(ratio) {
+    showLines() {
         Object.keys(this.lines).forEach($.proxy(function(pk) {
-            new Box('line', this, pk, this.lines[pk], ratio);
+            new Box('line', this, pk, this.lines[pk], this.ratio);
         }, this));
         if (!seeLines) $('.line-box').hide();
     }
     
+    createBoxAtMousePos(ev, mode) {
+        var $img = $('#viewer-img');
+        var box = [
+            Math.max(0, ev.pageX - $img.offset().left -30) / this.ratio / wz.scale,
+            Math.max(0, ev.pageY - $img.offset().top -20) / this.ratio / wz.scale,
+            Math.min($img.width() * this.ratio * wz.scale, ev.pageX - $img.offset().left +30) / this.ratio / wz.scale,
+            Math.min($img.height() * this.ratio * wz.scale, ev.pageY - $img.offset().top +20) / this.ratio / wz.scale
+        ];
+        var block = null;
+        if ($(ev.target).is('.block-box')) {
+            block = $(ev.target).data('Box').pk;
+        };
+        var box_ = new Box(mode, this, null, {
+            order: Object.keys(this.blocks).length,
+            box: box,
+            block: block}, this.ratio);
+        box_.changed = true;  // makes sure it's saved
+    }
+    
     showSegmentation() {
-        var $img, ratio;
-        
         $.get(this.partUrl, $.proxy(function(data) {
             this.blocks = data.blocks;
             this.lines = data.lines;
@@ -319,7 +336,7 @@ class partCard {
         function update_(this_) {
             var $viewer = $('#viewer');
             $viewer.empty();
-            $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
+            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
             $viewer.append($img);
             
             viewing = {index: this_.index, mode:'seg'};
@@ -337,34 +354,10 @@ class partCard {
             $('#viewer-segmentation').hide();
             
             $('#viewer-img').on('load', $.proxy(function(ev) {
+                this_.ratio = $img.width() / this_.image.width;
                 $('#viewer-container').trigger('wheelzoom.refresh');
-                ratio = $('#viewer-img').width() / this_.image.width;
-                this_.showBlocks(ratio);
-                this_.showLines(ratio);
-                // create a new block/line
-                function createBox(ev, mode) {
-                    var box = [
-                        Math.max(0, ev.pageX - $img.offset().left -30) / ratio / wz.scale,
-                        Math.max(0, ev.pageY - $img.offset().top -20) / ratio / wz.scale,
-                        Math.min($img.width() * ratio * wz.scale, ev.pageX - $img.offset().left +30) / ratio / wz.scale,
-                        Math.min($img.height() * ratio * wz.scale, ev.pageY - $img.offset().top +20) / ratio / wz.scale
-                    ];
-                    var block = null;
-                    if ($(ev.target).is('.block-box')) {
-                        block = $(ev.target).data('Box').pk;
-                    };
-                    var box_ = new Box(mode, this_, null, {
-                        order: Object.keys(this_.blocks).length,
-                        box: box,
-                        block: block}, ratio);
-                    box_.changed = true;  // makes sure it's saved
-                }
-                
-                $('#viewer').on('dblclick', function(ev) {
-                    createBox(ev, boxMode); });
-                $('#viewer').on('dblclick', '.block-box', function(ev) {
-                    ev.stopPropagation();
-                    createBox(ev, 'line'); });
+                this_.showBlocks();
+                this_.showLines();
             }, this_));
         }
 
@@ -515,16 +508,18 @@ class Box {
         this.$element.draggable('disable');
         this.$element.resizable('disable');
         if (this.changed) {
-            if (this.type == 'block') {
-                this.part.upload({blocks: JSON.stringify([{pk: this.pk,
-                                                           box: this.getBox()}])});
-            } else if (this.type == 'line') {
-                this.part.upload({lines: JSON.stringify([{pk: this.pk,
-                                                          block: this.block,
-                                                          box: this.getBox()}])});
-            }
-            this.changed = false;
+            this.upload();
         }
+    }
+    
+    upload() {
+        var post = {};
+        post[this.type+'s'] = JSON.stringify([{pk: this.pk, block: this.block, box: this.getBox()}]);
+        this.part.upload(post, $.proxy(function(data) {
+            console.log(data);
+            if (this.pk == null && data.created) this.pk = data.created;
+        }, this));
+        this.changed = false;
     }
     delete() {
         if (!confirm("Do you really want to delete this line?")) { return; }
@@ -712,5 +707,14 @@ $(document).ready(function() {
         $('#viewer-create-block').removeClass('btn-success').addClass('btn-secondary');
         $('#viewer-create-line').removeClass('btn-secondary').addClass('btn-success');
         boxMode = 'line';
+    });
+    $('#viewer').on('dblclick', function(ev) {
+        var part = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
+        part.createBoxAtMousePos(ev, boxMode);
+    });
+    $('#viewer').on('dblclick', '.block-box', function(ev) {
+        ev.stopPropagation();
+        var part = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
+        part.createBoxAtMousePos(ev, 'line');
     });
 });

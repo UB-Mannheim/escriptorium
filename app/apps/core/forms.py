@@ -59,6 +59,7 @@ class DocumentPartUpdateForm(forms.ModelForm):
         fields = ('name', 'typology', 'index')
         
     def save(self, *args, **kwargs):
+        self.created = None
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
             self.instance.to(self.cleaned_data['index'])
         
@@ -67,8 +68,9 @@ class DocumentPartUpdateForm(forms.ModelForm):
             blocks = json.loads(self.cleaned_data['blocks'])
             for block_ in blocks:
                 if block_['pk'] is None:
-                    Block.objects.create(document_part=self.instance,
+                    block = Block.objects.create(document_part=self.instance,
                                          box = block_['box'])
+                    self.created = block
                 else:
                     block = Block.objects.get(pk=block_['pk'])
                     if 'delete' in block_ and block_['delete'] is True:
@@ -89,6 +91,7 @@ class DocumentPartUpdateForm(forms.ModelForm):
                     Line.objects.create(document_part=self.instance,
                                         block=block,
                                         box = line_['box'])
+                    self.created = block
                 else:
                     line = Line.objects.get(pk=line_['pk'])
                     if 'delete' in line_ and line_['delete'] is True:
