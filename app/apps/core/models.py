@@ -226,7 +226,7 @@ class DocumentPart(OrderedModel):
             return 0
         self.transcription_progress = int(transcribed / total * 100)
 
-    def recalculate_ordering(self, line_level_treshold=3/100):
+    def recalculate_ordering(self, line_level_treshold=1/100):
         """
         Re-order the lines of the DocumentPart depending or text direction.
         Beware 'text direction' is different from reading order,
@@ -236,6 +236,7 @@ class DocumentPart(OrderedModel):
         for which blocks should be considered on the same 'line',
         in which case the secondary ord is used.
         """
+        
         def origin_pt(block):
             if self.document.process_settings.text_direction[-2:] == 'lr':
                 return (block[0], block[1])
@@ -427,11 +428,6 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
-    
-    def save(self, *args, **kwargs):
-        # TODO: validate char_boxes
-        super().save(*args, **kwargs)
-        self.document_part.recalculate_ordering()
 
 
 class Transcription(models.Model):
@@ -487,7 +483,7 @@ class DocumentProcessSettings(models.Model):
     document = models.OneToOneField(Document, on_delete=models.CASCADE,
                                     related_name='process_settings')
     auto_process = models.BooleanField(default=False)
-    text_direction = models.CharField(max_length=64, default='horizontal-lr',
+    text_direction = models.CharField(max_length=64, default='vertical-lr',
                                       choices=(('horizontal-lr', _("Horizontal l2r")),
                                                ('horizontal-rl', _("Horizontal r2l")),
                                                ('vertical-lr', _("Vertical l2r")),

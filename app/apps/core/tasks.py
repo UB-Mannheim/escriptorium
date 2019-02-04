@@ -205,7 +205,8 @@ def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
                 res['block'] = None
                 for line in res['boxes']:
                     Line.objects.create(document_part=part, box=line)
-                    
+        
+        part.recalculate_ordering()
 
     except:
         if user:

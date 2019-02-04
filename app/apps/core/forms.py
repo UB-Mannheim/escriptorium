@@ -100,6 +100,8 @@ class DocumentPartUpdateForm(forms.ModelForm):
                         line.box = line_['box']
                         line.save()
         
+        self.instance.recalculate_ordering()
+        
         return super().save(*args, **kwargs)
 
 
