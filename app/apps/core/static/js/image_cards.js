@@ -398,7 +398,7 @@ class Box {
         this.changed = false;
         this.click = {x: null, y:null};
         this.originalWidth = (obj.box[2] - obj.box[0]) * imgRatio;
-        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
+        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+(DEBUG ? this.order : '')+'</div>');
         $box.css({'left': obj.box[0] * imgRatio,
                   'top': obj.box[1] * imgRatio,
                   'width': (obj.box[2] - obj.box[0]) * imgRatio,

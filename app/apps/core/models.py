@@ -1,4 +1,6 @@
 import re
+import math
+import functools
 
 from django.db import models
 from django.db.models import Q
@@ -223,7 +225,50 @@ class DocumentPart(OrderedModel):
         if not total:
             return 0
         self.transcription_progress = int(transcribed / total * 100)
+
+    def recalculate_ordering(self, line_level_treshold=3/100):
+        """
+        Re-order the lines of the DocumentPart depending or text direction.
+        Beware 'text direction' is different from reading order,
+        it represents the order of the blocks of text.
+
+        line_level_treshold is a percentage of the total size of the image,
+        for which blocks should be considered on the same 'line',
+        in which case the secondary ord is used.
+        """
+        def origin_pt(block):
+            if self.document.process_settings.text_direction[-2:] == 'lr':
+                return (block[0], block[1])
+            else:
+                return (block[2], block[1])
         
+        imgsize = (self.image.width, self.image.height)
+        imgbox = (0, 0) + imgsize
+        if self.document.process_settings.text_direction[:-3] == 'vertical':
+            mi = 1; si = 0
+        else:
+            mi = 0; si = 1
+        
+        def cmp_pts(a, b):
+            # 2 lines more or less on the same level
+            if abs(a[mi] - b[mi]) < line_level_treshold * imgsize[mi]:
+                return abs(a[si] - origin_pt(imgbox)[si]) - abs(b[si]- origin_pt(imgbox)[si])
+            return abs(a[mi] - origin_pt(imgbox)[mi]) - abs(b[mi] - origin_pt(imgbox)[mi])
+        
+        # fetch all lines and regroup them by block
+        ls = [(l, (origin_pt(l.block.box)[0] + origin_pt(l.box)[0]/1000,
+                   origin_pt(l.block.box)[1] + origin_pt(l.box)[1]/1000)
+               if l.block else origin_pt(l.box))
+              for l in self.lines.all()]
+        
+        # sort depending on the distance to the origin
+        ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_pts(a[1], b[1])))
+        # one query / line, super gory
+        for order, line in enumerate(ls):
+            if line[0].order != order:
+                line[0].order = order
+                line[0].save()
+    
     def save(self, *args, **kwargs):
         self.calculate_progress()
         return super().save(*args, **kwargs)
@@ -383,9 +428,10 @@ class Line(OrderedModel):  # Versioned,
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
     
-    # def save(self, *args, **kwargs):
-    #     # validate char_boxes
-    #     return super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # TODO: validate char_boxes
+        super().save(*args, **kwargs)
+        self.document_part.recalculate_ordering()
 
 
 class Transcription(models.Model):
@@ -445,7 +491,7 @@ class DocumentProcessSettings(models.Model):
                                       choices=(('horizontal-lr', _("Horizontal l2r")),
                                                ('horizontal-rl', _("Horizontal r2l")),
                                                ('vertical-lr', _("Vertical l2r")),
-                                               ('vertical-lr', _("Vertical r2l"))))
+                                               ('vertical-rl', _("Vertical r2l"))))
     binarizer = models.CharField(max_length=64,
                                  choices=(('kraken', _("Kraken")),),
                                  default='kraken')
