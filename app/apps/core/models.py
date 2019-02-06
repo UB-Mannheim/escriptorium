@@ -245,16 +245,11 @@ class DocumentPart(OrderedModel):
         
         imgsize = (self.image.width, self.image.height)
         imgbox = (0, 0) + imgsize
-        if self.document.process_settings.text_direction[:-3] == 'vertical':
-            mi = 1; si = 0
-        else:
-            mi = 0; si = 1
-        
         def cmp_pts(a, b):
             # 2 lines more or less on the same level
-            if abs(a[mi] - b[mi]) < line_level_treshold * imgsize[mi]:
-                return abs(a[si] - origin_pt(imgbox)[si]) - abs(b[si]- origin_pt(imgbox)[si])
-            return abs(a[mi] - origin_pt(imgbox)[mi]) - abs(b[mi] - origin_pt(imgbox)[mi])
+            if abs(a[1] - b[1]) < line_level_treshold * imgsize[1]:
+                return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
+            return abs(a[1] - origin_pt(imgbox)[1]) - abs(b[1] - origin_pt(imgbox)[1])
         
         # fetch all lines and regroup them by block
         ls = [(l, (origin_pt(l.block.box)[0] + origin_pt(l.box)[0]/1000,

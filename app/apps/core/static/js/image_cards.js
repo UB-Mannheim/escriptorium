@@ -403,6 +403,7 @@ class Box {
                   'top': obj.box[1] * imgRatio,
                   'width': (obj.box[2] - obj.box[0]) * imgRatio,
                   'height': (obj.box[3] - obj.box[1]) * imgRatio});
+
         var color;
         if (this.type == 'block') {
             color = colors[this.order % colors.length];
@@ -516,7 +517,6 @@ class Box {
         var post = {};
         post[this.type+'s'] = JSON.stringify([{pk: this.pk, block: this.block, box: this.getBox()}]);
         this.part.upload(post, $.proxy(function(data) {
-            console.log(data);
             if (this.pk == null && data.created) this.pk = data.created;
         }, this));
         this.changed = false;
