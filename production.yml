@@ -1,0 +1,16 @@
+services:
+    web: &web
+      env_file: production.env
+    
+    db:
+      env_file: production.env
+
+    nginx:
+      ports:
+        - 80:80
+
+    celeryworker:
+      env_file: production.env
+    
+    celerybeat:
+      env_file: production.env

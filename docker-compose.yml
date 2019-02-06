@@ -2,6 +2,7 @@ version: "3.7"
 
 services:
   web: &web
+    image: lauxley/escriptorim:rc1
     build:
       context: ./app
     env_file: variables.env
@@ -10,8 +11,6 @@ services:
       - ./app/:/usr/src/app/
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/media
-    # ports:
-    #   - 8000:8000  # uncomment to access uwsgi directly
     expose:
       - 8000
     depends_on:
@@ -20,6 +19,7 @@ services:
 
   channelserver:
     <<: *web
+    image: lauxley/escriptorium:rc1
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
@@ -34,6 +34,7 @@ services:
     image: redis:3.0-alpine
 
   nginx:
+    image: lauxley/escriptorim/nginx:rc1
     build: ./nginx
     volumes:
       - static_volume:/usr/src/app/static
@@ -55,14 +56,15 @@ services:
         hard: -1
     volumes:
       - esdata:/usr/share/elasticsearch/data
-    expose:
-       - 9200
+    #expose:
+    #   - 9200
     # ports:
     #  - 9200:9200
     # networks:  # use this if adding nodes
     #   - esnet
 
   celeryworker:
+    image: lauxley/escriptorim/cw:rc1
     build:
       context: ./app
     env_file: variables.env
@@ -75,6 +77,7 @@ services:
     command: celery -E -A escriptorium worker -l INFO
 
   celerybeat:
+    image: lauxley/escriptorim/cb:rc1
     build:
       context: ./app
     env_file: variables.env
