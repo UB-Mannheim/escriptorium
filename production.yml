@@ -3,7 +3,10 @@ version: "3.7"
 services:
     web: &web
       env_file: production.env
-    
+
+    channelserver:
+      env_file: production.env
+
     db:
       env_file: production.env
 

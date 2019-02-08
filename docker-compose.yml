@@ -2,7 +2,6 @@ version: "3.7"
 
 services:
   web: &web
-    image: lauxley/escriptorium:rc1
     build:
       context: ./app
     env_file: variables.env
@@ -11,20 +10,15 @@ services:
       - ./app/:/usr/src/app/
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/media
-    expose:
-      - 8000
     depends_on:
       - db
       - redis
 
   channelserver:
     <<: *web
-    image: lauxley/escriptorium:rc1
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
-    ports:
-      - 5000:5000
 
   db:
     image: postgres:10.5-alpine
@@ -36,7 +30,6 @@ services:
     image: redis:3.0-alpine
 
   nginx:
-    image: lauxley/escriptorium/nginx:rc1
     build: ./nginx
     volumes:
       - static_volume:/usr/src/app/static
@@ -66,7 +59,6 @@ services:
     #   - esnet
 
   celeryworker:
-    image: lauxley/escriptorium/cw:rc1
     build:
       context: ./app
     env_file: variables.env
@@ -79,7 +71,6 @@ services:
     command: celery -E -A escriptorium worker -l INFO
 
   celerybeat:
-    image: lauxley/escriptorium/cb:rc1
     build:
       context: ./app
     env_file: variables.env
