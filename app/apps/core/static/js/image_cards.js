@@ -307,11 +307,10 @@ class partCard {
     
     createBoxAtMousePos(ev, mode) {
         var $img = $('#viewer-img');
+        var top_left_x = Math.max(0, ev.pageX - $img.offset().left) / this.ratio / wz.scale;
+        var top_left_y = Math.max(0, ev.pageY - $img.offset().top) / this.ratio / wz.scale;
         var box = [
-            Math.max(0, ev.pageX - $img.offset().left -30) / this.ratio / wz.scale,
-            Math.max(0, ev.pageY - $img.offset().top -20) / this.ratio / wz.scale,
-            Math.min($img.width() * this.ratio * wz.scale, ev.pageX - $img.offset().left +30) / this.ratio / wz.scale,
-            Math.min($img.height() * this.ratio * wz.scale, ev.pageY - $img.offset().top +20) / this.ratio / wz.scale
+            top_left_x, top_left_y, top_left_x + 120/this.ratio/wz.scale, top_left_y + 80/this.ratio/wz.scale
         ];
         var block = null;
         if ($(ev.target).is('.block-box')) {
@@ -398,7 +397,7 @@ class Box {
         this.changed = false;
         this.click = {x: null, y:null};
         this.originalWidth = (obj.box[2] - obj.box[0]) * imgRatio;
-        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+(DEBUG ? this.order : '')+'</div>');
+        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+this.order+'</div>');
         $box.css({'left': obj.box[0] * imgRatio,
                   'top': obj.box[1] * imgRatio,
                   'width': (obj.box[2] - obj.box[0]) * imgRatio,
