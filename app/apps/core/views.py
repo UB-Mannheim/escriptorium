@@ -175,6 +175,7 @@ class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
             if request.POST.get('new_version'):
                 try:
                     lt.new_version()
+                    lt.save()
                 except NoChangeException:
                     return HttpResponse(json.dumps({'status': 'error', 'msg': _('No changes detected.')}),
                                         content_type="application/json")

@@ -1,4 +1,5 @@
 'use strict';
+var editor;
 var lines = [], currentLine = null;
 var my_zone = moment.tz.guess();
 
@@ -62,7 +63,7 @@ class TranscriptionLine {
     }
     
     scaleContent() {
-        var scaleX = ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width();
+        var scaleX = Math.min(5, ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width());
         //var scaleY = this.textContainer.height() / ((this.box[3] - this.box[1])*this.ratio);
         this.textContainer.css({
             transform: 'scaleX('+scaleX+')'
@@ -86,8 +87,8 @@ class TranscriptionLine {
         if (this.order == (lines.length-1)) { $("#trans-modal #next-btn").attr('disabled', true); }
         else { $("#trans-modal #next-btn").attr('disabled', false); }
 
-        $('#trans-modal #trans-input').froalaEditor('html.set', content);
-
+        $('#trans-modal #trans-input .ql-editor').html(content); 
+        
         // fill the history
         var $container = $('#trans-modal #history tbody');
         $container.empty();
@@ -120,21 +121,21 @@ class TranscriptionLine {
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
-        $('#trans-modal #modal-img-container').animate({  // , #trans-modal .fr-box
+        $('#trans-modal #modal-img-container').animate({
             height: originalHeight * ratio + 'px',
             width: originalWidth * ratio + 'px'
         });
 
         // try to make the input match the image
-        $('#trans-modal .fr-box, #trans-modal .fr-box .fr-placeholder').css({
+        $('#trans-modal #trans-input .ql-editor').css({
             fontSize: originalHeight * ratio * 0.7 + 'px',
             lineHeight: originalHeight * ratio + 'px',
             height: originalHeight * ratio + 'px'
         });
-        var $el = $('#trans-modal .fr-box div.fr-element');
+        var $el = $('#trans-modal #trans-input .ql-editor');
         $el.css({width: 'initial', display: 'inline-block'}); // change to inline-block temporarily to calculate width
         if (content) {
-            var scaleX = originalWidth * ratio / $el.width();
+            var scaleX = Math.min(5, originalWidth * ratio / $el.width());
             $el.css({
                 transform: 'scaleX('+ scaleX +')',
                 width: 100/scaleX + '%' // fit in the container
@@ -191,7 +192,7 @@ class TranscriptionLine {
     
     save() {
         var selectedTranscription = $('#document-transcriptions').val();
-        var new_content = $('#trans-modal #trans-input').froalaEditor('html.get');
+        var new_content = $('#trans-modal #trans-input .ql-editor').html();
         if (this.transcriptions[selectedTranscription] != new_content) {
             var $form = $('#trans-modal #line-transcription-form');
             $.post($form.attr('action'), {
@@ -254,31 +255,26 @@ $(document).ready(function() {
     $('#trans-modal').on('click', '.js-pull-state', function(ev) {
         ev.preventDefault();
         var $tr = 'tr#'+$(ev.target).data('rev');
-        $('#trans-modal #trans-input').froalaEditor('html.set', $('.js-version-content', $tr).html());
+        $('#trans-modal #trans-input .ql-editor').html($('.js-version-content', $tr).html());
+        
     });
 
-    // TODO: automatic zoom ?
-    $('#trans-input').froalaEditor({
-        editInPopup: false,
-        multiLine: false,
-        toolbarInline: true,
-        // charCounterCount: false,
-        enter: $.FroalaEditor.ENTER_BR,
-        toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'color', 'undo', 'redo'],
-        toolbarVisibleWithoutSelection: false,
-        editorClass: 'form-control mt-2',
-        zIndex: 3000,
-        iconsTemplate: 'font_awesome_5',
-        codeBeautifierOptions: { end_with_newline: false },
-        pluginsEnabled: ['colors'],
-        theme: "dark"
-    });
-    // ugly: hijack enter key
-    $('#trans-input').froalaEditor('events.on', 'keydown', (e) => {
-        if(e.keyCode == 13) {
-            e.preventDefault();
-            e.stopPropagation();
-            $('#trans-modal #save-continue-btn').click();
+    editor = new Quill('#trans-input', {
+        theme: 'bubble',
+        formats: ['bold', 'italic', 'strike', 'underline'],
+        modules: {
+            toolbar: ['bold', 'italic', 'strike', 'underline'],
+            keyboard: { // disable enter key
+                bindings: {
+                    tab: false,
+                    handle: {
+                        key: 13,
+                        handler: function() {
+                            $('#trans-modal #save-continue-btn').click();
+                        }
+                    }
+                }
+            }
         }
-    }, true);
+    });
 });

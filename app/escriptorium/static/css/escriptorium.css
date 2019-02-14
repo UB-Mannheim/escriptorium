@@ -262,15 +262,13 @@ body {
 
 #trans-modal #trans-input {
     width: 100%;
-}
-
-#trans-modal .fr-box {
     padding: 0 0 0 8px;
-}
-#trans-modal .fr-box .fr-element {
     white-space: nowrap;
-    overflow-x: scroll;
-    padding-right: 20px;
+}
+#trans-modal #trans-input .ql-editor {
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
     transform-origin: 0 0;
 }
 

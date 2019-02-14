@@ -5,10 +5,7 @@
 {{ block.super }}
 {# custom jquery ui build with draggable and resizable only #}
     <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'vendor/froala/froala_editor.pkgd.min.css' %}" rel="stylesheet" type="text/css" />
-    <link href="{% static 'vendor/froala/froala_editor.min.css' %}" rel="stylesheet" type="text/css" />
-    <link href="{% static 'vendor/froala/dark.min.css' %}" rel="stylesheet" type="text/css" />
-    <link href="{% static 'vendor/froala/colors.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'vendor/quill/quill.bubble.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block nav-trans-active %}active{% endblock %}
@@ -62,9 +59,9 @@
           
           <input type="hidden" name="transcription"/>
           <input type="hidden" name="line"/>
-          <textarea id="trans-input" name="content" class="form-control"></textarea>
+          <div id="trans-input" name="content" class="form-control"></div>
 
-          <hr>
+          <br>
           <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
           <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
           <table id="history" class="table table-sm table-striped collapse">
@@ -86,8 +83,7 @@
 {% block scripts %}
 {{ block.super }}
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'vendor/froala/froala_editor.min.js' %}"></script>
-<script src="{% static 'vendor/froala/colors.min.js' %}"></script>
+<script src="{% static 'vendor/quill/quill.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>
