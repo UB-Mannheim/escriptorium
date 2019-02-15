@@ -234,27 +234,37 @@ class DocumentPart(OrderedModel):
 
         line_level_treshold is a percentage of the total size of the image,
         for which blocks should be considered on the same 'line',
-        in which case the secondary ord is used.
+        in which case x is used.
         """
         
-        def origin_pt(block):
+        def origin_pt(box):
             if self.document.process_settings.text_direction[-2:] == 'lr':
-                return (block[0], block[1])
+                return (box[0], box[1])
             else:
-                return (block[2], block[1])
+                return (box[2], box[1])
         
         imgsize = (self.image.width, self.image.height)
         imgbox = (0, 0) + imgsize
         def cmp_pts(a, b):
-            # 2 lines more or less on the same level
-            if abs(a[1] - b[1]) < line_level_treshold * imgsize[1]:
-                return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
-            return abs(a[1] - origin_pt(imgbox)[1]) - abs(b[1] - origin_pt(imgbox)[1])
+            def cmp_(a, b):
+                # 2 lines more or less on the same level
+                if abs(a[1] - b[1]) < line_level_treshold * imgsize[1]:
+                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
+                return abs(a[1] - origin_pt(imgbox)[1]) - abs(b[1] - origin_pt(imgbox)[1])
+            
+            if a[0] != b[0]:
+                return cmp_(a[0], b[0])
+            return cmp_(a[1], b[1])
+
+            if abs(a[1][1] - b[1][1]) < line_level_treshold * imgsize[1]:
+                return abs(a[1][0] - origin_pt(imgbox)[0]) - abs(b[1][0]- origin_pt(imgbox)[0])
+            return abs(a[1][1] - origin_pt(imgbox)[1]) - abs(b[1][1] - origin_pt(imgbox)[1])
         
         # fetch all lines and regroup them by block
-        ls = [(l, (origin_pt(l.block.box)[0] + origin_pt(l.box)[0]/1000,
-                   origin_pt(l.block.box)[1] + origin_pt(l.box)[1]/1000)
-               if l.block else origin_pt(l.box))
+        ls = [(l, #(origin_pt(l.block.box)[0] + origin_pt(l.box)[0]/1000,
+                  # origin_pt(l.block.box)[1] + origin_pt(l.box)[1]/1000)
+               (origin_pt(l.block.box), origin_pt(l.box))
+               if l.block else (origin_pt(l.box), origin_pt(l.box)))
               for l in self.lines.all()]
         
         # sort depending on the distance to the origin
@@ -358,7 +368,7 @@ class DocumentPart(OrderedModel):
         tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
-    def segment(self, user_pk=None, text_direction=None):
+    def segment(self, user_pk=None, steps='both', text_direction=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -368,7 +378,7 @@ class DocumentPart(OrderedModel):
             tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
-        tasks.append(segment.si(self.pk, user_pk=user_pk, text_direction=text_direction))
+        tasks.append(segment.si(self.pk, user_pk=user_pk, steps=steps, text_direction=text_direction))
         self.chain_tasks(*tasks)
     
     def transcribe(self, user_pk=None):

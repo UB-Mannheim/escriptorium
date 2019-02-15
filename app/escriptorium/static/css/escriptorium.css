@@ -159,6 +159,7 @@ body {
 .box.selected {
     border: 1px dashed;
     outline: 9999px solid rgba(0, 0, 0, 0.5);
+    z-index: 5;
 }
 
 .box.selected .close {

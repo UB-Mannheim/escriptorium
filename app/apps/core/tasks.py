@@ -178,7 +178,7 @@ def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
         blocks = Block.objects.filter(document_part=part)
         # cleanup pre-existing
         part.lines.all().delete()
-        if steps in ['regions', 'lines']:
+        if steps in ['regions', 'both']:
             blocks.delete()
         
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTING
@@ -186,12 +186,14 @@ def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
         
         with Image.open(part.bw_image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
-            options = {}
+            options = {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
             
             if blocks:
                 for block in blocks:
+                    if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
+                        continue
                     ic = im.crop(block.box)
                     res = pageseg.segment(ic, **options)
                     # if script_detect:

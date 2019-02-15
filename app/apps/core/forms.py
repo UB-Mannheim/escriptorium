@@ -57,48 +57,56 @@ class DocumentPartUpdateForm(forms.ModelForm):
     class Meta:
         model = DocumentPart
         fields = ('name', 'typology', 'index')
+
+    def clean_lines(self):
+        if 'lines' in self.cleaned_data and self.cleaned_data['lines']:
+            return json.loads(self.cleaned_data['lines'])
+        else:
+            return []
+
+    def clean_blocks(self):
+        if 'blocks' in self.cleaned_data and self.cleaned_data['blocks']:
+            return json.loads(self.cleaned_data['blocks'])
+        else:
+            return []
         
     def save(self, *args, **kwargs):
         self.created = None
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
             self.instance.to(self.cleaned_data['index'])
-        
-        # TODO: reassign lines
-        if 'blocks' in self.cleaned_data and self.cleaned_data['blocks']:
-            blocks = json.loads(self.cleaned_data['blocks'])
-            for block_ in blocks:
-                if block_['pk'] is None:
-                    block = Block.objects.create(document_part=self.instance,
-                                         box = block_['box'])
-                    self.created = block
+
+        blocks = self.cleaned_data['blocks']
+        for block_ in blocks:
+            if block_['pk'] is None:
+                block = Block.objects.create(document_part=self.instance,
+                                             box = block_['box'])
+                self.created = block
+            else:
+                block = Block.objects.get(pk=block_['pk'])
+                if 'delete' in block_ and block_['delete'] is True:
+                    block.delete()
                 else:
-                    block = Block.objects.get(pk=block_['pk'])
-                    if 'delete' in block_ and block_['delete'] is True:
-                        block.delete()
-                    else:
-                        block.box = block_['box']
-                        block.save()
+                    block.box = block_['box']
+                    block.save()
         
-        # TODO: find block + recalculate ordering of lines
-        if 'lines' in self.cleaned_data and self.cleaned_data['lines']:
-            lines = json.loads(self.cleaned_data['lines'])
-            for line_ in lines:
-                if line_['pk'] is None:
-                    if 'block' in line_ and line_['block']:
-                        block = Block.objects.get(pk=line_['block'])
-                    else:
-                        block = None
-                    Line.objects.create(document_part=self.instance,
-                                        block=block,
-                                        box = line_['box'])
-                    self.created = block
+        lines = self.cleaned_data['lines']
+        for line_ in lines:
+            if line_['pk'] is None:
+                if 'block' in line_ and line_['block']:
+                    block = Block.objects.get(pk=line_['block'])
                 else:
-                    line = Line.objects.get(pk=line_['pk'])
-                    if 'delete' in line_ and line_['delete'] is True:
-                        line.delete()
-                    else:
-                        line.box = line_['box']
-                        line.save()
+                    block = None
+                Line.objects.create(document_part=self.instance,
+                                    block=block,
+                                    box = line_['box'])
+                self.created = block
+            else:
+                line = Line.objects.get(pk=line_['pk'])
+                if 'delete' in line_ and line_['delete'] is True:
+                    line.delete()
+                else:
+                    line.box = line_['box']
+                    line.save()
         
         self.instance.recalculate_ordering()
         
@@ -117,7 +125,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         ('regions', _('Regions')),
         ('lines', _('Lines')),
         ('both', _('Lines and regions'))
-    ), initial='both', required=False)
+    ), initial='lines', required=False)
     new_model = forms.CharField(required=False, label=_('Name'))
     upload_model = forms.FileField(required=False)
     
@@ -173,6 +181,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         elif task == 'segment':
             for part in self.parts:
                 part.segment(user_pk=self.user.pk,
+                             steps=self.cleaned_data['segmentation_steps'],
                              text_direction=self.cleaned_data['text_direction'])
         elif task == 'train':
             if self.cleaned_data.get('upload_model'):
