@@ -284,6 +284,7 @@ body {
     white-space: nowrap;
     display: inline-block;
     transform-origin: top left;
+    max-height: 100%;
 }
 .trans-box span:empty {
     width: 100%;

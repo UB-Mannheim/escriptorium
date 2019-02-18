@@ -261,9 +261,7 @@ class DocumentPart(OrderedModel):
             return abs(a[1][1] - origin_pt(imgbox)[1]) - abs(b[1][1] - origin_pt(imgbox)[1])
         
         # fetch all lines and regroup them by block
-        ls = [(l, #(origin_pt(l.block.box)[0] + origin_pt(l.box)[0]/1000,
-                  # origin_pt(l.block.box)[1] + origin_pt(l.box)[1]/1000)
-               (origin_pt(l.block.box), origin_pt(l.box))
+        ls = [(l, (origin_pt(l.block.box), origin_pt(l.box))
                if l.block else (origin_pt(l.box), origin_pt(l.box)))
               for l in self.lines.all()]
         
