@@ -269,6 +269,7 @@ body {
 #trans-modal #trans-input .ql-editor {
     width: 100%;
     padding: 0;
+    padding-left: 1px;
     overflow: hidden;
     transform-origin: 0 0;
 }
