@@ -1,6 +1,6 @@
 'use strict';
 var editor;
-var lines = [], currentLine = null;
+var currentLine = null;
 var my_zone = moment.tz.guess();
 
 class TranscriptionLine {
@@ -26,7 +26,7 @@ class TranscriptionLine {
         });
 
         this.textContainer = $('span', $el).first();
-        this.textContainer.html(this.getText());
+        this.setText();
         this.textContainer.ready($.proxy(function(ev) {
             this.scaleContent();
         }, this));
@@ -52,7 +52,7 @@ class TranscriptionLine {
             height: (this.box[3] - this.box[1])*this.ratio + 'px'
         }).show();
     }
-    
+
     getText() {
         var selectedTranscription = $('#document-transcriptions').val();
         if (this.transcriptions[selectedTranscription] !== undefined) {
@@ -60,6 +60,9 @@ class TranscriptionLine {
         } else {
             return '';
         }
+    }
+    setText() {
+        this.textContainer.html(this.getText());
     }
     
     scaleContent() {
@@ -225,6 +228,11 @@ $(document).ready(function() {
         $('#part-trans').css({
             transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
         });
+    });
+    $('#document-transcriptions').change(function(ev) {
+        for (var i=0; i<lines.length; i++) {
+            lines[i].setText();
+        }
     });
     
     $("#trans-modal").draggable({

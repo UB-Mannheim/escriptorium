@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
@@ -127,7 +128,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         ('both', _('Lines and regions'))
     ), initial='lines', required=False)
     new_model = forms.CharField(required=False, label=_('Name'))
-    upload_model = forms.FileField(required=False)
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['clstm'])])
     
     class Meta:
         model = DocumentProcessSettings
@@ -169,7 +172,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         return img
     
     def process(self):
-        self.save()  # save settings
         task = self.cleaned_data.get('task')
         if task == 'binarize':
             if len(self.parts) == 1 and self.cleaned_data.get('bw_image'):
@@ -184,19 +186,27 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                              steps=self.cleaned_data['segmentation_steps'],
                              text_direction=self.cleaned_data['text_direction'])
         elif task == 'train':
-            if self.cleaned_data.get('upload_model'):
-                # create corresponding OcrModel
-                pass
-            elif self.cleaned_data.get('new_model'):
+            if self.cleaned_data.get('new_model'):
                 # create model and corresponding OcrModel
                 pass
-            elif self.cleaned_data.get('train_model'):
-                pass
+
             # part.train(user_pk=self.user.pk, model=None)
         elif task == 'transcribe':
+            if self.cleaned_data.get('upload_model'):
+                model = OcrModel.objects.create(
+                    name=self.cleaned_data['upload_model'].name,
+                    file=self.cleaned_data['upload_model'],
+                    trained=True, document=self.parts[0].document)
+                self.instance.ocr_model = model  # save to settings
+            elif self.cleaned_data['ocr_model']:
+                model = self.cleaned_data['ocr_model']
+            else:
+                model = None
+                
             for part in self.parts:
-                part.transcribe(user_pk=self.user.pk)
-
+                part.transcribe(user_pk=self.user.pk, model=model)
+        
+        self.save()  # save settings
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:

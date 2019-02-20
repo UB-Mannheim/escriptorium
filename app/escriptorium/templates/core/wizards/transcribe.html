@@ -7,12 +7,12 @@
 
 {% block wizard_fields %}
 <div class="form-group">
-  <h5>{% trans "New model" %}</h5>
+  <h5>{% trans "Upload model" %}</h5>
   {% render_field settings_form.upload_model class="js-proc-settings" data_document=object.pk %}
 </div>
 
 <div class="form-group">
-  <h5>{% trans "Or existing model" %}</h5>
+  <h5>{% trans "Or use existing model" %}</h5>
   {% render_field settings_form.ocr_model class="js-proc-settings" data_document=object.pk %}
 </div>
 {% endblock %}

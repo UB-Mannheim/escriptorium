@@ -14,7 +14,8 @@ from django.utils.translation import gettext as _
 from celery import shared_task
 from celery.signals import *
 from easy_thumbnails.files import generate_all_aliases
-from kraken import binarization, pageseg
+from kraken import binarization, pageseg, rpred
+from kraken.lib import models as kraken_models
 
 from users.consumers import send_event
 
@@ -230,14 +231,14 @@ def train(model, pks, user_pk=None):
 
  
 @shared_task
-def transcribe(instance_pk, user_pk=None):
+def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
         raise
-
+    
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -246,14 +247,53 @@ def transcribe(instance_pk, user_pk=None):
     else:
         user = None
 
-    Transcription = apps.get_model('core', 'Transcription')
-    Transcription.objects.get_or_create(name='default', document=part.document)
-    part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
-    part.save()
+    if model_pk:
+        try:
+            OcrModel = apps.get_model('core', 'OcrModel')
+            model = OcrModel.objects.get(pk=model_pk)
+        except OcrModel.DoesNotExist:
+            # Not sure how we should deal with this case
+            model = None
     
-    # model = part.select_model()
-    #if model:
-    #    TODO: kraken ocr
+    try:
+        Transcription = apps.get_model('core', 'Transcription')
+        LineTranscription = apps.get_model('core', 'LineTranscription')
+        if model:
+            trans, created = Transcription.objects.get_or_create(
+                name='kraken:' + model.name,
+                document=part.document)
+            model_ = kraken_models.load_any(model.file.path)
+            lines = part.lines.all()
+            with Image.open(part.image.file.name) as im:
+                for line in lines:
+                    it = rpred.rpred(model_, im,
+                                     bounds={'boxes': [line.box],
+                                             'text_direction': text_direction or 'horizontal-lr',
+                                             'script_detection': False},
+                                     pad=16,  # TODO: % of the image?
+                                     bidi_reordering=False)
+                
+                    lt, created = LineTranscription.objects.get_or_create(line=line,
+                                                                          transcription=trans)
+                    for pred in it:
+                        lt.content = pred.prediction
+                    lt.save()
+        else:
+            Transcription.objects.get_or_create(name='manual', document=part.document)
+    except:
+        if user:
+            user.notify(_("Something went wrong during the transcription!"),
+                        id="transcription-error", level='danger')
+        part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
+        part.save()
+        raise
+    else:
+        if user and model:
+            user.notify(_("Transcription done!"),
+                        id="transcription-success",
+                        level='success')
+        part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+        part.save()
 
 
 @before_task_publish.connect

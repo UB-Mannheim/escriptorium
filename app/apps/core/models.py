@@ -14,8 +14,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.db.models.signals import pre_delete
 
-
-import click
 from celery.result import AsyncResult
 from celery import chain
 from easy_thumbnails.files import get_thumbnailer
@@ -224,7 +222,7 @@ class DocumentPart(OrderedModel):
         total = Line.objects.filter(document_part=self).count()
         if not total:
             return 0
-        self.transcription_progress = int(transcribed / total * 100)
+        self.transcription_progress = min(int(transcribed / total * 100), 100)
 
     def recalculate_ordering(self, line_level_treshold=1/100):
         """
@@ -379,10 +377,10 @@ class DocumentPart(OrderedModel):
         tasks.append(segment.si(self.pk, user_pk=user_pk, steps=steps, text_direction=text_direction))
         self.chain_tasks(*tasks)
     
-    def transcribe(self, user_pk=None):
+    def transcribe(self, user_pk=None, model=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
-        
+
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
@@ -391,7 +389,7 @@ class DocumentPart(OrderedModel):
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         if not self.segmented:
             tasks.append(segment.si(self.pk, user_pk=user_pk))
-        tasks.append(transcribe.si(self.pk, user_pk=user_pk))
+        tasks.append(transcribe.si(self.pk, user_pk=user_pk, model_pk=model and model.pk or None))
         self.chain_tasks(*tasks)
 
 
@@ -467,11 +465,9 @@ class LineTranscription(Versioned, models.Model):
         return re.sub('<[^<]+?>', '', self.content)
 
 
-kraken_storage = FileSystemStorage(location=click.get_app_dir('kraken'))
-
 class OcrModel(models.Model):
-    name = models.CharField(max_length=256, unique=True)
-    file = models.FileField(storage=kraken_storage,
+    name = models.CharField(max_length=256)
+    file = models.FileField(upload_to='models/',
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['clstm', 'pronn'])])
     trained = models.BooleanField(default=False)
