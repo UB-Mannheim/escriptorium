@@ -657,7 +657,7 @@ $(document).ready(function() {
     });
     
     // zoom
-    wz = WheelZoom($('#viewer-container'), true, 1, null, null, $('#zoom-range'));
+    wz = WheelZoom($('#viewer-container'), true, 1, null, null);
     $('#viewer-zoom').click(function(ev) {
         zoomMode = !zoomMode;
         $('#zoom-range').toggle();
