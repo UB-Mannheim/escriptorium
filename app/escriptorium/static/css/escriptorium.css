@@ -4,6 +4,12 @@ body {
     max-width: 1800px;
 }
 
+.container {
+  margin-right: auto;
+  margin-left: auto;
+  max-width: 1600px;
+}
+
 /* alerts */
 #alerts-container {
     width: 400px;
@@ -129,6 +135,12 @@ body {
 }
 #viewer-buttons:hover {
     opacity: 1;
+}
+#zoom-range {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 50px;
 }
 
 #viewer {

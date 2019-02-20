@@ -3,7 +3,7 @@
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var wz, lastSelected = null, viewing=null;
-var boxMode = 'block', seeBlocks = true, seeLines = true;
+var boxMode = 'block', zoomMode = false, seeBlocks = true, seeLines = true;
 
 class partCard {
     constructor(part) {
@@ -418,7 +418,7 @@ class Box {
             cursor: "grab",
             stop: $.proxy(function(ev) {
                 this.changed = true;
-                $('#viewer-container').trigger('wheelzoom.enable');
+                if (zoomMode) $('#viewer-container').trigger('wheelzoom.enable');
             }, this),
             // this is necessary because WheelZoom make it jquery-ui drag jump around
             start: $.proxy(function(event) {
@@ -438,7 +438,7 @@ class Box {
             disabled: true,
             stop: $.proxy(function(ev) {
                 this.changed = true;
-                $('#viewer-container').trigger('wheelzoom.enable');
+                if (zoomMode) $('#viewer-container').trigger('wheelzoom.enable');
             }, this),
             start: function(ev) {
                 $('#viewer-container').trigger('wheelzoom.disable');
@@ -657,7 +657,30 @@ $(document).ready(function() {
     });
     
     // zoom
-    wz = WheelZoom($('#viewer-container'), 1);
+    wz = WheelZoom($('#viewer-container'), true, 1, null, null, $('#zoom-range'));
+    $('#viewer-zoom').click(function(ev) {
+        zoomMode = !zoomMode;
+        $('#zoom-range').toggle();
+        $('#viewer-zoom').toggleClass('btn-primary').toggleClass('btn-secondary');
+        if (zoomMode) { $('#viewer-container').trigger('wheelzoom.enable'); }
+        else { $('#viewer-container').trigger('wheelzoom.disable'); }
+    });
+    $('#viewer-container').get(0).addEventListener('wheelzoom.update', function(ev) {
+        $('#zoom-range').attr('min', wz.min_scale);
+        $('#zoom-range').attr('max', wz.max_scale);
+        $('#zoom-range').val(wz.scale);
+    });
+    $('#zoom-range').on('mousedown', function(ev) {
+        $('#viewer-container').trigger('wheelzoom.disable');
+    }).on('mouseup', function(ev) {
+        if (zoomMode) {
+            $('#viewer-container').trigger('wheelzoom.enable');
+        }
+    }).on('change', function(ev) {
+        wz.scale = parseFloat($(ev.target).val());
+        $('#viewer-container').trigger('wheelzoom.refresh');
+    });
+    
 
     // viewer buttons
     $('#viewer-prev').click(function(ev) {
@@ -676,6 +699,7 @@ $(document).ready(function() {
     });
     $('#viewer-reset').click(function(ev) {
         $('#viewer-container').trigger('wheelzoom.reset');
+        $('#zoom-range').val(wz.scale);
     });
     $('#viewer-binarization').click(function(ev) {
         var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');

@@ -1,17 +1,14 @@
 'use strict';
 
-function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
+function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale_opt){
     var factor = 0.2;
 	var target = container.children().first();
     initial_scale = initial_scale || 1;
-    var min_scale = min_scale_opt || Math.min(
-        $(window).width() / target.width() * initial_scale * 0.9,
-        $(window).height() / target.height() * initial_scale * 0.9);
 	var size = {w:target.width() * initial_scale, h:target.height() * initial_scale};
 	var zoom_target = {x:0, y:0};
 	var zoom_point = {x:0, y:0};
     var previousEvent;
-    var disabled = false;
+    var disabled = disabled_;
 	target.css({transformOrigin: '0 0', transition: 'transform 0.3s', cursor: 'zoom-in'});
 	container.on("mousewheel DOMMouseScroll", scrolled);
     container.on('mousedown', draggable);
@@ -22,14 +19,18 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
     container.on('wheelzoom.enable', enable);
 
     var api = {
+        min_scale: min_scale_opt || Math.min(
+            $(window).width() / target.width() * initial_scale * 0.9,
+            $(window).height() / target.height() * initial_scale * 0.9),
+        max_scale: max_scale_opt || 10,
         scale: initial_scale,
         pos: {x:0, y:0}
     };
     
 	function scrolled(e){
+        if (disabled) return;
         e.preventDefault();
 		var offset = container.offset();
-    
 		zoom_point.x = e.originalEvent.pageX - offset.left;
 		zoom_point.y = e.originalEvent.pageY - offset.top;
 		var delta = e.delta || e.originalEvent.wheelDelta;
@@ -39,18 +40,15 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
 	    }
         // cap the delta to [-1,1] for cross browser consistency
 	    delta = Math.max(-1, Math.min(1, delta));
-        
 	    // determine the point on where the slide is zoomed in
 	    zoom_target.x = (zoom_point.x - api.pos.x)/ api.scale;
 	    zoom_target.y = (zoom_point.y - api.pos.y)/ api.scale;
-      
 	    // apply zoom
 	    api.scale += delta * factor * api.scale;
-	    api.scale = Math.max(min_scale, api.scale);
-        if (max_scale) {
-            Math.min(max_scale, api.scale);
-        }
-
+        
+	    api.scale = Math.max(api.min_scale, api.scale);
+        api.scale = Math.min(api.max_scale, api.scale);
+        
         // calculate x and y based on zoom
 	    api.pos.x = Math.round(-zoom_target.x * api.scale + zoom_point.x);
 	    api.pos.y = Math.round(-zoom_target.y * api.scale + zoom_point.y);
@@ -74,6 +72,7 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
 	}
 
 	function draggable(e) {
+        if (disabled) return;
 		e.preventDefault();
 		previousEvent = e;
         // disable transition while dragging
@@ -113,7 +112,7 @@ function WheelZoom(container, initial_scale, min_scale_opt, max_scale){
 
     function refresh() {
         size = {w: target.width(), h: target.height()};
-        min_scale = min_scale_opt || Math.min(
+        api.min_scale = api.min_scale_opt || Math.min(
             $(window).width() / (size.w * initial_scale) * 0.9,
             $(window).height() / (size.h * initial_scale) * 0.9);
         updateStyle();
