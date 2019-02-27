@@ -26,7 +26,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', True)
+DEBUG = os.getenv('DEBUG', False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -178,12 +178,6 @@ THUMBNAIL_ALIASES = {
 }
 
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
-
-# only needed in developement
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(PROJECT_ROOT, 'static'),
-    ]
 
 if 'test' in sys.argv:
     class DisableMigrations(object):

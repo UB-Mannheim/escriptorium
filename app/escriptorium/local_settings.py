@@ -1,5 +1,6 @@
 from escriptorium.settings import *
 
+DEBUG=True
 
 DATABASES = {
     'default': {
@@ -11,6 +12,12 @@ DATABASES = {
 INSTALLED_APPS += ['debug_toolbar',]
 MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
 INTERNAL_IPS = ['127.0.0.1',]
+
+# only needed in developement
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(PROJECT_ROOT, 'static'),
+    ]
 
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.versions.VersionsPanel',

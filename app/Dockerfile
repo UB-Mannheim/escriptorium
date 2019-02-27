@@ -26,11 +26,11 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt
 RUN pip install -U -r requirements.txt
 
-# copy entrypoint.sh
-COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
+COPY ./sendmail_config.sh "/usr/src/app/sendmail_config.sh"
+RUN ./sendmail_config.sh
 
-# copy project
+COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
 COPY . /usr/src/app/
 
 # run entrypoint.sh
-ENTRYPOINT ["/usr/src/app/entrypoint.sh", "/usr/src/app/sendmail_config.sh"]
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
