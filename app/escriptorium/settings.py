@@ -122,10 +122,9 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.uk'
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-    EMAIL_FILE_PATH = '/tmp/django-emails'
+EMAIL_HOST = 'mail'
+EMAIL_PORT = 25
+DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.fr'
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))

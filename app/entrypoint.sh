@@ -12,8 +12,4 @@ python manage.py migrate
 # static files
 python manage.py collectstatic --no-input
 
-# kraken models
-kraken get default
-kraken list
-
 exec "$@"

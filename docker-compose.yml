@@ -82,6 +82,14 @@ services:
       - media_volume:/usr/src/app/media
     command: celery -E -A escriptorium beat -l INFO
 
+  mail:
+    image: elsdoerfer/exim-sender
+    expose:
+      - 25
+    environment:
+      - PRIMARY_HOST=escriptorium.fr
+      - ALLOWED_HOSTS=localhost ; web ; celeryworker ; docker0
+      
 volumes:
   postgres_data:
   static_volume:
