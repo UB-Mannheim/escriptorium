@@ -27,7 +27,8 @@
             {% endwith %}
           </td>
           <th>
-            <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a>
+            {# <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a> #}
+            {{ document.name }}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
           </th>
           <td>
