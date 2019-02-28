@@ -266,7 +266,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
                 document=part.document)
             model_ = kraken_models.load_any(model.file.path)
             lines = part.lines.all()
-            with Image.open(part.image.file.name) as im:
+            with Image.open(part.bw_image.file.name) as im:
                 for line in lines:
                     it = rpred.rpred(model_, im,
                                      bounds={'boxes': [line.box],
