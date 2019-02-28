@@ -19,9 +19,8 @@ class User(AbstractUser):
     fields = models.ManyToManyField('ResearchField', blank=True)
     
     def get_full_name(self):
-        fn = super().get_full_name()
         if self.first_name and self.last_name:
-            return self.get_full_name()
+            return super().get_full_name()
         else:
             return self.username
     
