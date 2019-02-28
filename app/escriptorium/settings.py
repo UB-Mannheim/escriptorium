@@ -26,7 +26,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', False)
+DEBUG = bool(os.getenv('DEBUG', False))
 
 ALLOWED_HOSTS = ['*']
 

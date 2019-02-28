@@ -19,8 +19,8 @@ if DEBUG:
         os.path.join(PROJECT_ROOT, 'static'),
     ]
 
-    #EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-    #EMAIL_FILE_PATH = '/tmp/django-emails'
+    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+    EMAIL_FILE_PATH = '/tmp/django-emails'
 
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.versions.VersionsPanel',
