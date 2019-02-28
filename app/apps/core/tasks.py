@@ -254,6 +254,8 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
         except OcrModel.DoesNotExist:
             # Not sure how we should deal with this case
             model = None
+    else:
+        model = None
     
     try:
         Transcription = apps.get_model('core', 'Transcription')
