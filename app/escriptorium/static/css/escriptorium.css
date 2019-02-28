@@ -276,14 +276,17 @@ body {
 #trans-modal #trans-input {
     width: 100%;
     padding: 0 0 0 8px;
+    margin-top: 1rem;
     white-space: nowrap;
 }
 #trans-modal #trans-input .ql-editor {
     width: 100%;
     padding: 0;
-    padding-left: 1px;
     overflow: hidden;
     transform-origin: 0 0;
+}
+#trans-modal  thead tr#no-versions th {
+    border: none;
 }
 
 .trans-box {
