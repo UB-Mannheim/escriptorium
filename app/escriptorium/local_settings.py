@@ -14,13 +14,8 @@ MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
 INTERNAL_IPS = ['127.0.0.1',]
 
 # only needed in developement
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(PROJECT_ROOT, 'static'),
-    ]
-
-    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-    EMAIL_FILE_PATH = '/tmp/django-emails'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = '/tmp/django-emails'
 
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.versions.VersionsPanel',
