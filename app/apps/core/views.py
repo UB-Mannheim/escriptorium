@@ -4,6 +4,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
 from django.http import HttpResponseForbidden, HttpResponse, Http404
+from django.shortcuts import render
+from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
@@ -350,7 +352,10 @@ class DeleteDocumentPartAjax(LoginRequiredMixin, DeleteView):
     http_method_names = ('post',)
 
     def get_object(self):
-        Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+        try:
+            Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+        except Document.DoesNotExist:
+            raise Http404
         return super().get_object()
     
     def delete(self, request, *args, **kwargs):
@@ -394,3 +399,19 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
 
 class DocumentDetail(DetailView):
     model = Document
+
+
+class DocumentExport(LoginRequiredMixin, DetailView):
+    model = Document
+    
+    def get_object(self):
+        return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
+    
+    def render_to_response(self, context, **kwargs):
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="%s.txt"' % slugify(self.object.name)
+        
+        transcription = Transcription.objects.get(pk=self.kwargs['trans_pk'])
+        lines = (LineTranscription.objects.filter(transcription=transcription)
+                    .order_by('line__document_part__order', 'line__order').select_related('line', 'line__document_part'))
+        return render(self.request, 'core/export/simple.txt', context={'lines': lines})

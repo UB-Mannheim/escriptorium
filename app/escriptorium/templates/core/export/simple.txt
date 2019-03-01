@@ -1,0 +1,3 @@
+{% for line in lines %}{% ifchanged line.line.document_part %}{% if not forloop.first %}
+-{% endif %}{% endifchanged %}
+{{line.content}}{% endfor %}

@@ -20,4 +20,5 @@ urlpatterns = [
     # path('document/<int:pk>/process/settings/', DocumentProcessSettingsUpdateAjax.as_view(), name='document-process-settings-update'),
     path('document/<int:pk>/part/<int:part_pk>/', DocumentPartAjax.as_view(), name='document-part'),
     path('document/<int:pk>/part/<int:part_pk>/delete/', DeleteDocumentPartAjax.as_view(), name='document-part-delete'),
+    path('document/<int:pk>/transcription/<int:trans_pk>/export/', DocumentExport.as_view(), name='document-export'),
 ]

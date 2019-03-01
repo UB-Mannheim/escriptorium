@@ -230,6 +230,9 @@ $(document).ready(function() {
         });
     });
     $('#document-transcriptions').change(function(ev) {
+        var selectedTranscription = $('#document-transcriptions').val();
+        var href = $('a#document-export').attr('href');
+        $('a#document-export').attr(href.replace(/transcriptions\/\d+\/export/, 'transcriptions/'+selectedTranscription+'/export'));
         for (var i=0; i<lines.length; i++) {
             lines[i].setText();
         }

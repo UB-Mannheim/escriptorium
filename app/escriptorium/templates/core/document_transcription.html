@@ -37,6 +37,14 @@
 </div>
 {% endblock %}
 
+{% block extra_nav %}
+<div>
+  <a id="document-export" href="{% url 'document-export' pk=object.pk trans_pk=object.transcriptions.first.pk %}">
+    <button type="button" class="nav-item btn btn-primary mr-1" title="{% trans "Export" %}"><i class="fas fa-file-download"></i></button>
+  </a>
+</div>
+{% endblock %}
+
 {% block modals %}
 <div class="modal" id="trans-modal" tabindex="-1" role="dialog" aria-labelledby="transModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
