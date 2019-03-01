@@ -597,7 +597,7 @@ $(document).ready(function() {
         }
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
-            for (i=0; i < imageDropzone.files.length - 7; i++) {
+            for (var i=0; i < imageDropzone.files.length - 7; i++) {
                 if (imageDropzone.files[i].status == "success") {
                     imageDropzone.removeFile(imageDropzone.files[i]);
                 }
