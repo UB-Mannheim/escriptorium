@@ -22,16 +22,37 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
-        super().__init__(*args, **kwargs)
-        self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
-        self.fields['shared_with_groups'].queryset = self.request.user.groups
+    new_user = forms.CharField(required=False, label=_("Username."))
     
     class Meta:
         model = Document
-        fields = ['shared_with_groups']  # shared_with_users
-
+        fields = ['shared_with_groups', 'shared_with_users', 'new_user']
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.fields['shared_with_users'].widget = forms.CheckboxSelectMultiple()
+        self.fields['shared_with_users'].queryset = (User.objects.filter(
+            Q(groups__in=self.request.user.groups.all())
+            | Q(pk__in=self.instance.shared_with_users.values_list('pk', flat=True))
+        ).exclude(pk=self.request.user.pk))
+        self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
+        self.fields['shared_with_groups'].queryset = self.request.user.groups
+    
+    def clean_new_user(self):
+        new = self.cleaned_data['new_user']
+        try:
+            user = User.objects.get(username=new)
+        except User.DoesNotExist:
+            user = None
+        return user
+    
+    def save(self, commit=True):
+        doc = super().save(commit=commit)
+        if self.cleaned_data['new_user']:
+            doc.shared_with_users.add(self.cleaned_data['new_user'])
+        return doc
+        
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
