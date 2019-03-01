@@ -201,7 +201,13 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
     form_class = DocumentShareForm
     success_message = _("Document shared successfully!")
     http_method_names = ('post',)
-        
+    
+    def get_redirect_url(self):
+        return reverse('document-update', kwargs={'pk': self.object.pk})
+    
+    def get_queryset(self):
+        return Document.objects.for_user(self.request.user).select_related('owner')
+    
     def form_valid(self, form):
         if form.instance.workflow_state == Document.WORKFLOW_STATE_DRAFT:
             form.instance.workflow_state = Document.WORKFLOW_STATE_SHARED

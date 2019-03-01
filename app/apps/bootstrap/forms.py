@@ -1,5 +1,9 @@
+import logging
+
 from django import forms
 from django.forms.renderers import TemplatesSetting
+
+logger = logging.getLogger(__name__)
 
 
 class BootstrapFormMixin():
@@ -32,4 +36,7 @@ class BootstrapFormMixin():
         if self._errors:
             for name, error in self._errors.items():
                 if not self.fields[name].widget.is_hidden:
-                    self.fields[name].widget.attrs['class'] += ' is-invalid'
+                    try:
+                        self.fields[name].widget.attrs['class'] += ' is-invalid'
+                    except KeyError:
+                        logger.warning("Couldn't set error class on widget.")

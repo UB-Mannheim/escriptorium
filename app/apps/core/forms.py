@@ -22,16 +22,37 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
-        super().__init__(*args, **kwargs)
-        self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
-        self.fields['shared_with_groups'].queryset = self.request.user.groups
+    username = forms.CharField(required=False)
     
     class Meta:
         model = Document
-        fields = ['shared_with_groups']  # shared_with_users
-
+        fields = ['shared_with_groups', 'shared_with_users', 'username']
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.fields['shared_with_users'].widget = forms.CheckboxSelectMultiple()
+        self.fields['shared_with_users'].queryset = (User.objects.filter(
+            Q(groups__in=self.request.user.groups.all())
+            | Q(pk__in=self.instance.shared_with_users.values_list('pk', flat=True))
+        ).exclude(pk=self.request.user.pk))
+        self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
+        self.fields['shared_with_groups'].queryset = self.request.user.groups
+    
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            user = None
+        return user
+    
+    def save(self, commit=True):
+        doc = super().save(commit=commit)
+        if self.cleaned_data['username']:
+            doc.shared_with_users.add(self.cleaned_data['username'])
+        return doc
+        
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
