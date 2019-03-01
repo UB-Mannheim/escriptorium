@@ -658,12 +658,16 @@ $(document).ready(function() {
     
     // zoom
     wz = WheelZoom($('#viewer-container'), true, 1, null, null);
-    $('#viewer-zoom').click(function(ev) {
+    function toggleZoom() {
         zoomMode = !zoomMode;
         $('#zoom-range').toggle();
         $('#viewer-zoom').toggleClass('btn-primary').toggleClass('btn-secondary');
         if (zoomMode) { $('#viewer-container').trigger('wheelzoom.enable'); }
         else { $('#viewer-container').trigger('wheelzoom.disable'); }
+    }
+    
+    $('#viewer-zoom').click(function(ev) {
+        toggleZoom();
     });
     $('#viewer-container').get(0).addEventListener('wheelzoom.update', function(ev) {
         $('#zoom-range').attr('min', wz.min_scale);
@@ -680,7 +684,6 @@ $(document).ready(function() {
         wz.scale = parseFloat($(ev.target).val());
         $('#viewer-container').trigger('wheelzoom.refresh');
     });
-    
 
     // viewer buttons
     $('#viewer-prev').click(function(ev) {
@@ -739,5 +742,12 @@ $(document).ready(function() {
         ev.stopPropagation();
         var part = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
         part.createBoxAtMousePos(ev, 'line');
+    });
+
+    /* Keyboard Shortcuts */
+    $(document).keydown(function(e) {
+        if(e.originalEvent.ctrlKey && e.originalEvent.key == 'z') {
+            toggleZoom();
+        }
     });
 });

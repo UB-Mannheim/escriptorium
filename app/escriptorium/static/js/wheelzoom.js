@@ -92,10 +92,10 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
 	        if(api.pos.x < 0) { api.pos.x = 0; }
 	        if(api.pos.x+size.w*api.scale > container.width()) { api.pos.x = -size.w*(api.scale-1); }
             
-            if(size.h*api.scale >= container.height() && api.pos.y > 0) { api.pos.y = 0; }
+            /*if(size.h*api.scale >= container.height() && api.pos.y > 0) { api.pos.y = 0; }
             if(size.h*api.scale <= container.height() && api.pos.y < 0) { api.pos.y = 0; }
 	        if(size.h*api.scale >= container.height() && api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
-            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }
+            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }*/
         }
           
         // apply scale first for transition effect
