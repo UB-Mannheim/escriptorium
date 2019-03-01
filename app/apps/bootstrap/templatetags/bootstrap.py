@@ -25,5 +25,6 @@ def render_field(field, group=False, **kwargs):
         kwargs['class'] = field.field.widget.attrs['class'] + " " + kwargs['class']
     field.field.widget.attrs.update(**{k.replace('_', '-'): v
                                        for k,v in kwargs.items()})
+        
     context = {'field': field, 'group': group}
     return tplt.render(context)  #.mark_safe()

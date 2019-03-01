@@ -22,11 +22,11 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
-    new_user = forms.CharField(required=False, label=_("Username."))
+    username = forms.CharField(required=False)
     
     class Meta:
         model = Document
-        fields = ['shared_with_groups', 'shared_with_users', 'new_user']
+        fields = ['shared_with_groups', 'shared_with_users', 'username']
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -39,18 +39,18 @@ class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
         self.fields['shared_with_groups'].queryset = self.request.user.groups
     
-    def clean_new_user(self):
-        new = self.cleaned_data['new_user']
+    def clean_username(self):
+        username = self.cleaned_data['username']
         try:
-            user = User.objects.get(username=new)
+            user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             user = None
         return user
     
     def save(self, commit=True):
         doc = super().save(commit=commit)
-        if self.cleaned_data['new_user']:
-            doc.shared_with_users.add(self.cleaned_data['new_user'])
+        if self.cleaned_data['username']:
+            doc.shared_with_users.add(self.cleaned_data['username'])
         return doc
         
 
