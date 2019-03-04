@@ -232,15 +232,17 @@ $(document).ready(function() {
         });
     });
     $('#document-transcriptions').change(function(ev) {
+        for (var i=0; i<lines.length; i++) {
+            lines[i].setText();
+        }
+    });
+    $('#document-export button').click(function(ev) {
+        ev.preventDefault();
         var selectedTranscription = $('#document-transcriptions').val();
         var href = $('a#document-export').attr('href');
         var new_href = href.replace(/(transcription\/)\d+(\/export)/,
                                     '$1'+selectedTranscription+'$2');
-        console.log(selectedTranscription, new_href);
-        $('a#document-export').attr('href', new_href);
-        for (var i=0; i<lines.length; i++) {
-            lines[i].setText();
-        }
+        window.open(new_href);
     });
     
     $("#trans-modal").draggable({

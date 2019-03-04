@@ -454,7 +454,7 @@ class LineTranscription(Versioned, models.Model):
     graphs = JSONField(null=True, blank=True)  # on postgres it maps to jsonb!
     
     # nullable in case we re-segment ?? for now we lose data.
-    line = models.ForeignKey(Line, null=True, on_delete=models.SET_NULL, related_name='transcriptions')
+    line = models.ForeignKey(Line, null=True, on_delete=models.CASCADE, related_name='transcriptions')
     version_ignore_fields = ('line', 'transcription')
     
     class Meta:
