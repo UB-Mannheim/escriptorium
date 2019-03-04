@@ -152,7 +152,9 @@ class TranscriptionLine {
             left: '-'+this.box[0]*ratio+'px',
             top: '-'+this.box[1]*ratio+'px',
             width: this.imgWidth*ratio + 'px'
-        });
+        }, 200);
+
+        editor.focus();
     }
 
     addVersionLine(version) {

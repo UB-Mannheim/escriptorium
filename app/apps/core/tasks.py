@@ -273,7 +273,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
                                              'text_direction': text_direction or 'horizontal-lr',
                                              'script_detection': False},
                                      pad=16,  # TODO: % of the image?
-                                     bidi_reordering=False)
+                                     bidi_reordering=True)
                 
                     lt, created = LineTranscription.objects.get_or_create(line=line,
                                                                           transcription=trans)
