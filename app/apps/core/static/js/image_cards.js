@@ -19,7 +19,6 @@ class partCard {
         this.typology = part.typology;
         this.image = part.image;
         this.bw_image = part.bw_image;
-        this.thumbnail = part.thumbnail;
         this.workflow = part.workflow;
         this.progress = part.transcription_progress;
         this.locked = false;
@@ -39,7 +38,7 @@ class partCard {
         
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        $('img.card-img-top', $new).attr('data-src', this.thumbnail.uri);
+        $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
         $('img.card-img-top', $new).attr('title', this.title);
 
         $new.attr('draggable', true);
@@ -304,7 +303,7 @@ class partCard {
         function update_(this_) {
             var $viewer = $('#viewer');
             $viewer.empty();
-            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.uri+'"/>');
+            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.thumbnails.large+'"/>');
             $viewer.append($img);
             
             viewing = {index: this_.index, mode:'seg'};

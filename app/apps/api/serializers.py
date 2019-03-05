@@ -6,12 +6,20 @@ from core.models import *
 
 
 class ImageField(serializers.ImageField):
+    def __init__(self, *args, thumbnails=None, **kwargs):
+        self.thumbnails = thumbnails
+        super().__init__(*args, **kwargs)
+    
     def to_representation(self, img):
         if img:
-            return {
+            data = {
                 'uri': img.url,
-                'size': (img.width, img.height)
+                'size': (img.width, img.height),
             }
+            if self.thumbnails:
+                data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
+                                      for alias in self.thumbnails}
+            return data
 
 
 class ThumbnailField(ImageField):
@@ -47,9 +55,8 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class PartSerializer(serializers.ModelSerializer):
-    image = ImageField()
-    bw_image = ImageField(required=False)
-    thumbnail = ThumbnailField(source='image', alias='card', read_only=True)
+    image = ImageField(thumbnails=['card', 'large'])
+    bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
     
@@ -66,7 +73,6 @@ class PartSerializer(serializers.ModelSerializer):
             'typology',
             'image',
             'bw_image',
-            'thumbnail',
             'workflow',
             'transcription_progress'
         )
