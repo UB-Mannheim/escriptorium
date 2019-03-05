@@ -1,5 +1,11 @@
 'use strict';
 
+var API = {
+    'document': '/api/documents/' + DOCUMENT_ID,
+    'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
+    'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/' 
+};
+
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var wz, lastSelected = null, viewing=null;
@@ -11,38 +17,30 @@ class partCard {
         this.name = part.name;
         this.title = part.title;
         this.typology = part.typology;
-        this.thumbnailUrl = part.thumbnailUrl;  // TODO: use the form data to avoid a trip back
         this.image = part.image;
-        this.bwImgUrl = part.bwImgUrl;
-        this.updateUrl = part.updateUrl;
-        this.deleteUrl = part.deleteUrl;
-        this.transcripionUrl = part.transcriptionUrl;
-        this.partUrl = part.partUrl;
+        this.bw_image = part.bw_image;
+        this.thumbnail = part.thumbnail;
         this.workflow = part.workflow;
-        this.progress = part.progress;
+        this.progress = part.transcription_progress;
         this.locked = false;
         this.blocks = [];
         this.lines = [];
         this.ratio = null;
+
+        this.api = API.part.replace('{part_pk}', this.pk);
         
-        var template = document.getElementById('card-template');
-        var $new = $('.card', template).clone();
+        var $new = $('.card', '#card-template').clone();
         this.$element = $new;
         this.domElement = this.$element.get(0);
 
         this.selectButton = $('.js-card-select-hdl', $new);
-        this.updateForm = $('.js-part-update-form', $new);
-        this.deleteForm = $('.js-part-delete-form', $new);
-        this.dropAfter = $('.js-drop', template).clone();
-
+        this.deleteButton = $('.js-card-delete', $new);
+        this.dropAfter = $('.js-drop', '#card-template').clone();
+        
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        $('img.card-img-top', $new).attr('data-src', this.thumbnailUrl);
+        $('img.card-img-top', $new).attr('data-src', this.thumbnail.uri);
         $('img.card-img-top', $new).attr('title', this.title);
-        this.updateForm.attr('action', this.updateUrl);
-        $('input[name=name]', this.updateForm).attr('value', this.name);
-        $('select[name=typology] option[value='+this.typology+']', this.updateForm).attr('selected', 'true');
-        this.deleteForm.attr('action', this.deleteUrl);
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
@@ -71,7 +69,8 @@ class partCard {
         this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
         this.transcribeButton.click($.proxy(function(ev) {
             if (this.workflow['transcribe'] == 'done') {
-                window.location.assign(this.transcripionUrl);
+                var url = TRANSCRIPTION_URL + this.pk + '/';
+                window.location.assign(url);
             }
         }, this));
         
@@ -85,11 +84,6 @@ class partCard {
         this.defaultColor = this.$element.css('color');
         
         //************* events **************
-        $('.js-edit', this.$element).click($.proxy(function(ev) { this.updateForm.toggle(); }, this));
-        this.updateForm.on('change', 'input,select', $.proxy(function(ev) {
-            this.upload();
-        }, this));
-
         this.selectButton.on('click', $.proxy(function(ev) {
             if (ev.shiftKey) {
                 if (lastSelected) {
@@ -102,13 +96,12 @@ class partCard {
                 this.toggleSelect();
             }
         }, this));
-        
-        this.deleteForm.on('submit', $.proxy(function(ev) {
-            ev.preventDefault();
+
+        this.deleteButton.on('click', $.proxy(function(ev) {
             if (!confirm("Do you really want to delete this image?")) { return; }
             this.delete();
         }, this));
-
+        
         this.$element.on('dblclick', $.proxy(function(ev) {
             this.toggleSelect();
         }, this));
@@ -168,7 +161,6 @@ class partCard {
         
         if (this.workflow['transcribe'] == 'done') {
             $('#nav-trans-tab').removeClass('disabled');
-            // this.progressBar.parent().css('display', 'inline-block');
         }
     }
     
@@ -198,39 +190,11 @@ class partCard {
         this.locked = true;
         this.$element.addClass('locked');
         this.$element.attr('draggable', false);
-        // $('input', this.updateForm).get(0).disabled = true;
     }
     unlock() {
         this.locked = false;
         this.$element.removeClass('locked');
         this.$element.attr('draggable', true);
-        // $('input', this.updateForm).get(0).disabled = false;
-    }
-    
-    upload(data, successCallback) {
-        this.lock();
-        if (data === undefined) { data = {}; }
-        var post = {};
-        this.updateForm.serializeArray().map(function(x){post[x.name] = x.value;});
-        post = Object.assign({}, post, data);
-        var url = this.updateForm.attr("action");
-        var posting = $.post(url, post)
-            .done($.proxy(function(data) {
-                // we moved it optimistically
-                this.previousIndex = null;
-                this.blocks = data.blocks;
-                this.lines = data.lines;
-                if (successCallback) { successCallback(data); }
-            }, this))
-            .fail($.proxy(function(xhr) {
-                // fly it back
-                if (data.index) { this.moveTo(this.previousIndex, false); }
-                // show errors
-                console.log('Something went wrong :(');
-            }, this))
-            .always($.proxy(function() {
-                this.unlock();
-            }, this));
     }
     
     moveTo(index, upload) {
@@ -242,20 +206,31 @@ class partCard {
         this.dropAfter.insertAfter(this.$element);  // drag the dropable zone with it
         if (this.previousIndex < index) { index--; }; // because the dragged card takes a room
         if (upload) {
-            this.upload({index: index});
+            $.post(this.api + 'move/', {
+                index: index
+            }).done($.proxy(function(data){
+                this.previousIndex = null;
+                this.blocks = data.blocks;
+                this.lines = data.lines;
+            }, this)).fail($.proxy(function(data){
+                this.moveTo(this.previousIndex, false);
+                // show errors
+                console.log('Something went wrong :(', data);
+            }, this)).always($.proxy(function() {
+                this.unlock();
+            }, this));
         }
         this.index = index;
     }
     
     delete() {
-        var posting = $.post(this.deleteForm.attr('action'),
-                             this.deleteForm.serialize())
+        var posting = $.ajax({url:this.api, type: 'DELETE'})
             .done($.proxy(function(data) {
                 this.dropAfter.remove();
                 this.$element.remove();
             }, this))
             .fail($.proxy(function(xhr) {
-                console.log("damit.");
+                console.log("Couldn't delete part " + this.pk);
             }, this));
     }
 
@@ -263,17 +238,14 @@ class partCard {
         // Note: have to recreate an image because webkit never really delete the boxes otherwise
         var $viewer = $('#viewer');
         $viewer.empty();
-        if (!this.bwImgUrl) {
-            $.get(this.partUrl, $.proxy(function(data) {
-                this.blocks = data.blocks;
-                this.lines = data.lines;
-                this.bwImgUrl = data.bwImgUrl;
-                this.image = data.image;
-                var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
+        if (!this.bw_image) {
+            $.get(this.api, $.proxy(function(data) {
+                Object.assign(this, data);
+                var $img = $('<img id="viewer-img" width="100%" src="'+this.bw_image.uri+'"/>');
                 $viewer.append($img);
             }, this));
         } else {
-            var $img = $('<img id="viewer-img" width="100%" src="'+this.bwImgUrl+'"/>');
+            var $img = $('<img id="viewer-img" width="100%" src="'+this.bw_image.uri+'"/>');
             $viewer.append($img);
         }
         viewing = {index: this.index, mode:'bw'};
@@ -288,19 +260,19 @@ class partCard {
         $('#viewer-img').on('load', $.proxy(function(ev) {
             $('#viewer-container').trigger('wheelzoom.refresh');
         }, this));
-
+        
         $viewer.parent().show();
     }
-
+    
     showBlocks() {
-        Object.keys(this.blocks).forEach($.proxy(function(pk) {
-            new Box('block', this, pk, this.blocks[pk], this.ratio);
+        Object.keys(this.blocks).forEach($.proxy(function(i) {
+            new Box('block', this, this.blocks[i], this.ratio);
         }, this));
         if (!seeBlocks) $('.block-box').hide();
     }
     showLines() {
-        Object.keys(this.lines).forEach($.proxy(function(pk) {
-            new Box('line', this, pk, this.lines[pk], this.ratio);
+        Object.keys(this.lines).forEach($.proxy(function(i) {
+            new Box('line', this, this.lines[i], this.ratio);
         }, this));
         if (!seeLines) $('.line-box').hide();
     }
@@ -316,7 +288,7 @@ class partCard {
         if ($(ev.target).is('.block-box')) {
             block = $(ev.target).data('Box').pk;
         };
-        var box_ = new Box(mode, this, null, {
+        var box_ = new Box(mode, this, {
             order: Object.keys(this.blocks).length,
             box: box,
             block: block}, this.ratio);
@@ -324,27 +296,28 @@ class partCard {
     }
     
     showSegmentation() {
-        $.get(this.partUrl, $.proxy(function(data) {
-            this.blocks = data.blocks;
-            this.lines = data.lines;
-            this.bwImgUrl = data.bwImgUrl;
-            this.image = data.image;
+        $.get(this.api, $.proxy(function(data) {
+            Object.assign(this, data);
             update_(this);
         }, this));
         
         function update_(this_) {
             var $viewer = $('#viewer');
             $viewer.empty();
-            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.url+'"/>');
+            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.uri+'"/>');
             $viewer.append($img);
             
             viewing = {index: this_.index, mode:'seg'};
             if (this_.index == 0) { $('#viewer-prev').attr('disabled', true); }
             else { $('#viewer-prev').attr('disabled', false); }
-            if (this_.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
-            else { $('#viewer-next').attr('disabled', false); }
+            if (this_.index >= $('#cards-container .card').length-1) {
+                $('#viewer-next').attr('disabled', true);
+            }
+            else {
+                $('#viewer-next').attr('disabled', false);
+            }
             $('#viewer-create-line').show();
-            if (this_.bwImgUrl) {
+            if (this_.bw_image && this_.bw_image.uri) {
                 $('#viewer-binarization').show();
             } else {
                 $('#viewer-binarization').hide();
@@ -353,13 +326,13 @@ class partCard {
             $('#viewer-segmentation').hide();
             
             $('#viewer-img').on('load', $.proxy(function(ev) {
-                this_.ratio = $img.width() / this_.image.width;
+                this_.ratio = $img.width() / this_.image.size[0];
                 $('#viewer-container').trigger('wheelzoom.refresh');
                 this_.showBlocks();
                 this_.showLines();
             }, this_));
         }
-
+        
         $('#viewer').parent().show();
     }
 
@@ -387,12 +360,15 @@ class partCard {
 // TODO: choose colors based on average color of image
 var colors = ['blue', 'green', 'cyan', 'indigo', 'purple', 'pink', 'orange', 'yellow', 'teal'];
 class Box {
-    constructor(type, part, pk, obj, imgRatio) {
+    constructor(type, part, obj, imgRatio) {
         this.type = type; // can be either block or line
         this.part = part;
-        this.pk = pk;
+        this.pk = obj.pk || null;
+        this.updateApi();
         this.order = obj.order;
-        this.block = obj.block;
+        this.block = this.part.blocks.find(function(block) {
+            return block.pk == obj.block;
+        });
         this.imgRatio = imgRatio;
         this.changed = false;
         this.click = {x: null, y:null};
@@ -402,14 +378,13 @@ class Box {
                   'top': obj.box[1] * imgRatio,
                   'width': (obj.box[2] - obj.box[0]) * imgRatio,
                   'height': (obj.box[3] - obj.box[1]) * imgRatio});
-
         var color;
         if (this.type == 'block') {
             color = colors[this.order % colors.length];
             $box.css({backgroundColor: color});
         } else if (this.type == 'line') {
             if (this.block == null) { color = 'red'; }
-            else { color = colors[this.part.blocks[this.block].order % colors.length]; }
+            else { console.log(this.block); color = colors[this.block.order % colors.length]; }
             $box.css({border: '2px solid '+color});
         }
         $box.draggable({
@@ -474,6 +449,15 @@ class Box {
         }, this));
     }
 
+    updateApi() {
+        this.api = {
+            list: this.part.api + this.type + 's' + '/'
+        };
+        if (this.pk) {
+            this.api.detail = this.api.list + this.pk + '/';
+        }
+    }
+    
     getBox() {
         var x1 = parseInt((this.$element.position().left) / wz.scale / this.imgRatio);
         var y1 = parseInt((this.$element.position().top) / wz.scale / this.imgRatio);
@@ -514,20 +498,24 @@ class Box {
     
     upload() {
         var post = {};
-        post[this.type+'s'] = JSON.stringify([{pk: this.pk, block: this.block, box: this.getBox()}]);
-        this.part.upload(post, $.proxy(function(data) {
-            if (this.pk == null && data.created) this.pk = data.created;
-        }, this));
+        post = { document_part: this.part.pk,
+                 box: JSON.stringify(this.getBox()) };
+        if (this.type == 'line') post.block = this.block.pk;
+        var uri = this.pk?this.api.detail:this.api.list;
+        var type = this.pk?'PUT':'POST';
+        $.ajax({url: uri, type: type, data: post})
+            .done($.proxy(function(data) {
+                this.pk = data.pk;
+                this.updateApi();
+            }, this)).fail(function(data){
+                alert("Couldn't save block:", data);
+            });
         this.changed = false;
     }
     delete() {
         if (!confirm("Do you really want to delete this line?")) { return; }
         if (this.pk !== null) {
-            if (this.type == 'block') {
-                this.part.upload({blocks: JSON.stringify([{pk: this.pk, delete: true}])});
-            } else if (this.type == 'line') {
-                this.part.upload({lines: JSON.stringify([{pk: this.pk, delete: true}])});
-            }
+            $.ajax({url: this.api.detail, type:'DELETE'});
         }
         $(document).unbind('keyup', this.proxykeyboard);
         $(document).off('click', this.proxyUnselect);
@@ -592,9 +580,7 @@ $(document).ready(function() {
     
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
-        if (data.status === 'ok') {
-            var card = new partCard(data.part);
-        }
+        var card = new partCard(data);
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
             for (var i=0; i < imageDropzone.files.length - 7; i++) {
@@ -750,4 +736,20 @@ $(document).ready(function() {
             toggleZoom();
         }
     });
+
+    /* fetch the images and create the cards */
+    var counter=0;
+    var getNextParts = function(page) {
+        var uri = API.parts + '?page=' + page;
+        $.get(uri, function(data) {
+            counter += data.results.length;            
+            $('#loading-counter').html(counter+'/'+data.count);
+            if (data.next) getNextParts(page+1);
+            else { $('#loading-counter').parent().fadeOut(1000); }
+            for (var i=0; i<data.results.length; i++) {
+                new partCard(data.results[i]);
+            }
+        });
+    };
+    getNextParts(1);
 });

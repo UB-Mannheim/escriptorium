@@ -17,7 +17,7 @@
   {% render_field settings_form.auto_process class="js-proc-settings" data_document=object.pk group=True %}
   {# render_field settings_form.typology class="js-proc-settings" data_document=object.pk #}
   
-  <form action="{% url 'document-upload-image' pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
+  <form action="{% url 'api:part-list' document_pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
     <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
   </form>
@@ -25,6 +25,7 @@
   <div class="d-flex">
     <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
+    <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
     {# <button id="train-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button> #}
@@ -65,28 +66,10 @@
   <div id="image-card-{pk}" class="card">
     <div style="position: relative;">
       <button class="js-card-select-hdl"><i class="fas fa-square"></i></button>
-      <form class="js-part-delete-form" method="post" action="{deleteurl}">
-        {% csrf_token %}
-        <button type="submit" class="close mr-1" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </form>
+      <button class="close mr-1 js-card-delete" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
-      {% comment %}
-      <button class="btn btn-sm btn-secondary js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
-      {% endcomment %}
     </div>
     <div class="card-body">
-      <form method="post" action="{updateurl}" class="js-part-update-form">      
-        {# csrf_token #}
-        {% comment %}
-        {# TODO doesn't really work, use a modal instead ? #}
-        <select name="typology" title="Typology" class="form-control form-control-sm custom-select" id="id_typology">
-          {% for choice in settings_form.typology.field.choices %}
-          {% if choice.0 %}<option value="{{ choice.0 }}">{{ choice.1 }}</option>{% endif %}
-          {% endfor %}
-        </select>
-        <input class="form-control form-control-sm mt-1" type="text" name="name" value="{name}" placeholder="Name" title="Name">
-        {% endcomment %}
-      </form>
       <div class="d-flex mt-2">
         <span class="proc js-binarized" data-title="{% trans 'Binarization' %}"><i class="fas fa-adjust"></i></span>
         <span class="proc ml-2 js-segmented" data-title="{% trans 'Segmentation' %}"><i class="fas fa-align-left"></i></span>
@@ -108,39 +91,20 @@
 
 {% block scripts %}
 {{ block.super }}
+<script type="text/javascript">
+  'use strict';
+  var DOCUMENT_ID = {{ document.pk }};
+  var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=object.pk %}";
+  $(document).ready(function() {
+    // join the ws room
+    msgSocket.addEventListener('open', function(ev) {
+    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
+  });
+});
+</script>
 <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 <script src="{% static 'js/image_cards.js' %}"></script>
 <script src="{% static 'js/lazyload.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>
-<script type="text/javascript">
-'use strict';
-$(document).ready(function() {
-    // join the ws room
-    msgSocket.addEventListener('open', function(ev) {
-        msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
-    });
-
-    {% for part in object.parts.all %}{% spaceless %}
-    new partCard({
-        pk: {{ part.pk }},
-        name: "{{ part.name }}",
-        title: "{{ part.title }}",
-        typology: {{ part.typology.pk|default:'null' }},
-        image: {"url": "{{ part.image|thumbnail_url:'large' }}",
-                "width":"{{ part.image.width }}",
-                "height": "{{ part.image.height}}" },
-        thumbnailUrl: "{{ part.image|thumbnail_url:'card' }}",
-        bwImgUrl: {% if part.bw_image %}"{{ part.bw_image|thumbnail_url:'large' }}"{% else %}null{% endif %},
-
-        updateUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
-        deleteUrl: "{% url 'document-part-delete' pk=object.pk part_pk=part.pk %}",
-        partUrl: "{% url 'document-part' pk=object.pk part_pk=part.pk %}",
-        transcriptionUrl: "{% url 'document-transcription' pk=object.pk part_pk=part.pk %}",
-        workflow: {{ part.workflow|safe }},
-        progress: {{ part.transcription_progress }}
-    });
-    {% endspaceless %}{% endfor %}
-});
-</script>
 {% endblock %}

@@ -85,18 +85,18 @@ class DocumentPartUpdateForm(forms.ModelForm):
             return json.loads(self.cleaned_data['lines'])
         else:
             return []
-
+    
     def clean_blocks(self):
         if 'blocks' in self.cleaned_data and self.cleaned_data['blocks']:
             return json.loads(self.cleaned_data['blocks'])
         else:
             return []
-        
+    
     def save(self, *args, **kwargs):
         self.created = None
         if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
             self.instance.to(self.cleaned_data['index'])
-
+    
         blocks = self.cleaned_data['blocks']
         for block_ in blocks:
             if block_['pk'] is None:

@@ -24,9 +24,13 @@ from .tasks import *
 
 User = get_user_model()
 
+class ProcessFailureException(Exception):
+    pass
+
 
 class AlreadyProcessingException(Exception):
     pass
+
 
 class Typology(models.Model):
     """
@@ -274,6 +278,18 @@ class DocumentPart(OrderedModel):
     def save(self, *args, **kwargs):
         self.calculate_progress()
         return super().save(*args, **kwargs)
+
+    def create(self, *args, **kwargs):
+        res = super().create(*args, **kwargs)
+        try:
+            if self.document.process_settings.auto_process:
+                part.transcribe(user_pk=selfelf.request.user.pk)
+            else:
+                part.compress()
+        except Exception as e:
+            raise ProcessFailureException(e)
+        get_thumbnailer(part.image)
+        return res
     
     @property
     def tasks(self):
