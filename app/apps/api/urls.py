@@ -10,6 +10,7 @@ documents_router.register(r'parts', PartViewSet, basename='part')
 parts_router = routers.NestedSimpleRouter(documents_router, r'parts', lookup='part')
 parts_router.register(r'blocks', BlockViewSet)
 parts_router.register(r'lines', LineViewSet)
+parts_router.register(r'transcriptions', LineTranscriptionViewSet)
 
 app_name = 'api'
 urlpatterns = [

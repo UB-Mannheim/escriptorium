@@ -82,12 +82,20 @@ class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
         fields = ('pk', 'order', 'document_part', 'box')
+    
+
+class LineTranscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LineTranscription
+        fields = ('pk', 'line', 'transcription', 'content', 'versions')
 
 
 class LineSerializer(serializers.ModelSerializer):
+    transcriptions = LineTranscriptionSerializer(many=True)
+    
     class Meta:
         model = Line
-        fields = ('pk', 'order', 'document_part', 'block', 'box')
+        fields = ('pk', 'order', 'document_part', 'block', 'box', 'transcriptions')
 
 
 class PartDetailSerializer(PartSerializer):

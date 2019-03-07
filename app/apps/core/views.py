@@ -3,7 +3,7 @@ import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
-from django.http import HttpResponseForbidden, HttpResponse, Http404
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
@@ -285,3 +285,37 @@ class DocumentExport(LoginRequiredMixin, DetailView):
         response['Content-Disposition'] = 'attachment; filename="%s.txt"' % slugify(self.object.name)
         return response
 
+
+class EditPart(LoginRequiredMixin, DetailView):
+    model = DocumentPart
+    pk_url_kwarg = 'part_pk'
+    template_name = "core/document_part_edit.html"
+    http_method_names = ('get',)
+    
+    def get_queryset(self):
+        return DocumentPart.objects.filter(
+            document=self.kwargs.get('pk')).select_related('document')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        # Note: a bit confusing but this view uses the same base template than UpdateDocument
+        # so we need context['object'] = document
+        context['document'] = self.object.document
+        context['part'] = self.object
+        
+        # Note .next() and .previous() don't work because can't filter against it
+        context['previous'] = self.get_queryset().filter(order__lt=self.object.order).order_by('-order').first()
+        context['next'] = self.get_queryset().filter(order__gt=self.object.order).order_by('order').first()
+        return context
+    
+    def dispatch(self, *args, **kwargs):
+        if not 'part_pk' in self.kwargs:
+            try:
+                first = self.get_queryset()[0]
+                return HttpResponseRedirect(reverse('document-part-edit',
+                                                    kwargs={'pk': first.document.pk,
+                                                            'part_pk': first.pk}))
+            except IndexError:
+                raise Http404
+        else:
+            return super().dispatch(*args, **kwargs)

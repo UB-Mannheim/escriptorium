@@ -17,7 +17,11 @@ class PartViewSet(ModelViewSet):
     paginate_by = 10
     
     def get_queryset(self):
-        return DocumentPart.objects.filter(document=self.kwargs['document_pk'])
+        qs = DocumentPart.objects.filter(document=self.kwargs['document_pk'])
+        if self.action == 'retrieve':
+            return qs.prefetch_related('lines__transcriptions')
+        else:
+            return qs
     
     def get_serializer_class(self):
         # different serializer because we don't want to query all the lines in the list view
@@ -26,7 +30,14 @@ class PartViewSet(ModelViewSet):
         else:  # list & create
             return PartSerializer
         return super(MyModelViewSet, self).get_serializer_class()
-    
+
+    def create(self, *args, **kwargs):
+        document = Document.objects.get(pk=self.kwargs['document_pk'])
+        kwargs['commit'] = False
+        part = super().create(*args, **kwargs)
+        part.typology = document.process_settings.typology
+        part.save()
+
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
@@ -53,3 +64,24 @@ class LineViewSet(ModelViewSet):
     def get_queryset(self):
         return Line.objects.filter(document_part=self.kwargs['part_pk'])
 
+
+class LineTranscriptionViewSet(ModelViewSet):
+    queryset = LineTranscription.objects.all()
+    serializer_class = LineTranscriptionSerializer
+
+    def get_queryset(self):
+        return (self.queryset.filter(line__document_part=self.kwargs['part_pk'])
+                .select_related('line__document_part', 'transcription'))
+    
+    def get_serializer_class(self):
+        lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
+        class RuntimeSerializer(self.serializer_class):
+            line = serializers.PrimaryKeyRelatedField(queryset=lines)
+            
+        return RuntimeSerializer
+    
+    @action(detail=True, methods=['post'])
+    def new_version(self, request, document_pk=None, part_pk=None, pk=None):
+        lt = self.get_object()
+        lt.new_version()
+        return Response(lt.versions[0])

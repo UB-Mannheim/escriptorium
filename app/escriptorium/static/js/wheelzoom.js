@@ -1,6 +1,6 @@
 'use strict';
 
-function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale_opt){
+function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale_opt) {
     var factor = 0.2;
 	var target = container.children().first();
     initial_scale = initial_scale || 1;
@@ -26,7 +26,7 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
         scale: initial_scale,
         pos: {x:0, y:0}
     };
-    
+
 	function scrolled(e){
         if (disabled) return;
         e.preventDefault();
@@ -48,7 +48,7 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
         
 	    api.scale = Math.max(api.min_scale, api.scale);
         api.scale = Math.min(api.max_scale, api.scale);
-        
+
         // calculate x and y based on zoom
 	    api.pos.x = Math.round(-zoom_target.x * api.scale + zoom_point.x);
 	    api.pos.y = Math.round(-zoom_target.y * api.scale + zoom_point.y);
@@ -91,11 +91,10 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
         } else {
 	        if(api.pos.x < 0) { api.pos.x = 0; }
 	        if(api.pos.x+size.w*api.scale > container.width()) { api.pos.x = -size.w*(api.scale-1); }
-            
-            /*if(size.h*api.scale >= container.height() && api.pos.y > 0) { api.pos.y = 0; }
+            if(api.pos.y > 0) { api.pos.y = 0; }
             if(size.h*api.scale <= container.height() && api.pos.y < 0) { api.pos.y = 0; }
 	        if(size.h*api.scale >= container.height() && api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
-            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }*/
+            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }
         }
           
         // apply scale first for transition effect
@@ -112,7 +111,7 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
 
     function refresh() {
         size = {w: target.width(), h: target.height()};
-        api.min_scale = api.min_scale_opt || Math.min(
+        api.min_scale = min_scale_opt || Math.min(
             $(window).width() / (size.w * initial_scale) * 0.9,
             $(window).height() / (size.h * initial_scale) * 0.9);
         updateStyle();

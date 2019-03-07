@@ -1,0 +1,149 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles thumbnail json %}
+
+{% block styles %}
+{{ block.super }}
+{# custom jquery ui build with draggable and resizable only #}
+    <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block nav-edit-active %}active{% endblock %}
+
+{% block extra_nav %}
+<div>
+  <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-primary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
+  <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
+  <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
+</div>
+{% endblock %}
+    
+{% block nav_content %}
+<div class="row">
+  <div id="img-tools" class="col">
+    <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
+  </div>
+  <div id="binar-tools" class="col">
+    <i title="{% trans 'Binarization Panel' %}" class="panel-icon fas fa-adjust"></i>
+  </div>
+  <div id="seg-tools" class="col">
+    <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+  </div>
+  <div id="trans-tools" class="col">
+    <div class="form-row">
+      <div class="col-auto mr-1">
+        <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
+      </div>
+      <div class="col mr-1">
+        <select id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
+          {% for transcription in document.transcriptions.all %}
+          <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto mb-2">
+        <button id="document-export" data-href="{% url 'document-export' pk=document.pk trans_pk=document.transcriptions.first.pk %}" type="button" class="nav-item btn btn-primary" title="{% trans "Export" %}"><i class="fas fa-file-download"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="position: relative;">
+  {% if previous %}<a class="nav-btn nav-prev" href="{% url 'document-part-edit' pk=document.pk part_pk=previous.pk %}" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>{% endif %}
+  {% if next %}<a class="nav-btn nav-next" href="{% url 'document-part-edit' pk=document.pk part_pk=next.pk %}" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>{% endif %}
+  
+  <div id="img-panel" class="col">
+    <div class="img-container">
+      <div class="zoom-container">
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <div class="overlay"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="binar-panel" class="col">
+    <div class="img-container">
+      <div class="zoom-container">
+        <img id="part-img" src="{{ part.bw_image|thumbnail_url:'large' }}" width="100%"/>
+        <div class="overlay"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="seg-panel" class="col">
+    <div class="img-container">
+      <div class="zoom-container">
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <div id="segmentation-overlay"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="trans-panel" class="col">
+    <div class="img-container">
+      <div class="zoom-container">
+        <div id="part-trans"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal" id="trans-modal" tabindex="-1" role="dialog" aria-labelledby="transModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        {% comment %}<h5 class="modal-title mx-2" id="modal-label">{% trans "Line" %}</h5>{% endcomment %}
+        <button type="button" id="prev-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-left"></i></button>
+        <button type="button" id="next-btn" class="btn btn-sm btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-right"></i></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-img-container">
+          <img id="line-img" src="{{ part.image.url }}" draggable="false" selectable="false"/>
+          {# show context #}
+        </div>
+        
+        <input type="hidden" name="transcription"/>
+        <input type="hidden" name="line"/>
+        <div id="trans-input" name="content" class="form-control"></div>
+
+        <br>
+        <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
+        <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
+        <table id="history" class="table table-sm table-striped collapse">
+          <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+        <button id="save-continue-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save & Continue' %}</button>
+        <button id="save-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+  var DOCUMENT_ID = {{document.id}};
+  var PART_ID = {{part.id}};
+</script>
+<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+<script src="{% static 'vendor/quill/quill.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+<script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
+<script src="{% static 'js/wheelzoom.js' %}"></script>
+<script src="{% static 'js/panels/source.js' %}"></script>
+<script src="{% static 'js/panels/binarization.js' %}"></script>
+<script src="{% static 'js/panels/segmentation.js' %}"></script>
+<script src="{% static 'js/panels/transcription.js' %}"></script>
+<script src="{% static 'js/edit.js' %}"></script>
+{% endblock %}
