@@ -101,9 +101,23 @@ class LineSerializer(serializers.ModelSerializer):
 class PartDetailSerializer(PartSerializer):
     blocks = BlockSerializer(many=True)
     lines = LineSerializer(many=True)
+    previous = serializers.SerializerMethodField(source='get_previous')
+    next = serializers.SerializerMethodField(source='get_next')
     
     class Meta(PartSerializer.Meta):
         fields = PartSerializer.Meta.fields + (
             'blocks',
-            'lines'
+            'lines',
+            'previous',
+            'next'
         )
+
+    def get_previous(self, instance):
+        prev = DocumentPart.objects.filter(
+            document=instance.document, order__lt=instance.order).order_by('-order').first()
+        return prev and prev.pk or None
+
+    def get_next(self, instance):
+        nex = DocumentPart.objects.filter(
+            document=instance.document, order__gt=instance.order).order_by('order').first()
+        return nex and nex.pk or None

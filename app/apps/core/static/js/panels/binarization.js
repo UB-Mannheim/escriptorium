@@ -1,16 +1,24 @@
 class BinarizationPanel {
-    constructor ($panel, opened, part) {
+    constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened | false;
-        // this.part = part;
+    }
 
-        var $container = $('.img-container', this.$panel);
-        WheelZoom($container, false, 1, 1);
-        $container.get(0).addEventListener('wheelzoom.update', function(ev) {
-            $(':not(#binar-panel) .img-container div.zoom-container').css({
-                transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
-            });
-        });
+    load(part) {
+        this.part = part;
+        if (this.part.bw_image) {
+            $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
+
+            var $container = $('.img-container', this.$panel);
+            WheelZoom($container, false, 1, 1);
+            $container.get(0).addEventListener('wheelzoom.update', function(ev) {
+                $(':not(#binar-panel) .img-container div.zoom-container').css({
+                    transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
+                });
+            });            
+        } else {
+            $('.img-container img', this.$panel).attr('src', '');
+        }
     }
     
     open() {

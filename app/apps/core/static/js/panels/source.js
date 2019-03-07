@@ -1,8 +1,7 @@
 class SourcePanel {
-    constructor ($panel, opened, part) {
+    constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened | false;
-        // this.part = part;
 
         var $container = $('.img-container', this.$panel);
         WheelZoom($container, false, 1, 1);
@@ -11,6 +10,11 @@ class SourcePanel {
                 transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
             });
         });
+    }
+
+    load(part) {
+        this.part = part;
+        $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
     }
     
     open() {

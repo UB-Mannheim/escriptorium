@@ -9,7 +9,8 @@ class TranscriptionLine {
         this.imgWidth = imgWidth;
         this.editing = false;
         this.panel = panel;
-        
+
+        this.api = API.part.replace('{part_pk}', panel.part.pk) + 'transcriptions/';
         var $el = $('<div class="trans-box"><span></span></div>');
         this.$element = $el;
 
@@ -26,7 +27,7 @@ class TranscriptionLine {
         $el.on('click', $.proxy(function(ev) {
             this.edit();
         }, this));
-
+        
         this.getRatio();
         this.setPosition();
     }
@@ -190,7 +191,7 @@ class TranscriptionLine {
     pushVersion() {
         var selectedTranscription = $('#document-transcriptions').val();
         var lt = this.getLineTranscription();
-        var uri = API.part + 'transcriptions/'+lt.pk+'/new_version/';
+        var uri = this.api + lt.pk + '/new_version/';
         $.post(uri, {}).done($.proxy(function(data) {
             $('#no-versions').hide();
             // this.getLineTranscription().versions.splice(0, 0, data);
@@ -208,10 +209,10 @@ class TranscriptionLine {
             var type, uri;
             if (lt === undefined) {  // creation
                 type = 'POST';
-                uri = API.part + 'transcriptions/';
+                uri = this.api;
             } else { // update
                 type = 'PUT';
-                uri = API.part + 'transcriptions/'+lt.pk+'/';
+                uri = this.api + lt.pk+'/';
             }
             $.ajax({type: type, url:uri, data:{
                 line: this.pk,
@@ -232,16 +233,12 @@ class TranscriptionLine {
 }
 
 class TranscriptionPanel{
-    constructor ($panel, opened, part) {
+    constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened;
-        this.part = part;
+        this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
 
-        for (var i=0; i < this.part.lines.length; i++) {
-            this.lines.push(new TranscriptionLine(
-                this.part.lines[i], this.part.image.size[0], this));
-        }
         $('#document-transcriptions').change($.proxy(function(ev) {
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].setText();
@@ -315,6 +312,16 @@ class TranscriptionPanel{
         this.$panel.hide();
     }
 
+    load(part) {
+        this.lines = [];
+        $('.trans-box').remove();
+        this.part = part;
+        for (var i=0; i < this.part.lines.length; i++) {
+            this.lines.push(new TranscriptionLine(
+                this.part.lines[i], this.part.image.size[0], this));
+        }
+    }
+    
     reset() {
         if (this.opened) {
             for (var i=0; i<this.lines.length; i++) {

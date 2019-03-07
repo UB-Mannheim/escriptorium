@@ -1,10 +1,14 @@
 class SegmentationPanel {
-    constructor ($panel, opened, part) {
+    constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened | false;
-        // this.part = part;
     }
 
+    load(part) {
+        this.part = part;
+        $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
+    }
+    
     open() {
         this.opened = true;
         this.$panel.show();

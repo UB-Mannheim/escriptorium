@@ -300,12 +300,9 @@ class EditPart(LoginRequiredMixin, DetailView):
         context = super().get_context_data()
         # Note: a bit confusing but this view uses the same base template than UpdateDocument
         # so we need context['object'] = document
+        context['object'] = self.object.document
         context['document'] = self.object.document
         context['part'] = self.object
-        
-        # Note .next() and .previous() don't work because can't filter against it
-        context['previous'] = self.get_queryset().filter(order__lt=self.object.order).order_by('-order').first()
-        context['next'] = self.get_queryset().filter(order__gt=self.object.order).order_by('order').first()
         return context
     
     def dispatch(self, *args, **kwargs):

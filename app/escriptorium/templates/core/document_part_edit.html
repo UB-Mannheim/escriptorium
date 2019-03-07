@@ -50,8 +50,8 @@
 </div>
 
 <div class="row" style="position: relative;">
-  {% if previous %}<a class="nav-btn nav-prev" href="{% url 'document-part-edit' pk=document.pk part_pk=previous.pk %}" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>{% endif %}
-  {% if next %}<a class="nav-btn nav-next" href="{% url 'document-part-edit' pk=document.pk part_pk=next.pk %}" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>{% endif %}
+  <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>
+  <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>
   
   <div id="img-panel" class="col">
     <div class="img-container">
