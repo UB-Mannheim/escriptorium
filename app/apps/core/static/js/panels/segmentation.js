@@ -202,20 +202,20 @@ class SegmentationPanel {
         this.$container = $('.img-container', this.$panel);
         this.boxes = [];
         
-        $('#viewer-blocks').click(function(ev) {
+        $('#viewer-blocks', this.$panel).click($.proxy(function(ev) {
             $('#viewer-blocks').toggleClass('btn-primary').toggleClass('btn-secondary');
             this.seeBlocks = !this.seeBlocks;
             if (this.seeBlocks) $('.block-box').show();
             else $('.block-box').hide();
-        });
-        $('#viewer-lines').click(function(ev) {
+        }, this));
+        $('#viewer-lines', this.$panel).click($.proxy(function(ev) {
             $('#viewer-lines').toggleClass('btn-primary').toggleClass('btn-secondary');
             this.seeLines = !this.seeLines;
-            if (this.seeLines) $('.line-box').show();
+            if (this.seeLines) {$('.line-box').show(); }
             else $('.line-box').hide();
-        });
+        }, this));
         this.$container.on('dblclick', $.proxy(function(ev) {
-            this.createBoxAtMousePos(ev, this.seeLines?'line':'block');
+            this.createBoxAtMousePos(ev, this.seeBlocks?'block':'line');
         }, this));
         this.$container.on('dblclick', '.block-box', $.proxy(function(ev) {
             ev.stopPropagation();

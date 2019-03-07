@@ -28,7 +28,15 @@
     <i title="{% trans 'Binarization Panel' %}" class="panel-icon fas fa-adjust"></i>
   </div>
   <div id="seg-tools" class="col">
-    <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+    <div class="form-row">
+      <div class="col-auto mr-1">
+        <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+      </div>
+      <div class="col mr-1">
+        <button id="viewer-blocks" title="{% trans 'Toggle regions.' %}" class="btn btn-primary"><i class="fas fa-th-large"></i></button>
+        <button id="viewer-lines" title="{% trans 'Toggle lines.' %}" class="btn btn-primary"><i class="fas fa-align-left"></i></button>
+      </div>
+    </div>
   </div>
   <div id="trans-tools" class="col">
     <div class="form-row">
