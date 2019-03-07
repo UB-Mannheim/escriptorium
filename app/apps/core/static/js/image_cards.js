@@ -8,8 +8,7 @@ var API = {
 
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
-var wz, lastSelected = null, viewing=null;
-var boxMode = 'block', zoomMode = false, seeBlocks = true, seeLines = true;
+var lastSelected = null;
 
 class partCard {
     constructor(part) {
@@ -22,9 +21,6 @@ class partCard {
         this.workflow = part.workflow;
         this.progress = part.transcription_progress;
         this.locked = false;
-        this.blocks = [];
-        this.lines = [];
-        this.ratio = null;
 
         this.api = API.part.replace('{part_pk}', this.pk);
         
@@ -64,13 +60,15 @@ class partCard {
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
-        this.binarizedButton.click($.proxy(function(ev) { this.showBW(); }, this));
-        this.segmentedButton.click($.proxy(function(ev) { this.showSegmentation(); }, this));
+        var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+        this.binarizedButton.click($.proxy(function(ev) {
+            document.location.replace(url+'#bin');
+        }, this));
+        this.segmentedButton.click($.proxy(function(ev) {
+            document.location.replace(url+'#seg');
+        }, this));
         this.transcribeButton.click($.proxy(function(ev) {
-            if (this.workflow['transcribe'] == 'done') {
-                var url = TRANSCRIPTION_URL + this.pk + '/';
-                window.location.assign(url);
-            }
+            window.location.assign(url+'#trans');
         }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -209,8 +207,6 @@ class partCard {
                 index: index
             }).done($.proxy(function(data){
                 this.previousIndex = null;
-                this.blocks = data.blocks;
-                this.lines = data.lines;
             }, this)).fail($.proxy(function(data){
                 this.moveTo(this.previousIndex, false);
                 // show errors
@@ -231,108 +227,6 @@ class partCard {
             .fail($.proxy(function(xhr) {
                 console.log("Couldn't delete part " + this.pk);
             }, this));
-    }
-
-    showBW() {
-        // Note: have to recreate an image because webkit never really delete the boxes otherwise
-        var $viewer = $('#viewer');
-        $viewer.empty();
-        if (!this.bw_image) {
-            $.get(this.api, $.proxy(function(data) {
-                Object.assign(this, data);
-                var $img = $('<img id="viewer-img" width="100%" src="'+this.bw_image.uri+'"/>');
-                $viewer.append($img);
-            }, this));
-        } else {
-            var $img = $('<img id="viewer-img" width="100%" src="'+this.bw_image.uri+'"/>');
-            $viewer.append($img);
-        }
-        viewing = {index: this.index, mode:'bw'};
-        if (this.index == 0) { $('#viewer-prev').attr('disabled', true); }
-        else { $('#viewer-prev').attr('disabled', false); }
-        if (this.index >= $('#cards-container .card').length-1) { $('#viewer-next').attr('disabled', true); }
-        else { $('#viewer-next').attr('disabled', false); }
-        $('#viewer-create-line').hide();
-        $('#viewer-binarization, #viewer-blocks-lines').hide();
-        $('#viewer-segmentation').show();
-        
-        $('#viewer-img').on('load', $.proxy(function(ev) {
-            $('#viewer-container').trigger('wheelzoom.refresh');
-        }, this));
-        
-        $viewer.parent().show();
-    }
-    
-    showBlocks() {
-        Object.keys(this.blocks).forEach($.proxy(function(i) {
-            new Box('block', this, this.blocks[i], this.ratio);
-        }, this));
-        if (!seeBlocks) $('.block-box').hide();
-    }
-    showLines() {
-        Object.keys(this.lines).forEach($.proxy(function(i) {
-            new Box('line', this, this.lines[i], this.ratio);
-        }, this));
-        if (!seeLines) $('.line-box').hide();
-    }
-    
-    createBoxAtMousePos(ev, mode) {
-        var $img = $('#viewer-img');
-        var top_left_x = Math.max(0, ev.pageX - $img.offset().left) / this.ratio / wz.scale;
-        var top_left_y = Math.max(0, ev.pageY - $img.offset().top) / this.ratio / wz.scale;
-        var box = [
-            top_left_x, top_left_y, top_left_x + 120/this.ratio/wz.scale, top_left_y + 80/this.ratio/wz.scale
-        ];
-        var block = null;
-        if ($(ev.target).is('.block-box')) {
-            block = $(ev.target).data('Box').pk;
-        };
-        var box_ = new Box(mode, this, {
-            order: Object.keys(this.blocks).length,
-            box: box,
-            block: block}, this.ratio);
-        box_.changed = true;  // makes sure it's saved
-    }
-    
-    showSegmentation() {
-        $.get(this.api, $.proxy(function(data) {
-            Object.assign(this, data);
-            update_(this);
-        }, this));
-        
-        function update_(this_) {
-            var $viewer = $('#viewer');
-            $viewer.empty();
-            var $img = $('<img id="viewer-img" width="100%" src="'+this_.image.thumbnails.large+'"/>');
-            $viewer.append($img);
-            
-            viewing = {index: this_.index, mode:'seg'};
-            if (this_.index == 0) { $('#viewer-prev').attr('disabled', true); }
-            else { $('#viewer-prev').attr('disabled', false); }
-            if (this_.index >= $('#cards-container .card').length-1) {
-                $('#viewer-next').attr('disabled', true);
-            }
-            else {
-                $('#viewer-next').attr('disabled', false);
-            }
-            $('#viewer-create-line').show();
-            if (this_.bw_image && this_.bw_image.uri) {
-                $('#viewer-binarization').show();
-            } else {
-                $('#viewer-binarization').hide();
-            }
-            $('#viewer-blocks-lines').show();
-            $('#viewer-segmentation').hide();
-            
-            $('#viewer-img').on('load', $.proxy(function(ev) {
-                this_.ratio = $img.width() / this_.image.size[0];
-                $('#viewer-container').trigger('wheelzoom.refresh');
-                this_.showBlocks();
-                this_.showLines();
-            }, this_));
-        }
-        
-        $('#viewer').parent().show();
     }
 
     static fromPk(pk) {
@@ -356,172 +250,6 @@ class partCard {
     }
 }
 
-// TODO: choose colors based on average color of image
-var colors = ['blue', 'green', 'cyan', 'indigo', 'purple', 'pink', 'orange', 'yellow', 'teal'];
-class Box {
-    constructor(type, part, obj, imgRatio) {
-        this.type = type; // can be either block or line
-        this.part = part;
-        this.pk = obj.pk || null;
-        this.updateApi();
-        this.order = obj.order;
-        this.block = this.part.blocks.find(function(block) {
-            return block.pk == obj.block;
-        });
-        this.imgRatio = imgRatio;
-        this.changed = false;
-        this.click = {x: null, y:null};
-        this.originalWidth = (obj.box[2] - obj.box[0]) * imgRatio;
-        var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+(DEBUG?this.order:'')+'</div>');
-        $box.css({'left': obj.box[0] * imgRatio,
-                  'top': obj.box[1] * imgRatio,
-                  'width': (obj.box[2] - obj.box[0]) * imgRatio,
-                  'height': (obj.box[3] - obj.box[1]) * imgRatio});
-        var color;
-        if (this.type == 'block') {
-            color = colors[this.order % colors.length];
-            $box.css({backgroundColor: color});
-        } else if (this.type == 'line') {
-            if (this.block == null) { color = 'red'; }
-            else { console.log(this.block); color = colors[this.block.order % colors.length]; }
-            $box.css({border: '2px solid '+color});
-        }
-        $box.draggable({
-            disabled: true,
-            containment: 'parent',
-            cursor: "grab",
-            stop: $.proxy(function(ev) {
-                this.changed = true;
-                if (zoomMode) $('#viewer-container').trigger('wheelzoom.enable');
-            }, this),
-            // this is necessary because WheelZoom make it jquery-ui drag jump around
-            start: $.proxy(function(event) {
-                this.click.x = event.clientX;
-                this.click.y = event.clientY;
-                $('#viewer-container').trigger('wheelzoom.disable');
-            }, this),
-            drag: $.proxy(function(event, ui) {
-                var original = ui.originalPosition;
-                ui.position = {
-                    left: (event.clientX - this.click.x + original.left) / wz.scale,
-                    top:  (event.clientY - this.click.y + original.top ) / wz.scale
-                };
-            }, this)
-        });
-        $box.resizable({
-            disabled: true,
-            stop: $.proxy(function(ev) {
-                this.changed = true;
-                if (zoomMode) $('#viewer-container').trigger('wheelzoom.enable');
-            }, this),
-            start: function(ev) {
-                $('#viewer-container').trigger('wheelzoom.disable');
-            }
-        });
-        
-        $box.data('Box', this);
-        $box.appendTo($('#viewer'));
-        this.$element = $box;
-        // we need to keep references to be able to unbind it
-        this.proxyUnselect = $.proxy(function(ev) {
-            // click in the img doesn't unselect ?!
-            if ($(ev.target).parents('#viewer').length) { return; }
-            this.unselect();
-        }, this);
-        this.proxyKeyboard = $.proxy(this.keyboard, this);
-        
-        // select a new line
-        if (this.pk === null) this.select();
-
-        // avoid jquery-ui jumping
-        $box.on('mousedown', function(ev) { ev.currentTarget.style.position = 'relative'; });
-        $box.on('mouseup', function(ev) { ev.currentTarget.style.position = 'absolute'; });
-        
-        $box.click($.proxy(function(ev) {
-            ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
-            this.select();
-        }, this));
-
-        $('.close', this.$element).click($.proxy(function(ev) {
-            ev.stopPropagation();
-            this.delete();
-        }, this));
-    }
-
-    updateApi() {
-        this.api = {
-            list: this.part.api + this.type + 's' + '/'
-        };
-        if (this.pk) {
-            this.api.detail = this.api.list + this.pk + '/';
-        }
-    }
-    
-    getBox() {
-        var x1 = parseInt((this.$element.position().left) / wz.scale / this.imgRatio);
-        var y1 = parseInt((this.$element.position().top) / wz.scale / this.imgRatio);
-        var x2 = parseInt(((this.$element.position().left) / wz.scale + this.$element.width()) / this.imgRatio);
-        var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.imgRatio);
-        return [x1, y1, x2, y2];
-    }
-    keyboard(ev) {
-        if(!this.$element.is('.selected')) return;
-        if (ev.keyCode == 46) {
-            this.delete();
-        }
-        else if (ev.keyCode == 37) { this.$element.animate({'left': '-=1px'}); }
-        else if (ev.keyCode == 38) { this.$element.animate({'top': '-=1px'}); }
-        else if (ev.keyCode == 39) { this.$element.animate({'left': '+=1px'}); }
-        else if (ev.keyCode == 40) { this.$element.animate({'top': '+=1px'}); }
-    }
-    select() {
-        if (this.$element.is('.selected')) return;
-        var previous = $('.box.selected');
-        if (previous.length) { previous.data('Box').unselect(); }
-        this.$element.addClass('selected');
-        this.$element.draggable('enable');
-        this.$element.resizable('enable');
-        $(document).on('click', this.proxyUnselect);
-        $(document).on('keyup', this.proxyKeyboard);
-    }
-    unselect() {
-        $(document).off('keyup', this.proxykeyboard);
-        $(document).off('click', this.proxyUnselect);
-        this.$element.removeClass('selected');
-        this.$element.draggable('disable');
-        this.$element.resizable('disable');
-        if (this.changed) {
-            this.upload();
-        }
-    }
-    
-    upload() {
-        var post = {};
-        post = { document_part: this.part.pk,
-                 box: JSON.stringify(this.getBox()) };
-        if (this.type == 'line') post.block = this.block.pk;
-        var uri = this.pk?this.api.detail:this.api.list;
-        var type = this.pk?'PUT':'POST';
-        $.ajax({url: uri, type: type, data: post})
-            .done($.proxy(function(data) {
-                this.pk = data.pk;
-                this.updateApi();
-            }, this)).fail(function(data){
-                alert("Couldn't save block:", data);
-            });
-        this.changed = false;
-    }
-    delete() {
-        if (!confirm("Do you really want to delete this line?")) { return; }
-        if (this.pk !== null) {
-            $.ajax({url: this.api.detail, type:'DELETE'});
-        }
-        $(document).unbind('keyup', this.proxykeyboard);
-        $(document).off('click', this.proxyUnselect);
-        this.$element.unbind();
-        this.$element.remove();
-    }
-}
 
 $(document).ready(function() {
     //************* Card ordering *************
@@ -640,101 +368,13 @@ $(document).ready(function() {
             if (data.status == 'error') { alert(data.error); }
         });
     });
-    
-    // zoom
-    wz = WheelZoom($('#viewer-container'), true, 1, null, null);
-    function toggleZoom() {
-        zoomMode = !zoomMode;
-        $('#zoom-range').toggle();
-        $('#viewer-zoom').toggleClass('btn-primary').toggleClass('btn-secondary');
-        if (zoomMode) { $('#viewer-container').trigger('wheelzoom.enable'); }
-        else { $('#viewer-container').trigger('wheelzoom.disable'); }
-    }
-    
-    $('#viewer-zoom').click(function(ev) {
-        toggleZoom();
-    });
-    $('#viewer-container').get(0).addEventListener('wheelzoom.update', function(ev) {
-        $('#zoom-range').attr('min', wz.min_scale);
-        $('#zoom-range').attr('max', wz.max_scale);
-        $('#zoom-range').val(wz.scale);
-    });
-    $('#zoom-range').on('mousedown', function(ev) {
-        $('#viewer-container').trigger('wheelzoom.disable');
-    }).on('mouseup', function(ev) {
-        if (zoomMode) {
-            $('#viewer-container').trigger('wheelzoom.enable');
-        }
-    }).on('change', function(ev) {
-        wz.scale = parseFloat($(ev.target).val());
-        $('#viewer-container').trigger('wheelzoom.refresh');
-    });
-
-    // viewer buttons
-    $('#viewer-prev').click(function(ev) {
-        if (viewing && viewing.index > 0) {
-            var card = $('#cards-container .card:eq('+(viewing.index-1)+')').data('partCard');
-            if (viewing.mode == 'bw') { card.showBW(); }
-            else if(viewing.mode == 'seg') { card.showSegmentation(); }
-        }
-    });
-    $('#viewer-next').click(function(ev) {
-        if (viewing && viewing.index < $('#cards-container .card').length) {
-            var card = $('#cards-container .card:nth('+(viewing.index+1)+')').data('partCard');
-            if (viewing.mode == 'bw') { card.showBW(); }
-            else if(viewing.mode == 'seg') { card.showSegmentation(); }
-        }
-    });
-    $('#viewer-reset').click(function(ev) {
-        $('#viewer-container').trigger('wheelzoom.reset');
-        $('#zoom-range').val(wz.scale);
-    });
-    $('#viewer-binarization').click(function(ev) {
-        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
-        if (viewing.mode != 'bw') { card.showBW(); }
-    });
-    $('#viewer-segmentation').click(function(ev) {
-        var card = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
-        if(viewing.mode != 'seg') { card.showSegmentation(); }
-    });
-    $('#viewer-blocks').click(function(ev) {
-        $('#viewer-blocks').toggleClass('btn-primary').toggleClass('btn-secondary');
-        seeBlocks = !seeBlocks;
-        if (seeBlocks) $('.block-box').show();
-        else $('.block-box').hide();
-    });
-    $('#viewer-lines').click(function(ev) {
-        $('#viewer-lines').toggleClass('btn-primary').toggleClass('btn-secondary');
-        seeLines = !seeLines;
-        if (seeLines) $('.line-box').show();
-        else $('.line-box').hide();
-    });
-    $('#viewer-create-block').click(function(ev) {
-        $('#viewer-create-line').removeClass('btn-success').addClass('btn-secondary');
-        $('#viewer-create-block').removeClass('btn-secondary').addClass('btn-success');
-        boxMode = 'block';
-    });
-    $('#viewer-create-line').click(function(ev) {
-        $('#viewer-create-block').removeClass('btn-success').addClass('btn-secondary');
-        $('#viewer-create-line').removeClass('btn-secondary').addClass('btn-success');
-        boxMode = 'line';
-    });
-    $('#viewer').on('dblclick', function(ev) {
-        var part = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
-        part.createBoxAtMousePos(ev, boxMode);
-    });
-    $('#viewer').on('dblclick', '.block-box', function(ev) {
-        ev.stopPropagation();
-        var part = $('#cards-container .card:eq('+(viewing.index)+')').data('partCard');
-        part.createBoxAtMousePos(ev, 'line');
-    });
 
     /* Keyboard Shortcuts */
-    $(document).keydown(function(e) {
-        if(e.originalEvent.ctrlKey && e.originalEvent.key == 'z') {
-            toggleZoom();
-        }
-    });
+    // $(document).keydown(function(e) {
+    //     if(e.originalEvent.ctrlKey && e.originalEvent.key == 'z') {
+    //         toggleZoom();
+    //     }
+    // });
 
     /* fetch the images and create the cards */
     var counter=0;

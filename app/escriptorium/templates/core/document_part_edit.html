@@ -12,13 +12,13 @@
 
 {% block extra_nav %}
 <div>
-  <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-primary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
   <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
   <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
   <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
 </div>
 {% endblock %}
-    
+
 {% block nav_content %}
 <div class="row">
   <div id="img-tools" class="col">

@@ -12,7 +12,9 @@ class TranscriptionLine {
         this.imgWidth = imgWidth;
         this.editing = false;
         
-        var $el = $('<div class="trans-box"><span></span></div>');
+        var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
+        $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
+        
         this.$element = $el;
         
         this.ratio = $('#part-img').width() / this.imgWidth;
@@ -43,6 +45,8 @@ class TranscriptionLine {
             this.edit();
         }, this));
     }
+
+
     
     showOverlay() {
         $('#overlay').css({

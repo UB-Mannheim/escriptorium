@@ -30,14 +30,14 @@ class PartViewSet(ModelViewSet):
         else:  # list & create
             return PartSerializer
         return super(MyModelViewSet, self).get_serializer_class()
-
-    def create(self, *args, **kwargs):
-        document = Document.objects.get(pk=self.kwargs['document_pk'])
-        kwargs['commit'] = False
-        part = super().create(*args, **kwargs)
-        part.typology = document.process_settings.typology
-        part.save()
-
+    
+    # def create(self, *args, **kwargs):
+    #     document = Document.objects.get(pk=self.kwargs['document_pk'])
+    #     kwargs['commit'] = False
+    #     part = super().create(*args, **kwargs)
+    #     part.typology = document.process_settings.typology
+    #     part.save()
+    
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)

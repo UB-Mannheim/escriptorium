@@ -91,7 +91,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 
 
 class LineSerializer(serializers.ModelSerializer):
-    transcriptions = LineTranscriptionSerializer(many=True)
+    transcriptions = LineTranscriptionSerializer(many=True, required=False)
     
     class Meta:
         model = Line

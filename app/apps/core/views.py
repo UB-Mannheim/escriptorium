@@ -295,7 +295,7 @@ class EditPart(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         return DocumentPart.objects.filter(
             document=self.kwargs.get('pk')).select_related('document')
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         # Note: a bit confusing but this view uses the same base template than UpdateDocument

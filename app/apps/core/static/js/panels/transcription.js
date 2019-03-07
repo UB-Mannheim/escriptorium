@@ -11,7 +11,8 @@ class TranscriptionLine {
         this.panel = panel;
 
         this.api = API.part.replace('{part_pk}', panel.part.pk) + 'transcriptions/';
-        var $el = $('<div class="trans-box"><span></span></div>');
+        var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
+        $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
         this.$element = $el;
 
         this.textContainer = $('span', $el).first();
@@ -33,7 +34,7 @@ class TranscriptionLine {
     }
 
     getRatio() {
-        this.ratio = $('#part-img').width() / this.imgWidth;
+        this.ratio = $('.img-container', this.panel.$panel).width() / this.imgWidth;
     }
     
     setPosition() {
@@ -219,8 +220,13 @@ class TranscriptionLine {
                 transcription: selectedTranscription,
                 content: new_content
             }}).done($.proxy(function(data){
-                lt = lt || {};
-                Object.assign(lt, data);
+                if (!lt) {  // creation
+                    lt = {};
+                    Object.assign(lt, data);
+                    this.transcriptions.push(lt);
+                } else {
+                    Object.assign(lt, data);
+                }
                 this.textContainer.html(new_content);
                 this.textContainer.ready($.proxy(function(ev) {
                     this.scaleContent();
@@ -229,6 +235,10 @@ class TranscriptionLine {
                 alert(data);
             });
         }
+    }
+
+    delete() {
+        this.$element.remove();
     }
 }
 
@@ -268,7 +278,11 @@ class TranscriptionPanel{
         });
         $('#trans-modal #save-continue-btn').on('click', $.proxy(function (e, editor) {
             currentLine.save();
-            this.lines[currentLine.order+1].edit();
+            if (this.lines[currentLine.order+1]) {
+                this.lines[currentLine.order+1].edit();
+            } else {
+                $('#trans-modal').modal('hide');
+            }
         }, this));
         $('#trans-modal').on('click', '.js-pull-state', function(ev) {
             ev.preventDefault();
@@ -295,31 +309,38 @@ class TranscriptionPanel{
                 }
             }
         });
-    }
-    
-    open() {
-        this.opened = true;
-        this.$panel.show();
-    }
-    
-    toggle() {
-        if (this.opened) this.close();
-        else this.open();
-    }
-    
-    close() {
-        this.opened = false;
-        this.$panel.hide();
+        
+        if (this.opened) this.open();
     }
 
+    addLine(line) {
+        this.lines.push(new TranscriptionLine(line, this.part.image.size[0], this));
+    }
+    
     load(part) {
         this.lines = [];
         $('.trans-box').remove();
         this.part = part;
         for (var i=0; i < this.part.lines.length; i++) {
-            this.lines.push(new TranscriptionLine(
-                this.part.lines[i], this.part.image.size[0], this));
+            this.addLine(this.part.lines[i]);
         }
+    }
+    
+    open() {
+        this.opened = true;
+        this.$panel.show();
+        Cookies.set('trans-panel-open', true);
+    }
+       
+    close() {
+        this.opened = false;
+        this.$panel.hide();
+        Cookies.set('trans-panel-open', false);
+    }
+    
+    toggle() {
+        if (this.opened) this.close();
+        else this.open();
     }
     
     reset() {

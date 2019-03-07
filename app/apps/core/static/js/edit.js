@@ -2,24 +2,35 @@
   Panel {
       open(opened)
       close()
-      ev loaded()
+      load(part)
       reset()
-      opened = false
   }
 */
+var panels;
 var API = {
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
 
 $(document).ready(function() {
-    var panels = {
-        'source': new SourcePanel($('#img-panel, #img-tools'), true),
-        'binar': new BinarizationPanel($('#binar-panel, #binar-tools'), false),
-        'seg': new SegmentationPanel($('#seg-panel, #seg-tools'), false),
-        'trans': new TranscriptionPanel($('#trans-panel, #trans-tools'), false)
+    var show_img = JSON.parse(Cookies.get('img-panel-open') || 'true');
+    var show_binar = JSON.parse(document.location.hash == '#bin' ||
+                                Cookies.get('binar-panel-open') || 'false');
+    var show_seg = JSON.parse(document.location.hash == '#seg' ||
+                              Cookies.get('seg-panel-open') || 'false');
+    var show_trans = JSON.parse(document.location.hash == '#trans' ||
+                                Cookies.get('trans-panel-open') || 'false');
+    panels = {
+        'source': new SourcePanel($('#img-panel, #img-tools'), show_img),
+        'binar': new BinarizationPanel($('#binar-panel, #binar-tools'), show_binar),
+        'seg': new SegmentationPanel($('#seg-panel, #seg-tools'), show_seg),
+        'trans': new TranscriptionPanel($('#trans-panel, #trans-tools'), show_trans)
     };
+    if (show_img) $('#img-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
+    if (show_binar) $('#binar-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
+    if (show_seg) $('#seg-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
+    if (show_trans) $('#trans-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
+    
     function loadPart(pk) {
-        // cleanup previous page references
         var uri = API.part.replace('{part_pk}', pk);
         $.get(uri, function(data) {
             for (var key in panels) {
@@ -35,7 +46,7 @@ $(document).ready(function() {
         });        
     }
     /* export */
-    $('#document-export button').click(function(ev) {
+    $('button#document-export').click(function(ev) {
         ev.preventDefault();
         var selectedTranscription = $('#document-transcriptions').val();
         var href = $('#document-export').data('href');

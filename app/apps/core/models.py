@@ -133,7 +133,12 @@ class Document(models.Model):
     
     def __str__(self):
         return self.name
-    
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+        Transcription.objects.get_or_create(document=self, name=_('manual'))
+        return res
+        
     @property
     def is_shared(self):
         return self.workflow_state in [self.WORKFLOW_STATE_PUBLISHED,

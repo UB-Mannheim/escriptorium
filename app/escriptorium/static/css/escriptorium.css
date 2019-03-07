@@ -231,7 +231,8 @@ body {
     right: -30px;
 }
 
-#binar-panel, #seg-panel, #binar-tools, #seg-tools, #trans-panel, #trans-tools {
+#img-panel, #img-tools, #binar-panel, #seg-panel,
+#binar-tools, #seg-tools, #trans-panel, #trans-tools {
     display: none;
 }
 i.panel-icon {

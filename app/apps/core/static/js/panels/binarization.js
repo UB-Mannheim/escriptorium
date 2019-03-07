@@ -19,16 +19,19 @@ class BinarizationPanel {
         } else {
             $('.img-container img', this.$panel).attr('src', '');
         }
+        if (this.opened) this.open();
     }
     
     open() {
         this.opened = true;
         this.$panel.show();
+        Cookies.set('binar-panel-open', true);
     }
 
     close() {
         this.opened = false;
         this.$panel.hide();
+        Cookies.set('binar-panel-open', false);
     }
 
     toggle() {
