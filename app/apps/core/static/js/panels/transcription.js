@@ -60,7 +60,7 @@ class TranscriptionLine {
 
     getLineTranscription() {
         var selectedTranscription = $('#document-transcriptions').val();
-        return this.transcriptions.find(function(tr) {
+        return this.transcriptions && this.transcriptions.find(function(tr) {
             return tr.transcription == selectedTranscription;
         });
     }
@@ -204,10 +204,10 @@ class TranscriptionLine {
     
     save() {
         var selectedTranscription = $('#document-transcriptions').val();
-        var lt = this.getLineTranscription();
         var new_content = $('#trans-modal #trans-input .ql-editor').html();
         if (this.getText() != new_content) {
             var type, uri;
+            var lt = this.getLineTranscription();
             if (lt === undefined) {  // creation
                 type = 'POST';
                 uri = this.api;
@@ -321,6 +321,7 @@ class TranscriptionPanel{
         this.lines = [];
         $('.trans-box').remove();
         this.part = part;
+        $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }

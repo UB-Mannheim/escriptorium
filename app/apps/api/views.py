@@ -14,7 +14,7 @@ class DocumentViewSet(ModelViewSet):
 
 class PartViewSet(ModelViewSet):
     queryset = Document.objects.all()
-    paginate_by = 10
+    paginate_by = 50
     
     def get_queryset(self):
         qs = DocumentPart.objects.filter(document=self.kwargs['document_pk'])
