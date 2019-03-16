@@ -227,7 +227,7 @@ class TranscriptionLine {
                 } else {
                     Object.assign(lt, data);
                 }
-                this.textContainer.html(new_content);
+                this.setText();
                 this.textContainer.ready($.proxy(function(ev) {
                     this.scaleContent();
                 }, this));

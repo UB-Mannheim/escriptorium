@@ -13,3 +13,4 @@ kraken==1.0.1
 django-cleanup==3.0.1
 djangorestframework==3.9.2
 drf-nested-routers==0.91
+bleach==3.1.0

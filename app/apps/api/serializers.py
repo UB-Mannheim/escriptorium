@@ -1,3 +1,4 @@
+import bleach
 import json
 
 from rest_framework import serializers
@@ -82,12 +83,23 @@ class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
         fields = ('pk', 'order', 'document_part', 'box')
-    
+
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineTranscription
         fields = ('pk', 'line', 'transcription', 'content', 'versions')
+        
+    def cleanup(self, data):
+        return bleach.clean(data, tags=['i', 'b', 's', 'u'], strip=True)
+    
+    def create(self, validated_data):
+        validated_data['content'] = self.cleanup(validated_data['content'])
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        validated_data['content'] = self.cleanup(validated_data['content'])
+        return super().update(instance, validated_data)
 
 
 class LineSerializer(serializers.ModelSerializer):
