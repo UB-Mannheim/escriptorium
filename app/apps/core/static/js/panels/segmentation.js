@@ -24,7 +24,8 @@ class Box {
         } else if (this.type == 'line') {
             if (this.block == null) { color = 'red'; }
             else { color = colors[this.block.order % colors.length]; }
-            $box.css({border: '2px solid '+color});
+            $box.css({border: '1px solid '+color});
+            if (!this.order%2) { $box.css('filter', 'invert(100%)'); }
         }
         $box.draggable({
             disabled: true,
@@ -172,6 +173,7 @@ class Box {
         if (this.type == 'line') post.block = this.block?this.block.pk:null;
         var uri = this.pk?this.api.detail:this.api.list;
         var type = this.pk?'PUT':'POST';
+
         $.ajax({url: uri, type: type, data: post})
             .done($.proxy(function(data) {
                 /* create corresponding transcription line */
@@ -184,7 +186,7 @@ class Box {
         this.changed = false;
     }
     delete() {
-        if (!confirm("Do you really want to delete this line?")) { return; }
+        if (!confirm("Do you really want to delete this line and all of its transcriptions?")) { return; }
         if (this.pk !== null) {
             $.ajax({url: this.api.detail, type:'DELETE'});
         }
@@ -194,7 +196,7 @@ class Box {
         this.$element.remove();
         if (this.type == 'line') {
             var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
-            tl.delete();
+            if (tl) tl.delete();
         }
     }
 }
@@ -234,13 +236,13 @@ class SegmentationPanel {
     }
     
     createBoxAtMousePos(ev, mode) {
-        var top_left_x = Math.max(0, ev.pageX - this.$container.offset().left) / this.ratio;
-        var top_left_y = Math.max(0, ev.pageY - this.$container.offset().top) / this.ratio;
+        var top_left_x = Math.max(0, ev.clientX - this.$container.offset().left) / wz.scale / this.ratio;
+        var top_left_y = Math.max(0, ev.clientY - this.$container.offset().top) / wz.scale / this.ratio;
         var box = [
             parseInt(top_left_x),
             parseInt(top_left_y),
-            parseInt(top_left_x + 120),
-            parseInt(top_left_y + 80)
+            parseInt(top_left_x + 200/wz.scale),
+            parseInt(top_left_y + 40/wz.scale)
         ];
         var block = null;
         if ($(ev.target).is('.block-box')) {

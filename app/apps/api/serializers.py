@@ -95,10 +95,13 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data['content'] = self.cleanup(validated_data['content'])
-        return super().create(validated_data)
+        instance = super().create(validated_data)
+        instance.part.recalculate_ordering()
+        return instance
     
     def update(self, instance, validated_data):
         validated_data['content'] = self.cleanup(validated_data['content'])
+        instance.part.recalculate_ordering()
         return super().update(instance, validated_data)
 
 
