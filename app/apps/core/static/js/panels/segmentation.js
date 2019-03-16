@@ -15,6 +15,7 @@ class Box {
         this.changed = false;
         this.click = {x: null, y:null};
         this.originalWidth = (obj.box[2] - obj.box[0]) * this.ratio;
+        this.$container = $('#seg-panel .img-container');
         var $box = $('<div class="box '+this.type+'-box"> <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+(DEBUG?this.order:'')+'</div>');
         var color;
         if (this.type == 'block') {
@@ -33,19 +34,18 @@ class Box {
                 this.changed = true;
             }, this),
             // this is necessary because WheelZoom make it jquery-ui drag jump around
-            start: $.proxy(function(event) {
-                this.click.x = event.clientX;
-                this.click.y = event.clientY;
+            start: $.proxy(function(ev) {
+                this.click.x = ev.clientX;
+                this.click.y = ev.clientY;
             }, this),
-            drag: $.proxy(function(event, ui) {
+            drag: $.proxy(function(ev, ui) {
                 var original = ui.originalPosition;
-                var left = event.clientX - this.click.x + original.left;
-                var top = event.clientY - this.click.y + original.top;
+                var left = (ev.clientX - this.click.x + original.left - wz.translate.x) / wz.scale;
+                var top = (ev.clientY - this.click.y + original.top - wz.translate.y) / wz.scale;
                 ui.position = {
                     left: left,
                     top: top
                 };
-                
                 var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
                 if (tl) {
                     tl.box = this.getBox();
@@ -58,7 +58,13 @@ class Box {
             stop: $.proxy(function(ev) {
                 this.changed = true;
             }, this),
+            start: $.proxy(function(ev) {
+                this.click.x = ev.clientX;
+                this.click.y = ev.clientY;
+            }, this),
             resize: $.proxy(function(ev, ui) {
+                ui.size.width = (ev.clientX - this.click.x) / wz.scale + ui.originalSize.width;
+                ui.size.height = (ev.clientY - this.click.y) / wz.scale + ui.originalSize.height;
                 var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
                 if (tl) {
                     tl.box = this.getBox();
@@ -107,7 +113,7 @@ class Box {
             this.api.detail = this.api.list + this.pk + '/';
         }
     }
-
+    
     setRatio(ratio) {
         this.ratio = ratio;
     }
@@ -122,10 +128,10 @@ class Box {
     }
     
     getBox() {
-        var x1 = parseInt((this.$element.position().left) / this.ratio);
-        var y1 = parseInt((this.$element.position().top)  / this.ratio);
-        var x2 = parseInt(((this.$element.position().left) + this.$element.width()) / this.ratio);
-        var y2 = parseInt(((this.$element.position().top) + this.$element.height()) / this.ratio);
+        var x1 = parseInt((this.$element.position().left) / wz.scale / this.ratio);
+        var y1 = parseInt((this.$element.position().top)  / wz.scale / this.ratio);
+        var x2 = parseInt(((this.$element.position().left) / wz.scale + this.$element.width()) / this.ratio);
+        var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.ratio);
         return [x1, y1, x2, y2];
     }
     keyboard(ev) {
@@ -169,7 +175,7 @@ class Box {
         $.ajax({url: uri, type: type, data: post})
             .done($.proxy(function(data) {
                 /* create corresponding transcription line */
-                if (!this.pk) { panels['trans'].addLine(data); }
+                if (!this.pk && this.type == 'line') { panels['trans'].addLine(data); }
                 this.pk = data.pk;
                 this.updateApi();
             }, this)).fail(function(data){
@@ -219,7 +225,7 @@ class SegmentationPanel {
         }, this));
         this.$container.on('dblclick', '.block-box', $.proxy(function(ev) {
             ev.stopPropagation();
-            this.part.createBoxAtMousePos(ev, 'line');
+            this.createBoxAtMousePos(ev, 'line');
         }, this));
     }
     
@@ -228,14 +234,13 @@ class SegmentationPanel {
     }
     
     createBoxAtMousePos(ev, mode) {
-        var scale = this.$container.css('scale') | 1;
-        var top_left_x = Math.max(0, ev.pageX - this.$container.offset().left) / this.ratio / scale;
-        var top_left_y = Math.max(0, ev.pageY - this.$container.offset().top) / this.ratio / scale;
+        var top_left_x = Math.max(0, ev.pageX - this.$container.offset().left) / this.ratio;
+        var top_left_y = Math.max(0, ev.pageY - this.$container.offset().top) / this.ratio;
         var box = [
             parseInt(top_left_x),
             parseInt(top_left_y),
-            parseInt(top_left_x + 120/this.ratio/scale),
-            parseInt(top_left_y + 80/this.ratio/scale)
+            parseInt(top_left_x + 120),
+            parseInt(top_left_y + 80)
         ];
         var block = null;
         if ($(ev.target).is('.block-box')) {

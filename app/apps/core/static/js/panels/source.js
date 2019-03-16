@@ -2,20 +2,15 @@ class SourcePanel {
     constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened | false;
+        this.$container = $('.img-container', this.$panel);
+        WheelZoom(this.$container, false, 1, 1);
     }
 
     load(part) {
         this.part = part;
         $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
         if (this.opened) this.open();
-        var $container = $('.img-container', this.$panel);
-        WheelZoom($container, false, 1, 1);
-        $container.get(0).addEventListener('wheelzoom.update', function(ev) {
-            $(':not(#img-panel) .img-container div.zoom-container').css({
-                transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
-            });
-        });
-
+        this.$container.trigger('wheelzoom.refresh');
     }
     
     open() {
@@ -36,6 +31,6 @@ class SourcePanel {
     }
 
     reset() {
-        $('.img-container', this.$panel).trigger('wheelzoom.refresh');
+        this.$container.trigger('wheelzoom.refresh');
     }
 }

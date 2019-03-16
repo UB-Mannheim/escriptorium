@@ -2,24 +2,19 @@ class BinarizationPanel {
     constructor ($panel, opened) {
         this.$panel = $panel;
         this.opened = opened | false;
+        this.$container = $('.img-container', this.$panel);
+        WheelZoom(this.$container, false, 1, 1);
     }
 
     load(part) {
         this.part = part;
         if (this.part.bw_image) {
             $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
-
-            var $container = $('.img-container', this.$panel);
-            WheelZoom($container, false, 1, 1);
-            $container.get(0).addEventListener('wheelzoom.update', function(ev) {
-                $(':not(#binar-panel) .img-container div.zoom-container').css({
-                    transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'
-                });
-            });            
         } else {
             $('.img-container img', this.$panel).attr('src', '');
         }
         if (this.opened) this.open();
+        this.$container.trigger('wheelzoom.refresh');
     }
     
     open() {
@@ -27,19 +22,19 @@ class BinarizationPanel {
         this.$panel.show();
         Cookies.set('binar-panel-open', true);
     }
-
+    
     close() {
         this.opened = false;
         this.$panel.hide();
         Cookies.set('binar-panel-open', false);
     }
-
+    
     toggle() {
         if (this.opened) this.close();
         else this.open();
     }
-
+    
     reset() {
-        $('.img-container', this.$panel).trigger('wheelzoom.refresh');
+        this.$container.trigger('wheelzoom.refresh');
     }
 }

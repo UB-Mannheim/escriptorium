@@ -1,12 +1,5 @@
-/*
-  Panel {
-      open(opened)
-      close()
-      load(part)
-      reset()
-  }
-*/
 var panels;
+var wz = {scale:1, translate: {x:0, y:0}};
 var API = {
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
@@ -30,19 +23,20 @@ $(document).ready(function() {
     if (show_seg) $('#seg-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
     if (show_trans) $('#trans-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
     
-    function loadPart(pk) {
+    function loadPart(pk, callback) {
         var uri = API.part.replace('{part_pk}', pk);
         $.get(uri, function(data) {
             for (var key in panels) {
                 panels[key].load(data);
             }
-
             /* previous and next button */
             window.history.pushState({},"", document.location.href.replace(/(part\/)\d+(\/edit)/, '$1'+data.pk+'$2'));
             if (data.previous) $('a#prev-part').data('target', data.previous).show();
             else $('a#prev-part').hide();
             if (data.next) $('a#next-part').data('target', data.next).show();
             else $('a#next-part').hide();
+
+            if (callback) callback(data);
         });        
     }
     /* export */
@@ -70,5 +64,20 @@ $(document).ready(function() {
         loadPart(pk);
     });
     
-    loadPart(PART_ID);
+    loadPart(PART_ID, function(data) {
+        // needs to recalculate positions once everything is loaded
+        for (var key in panels) {
+            panels[key].reset();
+        }
+    });
+
+    // propagate zoom & translation
+    $('.img-container').each(function(i, el) {
+        el.addEventListener('wheelzoom.update', function(ev) {
+            wz = ev.detail;
+            // select all panels but this one
+            var zc = $(':not(#binar-panel) .img-container .zoom-container');
+            zc.css({transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'});
+        });
+    });
 });

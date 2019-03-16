@@ -249,6 +249,7 @@ i.panel-icon {
     transform-origin: 0 0;
 }
 .zoom-container {
+    transition: transform 0.3s;
     transform-origin: 0 0;
 }
 

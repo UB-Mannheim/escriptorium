@@ -85,18 +85,19 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
 	    // Make sure the slide stays in its container area when zooming in/out
         if (api.scale > 1) {
 	        if(api.pos.x > 0) { api.pos.x = 0; }
-	        if(api.pos.x+size.w*api.scale < container.width()) { api.pos.x = -size.w*(api.scale-1); }
+	        if(api.pos.x+size.w*api.scale < container.width()) { api.pos.x = container.width() - size.w*api.scale; }
             if(api.pos.y > 0) { api.pos.y = 0; }
 	        if(api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
         } else {
 	        if(api.pos.x < 0) { api.pos.x = 0; }
-	        if(api.pos.x+size.w*api.scale > container.width()) { api.pos.x = -size.w*(api.scale-1); }
-            if(api.pos.y > 0) { api.pos.y = 0; }
-            if(size.h*api.scale <= container.height() && api.pos.y < 0) { api.pos.y = 0; }
-	        if(size.h*api.scale >= container.height() && api.pos.y+size.h*api.scale < container.height()) { api.pos.y = container.height() - size.h*api.scale; }
-            if(size.h*api.scale <= container.height() && api.pos.y+size.h*api.scale > container.height()) { api.pos.y = container.height() - size.h*api.scale; }
+	        if(api.pos.x+size.w > container.width()) { api.pos.x = -size.w*(api.scale-1); }
+            if(api.pos.y < 0) { api.pos.y = 0; }
+            if(api.pos.y+size.h > container.height()) { api.pos.y = 0; }
+            
+	        if(size.h*api.scale >= container.height() && api.pos.y+size.h < container.height()) { api.pos.y = container.height() - size.h; }
+            if(size.h*api.scale <= container.height() && api.pos.y+size.h > container.height()) { api.pos.y = container.height() - size.h; }
         }
-          
+        
         // apply scale first for transition effect
         target.css('transform','scale('+api.scale+')');
 		target.css('transform','translate('+(api.pos.x)+'px,'+(api.pos.y)+'px) scale('+api.scale+')');
