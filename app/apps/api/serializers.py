@@ -91,7 +91,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
         fields = ('pk', 'line', 'transcription', 'content', 'versions')
         
     def cleanup(self, data):
-        return bleach.clean(data, tags=['i', 'b', 's', 'u'], strip=True)
+        return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
     
     def create(self, validated_data):
         validated_data['content'] = self.cleanup(validated_data['content'])
