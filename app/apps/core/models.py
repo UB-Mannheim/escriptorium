@@ -258,14 +258,13 @@ class DocumentPart(OrderedModel):
                 if abs(a[1] - b[1]) < line_level_treshold * imgsize[1]:
                     return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
                 return abs(a[1] - origin_pt(imgbox)[1]) - abs(b[1] - origin_pt(imgbox)[1])
-            
-            if a[0] != b[0]:
-                return cmp_(a[0], b[0])
-            return cmp_(a[1], b[1])
 
-            if abs(a[1][1] - b[1][1]) < line_level_treshold * imgsize[1]:
-                return abs(a[1][0] - origin_pt(imgbox)[0]) - abs(b[1][0]- origin_pt(imgbox)[0])
-            return abs(a[1][1] - origin_pt(imgbox)[1]) - abs(b[1][1] - origin_pt(imgbox)[1])
+            try:
+                if a[0] != b[0]:
+                    return cmp_(a[0], b[0])
+                return cmp_(a[1], b[1])
+            except TypeError:  # invalid line
+                return 0
         
         # fetch all lines and regroup them by block
         ls = [(l, (origin_pt(l.block.box), origin_pt(l.box))
@@ -283,7 +282,7 @@ class DocumentPart(OrderedModel):
     def save(self, *args, **kwargs):
         self.calculate_progress()
         return super().save(*args, **kwargs)
-
+    
     def create(self, *args, **kwargs):
         res = super().create(*args, **kwargs)
         try:
