@@ -38,28 +38,6 @@
   {# card are created through the dom api (see below) #}
 </div>
 
-{# viewer #}
-<div id="viewer-container" class="col-12 my-3">  
-  <div id="viewer"><img id="viewer-img" width="100%"/></div>
-  <div id="viewer-buttons" class="d-flex m-2">
-    <button id="viewer-prev" title="{% trans 'Previous' %}" class="btn btn-sm btn-secondary mr-1"><i class="fas fa-arrow-left"></i></button>
-    <button id="viewer-next" title="{% trans 'Next' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-arrow-right"></i></button>
-    <button id="viewer-zoom" title="{% trans 'Mode zoom (ctrl+z)' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-search-plus"></i></button>
-    <button id="viewer-reset" title="{% trans 'Reset zoom' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-home"></i></button>
-    <button id="viewer-binarization" title="{% trans 'See binarization.' %}" class="btn btn-sm btn-secondary mr-3"><i class="fas fa-adjust"></i></button>
-
-    <button id="viewer-segmentation" title="{% trans 'See segmentation.' %}" class="btn btn-sm btn-secondary mr-1"><i class="fas fa-align-left"></i></button>
-    <div id="viewer-blocks-lines">
-      <button id="viewer-blocks" title="{% trans 'Toggle regions.' %}" class="btn btn-sm btn-primary"><i class="fas fa-th-large"></i></button>
-      <button id="viewer-create-block" title="{% trans 'To create a new region, double-click on the image.' %}" class="btn btn-sm btn-success mr-3"><i class="fas fa-plus-circle"></i></button> 
-      <button id="viewer-lines" title="{% trans 'Toggle lines.' %}" class="btn btn-sm btn-primary"><i class="fas fa-align-left"></i></button>
-      <button id="viewer-create-line" title="{% trans 'To create a new line, double-click on the image..' %}" class="btn btn-sm btn-secondary"><i class="fas fa-plus-circle"></i></button>
-    </div>
-    <div><input id="zoom-range" type="range" name="zoom-range" class="custom-range" min="" max="" step="0.2"></div>
-  </div>
-</div>
-{% endblock %}
-
 {% block modals %}
 {# template for adding card #}
 <div id="card-template">

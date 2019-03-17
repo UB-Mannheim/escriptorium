@@ -491,7 +491,7 @@ class OcrModel(models.Model):
     name = models.CharField(max_length=256)
     file = models.FileField(upload_to='models/',
                             validators=[FileExtensionValidator(
-                                allowed_extensions=['clstm', 'pronn'])])
+                                allowed_extensions=['mlmodel'])])
     trained = models.BooleanField(default=False)
     document = models.ForeignKey(Document, blank=True, null=True,
                                  default=None, on_delete=models.SET_NULL)
