@@ -50,7 +50,6 @@ class partCard {
         // add to the dom
         $('#cards-container').append($new);
         $('#cards-container').append(this.dropAfter);
-        this.domElement.scrollIntoView(false);
 
         // workflow icons & progress
         this.binarizedButton = $('.js-binarized', this.$element);
@@ -301,13 +300,11 @@ $(document).ready(function() {
         paramName: "image",
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
-    imageDropzone.on('sending', function(file, xhr, formData){
-        formData.append('auto_process', $('#auto_process').get(0).checked);
-    });
     
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
         var card = new partCard(data);
+        card.domElement.scrollIntoView(false);
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
             for (var i=0; i < imageDropzone.files.length - 7; i++) {

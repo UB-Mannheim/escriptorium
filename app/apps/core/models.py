@@ -287,10 +287,7 @@ class DocumentPart(OrderedModel):
     def create(self, *args, **kwargs):
         res = super().create(*args, **kwargs)
         try:
-            if self.document.process_settings.auto_process:
-                part.transcribe(user_pk=selfelf.request.user.pk)
-            else:
-                part.compress()
+            part.compress()
         except Exception as e:
             raise ProcessFailureException(e)
         get_thumbnailer(part.image)
@@ -503,8 +500,7 @@ class OcrModel(models.Model):
 class DocumentProcessSettings(models.Model):
     document = models.OneToOneField(Document, on_delete=models.CASCADE,
                                     related_name='process_settings')
-    auto_process = models.BooleanField(default=False)
-    text_direction = models.CharField(max_length=64, default='vertical-lr',
+    text_direction = models.CharField(max_length=64, default='horizontal-lr',
                                       choices=(('horizontal-lr', _("Horizontal l2r")),
                                                ('horizontal-rl', _("Horizontal r2l")),
                                                ('vertical-lr', _("Vertical l2r")),

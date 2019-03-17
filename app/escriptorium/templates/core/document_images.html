@@ -14,9 +14,6 @@
 
 {% block nav_content %}
 <div id="dropzone">
-  {% render_field settings_form.auto_process class="js-proc-settings" data_document=object.pk group=True %}
-  {# render_field settings_form.typology class="js-proc-settings" data_document=object.pk #}
-  
   <form action="{% url 'api:part-list' document_pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
     <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
@@ -37,7 +34,6 @@
   <div class="dropable js-drop"></div>
   {# card are created through the dom api (see below) #}
 </div>
-
 {% endblock %}
 
 {% block modals %}
