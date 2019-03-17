@@ -30,7 +30,7 @@ class Box {
             }
         }
         $box.draggable({
-            disabled: true,
+            // disabled: true,
             containment: 'parent',
             cursor: "grab",
             stop: $.proxy(function(ev) {
@@ -50,14 +50,21 @@ class Box {
                     top: top
                 };
                 var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
+                var box = this.getBox();
                 if (tl) {
-                    tl.box = this.getBox();
+                    tl.box = box;
                     tl.setPosition();
                 }
+                $('.overlay').css({
+                    left: box[0]*this.ratio + 'px',
+                    top: box[1]*this.ratio + 'px',
+                    width: (box[2] - box[0])*this.ratio+'px',
+                    height: (box[3] - box[1])*this.ratio+'px'
+                });
             }, this)
         });
         $box.resizable({
-            disabled: true,
+            // disabled: true,
             stop: $.proxy(function(ev) {
                 this.changed = true;
             }, this),
@@ -91,7 +98,7 @@ class Box {
         
         // select a new line
         if (this.pk === null) this.select();
-
+        
         // avoid jquery-ui jumping
         $box.on('mousedown', function(ev) { ev.currentTarget.style.position = 'relative'; });
         $box.on('mouseup', function(ev) { ev.currentTarget.style.position = 'absolute'; });
@@ -100,13 +107,20 @@ class Box {
             ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
             this.select();
         }, this));
-
+        
+        $box.on('mouseover', $.proxy(function(ev) {
+            this.showOverlay();
+        }, this));
+        $box.on('mouseleave', $.proxy(function(ev) {
+            $('.overlay').hide();
+        }, this));
+        
         $('.close', this.$element).click($.proxy(function(ev) {
             ev.stopPropagation();
             this.delete();
         }, this));
     }
-
+    
     updateApi() {
         var part_api = API.part.replace('{part_pk}', this.part.pk);
         this.api = {
@@ -137,6 +151,15 @@ class Box {
         var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.ratio);
         return [x1, y1, x2, y2];
     }
+    showOverlay() {
+        $('.overlay').css({
+            left: this.box[0]*this.ratio + 'px',
+            top: this.box[1]*this.ratio + 'px',
+            width: (this.box[2] - this.box[0])*this.ratio + 'px',
+            height: (this.box[3] - this.box[1])*this.ratio + 'px'
+        }).show();
+    }
+    
     keyboard(ev) {
         if(!this.$element.is('.selected')) return;
         if (ev.keyCode == 46) {
@@ -152,8 +175,8 @@ class Box {
         var previous = $('.box.selected');
         if (previous.length) { previous.data('Box').unselect(); }
         this.$element.addClass('selected');
-        this.$element.draggable('enable');
-        this.$element.resizable('enable');
+        // this.$element.draggable('enable');
+        // this.$element.resizable('enable');
         $(document).on('click', this.proxyUnselect);
         $(document).on('keyup', this.proxyKeyboard);
     }
@@ -161,14 +184,14 @@ class Box {
         $(document).off('keyup', this.proxykeyboard);
         $(document).off('click', this.proxyUnselect);
         this.$element.removeClass('selected');
-        this.$element.draggable('disable');
-        this.$element.resizable('disable');
+        // this.$element.draggable('disable');
+        // this.$element.resizable('disable');
         if (this.changed) {
-            this.upload();
+            this.save();
         }
     }
     
-    upload() {
+    save() {
         var post = {};
         post = { document_part: this.part.pk,
                  box: JSON.stringify(this.getBox()) };
@@ -180,7 +203,7 @@ class Box {
             .done($.proxy(function(data) {
                 /* create corresponding transcription line */
                 if (!this.pk && this.type == 'line') { panels['trans'].addLine(data); }
-                this.pk = data.pk;
+                Object.assign(this, data);  // TODO: checks ?
                 this.updateApi();
             }, this)).fail(function(data){
                 alert("Couldn't save block:", data);
@@ -256,7 +279,7 @@ class SegmentationPanel {
             block: block}, this.ratio);
         box_.changed = true;  // makes sure it's saved
     }
-
+    
     showBlocks() {
         Object.keys(this.part.blocks).forEach($.proxy(function(i) {
             this.boxes.push(new Box('block', this.part, this.part.blocks[i], this.ratio));

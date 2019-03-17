@@ -267,7 +267,7 @@ i.panel-icon {
     display: none;
     position: absolute;
     background-color: transparent;
-    outline: 9999px solid rgba(0, 0, 0, 0.3);
+    outline: 9999px solid rgba(0, 0, 0, 0.1);
 }
 
 #modal-img-container {

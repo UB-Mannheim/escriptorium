@@ -9,12 +9,12 @@ class TranscriptionLine {
         this.imgWidth = imgWidth;
         this.editing = false;
         this.panel = panel;
-
+        
         this.api = API.part.replace('{part_pk}', panel.part.pk) + 'transcriptions/';
         var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
         $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
         this.$element = $el;
-
+        
         this.textContainer = $('span', $el).first();
         this.setText();        
         $('#part-trans').append($el);
