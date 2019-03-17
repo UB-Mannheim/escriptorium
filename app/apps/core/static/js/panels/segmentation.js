@@ -243,15 +243,15 @@ class SegmentationPanel {
         var box = [
             parseInt(top_left_x),
             parseInt(top_left_y),
-            parseInt(top_left_x + 200/wz.scale),
-            parseInt(top_left_y + 40/wz.scale)
+            parseInt(top_left_x + 200/wz.scale/this.ratio),
+            parseInt(top_left_y + 40/wz.scale/this.ratio)
         ];
         var block = null;
         if ($(ev.target).is('.block-box')) {
             block = $(ev.target).data('Box').pk;
         };
         var box_ = new Box(mode, this.part, {
-            order: this.part.blocks.length,
+            order: mode=='line'?$('.line-box').length:$('.block-box').length,
             box: box,
             block: block}, this.ratio);
         box_.changed = true;  // makes sure it's saved
