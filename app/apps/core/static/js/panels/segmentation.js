@@ -25,7 +25,9 @@ class Box {
             if (this.block == null) { color = 'red'; }
             else { color = colors[this.block.order % colors.length]; }
             $box.css({border: '1px solid '+color});
-            if (!this.order%2) { $box.css('filter', 'invert(100%)'); }
+            if (this.order%2 == 0) {
+                $box.css('filter', 'invert(100%)');
+            }
         }
         $box.draggable({
             disabled: true,
