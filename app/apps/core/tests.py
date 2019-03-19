@@ -4,6 +4,7 @@ from django.test import TestCase
 from core.models import *
 from users.models import User
 
+
 class DocumentListTestCase(TestCase):
     def test_list(self):
         pass
@@ -100,4 +101,8 @@ class DocumentShareTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(self.doc.shared_with_groups.count(), 0)
+
+
+class DocumentPartProcessTestCase(TestCase):
+    pass
 

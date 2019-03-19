@@ -281,9 +281,8 @@ class DocumentExport(LoginRequiredMixin, DetailView):
         lines = (LineTranscription.objects.filter(transcription=transcription)
                  .order_by('line__document_part__order', 'line__order')
                  .select_related('line', 'line__document_part'))
-        
         response = render(self.request, 'core/export/simple.txt',
-                          context={'lines': [bleach.clean(line) for line in lines]},
+                          context={'lines': lines},
                           content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="%s.txt"' % slugify(self.object.name)
         return response

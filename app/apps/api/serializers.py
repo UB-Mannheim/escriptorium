@@ -15,22 +15,12 @@ class ImageField(serializers.ImageField):
         if img:
             data = {
                 'uri': img.url,
-                'size': (img.width, img.height),
+                'size': (img.width, img.height)
             }
             if self.thumbnails:
                 data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
                                       for alias in self.thumbnails}
             return data
-
-
-class ThumbnailField(ImageField):
-    def __init__(self, *args, alias=None, **kwargs):
-        self.tb_alias = alias
-        super().__init__(*args, **kwargs)
-    
-    def to_representation(self, img):
-        thumbnailer = get_thumbnailer(img)[self.tb_alias]
-        return super().to_representation(thumbnailer)
 
 
 class PartMoveSerializer(serializers.ModelSerializer):
@@ -45,7 +35,6 @@ class PartMoveSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
     
     def move(self):
-        print(self.validated_data)
         self.part.to(self.validated_data['index'])
 
 

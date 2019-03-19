@@ -1,5 +1,6 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
 from core.models import *
@@ -11,13 +12,17 @@ class DocumentViewSet(ModelViewSet):
     serializer_class = DocumentSerializer
     paginate_by = 10
 
+    def get_queryset(self):
+        return Document.objects.for_user(self.request.user)
+
 
 class PartViewSet(ModelViewSet):
     queryset = Document.objects.all()
     paginate_by = 50
     
     def get_queryset(self):
-        qs = DocumentPart.objects.filter(document=self.kwargs['document_pk'])
+        qs = (DocumentPart.objects.filter(document=self.kwargs['document_pk'])
+              .select_related('document'))
         if self.action == 'retrieve':
             return qs.prefetch_related('lines__transcriptions')
         else:
@@ -30,7 +35,7 @@ class PartViewSet(ModelViewSet):
         else:  # list & create
             return PartSerializer
         return super(MyModelViewSet, self).get_serializer_class()
-    
+        
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
