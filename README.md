@@ -15,10 +15,10 @@ The eScriptorium app itself is at the 'center'. It is a work in progress but wil
   
   
 ## The code
-Following [CIA's coding guidelines](https://wikileaks.org/ciav7p1/cms/page_26607631.html) (It is just a well writen guidelines on top of PEP-8).
-All the templates are in the project folder, because templating is close to the project than the app, and the project is bound to the app through INSTALLED_APPS and urls, not the other way around.
+Following [CIA's coding guidelines](https://wikileaks.org/ciav7p1/cms/page_26607631.html) (It is just a well writen guidelines on top of PEP-8).  
+All the templates are in the project folder, because templating is close to the project than the app, and the project is bound to the app through INSTALLED_APPS and urls, not the other way around.  
 A more debatable decision is to let the javascript sources in their respective apps, they are very tightly bound to the markup so it would make sense that they live in the project space, but they also contain a fair amount of logic.
-In the end, it was decided that it would be easier to keep a clean directory tree this way.
+In the end, it was decided that it would be easier to keep a clean directory tree this way.  
   
   
 ## Install
@@ -37,7 +37,7 @@ Build and run the docker containers
 You should be able to access the website at http://localhost:8080/  
   
 To update:  
-> git pull  
+> $ git pull  
 > $ docker-compose up -d --build  
   
 #### Dev (without docker)  
