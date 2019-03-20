@@ -1,7 +1,9 @@
 from PIL import Image
 from io import BytesIO
+import uuid
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 
 from core.models import *
 from users.models import User
@@ -12,8 +14,12 @@ class CoreFactory():
     A model Factory to help create data for tests.
     """
     def make_user(self):
-        return User.objects.create(username='test')
-
+        name = 'test-%s' % str(uuid.uuid1())
+        return User.objects.create(
+            username=name,
+            email='%s@test.com' % name
+        )
+    
     def make_document(self, **kwargs):
         attrs = kwargs.copy()
         attrs['owner'] = attrs.get('owner') or self.make_user()

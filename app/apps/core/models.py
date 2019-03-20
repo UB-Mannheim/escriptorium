@@ -1,9 +1,14 @@
 import re
 import math
+import logging
+import os.path
 import functools
+import subprocess
+from PIL import Image
 
 from django.db import models
 from django.db.models import Q
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -23,6 +28,7 @@ from versioning.models import Versioned
 from .tasks import *
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class ProcessFailureException(Exception):
     pass
@@ -289,7 +295,7 @@ class DocumentPart(OrderedModel):
     def create(self, *args, **kwargs):
         res = super().create(*args, **kwargs)
         try:
-            part.compress()
+            self.compress()
         except Exception as e:
             raise ProcessFailureException(e)
         get_thumbnailer(part.image)
@@ -361,19 +367,150 @@ class DocumentPart(OrderedModel):
         elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             self.workflow_state = self.WORFLOW_STATE_BINARIZED
         self.save()
+
+    def generate_thumbnails(self):
+        from easy_thumbnails.files import generate_all_aliases
+        generate_all_aliases(self.image, include_global=True)
+
+    def compress(self):
+        if self.workflow_state < part.WORKFLOW_STATE_COMPRESSING:
+            self.workflow_state = part.WORKFLOW_STATE_COMPRESSING
+            self.save()
+        
+        convert = False
+        old_name = self.image.file.name
+        filename, extension = os.path.splitext(old_name)
+        if extension != ".png":
+            convert = True
+            new_name = filename + ".png"
+            error = subprocess.check_call(["convert", old_name, new_name])
+            if error:
+                raise RuntimeError("Error trying to convert file(%s) to png.")
+        else:
+            new_name = old_name
+        opti_name = filename + '_opti.png'
+
+        try:
+            subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
+        except Exception as e:
+            # Note: let it fail it's fine
+            logger.exception("png optimization failed.")
+        os.rename(opti_name, new_name)
+        if convert:
+            self.image = new_name.split(settings.MEDIA_ROOT)[1][1:]
+            os.remove(old_name)
+        
+        if self.workflow_state < self.WORKFLOW_STATE_COMPRESSED:
+            self.workflow_state = self.WORKFLOW_STATE_COMPRESSED
+            self.save()
     
+    def binarize(self):
+        if self.workflow_state < self.WORKFLOW_STATE_BINARIZING:
+            self.workflow_state = self.WORKFLOW_STATE_BINARIZING
+            self.save()
+        
+        fname = os.path.basename(self.image.file.name)
+        # should be formated to png already by by lossless_compression but better safe than sorry
+        form = None
+        f_, ext = os.path.splitext(self.image.file.name)
+        if ext[1] in ['.jpg', '.jpeg', '.JPG', '.JPEG', '']:
+            if ext:
+                logger.warning('jpeg does not support 1bpp images. Forcing to png.')
+            form = 'png'
+            fname = '%s.%s' % (f_, form)
+        bw_file_name = 'bw_' + fname
+        bw_file = os.path.join(os.path.dirname(self.image.file.name), bw_file_name)
+        with Image.open(self.image.path) as im:
+            # threshold, zoom, escale, border, perc, range, low, high
+            res = binarization.nlbin(im)
+            res.save(bw_file, format=form)
+
+        self.bw_image = document_images_path(self, bw_file_name)
+        if self.workflow_state < self.WORKFLOW_STATE_BINARIZED:
+            self.workflow_state = self.WORKFLOW_STATE_BINARIZED
+            self.save()
+    
+    def segment(self):
+        blocks = Block.objects.filter(document_part=part)
+        # cleanup pre-existing
+        part.lines.all().delete()
+        if steps in ['regions', 'both']:
+            blocks.delete()
+        
+        part.workflow_state = part.WORKFLOW_STATE_SEGMENTING
+        part.save()
+        
+        with Image.open(part.bw_image.file.name) as im:
+            # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
+            options = {'maxcolseps': 1}
+            if text_direction:
+                options['text_direction'] = text_direction
+            
+            if blocks:
+                for block in blocks:
+                    if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
+                        continue
+                    ic = im.crop(block.box)
+                    res = pageseg.segment(ic, **options)
+                    # if script_detect:
+                    #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
+                    for line in res['boxes']:
+                        Line.objects.create(
+                            document_part=part, block=block,
+                            box=(line[0]+block.box[0], line[1]+block.box[1],
+                                 line[2]+block.box[0], line[3]+block.box[1]))
+            else:
+                res = pageseg.segment(im, **options)
+                res['block'] = None
+                for line in res['boxes']:
+                    Line.objects.create(document_part=part, box=line)
+        
+        part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
+        part.save()
+        part.recalculate_ordering()
+    
+    def transcribe(self, model=None):
+        if model:
+            trans, created = Transcription.objects.get_or_create(
+                name='kraken:' + model.name,
+                document=self.document)
+            model_ = kraken_models.load_any(model.file.path)
+            lines = self.lines.all()
+            with Image.open(self.bw_image.file.name) as im:
+                for line in lines:
+                    it = rpred.rpred(
+                        model_, im,
+                        bounds={'boxes': [line.box],
+                                'text_direction': text_direction or 'horizontal-lr',
+                                'script_detection': False},
+                        pad=16,  # TODO: % of the image?
+                        bidi_reordering=True)
+                    
+                    lt, created = LineTranscription.objects.get_or_create(
+                        line=line, transcription=trans)
+                    for pred in it:
+                        lt.content = pred.prediction
+                    lt.save()
+        else:
+            Transcription.objects.get_or_create(
+                name='manual',
+                document=self.document)
+        
+        self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
+        self.save()
+        
     def chain_tasks(self, *tasks):
         chain(*tasks).delay()
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
     
-    def compress(self):
+    def task_compress(self):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
         self.chain_tasks(lossless_compression.si(self.pk),
                          generate_part_thumbnails.si(self.pk))
     
-    def binarize(self, user_pk=None, binarizer=None):
+    def task_binarize(self, user_pk=None, binarizer=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -384,7 +521,7 @@ class DocumentPart(OrderedModel):
         tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
-    def segment(self, user_pk=None, steps='both', text_direction=None):
+    def task_segment(self, user_pk=None, steps='both', text_direction=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -397,7 +534,7 @@ class DocumentPart(OrderedModel):
         tasks.append(segment.si(self.pk, user_pk=user_pk, steps=steps, text_direction=text_direction))
         self.chain_tasks(*tasks)
     
-    def transcribe(self, user_pk=None, model=None):
+    def task_transcribe(self, user_pk=None, model=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
 

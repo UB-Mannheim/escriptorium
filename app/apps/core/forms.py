@@ -200,10 +200,10 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 self.parts[0].save()
             else:
                 for part in self.parts:
-                    part.binarize(user_pk=self.user.pk)
+                    part.task_binarize(user_pk=self.user.pk)
         elif task == 'segment':
             for part in self.parts:
-                part.segment(user_pk=self.user.pk,
+                part.task_segment(user_pk=self.user.pk,
                              steps=self.cleaned_data['segmentation_steps'],
                              text_direction=self.cleaned_data['text_direction'])
         elif task == 'train':
@@ -225,7 +225,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 model = None
                 
             for part in self.parts:
-                part.transcribe(user_pk=self.user.pk, model=model)
+                part.task_transcribe(user_pk=self.user.pk, model=model)
         
         self.save()  # save settings
 
