@@ -242,12 +242,16 @@ class DocumentPart(OrderedModel):
         for which blocks should be considered on the same 'line',
         in which case x is used.
         """
+        try:
+            text_direction = self.document.process_settings.text_direction[-2:]
+        except DocumentProcessSettings.DoesNotExist:
+            text_direction = 'lr'
         
         def origin_pt(box):
-            if self.document.process_settings.text_direction[-2:] == 'lr':
-                return (box[0], box[1])
-            else:
+            if text_direction == 'rl':
                 return (box[2], box[1])
+            else:
+                return (box[0], box[1])
         
         imgsize = (self.image.width, self.image.height)
         imgbox = (0, 0) + imgsize

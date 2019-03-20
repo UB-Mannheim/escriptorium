@@ -1,5 +1,10 @@
-from users.models import User
+from PIL import Image
+from io import BytesIO
+
+from django.conf import settings
+
 from core.models import *
+from users.models import User
 
 
 class CoreFactory():
@@ -18,7 +23,7 @@ class CoreFactory():
     def make_part(self, **kwargs):
         attrs = kwargs.copy()
         attrs['document'] = attrs.get('document') or self.make_document()
-        attrs.setdefault('image', None)
+        attrs.setdefault('image', os.path.join(settings.MEDIA_ROOT, 'test.png'))
         return DocumentPart.objects.create(**attrs)
     
     def make_transcription(self, **kwargs):
@@ -26,3 +31,11 @@ class CoreFactory():
         attrs['document'] = attrs.get('document') or self.make_document()
         attrs.setdefault('name', 'test trans')
         return Transcription.objects.create(**attrs)
+
+    def make_image(self):
+        file = BytesIO()
+        file.name = 'test.png'
+        image = Image.new('RGBA', size=(50, 50), color=(155, 0, 0))
+        image.save(file, 'png')
+        file.seek(0)
+        return file

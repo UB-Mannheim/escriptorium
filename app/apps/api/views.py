@@ -34,15 +34,14 @@ class PartViewSet(ModelViewSet):
             return PartDetailSerializer
         else:  # list & create
             return PartSerializer
-        return super(MyModelViewSet, self).get_serializer_class()
-        
+    
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         serializer = PartMoveSerializer(part=part, data=request.data)
         if serializer.is_valid():
             serializer.move()
-            return Response({'status': 'deleted'})
+            return Response({'status': 'moved'})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -81,4 +80,5 @@ class LineTranscriptionViewSet(ModelViewSet):
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
         lt.new_version()
-        return Response(lt.versions[0])
+        lt.save()
+        return Response(lt.versions[0], status=status.HTTP_201_CREATED)
