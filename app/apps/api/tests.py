@@ -7,31 +7,29 @@ import os.path
 from io import BytesIO
 
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from core.models import *
+from core.tests.factory import CoreFactory
 from users.models import User
+
 
 class DocumentViewSetTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create(username='test')
-        self.doc = Document.objects.create(
-            owner=self.user,
-            name='test1')
-        Document.objects.create(
-            owner=self.user,
-            name='test2')
+        factory = CoreFactory()
+        self.doc = factory.make_document()
+        self.doc2 = factory.make_document(owner=self.doc.owner)
         
     def test_list(self):
-        self.client.force_login(self.user)
+        self.client.force_login(self.doc.user)
         uri = reverse('api:document-list')
         with self.assertNumQueries(5):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-
+    
     def test_detail(self):
-        self.client.force_login(self.user)
+        self.client.force_login(self.doc.user)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
         with self.assertNumQueries(4):
@@ -45,21 +43,15 @@ class DocumentViewSetTestCase(TestCase):
 
 class PartViewSetTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create(username='test')
-        self.doc = Document.objects.create(
-            owner=self.user,
-            name='testdoc')
-        with open(os.path.join(settings.MEDIA_ROOT, 'test.png'), 'rb') as fh:
-            for i in range(2):  # test queries number scaling
-                p = DocumentPart.objects.create(
-                    document=self.doc,
-                    image=fh.name)
-        self.part = p
-    
+        factory = CoreFactory()
+        self.part = factory.make_part()
+        self.part2 = factory.make_part(document=self.part.document)  # scaling test
+        self.user = self.part.document.owner  # shortcut
+        
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
-                      kwargs={'document_pk': self.doc.pk})
+                      kwargs={'document_pk': self.part.document.pk})
         with self.assertNumQueries(4):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
@@ -67,7 +59,7 @@ class PartViewSetTestCase(TestCase):
     def test_detail(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-detail',
-                      kwargs={'document_pk': self.doc.pk,
+                      kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
         with self.assertNumQueries(7):
             resp = self.client.get(uri)
@@ -76,21 +68,21 @@ class PartViewSetTestCase(TestCase):
     def test_create(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
-                      kwargs={'document_pk': self.doc.pk})
+                      kwargs={'document_pk': self.part.document.pk})
         with self.assertNumQueries(19):
             # 1&2 session & user
             # 3 document
             # 4 ordering
             # 5 insert
             # 6-19 thumbnail stuff
-            with open(os.path.join(settings.MEDIA_ROOT, 'test.png'), 'rb') as fh:
-                resp = self.client.post(uri, {'image': fh})
+            img = SimpleUploadedFile("file.png", "file_content", content_type="image/png")
+            resp = self.client.post(uri, {'image': img})
         self.assertEqual(resp.status_code, 201)
     
     def test_update(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-detail',
-                      kwargs={'document_pk': self.doc.pk,
+                      kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
         with self.assertNumQueries(4):
             resp = self.client.patch(
@@ -101,13 +93,14 @@ class PartViewSetTestCase(TestCase):
     def test_move(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-move',
-                      kwargs={'document_pk': self.doc.pk,
+                      kwargs={'document_pk': self.part.doc.pk,
                               'pk': self.part.pk})
         with self.assertNumQueries(6):
             resp = self.client.post(uri, {'index': 0})
         self.assertEqual(resp.status_code, 200)
         # refresh
-        part = DocumentPart.objects.get(pk=self.part.pk)
+        # part = DocumentPart.objects.get(pk=self.part.pk)
+        part.from_db()
         self.assertEqual(part.order, 0)
 
 
