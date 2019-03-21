@@ -1,6 +1,7 @@
 import bleach
 import json
 
+from django.conf import settings
 from rest_framework import serializers
 
 from core.models import *
@@ -17,7 +18,7 @@ class ImageField(serializers.ImageField):
                 'uri': img.url,
                 'size': (img.width, img.height)
             }
-            if self.thumbnails:
+            if settings.THUMBNAIL_ENABLE and self.thumbnails:
                 data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
                                       for alias in self.thumbnails}
             return data

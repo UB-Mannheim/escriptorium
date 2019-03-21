@@ -118,7 +118,7 @@ def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
         user = None
     
     try:
-        part.segment()
+        part.segment(steps=steps, text_direction=text_direction)
     except:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),

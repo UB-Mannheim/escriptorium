@@ -199,8 +199,9 @@ class DocumentPart(OrderedModel):
         (WORKFLOW_STATE_SEGMENTED, _("Segmented")),
         (WORKFLOW_STATE_TRANSCRIBING, _("Transcribing")),
     )
-    workflow_state = models.PositiveSmallIntegerField(choices=WORKFLOW_STATE_CHOICES,
-                                                      default=WORKFLOW_STATE_CREATED)
+    workflow_state = models.PositiveSmallIntegerField(
+        choices=WORKFLOW_STATE_CHOICES,
+        default=WORKFLOW_STATE_CREATED)
     
     # this is denormalized because it's too heavy to calculate on the fly
     transcription_progress = models.PositiveSmallIntegerField(default=0)
@@ -373,8 +374,8 @@ class DocumentPart(OrderedModel):
         generate_all_aliases(self.image, include_global=True)
 
     def compress(self):
-        if self.workflow_state < part.WORKFLOW_STATE_COMPRESSING:
-            self.workflow_state = part.WORKFLOW_STATE_COMPRESSING
+        if self.workflow_state < self.WORKFLOW_STATE_COMPRESSING:
+            self.workflow_state = self.WORKFLOW_STATE_COMPRESSING
             self.save()
         
         convert = False
@@ -430,22 +431,24 @@ class DocumentPart(OrderedModel):
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
             self.save()
     
-    def segment(self):
-        blocks = Block.objects.filter(document_part=part)
+    def segment(self, steps='both', text_direction=None):
+        if steps not in ['regions', 'lines', 'both']:
+            raise ValueError(
+                "Invalid value for argument steps %s, should be one of ['regions', 'lines', 'both']." % steps)
         # cleanup pre-existing
-        part.lines.all().delete()
+        self.lines.all().delete()
         if steps in ['regions', 'both']:
-            blocks.delete()
+            self.blocks.all().delete()
         
-        part.workflow_state = part.WORKFLOW_STATE_SEGMENTING
-        part.save()
+        self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
+        self.save()
         
-        with Image.open(part.bw_image.file.name) as im:
+        with Image.open(self.bw_image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
             options = {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
-            
+            blocks = self.blocks.all()
             if blocks:
                 for block in blocks:
                     if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
@@ -465,9 +468,9 @@ class DocumentPart(OrderedModel):
                 for line in res['boxes']:
                     Line.objects.create(document_part=part, box=line)
         
-        part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
-        part.save()
-        part.recalculate_ordering()
+        self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
+        self.save()
+        self.recalculate_ordering()
     
     def transcribe(self, model=None):
         if model:

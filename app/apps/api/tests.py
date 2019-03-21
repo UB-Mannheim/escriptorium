@@ -8,7 +8,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import *
@@ -48,7 +48,8 @@ class PartViewSetTestCase(TestCase):
         self.part = self.factory.make_part()
         self.part2 = self.factory.make_part(document=self.part.document)  # scaling test
         self.user = self.part.document.owner  # shortcut
-    
+
+    @override_settings(THUMBNAIL_ENABLE=False)
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
@@ -56,7 +57,8 @@ class PartViewSetTestCase(TestCase):
         with self.assertNumQueries(4):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-    
+
+    @override_settings(THUMBNAIL_ENABLE=False)
     def test_detail(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-detail',
@@ -65,23 +67,20 @@ class PartViewSetTestCase(TestCase):
         with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-    
+
+    @override_settings(THUMBNAIL_ENABLE=False)
     def test_create(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(19):
-            # 1&2 session & user
-            # 3 document
-            # 4 ordering
-            # 5 insert
-            # 6-19 thumbnail stuff
-            img = self.factory.make_image()
+        with self.assertNumQueries(5):
+            img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
                     'test.png', img.read())})
             self.assertEqual(resp.status_code, 201)
-        
+
+    @override_settings(THUMBNAIL_ENABLE=False)
     def test_update(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-detail',
