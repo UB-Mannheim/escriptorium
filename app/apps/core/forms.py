@@ -71,69 +71,6 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
 MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=MetadataForm,
                                         extra=1, can_delete=True)
 
-class DocumentPartUpdateForm(forms.ModelForm):
-    index = forms.IntegerField(required=False, min_value=0)
-    blocks = forms.CharField(required=False)
-    lines = forms.CharField(required=False)
-    
-    class Meta:
-        model = DocumentPart
-        fields = ('name', 'typology', 'index')
-
-    def clean_lines(self):
-        if 'lines' in self.cleaned_data and self.cleaned_data['lines']:
-            return json.loads(self.cleaned_data['lines'])
-        else:
-            return []
-    
-    def clean_blocks(self):
-        if 'blocks' in self.cleaned_data and self.cleaned_data['blocks']:
-            return json.loads(self.cleaned_data['blocks'])
-        else:
-            return []
-    
-    def save(self, *args, **kwargs):
-        self.created = None
-        if 'index' in self.cleaned_data and self.cleaned_data['index'] is not None:
-            self.instance.to(self.cleaned_data['index'])
-    
-        blocks = self.cleaned_data['blocks']
-        for block_ in blocks:
-            if block_['pk'] is None:
-                block = Block.objects.create(document_part=self.instance,
-                                             box = block_['box'])
-                self.created = block
-            else:
-                block = Block.objects.get(pk=block_['pk'])
-                if 'delete' in block_ and block_['delete'] is True:
-                    block.delete()
-                else:
-                    block.box = block_['box']
-                    block.save()
-        
-        lines = self.cleaned_data['lines']
-        for line_ in lines:
-            if line_['pk'] is None:
-                if 'block' in line_ and line_['block']:
-                    block = Block.objects.get(pk=line_['block'])
-                else:
-                    block = None
-                Line.objects.create(document_part=self.instance,
-                                    block=block,
-                                    box = line_['box'])
-                self.created = block
-            else:
-                line = Line.objects.get(pk=line_['pk'])
-                if 'delete' in line_ and line_['delete'] is True:
-                    line.delete()
-                else:
-                    line.box = line_['box']
-                    line.save()
-        
-        self.instance.recalculate_ordering()
-        
-        return super().save(*args, **kwargs)
-
 
 class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     task = forms.ChoiceField(choices=(
@@ -173,8 +110,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     
     @cached_property
     def parts(self):
-        pks = json.loads(self.data.get('parts'))
-        parts = DocumentPart.objects.filter(document=self.document, pk__in=pks)
+        pks = self.data.getlist('parts')
+        parts = DocumentPart.objects.filter(
+            document=self.document, pk__in=pks)
         return parts
     
     def clean_bw_image(self):
@@ -228,6 +166,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 part.task_transcribe(user_pk=self.user.pk, model=model)
         
         self.save()  # save settings
+
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:

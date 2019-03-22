@@ -9,4 +9,5 @@ __all__ = [
     DocumentShareTestCase,
     DocumentExportTestCase,
     DocumentPartProcessTestCase,
+    TasksTestCase
 ]
