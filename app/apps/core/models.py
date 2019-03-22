@@ -299,11 +299,13 @@ class DocumentPart(OrderedModel):
             self.compress()
         except Exception as e:
             raise ProcessFailureException(e)
-        get_thumbnailer(part.image)
+        get_thumbnailer(self.image)
         return res
     
     @property
     def tasks(self):
+        if not settings.USE_CELERY:
+            return {}
         try:
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
@@ -466,7 +468,7 @@ class DocumentPart(OrderedModel):
                 res = pageseg.segment(im, **options)
                 res['block'] = None
                 for line in res['boxes']:
-                    Line.objects.create(document_part=part, box=line)
+                    Line.objects.create(document_part=self, box=line)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
@@ -503,7 +505,10 @@ class DocumentPart(OrderedModel):
         self.save()
         
     def chain_tasks(self, *tasks):
-        chain(*tasks).delay()
+        if settings.USE_CELERY:
+            chain(*tasks).delay()
+        else:
+            chain(*tasks)()
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
     
     def task_compress(self):
@@ -540,7 +545,7 @@ class DocumentPart(OrderedModel):
     def task_transcribe(self, user_pk=None, model=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
-
+        
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))

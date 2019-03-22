@@ -1,4 +1,4 @@
-from unittest import mock
+import json
 
 from django.urls import reverse
 from django.test import TestCase, override_settings
@@ -25,9 +25,6 @@ class TasksTestCase(TestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_BINARIZED)
     
-        # self.part.segment()
-        # self.assertEqual(self.part.workflow_state,
-        #                  self.part.WORKFLOW_STATE_SEGMENTED)
         b = Block.objects.create(document_part=self.part,
                                  box=[0,0]+[self.part.image.width, self.part.image.height])
         self.part.blocks.add(b)
@@ -39,19 +36,24 @@ class TasksTestCase(TestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_TRANSCRIBING)
 
-    override_settings(USE_CELERY=False)
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True, USE_CELERY=False)
     def test_post(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={
             'pk': self.part.document.pk})
-        with mock.patch('core.tasks.transcribe') as mocked:
-            response = self.client.post(uri, {
-                'document': self.part.document.pk,
-                'parts': list(self.part.document.parts.values_list('pk', flat=True)),
-                'task': 'transcribe'
-            }, follow=True)
-            self.assertEqual(response.status_code, 200)
-            mocked.assert_called_with((self.part.document.pk, None, None))
+        parts = self.part.document.parts.all()
+        for part in parts:
+            part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
         
+        response = self.client.post(uri, {
+            'document': self.part.document.pk,
+            'parts': json.dumps([part.pk for part in parts]),
+            'task': 'transcribe'
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        
+        part.refresh_from_db()
+        self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
+    
     def test_training(self):
         pass

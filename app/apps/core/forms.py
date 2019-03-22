@@ -111,6 +111,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     @cached_property
     def parts(self):
         pks = self.data.getlist('parts')
+        pks = json.loads(self.data.get('parts'))
+        parts = DocumentPart.objects.filter(document=self.document, pk__in=pks)
         parts = DocumentPart.objects.filter(
             document=self.document, pk__in=pks)
         return parts
@@ -161,7 +163,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 model = self.cleaned_data['ocr_model']
             else:
                 model = None
-                
+            
             for part in self.parts:
                 part.task_transcribe(user_pk=self.user.pk, model=model)
         
