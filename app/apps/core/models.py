@@ -25,7 +25,8 @@ from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
 
 from versioning.models import Versioned
-from .tasks import *
+from core.tasks import *
+from users.consumers import send_event
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -290,17 +291,20 @@ class DocumentPart(OrderedModel):
                 line[0].save()
     
     def save(self, *args, **kwargs):
+        new = self.pk is None
         self.calculate_progress()
-        return super().save(*args, **kwargs)
-    
-    def create(self, *args, **kwargs):
-        res = super().create(*args, **kwargs)
-        try:
+        instance = super().save(*args, **kwargs)
+        if new:
             self.compress()
-        except Exception as e:
-            raise ProcessFailureException(e)
-        get_thumbnailer(self.image)
-        return res
+            send_event('document', self.document.pk, "part:new", {"id": self.pk})
+            get_thumbnailer(self.image)
+        return instance
+    
+    def delete(self, *args, **kwargs):
+        send_event('document', self.document.pk, "part:delete", {
+            "id": self.pk
+        })
+        return super().delete(*args, **kwargs)
     
     @property
     def tasks(self):

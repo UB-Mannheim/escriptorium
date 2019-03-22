@@ -159,6 +159,11 @@ class partCard {
             $('#nav-trans-tab').removeClass('disabled');
         }
     }
+
+    remove() {
+        this.dropAfter.remove();
+        this.$element.remove();
+    }
     
     select() {
         if (this.locked) return;
@@ -216,12 +221,11 @@ class partCard {
         }
         this.index = index;
     }
-    
+
     delete() {
         var posting = $.ajax({url:this.api, type: 'DELETE'})
             .done($.proxy(function(data) {
-                this.dropAfter.remove();
-                this.$element.remove();
+                this.remove();
             }, this))
             .fail($.proxy(function(xhr) {
                 console.log("Couldn't delete part " + this.pk);
@@ -292,6 +296,23 @@ $(document).ready(function() {
             setTimeout(function() {
                 $('#alerts-container').trigger(ev, data);
             }, 1000);
+        }
+    });
+    $('#alerts-container').on('part:new', function(ev, data) {
+        setTimeout(function() {  // really ugly: but avoid a race condition against dropzone
+            var card = partCard.fromPk(data.id);
+            if (!card) {
+                var uri = API.part.replace('{part_pk}', data.id);
+                $.get(uri, function(data) {
+                    new partCard(data);
+                });
+            }
+        }, 5000);
+    });
+    $('#alerts-container').on('part:delete', function(ev, data) {
+        var card = partCard.fromPk(data.id);
+        if (card) {
+            card.remove();
         }
     });
     

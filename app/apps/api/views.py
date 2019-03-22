@@ -34,7 +34,7 @@ class PartViewSet(ModelViewSet):
             return PartDetailSerializer
         else:  # list & create
             return PartSerializer
-    
+        
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)

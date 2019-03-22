@@ -51,10 +51,6 @@ class PartSerializer(serializers.ModelSerializer):
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
     
-    def create(self, data):
-        data['document'] = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
-        return super().create(data)
-    
     class Meta:
         model = DocumentPart
         fields = (
@@ -67,6 +63,11 @@ class PartSerializer(serializers.ModelSerializer):
             'workflow',
             'transcription_progress'
         )
+    
+    def create(self, data):
+        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        data['document'] = document
+        return super().create(data)
 
 
 class BlockSerializer(serializers.ModelSerializer):
