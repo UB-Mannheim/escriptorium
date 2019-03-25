@@ -1,6 +1,7 @@
 import bleach
 import json
 
+from django.conf import settings
 from rest_framework import serializers
 
 from core.models import *
@@ -17,7 +18,7 @@ class ImageField(serializers.ImageField):
                 'uri': img.url,
                 'size': (img.width, img.height)
             }
-            if self.thumbnails:
+            if settings.THUMBNAIL_ENABLE and self.thumbnails:
                 data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
                                       for alias in self.thumbnails}
             return data
@@ -50,10 +51,6 @@ class PartSerializer(serializers.ModelSerializer):
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
     
-    def create(self, data):
-        data['document'] = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
-        return super().create(data)
-    
     class Meta:
         model = DocumentPart
         fields = (
@@ -66,6 +63,11 @@ class PartSerializer(serializers.ModelSerializer):
             'workflow',
             'transcription_progress'
         )
+    
+    def create(self, data):
+        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        data['document'] = document
+        return super().create(data)
 
 
 class BlockSerializer(serializers.ModelSerializer):

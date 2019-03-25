@@ -70,4 +70,6 @@ class NotificationConsumer(WebsocketConsumer):
                               'text': event['text']}))
 
     def notification_event(self, event):
-        self.send(json.dumps({'type': 'event', 'name': event['name'], 'data': event['data']}))
+        self.send(json.dumps({'type': 'event',
+                              'name': event['name'],
+                              'data': event['data']}))

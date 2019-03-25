@@ -5,7 +5,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from users.models import Invitation
-from users.models import User as CustomUser
+from users.models import User as CustomUser, ResearchField
 
 
 User = get_user_model()
@@ -19,6 +19,17 @@ class AuthTestCase(TestCase):
     
     def test_user_model(self):
         self.assertEqual(self.user.__class__, CustomUser)
+
+        self.assertEqual(self.user.get_full_name(), "test")
+        user = User.objects.create_user(
+            first_name="John",
+            last_name="Doe",
+            username="jdoe",
+            email="jdoe@test.com")
+        self.assertEqual(user.get_full_name(), "John Doe")
+        field = ResearchField.objects.create(name='test field')
+        user.fields.add(field)
+        self.assertEqual(str(field), 'test field')
     
     def test_login(self):
         with self.assertNumQueries(0):
@@ -51,9 +62,10 @@ class InvitationTestCase(TestCase):
         self.group = Group.objects.create(name='testgroup')
         self.sender.groups.add(self.group)
 
+    @override_settings(USE_CELERY=False)
     def test_send(self):
         self.client.login(username='sender', password='test')
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             response = self.client.get(reverse('send-invitation'))
         self.assertEqual(response.status_code, 200)
         
@@ -63,6 +75,7 @@ class InvitationTestCase(TestCase):
                                          "recipient_first_name": "john",
                                          "recipient_last_name": "doe",
                                          "group": self.group.pk})
+        
         # TODO eventually: test errors
         self.assertNotContains(response, "error", status_code=302)
         
@@ -116,4 +129,10 @@ class InvitationTestCase(TestCase):
 
         invitation.refresh_from_db()
         self.assertEqual(invitation.workflow_state, Invitation.STATE_ACCEPTED)
-        
+
+
+class NotificationTestCase(TestCase):
+    """
+    todo https://channels.readthedocs.io/en/latest/topics/testing.html
+    """
+    pass

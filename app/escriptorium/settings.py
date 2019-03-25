@@ -173,6 +173,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
         'list': {'size': (50, 50), 'crop': 'center'},

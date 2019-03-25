@@ -37,17 +37,6 @@ class ResearchField(models.Model):
         return self.name
 
 
-# class AccessLevel(models.Model):
-#     ACCESS_TEAM = 1
-#     # ACCESS_APP = 2 ? i don't think it's needed ?
-#     ACCESS_GLOBAL = 2
-#
-#     access_level = models.TinyIntegerField()
-#
-#     class Meta:
-#         abstract = True
-
-
 class Invitation(models.Model):
     """
     Represents an invitation to join the service, possibly in a given 'team' (Group)
