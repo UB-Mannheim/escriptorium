@@ -3,19 +3,25 @@ version: "3.7"
 services:
     web: &web
       env_file: production.env
+      restart: always
 
     channelserver:
       env_file: production.env
+      restart: always
 
     db:
       env_file: production.env
+      restart: always
 
     nginx:
+      restart: always
       ports:
         - 80:80
 
     celeryworker:
       env_file: production.env
+      restart: always
     
     celerybeat:
       env_file: production.env
+      restart: always
