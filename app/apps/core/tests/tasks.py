@@ -15,9 +15,10 @@ class TasksTestCase(TestCase):
         factory.make_part(document=self.part.document)
 
     def test_workflow(self):
-        self.assertEqual(self.part.workflow_state,
-                         self.part.WORKFLOW_STATE_CREATED)
-        self.part.compress()
+        # done automatically when creating
+        # self.assertEqual(self.part.workflow_state,
+        #                  self.part.WORKFLOW_STATE_CREATED)
+        # self.part.compress()
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_COMPRESSED)
             
@@ -36,7 +37,6 @@ class TasksTestCase(TestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_TRANSCRIBING)
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True, USE_CELERY=False)
     def test_post(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={
