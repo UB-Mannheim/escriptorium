@@ -35,6 +35,8 @@ class BootstrapFormMixin():
         super().full_clean()
         if self._errors:
             for name, error in self._errors.items():
+                if name == '__all__':
+                    continue
                 if not self.fields[name].widget.is_hidden:
                     try:
                         self.fields[name].widget.attrs['class'] += ' is-invalid'

@@ -465,7 +465,7 @@ class DocumentPart(OrderedModel):
                     #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
                     for line in res['boxes']:
                         Line.objects.create(
-                            document_part=part, block=block,
+                            document_part=self, block=block,
                             box=(line[0]+block.box[0], line[1]+block.box[1],
                                  line[2]+block.box[0], line[3]+block.box[1]))
             else:
@@ -478,7 +478,7 @@ class DocumentPart(OrderedModel):
         self.save()
         self.recalculate_ordering()
     
-    def transcribe(self, model=None):
+    def transcribe(self, model=None, text_direction=None):
         if model:
             trans, created = Transcription.objects.get_or_create(
                 name='kraken:' + model.name,

@@ -1,7 +1,9 @@
 import json
+import logging
 
 from django import forms
 from django.core.validators import FileExtensionValidator
+from django.db import transaction
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
@@ -9,6 +11,9 @@ from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
 from core.models import *
+from core.serializers import AltoParser, ParseError
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -80,15 +85,21 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         ('transcribe', 4)))
     parts = forms.CharField()
     bw_image = forms.ImageField(required=False)
+    segmentation_import = forms.FileField(
+        required=False,
+        help_text=_("json as a list of list of bounding boxes per page, or alto xml."),
+        validators=[FileExtensionValidator(
+            allowed_extensions=['xml'])])  # 'json', 
     segmentation_steps = forms.ChoiceField(choices=(
         ('regions', _('Regions')),
         ('lines', _('Lines')),
         ('both', _('Lines and regions'))
     ), initial='lines', required=False)
     new_model = forms.CharField(required=False, label=_('Name'))
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['pronn'])])
+    upload_model = forms.FileField(
+        required=False,
+        validators=[FileExtensionValidator(
+            allowed_extensions=['pronn'])])
     
     class Meta:
         model = DocumentProcessSettings
@@ -112,7 +123,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     def parts(self):
         pks = self.data.getlist('parts')
         pks = json.loads(self.data.get('parts'))
-        parts = DocumentPart.objects.filter(document=self.document, pk__in=pks)
         parts = DocumentPart.objects.filter(
             document=self.document, pk__in=pks)
         return parts
@@ -131,6 +141,33 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         if fh.size != isize:
             raise forms.ValidationError(_("Uploaded image should be the same size as original image {}.").format(isize))
         return img
+
+    def clean_segmentation_import(self):
+        """
+        json
+        one page [[..], [..]] or {'boxes': [[..], [..]]}
+        multipage []
+
+        or alto xml
+        """
+        fh = self.cleaned_data.get('segmentation_import')
+        if not fh:
+            return None
+        try:
+            # validate xml (alto)
+            # validate dimensions
+            parser = AltoParser(fh)
+        except ParseError as e:
+            logger.exception(e)
+            raise forms.ValidationError("Couldn't parse ALTO file.")
+        return parser
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        parser = self.cleaned_data['segmentation_import']
+        if parser and len(parser.pages) != len(self.parts):
+            raise forms.ValidationError("The number of pages in the ALTO file doesn't match the number of selected images.")
+        return cleaned_data
     
     def process(self):
         task = self.cleaned_data.get('task')
@@ -142,10 +179,17 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 for part in self.parts:
                     part.task_binarize(user_pk=self.user.pk)
         elif task == 'segment':
-            for part in self.parts:
-                part.task_segment(user_pk=self.user.pk,
-                             steps=self.cleaned_data['segmentation_steps'],
-                             text_direction=self.cleaned_data['text_direction'])
+            parser = self.cleaned_data.get('segmentation_import')
+            if parser:
+                with transaction.atomic():
+                    parser.parse(self.parts)
+                    self.user.notify(_("Import done!"),
+                        id="import-success", level='success')
+            else:
+                for part in self.parts:
+                    part.task_segment(user_pk=self.user.pk,
+                                      steps=self.cleaned_data['segmentation_steps'],
+                                      text_direction=self.cleaned_data['text_direction'])
         elif task == 'train':
             if self.cleaned_data.get('new_model'):
                 # create model and corresponding OcrModel
