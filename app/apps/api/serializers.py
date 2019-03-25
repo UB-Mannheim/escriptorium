@@ -14,13 +14,15 @@ class ImageField(serializers.ImageField):
     
     def to_representation(self, img):
         if img:
-            data = {
-                'uri': img.url,
-                'size': (img.width, img.height)
-            }
-            if settings.THUMBNAIL_ENABLE and self.thumbnails:
-                data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
-                                      for alias in self.thumbnails}
+            data = {'uri': img.url}
+            try:
+                data['size'] = (img.width, img.height)
+            except FileNotFoundError:
+                data['size'] = None
+            else:
+                if settings.THUMBNAIL_ENABLE and self.thumbnails:
+                    data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
+                                          for alias in self.thumbnails}
             return data
 
 

@@ -34,7 +34,9 @@ class partCard {
         
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
+        if (this.image.thumbnails) {
+            $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
+        }
         $('img.card-img-top', $new).attr('title', this.title);
 
         $new.attr('draggable', true);
