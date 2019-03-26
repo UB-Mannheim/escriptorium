@@ -44,16 +44,18 @@ class Command(BaseCommand):
         
         if options['csv']:
             file_ = None
-            trans = Transcription.objects.create(name='CSV import', document=self.document)
+            trans, created = Transcription.objects.get_or_create(name='CSV import', document=self.document)
             part = None
             with open(options['csv'], 'r') as fh:
                 for line in fh.readlines()[1:]:
-                    p,rc,gtc,gtl,x1,y1,x2,y2,x3,y3,x4,y4,sp,fn,ld,fr,sr,cor = line.split('\t')
+                    # order,page,realCol,GTcol,GTline,x1,y1,x1,y2,x1,y3,x1,y4,siftflowpoints,pagefilename,linedistance,folioreference,sourcereference,manual_correction,comment
+                    order,page,realCol,GTcol,GTline,x1,y1,x2,y2,x3,y3,x4,y4,siftflowpoints,fn,linedistance,folioreference,sourcereference,manual_correction,comment = line.split('\t')
+                    # p,rc,gtc,gtl,x1,y1,x2,y2,x3,y3,x4,y4,sp,fn,ld,fr,sr,cor = line.split('\t')
                     if fn != file_:
                         part = self.grab(ftp, fn.replace('.jpg', '.tif'))
                     file_ = fn
                     l = Line.objects.create(document_part=part, box=(x1,y1,x2,y4))
-                    LineTranscription.objects.create(line=l, transcription=trans, content=cor)
+                    LineTranscription.objects.create(line=l, transcription=trans, content=manual_correction)
         else:
             files = []
             def list_img(filename):
