@@ -20,6 +20,7 @@ from django.utils.translation import gettext as _
 from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
+from celery.task.control import inspect
 from celery import chain
 from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
@@ -336,7 +337,7 @@ class DocumentPart(OrderedModel):
                 w[task_name.split('.')[-1]] = 'pending'
             if task_name in tasks and tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
                 w[task_name.split('.')[-1]] = 'ongoing'
-            elif task_name in tasks and tasks[task_name]['status'] == 'task_failure':
+            elif task_name in tasks and tasks[task_name]['status'] in ['task_failure', 'error']:
                 w[task_name.split('.')[-1]] = 'error'
         
         # client doesnt know about compression
@@ -363,7 +364,6 @@ class DocumentPart(OrderedModel):
             return False
     
     def recover(self):
-        from celery.task.control import inspect
         i = inspect()
         # Important: this is really slow!
         queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
