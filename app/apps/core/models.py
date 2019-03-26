@@ -378,7 +378,7 @@ class DocumentPart(OrderedModel):
         elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
             task_name = 'core.tasks.binarize'
             if (not task_name in self.tasks or
-                self.tasks[task_name]['task_id'] not in queued):            
+                self.tasks[task_name]['task_id'] not in queued):
                 self.workflow_state = self.WORFLOW_STATE_COMPRESSED
                 redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
