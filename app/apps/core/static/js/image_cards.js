@@ -34,7 +34,7 @@ class partCard {
         
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        if (this.image.thumbnails) {
+        if (this.image.thumbnails != undefined) {
             $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
         }
         $('img.card-img-top', $new).attr('title', this.title);
