@@ -351,7 +351,6 @@ class DocumentPart(OrderedModel):
             return len([t for t in self.tasks.values()
                         if t['status'] not in ['task_success', 'task_failure']]) == 0
         except (KeyError, TypeError):
-            # self.recover()
             return True
     
     def in_queue(self):
@@ -361,17 +360,38 @@ class DocumentPart(OrderedModel):
                     len([t for t in statuses if t['status']
                          in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
-            # self.recover()
             return False
     
     def recover(self):
-        redis_.delete('process-%d' % self.pk)
+        from celery.task.control import inspect
+        i = inspect()
+        # Important: this is really slow!
+        queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
+                  [task['id'] for queue in i.active().values() for task in queue] +
+                  [task['id'] for queue in i.reserved().values() for task in queue])
         if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
-            self.workflow_state = self.WORFLOW_STATE_CREATED
+            task_name = 'core.tasks.lossless_compression'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                self.workflow_state = self.WORFLOW_STATE_CREATED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+            task_name = 'core.tasks.binarize'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):            
+                self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
-            self.workflow_state = self.WORFLOW_STATE_BINARIZED
+            task_name = 'core.tasks.segment'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                self.workflow_state = self.WORFLOW_STATE_BINARIZED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
+        elif self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
+            task_name = 'core.tasks.transcribe'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         self.save()
 
     def generate_thumbnails(self):
