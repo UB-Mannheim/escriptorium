@@ -436,12 +436,10 @@ class DocumentPart(OrderedModel):
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
             self.save()
     
-    def segment(self, steps='both', text_direction=None):
-        if steps not in ['regions', 'lines', 'both']:
-            raise ValueError(
-                "Invalid value for argument steps %s, should be one of ['regions', 'lines', 'both']." % steps)
+    def segment(self, steps=None, text_direction=None):
         # cleanup pre-existing
-        self.lines.all().delete()
+        if steps in ['lines', 'both']:
+            self.lines.all().delete()
         if steps in ['regions', 'both']:
             self.blocks.all().delete()
         
@@ -464,7 +462,7 @@ class DocumentPart(OrderedModel):
                     #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
                     for line in res['boxes']:
                         Line.objects.create(
-                            document_part=part, block=block,
+                            document_part=self, block=block,
                             box=(line[0]+block.box[0], line[1]+block.box[1],
                                  line[2]+block.box[0], line[3]+block.box[1]))
             else:
@@ -484,6 +482,11 @@ class DocumentPart(OrderedModel):
                 document=self.document)
             model_ = kraken_models.load_any(model.file.path)
             lines = self.lines.all()
+            try:
+                text_direction = self.document.process_settings.text_direction
+            except DocumentProcessSettings.DoesNotExist:
+                text_direction = None
+
             with Image.open(self.bw_image.file.name) as im:
                 for line in lines:
                     it = rpred.rpred(
@@ -532,7 +535,7 @@ class DocumentPart(OrderedModel):
         tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
-    def task_segment(self, user_pk=None, steps='both', text_direction=None):
+    def task_segment(self, user_pk=None, steps=None, text_direction=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -597,8 +600,8 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
-
-
+    
+    
 class Transcription(models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(Document, on_delete=models.CASCADE,
