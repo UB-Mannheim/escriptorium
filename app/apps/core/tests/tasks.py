@@ -15,10 +15,9 @@ class TasksTestCase(TestCase):
         factory.make_part(document=self.part.document)
 
     def test_workflow(self):
-        # done automatically when creating
-        # self.assertEqual(self.part.workflow_state,
-        #                  self.part.WORKFLOW_STATE_CREATED)
-        # self.part.compress()
+        self.assertEqual(self.part.workflow_state,
+                         self.part.WORKFLOW_STATE_CREATED)
+        self.part.compress()
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_COMPRESSED)
             

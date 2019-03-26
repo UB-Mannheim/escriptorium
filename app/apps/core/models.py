@@ -295,9 +295,8 @@ class DocumentPart(OrderedModel):
         self.calculate_progress()
         instance = super().save(*args, **kwargs)
         if new:
-            self.compress()
+            self.task_compress()
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
-            get_thumbnailer(self.image)
         return instance
     
     def delete(self, *args, **kwargs):

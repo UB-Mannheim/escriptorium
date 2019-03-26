@@ -42,6 +42,8 @@ def update_client_state(part_id, task, status):
 
 @shared_task
 def generate_part_thumbnails(instance_pk):
+    if not settings.THUMBNAIL_ENABLE:
+        return 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
