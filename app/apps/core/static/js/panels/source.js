@@ -8,7 +8,11 @@ class SourcePanel {
 
     load(part) {
         this.part = part;
-        $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
+        if (this.part.image.thumbnails) {
+            $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
+        } else {
+            $('.img-container img', this.$panel).attr('src', this.part.image.url);
+        }
         if (this.opened) this.open();
         this.$container.trigger('wheelzoom.refresh');
     }
