@@ -38,9 +38,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.document = Document.objects.get(pk=options['document_id'])
         # ftp://149.202.76.5/Latin_manuscripts/Bamberg78new/Msc.Class.78/
-        ftp = FTP(options['host'])
-        ftp.login(user=options['user'], passwd=options['password'])
-        ftp.cwd(options['dir'])
+        # ftp = FTP(options['host'])
+        # ftp.login(user=options['user'], passwd=options['password'])
+        # ftp.cwd(options['dir'])
         
         if options['csv']:
             file_ = None
@@ -50,14 +50,15 @@ class Command(BaseCommand):
             with open(options['csv'], 'r') as fh:
                 for line in fh.readlines()[1:]:
                     #order,page,realCol,GTcol,GTline,x1,y1,x2,y2,x3,y3,x4,y4,siftflowpoints,fn,linedistance,folioreference,sourcereference,manual_correction,comment = line.split('\t')
-                    order,page,regionNumber,x1Region,y1Region,x2Region,y2Region,lineNumber,x1line,y1line,x2line,y2line,color,img_file_name,AT,GT2  = line.split('\t')
-                    if image_file_name != file_:
+                    order,page,regionNumber,x1Region,y1Region,x2Region,y2Region,lineNumber,x1line,y1line,x2line,y2line,fn,AT,GT2  = line.split('\t')
+                    if fn != file_:
                         # part = self.grab(ftp, fn.replace('.jpg', '.tif'))
-                        part = DocumentPart.objects.get(image__contains=img_file_name, document=self.document)
+                        part = DocumentPart.objects.get(image__contains=fn, document=self.document)
                         part.lines.all().delete()
                         part.blocks.all().delete()
                         block = Block.objects.get_or_create(document_part=part,box=(x1Region,y1Region,x2Region,y2Region))
-                    file_ = image_file_name
+                    file_ = fn
+
                     l = Line.objects.create(document_part=part, block=block, box=(x1line, y1line, x2line, y2line))
                     LineTranscription.objects.create(line=l, transcription=trans, content=AT)
                     if GT2:
