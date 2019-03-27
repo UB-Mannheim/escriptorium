@@ -53,7 +53,7 @@ class Command(BaseCommand):
                     order,page,regionNumber,x1Region,y1Region,x2Region,y2Region,lineNumber,x1line,y1line,x2line,y2line,fn,AT,GT2  = line.split('\t')
                     if fn != file_:
                         # part = self.grab(ftp, fn.replace('.jpg', '.tif'))
-                        part = DocumentPart.objects.get(image__contains=fn, document=self.document)
+                        part = DocumentPart.objects.get(image__contains=fn.split('__')[1], document=self.document)
                         part.lines.all().delete()
                         part.blocks.all().delete()
                         block = Block.objects.get_or_create(document_part=part,box=(x1Region,y1Region,x2Region,y2Region))
