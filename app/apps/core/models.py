@@ -340,11 +340,6 @@ class DocumentPart(OrderedModel):
             elif task_name in tasks and tasks[task_name]['status'] in ['task_failure', 'error']:
                 w[task_name.split('.')[-1]] = 'error'
         
-        # client doesnt know about compression
-        if ('core.tasks.lossless_compression' in tasks and
-            tasks['core.tasks.lossless_compression']['status'] in ['before_task_publish', 'task_prerun']):
-            w['binarize'] = 'ongoing'
-        
         return w
     
     def tasks_finished(self):

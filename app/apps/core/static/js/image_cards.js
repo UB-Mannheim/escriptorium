@@ -321,6 +321,9 @@ $(document).ready(function() {
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
         paramName: "image",
+        timeout: 0,
+        // chunking: true,
+        // retryChunks: true,
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
     
