@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'versioning',
     'users',
     'core',
+    'imports',
 ]
 
 MIDDLEWARE = [
@@ -151,6 +152,19 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+from kombu import Queue
+
+CELERY_TASK_QUEUES = (
+    Queue('celery'),
+    Queue('img-processing', routing_key='img-processing'),
+    Queue('low-priority', routing_key='low-priority'),
+)
+CELERY_TASK_ROUTES = {
+    'core.tasks.*': {'queue': 'img-processing'},
+    #'escriptorium.celery.debug_task': '',
+    'imports.tasks.iiif_import': {'queue': 'low-priority'},
+    #'users.tasks.async_email': '',
+}
 
 CHANNEL_LAYERS = {
     "default": {

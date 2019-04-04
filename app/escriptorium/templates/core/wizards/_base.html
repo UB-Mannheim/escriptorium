@@ -10,7 +10,7 @@
         </button>
       </div>
       {% endcomment %}
-      <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="process-part-form" method="post" action="{% url 'document-parts-process' pk=object.pk %}" enctype="multipart/form-data">
+      <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="process-part-form" method="post" {% block wizard_action %}action="{% url 'document-parts-process' pk=object.pk %}"{% endblock %} enctype="multipart/form-data">
         <div class="modal-body">
           <p><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
           <div class="alert alert-primary help-text">

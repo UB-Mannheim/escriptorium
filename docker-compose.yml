@@ -68,7 +68,7 @@ services:
     volumes:
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/media
-    command: celery -E -A escriptorium worker -l INFO
+    command: celery multi start -E -A escriptorium worker -l INFO
 
   celerybeat:
     build:

@@ -23,8 +23,9 @@ def render_field(field, group=False, **kwargs):
     tplt = template.loader.get_template('django/forms/widgets/field.html')
     if 'class' in kwargs and 'class' in field.field.widget.attrs:
         kwargs['class'] = field.field.widget.attrs['class'] + " " + kwargs['class']
+    
     field.field.widget.attrs.update(**{k.replace('_', '-'): v
                                        for k,v in kwargs.items()})
-        
+    
     context = {'field': field, 'group': group}
     return tplt.render(context)  #.mark_safe()

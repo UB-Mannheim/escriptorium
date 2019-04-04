@@ -7,11 +7,6 @@
 
 {% block wizard_fields %}
 <div class="form-group">
-  <h5>{% trans "Manually" %}</h5>
-  {% render_field settings_form.segmentation_import %}
-</div>
-<div class="form-group">
-  <h5>{% trans "Or automatically" %}</h5>
   {% render_field settings_form.segmentation_steps %}
   {% render_field settings_form.text_direction %}
 </div>

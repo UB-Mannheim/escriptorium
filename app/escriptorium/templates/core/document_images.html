@@ -23,6 +23,7 @@
     <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
+    <button id="import-selected" class="btn btn-sm btn-primary ml-auto js-proc-selected" data-proc="import" title="{% trans 'Import data.' %}"><i class="fas fa-file-import mr-1"></i>{% trans "Import" %}</button>
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
     {# <button id="train-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button> #}
@@ -59,6 +60,7 @@
 </div>
 
 {# Process wizards #}
+{% include 'core/wizards/import.html' with proc='import' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
 {% include 'core/wizards/train.html' with proc='train' %}

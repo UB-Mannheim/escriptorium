@@ -78,18 +78,19 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=Metadat
 
 
 class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
+    TASK_BINARIZE = 'binarize'
+    TASK_SEGMENT = 'segment'
+    TASK_TRAIN = 'train'
+    TASK_TRANSCRIBE  = 'transcribe'
     task = forms.ChoiceField(choices=(
-        ('binarize', 1),
-        ('segment', 2),
-        ('train', 3),
-        ('transcribe', 4)))
+        (TASK_BINARIZE, 1),
+        (TASK_SEGMENT, 2),
+        (TASK_TRAIN, 3),
+        (TASK_TRANSCRIBE, 4),
+    ))
     parts = forms.CharField()
+    
     bw_image = forms.ImageField(required=False)
-    segmentation_import = forms.FileField(
-        required=False,
-        help_text=_("json as a list of list of bounding boxes per page, or alto xml."),
-        validators=[FileExtensionValidator(
-            allowed_extensions=['xml'])])  # 'json', 
     segmentation_steps = forms.ChoiceField(choices=(
         ('regions', _('Regions')),
         ('lines', _('Lines')),
@@ -141,62 +142,28 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         if fh.size != isize:
             raise forms.ValidationError(_("Uploaded image should be the same size as original image {}.").format(isize))
         return img
-
-    def clean_segmentation_import(self):
-        """
-        json
-        one page [[..], [..]] or {'boxes': [[..], [..]]}
-        multipage []
-
-        or alto xml
-        """
-        fh = self.cleaned_data.get('segmentation_import')
-        if not fh:
-            return None
-        try:
-            # validate xml (alto)
-            # validate dimensions
-            parser = AltoParser(fh)
-        except ParseError as e:
-            logger.exception(e)
-            raise forms.ValidationError("Couldn't parse ALTO file.")
-        return parser
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        parser = self.cleaned_data['segmentation_import']
-        if parser and len(parser.pages) != len(self.parts):
-            raise forms.ValidationError("The number of pages in the ALTO file doesn't match the number of selected images.")
-        return cleaned_data
     
     def process(self):
         task = self.cleaned_data.get('task')
-        if task == 'binarize':
+        if task == self.TASK_BINARIZE:
             if len(self.parts) == 1 and self.cleaned_data.get('bw_image'):
                 self.parts[0].bw_image = self.cleaned_data['bw_image']
                 self.parts[0].save()
             else:
                 for part in self.parts:
                     part.task_binarize(user_pk=self.user.pk)
-        elif task == 'segment':
-            parser = self.cleaned_data.get('segmentation_import')
-            if parser:
-                with transaction.atomic():
-                    parser.parse(self.parts)
-                    self.user.notify(_("Import done!"),
-                        id="import-success", level='success')
-            else:
-                for part in self.parts:
-                    part.task_segment(user_pk=self.user.pk,
-                                      steps=self.cleaned_data['segmentation_steps'],
-                                      text_direction=self.cleaned_data['text_direction'])
-        elif task == 'train':
+        elif task == self.TASK_SEGMENT:
+            for part in self.parts:
+                part.task_segment(user_pk=self.user.pk,
+                                  steps=self.cleaned_data['segmentation_steps'],
+                                  text_direction=self.cleaned_data['text_direction'])
+        elif task == self.TASK_TRAIN:
             if self.cleaned_data.get('new_model'):
                 # create model and corresponding OcrModel
                 pass
-
+            
             # part.train(user_pk=self.user.pk, model=None)
-        elif task == 'transcribe':
+        elif task == self.TASK_TRANSCRIBE:
             if self.cleaned_data.get('upload_model'):
                 model = OcrModel.objects.create(
                     name=self.cleaned_data['upload_model'].name,
@@ -210,7 +177,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
             
             for part in self.parts:
                 part.task_transcribe(user_pk=self.user.pk, model=model)
-        
         self.save()  # save settings
 
 

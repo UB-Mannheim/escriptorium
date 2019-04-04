@@ -15,8 +15,9 @@ from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 from easy_thumbnails.files import get_thumbnailer
 
 from versioning.models import NoChangeException
-from .models import Document, DocumentPart
-from .forms import *
+from core.models import Document, DocumentPart
+from core.forms import *
+from imports.forms import ImportForm
 
 
 class Home(TemplateView):
@@ -121,6 +122,7 @@ class DocumentImages(LoginRequiredMixin, DetailView):
         settings, created = DocumentProcessSettings.objects.get_or_create(document=self.object)
         context['settings_form'] = DocumentProcessForm(self.object, self.request.user,
                                                        instance=settings)
+        context['import_form'] = ImportForm(self.object, self.request.user)
         return context
 
 

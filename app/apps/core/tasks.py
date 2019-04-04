@@ -24,14 +24,8 @@ redis_ = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
 
 def update_client_state(part_id, task, status):
-    if task == 'core.tasks.generate_part_thumbnails':
-        return
-    try:
-        DocumentPart = apps.get_model('core', 'DocumentPart')
-        part = DocumentPart.objects.get(pk=part_id)
-    except DocumentPart.DoesNotExist:
-        logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
-        raise
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    part = DocumentPart.objects.get(pk=part_id)
     task_name = task.split('.')[-1]
     send_event('document', part.document.pk, "part:workflow", {
         "id": part.pk,
@@ -39,7 +33,7 @@ def update_client_state(part_id, task, status):
         "status": status
     })
 
-
+    
 @shared_task
 def generate_part_thumbnails(instance_pk):
     try:
@@ -183,13 +177,17 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
     instance_id = body[0][0]
+    
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
     data[sender] = {
         "task_id": kwargs['headers']['id'],
         "status": 'before_task_publish'
     }
     redis_.set('process-%d' % instance_id, json.dumps(data))
-    update_client_state(instance_id, sender, 'pending')
+    
+    queue = kwargs.get('routing_key')
+    if queue == 'img-processing':
+        update_client_state(instance_id, sender, 'pending')
 
 
 @task_prerun.connect
@@ -197,6 +195,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
     instance_id = sender.request.args[0]
+    
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
     signal_name = kwargs['signal'].name
     data[sender.name] = {
@@ -212,5 +211,8 @@ def done_state(sender=None, body=None, **kwargs):
         # remove any pending task down the chain
         data = {k:v for k,v in data.items() if v['status'] != 'pending'}
     
-    redis_.set('process-%d' % instance_id, json.dumps(data))    
-    update_client_state(instance_id, sender.name, status)
+    redis_.set('process-%d' % instance_id, json.dumps(data))
+    
+    queue = kwargs.get('routing_key')
+    if queue == 'img-processing':
+        update_client_state(instance_id, sender.name, status)

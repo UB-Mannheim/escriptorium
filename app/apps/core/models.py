@@ -31,6 +31,7 @@ from users.consumers import send_event
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+
 class ProcessFailureException(Exception):
     pass
 
