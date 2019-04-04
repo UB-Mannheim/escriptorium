@@ -1,10 +1,14 @@
 import bleach
+import logging
 import json
 
 from django.conf import settings
 from rest_framework import serializers
+import easy_thumbnails
 
 from core.models import *
+
+logger = logging.getLogger(__name__)
 
 
 class ImageField(serializers.ImageField):
@@ -14,13 +18,23 @@ class ImageField(serializers.ImageField):
     
     def to_representation(self, img):
         if img:
-            data = {
-                'uri': img.url,
-                'size': (img.width, img.height)
-            }
-            if settings.THUMBNAIL_ENABLE and self.thumbnails:
-                data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
-                                      for alias in self.thumbnails}
+            try:
+                data = {
+                    'uri': img.url,
+                    'size': (img.width, img.height)
+                }
+            except FileNotFoundError:
+                logger.warning('File not found: %s' % img.path)
+                data = {
+                    'uri': img.url,
+                    'size': (0, 0)
+                }
+            try:
+                if settings.THUMBNAIL_ENABLE and self.thumbnails:
+                    data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
+                                          for alias in self.thumbnails}
+            except easy_thumbnails.exceptions.InvalidImageFormatError:
+                pass
             return data
 
 
@@ -115,14 +129,13 @@ class PartDetailSerializer(PartSerializer):
             'blocks',
             'lines',
             'previous',
-            'next'
-        )
-
+            'next')
+    
     def get_previous(self, instance):
         prev = DocumentPart.objects.filter(
             document=instance.document, order__lt=instance.order).order_by('-order').first()
         return prev and prev.pk or None
-
+    
     def get_next(self, instance):
         nex = DocumentPart.objects.filter(
             document=instance.document, order__gt=instance.order).order_by('order').first()

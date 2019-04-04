@@ -55,7 +55,6 @@ class AltoParser():
                                 block=b,
                                 box=bbox(line))
                             lines.append(l)
-                            print(content)
                             if content:
                                 lt = LineTranscription.objects.create(
                                     transcription=trans,

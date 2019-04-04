@@ -143,7 +143,7 @@ class Document(models.Model):
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
-        Transcription.objects.get_or_create(document=self, name=_('manual'))
+        Transcription.objects.get_or_create(document=self, name=_('Manual'))
         return res
         
     @property
@@ -296,9 +296,8 @@ class DocumentPart(OrderedModel):
         self.calculate_progress()
         instance = super().save(*args, **kwargs)
         if new:
-            self.compress()
+            self.task_compress()
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
-            get_thumbnailer(self.image)
         return instance
     
     def delete(self, *args, **kwargs):
