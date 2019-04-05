@@ -4,15 +4,15 @@ from django.urls import reverse
 from django.test import TestCase, override_settings
 
 from core.models import Block
-from core.tests.factory import CoreFactory
+from core.tests.factory import CoreFactoryTestCase
 
 
-class TasksTestCase(TestCase):
+class TasksTestCase(CoreFactoryTestCase):
     def setUp(self):
-        factory = CoreFactory()
-        self.part = factory.make_part()
-        factory.make_part(document=self.part.document)
-        factory.make_part(document=self.part.document)
+        super().setUp()
+        self.part = self.factory.make_part()
+        self.factory.make_part(document=self.part.document)
+        self.factory.make_part(document=self.part.document)
 
     def test_workflow(self):
         self.assertEqual(self.part.workflow_state,
@@ -36,7 +36,6 @@ class TasksTestCase(TestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_TRANSCRIBING)
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True, USE_CELERY=False)
     def test_post(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={
@@ -50,8 +49,7 @@ class TasksTestCase(TestCase):
             'parts': json.dumps([part.pk for part in parts]),
             'task': 'transcribe'
         }, follow=True)
-        self.assertEqual(response.status_code, 200)
-        
+        self.assertEqual(response.status_code, 200)        
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
     

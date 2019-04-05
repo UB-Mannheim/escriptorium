@@ -4,7 +4,7 @@ from django.core.validators import FileExtensionValidator
 
 from core.models import Document, DocumentPart, Transcription
 from users.models import User
-from imports.parsers import AltoParser
+from imports.parsers import make_parser
 
 
 class Import(models.Model):
@@ -37,7 +37,7 @@ class Import(models.Model):
     def process(self):
         try:
             with open(self.import_file.path, 'r') as fh:
-                parser = AltoParser(fh)
+                parser = make_parser(fh)
             self.workflow_state = self.WORKFLOW_STATE_STARTED
             self.save()
             parts = DocumentPart.objects.filter(pk__in=self.parts)
@@ -48,6 +48,6 @@ class Import(models.Model):
             self.save()
         except Exception as e:
             self.worflow_state = self.WORKFLOW_STATE_ERROR
-            self.error_message = e.msg
+            self.error_message = str(e)
             self.save()
             raise

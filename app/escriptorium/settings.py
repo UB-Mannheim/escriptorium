@@ -146,7 +146,6 @@ CACHES = {
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
 
-USE_CELERY = True
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -208,12 +207,7 @@ REST_FRAMEWORK = {
 }
 
 if 'test' in sys.argv:
-    class DisableMigrations(object):
-
-        def __contains__(self, item):
-            return True
-
-        def __getitem__(self, item):
-            return None
-
-    MIGRATION_MODULES = DisableMigrations()
+    try:
+        from .test_settings import *
+    except ImportError:
+        pass

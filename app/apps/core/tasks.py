@@ -20,7 +20,9 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-redis_ = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+redis_ = redis.Redis(host=settings.REDIS_HOST,
+                     port=settings.REDIS_PORT,
+                     db=getattr(settings, 'REDIS_DB', 0))
 
 
 def update_client_state(part_id, task, status):

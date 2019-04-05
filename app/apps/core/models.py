@@ -21,7 +21,7 @@ from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
 from celery import chain
-from easy_thumbnails.files import get_thumbnailer
+from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 
 from versioning.models import Versioned
@@ -214,7 +214,7 @@ class DocumentPart(OrderedModel):
     def __str__(self):
         if self.name:
             return self.name
-        return '%s %d' % (self.typology or _("Element"), self.order + 1)
+        return '%s %d' % (self.typology or _("Element"), self.order or 0 + 1)
     
     @property
     def title(self):
@@ -293,14 +293,16 @@ class DocumentPart(OrderedModel):
     
     def save(self, *args, **kwargs):
         new = self.pk is None
-        self.calculate_progress()
         instance = super().save(*args, **kwargs)
         if new:
             self.task_compress()
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
+        else:
+            self.calculate_progress()
         return instance
     
     def delete(self, *args, **kwargs):
+        redis_.delete('process-%d' % self.pk)
         send_event('document', self.document.pk, "part:delete", {
             "id": self.pk
         })
@@ -308,13 +310,11 @@ class DocumentPart(OrderedModel):
     
     @property
     def tasks(self):
-        if not settings.USE_CELERY:
-            return {}
         try:
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
             return {}
-        
+    
     @property
     def workflow(self):
         w = {}
@@ -339,12 +339,7 @@ class DocumentPart(OrderedModel):
                 w[task_name.split('.')[-1]] = 'ongoing'
             elif task_name in tasks and tasks[task_name]['status'] == 'task_failure':
                 w[task_name.split('.')[-1]] = 'error'
-        
-        # client doesnt know about compression
-        if ('core.tasks.lossless_compression' in tasks and
-            tasks['core.tasks.lossless_compression']['status'] in ['before_task_publish', 'task_prerun']):
-            w['binarize'] = 'ongoing'
-        
+                
         return w
     
     def tasks_finished(self):
@@ -376,7 +371,6 @@ class DocumentPart(OrderedModel):
         self.save()
 
     def generate_thumbnails(self):
-        from easy_thumbnails.files import generate_all_aliases
         generate_all_aliases(self.image, include_global=True)
 
     def compress(self):
@@ -509,16 +503,12 @@ class DocumentPart(OrderedModel):
         self.save()
         
     def chain_tasks(self, *tasks):
-        if settings.USE_CELERY:
-            chain(*tasks).delay()
-        else:
-            chain(*tasks)()
+        chain(*tasks).delay()
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
     
     def task_compress(self):
         if not self.tasks_finished():
             raise AlreadyProcessingException
-        
         self.chain_tasks(lossless_compression.si(self.pk),
                          generate_part_thumbnails.si(self.pk))
     
