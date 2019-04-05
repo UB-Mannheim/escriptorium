@@ -8,8 +8,8 @@ services:
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     volumes:
       - ./app/:/usr/src/app/
-      - static_volume:/usr/src/app/static
-      - media_volume:/usr/src/app/media
+      - ./static/:/usr/src/app/static
+      - ./media/:/usr/src/app/media
     depends_on:
       - db
       - redis
@@ -23,7 +23,7 @@ services:
   db:
     image: postgres:10.5-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - ./postgres/:/var/lib/postgresql/data/
     env_file: variables.env
 
   redis:
@@ -32,8 +32,8 @@ services:
   nginx:
     build: ./nginx
     volumes:
-      - static_volume:/usr/src/app/static
-      - media_volume:/usr/src/app/media
+      - ./static/:/usr/src/app/static
+      - ./media/:/usr/src/app/media
     ports:
       - 8080:80
     depends_on:
@@ -50,7 +50,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - esdata:/usr/share/elasticsearch/data
+      - ./esdata/:/usr/share/elasticsearch/data
     #expose:
     #   - 9200
     # ports:
@@ -66,8 +66,8 @@ services:
       - db
       - redis
     volumes:
-      - static_volume:/usr/src/app/static
-      - media_volume:/usr/src/app/media
+      - ./static/:/usr/src/app/static
+      - ./media/:/usr/src/app/media
     command: celery multi start -E -A escriptorium worker -l INFO
 
   celerybeat:
@@ -78,8 +78,8 @@ services:
       - db
       - redis
     volumes:
-      - static_volume:/usr/src/app/static
-      - media_volume:/usr/src/app/media
+      - ./static/:/usr/src/app/static
+      - ./media/:/usr/src/app/media
     command: celery -E -A escriptorium beat -l INFO
 
   mail:
@@ -90,9 +90,9 @@ services:
       - PRIMARY_HOST=escriptorium.fr
       - ALLOWED_HOSTS=localhost ; web ; celeryworker ; docker0
       
-volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
-  esdata:
-    driver: local
+# volumes:
+#   ./postgres/:
+#   ./static/:
+#   ./media/:
+#   ./esdata/:
+#     driver: local

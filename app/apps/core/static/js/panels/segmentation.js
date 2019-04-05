@@ -35,6 +35,7 @@ class Box {
             cursor: "grab",
             stop: $.proxy(function(ev) {
                 this.changed = true;
+                this.save();
             }, this),
             // this is necessary because WheelZoom make it jquery-ui drag jump around
             start: $.proxy(function(ev) {
@@ -67,6 +68,7 @@ class Box {
             // disabled: true,
             stop: $.proxy(function(ev) {
                 this.changed = true;
+                this.save();
             }, this),
             start: $.proxy(function(ev) {
                 this.click.x = ev.clientX;

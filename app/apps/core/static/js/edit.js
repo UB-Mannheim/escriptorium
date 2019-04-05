@@ -50,8 +50,8 @@ $(document).ready(function() {
     });
 
     $('.open-panel').on('click', function(ev) {
-        $(ev.target).toggleClass('btn-primary').toggleClass('btn-secondary');
-        var panel = $(ev.target).data('target');
+        $(this).toggleClass('btn-primary').toggleClass('btn-secondary');
+        var panel = $(this).data('target');
         panels[panel].toggle();
         for (var key in panels) {
             panels[key].reset();

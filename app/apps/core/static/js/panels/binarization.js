@@ -9,7 +9,11 @@ class BinarizationPanel {
     load(part) {
         this.part = part;
         if (this.part.bw_image) {
-            $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
+            if (this.part.bw_image.thumbnails) {
+                $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
+            } else {
+                $('.img-container img', this.$panel).attr('src', this.part.bw_image.url);
+            }
         } else {
             $('.img-container img', this.$panel).attr('src', '');
         }

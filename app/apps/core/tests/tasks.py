@@ -36,7 +36,6 @@ class TasksTestCase(TestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_TRANSCRIBING)
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True, USE_CELERY=False)
     def test_post(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={

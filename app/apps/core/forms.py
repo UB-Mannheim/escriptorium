@@ -97,10 +97,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         ('both', _('Lines and regions'))
     ), initial='lines', required=False)
     new_model = forms.CharField(required=False, label=_('Name'))
-    upload_model = forms.FileField(
-        required=False,
-        validators=[FileExtensionValidator(
-            allowed_extensions=['pronn'])])
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['mlmodel'])])
     
     class Meta:
         model = DocumentProcessSettings

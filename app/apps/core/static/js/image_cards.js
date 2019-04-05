@@ -34,7 +34,9 @@ class partCard {
         
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
+        if (this.image.thumbnails != undefined) {
+            $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
+        }
         $('img.card-img-top', $new).attr('title', this.title);
 
         $new.attr('draggable', true);
@@ -319,6 +321,9 @@ $(document).ready(function() {
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
         paramName: "image",
+        timeout: 0,
+        // chunking: true,
+        // retryChunks: true,
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
     

@@ -20,6 +20,7 @@ from django.utils.translation import gettext as _
 from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
+from celery.task.control import inspect
 from celery import chain
 from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
@@ -296,9 +297,8 @@ class DocumentPart(OrderedModel):
         self.calculate_progress()
         instance = super().save(*args, **kwargs)
         if new:
-            self.compress()
+            self.task_compress()
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
-            get_thumbnailer(self.image)
         return instance
     
     def delete(self, *args, **kwargs):
@@ -338,13 +338,8 @@ class DocumentPart(OrderedModel):
                 w[task_name.split('.')[-1]] = 'pending'
             if task_name in tasks and tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
                 w[task_name.split('.')[-1]] = 'ongoing'
-            elif task_name in tasks and tasks[task_name]['status'] == 'task_failure':
+            elif task_name in tasks and tasks[task_name]['status'] in ['task_failure', 'error']:
                 w[task_name.split('.')[-1]] = 'error'
-        
-        # client doesnt know about compression
-        if ('core.tasks.lossless_compression' in tasks and
-            tasks['core.tasks.lossless_compression']['status'] in ['before_task_publish', 'task_prerun']):
-            w['binarize'] = 'ongoing'
         
         return w
     
@@ -353,7 +348,6 @@ class DocumentPart(OrderedModel):
             return len([t for t in self.tasks.values()
                         if t['status'] not in ['task_success', 'task_failure']]) == 0
         except (KeyError, TypeError):
-            # self.recover()
             return True
     
     def in_queue(self):
@@ -363,17 +357,37 @@ class DocumentPart(OrderedModel):
                     len([t for t in statuses if t['status']
                          in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
-            # self.recover()
             return False
     
     def recover(self):
-        redis_.delete('process-%d' % self.pk)
+        i = inspect()
+        # Important: this is really slow!
+        queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
+                  [task['id'] for queue in i.active().values() for task in queue] +
+                  [task['id'] for queue in i.reserved().values() for task in queue])
         if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
-            self.workflow_state = self.WORFLOW_STATE_CREATED
+            task_name = 'core.tasks.lossless_compression'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                self.workflow_state = self.WORFLOW_STATE_CREATED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+            task_name = 'core.tasks.binarize'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
-            self.workflow_state = self.WORFLOW_STATE_BINARIZED
+            task_name = 'core.tasks.segment'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                self.workflow_state = self.WORFLOW_STATE_BINARIZED
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
+        elif self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
+            task_name = 'core.tasks.transcribe'
+            if (not task_name in self.tasks or
+                self.tasks[task_name]['task_id'] not in queued):
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         self.save()
 
     def generate_thumbnails(self):
@@ -438,12 +452,10 @@ class DocumentPart(OrderedModel):
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
             self.save()
     
-    def segment(self, steps='both', text_direction=None):
-        if steps not in ['regions', 'lines', 'both']:
-            raise ValueError(
-                "Invalid value for argument steps %s, should be one of ['regions', 'lines', 'both']." % steps)
+    def segment(self, steps=None, text_direction=None):
         # cleanup pre-existing
-        self.lines.all().delete()
+        if steps in ['lines', 'both']:
+            self.lines.all().delete()
         if steps in ['regions', 'both']:
             self.blocks.all().delete()
         
@@ -486,6 +498,11 @@ class DocumentPart(OrderedModel):
                 document=self.document)
             model_ = kraken_models.load_any(model.file.path)
             lines = self.lines.all()
+            try:
+                text_direction = self.document.process_settings.text_direction
+            except DocumentProcessSettings.DoesNotExist:
+                text_direction = None
+
             with Image.open(self.bw_image.file.name) as im:
                 for line in lines:
                     it = rpred.rpred(
@@ -534,7 +551,7 @@ class DocumentPart(OrderedModel):
         tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
-    def task_segment(self, user_pk=None, steps='both', text_direction=None):
+    def task_segment(self, user_pk=None, steps=None, text_direction=None):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         
@@ -599,8 +616,8 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
-
-
+    
+    
 class Transcription(models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(Document, on_delete=models.CASCADE,

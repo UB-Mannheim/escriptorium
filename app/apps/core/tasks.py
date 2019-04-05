@@ -36,6 +36,8 @@ def update_client_state(part_id, task, status):
     
 @shared_task
 def generate_part_thumbnails(instance_pk):
+    if not settings.THUMBNAIL_ENABLE:
+        return 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -89,13 +91,10 @@ def binarize(instance_pk, user_pk=None, binarizer=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None, steps='both', text_direction=None):
+def segment(instance_pk, user_pk=None, steps=None, text_direction=None):
     """
     steps can be either 'regions', 'lines' or 'both'
     """
-    if steps not in ['regions', 'lines', 'both']:
-         raise ValueError("Invalid value for argument 'steps'.")
-    
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
