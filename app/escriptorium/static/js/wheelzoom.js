@@ -67,7 +67,7 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
 
 	function removeDrag() {
         target.removeClass('notransition');
-		container.off('mouseup', removeDrag);
+		$(document).off('mouseup', removeDrag);
 		container.off('mousemove', drag);
 	}
 
@@ -78,7 +78,7 @@ function WheelZoom(container, disabled_, initial_scale, min_scale_opt, max_scale
         // disable transition while dragging
         target.addClass('notransition');
 		container.on('mousemove', drag);
-		container.on('mouseup', removeDrag);
+		$(document).on('mouseup', removeDrag);
 	}
     
 	function updateStyle() {
