@@ -219,16 +219,11 @@ body {
 
 /* transcription interface  */
 .nav-btn {
-    position: absolute;
     font-size: 50px;
 }
 
-.nav-btn.nav-prev {
-    left: -30px;
-}
-
-.nav-btn.nav-next {
-    right: -30px;
+.col-sides {
+    width: 30px;
 }
 
 #img-panel, #img-tools, #binar-panel, #seg-panel,

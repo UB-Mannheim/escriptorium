@@ -21,6 +21,7 @@
 
 {% block nav_content %}
 <div class="row">
+  <div class="col-sides"></div>
   <div id="img-tools" class="col">
     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
   </div>
@@ -57,12 +58,13 @@
       </div>
     </div>
   </div>
-</div>
-
-<div class="row" style="position: relative;">
-  <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>
-  <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>
-  
+  <div class="col-sides"></div>
+  {#</div> #}
+  <div class="w-100"></div>
+  {# <div class="row" style="position: relative;"> #}
+  <div class="col-sides">
+    <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>
+  </div>
   <div id="img-panel" class="col">
     <div class="img-container">
       <div class="zoom-container">
@@ -95,9 +97,11 @@
       <div class="zoom-container">
         <div class="overlay"></div>
         <div id="part-trans"></div>
-
       </div>
     </div>
+  </div>
+  <div class="col-sides">
+    <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>
   </div>
 </div>
 {% endblock %}
