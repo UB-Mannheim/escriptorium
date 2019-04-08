@@ -3,8 +3,9 @@ from io import BytesIO
 import uuid
 
 from django.conf import settings
-from django.db.utils import IntegrityError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.utils import IntegrityError
+from django.test import TestCase
 
 from core.models import *
 from users.models import User
@@ -14,6 +15,14 @@ class CoreFactory():
     """
     A model Factory to help create data for tests.
     """
+    def __init__(self):
+        redis_.flushall()
+        self.cleanup_registry = []
+    
+    def cleanup(self):
+        for obj in self.cleanup_registry:
+            obj.delete()
+    
     def make_user(self):
         name = 'test-%s' % str(uuid.uuid1())
         return User.objects.create(
@@ -36,7 +45,9 @@ class CoreFactory():
             content=img.read(),
             content_type='image/png'))
         
-        return DocumentPart.objects.create(**attrs)
+        part = DocumentPart.objects.create(**attrs)
+        self.cleanup_registry.append(part)
+        return part
     
     def make_transcription(self, **kwargs):
         attrs = kwargs.copy()
@@ -54,3 +65,11 @@ class CoreFactory():
         image.save(file, 'png')
         file.seek(0)
         return file
+
+
+class CoreFactoryTestCase(TestCase):
+    def setUp(self):
+        self.factory = CoreFactory()
+
+    def tearDown(self):
+        self.factory.cleanup()

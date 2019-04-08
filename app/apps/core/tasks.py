@@ -20,7 +20,9 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-redis_ = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+redis_ = redis.Redis(host=settings.REDIS_HOST,
+                     port=settings.REDIS_PORT,
+                     db=getattr(settings, 'REDIS_DB', 0))
 
 
 def update_client_state(part_id, task, status):
@@ -183,9 +185,10 @@ def before_publish_state(sender=None, body=None, **kwargs):
         "status": 'before_task_publish'
     }
     redis_.set('process-%d' % instance_id, json.dumps(data))
-    
-    queue = kwargs.get('routing_key')
-    if queue == 'img-processing':
+
+    # Note: only this part of the signal is filtered
+    # against this module's tasks, which isn't great
+    if sender.startswith('core.tasks'):
         update_client_state(instance_id, sender, 'pending')
 
 
@@ -212,6 +215,5 @@ def done_state(sender=None, body=None, **kwargs):
     
     redis_.set('process-%d' % instance_id, json.dumps(data))
     
-    queue = kwargs.get('routing_key')
-    if queue == 'img-processing':
+    if sender.name.startswith('core.tasks'):
         update_client_state(instance_id, sender.name, status)

@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 
 from bootstrap.forms import BootstrapFormMixin
 from imports.models import Import
-from imports.parsers import AltoParser, ParseError
+from imports.parsers import make_parser, ParseError
 from imports.tasks import xml_import
 
 
@@ -15,7 +15,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     parts = forms.CharField()
     xml_file = forms.FileField(
         required=False,
-        help_text=_("Alto xml."))
+        help_text=_("Alto or Abbyy XML."))
     
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -24,7 +24,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     
     def clean_xml_file(self):
         tmpfile = self.cleaned_data.get('xml_file')
-        # check its alto
+        # check its alto or abbyy
         return tmpfile
     
     def clean_parts(self):
@@ -36,7 +36,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         if not cleaned_data['xml_file']:
             raise forms.ValidationError(_("Choose one type of import."))
         try:
-            parser = AltoParser(cleaned_data['xml_file'])
+            parser = make_parser(cleaned_data['xml_file'])
         except ParseError:
             raise forms.ValidationError(_("Couldn't parse the given xml file."))
         if parser and len(parser.pages) != len(cleaned_data['parts']):

@@ -12,15 +12,15 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import *
-from core.tests.factory import CoreFactory
+from core.tests.factory import CoreFactoryTestCase
 from users.models import User
 
 
-class DocumentViewSetTestCase(TestCase):
+class DocumentViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
-        factory = CoreFactory()
-        self.doc = factory.make_document()
-        self.doc2 = factory.make_document(owner=self.doc.owner)
+        super().setUp()
+        self.doc = self.factory.make_document()
+        self.doc2 = self.factory.make_document(owner=self.doc.owner)
     
     def test_list(self):
         self.client.force_login(self.doc.owner)
@@ -42,9 +42,9 @@ class DocumentViewSetTestCase(TestCase):
     #def test_create
 
 
-class PartViewSetTestCase(TestCase):
+class PartViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
-        self.factory = CoreFactory()
+        super().setUp()
         self.part = self.factory.make_part()
         self.part2 = self.factory.make_part(document=self.part.document)  # scaling test
         self.user = self.part.document.owner  # shortcut
@@ -73,7 +73,7 @@ class PartViewSetTestCase(TestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(33):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -105,10 +105,10 @@ class PartViewSetTestCase(TestCase):
         self.assertEqual(self.part2.order, 0)
 
 
-class BlockViewSetTestCase(TestCase):
+class BlockViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
-        factory = CoreFactory()
-        self.part = factory.make_part()
+        super().setUp()
+        self.part = self.factory.make_part()
         self.user = self.part.document.owner
         for i in range(2):
             b = Block.objects.create(
@@ -160,10 +160,10 @@ class BlockViewSetTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class LineViewSetTestCase(TestCase):
+class LineViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
-        factory = CoreFactory()
-        self.part = factory.make_part()
+        super().setUp()
+        self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.block = Block.objects.create(
                 box=[10,10,200, 200],
@@ -208,10 +208,10 @@ class LineViewSetTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class LineTranscriptionViewSetTestCase(TestCase):
+class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
-        factory = CoreFactory()
-        self.part = factory.make_part()
+        super().setUp()
+        self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.line = Line.objects.create(
             box=[10,10,50,50],
