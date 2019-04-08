@@ -390,7 +390,8 @@ class DocumentPart(OrderedModel):
         self.save()
 
     def generate_thumbnails(self):
-        generate_all_aliases(self.image, include_global=True)
+        if settings.THUMBNAIL_ENABLE:
+            generate_all_aliases(self.image, include_global=True)
 
     def compress(self):
         if self.workflow_state < self.WORKFLOW_STATE_COMPRESSING:
@@ -523,16 +524,19 @@ class DocumentPart(OrderedModel):
         
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.save()
-        
+    
     def chain_tasks(self, *tasks):
-        chain(*tasks).delay()
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
+        chain(*tasks).delay()
     
     def task_compress(self):
         if not self.tasks_finished():
             raise AlreadyProcessingException
-        self.chain_tasks(lossless_compression.si(self.pk),
-                         generate_part_thumbnails.si(self.pk))
+        tasks = []
+        tasks.append(lossless_compression.si(self.pk))
+        if settings.THUMBNAIL_ENABLE:
+            tasks.append(generate_part_thumbnails.si(self.pk))
+        self.chain_tasks(*tasks)
     
     def task_binarize(self, user_pk=None, binarizer=None):
         if not self.tasks_finished():
@@ -541,7 +545,8 @@ class DocumentPart(OrderedModel):
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
-            tasks.append(generate_part_thumbnails.si(self.pk))
+            if settings.THUMBNAIL_ENABLE:
+                tasks.append(generate_part_thumbnails.si(selfelf.pk))
         tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
         self.chain_tasks(*tasks)
     
@@ -552,7 +557,8 @@ class DocumentPart(OrderedModel):
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
-            tasks.append(generate_part_thumbnails.si(self.pk))
+            if settings.THUMBNAIL_ENABLE:
+                tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         tasks.append(segment.si(self.pk, user_pk=user_pk, steps=steps, text_direction=text_direction))
@@ -565,7 +571,8 @@ class DocumentPart(OrderedModel):
         tasks = []
         if not self.compressed:
             tasks.append(lossless_compression.si(self.pk))
-            tasks.append(generate_part_thumbnails.si(self.pk))
+            if settings.THUMBNAIL_ENABLE:
+                tasks.append(generate_part_thumbnails.si(self.pk))
         if not self.binarized:
             tasks.append(binarize.si(self.pk, user_pk=user_pk))
         if not self.segmented:

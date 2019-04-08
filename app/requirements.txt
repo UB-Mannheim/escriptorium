@@ -1,6 +1,6 @@
 celery==4.2.1
 Django==2.1.4
-redis==3.2.0
+redis==2.10.6
 uwsgi==2.0.17
 channels==2.1.5
 channels-redis==2.3.1

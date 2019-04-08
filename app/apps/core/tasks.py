@@ -188,7 +188,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
 
     # Note: only this part of the signal is filtered
     # against this module's tasks, which isn't great
-    if sender.startswith('core.tasks'):
+    if sender.name.startswith('core.tasks'):
         update_client_state(instance_id, sender, 'pending')
 
 
@@ -214,6 +214,5 @@ def done_state(sender=None, body=None, **kwargs):
         data = {k:v for k,v in data.items() if v['status'] != 'pending'}
     
     redis_.set('process-%d' % instance_id, json.dumps(data))
-    
     if sender.name.startswith('core.tasks'):
         update_client_state(instance_id, sender.name, status)

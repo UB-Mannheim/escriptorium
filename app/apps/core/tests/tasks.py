@@ -3,7 +3,7 @@ import json
 from django.urls import reverse
 from django.test import TestCase, override_settings
 
-from core.models import Block
+from core.models import *
 from core.tests.factory import CoreFactoryTestCase
 
 
@@ -42,14 +42,16 @@ class TasksTestCase(CoreFactoryTestCase):
             'pk': self.part.document.pk})
         parts = self.part.document.parts.all()
         for part in parts:
+            redis_.get('process-%d' % part.pk)
             part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
+            part.save()
         
         response = self.client.post(uri, {
             'document': self.part.document.pk,
             'parts': json.dumps([part.pk for part in parts]),
             'task': 'transcribe'
         }, follow=True)
-        self.assertEqual(response.status_code, 200)        
+        self.assertEqual(response.status_code, 200)
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
     
