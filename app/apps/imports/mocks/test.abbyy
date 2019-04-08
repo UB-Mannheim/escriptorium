@@ -1,0 +1,18 @@
+<document xmlns="http://www.abbyy.com/FineReader_xml/FineReader10-schema-v1.xml" version="1.0" producer="kraken">
+  <page width="850" height="1083" resolution="0" originalCoords="1">
+	<block blockType="Text">
+	  <text>
+		<par>
+		  <line baseline="785" l="160" r="180" t="771" b="799">
+            <formatting lang="">
+			  <charParams l="160" r="165" t="771" b="799" wordStart="1" charConfidence="0">T</charParams>
+              <charParams l="165" r="170" t="771" b="799" wordStart="0" charConfidence="0">e</charParams>
+              <charParams l="170" r="175" t="771" b="799" wordStart="0" charConfidence="0">s</charParams>
+              <charParams l="175" r="180" t="771" b="799" wordStart="0" charConfidence="0">t</charParams>
+            </formatting>
+		  </line>
+        </par>
+      </text>
+    </block>
+  </page>
+</document>
