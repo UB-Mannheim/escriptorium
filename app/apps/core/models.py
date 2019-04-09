@@ -144,7 +144,7 @@ class Document(models.Model):
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
-        Transcription.objects.get_or_create(document=self, name=_('Manual'))
+        Transcription.objects.get_or_create(document=self, name=_(Transcription.DEFAULT_NAME))
         return res
         
     @property
@@ -315,7 +315,7 @@ class DocumentPart(OrderedModel):
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
             return {}
-    
+        
     @property
     def workflow(self):
         w = {}
@@ -626,6 +626,8 @@ class Transcription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    DEFAULT_NAME = 'manual'
+    
     class Meta:
         unique_together = (('name', 'document'),)
 

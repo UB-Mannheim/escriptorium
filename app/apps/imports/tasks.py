@@ -7,19 +7,24 @@ from users.consumers import send_event
 
 
 @shared_task
-def xml_import(import_pk):
+def xml_import(import_pk, resume=True):
     Import = apps.get_model('imports', 'Import')
     imp = Import.objects.get(pk=import_pk)  # let it fail
-    
     send_event('document', imp.document.pk, "import:start", {
         "id": imp.document.pk
     })
     
     try:
-        imp.process()
-    except:
+        for obj in imp.process(resume=resume):
+            send_event('document', imp.document.pk, "import:progress", {
+                "id": imp.document.pk,
+                "progress": imp.processed,
+                "total": imp.total
+            })
+    except Exception as e:
         send_event('document', imp.document.pk, "import:fail", {
-            "id": imp.document.pk
+            "id": imp.document.pk,
+            "reason": str(e)
         })
         raise
     
@@ -29,5 +34,5 @@ def xml_import(import_pk):
 
 
 @shared_task
-def iiif_import():
+def iiif_import(import_pk):
     pass

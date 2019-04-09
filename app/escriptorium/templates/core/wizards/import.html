@@ -3,19 +3,29 @@
 
 {% block wizard_help %}
 {% url 'home' as import_url %} {# TODO #}
+<p>{% trans "Beware that importing a new segmentation will <u>destroy the current segmentation and all binded transcriptions</u>." %}</p>
 <p>{% blocktrans with opentag='<a href="'|add:import_url|add:'">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
 {% endblock %}
 
 {% block wizard_action %}action="{% url 'document-import' pk=object.pk %}"{% endblock %}
 
 {% block wizard_fields %}
+{% if import_form.current_import and import_form.current_import.ongoing%}
+{% trans "Import is ongoing, please wait for it to be finished." %}
+{% else %}
+{% if import_form.current_import.failed %}
+{% blocktrans with progress=import_form.current_import.processed total=import_form.current_import.total %}Previous import failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
+{% render_field import_form.resume_import %}
+{% endif %}
+
 <h5>{% trans "Import images from IIIF." %}</h5>
 <div class="form-group">Someday</div>
 
 <h5>{% trans "Or segmentation & transcriptions from xml/json." %}</h5>
 <div class="form-group">
-  {% render_field import_form.xml_file class="js-proc-settings" accept=".xml,.alto" %}
+  {% render_field import_form.xml_file class="js-proc-settings" accept=".xml,.alto,.abbyy" %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block wizard_submit %}{% trans "Start importing" %}{% endblock %}

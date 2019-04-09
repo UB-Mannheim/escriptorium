@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 from core.models import *
 
 
-DEFAULT_NAME = getattr(settings, 'ALTO_IMPORT_NAME', _("ALTO Import"))
-
 class ParseError(Exception):
     pass
 
@@ -20,10 +18,10 @@ class XMLParser():
     }
     SCHEMA_ABBYY = 'abbyy'
     SCHEMA_ALTO = 'alto'
+    name = _("XML Import")
     
-    def __init__(self, soup, name=DEFAULT_NAME):
+    def __init__(self, soup):
         self.soup = soup
-        self.name = name
         try:
             self.pages = self.soup.find_all(self.TAGS['page'])
         except AttributeError:
@@ -44,7 +42,7 @@ class XMLParser():
     def post_process(self, part):
         pass
     
-    def parse(self, document, parts):
+    def parse(self, document, parts, start_at=0):
         """
         This is actually a generator that yields the parts
         """
@@ -54,7 +52,9 @@ class XMLParser():
         
         try:
             for index, page in enumerate(self.pages):
-                with transaction.atomic():
+                if index < start_at:
+                    continue
+                with transaction.atomic():  
                     part = parts[index]
                     part.blocks.all().delete()
                     part.lines.all().delete()
@@ -87,6 +87,7 @@ class AltoParser(XMLParser):
         'block': 'TextBlock',
         'line': 'TextLine'
     }
+    name = _("ALTO Import")
     
     def bbox(self, tag):
         return (
@@ -105,7 +106,8 @@ class AltoParser(XMLParser):
 
 class AbbyyParser(XMLParser):
     BLOCK_MARGIN = 10
-
+    name = _("ABBYY Import")
+    
     def line_bbox(self, tag):
         return (
             int(tag.attrs['l']),

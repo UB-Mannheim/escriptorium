@@ -317,6 +317,27 @@ $(document).ready(function() {
             card.remove();
         }
     });
+
+    // Imports
+    $('#alerts-container').on('import:start', function(ev, data) {
+        $('#import-counter').parent().css({opacity: 100});
+    });
+
+    $('#alerts-container').on('import:progress', function(ev, data) {
+        if (data.progress) {
+            $('#import-counter').text(data.progress+"/"+data.total);
+        } 
+    });
+    
+    $('#alerts-container').on('import:fail', function(ev, data) {
+        $('#import-counter').text('failed');
+        Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
+    });
+    
+    $('#alerts-container').on('import:done', function(ev, data) {
+        $('#import-counter').parent().animate({opacity: 0}, 1000);
+        Alert.add('import-done', "Import finished!", 'success');
+    });
     
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {

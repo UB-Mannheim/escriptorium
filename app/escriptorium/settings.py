@@ -154,14 +154,14 @@ CELERY_RESULT_SERIALIZER = 'json'
 from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
-    Queue('celery'),
+    Queue('default'),
     Queue('img-processing', routing_key='img-processing'),
     Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
 )
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
     #'escriptorium.celery.debug_task': '',
-    'imports.tasks.iiif_import': {'queue': 'low-priority'},
+    'imports.tasks.*': {'queue': 'low-priority'},
     #'users.tasks.async_email': '',
 }
 

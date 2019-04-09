@@ -28,6 +28,14 @@ body {
 }
 
 /* document form */
+.multi-proc span {
+    line-height: 2rem;
+}
+
+.import-counter-container {
+    opacity: 0;
+}
+
 .js-metadata-row:last-of-type .js-metadata-delete {
     display: none;
 }

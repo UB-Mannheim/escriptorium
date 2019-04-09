@@ -30,20 +30,38 @@ class Import(models.Model):
     import_file = models.FileField(
         upload_to='import_src/',
         validators=[FileExtensionValidator(
-            allowed_extensions=['xml', 'alto'])])
+            allowed_extensions=['xml', 'alto', 'abbyy'])])
+    
     processed = models.PositiveIntegerField(default=0)
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
     
-    def process(self):
+    class Meta:
+        ordering = ('-started_on',)
+    
+    @property
+    def failed(self):
+        return self.workflow_state == self.WORKFLOW_STATE_ERROR
+    
+    @property
+    def ongoing(self):
+        return self.workflow_state == self.WORKFLOW_STATE_STARTED
+
+    @property
+    def total(self):
+        return len(self.parts)
+    
+    def process(self, resume=True):
         try:
             with open(self.import_file.path, 'r') as fh:
                 parser = make_parser(fh)
             self.workflow_state = self.WORKFLOW_STATE_STARTED
             self.save()
             parts = DocumentPart.objects.filter(pk__in=self.parts)
-            for obj in parser.parse(self.document, parts):
+            start_at = resume and self.processed or 0
+            for obj in parser.parse(self.document, parts, start_at=start_at):
                 self.processed += 1
                 self.save()
+                yield obj
             self.workflow_state = self.WORKFLOW_STATE_DONE
             self.save()
         except Exception as e:
@@ -51,3 +69,4 @@ class Import(models.Model):
             self.error_message = str(e)
             self.save()
             raise
+
