@@ -150,12 +150,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 self.parts[0].save()
             else:
                 for part in self.parts:
-                    part.task_binarize(user_pk=self.user.pk)
+                    part.task('binarize', user_pk=self.user.pk)
         elif task == self.TASK_SEGMENT:
             for part in self.parts:
-                part.task_segment(user_pk=self.user.pk,
-                                  steps=self.cleaned_data['segmentation_steps'],
-                                  text_direction=self.cleaned_data['text_direction'])
+                part.task('segment',
+                          user_pk=self.user.pk,
+                          steps=self.cleaned_data['segmentation_steps'],
+                          text_direction=self.cleaned_data['text_direction'])
         elif task == self.TASK_TRAIN:
             if self.cleaned_data.get('new_model'):
                 # create model and corresponding OcrModel
@@ -175,7 +176,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 model = None
             
             for part in self.parts:
-                part.task_transcribe(user_pk=self.user.pk, model=model)
+                part.task('transcribe', user_pk=self.user.pk, model=model)
         self.save()  # save settings
 
 

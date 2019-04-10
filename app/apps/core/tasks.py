@@ -49,8 +49,19 @@ def generate_part_thumbnails(instance_pk):
     part.generate_thumbnails()
 
 
-@shared_task(bind=True)
-def lossless_compression(self, instance_pk):
+@shared_task
+def convert(instance_pk, **kwargs):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to convert innexistant DocumentPart : %d', instance_pk)
+        raise
+    part.convert()
+
+    
+@shared_task
+def lossless_compression(instance_pk, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -61,7 +72,7 @@ def lossless_compression(self, instance_pk):
 
 
 @shared_task
-def binarize(instance_pk, user_pk=None, binarizer=None):
+def binarize(instance_pk, user_pk=None, binarizer=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -93,7 +104,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None):
 
 
 @shared_task
-def segment(instance_pk, user_pk=None, steps=None, text_direction=None):
+def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs):
     """
     steps can be either 'regions', 'lines' or 'both'
     """
@@ -128,12 +139,12 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None):
 
 
 @shared_task
-def train(model, pks, user_pk=None):
+def train(model, pks, user_pk=None, **kwargs):
     pass
 
  
 @shared_task
-def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
+def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -177,6 +188,8 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None):
 
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
+    if not sender.startswith('core.tasks'):
+        return
     instance_id = body[0][0]
     
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
@@ -186,16 +199,15 @@ def before_publish_state(sender=None, body=None, **kwargs):
     }
     redis_.set('process-%d' % instance_id, json.dumps(data))
 
-    # Note: only this part of the signal is filtered
-    # against this module's tasks, which isn't great
-    if sender.name.startswith('core.tasks'):
-        update_client_state(instance_id, sender, 'pending')
+    update_client_state(instance_id, sender, 'pending')
 
 
 @task_prerun.connect
 @task_success.connect
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
+    if not sender.name.startswith('core.tasks'):
+        return
     instance_id = sender.request.args[0]
     
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
@@ -214,5 +226,4 @@ def done_state(sender=None, body=None, **kwargs):
         data = {k:v for k,v in data.items() if v['status'] != 'pending'}
     
     redis_.set('process-%d' % instance_id, json.dumps(data))
-    if sender.name.startswith('core.tasks'):
-        update_client_state(instance_id, sender.name, status)
+    update_client_state(instance_id, sender.name, status)

@@ -1,10 +1,11 @@
 from django.db import models
+from django.utils.functional import cached_property
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
 
 from core.models import Document, DocumentPart, Transcription
 from users.models import User
-from imports.parsers import make_parser
+from imports.parsers import make_parser, XML_EXTENSIONS
 
 
 class Import(models.Model):
@@ -18,6 +19,7 @@ class Import(models.Model):
         (WORKFLOW_STATE_DONE, 'Done'),
         (WORKFLOW_STATE_ERROR, 'Error'),
     )
+    
     started_on = models.DateTimeField(auto_now_add=True)
     started_by = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL)
@@ -26,11 +28,11 @@ class Import(models.Model):
         choices=WORKFLOW_STATE_CHOICES)
     error_message = models.CharField(
         null=True, blank=True, max_length=512)
-    parts = ArrayField(models.IntegerField())
+    parts = ArrayField(models.IntegerField(), blank=True)
     import_file = models.FileField(
         upload_to='import_src/',
         validators=[FileExtensionValidator(
-            allowed_extensions=['xml', 'alto', 'abbyy'])])
+            allowed_extensions=XML_EXTENSIONS + ['json',])])
     
     processed = models.PositiveIntegerField(default=0)
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
@@ -45,20 +47,22 @@ class Import(models.Model):
     @property
     def ongoing(self):
         return self.workflow_state == self.WORKFLOW_STATE_STARTED
-
+    
     @property
     def total(self):
-        return len(self.parts)
+        return self.parser.total
+    
+    @cached_property
+    def parser(self):
+        return make_parser(self.import_file)
     
     def process(self, resume=True):
         try:
-            with open(self.import_file.path, 'r') as fh:
-                parser = make_parser(fh)
             self.workflow_state = self.WORKFLOW_STATE_STARTED
             self.save()
             parts = DocumentPart.objects.filter(pk__in=self.parts)
             start_at = resume and self.processed or 0
-            for obj in parser.parse(self.document, parts, start_at=start_at):
+            for obj in self.parser.parse(self.document, parts, start_at=start_at):
                 self.processed += 1
                 self.save()
                 yield obj
@@ -68,5 +72,5 @@ class Import(models.Model):
             self.worflow_state = self.WORKFLOW_STATE_ERROR
             self.error_message = str(e)
             self.save()
-            raise
+            raise e
 

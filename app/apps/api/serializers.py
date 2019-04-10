@@ -93,17 +93,9 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
         
     def cleanup(self, data):
         return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
-    
-    def create(self, validated_data):
-        validated_data['content'] = self.cleanup(validated_data['content'])
-        instance = super().create(validated_data)
-        instance.line.document_part.recalculate_ordering()
-        return instance
-    
-    def update(self, instance, validated_data):
-        validated_data['content'] = self.cleanup(validated_data['content'])
-        instance.line.document_part.recalculate_ordering()
-        return super().update(instance, validated_data)
+
+    def validate_content(self, mode):
+        return self.cleanup(self.initial_data.get('content'))
 
 
 class LineSerializer(serializers.ModelSerializer):
@@ -113,6 +105,15 @@ class LineSerializer(serializers.ModelSerializer):
         model = Line
         fields = ('pk', 'order', 'document_part', 'block', 'box', 'transcriptions')
 
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.document_part.recalculate_ordering()
+        return instance
+    
+    def update(self, instance, validated_data):
+        instance.document_part.recalculate_ordering()
+        return super().update(instance, validated_data)
+   
 
 class PartDetailSerializer(PartSerializer):
     blocks = BlockSerializer(many=True)

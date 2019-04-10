@@ -324,9 +324,10 @@ $(document).ready(function() {
     });
 
     $('#alerts-container').on('import:progress', function(ev, data) {
+        $('#import-counter').parent().css({opacity: 100});
         if (data.progress) {
             $('#import-counter').text(data.progress+"/"+data.total);
-        } 
+        }
     });
     
     $('#alerts-container').on('import:fail', function(ev, data) {

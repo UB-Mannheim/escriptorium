@@ -160,6 +160,8 @@ CELERY_TASK_QUEUES = (
 )
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
+    'core.tasks.lossless_compression': {'queue': 'low-priority'},
+    'core.tasks.generate_part_thumbnail': {'queue': 'low-priority'},
     #'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     #'users.tasks.async_email': '',

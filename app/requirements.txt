@@ -1,6 +1,6 @@
 celery==4.2.1
 Django==2.1.4
-redis==2.10.6
+redis==3.2.1
 uwsgi==2.0.17
 channels==2.1.5
 channels-redis==2.3.1
@@ -15,3 +15,4 @@ djangorestframework==3.9.2
 drf-nested-routers==0.91
 bleach==3.1.0
 beautifulsoup4==4.7.1
+requests==2.21.0

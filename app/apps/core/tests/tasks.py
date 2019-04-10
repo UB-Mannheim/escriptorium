@@ -17,10 +17,10 @@ class TasksTestCase(CoreFactoryTestCase):
     def test_workflow(self):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_CREATED)
-        self.part.compress()
+        self.part.convert()
         self.assertEqual(self.part.workflow_state,
-                         self.part.WORKFLOW_STATE_COMPRESSED)
-            
+                         self.part.WORKFLOW_STATE_CONVERTED)
+        self.part.compress()
         self.part.binarize()
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_BINARIZED)
@@ -35,15 +35,14 @@ class TasksTestCase(CoreFactoryTestCase):
         self.part.transcribe()
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_TRANSCRIBING)
-
-    def test_post(self):
+    
+    def test_process_transcribe(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={
             'pk': self.part.document.pk})
         parts = self.part.document.parts.all()
         for part in parts:
-            redis_.get('process-%d' % part.pk)
-            part.workflow_state = part.WORKFLOW_STATE_COMPRESSED
+            part.workflow_state = part.WORKFLOW_STATE_CONVERTED
             part.save()
         
         response = self.client.post(uri, {

@@ -73,7 +73,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(17):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -170,12 +170,12 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                 document_part=self.part)
         for i in range(2):
             l = Line.objects.create(
-                box=[10+50*i,10,50+50*i,50],
+                box=[10+50*i, 10, 50+50*i, 50],
                 document_part=self.part,
                 block=self.block)
         self.line = l
         self.orphan = Line.objects.create(
-            box=[0,0,10,10],
+            box=[0, 0, 10, 10],
             document_part=self.part,
             block=None)
 
@@ -188,10 +188,10 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(13):
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
-                'box': [10,10,50,50]
+                'box': '[10, 10, 50, 50]'
             })
         self.assertEqual(resp.status_code, 201)        
         
@@ -233,7 +233,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': self.lt.pk})
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(5):
             resp = self.client.patch(uri, {
                 'content': 'update'
             }, content_type='application/json')
@@ -245,7 +245,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
         
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,

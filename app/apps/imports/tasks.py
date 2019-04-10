@@ -7,7 +7,7 @@ from users.consumers import send_event
 
 
 @shared_task
-def xml_import(import_pk, resume=True):
+def document_import(import_pk, resume=True):
     Import = apps.get_model('imports', 'Import')
     imp = Import.objects.get(pk=import_pk)  # let it fail
     send_event('document', imp.document.pk, "import:start", {
@@ -22,6 +22,8 @@ def xml_import(import_pk, resume=True):
                 "total": imp.total
             })
     except Exception as e:
+        imp.workflow_state = imp.WORKFLOW_STATE_ERROR
+        imp.save()
         send_event('document', imp.document.pk, "import:fail", {
             "id": imp.document.pk,
             "reason": str(e)
@@ -32,7 +34,3 @@ def xml_import(import_pk, resume=True):
         "id": imp.document.pk
     })
 
-
-@shared_task
-def iiif_import(import_pk):
-    pass

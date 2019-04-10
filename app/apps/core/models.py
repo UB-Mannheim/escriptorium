@@ -21,7 +21,7 @@ from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
 from celery.task.control import inspect
-from celery import chain
+from celery import chain, group
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 
@@ -174,6 +174,7 @@ class DocumentPart(OrderedModel):
     """
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
+    source = models.CharField(max_length=1024, blank=True)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path,
                                  null=True, blank=True,
@@ -185,8 +186,8 @@ class DocumentPart(OrderedModel):
     order_with_respect_to = 'document'
     
     WORKFLOW_STATE_CREATED = 0
-    WORKFLOW_STATE_COMPRESSING = 1
-    WORKFLOW_STATE_COMPRESSED = 2
+    WORKFLOW_STATE_CONVERTING = 1
+    WORKFLOW_STATE_CONVERTED = 2
     WORKFLOW_STATE_BINARIZING = 3
     WORKFLOW_STATE_BINARIZED = 4
     WORKFLOW_STATE_SEGMENTING = 5
@@ -194,8 +195,8 @@ class DocumentPart(OrderedModel):
     WORKFLOW_STATE_TRANSCRIBING = 7
     WORKFLOW_STATE_CHOICES = (
         (WORKFLOW_STATE_CREATED, _("Created")),
-        (WORKFLOW_STATE_COMPRESSING, _("Compressing")),
-        (WORKFLOW_STATE_COMPRESSED, _("Compressed")),
+        (WORKFLOW_STATE_CONVERTING, _("Converting")),
+        (WORKFLOW_STATE_CONVERTED, _("Converted")),
         (WORKFLOW_STATE_BINARIZING, _("Binarizing")),
         (WORKFLOW_STATE_BINARIZED, _("Binarized")),
         (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
@@ -222,8 +223,8 @@ class DocumentPart(OrderedModel):
         return str(self)
     
     @property
-    def compressed(self):
-        return self.workflow_state >= self.WORKFLOW_STATE_COMPRESSED
+    def converted(self):
+        return self.workflow_state >= self.WORKFLOW_STATE_CONVERTED
     
     @property
     def binarized(self):
@@ -280,9 +281,10 @@ class DocumentPart(OrderedModel):
                 return 0
         
         # fetch all lines and regroup them by block
+        qs = self.lines.select_related('block').all()
         ls = [(l, (origin_pt(l.block.box), origin_pt(l.box))
                if l.block else (origin_pt(l.box), origin_pt(l.box)))
-              for l in self.lines.all()]
+              for l in qs]
         
         # sort depending on the distance to the origin
         ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_pts(a[1], b[1])))
@@ -296,7 +298,7 @@ class DocumentPart(OrderedModel):
         new = self.pk is None
         instance = super().save(*args, **kwargs)
         if new:
-            self.task_compress()
+            self.task('convert')
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
         else:
             self.calculate_progress()
@@ -364,8 +366,8 @@ class DocumentPart(OrderedModel):
         queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
                   [task['id'] for queue in i.active().values() for task in queue] +
                   [task['id'] for queue in i.reserved().values() for task in queue])
-        if self.workflow_state == self.WORKFLOW_STATE_COMPRESSING:
-            task_name = 'core.tasks.lossless_compression'
+        if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
+            task_name = 'core.tasks.convert'
             if (not task_name in self.tasks or
                 self.tasks[task_name]['task_id'] not in queued):
                 self.workflow_state = self.WORFLOW_STATE_CREATED
@@ -374,7 +376,7 @@ class DocumentPart(OrderedModel):
             task_name = 'core.tasks.binarize'
             if (not task_name in self.tasks or
                 self.tasks[task_name]['task_id'] not in queued):
-                self.workflow_state = self.WORFLOW_STATE_COMPRESSED
+                self.workflow_state = self.WORFLOW_STATE_CONVERTED
                 redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             task_name = 'core.tasks.segment'
@@ -393,37 +395,38 @@ class DocumentPart(OrderedModel):
         if settings.THUMBNAIL_ENABLE:
             generate_all_aliases(self.image, include_global=True)
 
-    def compress(self):
-        if self.workflow_state < self.WORKFLOW_STATE_COMPRESSING:
-            self.workflow_state = self.WORKFLOW_STATE_COMPRESSING
+    def convert(self):
+        if self.workflow_state < self.WORKFLOW_STATE_CONVERTING:
+            self.workflow_state = self.WORKFLOW_STATE_CONVERTING
             self.save()
         
-        convert = False
         old_name = self.image.file.name
         filename, extension = os.path.splitext(old_name)
         if extension != ".png":
-            convert = True
             new_name = filename + ".png"
             error = subprocess.check_call(["convert", old_name, new_name])
             if error:
                 raise RuntimeError("Error trying to convert file(%s) to png.")
-        else:
-            new_name = old_name
-        opti_name = filename + '_opti.png'
-
-        try:
-            subprocess.check_call(["pngcrush", "-q", new_name, opti_name])
-        except Exception as e:
-            # Note: let it fail it's fine
-            logger.exception("png optimization failed.")
-        os.rename(opti_name, new_name)
-        if convert:
+            
             self.image = new_name.split(settings.MEDIA_ROOT)[1][1:]
             os.remove(old_name)
         
-        if self.workflow_state < self.WORKFLOW_STATE_COMPRESSED:
-            self.workflow_state = self.WORKFLOW_STATE_COMPRESSED
-            self.save()
+        if self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
+            self.workflow_state = self.WORKFLOW_STATE_CONVERTED
+        self.save()
+        
+    def compress(self):
+        filename, extension = os.path.splitext(self.image.file.name)
+        opti_name = filename + '_opti.png'
+        try:
+            subprocess.check_call(["pngcrush", "-q", self.image.file.name, opti_name])
+        except Exception as e:
+            # Note: let it fail it's fine
+            logger.exception("png optimization failed for %s." % filename)
+            if DEBUG:
+                raise e
+        else:
+            os.rename(opti_name, self.image.file.name)
     
     def binarize(self):
         if self.workflow_state < self.WORKFLOW_STATE_BINARIZING:
@@ -529,55 +532,31 @@ class DocumentPart(OrderedModel):
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
         chain(*tasks).delay()
     
-    def task_compress(self):
+    def task(self, task_name, **kwargs):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
-        tasks.append(lossless_compression.si(self.pk))
-        if settings.THUMBNAIL_ENABLE:
-            tasks.append(generate_part_thumbnails.si(self.pk))
-        self.chain_tasks(*tasks)
-    
-    def task_binarize(self, user_pk=None, binarizer=None):
-        if not self.tasks_finished():
-            raise AlreadyProcessingException
-        
-        tasks = []
-        if not self.compressed:
-            tasks.append(lossless_compression.si(self.pk))
+        tasks_order = ['convert', 'binarize', 'segment', 'transcribe']
+        if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
+            sig = convert.si(self.pk)
+            sig.link(lossless_compression.si(self.pk))
             if settings.THUMBNAIL_ENABLE:
-                tasks.append(generate_part_thumbnails.si(selfelf.pk))
-        tasks.append(binarize.si(self.pk, user_pk=user_pk, binarizer=binarizer))
-        self.chain_tasks(*tasks)
-    
-    def task_segment(self, user_pk=None, steps=None, text_direction=None):
-        if not self.tasks_finished():
-            raise AlreadyProcessingException
+                sig.link(generate_part_thumbnails.si(self.pk))
+            tasks.append(sig)
         
-        tasks = []
-        if not self.compressed:
-            tasks.append(lossless_compression.si(self.pk))
-            if settings.THUMBNAIL_ENABLE:
-                tasks.append(generate_part_thumbnails.si(self.pk))
-        if not self.binarized:
-            tasks.append(binarize.si(self.pk, user_pk=user_pk))
-        tasks.append(segment.si(self.pk, user_pk=user_pk, steps=steps, text_direction=text_direction))
-        self.chain_tasks(*tasks)
-    
-    def task_transcribe(self, user_pk=None, model=None):
-        if not self.tasks_finished():
-            raise AlreadyProcessingException
+        if (task_name == 'binarize'
+            or (tasks_order.index(task_name) > tasks_order.index('binarize')
+                and not self.binarized)):
+            tasks.append(binarize.si(self.pk, **kwargs))
+            
+        if (task_name == 'segment'
+            or (tasks_order.index(task_name) > tasks_order.index('segment')
+                and not self.segmented)):
+            tasks.append(segment.si(self.pk, **kwargs))
+
+        if task_name == 'transcribe':
+            tasks.append(transcribe.si(self.pk, **kwargs))
         
-        tasks = []
-        if not self.compressed:
-            tasks.append(lossless_compression.si(self.pk))
-            if settings.THUMBNAIL_ENABLE:
-                tasks.append(generate_part_thumbnails.si(self.pk))
-        if not self.binarized:
-            tasks.append(binarize.si(self.pk, user_pk=user_pk))
-        if not self.segmented:
-            tasks.append(segment.si(self.pk, user_pk=user_pk))
-        tasks.append(transcribe.si(self.pk, user_pk=user_pk, model_pk=model and model.pk or None))
         self.chain_tasks(*tasks)
 
 
