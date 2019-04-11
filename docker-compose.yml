@@ -39,26 +39,26 @@ services:
     depends_on:
       - web
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
-    environment:
-      - cluster.name=docker-cluster
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - ./esdata/:/usr/share/elasticsearch/data
-    #expose:
-    #   - 9200
-    # ports:
-    #  - 9200:9200
-    # networks:  # use this if adding nodes
-    #   - esnet
-
-  celeryworker:
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
+  #   environment:
+  #     - cluster.name=docker-cluster
+  #     - bootstrap.memory_lock=true
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - ./esdata/:/usr/share/elasticsearch/data
+  #   #expose:
+  #   #   - 9200
+  #   # ports:
+  #   #  - 9200:9200
+  #   # networks:  # use this if adding nodes
+  #   #   - esnet
+  
+  celery-main: &celery-main
     build:
       context: ./app
     env_file: variables.env
@@ -68,19 +68,24 @@ services:
     volumes:
       - ./static/:/usr/src/app/static
       - ./media/:/usr/src/app/media
-    command: celery multi start 1 -E -A escriptorium -l INFO && celery -E -A escriptorium --concurency 1 -n low-priority -Q low-priority
-
-  celerybeat:
-    build:
-      context: ./app
-    env_file: variables.env
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - ./static/:/usr/src/app/static
-      - ./media/:/usr/src/app/media
-    command: celery -E -A escriptorium beat -l INFO
+    command: celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10
+  
+  celery-low-priority:
+    <<: *celery-main
+    command: celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10
+  
+  # No need while we don't have regular tasks
+  # celerybeat:
+  #   build:
+  #     context: ./app
+  #   env_file: variables.env
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   volumes:
+  #     - ./static/:/usr/src/app/static
+  #     - ./media/:/usr/src/app/media
+  #   command: celery -E -A escriptorium beat -l INFO
 
   mail:
     image: elsdoerfer/exim-sender

@@ -300,7 +300,11 @@ class SegmentationPanel {
         $('.line-box, .block-box').remove();
         this.part = part;
         if (this.opened) this.open();
-        $('img', this.$container).attr('src', this.part.image.thumbnails.large);
+        if (this.part.image.thumbnails) {
+            $('img', this.$container).attr('src', this.part.image.thumbnails.large);
+        } else {
+            $('img', this.$container).attr('src', this.part.image.uri);
+        }
         this.getRatio();
         this.showBlocks();
         this.showLines();
