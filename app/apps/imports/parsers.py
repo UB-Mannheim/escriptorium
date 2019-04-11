@@ -1,3 +1,4 @@
+import time
 import os.path
 import requests
 
@@ -180,6 +181,7 @@ class IIIFManifesParser():
                 part.image.save(name, ContentFile(r.content))
                 part.save()
                 yield part
+                time.sleep(0.1)  # avoid being throttled
         except (KeyError, IndexError) as e:
             raise ParseError(e)
 
