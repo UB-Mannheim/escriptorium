@@ -10,9 +10,6 @@ from users.consumers import send_event
 def document_import(import_pk, resume=True):
     Import = apps.get_model('imports', 'Import')
     imp = Import.objects.get(pk=import_pk)  # let it fail
-    send_event('document', imp.document.pk, "import:start", {
-        "id": imp.document.pk
-    })
     
     try:
         for obj in imp.process(resume=resume):

@@ -5,6 +5,7 @@ from django.core.validators import FileExtensionValidator
 
 from core.models import Document, DocumentPart, Transcription
 from users.models import User
+from users.consumers import send_event
 from imports.parsers import make_parser, XML_EXTENSIONS
 
 
@@ -73,4 +74,8 @@ class Import(models.Model):
             self.error_message = str(e)
             self.save()
             raise e
+        else:
+            send_event('document', self.document.pk, "import:start", {
+                "id": self.document.pk
+            })
 
