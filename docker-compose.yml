@@ -8,8 +8,8 @@ services:
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     volumes:
       - ./app/:/usr/src/app/
-      - ./static/:/usr/src/app/static
-      - ./media/:/usr/src/app/media
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
     depends_on:
       - db
       - redis
@@ -23,7 +23,7 @@ services:
   db:
     image: postgres:10.5-alpine
     volumes:
-      - ./postgres/:/var/lib/postgresql/data/
+      - postgres:/var/lib/postgresql/data/
     env_file: variables.env
 
   redis:
@@ -32,8 +32,8 @@ services:
   nginx:
     build: ./nginx
     volumes:
-      - ./static/:/usr/src/app/static
-      - ./media/:/usr/src/app/media
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
     ports:
       - 8080:80
     depends_on:
@@ -66,8 +66,8 @@ services:
       - db
       - redis
     volumes:
-      - ./static/:/usr/src/app/static
-      - ./media/:/usr/src/app/media
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
     command: celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10
   
   celery-low-priority:
@@ -85,6 +85,8 @@ services:
   #   volumes:
   #     - ./static/:/usr/src/app/static
   #     - ./media/:/usr/src/app/media
+  #     - static:./static/
+  #     - media:./media/
   #   command: celery -E -A escriptorium beat -l INFO
 
   mail:
@@ -95,9 +97,20 @@ services:
       - PRIMARY_HOST=escriptorium.fr
       - ALLOWED_HOSTS=localhost ; web ; celeryworker ; docker0
       
-# volumes:
-#   ./postgres/:
-#   ./static/:
-#   ./media/:
-#   ./esdata/:
-#     driver: local
+volumes:
+   static:
+    driver: local
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: $PWD/static/
+   
+   media:
+    driver: local
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: $PWD/media/
+   
+   postgres:   
+   esdata:
