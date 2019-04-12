@@ -18,10 +18,14 @@ services:
       ports:
         - 80:80
 
-    celeryworker:
+    celery-main:
       env_file: production.env
       restart: always
-    
+
+    celery-low-priority:
+      env_file: production.env
+      restart: always
+
     celerybeat:
       env_file: production.env
       restart: always
