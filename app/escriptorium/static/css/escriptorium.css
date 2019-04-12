@@ -94,11 +94,12 @@ body {
 }
 
 .card .js-edit {
-    opacity: 0.5;
-    position: absolute;
     width: 100%;
+    /*opacity: 0.8;
+    position: absolute;
+    
     bottom: 0;
-    left:0;
+    left:0; */
 }
 
 .card .js-part-update-form {
@@ -180,9 +181,6 @@ body {
     display: inline;
 }
 
-.card .js-binarized, .card .js-trans-progress  {
-    display: none;
-}
 .card .js-trans-progress {
     width: 100%;
     background-color: #EEEEEE;
@@ -193,7 +191,7 @@ body {
     color: var(--dark);
 }
 
-.card .proc.ongoing {
+.card .ongoing {
     color: var(--info);
     animation-duration: 1s;
     animation-name: blink;
@@ -210,12 +208,21 @@ body {
 .card .proc.pending {
     color: var(--secondary);
 }
-.card .proc.js-segmented, .card .proc.done {
+.card .proc {
     cursor: pointer;
 }
 
-.card .proc.done:hover {
-    color: var(--primary);
+.card .proc.done {
+    color: var(--success);
+}
+.card .js-compressing {
+    display: none;
+}
+.card .js-compressing.pending, .card .js-compressing.ongoing {
+    display: inline;
+}
+.card .js-compressing.done {
+    display: none;
 }
 
 .ui-resizable-s {

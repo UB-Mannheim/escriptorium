@@ -49,10 +49,12 @@
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
     </div>
     <div class="card-body">
+      <button class="btn btn-primary js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
       <div class="d-flex mt-2">
-        <span class="proc js-binarized" data-title="{% trans 'Binarization' %}"><i class="fas fa-adjust"></i></span>
-        <span class="proc ml-2 js-segmented" data-title="{% trans 'Segmentation' %}"><i class="fas fa-align-left"></i></span>
-        <span class="proc ml-2 js-trans-progress" data-title="{% trans 'Transcription' %}">
+        <span class="js-compressing mr-2" data-title="{% trans 'Compressing' %}"><i class="fas fa-compress-arrows-alt"></i></span>
+        <span class="proc js-binarized" data-title="{% trans 'Binarize' %}"><i class="fas fa-adjust"></i></span>
+        <span class="proc ml-2 js-segmented" data-title="{% trans 'Segment' %}"><i class="fas fa-align-left"></i></span>
+        <span class="proc ml-2 js-trans-progress" data-title="{% trans 'Transcribe' %}">
           <span class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
         </span>
       </div>

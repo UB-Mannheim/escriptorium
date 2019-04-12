@@ -322,20 +322,25 @@ class DocumentPart(OrderedModel):
     def workflow(self):
         w = {}
         tasks = self.tasks  # its not cached
-        
+
+        if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
+            w['convert'] = 'ongoing'
+        elif self.workflow_state > self.WORKFLOW_STATE_CONVERTING:
+            w['convert'] = 'done'
         if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
             w['binarize'] = 'ongoing'
-        if self.workflow_state > self.WORKFLOW_STATE_BINARIZING:
+        elif self.workflow_state > self.WORKFLOW_STATE_BINARIZING:
             w['binarize'] = 'done'
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             w['segment'] = 'ongoing'
-        if self.workflow_state > self.WORKFLOW_STATE_SEGMENTING:
+        elif self.workflow_state > self.WORKFLOW_STATE_SEGMENTING:
             w['segment'] = 'done'
         if self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
             w['transcribe'] = 'done'
         
         # check on redis for reruns
-        for task_name in ['core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
+        for task_name in ['core.tasks.convert',
+                          'core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
             if task_name in tasks and tasks[task_name]['status'] == 'pending':
                 w[task_name.split('.')[-1]] = 'pending'
             if task_name in tasks and tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
@@ -346,8 +351,7 @@ class DocumentPart(OrderedModel):
     
     def tasks_finished(self):
         try:
-            return len([t for t in self.tasks.values()
-                        if t['status'] not in ['task_success', 'task_failure']]) == 0
+            return len([t for t in self.workflow if t['status'] != 'done']) == 0
         except (KeyError, TypeError):
             return True
     

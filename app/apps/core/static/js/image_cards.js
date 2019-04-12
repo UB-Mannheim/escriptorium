@@ -10,6 +10,25 @@ Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var lastSelected = null;
 
+function openWizard(proc) {        
+    var selected_num = partCard.getSelectedPks().length;
+        
+    if(proc != 'import' && selected_num < 1) {
+        alert('Select at least one image.');
+        return;
+    }
+    // update selected count
+    $('#selected-num', '#'+proc+'-wizard').text(selected_num);
+    // can't send more than one binarized image at a time
+    if (selected_num != 1) { $('#id_bw_image').attr('disabled', true); }
+    else { $('#id_bw_image').attr('disabled', false); }
+    
+    // Reset the form
+    $('.process-part-form', '#'+proc+'-wizard').get(0).reset();
+    
+    $('#'+proc+'-wizard').modal('show');
+}
+
 class partCard {
     constructor(part) {
         this.pk = part.pk;
@@ -54,6 +73,8 @@ class partCard {
         $('#cards-container').append(this.dropAfter);
 
         // workflow icons & progress
+        this.editButton = $('.js-edit', this.$element);
+        this.convertIcon = $('.js-compressing', this.$element);
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
         this.transcribeButton = $('.js-trans-progress', this.$element);
@@ -62,14 +83,21 @@ class partCard {
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+        this.editButton.click(function(ev) {
+            document.location.replace(url);
+        });
+        
         this.binarizedButton.click($.proxy(function(ev) {
-            document.location.replace(url+'#bin');
+            this.select();
+            openWizard('binarize');
         }, this));
         this.segmentedButton.click($.proxy(function(ev) {
-            document.location.replace(url+'#seg');
+            this.select();
+            openWizard('segment');
         }, this));
         this.transcribeButton.click($.proxy(function(ev) {
-            window.location.assign(url+'#trans');
+            this.select();
+            openWizard('transcribe');
         }, this));
         
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -117,22 +145,26 @@ class partCard {
     }
 
     inQueue() {
-        return ((this.workflow['binarize'] == 'pending' ||
+        return ((this.workflow['convert'] == 'pending' ||
+                 this.workflow['binarize'] == 'pending' ||
                  this.workflow['segment'] == 'pending' ||
                  this.workflow['transcribe'] == 'pending') &&
                 !this.working());
     }
 
     working() {
-        return (this.workflow['binarize'] == 'ongoing' ||
+        return (this.workflow['convert'] == 'ongoing' ||
+                this.workflow['binarize'] == 'ongoing' ||
                 this.workflow['segment'] == 'ongoing' ||
                 this.workflow['transcribe'] == 'ongoing');
     }
     
     updateWorkflowIcons() {
-        var map = [['binarize', this.binarizedButton],
-                   ['segment', this.segmentedButton],
-                   ['transcribe', this.transcribeButton]];
+        var map = [
+            ['convert', this.convertIcon],
+            ['binarize', this.binarizedButton],
+            ['segment', this.segmentedButton],
+            ['transcribe', this.transcribeButton]];
         for (var i=0; i < map.length; i++) {
             var proc = map[i][0], btn = map[i][1];
             if (this.workflow[proc] == undefined) {
@@ -140,15 +172,9 @@ class partCard {
                 btn.attr('title', btn.data('title'));
             } else {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
-                btn.addClass(this.workflow[proc]).show();
+                btn.addClass(this.workflow[proc]);
                 btn.attr('title', btn.data('title') + ' ('+this.workflow[proc]+')');
             }            
-        }
-        
-        if (this.workflow['binarize'] == 'ongoing' ||
-            this.workflow['segment'] == 'ongoing' ||
-            this.workflow['transcribe'] == 'ongoing') {
-            this.lock();
         }
         
         if (this.inQueue() || this.working()) {
@@ -257,6 +283,9 @@ class partCard {
 
 
 $(document).ready(function() {
+
+    
+    
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
         var index = $('#cards-container .js-drop').index(ev.target);
@@ -375,22 +404,7 @@ $(document).ready(function() {
     });
     
     $('.js-proc-selected').click(function(ev) {
-        var proc = $(ev.target).data('proc');
-        var selected_num = partCard.getSelectedPks().length;
-        
-        if(proc != 'import' && selected_num < 1) {
-            alert('Select at least one image.');
-            return;
-        }
-        // update selected count
-        $('#selected-num', '#'+proc+'-wizard').text(selected_num);
-        if (selected_num != 1) { $('#id_bw_image').attr('disabled', true); }
-        else { $('#id_bw_image').attr('disabled', false); }
-
-        // Reset the form
-        $('.process-part-form', '#'+proc+'-wizard').get(0).reset();
-
-        $('#'+proc+'-wizard').modal('show');
+        openWizard($(ev.target).data('proc'));
     });
     
     $('.process-part-form').submit(function(ev) {
