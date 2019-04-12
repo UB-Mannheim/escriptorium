@@ -211,5 +211,5 @@ REST_FRAMEWORK = {
 if 'test' in sys.argv:
     try:
         from .test_settings import *
-    except ImportError:
+    except (ModuleNotFoundError, ImportError):
         pass
