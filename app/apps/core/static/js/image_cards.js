@@ -200,6 +200,7 @@ class partCard {
         this.$element.css({'color': 'white'});
         $('i', this.selectButton).removeClass('fa-square');
         $('i', this.selectButton).addClass('fa-check-square');
+        this.$element.get(0).scrollIntoView();
         this.selected = true;
     }
     unselect() {
@@ -283,9 +284,6 @@ class partCard {
 
 
 $(document).ready(function() {
-
-    
-    
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
         var index = $('#cards-container .js-drop').index(ev.target);
@@ -427,13 +425,10 @@ $(document).ready(function() {
         });
     });
 
-    /* Keyboard Shortcuts */
-    // $(document).keydown(function(e) {
-    //     if(e.originalEvent.ctrlKey && e.originalEvent.key == 'z') {
-    //         toggleZoom();
-    //     }
-    // });
-
+    /* Select card if coming from edit page */
+    var tabUrl = new URL(window.location);
+    var select = tabUrl.searchParams.get('select');
+    
     /* fetch the images and create the cards */
     var counter=0;
     var getNextParts = function(page) {
@@ -444,7 +439,8 @@ $(document).ready(function() {
             if (data.next) getNextParts(page+1);
             else { $('#loading-counter').parent().animate({opacity: 0}, 1000); }
             for (var i=0; i<data.results.length; i++) {
-                new partCard(data.results[i]);
+                var pc = new partCard(data.results[i]);
+                if (select == pc.pk) pc.select();
             }
         });
     };

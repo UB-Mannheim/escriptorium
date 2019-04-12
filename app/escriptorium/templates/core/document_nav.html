@@ -7,7 +7,7 @@
 <nav>
   <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">        
     <a href="{% if object %}{% url 'document-update' pk=object.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Document" %}</a>
-    <a href="{% if object %}{% url 'document-images' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
+    <a id="images-tab-link" href="{% url 'document-images' pk=object.pk %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
     <a href="{% if object  %}{% url 'document-part-edit' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link mr-auto {% block nav-edit-active %}{% endblock %}{% if not object or not object.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
     {% block extra_nav %}{% endblock %}
   </div>

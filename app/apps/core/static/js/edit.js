@@ -36,6 +36,11 @@ $(document).ready(function() {
             if (data.next) $('a#next-part').data('target', data.next).show();
             else $('a#next-part').hide();
 
+            // set the 'image' tab btn to select the corresponding image
+            var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
+            tabUrl.searchParams.set('select', pk);
+            $('#images-tab-link').attr('href', tabUrl);
+            
             if (callback) callback(data);
         });        
     }
