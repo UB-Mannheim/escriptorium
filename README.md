@@ -67,9 +67,10 @@ INTERNAL_IPS += ['127.0.0.1',]
   
 it is recomanded to then make an alias for manage.py or set $DJANGO_SETTINGS_MODULE  
   
-* if you need to test methods from the queue manager, set USE_CELERY=True and run a celery worker  
+* To run a basic celery worker listening on everything  
 > $ celery -A app.escriptorium worker -l INFO  
-  
+To disable celery you can set `CELERY_TASK_ALWAYS_EAGER = True`  
+
 * Create the sql tables  
 > $ cd app && python manage.py migrate  
   

@@ -62,7 +62,6 @@ class InvitationTestCase(TestCase):
         self.group = Group.objects.create(name='testgroup')
         self.sender.groups.add(self.group)
 
-    @override_settings(USE_CELERY=False)
     def test_send(self):
         self.client.login(username='sender', password='test')
         with self.assertNumQueries(3):
