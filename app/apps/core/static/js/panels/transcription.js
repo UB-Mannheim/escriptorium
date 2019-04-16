@@ -248,7 +248,8 @@ class TranscriptionPanel{
         this.opened = opened;
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
-
+        this.$container = $('.img-container', this.$panel);
+        
         $('#document-transcriptions').change($.proxy(function(ev) {
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].setText();
@@ -325,6 +326,7 @@ class TranscriptionPanel{
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }
+        zoom.register(this.$container, true);
     }
     
     open() {

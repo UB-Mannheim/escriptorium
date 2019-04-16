@@ -3,11 +3,15 @@ class BinarizationPanel {
         this.$panel = $panel;
         this.opened = opened | false;
         this.$container = $('.img-container', this.$panel);
-        WheelZoom(this.$container, false, 1, 1);
     }
-
+    
     load(part) {
         this.part = part;
+        
+        $('.img-container img', this.$panel).on('load', $.proxy(function() {   
+            zoom.register(this.$container);
+        }, this));
+        
         if (this.part.bw_image) {
             if (this.part.bw_image.thumbnails) {
                 $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
@@ -18,7 +22,6 @@ class BinarizationPanel {
             $('.img-container img', this.$panel).attr('src', '');
         }
         if (this.opened) this.open();
-        this.$container.trigger('wheelzoom.refresh');
     }
     
     open() {
@@ -38,7 +41,5 @@ class BinarizationPanel {
         else this.open();
     }
     
-    reset() {
-        this.$container.trigger('wheelzoom.refresh');
-    }
+    reset() {}
 }

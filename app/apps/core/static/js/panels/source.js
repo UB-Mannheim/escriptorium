@@ -3,18 +3,21 @@ class SourcePanel {
         this.$panel = $panel;
         this.opened = opened | false;
         this.$container = $('.img-container', this.$panel);
-        WheelZoom(this.$container, false, 1, 1);
     }
 
     load(part) {
         this.part = part;
+
+        $('.img-container img', this.$panel).on('load', $.proxy(function() {
+            zoom.register(this.$container);
+        }, this));
+
         if (this.part.image.thumbnails) {
             $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
         } else {
             $('.img-container img', this.$panel).attr('src', this.part.image.url);
         }
         if (this.opened) this.open();
-        this.$container.trigger('wheelzoom.refresh');
     }
     
     open() {
@@ -34,7 +37,5 @@ class SourcePanel {
         else this.open();
     }
 
-    reset() {
-        this.$container.trigger('wheelzoom.refresh');
-    }
+    reset() {}
 }
