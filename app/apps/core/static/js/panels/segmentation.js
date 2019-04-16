@@ -44,8 +44,8 @@ class Box {
             }, this),
             drag: $.proxy(function(ev, ui) {
                 var original = ui.originalPosition;
-                var left = (ev.clientX - this.click.x + original.left - wz.translate.x) / wz.scale;
-                var top = (ev.clientY - this.click.y + original.top - wz.translate.y) / wz.scale;
+                var left = (ev.clientX - this.click.x + original.left - zoom.translate.x) / zoom.scale;
+                var top = (ev.clientY - this.click.y + original.top - zoom.translate.y) / zoom.scale;
                 ui.position = {
                     left: left,
                     top: top
@@ -75,8 +75,8 @@ class Box {
                 this.click.y = ev.clientY;
             }, this),
             resize: $.proxy(function(ev, ui) {
-                ui.size.width = (ev.clientX - this.click.x) / wz.scale + ui.originalSize.width;
-                ui.size.height = (ev.clientY - this.click.y) / wz.scale + ui.originalSize.height;
+                ui.size.width = (ev.clientX - this.click.x) / zoom.scale + ui.originalSize.width;
+                ui.size.height = (ev.clientY - this.click.y) / zoom.scale + ui.originalSize.height;
                 var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
                 if (tl) {
                     tl.box = this.getBox();
@@ -147,10 +147,10 @@ class Box {
     }
     
     getBox() {
-        var x1 = parseInt((this.$element.position().left) / wz.scale / this.ratio);
-        var y1 = parseInt((this.$element.position().top)  / wz.scale / this.ratio);
-        var x2 = parseInt(((this.$element.position().left) / wz.scale + this.$element.width()) / this.ratio);
-        var y2 = parseInt(((this.$element.position().top) / wz.scale + this.$element.height()) / this.ratio);
+        var x1 = parseInt((this.$element.position().left) / zoom.scale / this.ratio);
+        var y1 = parseInt((this.$element.position().top)  / zoom.scale / this.ratio);
+        var x2 = parseInt(((this.$element.position().left) / zoom.scale + this.$element.width()) / this.ratio);
+        var y2 = parseInt(((this.$element.position().top) / zoom.scale + this.$element.height()) / this.ratio);
         return [x1, y1, x2, y2];
     }
     showOverlay() {
@@ -263,13 +263,13 @@ class SegmentationPanel {
     }
     
     createBoxAtMousePos(ev, mode) {
-        var top_left_x = Math.max(0, ev.clientX - this.$container.offset().left) / wz.scale / this.ratio;
-        var top_left_y = Math.max(0, ev.clientY - this.$container.offset().top) / wz.scale / this.ratio;
+        var top_left_x = Math.max(0, ev.clientX - this.$container.offset().left) / zoom.scale / this.ratio;
+        var top_left_y = Math.max(0, ev.clientY - this.$container.offset().top) / zoom.scale / this.ratio;
         var box = [
             parseInt(top_left_x),
             parseInt(top_left_y),
-            parseInt(top_left_x + 200/wz.scale/this.ratio),
-            parseInt(top_left_y + 40/wz.scale/this.ratio)
+            parseInt(top_left_x + 200/zoom.scale/this.ratio),
+            parseInt(top_left_y + 40/zoom.scale/this.ratio)
         ];
         var block = null;
         if ($(ev.target).is('.block-box')) {
@@ -308,6 +308,8 @@ class SegmentationPanel {
         this.getRatio();
         this.showBlocks();
         this.showLines();
+
+        zoom.register(this.$container, true);
     }
     
     open() {

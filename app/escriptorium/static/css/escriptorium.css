@@ -1,5 +1,6 @@
 body {
     mind-height: 2000px;
+    padding: 10px;
     padding-top: 70px;
     max-width: 1800px;
 }
@@ -94,12 +95,19 @@ body {
 }
 
 .card .js-edit {
-    width: 100%;
-    /*opacity: 0.8;
     position: absolute;
-    
-    bottom: 0;
-    left:0; */
+    opacity: 0.2;
+    bottom: 5px;;
+
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+}
+
+.card:hover .js-edit {
+    opacity: 1;
 }
 
 .card .js-part-update-form {
@@ -208,8 +216,11 @@ body {
 .card .proc.pending {
     color: var(--secondary);
 }
-.card .proc {
-    cursor: pointer;
+.card .btn.proc {
+    padding: 0;
+}
+.card .btn.proc:hover {
+    color: var(--info);
 }
 
 .card .proc.done {
@@ -249,7 +260,6 @@ i.panel-icon {
     vertical-align: top;
 }
 
-
 .img-container {
     position: relative;
     overflow: hidden;
@@ -259,8 +269,10 @@ i.panel-icon {
     transform-origin: 0 0;
 }
 .zoom-container {
-    transition: transform 0.3s;
     transform-origin: 0 0;
+}
+#zoom-range {
+    height: 100px;
 }
 
 #part-trans, #part-img {

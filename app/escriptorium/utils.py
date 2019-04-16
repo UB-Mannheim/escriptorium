@@ -23,8 +23,5 @@ def send_email(subject_template, txt_template, html_template,
     subject = subject_tmplt.render(context=context).strip('\n')
     msg = txt_tmplt.render(context=context)
     html = html_tmplt.render(context=context)
-
-    if settings.USE_CELERY:
-        async_email.delay(subject, msg, (recipient,), html=html, result_interface=result_interface)
-    else:
-        async_email(subject, msg, (recipient,), html=html, result_interface=result_interface)
+    
+    async_email.delay(subject, msg, (recipient,), html=html, result_interface=result_interface)

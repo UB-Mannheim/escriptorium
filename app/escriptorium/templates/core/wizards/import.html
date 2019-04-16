@@ -4,7 +4,7 @@
 {% block wizard_help %}
 {% url 'home' as import_url %} {# TODO #}
 <p>{% trans "Beware that importing a new segmentation will <u>destroy the current segmentation and all binded transcriptions</u>." %}</p>
-<p>{% blocktrans with opentag='<a href="'|add:import_url|add:'">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
+<p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
 {% endblock %}
 
 {% block wizard_action %}action="{% url 'document-import' pk=object.pk %}"{% endblock %}

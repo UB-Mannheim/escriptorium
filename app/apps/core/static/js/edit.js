@@ -1,8 +1,8 @@
 var panels;
-var wz = {scale:1, translate: {x:0, y:0}};
 var API = {
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
+var zoom = new WheelZoom({min_scale: 0.5, max_scale: 10});
 
 $(document).ready(function() {
     var show_img = JSON.parse(Cookies.get('img-panel-open') || 'true');
@@ -42,8 +42,9 @@ $(document).ready(function() {
             $('#images-tab-link').attr('href', tabUrl);
             
             if (callback) callback(data);
-        });        
+        });
     }
+    
     /* export */
     $('button#document-export').click(function(ev) {
         ev.preventDefault();
@@ -53,7 +54,7 @@ $(document).ready(function() {
                                     '$1'+selectedTranscription+'$2');
         window.open(new_href);
     });
-
+    
     $('.open-panel').on('click', function(ev) {
         $(this).toggleClass('btn-primary').toggleClass('btn-secondary');
         var panel = $(this).data('target');
@@ -61,6 +62,7 @@ $(document).ready(function() {
         for (var key in panels) {
             panels[key].reset();
         }
+        zoom.refresh();
     });
     
     $('a#prev-part, a#next-part').click(function(ev) {
@@ -76,13 +78,20 @@ $(document).ready(function() {
         }
     });
 
-    // propagate zoom & translation
-    $('.img-container').each(function(i, el) {
-        el.addEventListener('wheelzoom.update', function(ev) {
-            wz = ev.detail;
-            // select all panels but this one
-            var zc = $(':not(#binar-panel) .img-container .zoom-container');
-            zc.css({transform: 'translate('+ev.detail.translate.x+'px,'+ev.detail.translate.y+'px) scale('+ev.detail.scale+')'});
-        });
+    // zoom slider
+    $('#zoom-range').attr('min', zoom.min_scale);
+    $('#zoom-range').attr('max', zoom.max_scale);
+    $('#zoom-range').val(zoom.scale);
+    
+    zoom.events.on('wheelzoom.updated', function(data) {
+        $('#zoom-range').val(zoom.scale);
+    });    
+    $('#zoom-range').on('change', function(ev) {
+        zoom.scale = parseFloat($(ev.target).val());
+        zoom.refresh();
+    });
+    $('#zoom-reset').on('click', function(ev) {
+        zoom.reset();
+	    $('#zoom-range').val(zoom.scale);
     });
 });
