@@ -9,6 +9,7 @@
 <div>
   <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
 </div>
+{% comment %}
 {% if not object.is_published %}
 <form method="post" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
   <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
@@ -17,6 +18,7 @@
   </button>
 </form>
 {% endif %}
+{% endcomment %}
 <form method="post" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
   <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
   <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
