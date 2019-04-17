@@ -25,7 +25,7 @@ class DocumentListTestCase(TestCase):
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('documents-list')
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             # Note: 1 query / document to fetch the first picture
             # can be improved
             resp = self.client.get(uri)
