@@ -10,7 +10,7 @@
 {% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
 
 {% block wizard_fields %}
-{% if import_form.current_import and import_form.current_import.ongoing%}
+{% if import_form.current_import and import_form.current_import.ongoing %}
 {% trans "Import is ongoing, please wait for it to be finished." %}
 {% else %}
 {% if import_form.current_import.failed %}

@@ -22,7 +22,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     iiif_uri = forms.URLField(
         required=False,
         label=_("iiif manifesto"),
-        help_text=_("exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b8610793w/manifest.json"))
+        help_text=_("exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"))
     resume_import = forms.BooleanField(
         required=False,
         label=_("Resume previous import"),
