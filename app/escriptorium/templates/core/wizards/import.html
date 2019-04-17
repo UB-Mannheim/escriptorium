@@ -7,7 +7,7 @@
 <p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
 {% endblock %}
 
-{% block wizard_action %}action="{% url 'document-import' pk=object.pk %}"{% endblock %}
+{% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
 
 {% block wizard_fields %}
 {% if import_form.current_import and import_form.current_import.ongoing%}

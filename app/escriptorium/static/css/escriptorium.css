@@ -34,7 +34,10 @@ body {
 }
 
 .import-counter-container {
-    opacity: 0;
+    display: none;
+}
+.import-counter-container.ongoing {
+    display: block;
 }
 
 .js-metadata-row:last-of-type .js-metadata-delete {
@@ -94,19 +97,24 @@ body {
     border: 2px solid var(--dark);
 }
 
-.card .js-edit {
+.card-btns {
+    width: 100%;
     position: absolute;
-    opacity: 0.2;
-    bottom: 5px;;
-
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0;
+    bottom: 5px;
+    text-align: center;
 }
 
-.card:hover .js-edit {
+.card .card-btn {
+    opacity: 0.2;
+    margin: 5px;
+    width: 90%;
+}
+
+.card .card-btn.js-cancel {
+    display: none;
+}
+
+.card:hover .card-btn {
     opacity: 1;
 }
 
@@ -215,6 +223,9 @@ body {
 }
 .card .proc.pending {
     color: var(--secondary);
+}
+.card .proc.canceled {
+    color: var(--warning);
 }
 .card .btn.proc {
     padding: 0;

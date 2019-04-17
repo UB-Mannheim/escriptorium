@@ -74,6 +74,7 @@ class partCard {
 
         // workflow icons & progress
         this.editButton = $('.js-edit', this.$element);
+        this.cancelTasksButton = $('.js-cancel', this.$element);
         this.convertIcon = $('.js-compressing', this.$element);
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
@@ -86,6 +87,9 @@ class partCard {
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
+        this.cancelTasksButton.click($.proxy(function(ev) {
+            this.cancelTasks();
+        }, this));
         
         this.binarizedButton.click($.proxy(function(ev) {
             this.select();
@@ -159,6 +163,15 @@ class partCard {
                 this.workflow['transcribe'] == 'ongoing');
     }
     
+    isCancelable() {
+        return (this.workflow['binarize'] == 'ongoing' ||
+                this.workflow['segment'] == 'ongoing' ||
+                this.workflow['transcribe'] == 'ongoing' ||
+                this.workflow['binarize'] == 'pending' ||
+                this.workflow['segment'] == 'pending' ||
+                this.workflow['transcribe'] == 'pending');
+    }
+    
     updateWorkflowIcons() {
         var map = [
             ['convert', this.convertIcon],
@@ -182,9 +195,11 @@ class partCard {
         } else {
             this.unlock();
         }
-        
-        if (this.workflow['transcribe'] == 'done') {
-            $('#nav-trans-tab').removeClass('disabled');
+
+        if (this.isCancelable()) {
+            this.cancelTasksButton.show();
+        } else {
+            this.cancelTasksButton.hide();
         }
     }
 
@@ -251,6 +266,13 @@ class partCard {
         this.index = index;
     }
 
+    cancelTasks() {
+        $.post(this.api + 'cancel/', {}).done($.proxy(function(data){
+            this.workflow = data.workflow;
+            this.updateWorkflowIcons();
+        }, this)).fail($.proxy(function(data){console.log("Couldn't cancel the task.");}));
+    }
+    
     delete() {
         var posting = $.ajax({url:this.api, type: 'DELETE'})
             .done($.proxy(function(data) {
@@ -346,22 +368,34 @@ $(document).ready(function() {
     });
 
     // Imports
-    $('#alerts-container').on('import:start', function(ev, data) {
-        $('#import-counter').parent().css({opacity: 100});
+    let $alertsContainer = $('#alerts-container');
+    $alertsContainer.on('import:start', function(ev, data) {
+        $('#import-counter').parent().addClass('ongoing');
     });
-    $('#alerts-container').on('import:progress', function(ev, data) {
-        $('#import-counter').parent().css({opacity: 100});
+    $alertsContainer.on('import:progress', function(ev, data) {
+        $('#import-counter').parent().addClass('ongoing');
         if (data.progress) {
             $('#import-counter').text(data.progress+"/"+data.total);
         }
-    });    
-    $('#alerts-container').on('import:fail', function(ev, data) {
+    });
+    $alertsContainer.on('import:fail', function(ev, data) {
         $('#import-counter').text('failed');
         Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
-    });    
-    $('#alerts-container').on('import:done', function(ev, data) {
-        $('#import-counter').parent().animate({opacity: 0}, 1000);
+    });
+    $alertsContainer.on('import:done', function(ev, data) {
+        $('#import-counter').parent().removeClass('ongoing');
         Alert.add('import-done', "Import finished!", 'success');
+    });
+    $('#cancel-import').click(function(ev, data) {
+        let url = API.document + '/cancel_import/';
+        $.post(url, {})
+            .done(function(data) {
+                $('#import-counter').text('canceled');
+                $('#import-counter').parent().removeClass('ongoing');
+            })
+            .fail(function(data) {
+                console.log("Couldn't cancel import");
+            });
     });
     
     // create & configure dropzone

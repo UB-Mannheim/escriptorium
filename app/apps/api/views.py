@@ -3,8 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
-from core.models import *
 from api.serializers import *
+from core.models import *
+from imports.forms import ImportForm
+from imports.parsers import ParseError
+from users.consumers import send_event
 
 
 class DocumentViewSet(ModelViewSet):
@@ -14,6 +17,34 @@ class DocumentViewSet(ModelViewSet):
 
     def get_queryset(self):
         return Document.objects.for_user(self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def imports(self, request, pk=None):
+        def error(msg):
+            return Response({'status': 'error', 'error': msg}, status=400)
+
+        document = self.get_object()
+        form = ImportForm(document, request.user,
+                          request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  # create the import
+            try:
+                form.process()
+            except ParseError:
+                return error("Incorrectly formated file, couldn't parse it.")
+            return Response({'status': 'ok'})
+        else:
+            return error(json.dumps(form.errors))
+
+    @action(detail=True, methods=['post'])
+    def cancel_import(self, request, pk=None):
+        document = self.get_object()
+        current_import = document.import_set.order_by('started_on').last()
+        if current_import.is_cancelable():
+            current_import.cancel()
+            return Response({'status': 'canceled'})
+        else:
+            return Response({'status': 'already canceled'}, status=400)
 
 
 class PartViewSet(ModelViewSet):
@@ -44,6 +75,13 @@ class PartViewSet(ModelViewSet):
             return Response({'status': 'moved'})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, document_pk=None, pk=None):
+        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part.cancel_tasks()
+        part.refresh_from_db()
+        return Response({'status': 'canceled', 'workflow': part.workflow})
 
 
 class BlockViewSet(ModelViewSet):

@@ -90,13 +90,13 @@ def binarize(instance_pk, user_pk=None, binarizer=None, **kwargs):
     
     try:
         part.binarize()
-    except:
+    except Exception as e:
         if user:
             user.notify(_("Something went wrong during the binarization!"),
                         id="binarization-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
-        raise
+        raise e
     else:
         if user:
             user.notify(_("Binarization done!"),
@@ -111,9 +111,9 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist:
+    except DocumentPart.DoesNotExist as e:
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
-        raise
+        raise e
 
     if user_pk:
         try:
@@ -125,13 +125,13 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
     
     try:
         part.segment(steps=steps, text_direction=text_direction)
-    except:
+    except Exception as e:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
                         id="segmentation-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
-        raise
+        raise e
     else:
         if user:
             user.notify(_("Segmentation done!"),
@@ -172,7 +172,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
     
     try:
         part.transcribe(model=model)
-    except:
+    except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),
                         id="transcription-error", level='danger')

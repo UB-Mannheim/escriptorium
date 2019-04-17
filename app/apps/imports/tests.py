@@ -20,7 +20,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.client.force_login(self.document.owner)
     
     def test_alto_single(self):
-        uri = reverse('document-import', kwargs={'pk': self.document.pk})
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
@@ -30,7 +30,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                     'xml_file': SimpleUploadedFile(filename, fh.read())
                 })
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(response.content, b'{"status": "ok"}')
+                self.assertEqual(response.content, b'{"status":"ok"}')
         self.assertEqual(Import.objects.count(), 1)
         self.assertEqual(Import.objects.first().workflow_state, Import.WORKFLOW_STATE_DONE) 
         self.assertEqual(self.part1.blocks.count(), 1)
@@ -39,7 +39,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part2.lines.count(), 0)    
     
     def test_alto_multi(self):
-        uri = reverse('document-import', kwargs={'pk': self.document.pk})
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_multi.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
@@ -49,7 +49,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                     'xml_file': SimpleUploadedFile(filename, fh.read())
                 })
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(response.content, b'{"status": "ok"}')
+                self.assertEqual(response.content, b'{"status":"ok"}')
         self.assertEqual(Import.objects.count(), 1)
         self.assertEqual(Import.objects.first().workflow_state, Import.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 1)
@@ -58,7 +58,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part2.lines.count(), 2)
     
     def test_invalid_count(self):
-        uri = reverse('document-import', kwargs={'pk': self.document.pk})
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
@@ -71,7 +71,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(response.json()['status'], 'error')
     
     def test_abbyy(self):
-        uri = reverse('document-import', kwargs={'pk': self.document.pk})
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test.abbyy'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
@@ -80,7 +80,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 'xml_file': SimpleUploadedFile(filename, fh.read())
             })
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b'{"status": "ok"}')
+        self.assertEqual(response.content, b'{"status":"ok"}')
         self.assertEqual(Import.objects.count(), 1)
         self.assertEqual(Import.objects.first().workflow_state, Import.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 1)
@@ -93,7 +93,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                          [150, 761, 170, 781])
 
     def test_resume(self):
-        uri = reverse('document-import', kwargs={'pk': self.document.pk})
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_multi.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
