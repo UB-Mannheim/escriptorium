@@ -163,6 +163,8 @@ class IIIFManifesParser():
     def parse(self, document, parts, start_at=0):
         try:
             for i, canvas in enumerate(self.canvases):
+                if i < start_at:
+                    continue
                 resource = canvas['images'][0]['resource']
                 url = resource['@id']
             

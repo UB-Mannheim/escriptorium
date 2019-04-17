@@ -23,7 +23,7 @@ class TranscriptionLine {
             this.showOverlay();
         }, this));
         $el.on('mouseleave', $.proxy(function(ev) {
-            if (!this.editing) $('.overlay').hide();
+            if (!this.editing) $('.overlay').fadeOut();
         }, this));
         $el.on('click', $.proxy(function(ev) {
             this.edit();
@@ -55,7 +55,7 @@ class TranscriptionLine {
             top: this.box[1]*this.ratio + 'px',
             width: (this.box[2] - this.box[0])*this.ratio + 'px',
             height: (this.box[3] - this.box[1])*this.ratio + 'px'
-        }).show();
+        }).stop().show();
     }
 
     getLineTranscription() {
@@ -261,7 +261,7 @@ class TranscriptionPanel{
         });
         $("#trans-modal").on('hide.bs.modal', function(ev) {
             currentLine.editing = false;
-            $('.overlay').hide();
+            $('.overlay').fadeOut();
         });
         $("#trans-modal #prev-btn").click($.proxy(function(ev) {
             this.lines[currentLine.order-1].edit();

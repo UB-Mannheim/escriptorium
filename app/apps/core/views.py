@@ -4,6 +4,7 @@ import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
+from django.db.models import Max
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.utils.text import slugify
@@ -29,7 +30,7 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        return Document.objects.for_user(self.request.user).select_related('owner')
+        return Document.objects.for_user(self.request.user).select_related('owner').annotate(parts_updated_at=Max('parts__updated_at'))
 
 
 class DocumentMixin():

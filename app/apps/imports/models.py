@@ -3,6 +3,9 @@ from django.utils.functional import cached_property
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
 
+#from celery.task.control import revoke
+from escriptorium.celery import app
+
 from core.models import Document, DocumentPart, Transcription
 from users.models import User
 from users.consumers import send_event
@@ -34,7 +37,8 @@ class Import(models.Model):
         upload_to='import_src/',
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json',])])
-    
+
+    task_id = models.CharField(max_length=64, blank=True)
     processed = models.PositiveIntegerField(default=0)
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
     
@@ -56,6 +60,17 @@ class Import(models.Model):
     @cached_property
     def parser(self):
         return make_parser(self.import_file)
+
+    def is_cancelable(self):
+        return self.workflow_state < self.WORKFLOW_STATE_DONE
+    
+    def cancel(self):
+        self.workflow_state = self.WORKFLOW_STATE_ERROR
+        self.error_message = 'canceled'
+        if self.task_id:
+            #revoke(self.task_id, terminate=True)
+            app.control.revoke(self.task_id, terminate=True)
+        self.save()
     
     def process(self, resume=True):
         try:
@@ -74,8 +89,4 @@ class Import(models.Model):
             self.error_message = str(e)
             self.save()
             raise e
-        else:
-            send_event('document', self.document.pk, "import:start", {
-                "id": self.document.pk
-            })
 

@@ -25,7 +25,12 @@
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
     <button id="import-selected" class="btn btn-sm btn-primary ml-auto js-proc-selected mr-1" data-proc="import" title="{% trans 'Import data.' %}"><i class="fas fa-file-import mr-1"></i>{% trans "Import" %}</button>
-    <span class="import-counter-container">{% trans "Importing" %} <span id="import-counter">{% with import=import_form.current_import %}{% if import %}{{import.processed}}/{{import.total}}{% endif %}{% endwith %}</span>...</span>
+    {% with import=import_form.current_import %}
+    <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
+      <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
+      <button id="cancel-import" class="btn btn-sm btn-warning"><i class="fas fa-ban"></i></button>
+    </span>
+    {% endwith %}
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
     {# <button id="train-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button> #}
@@ -47,7 +52,10 @@
       <button class="js-card-select-hdl"><i class="fas fa-square"></i></button>
       <button class="close mr-1 js-card-delete" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
-      <button class="btn btn-info js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
+      <div class="card-btns">
+        <button class="btn card-btn btn-warning js-cancel" title="{% trans 'Cancel tasks' %}"><i class="fas fa-ban"></i></button>
+        <button class="btn card-btn btn-info js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
+      </div>
     </div>
     <div class="card-body">
       <div class="d-flex mt-2">

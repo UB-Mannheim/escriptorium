@@ -20,7 +20,7 @@ from django.utils.translation import gettext as _
 from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
-from celery.task.control import inspect
+from celery.task.control import inspect, revoke
 from celery import chain, group
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
@@ -185,6 +185,9 @@ class DocumentPart(OrderedModel):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
     
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
     WORKFLOW_STATE_CONVERTED = 2
@@ -341,12 +344,15 @@ class DocumentPart(OrderedModel):
         # check on redis for reruns
         for task_name in ['core.tasks.convert',
                           'core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
-            if task_name in tasks and tasks[task_name]['status'] == 'pending':
-                w[task_name.split('.')[-1]] = 'pending'
-            if task_name in tasks and tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
-                w[task_name.split('.')[-1]] = 'ongoing'
-            elif task_name in tasks and tasks[task_name]['status'] in ['task_failure', 'error']:
-                w[task_name.split('.')[-1]] = 'error'
+            if task_name in tasks:
+                if tasks[task_name]['status'] == 'pending':
+                    w[task_name.split('.')[-1]] = 'pending'
+                elif tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
+                    w[task_name.split('.')[-1]] = 'ongoing'
+                elif tasks[task_name]['status'] == 'canceled':
+                    w[task_name.split('.')[-1]] = 'canceled'
+                elif tasks[task_name]['status'] in ['task_failure', 'error']:
+                    w[task_name.split('.')[-1]] = 'error'
         return w
     
     def tasks_finished(self):
@@ -363,6 +369,23 @@ class DocumentPart(OrderedModel):
                          in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
             return False
+    
+    def cancel_tasks(self):
+        uncancelable = ['core.tasks.convert',
+                        'core.tasks.lossless_compression',
+                        'core.tasks.generate_part_thumbnails']
+        if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
+            self.workflow_state = self.WORKFLOW_STATE_CONVERTED
+            self.save()
+        if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
+            self.workflow_state = self.WORKFLOW_STATE_BINARIZED
+            self.save()
+        
+        for task_name, task in self.tasks.items():
+            if task_name not in uncancelable:
+                if 'task_id' in task:  # if not, it is still pending
+                    revoke(task['task_id'], terminate=True)
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "canceled"}}))
     
     def recover(self):
         i = inspect()
@@ -394,9 +417,9 @@ class DocumentPart(OrderedModel):
                 self.tasks[task_name]['task_id'] not in queued):
                 redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
         self.save()
-
+    
     def generate_thumbnails(self):
-        if settings.THUMBNAIL_ENABLE:
+        if getattr(settings, 'THUMBNAIL_ENABLE', True):
             generate_all_aliases(self.image, include_global=True)
 
     def convert(self):
@@ -420,6 +443,8 @@ class DocumentPart(OrderedModel):
         self.save()
         
     def compress(self):
+        if not getattr(settings, 'COMPRESS_ENABLE', True):
+            return
         filename, extension = os.path.splitext(self.image.file.name)
         opti_name = filename + '_opti.png'
         try:
@@ -544,7 +569,7 @@ class DocumentPart(OrderedModel):
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             sig = convert.si(self.pk)
             sig.link(lossless_compression.si(self.pk))
-            if settings.THUMBNAIL_ENABLE:
+            if getattr(settings, 'THUMBNAIL_ENABLE', True):
                 sig.link(generate_part_thumbnails.si(self.pk))
             tasks.append(sig)
         

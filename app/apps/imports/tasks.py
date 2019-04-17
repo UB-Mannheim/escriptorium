@@ -6,12 +6,15 @@ from imports.parsers import AltoParser
 from users.consumers import send_event
 
 
-@shared_task
-def document_import(import_pk, resume=True):
+@shared_task(bind=True)
+def document_import(task, import_pk, resume=True, task_id=None):
     Import = apps.get_model('imports', 'Import')
-    imp = Import.objects.get(pk=import_pk)  # let it fail
-    
+    imp = Import.objects.get(pk=import_pk)  # let it fail    
+    imp.task_id = task.request.id
     try:
+        send_event('document', imp.document.pk, "import:start", {
+            "id": imp.document.pk
+        })
         for obj in imp.process(resume=resume):
             send_event('document', imp.document.pk, "import:progress", {
                 "id": imp.document.pk,
@@ -26,8 +29,7 @@ def document_import(import_pk, resume=True):
             "reason": str(e)
         })
         raise
-    
-    send_event('document', imp.document.pk, "import:done", {
-        "id": imp.document.pk
-    })
-
+    else:
+        send_event('document', imp.document.pk, "import:done", {
+            "id": imp.document.pk
+        })
