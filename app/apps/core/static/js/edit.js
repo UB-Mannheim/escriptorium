@@ -62,7 +62,6 @@ $(document).ready(function() {
         for (var key in panels) {
             panels[key].reset();
         }
-        zoom.refresh();
     });
     
     $('a#prev-part, a#next-part').click(function(ev) {

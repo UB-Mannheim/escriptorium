@@ -3,13 +3,14 @@ class BinarizationPanel {
         this.$panel = $panel;
         this.opened = opened | false;
         this.$container = $('.img-container', this.$panel);
+        zoom.register(this.$container);
     }
     
     load(part) {
         this.part = part;
         
         $('.img-container img', this.$panel).on('load', $.proxy(function() {   
-            zoom.register(this.$container);
+            zoom.refresh();
         }, this));
         
         if (this.part.bw_image) {
@@ -41,5 +42,7 @@ class BinarizationPanel {
         else this.open();
     }
     
-    reset() {}
+    reset() {
+        zoom.refresh();
+    }
 }
