@@ -44,8 +44,8 @@ class Box {
             }, this),
             drag: $.proxy(function(ev, ui) {
                 var original = ui.originalPosition;
-                var left = (ev.clientX - this.click.x + original.left - zoom.translate.x) / zoom.scale;
-                var top = (ev.clientY - this.click.y + original.top - zoom.translate.y) / zoom.scale;
+                var left = (ev.clientX - this.click.x + original.left - zoom.pos.x) / zoom.scale;
+                var top = (ev.clientY - this.click.y + original.top - zoom.pos.y) / zoom.scale;
                 ui.position = {
                     left: left,
                     top: top
