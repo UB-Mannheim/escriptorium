@@ -27,9 +27,11 @@ class ImageField(serializers.ImageField):
             else:
                 try:
                     if settings.THUMBNAIL_ENABLE and self.thumbnails:
-                        data['thumbnails'] = {alias: get_thumbnailer(img)[alias].url
-                                              for alias in self.thumbnails}
-                except easy_thumbnails.exceptions.InvalidImageFormatError:
+                        data['thumbnails'] = {
+                            alias: get_thumbnailer(img).get_thumbnail(
+                                settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
+                            for alias in self.thumbnails}
+                except (easy_thumbnails.exceptions.InvalidImageFormatError, AttributeError):
                     pass
             return data
 

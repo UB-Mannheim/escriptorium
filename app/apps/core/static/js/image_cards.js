@@ -55,6 +55,8 @@ class partCard {
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         if (this.image.thumbnails != undefined) {
             $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
+        } else {
+            $('img.card-img-top', $new).attr('data-src', this.image.uri);
         }
         $('img.card-img-top', $new).attr('title', this.title);
 
