@@ -19,7 +19,7 @@
 
     {% if page_obj.number < page_obj.paginator.num_pages %}
     <li class="page-item">
-      <a class="page-link" title="{% trans 'Last page' %}" href="?page={{page_obj.num_pages}}">{{page_obj.paginator.num_pages}}</a>
+      <a class="page-link" title="{% trans 'Last page' %}" href="?page={{page_obj.paginator.num_pages}}">{{page_obj.paginator.num_pages}}</a>
     </li>
     {% endif %}
     
