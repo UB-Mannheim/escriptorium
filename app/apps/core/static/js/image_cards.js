@@ -172,13 +172,12 @@ class partCard {
     }
 
     updateThumbnail() {
-        let img = $('img.card-img-top', this.$element);
-        let target = (img.attr('src') != ''?'src':'data-src');  // if card img is already loaded we want to replace it
-
-        console.log(this.image.thumbnails);
+        var img = $('img.card-img-top', this.$element);
+        var target = (img.attr('src') != ''?'src':'data-src');  // if card img is already lazy-loaded we want to replace it
         
-        if (this.image.thumbnails['card']) {
-            img.attr(target, this.image.thumbnails['card']);
+        if (this.image.thumbnails['card'] != undefined) {
+            if (img.attr('src')) img.attr('src', this.image.thumbnails['card']);
+            img.attr('data-src', this.image.thumbnails['card']);
         } else {
             img.attr(target, this.image.uri);
         }

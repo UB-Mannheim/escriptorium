@@ -1,6 +1,5 @@
 import json
 import logging
-import os.path
 import subprocess
 import redis
 
@@ -41,7 +40,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
     
 @shared_task
 def generate_part_thumbnails(instance_pk):
-    if not settings.THUMBNAIL_ENABLE:
+    if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -51,10 +50,9 @@ def generate_part_thumbnails(instance_pk):
         raise
     
     aliases = {}
-    thbn = get_thumbnailer(part.image)
-    print('###', part.image)
+    thbnr = get_thumbnailer(part.image)
     for alias, config in settings.THUMBNAIL_ALIASES[''].items():
-        aliases[alias] = thbn.get_thumbnail(config).url
+        aliases[alias] = thbnr.get_thumbnail(config).url
     return aliases
 
 

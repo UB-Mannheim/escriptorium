@@ -191,6 +191,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 COMPRESS_ENABLE = True
+
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
@@ -199,7 +200,7 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
     }
 }
-
+THUMBNAIL_EXTENSION = 'jpg'
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 
 REST_FRAMEWORK = {

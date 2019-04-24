@@ -4,8 +4,7 @@ import json
 
 from django.conf import settings
 from rest_framework import serializers
-# from easy_thumbnails.files import get_thumbnailer
-from sorl.thumbnail import get_thumbnail
+from easy_thumbnails.files import get_thumbnailer
 
 
 from core.models import *
@@ -30,13 +29,10 @@ class ImageField(serializers.ImageField):
                 if self.thumbnails:
                     data['thumbnails'] = {}
                     thbn = get_thumbnailer(img)
-                    for thb in 
-                    # for alias in self.thumbnails:
-                    #     try:
-                    #         data['thumbnails'][alias] = thbn.get_thumbnail(
-                    #             settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
-                    #     except AttributeError:
-                    #         pass
+                    for alias in self.thumbnails:
+                        config = settings.THUMBNAIL_ALIASES[''][alias]
+                        if thbn.thumbnail_exists(config):
+                            data['thumbnails'][alias] = thbn.get_thumbnail(config, generate=False).url
             return data
 
 
@@ -84,7 +80,10 @@ class PartSerializer(serializers.ModelSerializer):
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
-        return super().create(data)
+        obj = super().create(data)
+        # generate card thumbnail right away since we need it
+        get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
+        return obj
 
 
 class BlockSerializer(serializers.ModelSerializer):
