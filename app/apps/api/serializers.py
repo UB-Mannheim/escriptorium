@@ -4,7 +4,9 @@ import json
 
 from django.conf import settings
 from rest_framework import serializers
-import easy_thumbnails
+# from easy_thumbnails.files import get_thumbnailer
+from sorl.thumbnail import get_thumbnail
+
 
 from core.models import *
 
@@ -25,14 +27,16 @@ class ImageField(serializers.ImageField):
                 logger.warning('File not found: %s' % img.path)
                 data['size'] = None
             else:
-                try:
-                    if settings.THUMBNAIL_ENABLE and self.thumbnails:
-                        data['thumbnails'] = {
-                            alias: get_thumbnailer(img).get_thumbnail(
-                                settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
-                            for alias in self.thumbnails}
-                except (easy_thumbnails.exceptions.InvalidImageFormatError, AttributeError):
-                    pass
+                if self.thumbnails:
+                    data['thumbnails'] = {}
+                    thbn = get_thumbnailer(img)
+                    for thb in 
+                    # for alias in self.thumbnails:
+                    #     try:
+                    #         data['thumbnails'][alias] = thbn.get_thumbnail(
+                    #             settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
+                    #     except AttributeError:
+                    #         pass
             return data
 
 
@@ -73,6 +77,7 @@ class PartSerializer(serializers.ModelSerializer):
             'image',
             'bw_image',
             'workflow',
+            'recoverable',
             'transcription_progress'
         )
     

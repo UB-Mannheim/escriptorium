@@ -151,6 +151,8 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+# time in seconds a user has to wait after a task is started before being able to recover
+TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
