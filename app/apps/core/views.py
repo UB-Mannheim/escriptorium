@@ -27,7 +27,7 @@ class Home(TemplateView):
 
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
-    paginate_by = 20
+    paginate_by = 10
     
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).select_related('owner').annotate(parts_updated_at=Max('parts__updated_at'))

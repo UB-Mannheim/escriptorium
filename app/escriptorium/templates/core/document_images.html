@@ -82,12 +82,12 @@
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
-  'use strict';
-  var DOCUMENT_ID = {{ document.pk }};
-  var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=object.pk %}";
-  $(document).ready(function() {
-    // join the ws room
-    msgSocket.addEventListener('open', function(ev) {
+'use strict';
+var DOCUMENT_ID = {{ document.pk }};
+var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=object.pk %}";
+$(document).ready(function() {
+  // join the ws room
+  msgSocket.addEventListener('open', function(ev) {
     msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
   });
 });

@@ -48,7 +48,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.part2 = self.factory.make_part(document=self.part.document)  # scaling test
         self.user = self.part.document.owner  # shortcut
-
+    
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_list(self):
         self.client.force_login(self.user)
@@ -57,7 +57,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         with self.assertNumQueries(4):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-
+    
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_detail(self):
         self.client.force_login(self.user)
@@ -67,19 +67,19 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-
+    
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_create(self):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(9):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
                     'test.png', img.read())})
             self.assertEqual(resp.status_code, 201)
-
+    
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_update(self):
         self.client.force_login(self.user)

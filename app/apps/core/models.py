@@ -5,6 +5,7 @@ import os.path
 import functools
 import subprocess
 from PIL import Image
+from datetime import datetime
 
 from django.db import models
 from django.db.models import Q
@@ -314,17 +315,16 @@ class DocumentPart(OrderedModel):
         })
         return super().delete(*args, **kwargs)
     
-    @property
+    @cached_property
     def tasks(self):
         try:
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
             return {}
-        
+
     @property
     def workflow(self):
         w = {}
-        tasks = self.tasks  # its not cached
 
         if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
             w['convert'] = 'ongoing'
@@ -342,16 +342,15 @@ class DocumentPart(OrderedModel):
             w['transcribe'] = 'done'
         
         # check on redis for reruns
-        for task_name in ['core.tasks.convert',
-                          'core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
-            if task_name in tasks:
-                if tasks[task_name]['status'] == 'pending':
+        for task_name in ['core.tasks.binarize', 'core.tasks.segment', 'core.tasks.transcribe']:
+            if task_name in self.tasks:
+                if self.tasks[task_name]['status'] == 'pending':
                     w[task_name.split('.')[-1]] = 'pending'
-                elif tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
+                elif self.tasks[task_name]['status'] in ['before_task_publish', 'task_prerun']:
                     w[task_name.split('.')[-1]] = 'ongoing'
-                elif tasks[task_name]['status'] == 'canceled':
+                elif self.tasks[task_name]['status'] == 'canceled':
                     w[task_name.split('.')[-1]] = 'canceled'
-                elif tasks[task_name]['status'] in ['task_failure', 'error']:
+                elif self.tasks[task_name]['status'] in ['task_failure', 'error']:
                     w[task_name.split('.')[-1]] = 'error'
         return w
     
@@ -387,41 +386,44 @@ class DocumentPart(OrderedModel):
                     revoke(task['task_id'], terminate=True)
                 redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "canceled"}}))
     
+    def recoverable(self):
+        now = round(datetime.utcnow().timestamp())
+        try:
+            return len([task for task in self.tasks
+                        if getattr(task, 'timestamp', 0) +
+                        getattr(settings, 'TASK_RECOVER_DELAY', 60*60*24) > now]) != 0
+        except KeyError:
+            return True  # probably old school stored task
+    
     def recover(self):
         i = inspect()
         # Important: this is really slow!
         queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
                   [task['id'] for queue in i.active().values() for task in queue] +
                   [task['id'] for queue in i.reserved().values() for task in queue])
-        if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
-            task_name = 'core.tasks.convert'
-            if (not task_name in self.tasks or
-                self.tasks[task_name]['task_id'] not in queued):
-                self.workflow_state = self.WORFLOW_STATE_CREATED
-                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
-        elif self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            task_name = 'core.tasks.binarize'
-            if (not task_name in self.tasks or
-                self.tasks[task_name]['task_id'] not in queued):
-                self.workflow_state = self.WORFLOW_STATE_CONVERTED
-                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
-        elif self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
-            task_name = 'core.tasks.segment'
-            if (not task_name in self.tasks or
-                self.tasks[task_name]['task_id'] not in queued):
-                self.workflow_state = self.WORFLOW_STATE_BINARIZED
-                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
-        elif self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
-            task_name = 'core.tasks.transcribe'
-            if (not task_name in self.tasks or
-                self.tasks[task_name]['task_id'] not in queued):
-                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "error"}}))
+        
+        data = self.tasks
+        
+        for task_name in [task_name for task_name in data.keys()
+                          if task_name not in queued]:
+            # redis seems desync, but it could really be pending!
+            # but if it is it doesn't really matter since state will be updated when the worker pick it up.
+            del data[task_name]
+        
+        tasks_map = {  # map a task to a workflow state it should go back to if failed
+            'core.tasks.convert': (self.WORKFLOW_STATE_CONVERTING, self.WORKFLOW_STATE_CREATED),
+            'core.tasks.binarize': (self.WORKFLOW_STATE_BINARIZING, self.WORKFLOW_STATE_CONVERTED),
+            'core.tasks.segment': (self.WORKFLOW_STATE_SEGMENTING, self.WORKFLOW_STATE_BINARIZED),
+            'core.tasks.transcribe': (self.WORKFLOW_STATE_TRANSCRIBING, self.WORKFLOW_STATE_SEGMENTED),
+        }
+        for task_name in tasks_map:
+            if self.workflow_state == tasks_map[task_name][0] and task_name not in data:
+                data[task_name] = {"status": "error"}
+                self.workflow_state = tasks_map[task_name][1]
+        
+        redis_.set('process-%d' % self.pk, json.dumps(data))
         self.save()
-    
-    def generate_thumbnails(self):
-        if getattr(settings, 'THUMBNAIL_ENABLE', True):
-            generate_all_aliases(self.image, include_global=True)
-
+            
     def convert(self):
         if self.workflow_state < self.WORKFLOW_STATE_CONVERTING:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTING
@@ -700,6 +702,7 @@ class DocumentProcessSettings(models.Model):
     
     def __str__(self):
         return 'Processing settings for %s' % self.document
+
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')

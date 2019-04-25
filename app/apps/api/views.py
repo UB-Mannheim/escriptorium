@@ -65,7 +65,7 @@ class PartViewSet(ModelViewSet):
             return PartDetailSerializer
         else:  # list & create
             return PartSerializer
-        
+    
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
@@ -75,7 +75,7 @@ class PartViewSet(ModelViewSet):
             return Response({'status': 'moved'})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
     @action(detail=True, methods=['post'])
     def cancel(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
