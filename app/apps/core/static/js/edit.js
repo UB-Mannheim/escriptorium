@@ -85,7 +85,7 @@ $(document).ready(function() {
     zoom.events.on('wheelzoom.updated', function(data) {
         $('#zoom-range').val(zoom.scale);
     });    
-    $('#zoom-range').on('change', function(ev) {
+    $('#zoom-range').on('input', function(ev) {
         zoom.scale = parseFloat($(ev.target).val());
         zoom.refresh();
     });

@@ -38,6 +38,7 @@ class partCard {
         this.image = part.image;
         this.bw_image = part.bw_image;
         this.workflow = part.workflow;
+        this.task_ids = {};  // helps preventing card status race conditions
         this.progress = part.transcription_progress;
         this.locked = false;
 
@@ -53,11 +54,7 @@ class partCard {
         
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
-        if (this.image.thumbnails != undefined) {
-            $('img.card-img-top', $new).attr('data-src', this.image.thumbnails['card']);
-        } else {
-            $('img.card-img-top', $new).attr('data-src', this.image.uri);
-        }
+        this.updateThumbnail();
         $('img.card-img-top', $new).attr('title', this.title);
 
         $new.attr('draggable', true);
@@ -172,6 +169,19 @@ class partCard {
                 this.workflow['binarize'] == 'pending' ||
                 this.workflow['segment'] == 'pending' ||
                 this.workflow['transcribe'] == 'pending');
+    }
+
+    updateThumbnail() {
+        let uri, img = $('img.card-img-top', this.$element);
+        
+        if (this.image.thumbnails['card'] != undefined) {
+            uri = this.image.thumbnails['card'];
+        } else {
+            uri = this.image.uri;
+        }
+
+        if (img.attr('src')) img.attr('src', uri);
+        img.attr('data-src', uri);
     }
     
     updateWorkflowIcons() {
@@ -337,18 +347,31 @@ $(document).ready(function() {
         card.moveTo(index);
         g_dragged = null;
     });
-
+    
     // update workflow icons, send by notification through web socket
+    var workflow_order = ['pending', 'ongoing', 'error', 'done'];
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
         if (card) {
+            if ((!data.task_id || card.task_ids[data.process] == data.task_id) &&
+                workflow_order.indexOf(card.workflow[data.process]) > workflow_order.indexOf(data.status)) {
+                return; // protection against race condition
+            }
             card.workflow[data.process] = data.status;
+            if (data.task_id) card.task_ids[data.process] = data.task_id;
             card.updateWorkflowIcons();
+
+            
+            // special case, done with thumbnails:
+            if (data.process == 'generate_part_thumbnails' && data.status == 'done') {
+                card.image.thumbnails = data.data;
+                card.updateThumbnail();
+            }
         } else {
             // we probably received the event before the card was created, retrigger ev in a sec
             setTimeout(function() {
                 $('#alerts-container').trigger(ev, data);
-            }, 1000);
+            }, 100);
         }
     });
     $('#alerts-container').on('part:new', function(ev, data) {
@@ -454,7 +477,7 @@ $(document).ready(function() {
             processData: false,
             contentType: false
         }).done(function(data) {
-            console.log(proc+' process', data.status);
+            if (DEBUG) console.log(proc+' process', data.status);
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
             if (data.status == 'error') { alert(data.error); }

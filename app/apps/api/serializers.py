@@ -4,7 +4,8 @@ import json
 
 from django.conf import settings
 from rest_framework import serializers
-import easy_thumbnails
+from easy_thumbnails.files import get_thumbnailer
+
 
 from core.models import *
 
@@ -25,14 +26,15 @@ class ImageField(serializers.ImageField):
                 logger.warning('File not found: %s' % img.path)
                 data['size'] = None
             else:
-                try:
-                    if settings.THUMBNAIL_ENABLE and self.thumbnails:
-                        data['thumbnails'] = {
-                            alias: get_thumbnailer(img).get_thumbnail(
+                if self.thumbnails:
+                    data['thumbnails'] = {}
+                    thbn = get_thumbnailer(img)
+                    for alias in self.thumbnails: 
+                        try:
+                            data['thumbnails'][alias] = thbn.get_thumbnail(
                                 settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
-                            for alias in self.thumbnails}
-                except (easy_thumbnails.exceptions.InvalidImageFormatError, AttributeError):
-                    pass
+                        except AttributeError:
+                            pass
             return data
 
 
@@ -73,13 +75,17 @@ class PartSerializer(serializers.ModelSerializer):
             'image',
             'bw_image',
             'workflow',
+            'recoverable',
             'transcription_progress'
         )
     
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
-        return super().create(data)
+        obj = super().create(data)
+        # generate card thumbnail right away since we need it
+        get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
+        return obj
 
 
 class BlockSerializer(serializers.ModelSerializer):

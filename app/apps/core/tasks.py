@@ -1,6 +1,5 @@
 import json
 import logging
-import os.path
 import subprocess
 import redis
 
@@ -12,6 +11,7 @@ from django.utils.translation import gettext as _
 
 from celery import shared_task
 from celery.signals import *
+from easy_thumbnails.files import get_thumbnailer
 from kraken import binarization, pageseg, rpred
 from kraken.lib import models as kraken_models
 
@@ -25,20 +25,22 @@ redis_ = redis.Redis(host=settings.REDIS_HOST,
                      db=getattr(settings, 'REDIS_DB', 0))
 
 
-def update_client_state(part_id, task, status):
+def update_client_state(part_id, task, status, task_id=None, data=None):
     DocumentPart = apps.get_model('core', 'DocumentPart')
     part = DocumentPart.objects.get(pk=part_id)
     task_name = task.split('.')[-1]
     send_event('document', part.document.pk, "part:workflow", {
         "id": part.pk,
         "process": task_name,
-        "status": status
+        "status": status,
+        "task_id": task_id,
+        "data": data or {}
     })
 
     
 @shared_task
 def generate_part_thumbnails(instance_pk):
-    if not settings.THUMBNAIL_ENABLE:
+    if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -46,7 +48,12 @@ def generate_part_thumbnails(instance_pk):
     except DocumentPart.DoesNotExist:
         logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
         raise
-    part.generate_thumbnails()
+    
+    aliases = {}
+    thbnr = get_thumbnailer(part.image)
+    for alias, config in settings.THUMBNAIL_ALIASES[''].items():
+        aliases[alias] = thbnr.get_thumbnail(config).url
+    return aliases
 
 
 @shared_task
@@ -186,6 +193,11 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
                         level='success')
 
 
+def check_signal_order(old_signal, new_signal):
+    SIGNAL_ORDER = ['before_task_publish', 'task_prerun', 'task_failure', 'task_success']
+    return SIGNAL_ORDER.index(old_signal) < SIGNAL_ORDER.index(new_signal)
+
+
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
     if not sender.startswith('core.tasks'):
@@ -193,12 +205,20 @@ def before_publish_state(sender=None, body=None, **kwargs):
     instance_id = body[0][0]
     
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    
+    try:
+        # protects against signal race condition
+        if (data[sender]['task_id'] == sender.request.id and
+            not check_signal_order(data[sender]['status'], signal_name)):
+            return
+    except KeyError:
+        pass
+    
     data[sender] = {
         "task_id": kwargs['headers']['id'],
         "status": 'before_task_publish'
     }
     redis_.set('process-%d' % instance_id, json.dumps(data))
-
     update_client_state(instance_id, sender, 'pending')
 
 
@@ -211,7 +231,17 @@ def done_state(sender=None, body=None, **kwargs):
     instance_id = sender.request.args[0]
     
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+
     signal_name = kwargs['signal'].name
+    
+    try:
+        # protects against signal race condition
+        if (data[sender.name]['task_id'] == sender.request.id and
+            not check_signal_order(data[sender.name]['status'], signal_name)):
+            return
+    except KeyError:
+        pass
+
     data[sender.name] = {
         "task_id": sender.request.id,
         "status": signal_name
@@ -224,6 +254,11 @@ def done_state(sender=None, body=None, **kwargs):
     if status == 'error':
         # remove any pending task down the chain
         data = {k:v for k,v in data.items() if v['status'] != 'pending'}
-    
+
     redis_.set('process-%d' % instance_id, json.dumps(data))
-    update_client_state(instance_id, sender.name, status)
+
+    if status == 'done':
+        result = kwargs.get('result', None)
+    else:
+        result = None
+    update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)

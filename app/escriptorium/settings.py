@@ -16,6 +16,8 @@ import os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
+ADMINS = ['robin.tissot@psl.eu',]
+
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APPS_DIR)
@@ -151,6 +153,8 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+# time in seconds a user has to wait after a task is started before being able to recover
+TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
@@ -161,7 +165,7 @@ CELERY_TASK_QUEUES = (
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
     'core.tasks.lossless_compression': {'queue': 'low-priority'},
-    'core.tasks.generate_part_thumbnail': {'queue': 'low-priority'},
+    'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     #'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     #'users.tasks.async_email': '',
@@ -189,6 +193,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 COMPRESS_ENABLE = True
+
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
