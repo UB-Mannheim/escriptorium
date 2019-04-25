@@ -16,6 +16,8 @@ import os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
+ADMINS = ['robin.tissot@psl.eu',]
+
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APPS_DIR)
@@ -163,7 +165,7 @@ CELERY_TASK_QUEUES = (
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
     'core.tasks.lossless_compression': {'queue': 'low-priority'},
-    'core.tasks.generate_part_thumbnail': {'queue': 'low-priority'},
+    'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     #'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     #'users.tasks.async_email': '',
@@ -200,7 +202,7 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
     }
 }
-THUMBNAIL_EXTENSION = 'jpg'
+
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 
 REST_FRAMEWORK = {

@@ -172,15 +172,16 @@ class partCard {
     }
 
     updateThumbnail() {
-        var img = $('img.card-img-top', this.$element);
-        var target = (img.attr('src') != ''?'src':'data-src');  // if card img is already lazy-loaded we want to replace it
+        let uri, img = $('img.card-img-top', this.$element);
         
         if (this.image.thumbnails['card'] != undefined) {
-            if (img.attr('src')) img.attr('src', this.image.thumbnails['card']);
-            img.attr('data-src', this.image.thumbnails['card']);
+            uri = this.image.thumbnails['card'];
         } else {
-            img.attr(target, this.image.uri);
+            uri = this.image.uri;
         }
+
+        if (img.attr('src')) img.attr('src', uri);
+        img.attr('data-src', uri);
     }
     
     updateWorkflowIcons() {

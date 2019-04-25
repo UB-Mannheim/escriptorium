@@ -29,10 +29,12 @@ class ImageField(serializers.ImageField):
                 if self.thumbnails:
                     data['thumbnails'] = {}
                     thbn = get_thumbnailer(img)
-                    for alias in self.thumbnails:
-                        config = settings.THUMBNAIL_ALIASES[''][alias]
-                        if thbn.thumbnail_exists(config):
-                            data['thumbnails'][alias] = thbn.get_thumbnail(config, generate=False).url
+                    for alias in self.thumbnails: 
+                        try:
+                            data['thumbnails'][alias] = thbn.get_thumbnail(
+                                settings.THUMBNAIL_ALIASES[''][alias], generate=False).url
+                        except AttributeError:
+                            pass
             return data
 
 
