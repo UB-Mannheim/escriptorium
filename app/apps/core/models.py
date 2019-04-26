@@ -220,7 +220,7 @@ class DocumentPart(OrderedModel):
     def __str__(self):
         if self.name:
             return self.name
-        return '%s %d' % (self.typology or _("Element"), self.order or 0 + 1)
+        return '%s %d' % (self.typology or _("Element"), self.order + 1)
     
     @property
     def title(self):
