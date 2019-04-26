@@ -570,9 +570,12 @@ class DocumentPart(OrderedModel):
         tasks_order = ['convert', 'binarize', 'segment', 'transcribe']
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             sig = convert.si(self.pk)
-            sig.link(lossless_compression.si(self.pk))
+            
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(generate_part_thumbnails.si(self.pk))
+                sig.link(chain(lossless_compression.si(self.pk),
+                               generate_part_thumbnails.si(self.pk)))
+            else:
+                sig.link(lossless_compression.si(self.pk))
             tasks.append(sig)
         
         if (task_name == 'binarize'
