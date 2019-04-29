@@ -450,7 +450,7 @@ class DocumentPart(OrderedModel):
         filename, extension = os.path.splitext(self.image.file.name)
         opti_name = filename + '_opti.png'
         try:
-            subprocess.check_call(["pngcrush", "-q", self.image.file.name, opti_name])
+            subprocess.check_call(["pngcrush", "--fix", "-q", self.image.file.name, opti_name])
         except Exception as e:
             # Note: let it fail it's fine
             logger.exception("png optimization failed for %s." % filename)
