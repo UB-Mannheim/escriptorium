@@ -162,6 +162,15 @@ class IIIFManifesParser():
     
     def parse(self, document, parts, start_at=0):
         try:
+            for metadata in self.manifest['metadata']:
+                if metadata['value']:
+                    md, created = Metadata.objects.get_or_create(name=metadata['label'])
+                    DocumentMetadata.objects.get_or_create(
+                        document=document, key=md, value=metadata['value'])
+        except KeyError as e:
+            pass
+        
+        try:
             for i, canvas in enumerate(self.canvases):
                 if i < start_at:
                     continue

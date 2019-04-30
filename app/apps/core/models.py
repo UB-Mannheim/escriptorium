@@ -66,6 +66,7 @@ class Typology(models.Model):
 class Metadata(models.Model):
     name = models.CharField(max_length=128, unique=True)
     cidoc_id = models.CharField(max_length=8, null=True, blank=True)
+    public = models.BooleanField(default=False)
     
     class Meta:
         ordering = ('name',)
@@ -81,7 +82,7 @@ class DocumentMetadata(models.Model):
     
     def __str__(self):
         return '%s:%s' % (self.document.name, self.key.name)
-    
+
 
 class DocumentManager(models.Manager):
     def get_queryset(self):
