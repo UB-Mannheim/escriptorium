@@ -48,7 +48,7 @@
           {{ form.id }}  {# hidden #}
           {{ form.document }}  {# hidden #}
           <div class="input-group-prepend">
-            {% render_field form.key group=True %}
+            {% render_field form.key group=True autocomplete="on" list="metadataKeys" class="input-group-text" %}
           </div>
           {% render_field form.value group=True %}
           <div class="input-group-prepend">
@@ -58,20 +58,15 @@
         </div>
         {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
         {% endfor %}
-      </div>
 
-      {% comment %}
-      {# in case we rather have a free form with autocomplete #}
-      {% with choices=metadata_form.forms.0.key.field.choices %}
-      {% if choices %}
-      <datalist id="metadataKeys">
-        {% for choice in choices %}
-        <option>{{ choice.1 }}</option>
-        {% endfor %}
-      </datalist>
-      {% endif %}
-      {% endwith %}
-      {% endcomment %}
+        {% if metadata_form.forms.0.choices %}
+        <datalist id="metadataKeys">
+          {% for md in metadata_form.forms.0.choices %}
+          <option>{{ md.name }}</option>
+          {% endfor %}
+        </datalist>
+        {% endif %}
+      </div>
       
       <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
     </fieldset>

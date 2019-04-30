@@ -59,14 +59,14 @@ class TranscriptionLine {
     }
 
     getLineTranscription() {
-        var selectedTranscription = $('#document-transcriptions').val();
+        let selectedTranscription = $('#document-transcriptions').val();
         return this.transcriptions && this.transcriptions.find(function(tr) {
             return tr.transcription == selectedTranscription;
         });
     }
     
     getText() {
-        var lt = this.getLineTranscription();
+        let lt = this.getLineTranscription();
         if (lt !== undefined) {
             return lt.content;
         } else {
@@ -249,11 +249,18 @@ class TranscriptionPanel{
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
         this.$container = $('.img-container', this.$panel);
-        
+
+        let itrans = userProfile.get('initialTranscriptions');
+        if (itrans && itrans[DOCUMENT_ID]) {
+            $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
+        }
         $('#document-transcriptions').change($.proxy(function(ev) {
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].setText();
             }
+            let data = {};
+            data[DOCUMENT_ID] = $('#document-transcriptions').val();
+            userProfile.set('initialTranscriptions', data);
         }, this));
         
         $("#trans-modal").draggable({

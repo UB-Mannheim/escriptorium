@@ -66,6 +66,7 @@ class Typology(models.Model):
 class Metadata(models.Model):
     name = models.CharField(max_length=128, unique=True)
     cidoc_id = models.CharField(max_length=8, null=True, blank=True)
+    public = models.BooleanField(default=False)
     
     class Meta:
         ordering = ('name',)
@@ -81,7 +82,7 @@ class DocumentMetadata(models.Model):
     
     def __str__(self):
         return '%s:%s' % (self.document.name, self.key.name)
-    
+
 
 class DocumentManager(models.Manager):
     def get_queryset(self):
@@ -220,7 +221,7 @@ class DocumentPart(OrderedModel):
     def __str__(self):
         if self.name:
             return self.name
-        return '%s %d' % (self.typology or _("Element"), self.order or 0 + 1)
+        return '%s %d' % (self.typology or _("Element"), self.order + 1)
     
     @property
     def title(self):
@@ -450,7 +451,7 @@ class DocumentPart(OrderedModel):
         filename, extension = os.path.splitext(self.image.file.name)
         opti_name = filename + '_opti.png'
         try:
-            subprocess.check_call(["pngcrush", "-q", self.image.file.name, opti_name])
+            subprocess.check_call(["pngcrush", "--fix", "-q", self.image.file.name, opti_name])
         except Exception as e:
             # Note: let it fail it's fine
             logger.exception("png optimization failed for %s." % filename)

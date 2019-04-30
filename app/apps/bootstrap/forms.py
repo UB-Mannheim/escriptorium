@@ -14,8 +14,8 @@ class BootstrapFormMixin():
         for name, field in self.fields.items():
             if not field.widget.is_hidden:
                 field.widget.attrs.update({
-                    'placeholder': field.label,
-                    'title': field.label
+                    'placeholder': field.label or name.capitalize(),
+                    'title': field.label or name.capitalize()
                 })
                 class_ = field.widget.attrs.get('class', '')
                 if issubclass(field.widget.__class__, forms.CheckboxInput):

@@ -60,17 +60,23 @@ class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
         
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
+    key = forms.CharField()
+    
     class Meta:
         model = DocumentMetadata
         fields = '__all__'
     
     def __init__(self, *args, **kwargs):
+        self.choices = kwargs.pop('choices', None)
         super().__init__(*args, **kwargs)
-        attrs = self.fields['key'].widget.attrs
-        # attrs.update({'autocomplete':"off", 'list': "metadataKeys"})
-        attrs['class'] += ' input-group-text px-5'
-        self.fields['key'].empty_label = '-'
-        self.fields['key'].widget.need_label = False
+        if 'key' in self.initial:
+            # feels like a hack but changes the display value to the name rather than the pk
+            self.initial['key'] = next(md.name for md in self.choices
+                                       if md.pk == self.initial['key'])
+    
+    def clean_key(self):
+        key, created = Metadata.objects.get_or_create(name=self.cleaned_data['key'])
+        return key
 
 
 MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=MetadataForm,

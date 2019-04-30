@@ -101,6 +101,7 @@
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
     <script src="{% static 'js/messages.js' %}"></script>
     {% include 'includes/messages.html' %}
+    <script src="{% static 'js/profile.js' %}"></script>
     {% endif %}
     {% endblock scripts %}
   </body>

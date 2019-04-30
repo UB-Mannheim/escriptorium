@@ -42,6 +42,13 @@ class DocumentMixin():
         kwargs['request'] = self.request
         return kwargs
 
+    def get_metadata_formset(self, *args, instance=None):
+        if instance:
+            qs = Metadata.objects.filter(Q(public=True) | Q(documentmetadata__document=instance)).distinct()
+        else:
+            qs = Metadata.objects.filter(public=True)
+        return MetadataFormSet(*args, instance=instance, form_kwargs={'choices': qs})
+
 
 class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, CreateView):
     model = Document
@@ -51,12 +58,12 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['metadata_form'] = MetadataFormSet()
+        context['metadata_form'] = self.get_metadata_formset()
         return context
-
+    
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        metadata_form = MetadataFormSet(self.request.POST)
+        metadata_form = self.get_metadata_formset(self.request.POST)
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
@@ -84,14 +91,14 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
-            context['metadata_form'] = MetadataFormSet(instance=self.object)
+            context['metadata_form'] = self.get_metadata_formset(instance=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
-        metadata_form = MetadataFormSet(self.request.POST, instance=self.object)
+        metadata_form = self.get_metadata_formset(self.request.POST, instance=self.object)
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
