@@ -23,7 +23,7 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
     
     class Meta:
         model = Document
-        fields = ['name', 'typology']
+        fields = ['name', 'read_direction', 'main_script']  # 'typology'
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
@@ -118,6 +118,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         # self.fields['typology'].widget = forms.HiddenInput()  # for now
         # self.fields['typology'].initial = Typology.objects.get(name="Page")
         # self.fields['typology'].widget.attrs['title'] = _("Default Typology")
+        if self.document.read_direction == self.document.READ_DIRECTION_RTL:
+            self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
         self.fields['binarizer'].required = False
         self.fields['text_direction'].required = False

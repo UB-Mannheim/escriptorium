@@ -14,7 +14,7 @@
 
 {% block nav_content %}
 <div id="dropzone">
-  <form action="{% url 'api:part-list' document_pk=object.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
+  <form action="{% url 'api:part-list' document_pk=document.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
     <div class="dz-message"><i class="fas fa-upload"></i> {% trans "Drop images here or click to upload." %}</div>
   </form>
@@ -38,7 +38,7 @@
   </div>
 </div>
 
-<div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap">
+<div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap {{ document.read_direction }}">
   <div class="dropable js-drop"></div>
   {# card are created through the dom api (see below) #}
 </div>
@@ -84,11 +84,11 @@
 <script type="text/javascript">
 'use strict';
 var DOCUMENT_ID = {{ document.pk }};
-var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=object.pk %}";
+var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=document.pk %}";
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
-    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ object.pk }}}');
+    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
   });
 });
 </script>

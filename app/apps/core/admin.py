@@ -19,11 +19,16 @@ class DocumentPartAdmin(admin.ModelAdmin):
     
 class LineTranscriptionAdmin(admin.ModelAdmin):
     raw_id_fields = ('line',)
+
+class ScriptAdmin(admin.ModelAdmin):
+    list_display = ['name', 'text_direction']
+    list_filter = ['text_direction']
     
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentProcessSettings)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
 admin.site.register(Typology)
+admin.site.register(Script, ScriptAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel)

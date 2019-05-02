@@ -30,7 +30,10 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 10
     
     def get_queryset(self):
-        return Document.objects.for_user(self.request.user).select_related('owner').annotate(parts_updated_at=Max('parts__updated_at'))
+        return (Document.objects
+                .for_user(self.request.user)
+                .select_related('owner', 'main_script')
+                .annotate(parts_updated_at=Max('parts__updated_at')))
 
 
 class DocumentMixin():
