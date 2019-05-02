@@ -1,0 +1,11 @@
+.rtl {
+    direction: rtl;
+}
+
+#trans-modal .modal-body.rtl #trans-input {
+    transform-origin: top right;
+}
+
+.rtl .trans-box span {
+    transform-origin: top right;
+}
