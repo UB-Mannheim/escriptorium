@@ -81,7 +81,8 @@ class TranscriptionLine {
         this.textContainer.css('display', 'inline-block');
         var scaleX = Math.min(5, ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width());
         this.textContainer.css({
-            transform: 'scaleX('+scaleX+')'
+            transform: 'scaleX('+scaleX+')',
+            width: 100/scaleX + '%' // fit in the container
         });
         this.textContainer.css('display', 'block');
     }
