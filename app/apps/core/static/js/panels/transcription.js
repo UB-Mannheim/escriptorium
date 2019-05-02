@@ -1,5 +1,4 @@
 'use strict';
-var editor;
 var currentLine = null;
 var my_zone = moment.tz.guess();
 
@@ -80,7 +79,6 @@ class TranscriptionLine {
     
     scaleContent() {
         var scaleX = Math.min(5, ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width());
-        //var scaleY = this.textContainer.height() / ((this.box[3] - this.box[1])*this.ratio);
         this.textContainer.css({
             transform: 'scaleX('+scaleX+')'
         });
@@ -103,7 +101,8 @@ class TranscriptionLine {
         if (this.order == (this.panel.lines.length-1)) { $("#trans-modal #next-btn").attr('disabled', true); }
         else { $("#trans-modal #next-btn").attr('disabled', false); }
 
-        $('#trans-modal #trans-input .ql-editor').html(content); 
+        $('#trans-modal #trans-input').val(content);
+        $('#trans-modal #trans-rule').html(content);
         
         // fill the history
         var $container = $('#trans-modal #history tbody');
@@ -144,21 +143,23 @@ class TranscriptionLine {
         });
 
         // try to make the input match the image
-        $('#trans-modal #trans-input .ql-editor').css({
+        let $el = $('#trans-modal #trans-input, #trans-rule');
+        $el.css({
+            display: 'inline-block',  // change to inline-block temporarily to calculate width
+            width: 'auto',
             fontSize: originalHeight * ratio * 0.7 + 'px',
             lineHeight: originalHeight * ratio + 'px',
             height: originalHeight * ratio + 'px'
         });
-        var $el = $('#trans-modal #trans-input .ql-editor');
-        $el.css({width: 'initial', display: 'inline-block'}); // change to inline-block temporarily to calculate width
         if (content) {
-            var scaleX = Math.min(5, originalWidth * ratio / $el.width());
+            var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
+            scaleX = Math.max(0.5, scaleX);
             $el.css({
                 transform: 'scaleX('+ scaleX +')',
                 width: 100/scaleX + '%' // fit in the container
             });
         } else {
-            $el.css({transform: 'none'});
+            $el.css({transform: 'none', width: '100%'});
         }
         $el.css({display: 'block'}); // revert to block to take the full space available
         
@@ -168,7 +169,7 @@ class TranscriptionLine {
             width: this.imgWidth*ratio + 'px'
         }, 200);
 
-        editor.focus();
+        $el.focus();
     }
 
     addVersionLine(version) {
@@ -204,7 +205,7 @@ class TranscriptionLine {
     
     save() {
         var selectedTranscription = $('#document-transcriptions').val();
-        var new_content = $('#trans-modal #trans-input .ql-editor').html();
+        var new_content = $('#trans-modal #trans-input').val();
         if (this.getText() != new_content) {
             var type, uri;
             var lt = this.getLineTranscription();
@@ -295,29 +296,10 @@ class TranscriptionPanel{
         $('#trans-modal').on('click', '.js-pull-state', function(ev) {
             ev.preventDefault();
             var $tr = 'tr#'+$(ev.target).data('rev');
-            $('#trans-modal #trans-input .ql-editor').html($('.js-version-content', $tr).html());
+            $('#trans-modal #trans-input').val($('.js-version-content', $tr).html());
             
         });
-        
-        editor = new Quill('#trans-input', {
-            theme: 'bubble',
-            formats: ['bold', 'italic', 'strike', 'underline'],
-            modules: {
-                toolbar: ['bold', 'italic', 'strike', 'underline'],
-                keyboard: { // disable enter key
-                    bindings: {
-                        tab: false,
-                        handle: {
-                            key: 13,
-                            handler: function() {
-                                $('#trans-modal #save-continue-btn').click();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        
+                
         if (this.opened) this.open();
     }
 

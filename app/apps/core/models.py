@@ -75,6 +75,33 @@ class Metadata(models.Model):
         return self.name
 
 
+class Script(models.Model):
+    TEXT_DIRECTION_HORIZONTAL_LTR = 'horizontal-lr'
+    TEXT_DIRECTION_HORIZONTAL_RTL = 'horizontal-rl'
+    TEXT_DIRECTION_VERTICAL_LTR = 'vertical-lr'
+    TEXT_DIRECTION_VERTICAL_RTL = 'vertical-rl'
+    TEXT_DIRECTION_TTB = 'ttb'
+    TEXT_DIRECTION_CHOICES = (
+        ((TEXT_DIRECTION_HORIZONTAL_LTR, _("Horizontal l2r")),
+         (TEXT_DIRECTION_HORIZONTAL_RTL, _("Horizontal r2l")),
+         (TEXT_DIRECTION_VERTICAL_LTR, _("Vertical l2r")),
+         (TEXT_DIRECTION_VERTICAL_RTL, _("Vertical r2l")),
+         (TEXT_DIRECTION_TTB, _("Top to bottom")))
+    )
+    
+    name = models.CharField(max_length=128)
+    name_fr = models.CharField(max_length=128, blank=True)
+    iso_code = models.CharField(max_length=4, blank=True)
+    text_direction = models.CharField(max_length=64, default='horizontal-lr',
+                                      choices=TEXT_DIRECTION_CHOICES)
+    
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
+
+
 class DocumentMetadata(models.Model):
     document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
     key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
@@ -115,6 +142,12 @@ class Document(models.Model):
         (WORKFLOW_STATE_PUBLISHED, _("Published")),
         (WORKFLOW_STATE_ARCHIVED, _("Archived")),
     )
+    READ_DIRECTION_LTR = 'ltr'
+    READ_DIRECTION_RTL = 'rtl'
+    READ_DIRECTION_CHOICES = (
+        (READ_DIRECTION_LTR, _("Left to right")),
+        (READ_DIRECTION_RTL, _("Right to left")),
+    )
     
     name = models.CharField(max_length=512)
     
@@ -129,6 +162,12 @@ class Document(models.Model):
                                                 verbose_name=_("Share with teams"),
                                                 related_name='shared_documents')
     
+    main_script = models.ForeignKey(Script, null=True, blank=True, on_delete=models.SET_NULL)
+    read_direction = models.CharField(
+        max_length=3,
+        choices=READ_DIRECTION_CHOICES,
+        default=READ_DIRECTION_LTR
+    )
     typology = models.ForeignKey(Typology, null=True, blank=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
     created_at = models.DateTimeField(auto_now_add=True)
@@ -164,6 +203,19 @@ class Document(models.Model):
     @cached_property
     def is_transcribing(self):
         return self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).first() is not None
+
+    @cached_property
+    def default_text_direction(self):
+        if self.main_script:
+            if self.main_script.text_direction == Script.TEXT_DIRECTION_HORIZONTAL_RTL:
+                return 'rtl'
+            else:
+                return 'ltr'
+        else:
+            if self.read_direction == self.READ_DIRECTION_RTL:
+                return 'rtl'
+            else:
+                return 'ltr'
 
 
 def document_images_path(instance, filename):

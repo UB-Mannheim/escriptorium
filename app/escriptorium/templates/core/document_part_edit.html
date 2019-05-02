@@ -11,7 +11,7 @@
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_nav %}
-<div>
+<div class="ml-auto">
   <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
   <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
   <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
@@ -63,7 +63,11 @@
   <div class="w-100"></div>
   {# <div class="row" style="position: relative;"> #}
     <div class="col-sides">
+      {% if document.read_direction == 'rtl' %}
+      <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-left"></i></a>
+      {% else %}
       <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>
+      {% endif %}
       <div>
         <button id="zoom-reset" class="btn btn-sm btn-info" title="{% trans "Reset zoom." %}"><i class="fas fa-search-minus"></i></button>
         <input id="zoom-range" type="range" name="zoom-range" class="form-control-range mt-1" orient="vertical" min="" max="" step="0.2">
@@ -96,7 +100,7 @@
     </div>
   </div>
   
-  <div id="trans-panel" class="col">
+  <div id="trans-panel" class="col {{ document.default_text_direction }}">
     <div class="img-container">
       <div class="zoom-container">
         <div id="part-trans"></div>
@@ -104,7 +108,11 @@
     </div>
   </div>
   <div class="col-sides">
+    {% if document.read_direction == 'rtl' %}
+    <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-right"></i></a>
+    {% else %}
     <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -115,13 +123,18 @@
     <div class="modal-content">
       <div class="modal-header">
         {% comment %}<h5 class="modal-title mx-2" id="modal-label">{% trans "Line" %}</h5>{% endcomment %}
+        {% if document.read_direction == 'rtl' %}
+        <button type="button" id="next-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-left"></i></button>
+        <button type="button" id="prev-btn" class="btn btn-sm btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-right"></i></button>
+        {% else %}
         <button type="button" id="prev-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-left"></i></button>
         <button type="button" id="next-btn" class="btn btn-sm btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-right"></i></button>
+        {% endif %}
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body {{ document.default_text_direction }}">
         <div id="modal-img-container">
           <img id="line-img" src="{{ part.image|thumbnail_url:'large' }}" draggable="false" selectable="false"/>
           {# show context #}
@@ -129,8 +142,8 @@
         
         <input type="hidden" name="transcription"/>
         <input type="hidden" name="line"/>
-        <div id="trans-input" name="content" class="form-control"></div>
-
+        <input id="trans-input" name="content" class="form-control mb-2" />
+        <span id="trans-rule" name="content" class="form-control" /></span>
         <br>
         <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
         <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>

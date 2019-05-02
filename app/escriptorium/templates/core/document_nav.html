@@ -2,13 +2,21 @@
 {% load i18n bootstrap %}
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
+{% comment %}
+{% block styles %}
+{{block.super}}
+{% if object and %}
+{% endblock %}
+{% block bodyclass %}{% if object %}{{ object.read_direction }}{% endif %}{% endblock %}
+{% endcomment %}
+
 {% block body %}
 <nav>
   <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
     {% if object %}<div class="navbar-brand">{{ document.name }}</div>{% endif %}
     <a href="{% if object %}{% url 'document-update' pk=object.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
     <a id="images-tab-link" href="{% if object %}{% url 'document-images' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
-    <a href="{% if object  %}{% url 'document-part-edit' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link mr-auto {% block nav-edit-active %}{% endblock %}{% if not object or not object.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
+    <a href="{% if object  %}{% url 'document-part-edit' pk=object.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-edit-active %}{% endblock %}{% if not object or not object.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
     {% block extra_nav %}{% endblock %}
   </div>
 </nav>

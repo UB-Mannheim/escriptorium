@@ -38,7 +38,9 @@ class DocumentTestCase(TestCase):
         with self.assertNumQueries(19):
             resp = self.client.post(uri, {
                 'name':"Test+metadatas",
-                'typology': '',
+                'main_script': '',
+                'read_direction': 'rtl',
+                #'typology': '',
                 'documentmetadata_set-TOTAL_FORMS': 3,
                 'documentmetadata_set-INITIAL_FORMS': 0,
                 'documentmetadata_set-MIN_NUM_FORMS': 0,
