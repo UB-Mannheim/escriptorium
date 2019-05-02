@@ -80,11 +80,13 @@ class Script(models.Model):
     TEXT_DIRECTION_HORIZONTAL_RTL = 'horizontal-rl'
     TEXT_DIRECTION_VERTICAL_LTR = 'vertical-lr'
     TEXT_DIRECTION_VERTICAL_RTL = 'vertical-rl'
+    TEXT_DIRECTION_TTB = 'ttb'
     TEXT_DIRECTION_CHOICES = (
         ((TEXT_DIRECTION_HORIZONTAL_LTR, _("Horizontal l2r")),
          (TEXT_DIRECTION_HORIZONTAL_RTL, _("Horizontal r2l")),
          (TEXT_DIRECTION_VERTICAL_LTR, _("Vertical l2r")),
-         (TEXT_DIRECTION_VERTICAL_RTL, _("Vertical r2l")))
+         (TEXT_DIRECTION_VERTICAL_RTL, _("Vertical r2l")),
+         (TEXT_DIRECTION_TTB, _("Top to bottom")))
     )
     
     name = models.CharField(max_length=128)
