@@ -5,7 +5,6 @@
 {{ block.super }}
 {# custom jquery ui build with draggable and resizable only #}
     <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'vendor/quill/quill.bubble.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block nav-edit-active %}active{% endblock %}
@@ -169,7 +168,6 @@
   var PART_ID = {{part.id}};
 </script>
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'vendor/quill/quill.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>
