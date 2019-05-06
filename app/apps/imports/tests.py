@@ -29,6 +29,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                     'parts': str([self.part1.pk]),
                     'xml_file': SimpleUploadedFile(filename, fh.read())
                 })
+                print(response.content)
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.content, b'{"status":"ok"}')
         self.assertEqual(Import.objects.count(), 1)

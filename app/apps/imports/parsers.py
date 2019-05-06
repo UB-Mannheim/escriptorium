@@ -1,6 +1,7 @@
 import time
 import os.path
 import requests
+from lxml import etree
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -27,32 +28,35 @@ class XMLParser():
     SCHEMA_ALTO = 'alto'
     DEFAULT_NAME = _("XML Import")
     
-    def __init__(self, soup, name=None):
-        self.soup = soup
+    def __init__(self, root, name=None):
+        self.root = root
         self.name = name or self.DEFAULT_NAME
-        try:
-            self.pages = self.soup.find_all(self.TAGS['page'])
-        except AttributeError:
-            raise ParseError
-        
+        self.pages = self.get_pages()
+    
+    def get_pages(self):
+        raise NotImplemented
+    
     def make_line(self, line_tag):
         pass
-
+    
     def bbox(self, tag):
         pass
-
+    
     def block_bbox(self, block_tag):
         return self.bbox(block_tag)
-
+    
     def line_bbox(self, line_tag):
         return self.bbox(line_tag)
-
+    
     def post_process(self, part):
         pass
-
+    
     @property
     def total(self):
         return len(self.pages)
+    
+    def validate(self):
+        return True
     
     def parse(self, document, parts, start_at=0):
         """
@@ -70,12 +74,12 @@ class XMLParser():
                     part = parts[index]
                     part.blocks.all().delete()
                     part.lines.all().delete()
-                    for block in page.find_all(self.TAGS['block']):
+                    for block in page.findall(self.TAGS['block']):
                         b = Block.objects.create(
                             document_part=part,
                             box=self.block_bbox(block))
                         
-                        for line in block.find_all(self.TAGS['line']):
+                        for line in block.findall(self.TAGS['line']):
                             l = Line.objects.create(
                                 document_part=part,
                                 block=b,
@@ -100,6 +104,15 @@ class AltoParser(XMLParser):
         'line': 'TextLine'
     }
     DEFAULT_NAME = _("ALTO Import")
+    SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd'
+
+    def get_pages(self):
+        try:
+            from IPython import embed
+            embed()
+            return self.root.find('Layout').findall(self.TAGS['page'])
+        except AttributeError as e:
+            raise ParseError
     
     def bbox(self, tag):
         return (
@@ -111,14 +124,36 @@ class AltoParser(XMLParser):
     
     def make_line(self, line_tag):
         content = ''
-        for string in line_tag.find_all('String'):
+        for string in line_tag.findall('String'):
             content += (string.attrs.get('CONTENT') + ' ')
         return content
+
+    def validate(self):
+        try:
+            response = requests.get(self.SCHEMA)
+        except:
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+        else:
+            schema_root = etree.XML(response.content)
+            xmlschema = etree.XMLSchema(schema_root)
+            try:
+                xmlschema.assertValid(self.soup)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                if settings.DEBUG:
+                    print(e)
+                raise ParseError("Document didn't validate. %s" % e.args[0])
 
 
 class AbbyyParser(XMLParser):
     BLOCK_MARGIN = 10
     DEFAULT_NAME = _("ABBYY Import")
+    SCHEMA = ''
+    
+    def get_pages(self):
+        try:
+            return self.root.findall(self.TAGS['page'])
+        except AttributeError as e:
+            raise ParseError
     
     def line_bbox(self, tag):
         return (
@@ -132,7 +167,7 @@ class AbbyyParser(XMLParser):
         return (0,0,0,0)
     
     def make_line(self, line_tag):
-        content = ''.join(map(lambda a: a.text, line_tag.find_all('charParams')))
+        content = ''.join(map(lambda a: a.text, line_tag.findall('charParams')))
         return content
 
     def post_process(self, part):
@@ -144,6 +179,9 @@ class AbbyyParser(XMLParser):
                          l.box[0]+self.BLOCK_MARGIN,
                          l.box[1]+self.BLOCK_MARGIN)
             block.save()
+
+    def validate(self):
+        pass
 
 
 class IIIFManifesParser():
@@ -202,13 +240,15 @@ def make_parser(file_handler):
     # TODO: not great to rely on extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
-        soup = BeautifulSoup(file_handler, 'xml')
-        root = next(soup.descendants)
-        schema = root.attrs['xmlns']
+        root = etree.parse(file_handler).getroot()
+        try:
+            schema = root.nsmap[None]
+        except KeyError:
+            raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
         if 'abbyy' in schema:  # Not super robust
-            return AbbyyParser(soup)
+            return AbbyyParser(root)
         elif 'alto' in schema:
-            return AltoParser(soup)
+            return AltoParser(root)
         else:
             raise ParseError("Couldn't determine xml schema, abbyy or alto, check the content of the root tag.")
     elif ext == 'json':
