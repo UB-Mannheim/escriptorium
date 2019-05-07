@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="modal fade" id="{{proc}}-wizard" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
-    <div class="modal-content">
+    <div class="modal-content">      
       {% comment %}
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">{% block wizard_title %}{% endblock %}</h5>
@@ -10,11 +10,17 @@
         </button>
       </div>
       {% endcomment %}
-      <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="process-part-form" method="post" {% block wizard_action %}action="{% url 'document-parts-process' pk=object.pk %}"{% endblock %} enctype="multipart/form-data">
+      <form id="process-part-form-{{ proc }}" data-proc="{{ proc }}" class="js-help-container process-part-form" method="post" {% block wizard_action %}action="{% url 'document-parts-process' pk=object.pk %}"{% endblock %} enctype="multipart/form-data">
         <div class="modal-body">
+          <button type="button" class="btn help open" aria-label="Help">
+            <span class="fas fa-question"></span>
+          </button>
+          
+          {% block selected_images %}
           <p><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
+          {% endblock %}
           <div class="alert alert-primary help-text">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <button type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
             {% block wizard_help %}{% endblock %}

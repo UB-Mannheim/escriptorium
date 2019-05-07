@@ -1,0 +1,25 @@
+{% extends 'core/wizards/import.html' %}
+{% load i18n bootstrap %}
+
+{% block wizard_help %}
+{% url 'home' as import_url %} {# TODO #}
+<p>{% trans "The pages will match the selected images in the same order (ie. the first page of the document will match the first selected card and so on)." %}</p>
+<p>{% trans "Beware that importing a new segmentation will <u>destroy the current segmentation and all binded transcriptions</u>." %}
+  <br/>{% trans "Unless the override option is unchecked. In which case the old transcriptions for matching lines(by ID) will be saved in the history." %}
+</p>
+{{ block.super }}
+{% endblock %}
+
+{% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
+
+{% block wizard_fields %}
+{{ block.super }}
+<h5>{% trans "Or segmentation & transcriptions from XML." %}</h5>
+<div class="form-group">
+  {% render_field import_form.name %}
+  {% render_field import_form.override %}
+  {% render_field import_form.xml_file class="js-proc-settings" accept=".xml,.alto,.abbyy" %}
+</div>
+{% endblock %}
+
+{% block wizard_submit %}{% trans "Start importing" %}{% endblock %}

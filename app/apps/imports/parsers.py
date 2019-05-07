@@ -259,6 +259,6 @@ def make_parser(file_handler, name=None, override=True):
         else:
             raise ParseError("Couldn't determine xml schema, abbyy or alto, check the content of the root tag.")
     elif ext == 'json':
-        return IIIFManifesParser(file_handler, name=name)
+        return IIIFManifesParser(file_handler)
     else:
         raise ValueError("Invalid extension for the file to be parsed %s." % file_handler.name)

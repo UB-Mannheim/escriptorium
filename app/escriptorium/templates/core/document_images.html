@@ -24,7 +24,18 @@
     <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
-    <button id="import-selected" class="btn btn-sm btn-primary ml-auto js-proc-selected mr-1" data-proc="import" title="{% trans 'Import data.' %}"><i class="fas fa-file-import mr-1"></i>{% trans "Import" %}</button>
+    
+    <div class="btn-group ml-auto mr-1" role="group">
+      <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+        <i class="fas fa-file-import mr-1"></i>{% trans "Import" %}
+      </button>
+      <div class="dropdown-menu">
+        <a data-proc="import-iiif" class="js-proc-selected dropdown-item" href="#">IIIF</a>
+        <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">XML</a>
+      </div>
+    </div>
+    
+    {# <button id="import-selected" class="btn btn-sm btn-primary ml-auto js-proc-selected mr-1" data-proc="import" title="{% trans 'Import data.' %}"><i class="fas fa-file-import mr-1"></i>{% trans "Import" %}</button> #}
     {% with import=import_form.current_import %}
     <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
       <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
@@ -72,7 +83,8 @@
 </div>
 
 {# Process wizards #}
-{% include 'core/wizards/import.html' with proc='import' %}
+{% include 'core/wizards/import_iiif.html' with proc='import-iiif' %}
+{% include 'core/wizards/import_xml.html' with proc='import-xml' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
 {% include 'core/wizards/train.html' with proc='train' %}
@@ -80,6 +92,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'vendor/popper/popper.min.js' %}"></script>
 {{ block.super }}
 <script type="text/javascript">
 'use strict';
@@ -96,5 +109,5 @@ $(document).ready(function() {
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 <script src="{% static 'js/image_cards.js' %}"></script>
 <script src="{% static 'js/lazyload.js' %}"></script>
-<script src="{% static 'js/wheelzoom.js' %}"></script>
+<script src="{% static 'js/help.js' %}"></script>
 {% endblock %}
