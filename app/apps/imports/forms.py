@@ -16,10 +16,18 @@ from imports.tasks import document_import
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
+    name = forms.CharField(
+        required=False,
+        max_length=256,
+        help_text=_("The name of the target transcription. Will default to '{format} Import'."))
     parts = forms.CharField(required=False)
     xml_file = forms.FileField(
         required=False,
         help_text=_("Alto or Abbyy XML."))
+    override = forms.BooleanField(
+        initial=True, required=False,
+        label=_("Override existing segmentation."),
+        help_text=_("Destroys existing regions and lines before importing."))
     iiif_uri = forms.URLField(
         required=False,
         label=_("iiif manifesto"),
@@ -52,22 +60,23 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     
     def clean(self):
         cleaned_data = super().clean()
+        xml_file = self.cleaned_data.get('xml_file')
         if (not cleaned_data['resume_import']
-            and not cleaned_data['xml_file']
+            and not xml_file
             and not cleaned_data['iiif_uri']):
             raise forms.ValidationError(_("Choose one type of import."))
-
-        xml_file = self.cleaned_data['xml_file']
+        
         if xml_file:
             try:
-                parser = make_parser(xml_file)
+                parser = make_parser(xml_file,
+                                     name=cleaned_data.get('name'),
+                                     override=cleaned_data.get('override'))
                 parser.validate()
             except ParseError as e:
                 msg = _("Couldn't parse the given xml file or its validation failed.")
-                if hasattr(e, 'msg'):
-                    msg += " (%s)" % e.msg
+                if len(e.args):
+                    msg += " %s" % e.args[0]
                 raise forms.ValidationError(msg)
-            print(parser.total, len(cleaned_data['parts']))
             if parser and parser.total != len(cleaned_data['parts']):
                 raise forms.ValidationError(
                     _("The number of pages in the import (%d) file doesn't match the number of selected images (%d)." %
@@ -81,9 +90,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         else:
             imp = Import(
                 document = self.document,
+                name=self.cleaned_data['name'],
+                override=self.cleaned_data['override'],
                 started_by = self.user,
                 parts=self.cleaned_data.get('parts'))
-            
             if self.cleaned_data.get('iiif_uri'):
                 content = json.dumps(self.cleaned_data.get('iiif_uri'))
                 imp.import_file.save(

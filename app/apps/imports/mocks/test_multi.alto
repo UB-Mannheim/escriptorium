@@ -19,13 +19,13 @@
   <Layout>
     <Page WIDTH="850" HEIGHT="1083" PHYSICAL_IMG_NR="0" ID="page_0">
 	  <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
-		<TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
-		  <TextLine ID="line_0"
+		<TextBlock HPOS="0" VPOS="0" ID="textblock_0_0" WIDTH="850" HEIGHT="1083">
+		  <TextLine ID="line_0_0"
 					HPOS="160"
 					VPOS="771" 
 					WIDTH="0" 
 					HEIGHT="28">
-			<String ID="segment_0"
+			<String ID="segment_0_0_0"
 					CONTENT="Test page 1 block 1 line 1" 
 					HPOS="160" 
 					VPOS="771"
@@ -37,13 +37,13 @@
     </Page>
     <Page WIDTH="850" HEIGHT="1083" PHYSICAL_IMG_NR="0" ID="page_1">
 	  <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
-		<TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
-		  <TextLine ID="line_0"
+		<TextBlock HPOS="0" VPOS="0" ID="textblock_1_0" WIDTH="850" HEIGHT="1083">
+		  <TextLine ID="line_1_0"
 					HPOS="160"
 					VPOS="771" 
 					WIDTH="0" 
 					HEIGHT="28">
-			<String ID="segment_0"
+			<String ID="segment_1_0_0"
 					CONTENT="Test page 2 block 1 line 1" 
 					HPOS="160" 
 					VPOS="771"
@@ -51,13 +51,13 @@
 					HEIGHT="28"></String>
 		  </TextLine>
         </TextBlock>
-        <TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
-		  <TextLine ID="line_0"
+        <TextBlock HPOS="0" VPOS="0" ID="textblock_1_1" WIDTH="850" HEIGHT="1083">
+		  <TextLine ID="line_1_1"
 					HPOS="160"
 					VPOS="771" 
 					WIDTH="0" 
 					HEIGHT="28">
-			<String ID="segment_0"
+			<String ID="segment_1_0_1"
 					CONTENT="Test page 2 block 2 line 2"
 					HPOS="160" 
 					VPOS="771"

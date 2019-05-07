@@ -32,12 +32,15 @@ class Import(models.Model):
         choices=WORKFLOW_STATE_CHOICES)
     error_message = models.CharField(
         null=True, blank=True, max_length=512)
+
+    name = models.CharField(max_length=256, blank=True)
+    override = models.BooleanField(default=True)
     parts = ArrayField(models.IntegerField(), blank=True)
     import_file = models.FileField(
         upload_to='import_src/',
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json',])])
-
+    
     task_id = models.CharField(max_length=64, blank=True)
     processed = models.PositiveIntegerField(default=0)
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
@@ -59,7 +62,7 @@ class Import(models.Model):
     
     @cached_property
     def parser(self):
-        return make_parser(self.import_file)
+        return make_parser(self.import_file, name=self.name, override=self.override)
 
     def is_cancelable(self):
         return self.workflow_state < self.WORKFLOW_STATE_DONE

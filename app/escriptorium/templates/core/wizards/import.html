@@ -3,7 +3,9 @@
 
 {% block wizard_help %}
 {% url 'home' as import_url %} {# TODO #}
-<p>{% trans "Beware that importing a new segmentation will <u>destroy the current segmentation and all binded transcriptions</u>." %}</p>
+<p>{% trans "Beware that importing a new segmentation will <u>destroy the current segmentation and all binded transcriptions</u>." %}
+  <br/>{% trans "Unless the override option is unchecked. In which case the old transcriptions for matching lines(by ID) will be saved in the history." %}
+</p>
 <p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
 {% endblock %}
 
@@ -23,6 +25,8 @@
 
 <h5>{% trans "Or segmentation & transcriptions from xml/json." %}</h5>
 <div class="form-group">
+  {% render_field import_form.name %}
+  {% render_field import_form.override %}
   {% render_field import_form.xml_file class="js-proc-settings" accept=".xml,.alto,.abbyy" %}
 </div>
 {% endif %}

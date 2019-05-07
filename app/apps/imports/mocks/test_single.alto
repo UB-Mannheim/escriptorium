@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
   <Description>
 	<MeasurementUnit>pixel</MeasurementUnit>
@@ -48,7 +48,7 @@
 					HPOS="200" 
 					VPOS="771"
 					WIDTH="20" 
-					HEIGHT="28"></String>            
+					HEIGHT="28"></String>
 		  </TextLine>
           <TextLine ID="line_1"
 					HPOS="160"

@@ -660,6 +660,8 @@ class Block(OrderedModel, models.Model):
                                       related_name='blocks')
     order_with_respect_to = 'document_part'
 
+    external_id = models.CharField(max_length=128, blank=True, null=True)
+    
     class Meta(OrderedModel.Meta):
         pass
 
@@ -677,6 +679,8 @@ class Line(OrderedModel):  # Versioned,
     # text direction
     order_with_respect_to = 'document_part'
     version_ignore_fields = ('document_part', 'order')
+
+    external_id = models.CharField(max_length=128, blank=True, null=True)
     
     class Meta(OrderedModel.Meta):
         pass
@@ -696,6 +700,9 @@ class Transcription(models.Model):
     
     class Meta:
         unique_together = (('name', 'document'),)
+
+    def __str__(self):
+        return self.name
 
 
 class LineTranscription(Versioned, models.Model):
