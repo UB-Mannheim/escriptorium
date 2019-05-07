@@ -25,14 +25,14 @@
 					VPOS="771" 
 					WIDTH="0" 
 					HEIGHT="28">
-			<String ID="segment_0"
+			<String ID="0"
 					CONTENT="i" 
 					HPOS="160" 
 					VPOS="771"
 					WIDTH="0" 
 					HEIGHT="28" 
 					WC="0.9995">
-			  <Glyph ID="char_0" 
+			  <Glyph ID="0" 
 					 CONTENT="i"
 					 HPOS="160"
 					 VPOS="771"

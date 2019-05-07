@@ -5,12 +5,12 @@
 {{ block.super }}
 {# custom jquery ui build with draggable and resizable only #}
     <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'vendor/quill/quill.bubble.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_nav %}
+<div id="part-name" class="navbar-brand mx-3"></div>
 <div class="ml-auto">
   <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
   <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
@@ -169,7 +169,6 @@
   var PART_ID = {{part.id}};
 </script>
 <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'vendor/quill/quill.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>

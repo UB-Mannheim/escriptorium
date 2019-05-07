@@ -24,7 +24,7 @@ $(document).ready(function() {
     if (show_trans) $('#trans-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
     
     function loadPart(pk, callback) {
-        var uri = API.part.replace('{part_pk}', pk);
+        let uri = API.part.replace('{part_pk}', pk);
         $.get(uri, function(data) {
             for (var key in panels) {
                 panels[key].load(data);
@@ -36,6 +36,11 @@ $(document).ready(function() {
             if (data.next) $('a#next-part').data('target', data.next).show();
             else $('a#next-part').hide();
 
+            if (data.image && data.image.uri) {
+                let imagename = data.image.uri.split('/').slice(-1)[0];
+                $('#part-name').html(data.title).attr('title', imagename);
+            }
+            
             // set the 'image' tab btn to select the corresponding image
             var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
             tabUrl.searchParams.set('select', pk);

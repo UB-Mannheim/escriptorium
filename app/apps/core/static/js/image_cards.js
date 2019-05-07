@@ -13,7 +13,7 @@ var lastSelected = null;
 function openWizard(proc) {        
     var selected_num = partCard.getSelectedPks().length;
         
-    if(proc != 'import' && selected_num < 1) {
+    if(proc != 'import-iiif' && selected_num < 1) {
         alert('Select at least one image.');
         return;
     }
@@ -55,7 +55,8 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
-        $('img.card-img-top', $new).attr('title', this.title);
+        let filename = this.image.uri.split('/').splice(-1)[0];
+        $('img.card-img-top', $new).attr('title', this.title + '\n<' + filename +'>');
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);

@@ -1,6 +1,7 @@
 import time
 import os.path
 import requests
+from lxml import etree
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -9,6 +10,7 @@ from django.utils.translation import gettext as _
 from bs4 import BeautifulSoup
 
 from core.models import *
+from versioning.models import NoChangeException
 
 
 XML_EXTENSIONS = ['xml', 'alto', 'abbyy']
@@ -27,32 +29,37 @@ class XMLParser():
     SCHEMA_ALTO = 'alto'
     DEFAULT_NAME = _("XML Import")
     
-    def __init__(self, soup, name=None):
-        self.soup = soup
+    def __init__(self, root, name=None, override=True):
+        self.root = root
         self.name = name or self.DEFAULT_NAME
-        try:
-            self.pages = self.soup.find_all(self.TAGS['page'])
-        except AttributeError:
-            raise ParseError
+        self.override = override
+        self.namespace = self.root.nsmap[None]
+        self.pages = self.find(self.root, self.TAGS['page'])
+
+    def find(self, parent, tag):
+        return parent.findall('.//{%s}%s' % (self.namespace, tag))
         
     def make_line(self, line_tag):
         pass
-
+    
     def bbox(self, tag):
         pass
-
+    
     def block_bbox(self, block_tag):
         return self.bbox(block_tag)
-
+    
     def line_bbox(self, line_tag):
         return self.bbox(line_tag)
-
+    
     def post_process(self, part):
         pass
-
+    
     @property
     def total(self):
         return len(self.pages)
+    
+    def validate(self):
+        return True
     
     def parse(self, document, parts, start_at=0):
         """
@@ -61,31 +68,52 @@ class XMLParser():
         trans, created = Transcription.objects.get_or_create(
             document=document,
             name=self.name)
-        
         try:
             for index, page in enumerate(self.pages):
                 if index < start_at:
                     continue
-                with transaction.atomic():  
+                with transaction.atomic():
                     part = parts[index]
-                    part.blocks.all().delete()
-                    part.lines.all().delete()
-                    for block in page.find_all(self.TAGS['block']):
-                        b = Block.objects.create(
-                            document_part=part,
-                            box=self.block_bbox(block))
-                        
-                        for line in block.find_all(self.TAGS['line']):
-                            l = Line.objects.create(
-                                document_part=part,
-                                block=b,
-                                box=self.line_bbox(line))
+                    if self.override:
+                        part.blocks.all().delete()
+                        part.lines.all().delete()
+                    for block in self.find(page, self.TAGS['block']):
+                        # Note: don't use get_or_create to avoid a update query
+                        attrs = {'document_part': part,
+                                 'external_id': block.get('ID')}
+                        try:
+                            b = Block.objects.get(**attrs)
+                        except Block.DoesNotExist:
+                            b = Block(**attrs)
+                        b.box = self.block_bbox(block)
+                        b.save()
+                        for line in self.find(block, self.TAGS['line']):
+                            attrs = {'document_part': part,
+                                     'block': b,
+                                     'external_id': line.get('ID')}
+                            try:
+                                l = Line.objects.get(**attrs)
+                            except Line.DoesNotExist:
+                                l = Line(**attrs)
+                            l.box = self.line_bbox(line)
+                            l.save()
                             content = self.make_line(line)
                             if content:
-                                lt = LineTranscription.objects.create(
-                                    transcription=trans,
-                                    line=l,
-                                    content=content)
+                                attrs = {'transcription': trans, 'line':l}
+                                try:
+                                    lt = LineTranscription.objects.get(**attrs)
+                                except LineTranscription.DoesNotExist:
+                                    lt = LineTranscription(version_source='import',
+                                                           version_author=self.name,
+                                                           **attrs)
+                                else:
+                                    try:
+                                        lt.new_version()  # save current content in history
+                                    except NoChangeException:
+                                        pass
+                                lt.content = content
+                                lt.save()
+                            
                             # TODO: store glyphs too
                 self.post_process(part)
                 yield part
@@ -100,39 +128,50 @@ class AltoParser(XMLParser):
         'line': 'TextLine'
     }
     DEFAULT_NAME = _("ALTO Import")
+    SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd'
     
     def bbox(self, tag):
         return (
-            int(tag.attrs['HPOS']),
-            int(tag.attrs['VPOS']),
-            int(tag.attrs['HPOS']) + int(tag.attrs['WIDTH']),
-            int(tag.attrs['VPOS']) + int(tag.attrs['HEIGHT']),
+            int(tag.get('HPOS')),
+            int(tag.get('VPOS')),
+            int(tag.get('HPOS')) + int(tag.get('WIDTH')),
+            int(tag.get('VPOS')) + int(tag.get('HEIGHT')),
         )
     
     def make_line(self, line_tag):
-        content = ''
-        for string in line_tag.find_all('String'):
-            content += (string.attrs.get('CONTENT') + ' ')
-        return content
+        return ' '.join([e.get('CONTENT') for e in self.find(line_tag, 'String')])
+
+    def validate(self):
+        try:
+            response = requests.get(self.SCHEMA)
+        except:
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+        else:
+            schema_root = etree.XML(response.content)
+            xmlschema = etree.XMLSchema(schema_root)
+            try:
+                xmlschema.assertValid(self.root)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                raise ParseError("Document didn't validate. %s" % e.args[0])
 
 
 class AbbyyParser(XMLParser):
     BLOCK_MARGIN = 10
     DEFAULT_NAME = _("ABBYY Import")
+    SCHEMA = ''
     
     def line_bbox(self, tag):
         return (
-            int(tag.attrs['l']),
-            int(tag.attrs['t']),
-            int(tag.attrs['r']),
-            int(tag.attrs['b'])
-        )
+            int(tag.get('l')),
+            int(tag.get('t')),
+            int(tag.get('r')),
+            int(tag.get('b')))
     
     def block_bbox(self, tag):
         return (0,0,0,0)
     
     def make_line(self, line_tag):
-        content = ''.join(map(lambda a: a.text, line_tag.find_all('charParams')))
+        content = ''.join([e.text for e in self.find(line_tag, 'charParams')])
         return content
 
     def post_process(self, part):
@@ -144,6 +183,9 @@ class AbbyyParser(XMLParser):
                          l.box[0]+self.BLOCK_MARGIN,
                          l.box[1]+self.BLOCK_MARGIN)
             block.save()
+
+    def validate(self):
+        pass
 
 
 class IIIFManifesParser():
@@ -198,17 +240,22 @@ class IIIFManifesParser():
 
         
 
-def make_parser(file_handler):
+def make_parser(file_handler, name=None, override=True):
     # TODO: not great to rely on extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
-        soup = BeautifulSoup(file_handler, 'xml')
-        root = next(soup.descendants)
-        schema = root.attrs['xmlns']
+        try:
+            root = etree.parse(file_handler).getroot()
+        except etree.XMLSyntaxError as e:
+            raise ParseError(e.msg)
+        try:
+            schema = root.nsmap[None]
+        except KeyError:
+            raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
         if 'abbyy' in schema:  # Not super robust
-            return AbbyyParser(soup)
+            return AbbyyParser(root, name=name, override=override)
         elif 'alto' in schema:
-            return AltoParser(soup)
+            return AltoParser(root, name=name, override=override)
         else:
             raise ParseError("Couldn't determine xml schema, abbyy or alto, check the content of the root tag.")
     elif ext == 'json':

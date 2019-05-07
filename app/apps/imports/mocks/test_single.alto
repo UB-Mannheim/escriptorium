@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
   <Description>
 	<MeasurementUnit>pixel</MeasurementUnit>
@@ -31,31 +31,31 @@
 					VPOS="771"
 					WIDTH="20" 
 					HEIGHT="28"></String>
-            <String ID="segment_0"
+            <String ID="segment_1"
 					CONTENT="is" 
 					HPOS="185" 
 					VPOS="771"
 					WIDTH="10" 
 					HEIGHT="28"></String>
-            <String ID="segment_0"
+            <String ID="segment_2"
 					CONTENT="a" 
 					HPOS="195" 
 					VPOS="771"
 					WIDTH="5" 
 					HEIGHT="28"></String>
-            <String ID="segment_0"
+            <String ID="segment_3"
 					CONTENT="test" 
 					HPOS="200" 
 					VPOS="771"
 					WIDTH="20" 
-					HEIGHT="28"></String>            
+					HEIGHT="28"></String>
 		  </TextLine>
           <TextLine ID="line_1"
 					HPOS="160"
 					VPOS="800" 
 					WIDTH="25" 
 					HEIGHT="28">
-            <String ID="segment_0"
+            <String ID="segment_1_0"
 					CONTENT="Line 2" 
 					HPOS="160" 
 					VPOS="771"
@@ -67,7 +67,7 @@
 					VPOS="830" 
 					WIDTH="25" 
 					HEIGHT="28">
-            <String ID="segment_0"
+            <String ID="segment_2_0"
 					CONTENT="Line 3" 
 					HPOS="160" 
 					VPOS="771"
