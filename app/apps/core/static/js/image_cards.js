@@ -397,6 +397,7 @@ $(document).ready(function() {
     let $alertsContainer = $('#alerts-container');
     $alertsContainer.on('import:start', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
+        $('#import-resume').hide();
     });
     $alertsContainer.on('import:progress', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
@@ -464,7 +465,7 @@ $(document).ready(function() {
     $('.js-proc-selected').click(function(ev) {
         openWizard($(ev.target).data('proc'));
     });
-    
+
     $('.process-part-form').submit(function(ev) {
         ev.preventDefault();
         var $form = $(ev.target);
@@ -479,6 +480,9 @@ $(document).ready(function() {
             contentType: false
         }).done(function(data) {
             if (DEBUG) console.log(proc+' process', data.status);
+            if (proc == 'import-xml' || proc == 'import-iiif') {
+                $('#import-counter').text('queued.');
+            }
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
             if (data.status == 'error') { alert(data.error); }

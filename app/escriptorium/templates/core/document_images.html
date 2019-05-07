@@ -34,8 +34,6 @@
         <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">XML</a>
       </div>
     </div>
-    
-    {# <button id="import-selected" class="btn btn-sm btn-primary ml-auto js-proc-selected mr-1" data-proc="import" title="{% trans 'Import data.' %}"><i class="fas fa-file-import mr-1"></i>{% trans "Import" %}</button> #}
     {% with import=import_form.current_import %}
     <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
       <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
