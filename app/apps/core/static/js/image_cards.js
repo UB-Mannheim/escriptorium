@@ -13,7 +13,7 @@ var lastSelected = null;
 function openWizard(proc) {        
     var selected_num = partCard.getSelectedPks().length;
         
-    if(proc != 'import' && selected_num < 1) {
+    if(proc != 'import-iiif' && selected_num < 1) {
         alert('Select at least one image.');
         return;
     }
