@@ -12,8 +12,13 @@
 {% trans "Import is ongoing, please wait for it to be finished." %}
 {% else %}
 {% if import_form.current_import.failed %}
-{% blocktrans with progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
-{% render_field import_form.resume_import %}
+<div id="import-resume">
+  {% blocktrans with progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
+  {% if import_form.current_import.error_message %}
+  <br/>{% trans "Reason:" %} {{ import_form.current_import.error_message }}
+  {% endif %}
+  {% render_field import_form.resume_import %}
+</div>
 {% endif %}
 {% endif %}
 {% endblock %}
