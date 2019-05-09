@@ -53,7 +53,15 @@
       </div>
       <div class="col-auto mb-2">
         {% if document.transcriptions.count %}
-        <button id="document-export" data-href="{% url 'document-export' pk=document.pk trans_pk=document.transcriptions.first.pk %}" type="button" class="nav-item btn btn-primary" title="{% trans "Export" %}"><i class="fas fa-file-download"></i></button>
+        <div class="btn-group ml-auto mr-1" role="group">
+          <button id="document-export" type="button" class="nav-item btn btn-primary dropdown-toggle" title="{% trans "Export" %}" data-toggle="dropdown">
+            <i class="fas fa-file-download"></i>
+          </button>
+          <div class="dropdown-menu">
+            <a data-format="alto" class="js-export dropdown-item">Alto</a>
+            <a data-format="text" class="js-export dropdown-item">Texte</a>
+          </div>
+        </div>
         {% endif %}
       </div>
     </div>

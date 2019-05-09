@@ -91,10 +91,12 @@ class PartSerializer(serializers.ModelSerializer):
 class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
-        fields = ('pk', 'order', 'document_part', 'box')
+        fields = ('pk', 'document_part', 'order', 'box')
 
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):
+    # transcription = TranscriptionSerializer()
+    
     class Meta:
         model = LineTranscription
         fields = ('pk', 'line', 'transcription', 'content', 'versions')
@@ -107,12 +109,10 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 
 
 class LineSerializer(serializers.ModelSerializer):
-    transcriptions = LineTranscriptionSerializer(many=True, required=False)
-    
     class Meta:
         model = Line
-        fields = ('pk', 'order', 'document_part', 'block', 'box', 'transcriptions')
-
+        fields = ('pk',  'order', 'block', 'box')
+    
     def create(self, validated_data):
         instance = super().create(validated_data)
         instance.document_part.recalculate_ordering()
@@ -121,7 +121,15 @@ class LineSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.document_part.recalculate_ordering()
         return super().update(instance, validated_data)
-   
+
+
+class DetailedLineSerializer(LineSerializer):
+    block = BlockSerializer(required=False)
+    transcriptions = LineTranscriptionSerializer(many=True, required=False)
+    
+    class Meta(LineSerializer.Meta):
+        fields = LineSerializer.Meta.fields + ('document_part', 'block', 'transcriptions',)
+
 
 class PartDetailSerializer(PartSerializer):
     blocks = BlockSerializer(many=True)

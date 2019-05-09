@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
+  {% for line in lines %}{% ifchanged line.document_part %}{% if not forloop.first %}
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>{% endif %}
+  <Layout>
+    <Page HPOS="0" VPOS="0" WIDTH="{{ line.document_part.image.width }}" HEIGHT="{{ line.document_part.image.height }}" ID="page_{{line.document_part.pk}}">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">{% endifchanged %}
+        {% ifchanged line.block %}{% ifchanged line.document_part %}{% else %}{% if not forloop.first %}
+        </TextBlock>{% endif %}{% endifchanged %}
+        {% with block=line.block %}
+        <TextBlock {% if block %}HPOS="{{ block.box.0 }}" VPOS="{{ block.box.1 }}" WIDTH="{{ block.width }}" HEIGHT="{{ block.height }}" ID="{{ block.make_external_id }}"{% endif %}>{% endwith %}{% endifchanged %}
+	      <TextLine ID="{{ line.make_external_id }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}">
+	        <String CONTENT="{{ line.transcription.0.content }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}"></String>
+          </TextLine>{% endfor %}
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

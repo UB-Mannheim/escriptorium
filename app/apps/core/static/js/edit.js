@@ -1,5 +1,6 @@
 var panels;
 var API = {
+    document: '/api/documents/' + DOCUMENT_ID,
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
 var zoom = new WheelZoom({min_scale: 0.5, max_scale: 10});
@@ -49,16 +50,6 @@ $(document).ready(function() {
             if (callback) callback(data);
         });
     }
-    
-    /* export */
-    $('button#document-export').click(function(ev) {
-        ev.preventDefault();
-        var selectedTranscription = $('#document-transcriptions').val();
-        var href = $('#document-export').data('href');
-        var new_href = href.replace(/(transcription\/)\d+(\/export)/,
-                                    '$1'+selectedTranscription+'$2');
-        window.open(new_href);
-    });
     
     $('.open-panel').on('click', function(ev) {
         $(this).toggleClass('btn-primary').toggleClass('btn-secondary');

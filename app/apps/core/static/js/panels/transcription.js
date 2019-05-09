@@ -7,8 +7,9 @@ class TranscriptionLine {
         Object.assign(this, line);
         this.editing = false;
         this.panel = panel;
+        this.transcriptions = {};
         
-        this.api = API.part.replace('{part_pk}', panel.part.pk) + 'transcriptions/';
+        this.api = this.panel.api + 'transcriptions/';
         var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
         $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
         this.$element = $el;
@@ -71,10 +72,7 @@ class TranscriptionLine {
     }
     
     getLineTranscription() {
-        let selectedTranscription = $('#document-transcriptions').val();
-        return this.transcriptions && this.transcriptions.find(function(tr) {
-            return tr.transcription == selectedTranscription;
-        });
+        return this.transcriptions[this.panel.selectedTranscription];
     }
     
     getText() {
@@ -98,8 +96,7 @@ class TranscriptionLine {
         var content = this.getText();
         currentLine = this;
         // form hidden values
-        var selectedTranscription = $('#document-transcriptions').val();
-        $('#line-transcription-form [name=transcription]').val(selectedTranscription);
+        $('#line-transcription-form [name=transcription]').val(this.panel.selectedTranscription);
         $('#line-transcription-form [name=line]').val(this.pk);
         
         if (this.order == 0) { $("#trans-modal #prev-btn").attr('disabled', true); }
@@ -201,7 +198,6 @@ class TranscriptionLine {
     }
     
     pushVersion() {
-        var selectedTranscription = $('#document-transcriptions').val();
         var lt = this.getLineTranscription();
         var uri = this.api + lt.pk + '/new_version/';
         $.post(uri, {}).done($.proxy(function(data) {
@@ -214,7 +210,6 @@ class TranscriptionLine {
     }
     
     save() {
-        var selectedTranscription = $('#document-transcriptions').val();
         var new_content = $('#trans-modal #trans-input').val();
         if (this.getText() != new_content) {
             var type, uri;
@@ -224,17 +219,18 @@ class TranscriptionLine {
                 uri = this.api;
             } else { // update
                 type = 'PUT';
-                uri = this.api + lt.pk+'/';
+                uri = this.api + lt.pk + '/';
             }
+            
             $.ajax({type: type, url:uri, data:{
                 line: this.pk,
-                transcription: selectedTranscription,
+                transcription: this.panel.selectedTranscription,
                 content: new_content
             }}).done($.proxy(function(data){
                 if (!lt) {  // creation
                     lt = {};
                     Object.assign(lt, data);
-                    this.transcriptions.push(lt);
+                    this.transcriptions[data.transcription] = lt;
                 } else {
                     Object.assign(lt, data);
                 }
@@ -257,18 +253,27 @@ class TranscriptionPanel{
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
         this.$container = $('.img-container', this.$panel);
+        this.selectedTranscription = $('#document-transcriptions').val();
 
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
             $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
         }
         $('#document-transcriptions').change($.proxy(function(ev) {
+            this.selectedTranscription = $('#document-transcriptions').val();
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].reset();
             }
             let data = {};
-            data[DOCUMENT_ID] = $('#document-transcriptions').val();
+            data[DOCUMENT_ID] = this.selectedTranscription;
+            this.loadTranscriptions();
             userProfile.set('initialTranscriptions', data);
+        }, this));
+        
+        /* export */
+        $('.js-export').click($.proxy(function(ev) {
+            ev.preventDefault();
+            window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + $(ev.target).data('format'));
         }, this));
         
         $("#trans-modal").draggable({
@@ -322,16 +327,34 @@ class TranscriptionPanel{
     getRatio() {
         return $('.img-container', this.$panel).width() / this.part.image.size[0];
     }
+
+    loadTranscriptions() {
+        let getNext = $.proxy(function(page) {
+            let uri = this.api + 'transcriptions/?transcription='+this.selectedTranscription+'&page=' + page;
+            $.get(uri, $.proxy(function(data) {
+                for (var i=0; i<data.results.length; i++) {
+                    let cur = data.results[i];
+                    let lt = $('#trans-box-line-'+cur.line).data('TranscriptionLine');
+                    lt.transcriptions[this.selectedTranscription] = cur;
+                    lt.reset();
+                }
+                if (data.next) getNext(page+1);
+            }, this));
+        }, this);
+        getNext(1);
+    }
     
     load(part) {
+        this.part = part;
+        this.api = API.part.replace('{part_pk}', this.part.pk);
         this.lines = [];
         $('.trans-box').remove();
-        this.part = part;
         this.ratio = this.getRatio();
         $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }
+        this.loadTranscriptions();
         zoom.register(this.$container, true);
     }
     
