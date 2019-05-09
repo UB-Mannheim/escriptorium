@@ -24,7 +24,13 @@ class DocumentExportTestCase(TestCase):
     def test_simple(self):
         self.client.force_login(self.user)
         with self.assertNumQueries(6):
-            resp = self.client.get(reverse('document-export',
-                                           kwargs={'pk': self.trans.document.pk,
-                                                   'trans_pk': self.trans.pk}))
+            resp = self.client.get(reverse('api:document-export',
+                                           kwargs={'pk': self.trans.document.pk})
+                                   + '?transcription=' + str(self.trans.pk))
         self.assertEqual(resp.content.decode(), "\nline 1:1\nline 1:2\nline 1:3\n-\nline 2:1\nline 2:2\nline 2:3\n")
+
+    def test_invalid(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('api:document-export',
+                                       kwargs={'pk': self.trans.document.pk}))
+        self.assertEqual(resp.status_code, 400)

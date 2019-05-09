@@ -205,6 +205,9 @@ form.inline-form {
     z-index: 3;
     box-sizing: content-box; 
 }
+.line-box:hover {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px var(--secondary);
+}
 
 .box.selected {
     border: 1px dashed;
@@ -340,8 +343,9 @@ i.panel-icon {
     overflow: visible;
     margin-top: 1rem;
     white-space: nowrap;
-    padding: 0 8px;
+    padding: 0 2px;
     transform-origin: top left;
+    box-shadow: none;
 }
 #trans-rule {
     visibility: hidden;
@@ -362,11 +366,16 @@ i.panel-icon {
     padding: 0;
     cursor: pointer;
 }
+.trans-box:hover {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px var(--secondary);
+}
+
 .trans-box span {
     white-space: nowrap;
     display: block;
     transform-origin: top left;
     max-height: 100%;
+    width: 100%;
 }
 .trans-box span:empty {
     width: 100%;

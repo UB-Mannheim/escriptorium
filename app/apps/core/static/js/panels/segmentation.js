@@ -69,18 +69,20 @@ class Box {
             stop: $.proxy(function(ev) {
                 this.changed = true;
                 this.save();
+                this.resizingLine = null;
             }, this),
             start: $.proxy(function(ev) {
                 this.click.x = ev.clientX;
                 this.click.y = ev.clientY;
+                this.resizingLine = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
             }, this),
             resize: $.proxy(function(ev, ui) {
                 ui.size.width = (ev.clientX - this.click.x) / zoom.scale + ui.originalSize.width;
                 ui.size.height = (ev.clientY - this.click.y) / zoom.scale + ui.originalSize.height;
-                var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
-                if (tl) {
-                    tl.box = this.getBox();
-                    tl.setPosition();
+                if (this.resizingLine) {
+                    this.resizingLine.box = this.getBox();
+                    this.resizingLine.setPosition();
+                    this.resizingLine.scaleContent();
                 }
             }, this)
         });
@@ -107,6 +109,7 @@ class Box {
         
         $box.click($.proxy(function(ev) {
             ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
+            ev.preventDefault();
             this.select();
         }, this));
         

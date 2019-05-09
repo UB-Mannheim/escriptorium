@@ -17,5 +17,4 @@ urlpatterns = [
     path('document/<int:pk>/publish/', PublishDocument.as_view(), name='document-publish'),
     path('document/<int:pk>/share/', ShareDocument.as_view(), name='document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(), name='document-parts-process'),
-    path('document/<int:pk>/transcription/<int:trans_pk>/export/', DocumentExport.as_view(), name='document-export'),
 ]

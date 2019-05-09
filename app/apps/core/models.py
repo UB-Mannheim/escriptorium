@@ -665,6 +665,17 @@ class Block(OrderedModel, models.Model):
     class Meta(OrderedModel.Meta):
         pass
 
+    @property
+    def width(self):
+        return self.box[2] - self.box[0]
+    
+    @property
+    def height(self):
+        return self.box[3] - self.box[1]
+    
+    def make_external_id(self):
+        return self.external_id or 'textblock_%d' % self.pk
+
 
 class Line(OrderedModel):  # Versioned, 
     """
@@ -687,8 +698,19 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
+
+    @property
+    def width(self):
+        return self.box[2] - self.box[0]
     
-    
+    @property
+    def height(self):
+        return self.box[3] - self.box[1]
+
+    def make_external_id(self):
+        return self.external_id or 'line_%d' % self.pk
+
+
 class Transcription(models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(Document, on_delete=models.CASCADE,

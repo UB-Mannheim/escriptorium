@@ -3,65 +3,76 @@ var currentLine = null;
 var my_zone = moment.tz.guess();
 
 class TranscriptionLine {
-    constructor (line, imgWidth, panel) {
+    constructor (line, panel) {
         Object.assign(this, line);
-        this.imgWidth = imgWidth;
         this.editing = false;
         this.panel = panel;
+        this.transcriptions = {};
         
-        this.api = API.part.replace('{part_pk}', panel.part.pk) + 'transcriptions/';
+        this.api = this.panel.api + 'transcriptions/';
         var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
         $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
         this.$element = $el;
         
         this.textContainer = $('span', $el).first();
-        this.setText();        
         $('#part-trans').append($el);
+        this.reset();
         
         $el.on('mouseover', $.proxy(function(ev) {
             this.showOverlay();
         }, this));
         $el.on('mouseleave', $.proxy(function(ev) {
-            if (!this.editing) $('.overlay').fadeOut();
+            if (!this.editing) $('.overlay').fadeOut({queue:false});
         }, this));
         $el.on('click', $.proxy(function(ev) {
             this.edit();
         }, this));
-        
-        this.getRatio();
-        this.setPosition();
     }
-
-    getRatio() {
-        this.ratio = $('.img-container', this.panel.$panel).width() / this.imgWidth;
+    
+    reset() {
+        this.setText();
+        this.textContainer.ready($.proxy(function(ev) {
+            this.setPosition();
+            this.scaleContent();
+        }, this));
     }
     
     setPosition() {
         this.$element.css({
-            left: this.box[0]*this.ratio + 'px',
-            top: this.box[1]*this.ratio + 'px',
-            width: (this.box[2] - this.box[0])*this.ratio  + 'px',
-            height: (this.box[3] - this.box[1])*this.ratio + 'px',
-            fontSize:  (this.box[3] - this.box[1])*this.ratio*0.7 + 'px',
-            lineHeight: (this.box[3] - this.box[1])*this.ratio + 'px'
+            left: this.box[0]*this.panel.ratio + 'px',
+            top: this.box[1]*this.panel.ratio + 'px',
+            width: (this.box[2] - this.box[0])*this.panel.ratio  + 'px',
+            height: (this.box[3] - this.box[1])*this.panel.ratio + 'px',
+            fontSize:  (this.box[3] - this.box[1])*this.panel.ratio*0.7 + 'px',
+            lineHeight: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
         });
-        this.scaleContent();
+    }
+    
+    scaleContent() {
+        this.textContainer.css({
+            display: 'inline-block', // can't calculate size otherwise
+            transform: 'none',
+            width: 'initial'
+        });
+        var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
+        this.textContainer.css({
+            transform: 'scaleX('+scaleX+')',
+            display: 'block',
+            width: '100%'
+        });
     }
     
     showOverlay() {
         $('.overlay').css({
-            left: this.box[0]*this.ratio + 'px',
-            top: this.box[1]*this.ratio + 'px',
-            width: (this.box[2] - this.box[0])*this.ratio + 'px',
-            height: (this.box[3] - this.box[1])*this.ratio + 'px'
-        }).stop().show();
+            left: this.box[0]*this.panel.ratio + 'px',
+            top: this.box[1]*this.panel.ratio + 'px',
+            width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
+            height: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
+        }).stop(true).fadeIn(0.1);
     }
-
+    
     getLineTranscription() {
-        let selectedTranscription = $('#document-transcriptions').val();
-        return this.transcriptions && this.transcriptions.find(function(tr) {
-            return tr.transcription == selectedTranscription;
-        });
+        return this.transcriptions[this.panel.selectedTranscription];
     }
     
     getText() {
@@ -72,19 +83,9 @@ class TranscriptionLine {
             return '';
         }
     }
+    
     setText() {
         this.textContainer.html(this.getText());
-        this.scaleContent();
-    }
-    
-    scaleContent() {
-        this.textContainer.css('display', 'inline-block');
-        var scaleX = Math.min(5, ((this.box[2] - this.box[0])*this.ratio) / this.textContainer.width());
-        this.textContainer.css({
-            transform: 'scaleX('+scaleX+')',
-            width: 100/scaleX + '%' // fit in the container
-        });
-        this.textContainer.css('display', 'block');
     }
     
     edit () {
@@ -95,8 +96,7 @@ class TranscriptionLine {
         var content = this.getText();
         currentLine = this;
         // form hidden values
-        var selectedTranscription = $('#document-transcriptions').val();
-        $('#line-transcription-form [name=transcription]').val(selectedTranscription);
+        $('#line-transcription-form [name=transcription]').val(this.panel.selectedTranscription);
         $('#line-transcription-form [name=line]').val(this.pk);
         
         if (this.order == 0) { $("#trans-modal #prev-btn").attr('disabled', true); }
@@ -140,23 +140,27 @@ class TranscriptionLine {
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
+        let height = Math.max(originalHeight * ratio, 200);
+        height = Math.min(height, 40);
+        let width = originalWidth * ratio;
+        
         $('#trans-modal #modal-img-container').animate({
-            height: originalHeight * ratio + 'px',
-            width: originalWidth * ratio + 'px'
+            height: height + 'px',
+            width: width + 'px'
         });
-
+        
         // try to make the input match the image
         let $el = $('#trans-modal #trans-input, #trans-rule');
         $el.css({
             display: 'inline-block',  // change to inline-block temporarily to calculate width
             width: 'auto',
-            fontSize: originalHeight * ratio * 0.7 + 'px',
-            lineHeight: originalHeight * ratio + 'px',
-            height: originalHeight * ratio + 'px'
+            fontSize: height * 0.7 + 'px',
+            lineHeight: height + 'px',
+            height: height + 'px'
         });
         if (content) {
             var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
-            scaleX = Math.max(0.5, scaleX);
+            scaleX = Math.max(0.2, scaleX);
             $el.css({
                 transform: 'scaleX('+ scaleX +')',
                 width: 100/scaleX + '%' // fit in the container
@@ -169,7 +173,7 @@ class TranscriptionLine {
         $('#trans-modal #line-img').animate({
             left: '-'+this.box[0]*ratio+'px',
             top: '-'+this.box[1]*ratio+'px',
-            width: this.imgWidth*ratio + 'px'
+            width: this.panel.part.image.size[0]*ratio + 'px'
         }, 200);
 
         $el.focus();
@@ -194,7 +198,6 @@ class TranscriptionLine {
     }
     
     pushVersion() {
-        var selectedTranscription = $('#document-transcriptions').val();
         var lt = this.getLineTranscription();
         var uri = this.api + lt.pk + '/new_version/';
         $.post(uri, {}).done($.proxy(function(data) {
@@ -207,7 +210,6 @@ class TranscriptionLine {
     }
     
     save() {
-        var selectedTranscription = $('#document-transcriptions').val();
         var new_content = $('#trans-modal #trans-input').val();
         if (this.getText() != new_content) {
             var type, uri;
@@ -217,24 +219,22 @@ class TranscriptionLine {
                 uri = this.api;
             } else { // update
                 type = 'PUT';
-                uri = this.api + lt.pk+'/';
+                uri = this.api + lt.pk + '/';
             }
+            
             $.ajax({type: type, url:uri, data:{
                 line: this.pk,
-                transcription: selectedTranscription,
+                transcription: this.panel.selectedTranscription,
                 content: new_content
             }}).done($.proxy(function(data){
                 if (!lt) {  // creation
                     lt = {};
                     Object.assign(lt, data);
-                    this.transcriptions.push(lt);
+                    this.transcriptions[data.transcription] = lt;
                 } else {
                     Object.assign(lt, data);
                 }
-                this.setText();
-                this.textContainer.ready($.proxy(function(ev) {
-                    this.scaleContent();
-                }, this));
+                this.reset();
             }, this)).fail(function(data) {
                 alert(data);
             });
@@ -253,18 +253,27 @@ class TranscriptionPanel{
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
         this.$container = $('.img-container', this.$panel);
+        this.selectedTranscription = $('#document-transcriptions').val();
 
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
             $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
         }
         $('#document-transcriptions').change($.proxy(function(ev) {
+            this.selectedTranscription = $('#document-transcriptions').val();
             for (var i=0; i<this.lines.length; i++) {
-                this.lines[i].setText();
+                this.lines[i].reset();
             }
             let data = {};
-            data[DOCUMENT_ID] = $('#document-transcriptions').val();
+            data[DOCUMENT_ID] = this.selectedTranscription;
+            this.loadTranscriptions();
             userProfile.set('initialTranscriptions', data);
+        }, this));
+        
+        /* export */
+        $('.js-export').click($.proxy(function(ev) {
+            ev.preventDefault();
+            window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + $(ev.target).data('format'));
         }, this));
         
         $("#trans-modal").draggable({
@@ -272,7 +281,7 @@ class TranscriptionPanel{
         });
         $("#trans-modal").on('hide.bs.modal', function(ev) {
             currentLine.editing = false;
-            $('.overlay').fadeOut();
+            $('.overlay').fadeOut({queue:false});
         });
         $("#trans-modal #prev-btn").click($.proxy(function(ev) {
             this.lines[currentLine.order-1].edit();
@@ -296,28 +305,56 @@ class TranscriptionPanel{
                 $('#trans-modal').modal('hide');
             }
         }, this));
+        $(document).keydown(function(e) {
+	        if(e.originalEvent.key == 'Enter') {
+	            $('#trans-modal #save-continue-btn').trigger('click');
+	        }
+	    });
+        
         $('#trans-modal').on('click', '.js-pull-state', function(ev) {
             ev.preventDefault();
             var $tr = 'tr#'+$(ev.target).data('rev');
             $('#trans-modal #trans-input').val($('.js-version-content', $tr).html());
-            
         });
                 
         if (this.opened) this.open();
     }
 
-    addLine(line) {
-        this.lines.push(new TranscriptionLine(line, this.part.image.size[0], this));
+    addLine(line, ratio) {
+        this.lines.push(new TranscriptionLine(line, this));
+    }
+
+    getRatio() {
+        return $('.img-container', this.$panel).width() / this.part.image.size[0];
+    }
+
+    loadTranscriptions() {
+        let getNext = $.proxy(function(page) {
+            let uri = this.api + 'transcriptions/?transcription='+this.selectedTranscription+'&page=' + page;
+            $.get(uri, $.proxy(function(data) {
+                for (var i=0; i<data.results.length; i++) {
+                    let cur = data.results[i];
+                    let lt = $('#trans-box-line-'+cur.line).data('TranscriptionLine');
+                    lt.transcriptions[this.selectedTranscription] = cur;
+                    lt.reset();
+                }
+                if (data.next) getNext(page+1);
+            }, this));
+        }, this);
+        getNext(1);
     }
     
     load(part) {
+        this.part = part;
+        this.api = API.part.replace('{part_pk}', this.part.pk);
         this.lines = [];
         $('.trans-box').remove();
-        this.part = part;
+        this.ratio = this.getRatio();
         $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }
+        this.loadTranscriptions();
         zoom.register(this.$container, true);
     }
     
@@ -340,9 +377,9 @@ class TranscriptionPanel{
     
     reset() {
         if (this.opened) {
+            this.ratio = this.getRatio();
             for (var i=0; i<this.lines.length; i++) {
-                this.lines[i].getRatio();
-                this.lines[i].setPosition();
+                this.lines[i].reset();
             }
         }
     }
