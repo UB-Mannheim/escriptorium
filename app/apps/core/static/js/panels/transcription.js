@@ -53,11 +53,11 @@ class TranscriptionLine {
             transform: 'none',
             width: 'initial'
         });
-        var scaleX = this.$element.width() / this.textContainer.width();
+        var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
         this.textContainer.css({
             transform: 'scaleX('+scaleX+')',
-            width: 100/scaleX + '%', // fit in the container
-            display: 'block'
+            display: 'block',
+            width: '100%'
         });
     }
     
@@ -143,23 +143,27 @@ class TranscriptionLine {
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
+        let height = Math.max(originalHeight * ratio, 200);
+        height = Math.min(height, 40);
+        let width = originalWidth * ratio;
+        
         $('#trans-modal #modal-img-container').animate({
-            height: originalHeight * ratio + 'px',
-            width: originalWidth * ratio + 'px'
+            height: height + 'px',
+            width: width + 'px'
         });
-
+        
         // try to make the input match the image
         let $el = $('#trans-modal #trans-input, #trans-rule');
         $el.css({
             display: 'inline-block',  // change to inline-block temporarily to calculate width
             width: 'auto',
-            fontSize: originalHeight * ratio * 0.7 + 'px',
-            lineHeight: originalHeight * ratio + 'px',
-            height: originalHeight * ratio + 'px'
+            fontSize: height * 0.7 + 'px',
+            lineHeight: height + 'px',
+            height: height + 'px'
         });
         if (content) {
             var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
-            scaleX = Math.max(0.5, scaleX);
+            scaleX = Math.max(0.2, scaleX);
             $el.css({
                 transform: 'scaleX('+ scaleX +')',
                 width: 100/scaleX + '%' // fit in the container
@@ -296,11 +300,16 @@ class TranscriptionPanel{
                 $('#trans-modal').modal('hide');
             }
         }, this));
+        $(document).keydown(function(e) {
+	        if(e.originalEvent.key == 'Enter') {
+	            $('#trans-modal #save-continue-btn').trigger('click');
+	        }
+	    });
+        
         $('#trans-modal').on('click', '.js-pull-state', function(ev) {
             ev.preventDefault();
             var $tr = 'tr#'+$(ev.target).data('rev');
             $('#trans-modal #trans-input').val($('.js-version-content', $tr).html());
-            
         });
                 
         if (this.opened) this.open();

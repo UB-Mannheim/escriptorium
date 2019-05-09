@@ -109,6 +109,7 @@ class Box {
         
         $box.click($.proxy(function(ev) {
             ev.stopPropagation();  // avoid bubbling to document that would trigger unselect
+            ev.preventDefault();
             this.select();
         }, this));
         
