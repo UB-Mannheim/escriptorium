@@ -68,7 +68,7 @@ class TranscriptionLine {
             top: this.box[1]*this.panel.ratio + 'px',
             width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
             height: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
-        }).stop(true).fadeIn(0.1);
+        }).stop(true).fadeIn(0.2);
     }
     
     getLineTranscription() {

@@ -1,5 +1,7 @@
+from django.db.models import Prefetch
 from django.shortcuts import render
 from django.utils.text import slugify
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
@@ -52,6 +54,15 @@ class DocumentViewSet(ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def export(self, request, pk=None):
+        def fetch_by_batch(queryset, start=0, size=200):
+            while True:
+                results = queryset[start:start+size]
+                for result in results:
+                    yield result
+                if len(results) < size:
+                    break
+                start += size
+            
         format_ = request.GET.get('as', 'text')
         try:
             transcription = Transcription.objects.get(
@@ -60,7 +71,7 @@ class DocumentViewSet(ModelViewSet):
             return Response({'error': "Object 'transcription' is required."}, status=status.HTTP_400_BAD_REQUEST)
         self.object = self.get_object()
 
-        from django.db.models import Prefetch
+        
         if format_ == 'text':
             template = 'core/export/simple.txt'
             content_type = 'text/plain'
@@ -68,7 +79,7 @@ class DocumentViewSet(ModelViewSet):
             lines = (LineTranscription.objects.filter(transcription=transcription)
                      .order_by('line__document_part', 'line__document_part__order', 'line__order')
                      .select_related('line', 'line__document_part', 'line__block'))
-            context = {'lines': lines}
+            context = {'lines': fetch_by_batch(lines)}
         elif format_ == 'alto':
             template = 'core/export/alto.xml'
             content_type = 'text/xml'
@@ -81,7 +92,7 @@ class DocumentViewSet(ModelViewSet):
                          Prefetch('transcriptions',
                                   to_attr='transcription',
                                   queryset=LineTranscription.objects.filter(transcription=transcription))))            
-            context = {'lines': lines}
+            context = {'lines': fetch_by_batch(lines)}
         else:
             return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
         response = render(request, template,
