@@ -152,7 +152,7 @@ class LineTranscriptionViewSet(ModelViewSet):
     
     def get_queryset(self):
         qs = (self.queryset.filter(line__document_part=self.kwargs['part_pk'])
-                .select_related('line', 'transcription'))
+                .select_related('line', 'transcription').order_by('line__order'))
         transcription = self.request.GET.get('transcription')
         if transcription:
              qs = qs.filter(transcription=transcription)
