@@ -57,7 +57,7 @@ class DocumentViewSet(ModelViewSet):
             transcription = Transcription.objects.get(
                 document=pk, pk=request.GET.get('transcription'))
         except Transcription.DoesNotExist:
-            return Response({'error': "Object 'transcription' is required."})
+            return Response({'error': "Object 'transcription' is required."}, status=status.HTTP_400_BAD_REQUEST)
         self.object = self.get_object()
 
         from django.db.models import Prefetch
@@ -83,7 +83,7 @@ class DocumentViewSet(ModelViewSet):
                                   queryset=LineTranscription.objects.filter(transcription=transcription))))            
             context = {'lines': lines}
         else:
-            return Response({'error': 'Invalid format.'})
+            return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
         response = render(request, template,
                           context=context,
                           content_type=content_type)
