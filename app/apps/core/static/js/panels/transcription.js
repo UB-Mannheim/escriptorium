@@ -52,13 +52,13 @@ class TranscriptionLine {
         this.textContainer.css({
             display: 'inline-block', // can't calculate size otherwise
             transform: 'none',
-            width: 'initial'
+            width: 'auto'
         });
         var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
         this.textContainer.css({
             transform: 'scaleX('+scaleX+')',
-            display: 'block',
-            width: '100%'
+            width: 100/scaleX + '%', // fit in the container
+            display: 'block'
         });
     }
     
