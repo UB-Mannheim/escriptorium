@@ -16,7 +16,7 @@ import os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-ADMINS = [('Robin Tissot','robin.tissot@psl.eu'),]
+ADMINS = [('Robin Tissot','tissotrobin@gmail.com'),]
 
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
