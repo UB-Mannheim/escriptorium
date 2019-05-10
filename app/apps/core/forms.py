@@ -184,7 +184,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 model = None
             
             for part in self.parts:
-                part.task('transcribe', user_pk=self.user.pk, model=model)
+                part.task('transcribe', user_pk=self.user.pk, model_pk=model.pk)
         self.save()  # save settings
 
 
