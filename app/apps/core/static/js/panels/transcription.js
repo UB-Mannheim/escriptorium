@@ -55,11 +55,19 @@ class TranscriptionLine {
             width: 'auto'
         });
         var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
-        this.textContainer.css({
-            transform: 'scaleX('+scaleX+')',
-            width: 100/scaleX + '%', // fit in the container
-            display: 'block'
-        });
+        let content = this.getText();
+        if (content) {
+            this.textContainer.css({
+                transform: 'scaleX('+scaleX+')',
+                width: 100/scaleX + '%', // fit in the container
+            });
+        } else {
+            this.textContainer.css({
+                transform: 'none',
+                width: '100%'
+            });
+        }
+        this.textContainer.css({display: 'block'});
     }
     
     showOverlay() {
