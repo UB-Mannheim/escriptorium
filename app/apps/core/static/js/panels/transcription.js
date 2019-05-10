@@ -253,12 +253,12 @@ class TranscriptionPanel{
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
         this.$container = $('.img-container', this.$panel);
-        this.selectedTranscription = $('#document-transcriptions').val();
 
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
             $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
         }
+        this.selectedTranscription = $('#document-transcriptions').val();
         $('#document-transcriptions').change($.proxy(function(ev) {
             this.selectedTranscription = $('#document-transcriptions').val();
             for (var i=0; i<this.lines.length; i++) {
