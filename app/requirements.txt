@@ -1,3 +1,4 @@
+kombu==4.2.2.post1
 celery==4.2.1
 Django==2.1.4
 redis==3.2.1
