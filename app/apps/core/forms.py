@@ -105,7 +105,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
     new_model = forms.CharField(required=False, label=_('Name'))
     upload_model = forms.FileField(required=False,
                                    validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel'])])
+                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
     
     class Meta:
         model = DocumentProcessSettings
@@ -184,7 +184,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
                 model = None
             
             for part in self.parts:
-                part.task('transcribe', user_pk=self.user.pk, model_pk=model.pk)
+                part.task('transcribe', user_pk=self.user.pk, model_pk=model and model.pk or None)
         self.save()  # save settings
 
 
