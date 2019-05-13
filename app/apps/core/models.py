@@ -289,7 +289,7 @@ class DocumentPart(OrderedModel):
     
     @property
     def segmented(self):
-        return self.workflow_state >= self.WORKFLOW_STATE_SEGMENTED
+        return self.lines.count() > 0
     
     def calculate_progress(self):
         if self.workflow_state < self.WORKFLOW_STATE_TRANSCRIBING:
