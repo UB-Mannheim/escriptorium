@@ -148,8 +148,8 @@ class TranscriptionLine {
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
-        let height = Math.max(originalHeight * ratio, 200);
-        height = Math.min(height, 40);
+        let height = Math.min(originalHeight * ratio, 200);
+        height = Math.max(height, 40);
         let width = originalWidth * ratio;
         
         $('#trans-modal #modal-img-container').animate({
