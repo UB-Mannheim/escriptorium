@@ -326,6 +326,7 @@ class TranscriptionPanel{
         });
                 
         if (this.opened) this.open();
+        zoom.register(this.$container, true);
     }
 
     addLine(line, ratio) {
@@ -350,6 +351,10 @@ class TranscriptionPanel{
             }, this));
         }, this);
         getNext(1);
+        
+        $('.zoom-container', this.$container).css({
+            width: this.part.image.size[0]*this.ratio,
+            height: this.part.image.size[1]*this.ratio});
     }
     
     load(part) {
@@ -363,7 +368,6 @@ class TranscriptionPanel{
             this.addLine(this.part.lines[i]);
         }
         this.loadTranscriptions();
-        zoom.register(this.$container, true);
     }
     
     open() {
@@ -371,7 +375,7 @@ class TranscriptionPanel{
         this.$panel.show();
         Cookies.set('trans-panel-open', true);
     }
-       
+    
     close() {
         this.opened = false;
         this.$panel.hide();
@@ -389,6 +393,10 @@ class TranscriptionPanel{
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].reset();
             }
+            
+            $('.zoom-container', this.$container).css({
+                width: this.part.image.size[0]*this.ratio,
+                height: this.part.image.size[1]*this.ratio});
         }
     }
 }

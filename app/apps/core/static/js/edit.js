@@ -59,7 +59,8 @@ $(document).ready(function() {
             panels[key].reset();
         }
     });
-    
+
+    // previous and next buttons
     $('a#prev-part, a#next-part').click(function(ev) {
         ev.preventDefault();
         var pk = $(ev.target).parents('a').data('target');
