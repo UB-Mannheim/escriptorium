@@ -91,8 +91,8 @@ class DocumentViewSet(ModelViewSet):
         else:
             return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        response['Content-Disposition'] = 'attachment; filename="export-%s-%s.%s"' % (
-            slugify(self.object.name), datetime.now().isoformat()[:16], extension)
+        response['Content-Disposition'] = 'attachment; filename="export_%s_%s.%s"' % (
+            slugify(self.object.name), datetime.now().isoformat()[:16].replace('-', '_'), extension)
         return response
     
     def get_part_data(self, part_pk, transcription):
