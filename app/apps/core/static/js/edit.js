@@ -38,8 +38,7 @@ $(document).ready(function() {
             else $('a#next-part').hide();
 
             if (data.image && data.image.uri) {
-                let imagename = data.image.uri.split('/').slice(-1)[0];
-                $('#part-name').html(data.title).attr('title', imagename);
+                $('#part-name').html(data.title).attr('title', '<'+data.filename+'>');
             }
             
             // set the 'image' tab btn to select the corresponding image

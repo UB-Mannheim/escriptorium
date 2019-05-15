@@ -1,5 +1,8 @@
-from django.db.models import Prefetch
-from django.shortcuts import render
+import itertools
+
+from django.db.models import Prefetch, Count
+from django.http import StreamingHttpResponse
+from django.template import loader
 from django.utils.text import slugify
 
 from rest_framework.decorators import action
@@ -36,7 +39,6 @@ class DocumentViewSet(ModelViewSet):
             try:
                 form.process()
             except ParseError as e:
-                
                 return error("Incorrectly formated file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:
@@ -53,16 +55,7 @@ class DocumentViewSet(ModelViewSet):
             return Response({'status': 'already canceled'}, status=400)
 
     @action(detail=True, methods=['get'])
-    def export(self, request, pk=None):
-        def fetch_by_batch(queryset, start=0, size=200):
-            while True:
-                results = queryset[start:start+size]
-                for result in results:
-                    yield result
-                if len(results) < size:
-                    break
-                start += size
-            
+    def export(self, request, pk=None):            
         format_ = request.GET.get('as', 'text')
         try:
             transcription = Transcription.objects.get(
@@ -70,37 +63,52 @@ class DocumentViewSet(ModelViewSet):
         except Transcription.DoesNotExist:
             return Response({'error': "Object 'transcription' is required."}, status=status.HTTP_400_BAD_REQUEST)
         self.object = self.get_object()
-
         
         if format_ == 'text':
             template = 'core/export/simple.txt'
             content_type = 'text/plain'
             extension = 'txt'
             lines = (LineTranscription.objects.filter(transcription=transcription)
-                     .order_by('line__document_part', 'line__document_part__order', 'line__order')
-                     .select_related('line', 'line__document_part', 'line__block'))
-            context = {'lines': fetch_by_batch(lines)}
+                     .order_by('line__document_part', 'line__document_part__order', 'line__order'))
+            response = StreamingHttpResponse(['%s\n' % line.content for line in lines],
+                                             content_type=content_type)
         elif format_ == 'alto':
             template = 'core/export/alto.xml'
             content_type = 'text/xml'
             extension = 'xml'
-            lines = (Line.objects
-                     .filter(document_part__document=pk)
-                     .select_related('document_part', 'block')
-                     .order_by('document_part', 'block', 'order')
-                     .prefetch_related(
-                         Prefetch('transcriptions',
-                                  to_attr='transcription',
-                                  queryset=LineTranscription.objects.filter(transcription=transcription))))            
-            context = {'lines': fetch_by_batch(lines)}
+            document = self.get_object()
+            part_pks = document.parts.values_list('pk', flat=True)
+            start = loader.get_template('core/export/alto_start.xml').render()
+            end = loader.get_template('core/export/alto_end.xml').render()
+            part_tmpl = loader.get_template('core/export/alto_part.xml')
+            response = StreamingHttpResponse(itertools.chain([start],
+                                                             [part_tmpl.render({
+                                                                 'part': self.get_part_data(pk, transcription)})
+                                                              for pk in part_pks],
+                                                             [end]),
+                                             content_type=content_type)
         else:
             return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
-        response = render(request, template,
-                          context=context,
-                          content_type=content_type)
+        
         response['Content-Disposition'] = 'attachment; filename="export-%s-%s.%s"' % (
             slugify(self.object.name), datetime.now().isoformat()[:16], extension)
         return response
+    
+    def get_part_data(self, part_pk, transcription):
+        return (DocumentPart.objects
+                .prefetch_related(
+                    Prefetch('blocks',
+                             to_attr='orphan_blocks',
+                             queryset=(Block.objects.annotate(num_lines=Count("line"))
+                                       .filter(num_lines=0))),
+                    Prefetch('lines',
+                             queryset=(Line.objects.all()
+                                       .select_related('block')
+                                       .prefetch_related(
+                                           Prefetch('transcriptions',
+                                          to_attr='transcription',
+                                          queryset=LineTranscription.objects.filter(transcription=transcription))))))
+                .get(pk=part_pk))
 
 
 class PartViewSet(ModelViewSet):
@@ -151,6 +159,12 @@ class LineViewSet(ModelViewSet):
     queryset = Line.objects.all().select_related('block').prefetch_related('transcriptions__transcription')
     serializer_class = DetailedLineSerializer
     
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'list']:
+            return DetailedLineSerializer
+        else:  # create
+            return LineSerializer
+
 
 class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100

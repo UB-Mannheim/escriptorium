@@ -36,6 +36,7 @@ class partCard {
         this.title = part.title;
         this.typology = part.typology;
         this.image = part.image;
+        this.filename = part.filename;
         this.bw_image = part.bw_image;
         this.workflow = part.workflow;
         this.task_ids = {};  // helps preventing card status race conditions
@@ -55,8 +56,7 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
-        let filename = this.image.uri.split('/').splice(-1)[0];
-        $('img.card-img-top', $new).attr('title', this.title + '\n<' + filename +'>');
+        $('img.card-img-top', $new).attr('title', this.title + '\n<' + this.filename +'>');
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
@@ -175,7 +175,7 @@ class partCard {
     updateThumbnail() {
         let uri, img = $('img.card-img-top', this.$element);
         
-        if (this.image.thumbnails['card'] != undefined) {
+        if (this.image.thumbnails && this.image.thumbnails['card'] != undefined) {
             uri = this.image.thumbnails['card'];
         } else {
             uri = this.image.uri;
