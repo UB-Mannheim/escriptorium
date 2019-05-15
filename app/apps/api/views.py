@@ -83,8 +83,9 @@ class DocumentViewSet(ModelViewSet):
             part_tmpl = loader.get_template('core/export/alto_part.xml')
             response = StreamingHttpResponse(itertools.chain([start],
                                                              [part_tmpl.render({
-                                                                 'part': self.get_part_data(pk, transcription)})
-                                                              for pk in part_pks],
+                                                                 'part': self.get_part_data(pk, transcription),
+                                                                 'counter': i})
+                                                              for i, pk in enumerate(part_pks)],
                                                              [end]),
                                              content_type=content_type)
         else:
