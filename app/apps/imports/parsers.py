@@ -1,7 +1,8 @@
-import time
+from lxml import etree
 import os.path
 import requests
-from lxml import etree
+import time
+import uuid
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -79,18 +80,36 @@ class XMLParser():
                         part.lines.all().delete()
                     for block in self.find(page, self.TAGS['block']):
                         # Note: don't use get_or_create to avoid a update query
-                        attrs = {'document_part': part,
-                                 'external_id': block.get('ID')}
-                        try:
-                            b = Block.objects.get(**attrs)
-                        except Block.DoesNotExist:
-                            b = Block(**attrs)
-                        b.box = self.block_bbox(block)
-                        b.save()
+                        id_ = block.get('ID')
+                        if id_ and id_.startswith('eSc_dummyblock_'):
+                            block_ = None
+                        else:
+                            try:
+                                assert id_ and id_.startswith('eSc_textblock_')
+                                attrs = {'pk': int(id_[len('eSc_textblock_'):])}
+                            except (ValueError, AssertionError, TypeError):
+                                attrs = {'document_part': part,
+                                         'external_id': id_}
+                            try:
+                                block_ = Block.objects.get(**attrs)
+                            except Block.DoesNotExist:
+                                block_ = Block(**attrs)
+                            try:
+                                block_.box = self.block_bbox(block)
+                            except TypeError:  # probably a dummy block
+                                block = None
+                            else:
+                                block_.save()
+                        
                         for line in self.find(block, self.TAGS['line']):
-                            attrs = {'document_part': part,
-                                     'block': b,
-                                     'external_id': line.get('ID')}
+                            id_ = line.get('ID')
+                            try:
+                                assert id_ and id_.startswith('eSc_line_')
+                                attrs = {'pk': int(id_[len('eSc_line_'):])}
+                            except (ValueError, AssertionError, TypeError):
+                                attrs = {'document_part': part,
+                                         'block': block_,
+                                         'external_id': line.get('ID')}
                             try:
                                 l = Line.objects.get(**attrs)
                             except Line.DoesNotExist:
@@ -230,8 +249,9 @@ class IIIFManifesParser():
                 )
                 if 'label' in resource:
                     part.name = resource['label']
-                name = '%d_%s' % (i, url.split('/')[-1])
-                part.image.save(name, ContentFile(r.content))
+                name = '%d_%s_%s' % (i, uuid.uuid4().hex[:5], url.split('/')[-1])
+                part.original_filename = name
+                part.image.save(name, ContentFile(r.content), save=False)
                 part.save()
                 yield part
                 time.sleep(0.1)  # avoid being throttled

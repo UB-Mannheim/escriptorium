@@ -4,7 +4,7 @@ class WheelZoom {
     constructor(options) {
         this.options = options || {};
         var defaults = {
-            factor: 0.2,
+            factor: 0.1,
             min_scale: 1,
             max_scale: null,
             initial_scale: 1,
@@ -29,13 +29,18 @@ class WheelZoom {
     
     register(container, mirror) {
         var target = container.children().first();
-        this.size = {w:target.width() * this.initial_scale, h:target.height() * this.initial_scale};
+        this.size = {w:target.width() * this.scale, h:target.height() * this.scale};
+        this.min_scale = this.options.min_scale || Math.min(
+            $(window).width() / (this.size.w * this.initial_scale) * 0.9,
+            $(window).height() / (this.size.h * this.initial_scale) * 0.9);
         target.css({transformOrigin: '0 0', transition: 'transform 0.3s'});
         
         if (mirror !== true) {
             target.css({cursor: 'zoom-in'});
             container.on("mousewheel DOMMouseScroll", $.proxy(this.scrolled, this));
             container.on('mousedown', $.proxy(this.draggable, this));
+        } else {
+            container.addClass('mirror');
         }
         this.events.on('wheelzoom.reset', $.proxy(this.reset, this));
         this.events.on('wheelzoom.refresh', $.proxy(this.refresh, this));
@@ -100,17 +105,23 @@ class WheelZoom {
     
 	updateStyle() {
 	    // Make sure the slide stays in its container area when zooming in/out
-        if (this.scale > 1) {
+        let container = this.getVisibleContainer();
+        if (this.size.w*this.scale > container.width()) {
 	        if(this.pos.x > 0) { this.pos.x = 0; }
-	        if(this.pos.x+this.size.w*this.scale < this.size.w) { this.pos.x = this.size.w - this.size.w*this.scale; }
-            if(this.pos.y > 0) { this.pos.y = 0; }
-	        if(this.pos.y+this.size.h*this.scale < this.size.h) { this.pos.y = this.size.h - this.size.h*this.scale; }
+	        if(this.pos.x+this.size.w*this.scale < container.width()) { this.pos.x = container.width() - this.size.w*this.scale; }
         } else {
 	        if(this.pos.x < 0) { this.pos.x = 0; }
-	        if(this.pos.x+this.size.w*this.scale > this.size.w) { this.pos.x = -this.size.w*(this.scale-1); }
-            if(this.pos.y < 0) { this.pos.y = 0; }
-            if(this.pos.y+this.size.h*this.scale > this.size.h) { this.pos.y = -this.size.h*(this.scale-1); }
+	        if(this.pos.x+this.size.w*this.scale > container.width()) { this.pos.x = container.width() - this.size.w*this.scale; }
         }
+
+        if (this.size.h*this.scale > container.height()) {
+            if(this.pos.y > 0) { this.pos.y = 0; }
+	        if(this.pos.y+this.size.h*this.scale < container.height()) { this.pos.y = container.height() - this.size.h*this.scale; }
+        } else {
+            if(this.pos.y < 0) { this.pos.y = 0; }
+            if(this.pos.y+this.size.h*this.scale > container.height()) { this.pos.y = container.height() - this.size.h*this.scale; }
+        }
+
         
         // apply scale first for transition effect
         this.targets.forEach($.proxy(function(e, i) {
@@ -122,12 +133,13 @@ class WheelZoom {
 	}
     
     getVisibleContainer() {
-        return this.containers.find(function(e) { return e.is(':visible') && e.height() != 0;});
+        return this.containers.find(function(e) { return e.is(':visible:not(.mirror)') && e.height() != 0;});
     }
     
     refresh() {
         let container = this.getVisibleContainer();
-        this.size = {w: container.width(), h: container.height()};
+        var target = container.children().first();
+        this.size = {w:target.width(), h:target.height()};
         this.min_scale = this.options.min_scale || Math.min(
             $(window).width() / (this.size.w * this.initial_scale) * 0.9,
             $(window).height() / (this.size.h * this.initial_scale) * 0.9);

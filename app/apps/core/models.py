@@ -228,6 +228,7 @@ class DocumentPart(OrderedModel):
     """
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
+    original_filename = models.CharField(max_length=1024, blank=True)
     source = models.CharField(max_length=1024, blank=True)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path,
@@ -290,6 +291,13 @@ class DocumentPart(OrderedModel):
     @property
     def segmented(self):
         return self.lines.count() > 0
+
+    def make_external_id(self):
+        return 'eSc_page_%d' % self.pk
+    
+    @property
+    def filename(self):
+        return self.original_filename or os.path.split(self.image.path)[1]
     
     def calculate_progress(self):
         if self.workflow_state < self.WORKFLOW_STATE_TRANSCRIBING:
@@ -659,12 +667,12 @@ class Block(OrderedModel, models.Model):
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
                                       related_name='blocks')
     order_with_respect_to = 'document_part'
-
+    
     external_id = models.CharField(max_length=128, blank=True, null=True)
     
     class Meta(OrderedModel.Meta):
         pass
-
+    
     @property
     def width(self):
         return self.box[2] - self.box[0]
@@ -674,7 +682,7 @@ class Block(OrderedModel, models.Model):
         return self.box[3] - self.box[1]
     
     def make_external_id(self):
-        return self.external_id or 'textblock_%d' % self.pk
+        return self.external_id or 'eSc_textblock_%d' % self.pk
 
 
 class Line(OrderedModel):  # Versioned, 
@@ -706,9 +714,9 @@ class Line(OrderedModel):  # Versioned,
     @property
     def height(self):
         return self.box[3] - self.box[1]
-
+    
     def make_external_id(self):
-        return self.external_id or 'line_%d' % self.pk
+        return self.external_id or 'eSc_line_%d' % self.pk
 
 
 class Transcription(models.Model):

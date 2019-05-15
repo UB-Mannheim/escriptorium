@@ -61,6 +61,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class PartSerializer(serializers.ModelSerializer):
     image = ImageField(thumbnails=['card', 'large'])
+    filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
@@ -70,6 +71,7 @@ class PartSerializer(serializers.ModelSerializer):
         fields = (
             'pk',
             'name',
+            'filename',
             'title',
             'typology',
             'image',
@@ -82,6 +84,7 @@ class PartSerializer(serializers.ModelSerializer):
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
+        data['original_filename'] = data['image'].name
         obj = super().create(data)
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
@@ -111,7 +114,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
-        fields = ('pk',  'order', 'block', 'box')
+        fields = ('pk', 'document_part', 'order', 'block', 'box')
     
     def create(self, validated_data):
         instance = super().create(validated_data)
@@ -128,7 +131,7 @@ class DetailedLineSerializer(LineSerializer):
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
     
     class Meta(LineSerializer.Meta):
-        fields = LineSerializer.Meta.fields + ('document_part', 'block', 'transcriptions',)
+        fields = LineSerializer.Meta.fields + ('transcriptions',)
 
 
 class PartDetailSerializer(PartSerializer):

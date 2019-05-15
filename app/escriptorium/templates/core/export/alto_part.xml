@@ -1,0 +1,12 @@
+    <Page PHYSICAL_IMG_NR="{{ counter }}" WIDTH="{{ part.image.width }}" HEIGHT="{{ part.image.height }}" ID="{{part.make_external_id}}">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="{{ part.image.width }}" HEIGHT="{{ part.image.height }}">
+        {% regroup part.lines.all by block as part_blocks %}{% for block in part_blocks %}{% ifchanged block.grouper %}
+        <TextBlock {% if block.grouper %}HPOS="{{ block.grouper.box.0|default:0 }}" VPOS="{{ block.grouper.box.1|default:0 }}" WIDTH="{{ block.grouper.width|default:0 }}" HEIGHT="{{ block.grouper.height|default:0 }}" ID="{{ block.grouper.make_external_id }}"{% else %}ID="eSc_dummyblock_{{ block.list.0.pk }}"{% endif %}>{% endifchanged %}
+          {% for line in block.list %}<TextLine ID="{{ line.make_external_id }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}">
+	        <String CONTENT="{{ line.transcription.0.content }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}"></String>
+          </TextLine>{% endfor %}
+        </TextBlock>{% endfor %}
+        {% for block in part.orphan_blocks %}<TextBlock HPOS="{{ block.box.0 }}" VPOS="{{ block.box.1 }}" WIDTH="{{ block.width }}" HEIGHT="{{ block.height }}" ID="{{ block.make_external_id }}">
+        </TextBlock>{% endfor %}
+      </PrintSpace>
+    </Page>

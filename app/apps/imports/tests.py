@@ -42,7 +42,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.lines.first().box, [160, 771, 220, 799])
         self.assertEqual(self.part1.lines.first().transcriptions.first().content, 'This is a test')
         self.assertEqual(self.part2.blocks.count(), 0)
-        self.assertEqual(self.part2.lines.count(), 0)    
+        self.assertEqual(self.part2.lines.count(), 0)
     
     def test_alto_multi(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
