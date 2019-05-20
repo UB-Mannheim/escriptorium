@@ -84,6 +84,7 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=Metadat
 
 
 class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
+    # TODO: split this form into one for each process?!
     TASK_BINARIZE = 'binarize'
     TASK_SEGMENT = 'segment'
     TASK_TRAIN = 'train'

@@ -729,6 +729,7 @@ class Transcription(models.Model):
     DEFAULT_NAME = 'manual'
     
     class Meta:
+        ordering = ('-updated_at',)
         unique_together = (('name', 'document'),)
 
     def __str__(self):
