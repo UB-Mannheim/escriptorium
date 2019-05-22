@@ -227,7 +227,7 @@ class IIIFManifesParser():
                 if metadata['value']:
                     md, created = Metadata.objects.get_or_create(name=metadata['label'])
                     DocumentMetadata.objects.get_or_create(
-                        document=document, key=md, value=metadata['value'])
+                        document=document, key=md, value=metadata['value'][:512])
         except KeyError as e:
             pass
         
@@ -242,7 +242,7 @@ class IIIFManifesParser():
                 if self.quality:
                     url = re.sub(r'/full/full/', '/full/%d/' % self.quality, url)
                 
-                r = requests.get(url, stream=True)
+                r = requests.get(url, stream=True, verify=False)
                 part = DocumentPart(
                     document=document,
                     source=url
