@@ -481,7 +481,7 @@ $(document).ready(function() {
         }).done(function(data) {
             if (DEBUG) console.log(proc+' process', data.status);
             if (proc == 'import-xml' || proc == 'import-iiif') {
-                $('#import-counter').text('queued.');
+                $('#import-counter').text('queued.').show().parent().addClass('ongoing');
             }
         }).fail(function(xhr) {
             var data = xhr.responseJSON;

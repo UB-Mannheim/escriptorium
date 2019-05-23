@@ -62,7 +62,7 @@ $(document).ready(function() {
     // previous and next buttons
     $('a#prev-part, a#next-part').click(function(ev) {
         ev.preventDefault();
-        var pk = $(ev.target).parents('a').data('target');
+        var pk = $(this).data('target');
         loadPart(pk);
     });
     

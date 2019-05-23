@@ -49,7 +49,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             if uri:
                 return requests.get(uri).json()
         except json.decoder.JSONDecodeError:
-            raise ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+            raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
     
     def clean_parts(self):
         try:
