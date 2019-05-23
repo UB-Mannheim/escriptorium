@@ -1,5 +1,6 @@
 kombu==4.2.2.post1
 celery==4.2.1
+Pillow==5.4.1
 Django==2.1.4
 redis==3.2.1
 uwsgi==2.0.17
@@ -9,7 +10,6 @@ channels-redis==2.3.1
 django-redis==4.10.0
 psycopg2==2.7.6
 django-ordered-model==3.1.1
-Pillow==5.3.0
 easy-thumbnails==2.5
 kraken==2.0.1
 django-cleanup==3.0.1
