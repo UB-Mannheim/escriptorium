@@ -201,10 +201,14 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
+            'level': 'error',
             'propagate': True,
         },
     },
