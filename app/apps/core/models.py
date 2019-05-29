@@ -693,9 +693,10 @@ class Line(OrderedModel):  # Versioned,
     """
     Represents a segmented line from a DocumentPart
     """
-    # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField()
-    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
+    # box = gis_models.PolygonField()  # in case we use PostGIS
+    polygon = JSONField(null=True)
+    document_part = models.ForeignKey(DocumentPart,
+                                      on_delete=models.CASCADE,
                                       related_name='lines')
     block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
@@ -710,7 +711,7 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
-
+    
     @property
     def width(self):
         return self.box[2] - self.box[0]
@@ -718,6 +719,17 @@ class Line(OrderedModel):  # Versioned,
     @property
     def height(self):
         return self.box[3] - self.box[1]
+    
+    def get_box(self):
+        return (*map(min, *self.polygon), *map(max, *self.polygon))
+    
+    def set_box(self, box):
+        self.polygon = ((box[0], box[1]),
+                        (box[0], box[3]),
+                        (box[2], box[3]),
+                        (box[2], box[1]))
+    
+    box = property(get_box, set_box)
     
     def make_external_id(self):
         return self.external_id or 'eSc_line_%d' % self.pk
@@ -729,13 +741,13 @@ class Transcription(models.Model):
                                  related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     DEFAULT_NAME = 'manual'
     
     class Meta:
         ordering = ('-updated_at',)
         unique_together = (('name', 'document'),)
-
+        
     def __str__(self):
         return self.name
 

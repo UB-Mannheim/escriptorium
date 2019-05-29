@@ -128,9 +128,15 @@ class LineSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         instance.document_part.recalculate_ordering()
+        instance.box = validated_data.pop('box', ())  # make use of the property setter
         return super().update(instance, validated_data)
 
-
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        value['box'] = json.loads(data['box'])
+        return value
+    
+    
 class DetailedLineSerializer(LineSerializer):
     block = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
