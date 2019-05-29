@@ -210,7 +210,7 @@ class AbbyyParser(XMLParser):
 class IIIFManifesParser():
     def __init__(self, fh, quality=None):
         self.file = fh
-        self.quality = quality
+        self.quality = quality or 'full'
         try:
             self.manifest = json.loads(self.file.read())
             self.canvases = self.manifest['sequences'][0]['canvases']
@@ -227,7 +227,7 @@ class IIIFManifesParser():
                 if metadata['value']:
                     md, created = Metadata.objects.get_or_create(name=metadata['label'])
                     DocumentMetadata.objects.get_or_create(
-                        document=document, key=md, value=metadata['value'])
+                        document=document, key=md, value=metadata['value'][:512])
         except KeyError as e:
             pass
         
@@ -237,18 +237,24 @@ class IIIFManifesParser():
                     continue
                 resource = canvas['images'][0]['resource']
                 url = resource['@id']
-            
-                # replaces quality in the image's uri
-                if self.quality:
-                    url = re.sub(r'/full/full/', '/full/%d/' % self.quality, url)
-                
-                r = requests.get(url, stream=True)
+                uri_template =  '{image}/{region}/{size}/{rotation}/{quality}.{format}'
+                url = uri_template.format(
+                    image=resource['service']['@id'],
+                    region='full',
+                    size=self.quality,
+                    rotation=0,
+                    quality='default',
+                    format='jpg')  # we could gain some time by fetching png, but it's not implemented everywhere.
+                r = requests.get(url, stream=True, verify=False)
+                if r.status_code != 200:
+                    raise ParseError('Invalid image url: %s' % url)
                 part = DocumentPart(
                     document=document,
                     source=url
                 )
                 if 'label' in resource:
                     part.name = resource['label']
+                # iiif file names are always default.jpg or close to
                 name = '%d_%s_%s' % (i, uuid.uuid4().hex[:5], url.split('/')[-1])
                 part.original_filename = name
                 part.image.save(name, ContentFile(r.content), save=False)
@@ -258,7 +264,6 @@ class IIIFManifesParser():
         except (KeyError, IndexError) as e:
             raise ParseError(e)
 
-        
 
 def make_parser(file_handler, name=None, override=True):
     # TODO: not great to rely on extension

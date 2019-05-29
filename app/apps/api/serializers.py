@@ -110,6 +110,11 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     def validate_content(self, mode):
         return self.cleanup(self.initial_data.get('content'))
 
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.line.document_part.calculate_progress()
+        return instance
+
 
 class LineSerializer(serializers.ModelSerializer):
     class Meta:

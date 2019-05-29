@@ -126,6 +126,11 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+from django.utils.translation import gettext_lazy as _
+LANGUAGES = [
+  ('en', _('English')),
+  ('de', _('French')),
+]
 
 EMAIL_HOST = 'mail'
 EMAIL_PORT = 25
@@ -148,6 +153,8 @@ CACHES = {
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
 
+KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
+
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -164,6 +171,7 @@ CELERY_TASK_QUEUES = (
 )
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
+    'core.tasks.train': {'queue': 'low-priority'},
     'core.tasks.lossless_compression': {'queue': 'low-priority'},
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     #'escriptorium.celery.debug_task': '',
@@ -179,6 +187,9 @@ CHANNEL_LAYERS = {
         },
     },
 }
+# fixes https://github.com/django/channels/issues/1240:
+DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024 # value in bytes (so 150Mb)
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -191,6 +202,28 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
+        },
+        'console': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'propagate': True,
+        },
+    },
+}
 
 COMPRESS_ENABLE = True
 

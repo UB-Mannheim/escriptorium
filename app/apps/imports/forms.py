@@ -49,7 +49,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             if uri:
                 return requests.get(uri).json()
         except json.decoder.JSONDecodeError:
-            raise ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+            raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
     
     def clean_parts(self):
         try:
@@ -79,8 +79,8 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 raise forms.ValidationError(msg)
             if parser and parser.total != len(cleaned_data['parts']):
                 raise forms.ValidationError(
-                    _("The number of pages in the import (%d) file doesn't match the number of selected images (%d)." %
-                      (len(parser.pages), len(cleaned_data['parts']))))
+                    _("The number of pages in the import {num_pages} file doesn't match the number of selected images {num_images}.").format(
+                      num_pages=len(parser.pages), num_images=len(cleaned_data['parts'])))
         
         return cleaned_data
     

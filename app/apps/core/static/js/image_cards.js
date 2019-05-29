@@ -26,6 +26,12 @@ function openWizard(proc) {
     // Reset the form
     $('.process-part-form', '#'+proc+'-wizard').get(0).reset();
     
+    // initialize transcription field with user's last edited transcription
+    let itrans = userProfile.get('initialTranscriptions');
+    if (itrans && itrans[DOCUMENT_ID]) {
+        $('#process-part-form-train #id_transcription').val(itrans[DOCUMENT_ID]);
+    }
+    
     $('#'+proc+'-wizard').modal('show');
 }
 
@@ -93,14 +99,17 @@ class partCard {
         
         this.binarizedButton.click($.proxy(function(ev) {
             this.select();
+            partCard.refreshSelectedCount();
             openWizard('binarize');
         }, this));
         this.segmentedButton.click($.proxy(function(ev) {
             this.select();
+            partCard.refreshSelectedCount();
             openWizard('segment');
         }, this));
         this.transcribeButton.click($.proxy(function(ev) {
             this.select();
+            partCard.refreshSelectedCount();
             openWizard('transcribe');
         }, this));
         
@@ -125,15 +134,18 @@ class partCard {
             } else {
                 this.toggleSelect();
             }
+            partCard.refreshSelectedCount();
         }, this));
 
         this.deleteButton.on('click', $.proxy(function(ev) {
             if (!confirm("Do you really want to delete this image?")) { return; }
             this.delete();
+            partCard.refreshSelectedCount();
         }, this));
         
         this.$element.on('dblclick', $.proxy(function(ev) {
             this.toggleSelect();
+            partCard.refreshSelectedCount();
         }, this));
         
         // drag'n'drop
@@ -315,6 +327,9 @@ class partCard {
         });
         return pks;
     }
+    static refreshSelectedCount() {
+        $('#selected-counter').text(partCard.getSelectedPks().length+'/'+$('#cards-container .card').length).parent().show();
+    }
 }
 
 
@@ -397,20 +412,24 @@ $(document).ready(function() {
     let $alertsContainer = $('#alerts-container');
     $alertsContainer.on('import:start', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
+        $('#import-selected').addClass('blink');
         $('#import-resume').hide();
     });
     $alertsContainer.on('import:progress', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
+        $('#import-selected').addClass('blink');
         if (data.progress) {
             $('#import-counter').text(data.progress+"/"+data.total);
         }
     });
     $alertsContainer.on('import:fail', function(ev, data) {
         $('#import-counter').text('failed');
+        $('#import-selected').removeClass('blink');
         Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
     });
     $alertsContainer.on('import:done', function(ev, data) {
         $('#import-counter').parent().removeClass('ongoing');
+        $('#import-selected').removeClass('blink');
         Alert.add('import-done', "Import finished!", 'success');
     });
     $('#cancel-import').click(function(ev, data) {
@@ -419,10 +438,31 @@ $(document).ready(function() {
             .done(function(data) {
                 $('#import-counter').text('canceled');
                 $('#import-counter').parent().removeClass('ongoing');
+                $('#import-selected').removeClass('blink');
             })
             .fail(function(data) {
                 console.log("Couldn't cancel import");
             });
+    });
+    
+    // training
+    var max_accuracy = 0;
+    $alertsContainer.on('training:start', function(ev, data) {
+        $('#train-counter').addClass('ongoing');
+        $('#train-selected').addClass('blink');
+        $('#train-counter').text('Gathering data.');
+    });
+    $alertsContainer.on('training:eval', function(ev, data) {
+        $('#train-counter').addClass('ongoing');
+        $('#train-selected').addClass('blink');
+        let accuracy = Math.round(data.data.accuracy*100,1);
+        if (max_accuracy < accuracy) {
+            $('#train-counter').text('Reached '+accuracy+'% at epoch #'+data.data.epoch);
+        }
+    });
+    $alertsContainer.on('training:done', function(ev, data) {
+        // $('#train-counter').removeClass('ongoing');
+        $('#train-selected').removeClass('blink');
     });
     
     // create & configure dropzone
@@ -454,18 +494,20 @@ $(document).ready(function() {
         cards.each(function(i, el) {
             $(el).data('partCard').select();
         });
+        partCard.refreshSelectedCount();
     });
     $('#unselect-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
         cards.each(function(i, el) {
             $(el).data('partCard').unselect();
         });
+        partCard.refreshSelectedCount();
     });
     
     $('.js-proc-selected').click(function(ev) {
         openWizard($(ev.target).data('proc'));
     });
-
+    
     $('.process-part-form').submit(function(ev) {
         ev.preventDefault();
         var $form = $(ev.target);
@@ -481,11 +523,14 @@ $(document).ready(function() {
         }).done(function(data) {
             if (DEBUG) console.log(proc+' process', data.status);
             if (proc == 'import-xml' || proc == 'import-iiif') {
-                $('#import-counter').text('queued.');
+                $('#import-counter').text('Queued.').show().parent().addClass('ongoing');;
+            } else if (proc == 'train') {
+                $('#train-counter').text('Queued.').show();
             }
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
             if (data.status == 'error') { alert(data.error); }
+            if (DEBUG) console.log(xhr);
         });
     });
 
@@ -500,11 +545,15 @@ $(document).ready(function() {
         $.get(uri, function(data) {
             counter += data.results.length;            
             $('#loading-counter').html(counter+'/'+data.count);
-            if (data.next) getNextParts(page+1);
-            else { $('#loading-counter').parent().animate({opacity: 0}, 1000); }
             for (var i=0; i<data.results.length; i++) {
                 var pc = new partCard(data.results[i]);
                 if (select == pc.pk) pc.select();
+            }
+            if (data.next) {
+                getNextParts(page+1);
+            } else {
+                $('#loading-counter').parent().hide();
+                partCard.refreshSelectedCount();
             }
         });
     };

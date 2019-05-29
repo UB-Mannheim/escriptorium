@@ -1,7 +1,7 @@
 import re
 import math
 import logging
-import os.path
+import os
 import functools
 import subprocess
 from PIL import Image
@@ -17,12 +17,14 @@ from django.core.files.storage import FileSystemStorage
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django.utils.translation import gettext as _
+from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_delete
+
 
 from celery.result import AsyncResult
 from celery.task.control import inspect, revoke
-from celery import chain, group
+from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 
@@ -216,7 +218,10 @@ class Document(models.Model):
                 return 'rtl'
             else:
                 return 'ltr'
-
+    
+    @property
+    def is_training(self):
+        return self.ocr_models.filter(training=True).count() <= 0
 
 def document_images_path(instance, filename):
     return 'documents/%d/%s' % (instance.document.pk, filename)
@@ -308,7 +313,7 @@ class DocumentPart(OrderedModel):
             return 0
         self.transcription_progress = min(int(transcribed / total * 100), 100)
 
-    def recalculate_ordering(self, line_level_treshold=1/100):
+    def recalculate_ordering(self, text_direction=None, line_level_treshold=1/100):
         """
         Re-order the lines of the DocumentPart depending or text direction.
         Beware 'text direction' is different from reading order,
@@ -318,11 +323,9 @@ class DocumentPart(OrderedModel):
         for which blocks should be considered on the same 'line',
         in which case x is used.
         """
-        try:
-            text_direction = self.document.process_settings.text_direction[-2:]
-        except DocumentProcessSettings.DoesNotExist:
-            text_direction = 'lr'
-        
+        text_direction = (text_direction
+                          or (self.document.main_script and self.document.main_script.text_direction[-2:])
+                          or 'lr')
         def origin_pt(box):
             if text_direction == 'rl':
                 return (box[2], box[1])
@@ -583,7 +586,7 @@ class DocumentPart(OrderedModel):
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
-        self.recalculate_ordering()
+        self.recalculate_ordering(text_direction=text_direction)
     
     def transcribe(self, model=None, text_direction=None):
         if model:
@@ -592,17 +595,15 @@ class DocumentPart(OrderedModel):
                 document=self.document)
             model_ = kraken_models.load_any(model.file.path)
             lines = self.lines.all()
-            try:
-                text_direction = self.document.process_settings.text_direction
-            except DocumentProcessSettings.DoesNotExist:
-                text_direction = None
-
+            text_direction = (text_direction
+                              or (self.document.main_script and self.document.main_script.text_direction)
+                              or 'horizontal-lr')
             with Image.open(self.bw_image.file.name) as im:
                 for line in lines:
                     it = rpred.rpred(
                         model_, im,
                         bounds={'boxes': [line.box],
-                                'text_direction': text_direction or 'horizontal-lr',
+                                'text_direction': text_direction,
                                 'script_detection': False},
                         pad=16,  # TODO: % of the image?
                         bidi_reordering=True)
@@ -624,7 +625,7 @@ class DocumentPart(OrderedModel):
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
         chain(*tasks).delay()
     
-    def task(self, task_name, **kwargs):
+    def task(self, task_name, commit=True, **kwargs):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
@@ -643,16 +644,19 @@ class DocumentPart(OrderedModel):
             or (tasks_order.index(task_name) > tasks_order.index('binarize')
                 and not self.binarized)):
             tasks.append(binarize.si(self.pk, **kwargs))
-            
+        
         if (task_name == 'segment'
             or (tasks_order.index(task_name) > tasks_order.index('segment')
                 and not self.segmented)):
             tasks.append(segment.si(self.pk, **kwargs))
-
+        
         if task_name == 'transcribe':
             tasks.append(transcribe.si(self.pk, **kwargs))
         
-        self.chain_tasks(*tasks)
+        if commit:
+            self.chain_tasks(*tasks)
+        
+        return tasks
 
 
 class Block(OrderedModel, models.Model):
@@ -729,6 +733,7 @@ class Transcription(models.Model):
     DEFAULT_NAME = 'manual'
     
     class Meta:
+        ordering = ('-updated_at',)
         unique_together = (('name', 'document'),)
 
     def __str__(self):
@@ -759,43 +764,81 @@ class LineTranscription(Versioned, models.Model):
         return re.sub('<[^<]+?>', '', self.content)
 
 
-class OcrModel(models.Model):
+def models_path(instance, filename):
+    return 'models/%s/%s' % (slugify(filename), filename)
+
+
+class OcrModel(Versioned, models.Model):
     name = models.CharField(max_length=256)
-    file = models.FileField(upload_to='models/',
+    file = models.FileField(upload_to=models_path,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
-    trained = models.BooleanField(default=False)
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    training = models.BooleanField(default=False)
+    training_epoch = models.PositiveSmallIntegerField(default=0)
+    training_accuracy = models.FloatField(default=0.0)
+    training_total = models.IntegerField(default=0)
+    training_errors = models.IntegerField(default=0)
     document = models.ForeignKey(Document, blank=True, null=True,
+                                 related_name='ocr_models',
                                  default=None, on_delete=models.SET_NULL)
+    script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
+    
+    version_ignore_fields = ('name', 'owner', 'document', 'script', 'training')
+    version_history_max_length = 15
+
+    class Meta:
+        ordering = ('-version_updated_at',)
     
     def __str__(self):
         return self.name
-
-
-class DocumentProcessSettings(models.Model):
-    document = models.OneToOneField(Document, on_delete=models.CASCADE,
-                                    related_name='process_settings')
-    text_direction = models.CharField(max_length=64, default='horizontal-lr',
-                                      choices=(('horizontal-lr', _("Horizontal l2r")),
-                                               ('horizontal-rl', _("Horizontal r2l")),
-                                               ('vertical-lr', _("Vertical l2r")),
-                                               ('vertical-rl', _("Vertical r2l"))))
-    binarizer = models.CharField(max_length=64,
-                                 choices=(('kraken', _("Kraken")),),
-                                 default='kraken')
-    ocr_model = models.ForeignKey(OcrModel, verbose_name=_("Model"),
-                                  related_name='settings_ocr',
-                                  null=True, blank=True, on_delete=models.SET_NULL)
-    train_model = models.ForeignKey(OcrModel, verbose_name=_("Model"),
-                                    related_name='settings_train',
-                                    null=True, blank=True, on_delete=models.SET_NULL)
-    typology = models.ForeignKey(Typology,
-                                 null=True, blank=True, on_delete=models.SET_NULL,
-                                 limit_choices_to={'target': Typology.TARGET_PART})
     
-    def __str__(self):
-        return 'Processing settings for %s' % self.document
-
+    @cached_property
+    def accuracy_percent(self):
+        return self.training_accuracy * 100
+    
+    @classmethod
+    def train(cls, parts_qs, transcription, model=None, model_name=None, user=None):
+        btasks = []
+        for part in parts_qs:
+            if not part.binarized:
+                btasks.append(part.task('binarize', commit=False))
+        if not (model or model_name):
+            raise ValueError("OcrModel.train() requires either a `model` or `model_name`.")
+        ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
+                         transcription.pk,
+                         model_pk=model and model.pk or None,
+                         model_name=model_name,
+                         user_pk=user and user.pk or None)
+        chord(set(btasks), ttask).delay()
+    
+    # versioning
+    def pack(self, **kwargs):
+        # we use the name kraken generated
+        kwargs['file'] = kwargs.get('file', self.file.name)
+        return super().pack(**kwargs)
+    
+    def revert(self, revision):
+        # we want the file to be swaped but the filename to stay the same
+        for version in self.versions:
+            if version['revision'] == revision:
+                current_filename = self.file.path
+                target_filename = os.path.join(settings.MEDIA_ROOT, version['data']['file'])
+                tmp_filename = current_filename + '.tmp'
+                break
+        else:
+            raise ValueError("Revision %s not found for %s" % (revision, self))
+        os.rename(current_filename, tmp_filename)
+        os.rename(target_filename, current_filename)
+        os.rename(tmp_filename, target_filename)
+        super().revert(revision)
+    
+    def delete_revision(self, revision):
+        for version in self.versions:
+            if version['revision'] == revision:
+                os.remove(os.path.join(settings.MEDIA_ROOT, version['data']['file']))
+                break
+        super().delete_revision(revision)
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')

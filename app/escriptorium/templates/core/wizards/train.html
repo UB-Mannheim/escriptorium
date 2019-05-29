@@ -2,19 +2,27 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-<p>(PLACEHOLDER)</p>
+<p>{% trans "The training data will be generated from the selected images and transcription." %}</p>
+<p>{% trans "Empty lines will be ignored." %}</p>
+<p>{% trans "Gathering data can take time and the model won't be available in the models tab until then." %}</p>
 {% endblock %}
 
 {% block wizard_fields %}
 <div class="form-group">
+  {% render_field process_form.transcription class="js-proc-settings" required="true" %}
   <h5>{% trans "New model" %}</h5>
-  {% render_field settings_form.new_model class="js-proc-settings" %}
-  {% trans "Or" %} {% render_field settings_form.upload_model class="js-proc-settings" %}
+  {% render_field process_form.new_model class="js-proc-settings" %}
 </div>
 
 <div class="form-group">
-  <h5>{% trans "Or existing model" %}</h5>
-  {% render_field settings_form.train_model class="js-proc-settings" %}
+  <h5>{% trans "Or upload a model" %}</h5>
+  {% render_field process_form.upload_model class="js-proc-settings" accept=".mlmodel,.clstm,.pronn" %}
+
+</div>
+
+<div class="form-group">
+  <h5>{% trans "Or select an existing one" %}</h5>
+  {% render_field process_form.train_model class="js-proc-settings" %}
 </div>
 {% endblock %}
 

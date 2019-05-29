@@ -15,7 +15,7 @@ class SourcePanel {
         if (this.part.image.thumbnails) {
             $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
         } else {
-            $('.img-container img', this.$panel).attr('src', this.part.image.url);
+            $('.img-container img', this.$panel).attr('src', this.part.image.uri);
         }
         if (this.opened) this.open();
     }
@@ -37,5 +37,7 @@ class SourcePanel {
         else this.open();
     }
 
-    reset() {}
+    reset() {
+        zoom.refresh();
+    }
 }

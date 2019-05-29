@@ -193,7 +193,7 @@ class TranscriptionLine {
         date = date.substring(0, 23) + date.substring(26);
         var $version = $('<tr id="rev-'+version.revision+'">'+
                          '<th class="js-version-content w-75">'+version.data.content+'</th>'+
-                         '<td>'+version.author+'</td>'+
+                         '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
                          '<td class="js-version-date" data-date="'+date+'"></td>'+
                          '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
                               '<i class="fas fa-file-upload"></i></button></td>'+

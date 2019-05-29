@@ -20,12 +20,18 @@ class Versioned(models.Model):
     """
     Allows the flat versioning of a model instance, every revisions is stored in the versions field
     this technique allows to not have to deal with changing references to this 'object'.
+    cons: get clobbered somewhat fast depending on the quantity of versioned data
     
     API:
     instance.history : is a property returning a list of instances corresponding to the versions.
     instance.new_version() : store the current data in versions.
     instance.revert(revision) : store the current data in versions and revert to the given revision
                                 does not call save(), it needs to be done manually.
+    instance.delete_revision(revision)
+    
+    Model class attributes:
+    version_ignore_fields = () : model fields that won't be added to the versions
+    version_history_max_length = 10 : maximum number of revisions to store in the history
 
     revisions = [{
       revision: <uuid>,
@@ -49,8 +55,9 @@ class Versioned(models.Model):
     # on postgres it's stored as jsonb, super fast and indexable!
     versions = JSONField(editable=False, default=list)
     version_ignore_fields = ()
+    version_history_max_length = 20
     
-    def pack(self):
+    def pack(self, **kwargs):
         """
         Create a dict from the current instance to be added to the history
         """
@@ -60,7 +67,7 @@ class Versioned(models.Model):
                 and not field.name in self._meta.model.version_ignore_fields
                 and not field.name.startswith('version_')):
                 data[field.name] = getattr(self, field.name)
-        
+        data.update(kwargs)
         return {
             'revision': self.revision.hex,
             'source': self.version_source,
@@ -79,19 +86,25 @@ class Versioned(models.Model):
         fields['revision'] = uuid.UUID(v.pop('revision'))
         # version_source, version_author, version_created_at, version_updated_at
         fields.update(**{'version_%s' % key: value for key, value in v.items()})
-        instance = self._meta.model(**fields)
+        # update the instance with the left over fields
+        fields.update(**{field:getattr(self, field) for field in self.version_ignore_fields})
+        data = {f:fields[f] for f in fields if f in [mf.name for mf in self._meta.fields]}
+        instance = self._meta.model(**data)
         # disable database operations
         instance.save = _dummy_db
         instance.delete = _dummy_db
         return instance
     
-    def new_version(self):
-        packed = self.pack()
+    def new_version(self, **kwargs):
+        packed = self.pack(**kwargs)
         if self.versions:
             last = self.versions[0]
             if packed['data'] == last['data']:
                 raise NoChangeException
-        self.versions.insert(0, self.pack())
+        self.versions.insert(0, packed)
+        # if we passed version_history_max_length we delete the last one
+        if len(self.versions) > self.version_history_max_length:
+            self.delete_revision(self.versions[self.version_history_max_length]['revision'])
         self.revision = uuid.uuid4()  # new revision number
         self.version_created_at = datetime.utcnow()
         self.version_updated_at = datetime.utcnow()
@@ -122,7 +135,18 @@ class Versioned(models.Model):
         else:
             # get here if we don't break
             raise ValueError("Revision %s not found for %s" % (revision, self))
+
+    def delete_revision(self, revision):
+        for i, version in enumerate(self.versions):
+            if version['revision'] == revision:
+                del self.versions[i]
+                break
+        else:
+            raise ValueError("Revision %s not found for %s" % (revision, self))
     
+    def flush_history(self):
+        self.versions = []
+        
     @property
     def history(self):
         return [self.unpack(version) for version in self.versions]
@@ -136,6 +160,7 @@ if 'test' in sys.argv:
         content = models.CharField(max_length=128)
         ignored = models.SmallIntegerField(default=5)
         version_ignore_fields = ('ignored',)
+        version_history_max_length = 5
         
         def __str__(self):
             return self.content

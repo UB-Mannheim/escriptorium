@@ -44,6 +44,13 @@ form.inline-form {
     display: block;
 }
 
+#train-counter {
+    display: none;
+}
+#train-counter.ongoing {
+    display: block;
+}
+
 .js-metadata-row:last-of-type .js-metadata-delete {
     display: none;
 }
@@ -112,6 +119,10 @@ form.inline-form {
     opacity: 0.2;
     margin: 5px;
     width: 90%;
+}
+
+.card .card-body {
+    padding: 1rem;
 }
 
 .card .card-btn.js-cancel {
@@ -229,8 +240,7 @@ form.inline-form {
     color: var(--dark);
 }
 
-.card .ongoing {
-    color: var(--info);
+.card .ongoing, .blink {
     animation-duration: 1s;
     animation-name: blink;
     animation-iteration-count: infinite;

@@ -91,8 +91,8 @@ class DocumentViewSet(ModelViewSet):
         else:
             return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        response['Content-Disposition'] = 'attachment; filename="export-%s-%s.%s"' % (
-            slugify(self.object.name), datetime.now().isoformat()[:16], extension)
+        response['Content-Disposition'] = 'attachment; filename="export_%s_%s.%s"' % (
+            slugify(self.object.name), datetime.now().isoformat()[:16].replace('-', '_'), extension)
         return response
     
     def get_part_data(self, part_pk, transcription):
@@ -145,6 +145,7 @@ class PartViewSet(ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         part.cancel_tasks()
         part.refresh_from_db()
+        del part.tasks  # reset cache
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
 

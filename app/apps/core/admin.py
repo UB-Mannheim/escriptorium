@@ -25,7 +25,6 @@ class ScriptAdmin(admin.ModelAdmin):
     list_filter = ['text_direction']
     
 admin.site.register(Document, DocumentAdmin)
-admin.site.register(DocumentProcessSettings)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
 admin.site.register(Typology)
