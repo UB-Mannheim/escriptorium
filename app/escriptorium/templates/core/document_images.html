@@ -24,9 +24,9 @@
     <button id="select-all" class="btn btn-sm btn-info mr-1">{% trans "Select all" %}</button>
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
-    
+    <span>{% trans "Selected" %} <span id="selected-counter"></span></span>
     <div class="btn-group ml-auto mr-1" role="group">
-      <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+      <button id="import-selected" type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
         <i class="fas fa-file-import mr-1"></i>{% trans "Import" %}
       </button>
       <div class="dropdown-menu">
@@ -40,10 +40,13 @@
       <button id="cancel-import" class="btn btn-sm btn-warning"><i class="fas fa-ban"></i></button>
     </span>
     {% endwith %}
+    {% if user.is_staff %}
+    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if document.is_training %}ongoing{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <span id="train-counter" class="ml-1"></span>
+    {% endif %}
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>
-    {# <button id="train-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button> #}
-    <button id="transcribe-selected" class="btn btn-sm btn-primary js-proc-selected" data-proc="transcribe" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
+    <button id="transcribe-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="transcribe" title="{% trans 'Start transcribing selected images.' %}"><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
   </div>
 </div>
 
@@ -59,7 +62,7 @@
   <div id="image-card-{pk}" class="card">
     <div style="position: relative;">
       <button class="js-card-select-hdl"><i class="fas fa-square"></i></button>
-      <button class="close mr-1 js-card-delete" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <button title="{% trans 'Delete this image and all its data (segmentation, transcriptions)' %}" class="close mr-1 js-card-delete" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
       <div class="card-btns">
         <button class="btn card-btn btn-warning js-cancel" title="{% trans 'Cancel tasks' %}"><i class="fas fa-ban"></i></button>
@@ -94,7 +97,6 @@
 <script type="text/javascript">
 'use strict';
 var DOCUMENT_ID = {{ document.pk }};
-var TRANSCRIPTION_URL = "{% url 'document-transcription' pk=document.pk %}";
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {

@@ -52,7 +52,6 @@ $(document).ready(function() {
     
     msgSocket.addEventListener('message', function(e) {
         var data = JSON.parse(e.data);
-
         if (DEBUG) {
             console.log('Received ws message: ', data);
         }

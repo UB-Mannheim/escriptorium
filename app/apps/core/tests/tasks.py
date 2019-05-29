@@ -13,7 +13,11 @@ class TasksTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.factory.make_part(document=self.part.document)
         self.factory.make_part(document=self.part.document)
-
+        self.transcription = self.factory.make_transcription(document=self.part.document)
+        self.factory.make_content(self.part, transcription=self.transcription)
+        for part in self.part.document.parts.all():
+            part.binarize()
+    
     def test_workflow(self):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_CREATED)
@@ -54,5 +58,27 @@ class TasksTestCase(CoreFactoryTestCase):
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
     
-    def test_training(self):
-        pass
+    def test_training_new_model(self):
+        self.client.force_login(self.part.document.owner)
+        uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
+        with self.assertNumQueries(13):
+            response = self.client.post(uri, {
+                'document': self.part.document.pk,
+                'transcription': self.transcription.pk,
+                'parts': json.dumps([part.pk for part in self.part.document.parts.all()]),
+                'task': 'train',
+                'new_model': 'new_test_model'})
+        self.assertEqual(response.status_code, 200)
+    
+    def test_training_existing_model(self):
+        model = self.factory.make_model(document=self.part.document)
+        self.client.force_login(self.part.document.owner)
+        uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
+        with self.assertNumQueries(26):
+            response = self.client.post(uri, {
+                'document': self.part.document.pk,
+                'transcription': self.transcription.pk,
+                'parts': json.dumps([part.pk for part in self.part.document.parts.all()]),
+                'task': 'train',
+                'train_model': model.pk})
+        self.assertEqual(response.status_code, 200)

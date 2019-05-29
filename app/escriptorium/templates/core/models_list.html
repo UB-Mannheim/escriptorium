@@ -1,0 +1,59 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles %}
+
+{% block nav_content %}
+<table id="models-table" class="table table-hover">
+  <tr>
+    <th class="col"></th>
+    <th>{% trans "Training" %}</th>
+    <th>{% trans "Accuracy" %}</th>
+    <th>{% trans "Errors" %}</th>
+    <th></th>
+    <th></th>
+  </tr>
+  {% for model in document.ocr_models.all %}
+  <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
+    <td title="{% trans "Model name" %}">{{ model.name }}</td>
+    <td title="{% if model.training %}{% trans "Is currently training" %}{% else %}{% trans "Is done training" %}{% endif %}">
+      {% if model.training %}<i class="fas fa-subway currently-training"></i>{% else %}<span class="text-success">✓</span>{% endif %}</td>
+    <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
+    <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
+    <td>
+      {% if model.versions %}
+      <button type="button" class="btn btn-sm btn-primary" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
+        <i class="fas fa-save"></i>
+      </button>
+      {% endif %}
+    </td>
+    <td>
+      <a href="{{ model.file.url }}">
+        <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
+          <i class="fas fa-file-download"></i>
+        </button>
+    </td>
+  </tr>
+  {% for version in model.history %}
+  <tr id="model-version-{{version.revision}}" class="versions-{{model.pk}} collapse">
+    
+    <td title="{% trans "Model name" %}" class="pl-5">{{ version.name }} (epoch #{{version.training_epoch}})</td>
+    <td></td>
+    <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
+    <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
+    <td></td>
+    <td>
+      <a href="{{ version.file.url }}">
+        <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
+          <i class="fas fa-file-download"></i>
+        </button>
+    </td>
+    
+  </tr>
+  {% endfor %}
+  {% endfor %}
+</table>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/models.js' %}"></script>
+{% endblock %}

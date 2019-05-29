@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
 from core.models import *
@@ -57,7 +57,7 @@ class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
         if self.cleaned_data['username']:
             doc.shared_with_users.add(self.cleaned_data['username'])
         return doc
-        
+
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
     key = forms.CharField()
@@ -79,11 +79,12 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
         return key
 
 
-MetadataFormSet = inlineformset_factory(Document, DocumentMetadata, form=MetadataForm,
+MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
+                                        form=MetadataForm,
                                         extra=1, can_delete=True)
 
 
-class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
+class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     # TODO: split this form into one for each process?!
     TASK_BINARIZE = 'binarize'
     TASK_SEGMENT = 'segment'
@@ -96,25 +97,44 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         (TASK_TRANSCRIBE, 4),
     ))
     parts = forms.CharField()
-    
+
+    # binarization
     bw_image = forms.ImageField(required=False)
-    segmentation_steps = forms.ChoiceField(choices=(
+    BINARIZER_CHOICES = (('kraken', _("Kraken")),)
+    binarizer = forms.ChoiceField(required=False,
+                                  choices=BINARIZER_CHOICES,
+                                  initial='kraken')
+
+    # segment
+    SEGMENTATION_STEPS_CHOICES = (
         ('regions', _('Regions')),
         ('lines', _('Lines')),
-        ('both', _('Lines and regions'))
-    ), initial='lines', required=False)
-    new_model = forms.CharField(required=False, label=_('Name'))
+        ('both', _('Lines and regions')))
+    segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
+                                           initial='lines', required=False)
+    TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
+                              ('horizontal-rl', _("Horizontal r2l")),
+                              ('vertical-lr', _("Vertical l2r")),
+                              ('vertical-rl', _("Vertical r2l")))
+    text_direction = forms.ChoiceField(initial='horizontal-lr', required=False,
+                                       choices=TEXT_DIRECTION_CHOICES)
+    # transcribe
     upload_model = forms.FileField(required=False,
                                    validators=[FileExtensionValidator(
                                        allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
+    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects.all(), label=_("Model"), required=False)
     
-    class Meta:
-        model = DocumentProcessSettings
-        fields = '__all__'
+    # train
+    new_model = forms.CharField(required=False, label=_('Model name'))
+    train_model = forms.ModelChoiceField(queryset=OcrModel.objects.all(), label=_("Model"), required=False)
+    transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+    
+    # typology = forms.ModelChoiceField(Typology, required=False,
+    #                              limit_choices_to={'target': Typology.TARGET_PART})
     
     def __init__(self, document, user, *args, **kwargs):
-        self.user = user
         self.document = document
+        self.user = user
         super().__init__(*args, **kwargs)
         # self.fields['typology'].widget = forms.HiddenInput()  # for now
         # self.fields['typology'].initial = Typology.objects.get(name="Page")
@@ -122,12 +142,12 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['binarizer'].required = False
-        self.fields['text_direction'].required = False
         self.fields['train_model'].queryset = OcrModel.objects.filter(document=self.document)
         self.fields['ocr_model'].queryset = OcrModel.objects.filter(
-            Q(document=None) | Q(document=self.document), trained=True)
-    
+            Q(document=None, script=document.main_script)
+            | Q(document=self.document))
+        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+
     @cached_property
     def parts(self):
         pks = self.data.getlist('parts')
@@ -148,8 +168,14 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
             raise forms.ValidationError(_("Uploaded image should be black and white."))
         isize = (self.parts[0].image.width, self.parts[0].image.height) 
         if fh.size != isize:
-            raise forms.ValidationError(_("Uploaded image should be the same size as original image {}.").format(isize))
+            raise forms.ValidationError(_("Uploaded image should be the same size as original image {size}.").format(size=isize))
         return img
+    
+    def clean_train_model(self):
+        model = self.cleaned_data['train_model']
+        if model and model.training:
+            raise AlreadyProcessingException
+        return model
     
     def process(self):
         task = self.cleaned_data.get('task')
@@ -160,33 +186,35 @@ class DocumentProcessForm(BootstrapFormMixin, forms.ModelForm):
             else:
                 for part in self.parts:
                     part.task('binarize', user_pk=self.user.pk)
+        
         elif task == self.TASK_SEGMENT:
             for part in self.parts:
                 part.task('segment',
                           user_pk=self.user.pk,
                           steps=self.cleaned_data['segmentation_steps'],
                           text_direction=self.cleaned_data['text_direction'])
-        elif task == self.TASK_TRAIN:
-            if self.cleaned_data.get('new_model'):
-                # create model and corresponding OcrModel
-                pass
-            
-            # part.train(user_pk=self.user.pk, model=None)
+        
         elif task == self.TASK_TRANSCRIBE:
             if self.cleaned_data.get('upload_model'):
                 model = OcrModel.objects.create(
+                    document=self.parts[0].document,
+                    owner=self.user,
                     name=self.cleaned_data['upload_model'].name,
-                    file=self.cleaned_data['upload_model'],
-                    trained=True, document=self.parts[0].document)
-                self.instance.ocr_model = model  # save to settings
+                    file=self.cleaned_data['upload_model'])
             elif self.cleaned_data['ocr_model']:
                 model = self.cleaned_data['ocr_model']
             else:
                 model = None
-            
             for part in self.parts:
                 part.task('transcribe', user_pk=self.user.pk, model_pk=model and model.pk or None)
-        self.save()  # save settings
+        
+        elif task == self.TASK_TRAIN:
+            model = self.cleaned_data.get('upload_model') or self.cleaned_data.get('train_model')
+            OcrModel.train(self.parts,
+                           self.cleaned_data['transcription'],
+                           model=model,
+                           model_name=self.cleaned_data['new_model'],
+                           user=self.user)
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):

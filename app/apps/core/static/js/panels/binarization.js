@@ -11,12 +11,11 @@ class BinarizationPanel {
     
     load(part) {
         this.part = part;
-        
         if (this.part.bw_image) {
-            if (this.part.bw_image.thumbnails) {
+            if (this.part.bw_image.thumbnails.large) {
                 $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
             } else {
-                $('.img-container img', this.$panel).attr('src', this.part.bw_image.url);
+                $('.img-container img', this.$panel).attr('src', this.part.bw_image.uri);
             }
         } else {
             $('.img-container img', this.$panel).attr('src', '');
@@ -41,5 +40,7 @@ class BinarizationPanel {
         else this.open();
     }
     
-    reset() {}
+    reset() {
+        zoom.refresh();
+    }
 }

@@ -10,11 +10,11 @@
 {% block wizard_fields %}
 <div class="form-group">
   <h5>{% trans "Manually" %}</h5>
-  {% render_field settings_form.bw_image class="js-proc-settings" %}
+  {% render_field process_form.bw_image class="js-proc-settings" %}
 </div>
 <div class="form-group">
   <h5>{% trans "Or automatically" %}</h5>
-  {% render_field settings_form.binarizer class="js-proc-settings" %}
+  {% render_field process_form.binarizer class="js-proc-settings" %}
 </div>
 {% endblock %}
 

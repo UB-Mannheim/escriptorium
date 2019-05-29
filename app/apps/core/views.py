@@ -129,84 +129,9 @@ class DocumentImages(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
-        settings, created = DocumentProcessSettings.objects.get_or_create(document=self.object)
-        context['settings_form'] = DocumentProcessForm(self.object, self.request.user,
-                                                       instance=settings)
+        context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
         return context
-
-
-class DocumentTranscription(LoginRequiredMixin, DetailView):
-    model = DocumentPart
-    pk_url_kwarg = 'part_pk'
-    template_name = "core/document_transcription.html"
-    http_method_names = ('get',)
-    
-    def get_queryset(self):
-        if not hasattr(self, 'document'):
-            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('pk'))
-        return DocumentPart.objects.filter(
-            document=self.document,
-            workflow_state=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).prefetch_related(
-                'lines', 'lines__transcriptions', 'lines__transcriptions__transcription')
-
-    def get_object(self):
-        if not 'part_pk' in self.kwargs:
-            try:
-                return self.get_queryset()[0]
-            except IndexError:
-                raise Http404
-        else:
-            return super().get_object()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        # Note: a bit confusing but this view uses the same base template than UpdateDocument
-        # so we need context['object'] = document
-        context['object'] = self.document
-        context['part'] = self.object
-        
-        # Note .next() and .previous() don't work because can't filter against it
-        context['previous'] = self.get_queryset().filter(order__lt=self.object.order).order_by('-order').first()
-        context['next'] = self.get_queryset().filter(order__gt=self.object.order).order_by('order').first()
-        return context
-
-
-class LineTranscriptionUpdateAjax(LoginRequiredMixin, View):
-    http_method_names = ('post',)
-
-    def post(self, request, *args, **kwargs):
-        line = Line.objects.get(pk=request.POST['line'])
-        transcription = Transcription.objects.get(pk=request.POST['transcription'])
-        try:
-            lt = line.transcriptions.get(transcription=transcription)
-        except LineTranscription.DoesNotExist:
-            lt = LineTranscription.objects.create(
-                line=line,
-                transcription=transcription,
-                version_author=self.request.user.username,
-                content=request.POST['content'])
-        else:
-            if request.POST.get('new_version'):
-                try:
-                    lt.new_version()
-                    lt.save()
-                except NoChangeException:
-                    return HttpResponse(json.dumps({'status': 'error', 'msg': _('No changes detected.')}),
-                                        content_type="application/json")
-                else:
-                    return HttpResponse(json.dumps({'status': 'ok', 'transcription': lt.versions[0]}),
-                                        content_type="application/json")
-            
-            if lt.version_author != self.request.user.username:
-                lt.new_version()
-            if 'content' in request.POST:
-                lt.content = request.POST['content']
-            lt.save()
-        line.document_part.calculate_progress()
-        line.document_part.save()
-        return HttpResponse(json.dumps({'status': 'ok', 'transcription': lt.pack()}),
-                            content_type="application/json")
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
@@ -250,6 +175,7 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
 
 class DocumentPartsProcessAjax(LoginRequiredMixin, View):
+    # TODO: move to api
     http_method_names = ('post',)
     
     def get_document(self):
@@ -262,10 +188,8 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
             return HttpResponse(json.dumps({'status': 'Not Found'}),
                                 status=404, content_type="application/json")
         
-        settings, created = DocumentProcessSettings.objects.get_or_create(document=document)
         form = DocumentProcessForm(document, self.request.user, 
-                                   self.request.POST, self.request.FILES,
-                                   instance=settings)
+                                   self.request.POST, self.request.FILES)
         if form.is_valid():
             try:
                 form.process()
@@ -312,3 +236,24 @@ class EditPart(LoginRequiredMixin, DetailView):
                 raise Http404
         else:
             return super().dispatch(*args, **kwargs)
+
+
+class ModelsList(LoginRequiredMixin, ListView):
+    model = OcrModel
+    template_name = "core/models_list.html"
+    http_method_names = ('get',)
+    
+    def get_queryset(self):
+        if 'document_pk' in self.kwargs:
+            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            return OcrModel.objects.filter(document=self.document)
+        else:
+            self.document = None
+            return OcrModel.objects.filter(owner=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.document:
+            context['document'] = self.document
+            context['object'] = self.document  # legacy
+        return context

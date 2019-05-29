@@ -145,6 +145,7 @@ class PartViewSet(ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         part.cancel_tasks()
         part.refresh_from_db()
+        del part.tasks  # reset cache
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
 

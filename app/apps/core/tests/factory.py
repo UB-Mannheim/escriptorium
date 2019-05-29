@@ -7,6 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
+from kraken.lib import vgsl
+
 from core.models import *
 from users.models import User
 
@@ -53,7 +55,8 @@ class CoreFactory():
         attrs = kwargs.copy()
         attrs['document'] = attrs.get('document') or self.make_document()
         attrs.setdefault('name', 'test trans')
-        return Transcription.objects.create(**attrs)
+        tr = Transcription.objects.create(**attrs)
+        return tr
     
     def make_image_file(self):
         file = BytesIO()
@@ -65,6 +68,27 @@ class CoreFactory():
         image.save(file, 'png')
         file.seek(0)
         return file
+
+    def make_model(self, document=None):
+        spec = '[1,48,0,1 Lbx100 Do O1c10]'
+        nn = vgsl.TorchVGSLModel(spec)
+        model_name = 'test-model'
+        model = OcrModel.objects.create(name=model_name, document=document)
+        modeldir = os.path.join(settings.MEDIA_ROOT, model.file.field.upload_to)
+        if not os.path.exists(modeldir):
+            os.mkdir(modeldir)
+        modelpath = os.path.join(modeldir, model_name)
+        nn.save_model(path=modelpath)
+        model.file = modelpath
+        model.save()
+        return model
+    
+    def make_content(self, part, amount=30, transcription=None):
+        if transcription is None:
+            transcription = self.make_transcription(document=part.document)
+        for i in range(amount):
+            line = Line.objects.create(document_part=part, box=[i*10, 5, i*10+10, 100])
+            LineTranscription.objects.create(transcription=transcription, line=line, content='test %d' % i)
 
 
 class CoreFactoryTestCase(TestCase):

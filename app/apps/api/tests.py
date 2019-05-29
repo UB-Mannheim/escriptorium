@@ -188,7 +188,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(11):
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
                 'box': '[10, 10, 50, 50]'
@@ -245,7 +245,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
         
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,
