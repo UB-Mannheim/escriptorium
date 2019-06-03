@@ -81,7 +81,7 @@
         <input id="zoom-range" type="range" name="zoom-range" class="form-control-range mt-1" orient="vertical" min="" max="" step="0.2">
       </div>
   </div>
-  <div id="img-panel" class="col">
+  <div id="img-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
         <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
@@ -90,7 +90,7 @@
     </div>
   </div>
   
-  <div id="binar-panel" class="col">
+  <div id="binar-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
         <img id="part-img" src="{{ part.bw_image|thumbnail_url:'large' }}" width="100%"/>
@@ -99,7 +99,7 @@
     </div>
   </div>
   
-  <div id="seg-panel" class="col">
+  <div id="seg-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
         <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
@@ -108,7 +108,7 @@
     </div>
   </div>
   
-  <div id="trans-panel" class="col {{ document.default_text_direction }}">
+  <div id="trans-panel" class="col panel {{ document.default_text_direction }}">
     <div class="img-container">
       <div class="zoom-container">
         <div id="part-trans"></div>
@@ -145,7 +145,7 @@
       <div class="modal-body {{ document.default_text_direction }}">
         <div id="modal-img-container">
           <img id="line-img" src="{{ part.image|thumbnail_url:'large' }}" draggable="false" selectable="false"/>
-          {# show context #}
+          <div class="overlay"></div>
         </div>
         
         <input type="hidden" name="transcription"/>

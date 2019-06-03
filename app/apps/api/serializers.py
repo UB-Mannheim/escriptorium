@@ -113,6 +113,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         instance = super().create(validated_data)
         instance.line.document_part.calculate_progress()
+        instance.line.document_part.save()
         return instance
 
 

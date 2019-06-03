@@ -305,12 +305,10 @@ class DocumentPart(OrderedModel):
         return self.original_filename or os.path.split(self.image.path)[1]
     
     def calculate_progress(self):
-        if self.workflow_state < self.WORKFLOW_STATE_TRANSCRIBING:
-            return 0
-        transcribed = LineTranscription.objects.filter(line__document_part=self).count()
-        total = Line.objects.filter(document_part=self).count()
+        total = self.lines.count()
         if not total:
             return 0
+        transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         self.transcription_progress = min(int(transcribed / total * 100), 100)
 
     def recalculate_ordering(self, text_direction=None, line_level_treshold=1/100):
@@ -619,6 +617,7 @@ class DocumentPart(OrderedModel):
                 document=self.document)
         
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
+        self.calculate_progress()
         self.save()
     
     def chain_tasks(self, *tasks):
@@ -802,7 +801,7 @@ class OcrModel(Versioned, models.Model):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
-                btasks.append(part.task('binarize', commit=False))
+                btasks.append(*part.task('binarize', commit=False))
         if not (model or model_name):
             raise ValueError("OcrModel.train() requires either a `model` or `model_name`.")
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
@@ -810,7 +809,7 @@ class OcrModel(Versioned, models.Model):
                          model_pk=model and model.pk or None,
                          model_name=model_name,
                          user_pk=user and user.pk or None)
-        chord(set(btasks), ttask).delay()
+        chord(btasks, ttask).delay()
     
     # versioning
     def pack(self, **kwargs):
