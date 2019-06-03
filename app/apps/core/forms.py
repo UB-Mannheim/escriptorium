@@ -2,7 +2,7 @@ import json
 import logging
 
 from django import forms
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
@@ -104,7 +104,11 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     binarizer = forms.ChoiceField(required=False,
                                   choices=BINARIZER_CHOICES,
                                   initial='kraken')
-
+    threshold = forms.FloatField(
+        validators=[MinValueValidator(0.1), MaxValueValidator(1)],
+        help_text=_('Increase for low contrast documents.'),
+        widget=forms.NumberInput(
+            attrs={'type':'range', 'step': '0.1', 'min': '0.1', 'max':'1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
         ('regions', _('Regions')),
@@ -185,7 +189,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                 self.parts[0].save()
             else:
                 for part in self.parts:
-                    part.task('binarize', user_pk=self.user.pk)
+                    part.task('binarize',
+                              user_pk=self.user.pk,
+                              threshold=self.cleaned_data.get('threshold'))
         
         elif task == self.TASK_SEGMENT:
             for part in self.parts:

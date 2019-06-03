@@ -508,6 +508,10 @@ $(document).ready(function() {
     $('.js-proc-selected').click(function(ev) {
         openWizard($(ev.target).data('proc'));
     });
+
+    $('#process-part-form-binarize #id_threshold').change(function() {
+        $(this).attr('title', this.value);
+    });
     
     $('.process-part-form').submit(function(ev) {
         ev.preventDefault();

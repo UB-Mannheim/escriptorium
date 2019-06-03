@@ -15,6 +15,9 @@
 <div class="form-group">
   <h5>{% trans "Or automatically" %}</h5>
   {% render_field process_form.binarizer class="js-proc-settings" %}
+
+  {% trans "Contrast" %}
+  {% render_field process_form.threshold class="js-proc-settings" %}
 </div>
 {% endblock %}
 

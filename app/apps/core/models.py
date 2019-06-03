@@ -521,7 +521,7 @@ class DocumentPart(OrderedModel):
         else:
             os.rename(opti_name, self.image.file.name)
     
-    def binarize(self):
+    def binarize(self, threshold=None):
         if self.workflow_state < self.WORKFLOW_STATE_BINARIZING:
             self.workflow_state = self.WORKFLOW_STATE_BINARIZING
             self.save()
@@ -539,9 +539,9 @@ class DocumentPart(OrderedModel):
         bw_file = os.path.join(os.path.dirname(self.image.file.name), bw_file_name)
         with Image.open(self.image.path) as im:
             # threshold, zoom, escale, border, perc, range, low, high
-            res = binarization.nlbin(im)
+            res = binarization.nlbin(im, threshold)
             res.save(bw_file, format=form)
-
+        
         self.bw_image = document_images_path(self, bw_file_name)
         if self.workflow_state < self.WORKFLOW_STATE_BINARIZED:
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED

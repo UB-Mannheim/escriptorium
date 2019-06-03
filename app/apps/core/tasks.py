@@ -89,7 +89,7 @@ def lossless_compression(instance_pk, **kwargs):
 
 
 @shared_task
-def binarize(instance_pk, user_pk=None, binarizer=None, **kwargs):
+def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -106,7 +106,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, **kwargs):
         user = None
     
     try:
-        part.binarize()
+        part.binarize(threshold=threshold)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the binarization!"),
