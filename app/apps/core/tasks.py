@@ -383,7 +383,7 @@ def check_signal_order(old_signal, new_signal):
 
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
-    if not sender.startswith('core.tasks') or sender.name.endswith('train'):
+    if not sender.startswith('core.tasks') or sender.endswith('train'):
         return
     instance_id = body[0][0]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')

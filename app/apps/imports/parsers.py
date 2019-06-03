@@ -53,7 +53,8 @@ class XMLParser():
         return self.bbox(line_tag)
     
     def post_process(self, part):
-        pass
+        part.calculate_progress()
+        part.save()
     
     @property
     def total(self):

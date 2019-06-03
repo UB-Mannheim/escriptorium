@@ -397,6 +397,7 @@ $(document).ready(function() {
                 var uri = API.part.replace('{part_pk}', data.id);
                 $.get(uri, function(data) {
                     new partCard(data);
+                    partCard.refreshSelectedCount();
                 });
             }
         }, 5000);

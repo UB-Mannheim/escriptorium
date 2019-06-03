@@ -22,7 +22,7 @@ class TranscriptionLine {
             this.showOverlay();
         }, this));
         $el.on('mouseleave', $.proxy(function(ev) {
-            if (!this.editing) $('.overlay').fadeOut({queue:false});
+            if (!this.editing) $('.panel .overlay').fadeOut({queue:false});
         }, this));
         $el.on('click', $.proxy(function(ev) {
             this.edit();
@@ -71,7 +71,7 @@ class TranscriptionLine {
     }
     
     showOverlay() {
-        $('.overlay').css({
+        $('.panel .overlay').css({
             left: this.box[0]*this.panel.ratio + 'px',
             top: this.box[1]*this.panel.ratio + 'px',
             width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
@@ -148,13 +148,19 @@ class TranscriptionLine {
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
         }
-        let height = Math.min(originalHeight * ratio, 200);
-        height = Math.max(height, 40);
+        let line_height = originalHeight * ratio;
+        // multiply by 1.4 to add a bit of context
+        let height = Math.max(Math.min(line_height*1.4, 200), 40);
         let width = originalWidth * ratio;
-        
+        let context_top = (height - line_height) / 2;
         $('#trans-modal #modal-img-container').animate({
-            height: height + 'px',
+            height: height + 'px',  // adds some context
             width: width + 'px'
+        });
+        $('#trans-modal .overlay').css({
+            height: line_height + 'px',
+            width: width + 'px',
+            top: context_top
         });
         
         // try to make the input match the image
@@ -180,7 +186,7 @@ class TranscriptionLine {
         
         $('#trans-modal #line-img').animate({
             left: '-'+this.box[0]*ratio+'px',
-            top: '-'+this.box[1]*ratio+'px',
+            top: '-'+(this.box[1]*ratio-context_top)+'px',
             width: this.panel.part.image.size[0]*ratio + 'px'
         }, 200);
 
@@ -289,7 +295,7 @@ class TranscriptionPanel{
         });
         $("#trans-modal").on('hide.bs.modal', function(ev) {
             currentLine.editing = false;
-            $('.overlay').fadeOut({queue:false});
+            $('.panel .overlay').fadeOut({queue:false});
         });
         $("#trans-modal #prev-btn").click($.proxy(function(ev) {
             this.lines[currentLine.order-1].edit();
