@@ -37,7 +37,5 @@ class SourcePanel {
         else this.open();
     }
 
-    reset() {
-        zoom.refresh();
-    }
+    reset() {}
 }

@@ -138,6 +138,7 @@ class WheelZoom {
     
     refresh() {
         let container = this.getVisibleContainer();
+        if (!container) return;
         var target = container.children().first();
         this.size = {w:target.width(), h:target.height()};
         this.min_scale = this.options.min_scale || Math.min(

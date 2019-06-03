@@ -40,7 +40,5 @@ class BinarizationPanel {
         else this.open();
     }
     
-    reset() {
-        zoom.refresh();
-    }
+    reset() {}
 }
