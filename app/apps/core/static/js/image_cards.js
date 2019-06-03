@@ -509,7 +509,7 @@ $(document).ready(function() {
         openWizard($(ev.target).data('proc'));
     });
 
-    $('#process-part-form-binarize #id_threshold').change(function() {
+    $('#process-part-form-binarize #id_threshold').on('input', function() {
         $(this).attr('title', this.value);
     });
     

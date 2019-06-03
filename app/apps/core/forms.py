@@ -106,9 +106,10 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                                   initial='kraken')
     threshold = forms.FloatField(
         validators=[MinValueValidator(0.1), MaxValueValidator(1)],
-        help_text=_('Increase for low contrast documents.'),
+        help_text=_('Increase it for low contrast documents, if the letters are not visible enough.'),
         widget=forms.NumberInput(
-            attrs={'type':'range', 'step': '0.1', 'min': '0.1', 'max':'1'}))
+            attrs={'type':'range', 'step': '0.05',
+                   'min': '0.1', 'max':'1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
         ('regions', _('Regions')),
