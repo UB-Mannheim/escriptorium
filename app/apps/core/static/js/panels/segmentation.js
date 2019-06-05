@@ -283,6 +283,7 @@ class SegmentationPanel {
             box: box,
             block: block}, this.ratio);
         box_.changed = true;  // makes sure it's saved
+        this.boxes.push(box_);
     }
     
     showBlocks() {

@@ -235,6 +235,11 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
     }
 }
+THUMBNAIL_OPTIMIZE_COMMAND = {
+    # 'png': '/usr/bin/optipng {filename}',
+    # 'gif': '/usr/bin/optipng {filename}',
+    'jpeg': '/usr/bin/jpegoptim {filename}'
+}
 
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 

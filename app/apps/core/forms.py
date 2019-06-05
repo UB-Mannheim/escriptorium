@@ -105,6 +105,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                                   choices=BINARIZER_CHOICES,
                                   initial='kraken')
     threshold = forms.FloatField(
+        required=False, initial=0.5,
         validators=[MinValueValidator(0.1), MaxValueValidator(1)],
         help_text=_('Increase it for low contrast documents, if the letters are not visible enough.'),
         widget=forms.NumberInput(

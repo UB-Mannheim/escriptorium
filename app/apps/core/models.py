@@ -539,7 +539,10 @@ class DocumentPart(OrderedModel):
         bw_file = os.path.join(os.path.dirname(self.image.file.name), bw_file_name)
         with Image.open(self.image.path) as im:
             # threshold, zoom, escale, border, perc, range, low, high
-            res = binarization.nlbin(im, threshold)
+            if threshold is not None:
+                res = binarization.nlbin(im, threshold)
+            else:
+                res = binarization.nlbin(im)
             res.save(bw_file, format=form)
         
         self.bw_image = document_images_path(self, bw_file_name)
