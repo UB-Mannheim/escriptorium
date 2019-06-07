@@ -68,7 +68,7 @@ services:
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
-    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing -c 4 --max-tasks-per-child=10"
   
   celery-low-priority:
     <<: *celery-main
