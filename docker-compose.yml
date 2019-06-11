@@ -68,11 +68,11 @@ services:
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
-    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing -c 4 --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing -c ${CELERY_MAIN_CORES:-4} --max-tasks-per-child=10"
   
   celery-low-priority:
     <<: *celery-main
-    command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
 
   flower:
     image: mher/flower
