@@ -169,6 +169,7 @@ CELERY_TASK_QUEUES = (
     Queue('img-processing', routing_key='img-processing'),
     Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
 )
+CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
     'core.tasks.train': {'queue': 'low-priority'},
