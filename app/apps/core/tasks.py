@@ -57,7 +57,7 @@ def generate_part_thumbnails(instance_pk):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
-        raise
+        return
     
     aliases = {}
     thbnr = get_thumbnailer(part.image)
@@ -73,7 +73,7 @@ def convert(instance_pk, **kwargs):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to convert innexistant DocumentPart : %d', instance_pk)
-        raise
+        return
     part.convert()
 
     
@@ -84,7 +84,7 @@ def lossless_compression(instance_pk, **kwargs):
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
-        raise
+        return
     part.compress()
 
 
@@ -95,7 +95,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to binarize innexistant DocumentPart : %d', instance_pk)
-        raise
+        return
     
     if user_pk:
         try:
@@ -113,7 +113,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
-        raise e
+        logger.exception(e)
     else:
         if user:
             user.notify(_("Binarization done!"),
@@ -130,7 +130,7 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist as e:
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
-        raise e
+        return
 
     if user_pk:
         try:
@@ -148,7 +148,7 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
                         id="segmentation-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_BINARIZED
         part.save()
-        raise e
+        logger.exception(e)
     else:
         if user:
             user.notify(_("Segmentation done!"),
@@ -159,7 +159,7 @@ def add_data_to_training_set(data, target_set):
     # reorder the lines inside the set to make sure we only open the image once
     data.sort(key=lambda e: e['image'])
     im = None;
-    for lt in data:
+    for i, lt in enumerate(data):
         if lt['image'] != im:
             if im:
                 logger.debug('Closing', im)
@@ -167,6 +167,7 @@ def add_data_to_training_set(data, target_set):
             im = Image.open(os.path.join(settings.MEDIA_ROOT, lt['image']))
             logger.debug('Opened', im)
         if lt['content']:
+            logger.debug('Loading {} {} {}'.format(i, lt['box'], lt['content']))
             target_set.add_loaded(im.crop(lt['box']), lt['content'])
     im.close()
 
@@ -214,14 +215,19 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
                                  reorder=True,
                                  im_transforms=transforms,
                                  preload=True)
+    
     partition = int(len(ground_truth) / 10)
     
-    add_data_to_training_set(ground_truth[:partition], gt_set)
-    gt_set.encode(None)  # codec
+    add_data_to_training_set(ground_truth[partition:], gt_set)
+    try:
+        gt_set.encode(None)  # codec
+    except KrakenEncodeException:
+        pass  # TODO
+
     train_loader = DataLoader(gt_set, batch_size=1, shuffle=True,
                               num_workers=0, pin_memory=True)
-    
-    add_data_to_training_set(ground_truth[partition:], val_set)
+    add_data_to_training_set(ground_truth[:partition], val_set)
+
     
     logger.debug('Done loading training data')
     
@@ -234,6 +240,7 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
         spec = '[1,48,0,1 Cr3,3,32 Do0.1,2 Mp2,2 Cr3,3,64 Do0.1,2 Mp2,2 S1(1x12)1,3 Lbx100 Do]'
         spec = '[{} O1c{}]'.format(spec[1:-1], gt_set.codec.max_label()+1)
         nn = vgsl.TorchVGSLModel(spec)
+        gt_set.encode(None)  # codec
         nn.user_metadata['accuracy'] = []
         nn.init_weights()
         nn.add_codec(gt_set.codec)
@@ -256,13 +263,13 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
     
     val_set.training_set = list(zip(val_set._images, val_set._gt))
     # #nn.train()
-    # # nn.set_num_threads(threads)
+    nn.set_num_threads(1)
     # rec = models.TorchSeqRecognizer(nn, train=True, device=device)
     #optim = getattr(torch.optim, optimizer)(nn.nn.parameters(), lr=0)
     optim = torch.optim.Adam(nn.nn.parameters(), lr=1e-3)
     # tr_it = TrainScheduler(optim)
     # tr_it.add_phase(1, (2e-3, 2e-3), (0.9, 0.9), 0, train.annealing_const)
-    st_it = EarlyStopping(None, int(len(gt_set) * LAG))
+    st_it = EarlyStopping(None, LAG)
     temp_file_prefix = os.path.join(fulldir, 'version')
     trainer = KrakenTrainer(model=nn,
                             optimizer=optim,
@@ -295,6 +302,7 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
             }})
     
     trainer.run(_print_eval, _progress)
+    
     send_event('document', document.pk, "training:done", {
         "id": model.pk,
     })
@@ -318,7 +326,7 @@ def train(part_pks, transcription_pk, model_pk=None, model_name=None, user_pk=No
     try:
         model = train_(part_pks, transcription_pk, model_pk=model_pk, model_name=model_name, user=user)
     except Exception as e:
-        raise e
+        logger.exception(e)
         if user:
             user.notify(_("Something went wrong during the training process!"),
                         id="training-error", level='danger')
@@ -340,7 +348,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
         logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
-        raise
+        return
     
     if user_pk:
         try:
@@ -368,7 +376,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
                         id="transcription-error", level='danger')
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
-        raise
+        logger.exception(e)
     else:
         if user and model:
             user.notify(_("Transcription done!"),

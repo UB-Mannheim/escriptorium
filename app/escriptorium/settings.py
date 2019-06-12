@@ -165,7 +165,7 @@ TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
-    Queue('default'),
+    Queue('default', routing_key='default'),
     Queue('img-processing', routing_key='img-processing'),
     Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
 )
@@ -212,16 +212,31 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
+
+        'kraken_logs': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_ROOT, 'logs', 'kraken', 'train.log'),
+        },
+        
         'console': {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
+        'kraken':{
+            'handlers': ['kraken_logs', 'console'],
+            'propagate': True
+        },
         'django': {
             'handlers': ['file', 'console'],
             'propagate': True,
         },
+        'core': {
+            'handlers': ['file', 'console'],
+            'propagate': True,
+        }
     },
 }
 
