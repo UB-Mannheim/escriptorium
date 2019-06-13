@@ -98,7 +98,7 @@ class XMLParser():
                             try:
                                 block_.box = self.block_bbox(block)
                             except TypeError:  # probably a dummy block
-                                block = None
+                                block_ = None
                             else:
                                 block_.save()
                         
