@@ -292,7 +292,7 @@ class DocumentPart(OrderedModel):
     
     @property
     def binarized(self):
-        return self.workflow_state >= self.WORKFLOW_STATE_BINARIZED
+        return self.bw_image is not None
     
     @property
     def segmented(self):
@@ -805,7 +805,8 @@ class OcrModel(Versioned, models.Model):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
-                btasks.append(*part.task('binarize', commit=False))
+                for task in part.task('binarize', commit=False):
+                    btasks.append(task)
         if not (model or model_name):
             raise ValueError("OcrModel.train() requires either a `model` or `model_name`.")
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
