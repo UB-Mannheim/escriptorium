@@ -172,19 +172,10 @@ def add_data_to_training_set(data, target_set):
     im.close()
 
 
-
-def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None):
+def train_(qs, document, transcription, model_pk=None, model_name=None, user=None):
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LAG = 5
-    Line = apps.get_model('core', 'Line')
-    DocumentPart = apps.get_model('core', 'DocumentPart')
-    Transcription = apps.get_model('core', 'Transcription')
-    LineTranscription = apps.get_model('core', 'LineTranscription')
-    OcrModel = apps.get_model('core', 'OcrModel')
-    
-    transcription = Transcription.objects.get(pk=transcription_pk)
-    document = transcription.document
-    
+
     send_event('document', document.pk, "training:start", {})
     
     # [1,48,0,1 Cr3,3,32 Do0.1,2 Mp2,2 Cr3,3,64 Do0.1,2 Mp2,2 S1(1x12)1,3 Lbx100 Do]
@@ -193,10 +184,6 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
     #     raise cick.BadOptionUsage('spec', 'Invalid input spec {}'.format(blocks[0]))
     # batch, height, width, channels, pad
     transforms = generate_input_transforms(1, 48, 0, 1, 16)
-    qs = (LineTranscription.objects
-          .filter(transcription=transcription,
-                  line__document_part__pk__in=part_pks)
-          .exclude(content__isnull=True))
     
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
@@ -227,10 +214,10 @@ def train_(part_pks, transcription_pk, model_pk=None, model_name=None, user=None
     train_loader = DataLoader(gt_set, batch_size=1, shuffle=True,
                               num_workers=0, pin_memory=True)
     add_data_to_training_set(ground_truth[:partition], val_set)
-
     
     logger.debug('Done loading training data')
     
+    OcrModel = apps.get_model('core', 'OcrModel')
     if model_pk:
         model = OcrModel.objects.get(pk=model_pk)
         nn = vgsl.TorchVGSLModel.load_model(model.file.path)
@@ -321,15 +308,27 @@ def train(part_pks, transcription_pk, model_pk=None, model_name=None, user_pk=No
             user = None
     else:
         user = None
+
+    Line = apps.get_model('core', 'Line')
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    Transcription = apps.get_model('core', 'Transcription')
+    LineTranscription = apps.get_model('core', 'LineTranscription')
     
     model = None
     try:
-        model = train_(part_pks, transcription_pk, model_pk=model_pk, model_name=model_name, user=user)
+        transcription = Transcription.objects.get(pk=transcription_pk)
+        document = transcription.document
+        qs = (LineTranscription.objects
+          .filter(transcription=transcription,
+                  line__document_part__pk__in=part_pks)
+          .exclude(content__isnull=True))
+        model = train_(qs, document, transcription, model_pk=model_pk, model_name=model_name, user=user)
     except Exception as e:
-        logger.exception(e)
+        send_event('document', document.pk, "training:error", {})
         if user:
             user.notify(_("Something went wrong during the training process!"),
                         id="training-error", level='danger')
+        logger.exception(e)
     else:
         if user:
             user.notify(_("Training finished!"),
