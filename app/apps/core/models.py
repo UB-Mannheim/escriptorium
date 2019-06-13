@@ -220,8 +220,9 @@ class Document(models.Model):
                 return 'ltr'
     
     @property
-    def is_training(self):
-        return self.ocr_models.filter(training=True).count() <= 0
+    def training_model(self):
+        return self.ocr_models.filter(training=True).first()
+
 
 def document_images_path(instance, filename):
     return 'documents/%d/%s' % (instance.document.pk, filename)

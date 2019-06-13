@@ -465,6 +465,11 @@ $(document).ready(function() {
         // $('#train-counter').removeClass('ongoing');
         $('#train-selected').removeClass('blink');
     });
+    $alertsContainer.on('training:error', function(ev, data) {
+        // $('#train-counter').removeClass('ongoing');
+        $('#train-selected').removeClass('blink');
+        $('#train-counter').text('Error.');
+    });
     
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
