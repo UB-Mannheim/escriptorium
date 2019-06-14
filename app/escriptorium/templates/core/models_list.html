@@ -14,8 +14,14 @@
   {% for model in document.ocr_models.all %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
-    <td title="{% if model.training %}{% trans "Is currently training" %}{% else %}{% trans "Is done training" %}{% endif %}">
-      {% if model.training %}<i class="fas fa-subway currently-training"></i>{% else %}<span class="text-success">✓</span>{% endif %}</td>
+    <td>
+      <i id="training-ongoing" class="fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
+      <span id="training-done" class="text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
+      <span id="training-error" class="text-danger hide">X</span>
+      <div id="training-gathering" title="{% trans "Gathering data" %}" class="progress hide">
+        <div class="progress-bar" role="progressbar"></div>
+      </div>
+    </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
     <td>
@@ -26,10 +32,12 @@
       {% endif %}
     </td>
     <td>
+      {% if model.file %}
       <a href="{{ model.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
           <i class="fas fa-file-download"></i>
         </button>
+        {% endif %}
     </td>
   </tr>
   {% for version in model.history %}
@@ -55,5 +63,14 @@
 
 {% block scripts %}
 {{ block.super }}
+<script type="text/javascript">
+'use strict';
+$(document).ready(function() {
+  // join the ws room
+  msgSocket.addEventListener('open', function(ev) {
+    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
+  });
+});
+</script>
 <script src="{% static 'js/models.js' %}"></script>
 {% endblock %}

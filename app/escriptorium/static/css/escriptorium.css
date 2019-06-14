@@ -5,6 +5,10 @@ body {
     max-width: 1800px;
 }
 
+.hide {
+    display: none;
+}
+
 .container {
   margin-right: auto;
   margin-left: auto;

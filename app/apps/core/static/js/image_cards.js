@@ -233,14 +233,14 @@ class partCard {
         this.$element.remove();
     }
     
-    select() {
+    select(scroll=true) {
         if (this.locked) return;
         lastSelected = this;
         this.$element.addClass('bg-dark');
         this.$element.css({'color': 'white'});
         $('i', this.selectButton).removeClass('fa-square');
         $('i', this.selectButton).addClass('fa-check-square');
-        this.$element.get(0).scrollIntoView();
+        if (scroll) this.$element.get(0).scrollIntoView();
         this.selected = true;
     }
     unselect() {
@@ -449,26 +449,19 @@ $(document).ready(function() {
     // training
     var max_accuracy = 0;
     $alertsContainer.on('training:start', function(ev, data) {
-        $('#train-counter').addClass('ongoing');
         $('#train-selected').addClass('blink');
-        $('#train-counter').text('Gathering data.');
+    });
+    $alertsContainer.on('training:gathering', function(ev, data) {
+        $('#train-selected').addClass('blink');
     });
     $alertsContainer.on('training:eval', function(ev, data) {
-        $('#train-counter').addClass('ongoing');
         $('#train-selected').addClass('blink');
-        let accuracy = Math.round(data.data.accuracy*100,1);
-        if (max_accuracy < accuracy) {
-            $('#train-counter').text('Reached '+accuracy+'% at epoch #'+data.data.epoch);
-        }
     });
     $alertsContainer.on('training:done', function(ev, data) {
-        // $('#train-counter').removeClass('ongoing');
         $('#train-selected').removeClass('blink');
     });
     $alertsContainer.on('training:error', function(ev, data) {
-        // $('#train-counter').removeClass('ongoing');
-        $('#train-selected').removeClass('blink');
-        $('#train-counter').text('Error.');
+        $('#train-selected').removeClass('blink').addClass('btn-danger');
     });
     
     // create & configure dropzone
@@ -498,7 +491,7 @@ $(document).ready(function() {
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
         cards.each(function(i, el) {
-            $(el).data('partCard').select();
+            $(el).data('partCard').select(false);
         });
         partCard.refreshSelectedCount();
     });

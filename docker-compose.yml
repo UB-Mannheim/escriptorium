@@ -101,7 +101,7 @@ services:
       - 25
     environment:
       - PRIMARY_HOST=escriptorium.fr
-      - ALLOWED_HOSTS=localhost ; web ; celeryworker ; docker0
+      - ALLOWED_HOSTS=localhost ; web ; celery-main ; docker0
       
 volumes:
    static:

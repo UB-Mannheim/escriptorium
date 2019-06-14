@@ -779,7 +779,7 @@ def models_path(instance, filename):
 
 class OcrModel(Versioned, models.Model):
     name = models.CharField(max_length=256)
-    file = models.FileField(upload_to=models_path,
+    file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -807,18 +807,15 @@ class OcrModel(Versioned, models.Model):
         return self.training_accuracy * 100
     
     @classmethod
-    def train(cls, parts_qs, transcription, model=None, model_name=None, user=None):
+    def train(cls, parts_qs, transcription, model, user=None):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
                 for task in part.task('binarize', commit=False):
                     btasks.append(task)
-        if not (model or model_name):
-            raise ValueError("OcrModel.train() requires either a `model` or `model_name`.")
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
                          transcription.pk,
-                         model_pk=model and model.pk or None,
-                         model_name=model_name,
+                         model_pk=model.pk,
                          user_pk=user and user.pk or None)
         chord(btasks, ttask).delay()
     

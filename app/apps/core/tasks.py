@@ -158,7 +158,7 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
 def add_data_to_training_set(data, target_set):
     # reorder the lines inside the set to make sure we only open the image once
     data.sort(key=lambda e: e['image'])
-    im = None;
+    im = None
     for i, lt in enumerate(data):
         if lt['image'] != im:
             if im:
@@ -166,18 +166,16 @@ def add_data_to_training_set(data, target_set):
                 im.close()  # close previous image
             im = Image.open(os.path.join(settings.MEDIA_ROOT, lt['image']))
             logger.debug('Opened', im)
-        if lt['content']:
-            logger.debug('Loading {} {} {}'.format(i, lt['box'], lt['content']))
-            target_set.add_loaded(im.crop(lt['box']), lt['content'])
+        logger.debug('Loading {} {} {}'.format(i, lt['box'], lt['content']))
+        target_set.add_loaded(im.crop(lt['box']), lt['content'])
+        yield i, lt
     im.close()
 
 
-def train_(qs, document, transcription, model_pk=None, model_name=None, user=None):
+def train_(qs, document, transcription, model=None, user=None):
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LAG = 5
 
-    send_event('document', document.pk, "training:start", {})
-    
     # [1,48,0,1 Cr3,3,32 Do0.1,2 Mp2,2 Cr3,3,64 Do0.1,2 Mp2,2 S1(1x12)1,3 Lbx100 Do]
     # m = re.match(r'(\d+),(\d+),(\d+),(\d+)', blocks[0])
     # if not m:
@@ -204,8 +202,11 @@ def train_(qs, document, transcription, model_pk=None, model_name=None, user=Non
                                  preload=True)
     
     partition = int(len(ground_truth) / 10)
-    
-    add_data_to_training_set(ground_truth[partition:], gt_set)
+    for i, data in add_data_to_training_set(ground_truth[partition:], gt_set):
+        if i%10 == 0:
+            logger.debug('Gathering #{} {}/{}'.format(1, i, partition*10))
+        send_event('document', document.pk, "training:gathering",
+                   {'id': model.pk, 'step':1, 'index': i, 'total': partition*10})
     try:
         gt_set.encode(None)  # codec
     except KrakenEncodeException:
@@ -213,17 +214,17 @@ def train_(qs, document, transcription, model_pk=None, model_name=None, user=Non
 
     train_loader = DataLoader(gt_set, batch_size=1, shuffle=True,
                               num_workers=0, pin_memory=True)
-    add_data_to_training_set(ground_truth[:partition], val_set)
+    for i, data in add_data_to_training_set(ground_truth[:partition], val_set):
+        if i%10 == 0:
+            logger.debug('Gathering #{} {}/{}'.format(2, i, partition))
+        send_event('document', document.pk, "training:gathering",
+                   {'id': model.pk, 'step':2, 'index': i, 'total': partition})
     
     logger.debug('Done loading training data')
     
-    OcrModel = apps.get_model('core', 'OcrModel')
-    if model_pk:
-        model = OcrModel.objects.get(pk=model_pk)
-        nn = vgsl.TorchVGSLModel.load_model(model.file.path)
-        upload_to = model.file.name
-        fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
-    else:
+    try:
+        model.file.path
+    except ValueError:
         spec = '[1,48,0,1 Cr3,3,32 Do0.1,2 Mp2,2 Cr3,3,64 Do0.1,2 Mp2,2 S1(1x12)1,3 Lbx100 Do]'
         spec = '[{} O1c{}]'.format(spec[1:-1], gt_set.codec.max_label()+1)
         nn = vgsl.TorchVGSLModel(spec)
@@ -231,12 +232,7 @@ def train_(qs, document, transcription, model_pk=None, model_name=None, user=Non
         nn.user_metadata['accuracy'] = []
         nn.init_weights()
         nn.add_codec(gt_set.codec)
-        filename = slugify(model_name) + '.mlmodel'
-        model = OcrModel.objects.create(name=filename,
-                                        owner=user,
-                                        document=document,
-                                        script=document.main_script,
-                                        version_author=user and user.username or 'unknown')
+        filename = slugify(model.name) + '.mlmodel'
         upload_to = model.file.field.upload_to(model, filename)
         fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
         if not os.path.exists(fulldir):
@@ -244,10 +240,11 @@ def train_(qs, document, transcription, model_pk=None, model_name=None, user=Non
         modelpath = os.path.join(fulldir, filename)
         nn.save_model(path=modelpath)
         model.file = upload_to
-    
-    model.training = True
-    model.save()
-    
+    else:
+        nn = vgsl.TorchVGSLModel.load_model(model.file.path)
+        upload_to = model.file.name
+        fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
+        
     val_set.training_set = list(zip(val_set._images, val_set._gt))
     # #nn.train()
     nn.set_num_threads(1)
@@ -281,26 +278,17 @@ def train_(qs, document, transcription, model_pk=None, model_name=None, user=Non
         model.save()
         send_event('document', document.pk, "training:eval", {
             "id": model.pk,
-            "data": {
-                'epoch': epoch,
-                'accuracy': accuracy,
-                'chars': chars,
-                'error': error
-            }})
+            'versions': model.versions,
+            'epoch': epoch,
+            'accuracy': accuracy,
+            'chars': chars,
+            'error': error})
     
     trainer.run(_print_eval, _progress)
-    
-    send_event('document', document.pk, "training:done", {
-        "id": model.pk,
-    })
-    return model
 
 
 @shared_task
-def train(part_pks, transcription_pk, model_pk=None, model_name=None, user_pk=None):
-    if not (model_pk or model_name):
-        raise ValueError("tasks.train() was called without either a model_pk or a model_name.")
-    
+def train(part_pks, transcription_pk, model_pk, user_pk=None):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -308,23 +296,31 @@ def train(part_pks, transcription_pk, model_pk=None, model_name=None, user_pk=No
             user = None
     else:
         user = None
-
+    
     Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
-    
-    model = None
+    OcrModel = apps.get_model('core', 'OcrModel')
     try:
+        model = OcrModel.objects.get(pk=model_pk)
+        model.training = True
+        model.save()
         transcription = Transcription.objects.get(pk=transcription_pk)
         document = transcription.document
+        
+        send_event('document', document.pk, "training:start", {
+            "id": model.pk,
+        })
         qs = (LineTranscription.objects
           .filter(transcription=transcription,
                   line__document_part__pk__in=part_pks)
           .exclude(content__isnull=True))
-        model = train_(qs, document, transcription, model_pk=model_pk, model_name=model_name, user=user)
+        train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
-        send_event('document', document.pk, "training:error", {})
+        send_event('document', document.pk, "training:error", {
+            "id": model.pk,
+        })
         if user:
             user.notify(_("Something went wrong during the training process!"),
                         id="training-error", level='danger')
@@ -335,9 +331,12 @@ def train(part_pks, transcription_pk, model_pk=None, model_name=None, user_pk=No
                         id="training-success",
                         level='success')
     finally:
-        if model:
-            model.training = False
-            model.save()
+        model.training = False
+        model.save()
+        
+        send_event('document', document.pk, "training:done", {
+            "id": model.pk,
+        })
 
 
 @shared_task
