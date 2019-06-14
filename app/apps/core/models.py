@@ -818,6 +818,11 @@ class OcrModel(Versioned, models.Model):
                          model_pk=model.pk,
                          user_pk=user and user.pk or None)
         chord(btasks, ttask).delay()
+
+    def cancel_training(self):
+        task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+        if task_id:
+            revoke(task_id, terminate=True)
     
     # versioning
     def pack(self, **kwargs):

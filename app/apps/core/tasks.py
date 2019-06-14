@@ -206,7 +206,7 @@ def train_(qs, document, transcription, model=None, user=None):
         if i%10 == 0:
             logger.debug('Gathering #{} {}/{}'.format(1, i, partition*10))
         send_event('document', document.pk, "training:gathering",
-                   {'id': model.pk, 'step':1, 'index': i, 'total': partition*10})
+                   {'id': model.pk, 'index': i, 'total': partition*10})
     try:
         gt_set.encode(None)  # codec
     except KrakenEncodeException:
@@ -218,7 +218,7 @@ def train_(qs, document, transcription, model=None, user=None):
         if i%10 == 0:
             logger.debug('Gathering #{} {}/{}'.format(2, i, partition))
         send_event('document', document.pk, "training:gathering",
-                   {'id': model.pk, 'step':2, 'index': i, 'total': partition})
+                   {'id': model.pk, 'index': partition*9+i, 'total': partition*10})
     
     logger.debug('Done loading training data')
     
@@ -287,8 +287,8 @@ def train_(qs, document, transcription, model=None, user=None):
     trainer.run(_print_eval, _progress)
 
 
-@shared_task
-def train(part_pks, transcription_pk, model_pk, user_pk=None):
+@shared_task(bind=True)
+def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -296,6 +296,8 @@ def train(part_pks, transcription_pk, model_pk, user_pk=None):
             user = None
     else:
         user = None
+    
+    redis_.set('training-%d' % model_pk, json.dumps({'task_id': task.request.id}))
     
     Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')

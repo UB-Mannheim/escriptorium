@@ -450,18 +450,34 @@ $(document).ready(function() {
     var max_accuracy = 0;
     $alertsContainer.on('training:start', function(ev, data) {
         $('#train-selected').addClass('blink');
+        $('#cancel-training').show();
     });
     $alertsContainer.on('training:gathering', function(ev, data) {
         $('#train-selected').addClass('blink');
+        $('#cancel-training').show();
     });
     $alertsContainer.on('training:eval', function(ev, data) {
         $('#train-selected').addClass('blink');
+        $('#cancel-training').show();
     });
     $alertsContainer.on('training:done', function(ev, data) {
         $('#train-selected').removeClass('blink');
+        $('#cancel-training').hide();
     });
     $alertsContainer.on('training:error', function(ev, data) {
         $('#train-selected').removeClass('blink').addClass('btn-danger');
+        $('#cancel-training').hide();
+    });
+    $('#cancel-training').click(function(ev, data) {
+        let url = API.document + '/cancel_training/';
+        $.post(url, {})
+            .done(function(data) {
+                $('#train-selected').removeClass('blink');
+                $('#cancel-training').hide();
+            })
+            .fail(function(data) {
+                console.log("Couldn't cancel training");
+            });
     });
     
     // create & configure dropzone
