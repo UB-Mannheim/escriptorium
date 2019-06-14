@@ -292,12 +292,18 @@ class DocumentPart(OrderedModel):
     
     @property
     def binarized(self):
-        return self.bw_image is not None
+        try:
+            self.bw_image.file
+        except ValueError:
+            # catches ValueError: The 'bw_image' attribute has no file associated with it.
+            return False
+        else:
+            return True
     
     @property
     def segmented(self):
         return self.lines.count() > 0
-
+    
     def make_external_id(self):
         return 'eSc_page_%d' % self.pk
     
@@ -311,7 +317,7 @@ class DocumentPart(OrderedModel):
             return 0
         transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         self.transcription_progress = min(int(transcribed / total * 100), 100)
-
+    
     def recalculate_ordering(self, text_direction=None, line_level_treshold=1/100):
         """
         Re-order the lines of the DocumentPart depending or text direction.
