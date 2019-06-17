@@ -35,10 +35,8 @@
       {% endif %}
 
       {% if model.file %}
-      <a href="{{ model.file.url }}">
-        <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
-          <i class="fas fa-file-download"></i>
-        </button>
+      <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
+        <i class="fas fa-file-download"></i>
       </a>
       {% endif %}
         
