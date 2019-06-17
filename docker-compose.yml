@@ -96,13 +96,13 @@ services:
   #   command: celery -E -A escriptorium beat -l INFO
 
   mail:
-    image: elsdoerfer/exim-sender
+    build: ./exim
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=escriptorium.fr
-      - ALLOWED_HOSTS=localhost ; web ; celery-main ; docker0
-      
+      - PRIMARY_HOST=ip-5-196-76.eu
+      - ALLOWED_HOSTS=web ; celery-main ; docker0
+
 volumes:
    static:
     driver: local
