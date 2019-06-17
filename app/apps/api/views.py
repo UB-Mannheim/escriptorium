@@ -54,6 +54,13 @@ class DocumentViewSet(ModelViewSet):
         else:
             return Response({'status': 'already canceled'}, status=400)
 
+    @action(detail=True, methods=['post'])
+    def cancel_training(self, request, pk=None):
+        document = self.get_object()
+        model = document.ocr_models.filter(training=True).last()
+        model.cancel_training()
+        return Response({'status': 'canceled'})
+    
     @action(detail=True, methods=['get'])
     def export(self, request, pk=None):            
         format_ = request.GET.get('as', 'text')
@@ -114,7 +121,6 @@ class DocumentViewSet(ModelViewSet):
 
 class PartViewSet(ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
-    paginate_by = 50
     
     def get_queryset(self):
         qs = self.queryset.filter(document=self.kwargs.get('document_pk'))

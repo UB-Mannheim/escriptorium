@@ -42,10 +42,8 @@
     {% endwith %}
     {% if user.is_staff %}
     {% with training_model=document.training_model %}
-    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if training_model %}ongoing blink{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
-    <span id="train-counter" class="ml-1 {% if training_model %}ongoing{% endif %}">
-      {% if training_model.training_accuracy %}{% blocktrans with accuracy=training_model.training_accuracy epoch=training_model.training_epoch %}Reached {{accuracy}}% at epoch #{{epoch}}{% endblocktrans %}
-      {% else %}{% trans "Gathering data."%}{% endif %}</span>
+    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if training_model %}blink{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <button id="cancel-training" class="btn btn-sm btn-warning {% if not training_model %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
     {% endwith %}
     {% endif %}
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>

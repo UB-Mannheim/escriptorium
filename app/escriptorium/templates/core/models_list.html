@@ -4,32 +4,50 @@
 {% block nav_content %}
 <table id="models-table" class="table table-hover">
   <tr>
-    <th class="col"></th>
-    <th>{% trans "Training" %}</th>
+    <th class="w-50"></th>
+    <th class="w-25">{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
-    <th></th>
-    <th></th>
+    <th>{# buttons #}</th>
   </tr>
   {% for model in document.ocr_models.all %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
-    <td title="{% if model.training %}{% trans "Is currently training" %}{% else %}{% trans "Is done training" %}{% endif %}">
-      {% if model.training %}<i class="fas fa-subway currently-training"></i>{% else %}<span class="text-success">✓</span>{% endif %}</td>
+    <td>
+      <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
+      <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
+      <span class="training-error text-danger hide">X</span>
+      <span title="{% trans "Gathering data" %}" class="training-gathering progress hide">
+        <div class="progress-bar" role="progressbar"></div>
+      </span>
+      <form method="POST" class="inline-form" action="{% url 'model-cancel-training' model.pk %}?next={{request.path}}">
+        {% csrf_token %}
+        <button type="submit" class="cancel-training btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
+      </form>
+    </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
     <td>
       {% if model.versions %}
-      <button type="button" class="btn btn-sm btn-primary" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
+      <button type="button" class="btn btn-sm btn-info" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
         <i class="fas fa-save"></i>
       </button>
       {% endif %}
-    </td>
-    <td>
-      <a href="{{ model.file.url }}">
-        <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
-          <i class="fas fa-file-download"></i>
+      
+      {% if model.file %}
+      <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
+        <i class="fas fa-file-download"></i>
+      </a>
+      {% endif %}
+        
+      {% if model.owner == request.user and not model.training %}
+      <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-danger" title="{% trans "Delete model." %}">
+          <i class="fas fa-trash"></i>
         </button>
+      </form>
+      {% endif %}
     </td>
   </tr>
   {% for version in model.history %}
@@ -39,14 +57,12 @@
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
-    <td></td>
     <td>
       <a href="{{ version.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
           <i class="fas fa-file-download"></i>
         </button>
     </td>
-    
   </tr>
   {% endfor %}
   {% endfor %}
@@ -55,5 +71,14 @@
 
 {% block scripts %}
 {{ block.super }}
+<script type="text/javascript">
+'use strict';
+$(document).ready(function() {
+  // join the ws room
+  msgSocket.addEventListener('open', function(ev) {
+    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
+  });
+});
+</script>
 <script src="{% static 'js/models.js' %}"></script>
 {% endblock %}

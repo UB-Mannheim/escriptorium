@@ -257,3 +257,39 @@ class ModelsList(LoginRequiredMixin, ListView):
             context['document'] = self.document
             context['object'] = self.document  # legacy
         return context
+
+
+class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = OcrModel
+    success_message = _("Model deleted successfully!")
+    
+    def get_queryset(self):
+        return OcrModel.objects.filter(owner=self.request.user)
+    
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('user-models')
+
+
+class ModelCancelTraining(LoginRequiredMixin, SuccessMessageMixin, DetailView):
+    model = OcrModel
+    http_method_names = ('post',)
+
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('user-models')
+    
+    def post(self, request, *args, **kwargs):
+        model = self.get_object()
+        try:
+            model.cancel_training()
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse({'status': 'failed'}, status=400,
+                                content_type="application/json")
+        else:
+            return HttpResponseRedirect(self.get_success_url())
