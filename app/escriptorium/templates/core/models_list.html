@@ -4,12 +4,11 @@
 {% block nav_content %}
 <table id="models-table" class="table table-hover">
   <tr>
-    <th class="col"></th>
-    <th>{% trans "Training" %}</th>
+    <th class="w-50"></th>
+    <th class="w-25">{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
-    <th></th>
-    <th></th>
+    <th>{# buttons #}</th>
   </tr>
   {% for model in document.ocr_models.all %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
@@ -18,9 +17,13 @@
       <i id="training-ongoing" class="fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
       <span id="training-done" class="text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
       <span id="training-error" class="text-danger hide">X</span>
-      <div id="training-gathering" title="{% trans "Gathering data" %}" class="progress hide">
+      <span id="training-gathering" title="{% trans "Gathering data" %}" class="progress hide">
         <div class="progress-bar" role="progressbar"></div>
-      </div>
+      </span>
+      <form method="POST" class="inline-form" action="{% url 'model-cancel-training' model.pk %}?next={{request.path}}">
+        {% csrf_token %}
+        <button type="submit" id="cancel-training" class="btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
+      </form>
     </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
@@ -30,14 +33,23 @@
         <i class="fas fa-save"></i>
       </button>
       {% endif %}
-    </td>
-    <td>
+
       {% if model.file %}
       <a href="{{ model.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
           <i class="fas fa-file-download"></i>
         </button>
-        {% endif %}
+      </a>
+      {% endif %}
+        
+      {% if model.owner == request.user %}
+      <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-danger" title="{% trans "Delete model." %}">
+          <i class="fas fa-trash"></i>
+        </button>
+      </form>
+      {% endif %}
     </td>
   </tr>
   {% for version in model.history %}
@@ -47,14 +59,12 @@
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
-    <td></td>
     <td>
       <a href="{{ version.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
           <i class="fas fa-file-download"></i>
         </button>
     </td>
-    
   </tr>
   {% endfor %}
   {% endfor %}

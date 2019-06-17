@@ -5,6 +5,7 @@ import os.path
 import redis
 import subprocess
 import torch
+import shutil
 from PIL import Image
 
 from django.apps import apps
@@ -244,6 +245,7 @@ def train_(qs, document, transcription, model=None, user=None):
         nn = vgsl.TorchVGSLModel.load_model(model.file.path)
         upload_to = model.file.name
         fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
+        modelpath = os.path.join(fulldir, model.file.name)
         
     val_set.training_set = list(zip(val_set._images, val_set._gt))
     # #nn.train()
@@ -276,6 +278,7 @@ def train_(qs, document, transcription, model=None, user=None):
         new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
         model.new_version(file=new_version_filename)
         model.save()
+        
         send_event('document', document.pk, "training:eval", {
             "id": model.pk,
             'versions': model.versions,
@@ -285,6 +288,8 @@ def train_(qs, document, transcription, model=None, user=None):
             'error': error})
     
     trainer.run(_print_eval, _progress)
+    best_version = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], trainer.stopper.best_epoch)
+    shutil.copy(best_version, modelpath)
 
 
 @shared_task(bind=True)

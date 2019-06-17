@@ -544,7 +544,7 @@ $(document).ready(function() {
             if (proc == 'import-xml' || proc == 'import-iiif') {
                 $('#import-counter').text('Queued.').show().parent().addClass('ongoing');;
             } else if (proc == 'train') {
-                $('#train-counter').text('Queued.').show();
+                $('#train-selected').addClass('blink');
             }
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
@@ -560,7 +560,7 @@ $(document).ready(function() {
     /* fetch the images and create the cards */
     var counter=0;
     var getNextParts = function(page) {
-        var uri = API.parts + '?page=' + page;
+        var uri = API.parts + '?paginate_by=50&page=' + page;
         $.get(uri, function(data) {
             counter += data.results.length;            
             $('#loading-counter').html(counter+'/'+data.count);
