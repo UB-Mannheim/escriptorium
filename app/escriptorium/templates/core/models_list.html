@@ -14,33 +14,33 @@
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
     <td>
-      <i id="training-ongoing" class="fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
-      <span id="training-done" class="text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
-      <span id="training-error" class="text-danger hide">X</span>
-      <span id="training-gathering" title="{% trans "Gathering data" %}" class="progress hide">
+      <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
+      <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
+      <span class="training-error text-danger hide">X</span>
+      <span title="{% trans "Gathering data" %}" class="training-gathering progress hide">
         <div class="progress-bar" role="progressbar"></div>
       </span>
       <form method="POST" class="inline-form" action="{% url 'model-cancel-training' model.pk %}?next={{request.path}}">
         {% csrf_token %}
-        <button type="submit" id="cancel-training" class="btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
+        <button type="submit" class="cancel-training btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
       </form>
     </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
     <td>
       {% if model.versions %}
-      <button type="button" class="btn btn-sm btn-primary" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
+      <button type="button" class="btn btn-sm btn-info" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
         <i class="fas fa-save"></i>
       </button>
       {% endif %}
-
+      
       {% if model.file %}
       <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
         <i class="fas fa-file-download"></i>
       </a>
       {% endif %}
         
-      {% if model.owner == request.user %}
+      {% if model.owner == request.user and not model.training %}
       <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-danger" title="{% trans "Delete model." %}">

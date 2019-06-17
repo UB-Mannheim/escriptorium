@@ -170,6 +170,7 @@ def add_data_to_training_set(data, target_set):
         logger.debug('Loading {} {} {}'.format(i, lt['box'], lt['content']))
         target_set.add_loaded(im.crop(lt['box']), lt['content'])
         yield i, lt
+    
     im.close()
 
 
@@ -222,7 +223,6 @@ def train_(qs, document, transcription, model=None, user=None):
                    {'id': model.pk, 'index': partition*9+i, 'total': partition*10})
     
     logger.debug('Done loading training data')
-    
     try:
         model.file.path
     except ValueError:
@@ -241,12 +241,13 @@ def train_(qs, document, transcription, model=None, user=None):
         modelpath = os.path.join(fulldir, filename)
         nn.save_model(path=modelpath)
         model.file = upload_to
+        model.save()
     else:
         nn = vgsl.TorchVGSLModel.load_model(model.file.path)
         upload_to = model.file.name
         fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
-        modelpath = os.path.join(fulldir, model.file.name)
-        
+        modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
+
     val_set.training_set = list(zip(val_set._images, val_set._gt))
     # #nn.train()
     nn.set_num_threads(1)
@@ -288,8 +289,9 @@ def train_(qs, document, transcription, model=None, user=None):
             'error': error})
     
     trainer.run(_print_eval, _progress)
-    best_version = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], trainer.stopper.best_epoch)
+    best_version = os.path.join(fulldir, 'version_{}.mlmodel'.format(trainer.stopper.best_epoch))
     shutil.copy(best_version, modelpath)
+        
 
 
 @shared_task(bind=True)
