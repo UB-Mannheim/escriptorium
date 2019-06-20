@@ -56,7 +56,7 @@ class Box {
                     tl.box = box;
                     tl.setPosition();
                 }
-                $('.overlay').css({
+                $('.panel .overlay').css({
                     left: box[0]*this.ratio + 'px',
                     top: box[1]*this.ratio + 'px',
                     width: (box[2] - box[0])*this.ratio+'px',
@@ -117,7 +117,7 @@ class Box {
             this.showOverlay();
         }, this));
         $box.on('mouseleave', $.proxy(function(ev) {
-            $('.overlay').hide();
+            $('.panel .overlay').hide();
         }, this));
         
         $('.close', this.$element).click($.proxy(function(ev) {
@@ -157,7 +157,7 @@ class Box {
         return [x1, y1, x2, y2];
     }
     showOverlay() {
-        $('.overlay').css({
+        $('.panel .overlay').css({
             left: this.box[0]*this.ratio + 'px',
             top: this.box[1]*this.ratio + 'px',
             width: (this.box[2] - this.box[0])*this.ratio + 'px',
@@ -283,6 +283,7 @@ class SegmentationPanel {
             box: box,
             block: block}, this.ratio);
         box_.changed = true;  // makes sure it's saved
+        this.boxes.push(box_);
     }
     
     showBlocks() {

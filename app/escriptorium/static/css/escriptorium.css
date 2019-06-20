@@ -5,6 +5,10 @@ body {
     max-width: 1800px;
 }
 
+.hide {
+    display: none;
+}
+
 .container {
   margin-right: auto;
   margin-left: auto;
@@ -337,10 +341,13 @@ i.panel-icon {
 .overlay {
     top: 0;
     left: 0;
-    display: none;
     position: absolute;
     background-color: transparent;
     outline: 9999px solid rgba(0, 0, 0, 0.1);
+}
+
+.panel .overlay {
+    display: none;
 }
 
 #modal-img-container {

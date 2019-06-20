@@ -2,7 +2,7 @@ import json
 import logging
 
 from django import forms
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
@@ -104,7 +104,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     binarizer = forms.ChoiceField(required=False,
                                   choices=BINARIZER_CHOICES,
                                   initial='kraken')
-
+    threshold = forms.FloatField(
+        required=False, initial=0.5,
+        validators=[MinValueValidator(0.1), MaxValueValidator(1)],
+        help_text=_('Increase it for low contrast documents, if the letters are not visible enough.'),
+        widget=forms.NumberInput(
+            attrs={'type':'range', 'step': '0.05',
+                   'min': '0.1', 'max':'1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
         ('regions', _('Regions')),
@@ -176,16 +182,44 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         if model and model.training:
             raise AlreadyProcessingException
         return model
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        if cleaned_data.get('train_model'):
+            model = cleaned_data.get('train_model')
+        elif cleaned_data.get('upload_model'):
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=self.cleaned_data['upload_model'].name,
+                file=self.cleaned_data['upload_model'])
+        elif cleaned_data.get('new_model'):
+            # file will be created by the training process
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=self.cleaned_data['new_model'])
+        elif cleaned_data.get('ocr_model'):
+            model = cleaned_data.get('ocr_model')
+        else:
+            model = None
+        
+        cleaned_data['model'] = model
+        return cleaned_data
     
     def process(self):
         task = self.cleaned_data.get('task')
+        model = self.cleaned_data.get('model')
         if task == self.TASK_BINARIZE:
             if len(self.parts) == 1 and self.cleaned_data.get('bw_image'):
                 self.parts[0].bw_image = self.cleaned_data['bw_image']
                 self.parts[0].save()
             else:
                 for part in self.parts:
-                    part.task('binarize', user_pk=self.user.pk)
+                    part.task('binarize',
+                              user_pk=self.user.pk,
+                              threshold=self.cleaned_data.get('threshold'))
         
         elif task == self.TASK_SEGMENT:
             for part in self.parts:
@@ -195,25 +229,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                           text_direction=self.cleaned_data['text_direction'])
         
         elif task == self.TASK_TRANSCRIBE:
-            if self.cleaned_data.get('upload_model'):
-                model = OcrModel.objects.create(
-                    document=self.parts[0].document,
-                    owner=self.user,
-                    name=self.cleaned_data['upload_model'].name,
-                    file=self.cleaned_data['upload_model'])
-            elif self.cleaned_data['ocr_model']:
-                model = self.cleaned_data['ocr_model']
-            else:
-                model = None
             for part in self.parts:
                 part.task('transcribe', user_pk=self.user.pk, model_pk=model and model.pk or None)
         
         elif task == self.TASK_TRAIN:
-            model = self.cleaned_data.get('upload_model') or self.cleaned_data.get('train_model')
             OcrModel.train(self.parts,
                            self.cleaned_data['transcription'],
-                           model=model,
-                           model_name=self.cleaned_data['new_model'],
+                           model,
                            user=self.user)
 
 

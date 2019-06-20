@@ -57,6 +57,7 @@ $(document).ready(function() {
         for (var key in panels) {
             panels[key].reset();
         }
+        zoom.refresh();
     });
 
     // previous and next buttons

@@ -41,8 +41,10 @@
     </span>
     {% endwith %}
     {% if user.is_staff %}
-    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if document.is_training %}ongoing{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
-    <span id="train-counter" class="ml-1"></span>
+    {% with training_model=document.training_model %}
+    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if training_model %}blink{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <button id="cancel-training" class="btn btn-sm btn-warning {% if not training_model %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
+    {% endwith %}
     {% endif %}
     <button id="binarize-selected" class="btn btn-sm btn-primary mr-1 ml-auto js-proc-selected" data-proc="binarize" title="{% trans 'Binarize selected images.' %}"><i class="fas fa-adjust mr-1"></i>{% trans "Binarize" %}</button>
     <button id="segment-selected" class="btn btn-sm btn-primary mr-1 js-proc-selected" data-proc="segment" title="{% trans 'Segment selected images.' %}"><i class="fas fa-align-left mr-1"></i>{% trans "Segment" %}</button>

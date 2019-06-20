@@ -7,6 +7,7 @@ class MetadataInline(admin.TabularInline):
     model = DocumentMetadata
 
 class DocumentAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'name', 'owner',]
     inlines = (MetadataInline,)
 
 class DocumentPartAdmin(admin.ModelAdmin):

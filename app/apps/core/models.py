@@ -220,8 +220,9 @@ class Document(models.Model):
                 return 'ltr'
     
     @property
-    def is_training(self):
-        return self.ocr_models.filter(training=True).count() <= 0
+    def training_model(self):
+        return self.ocr_models.filter(training=True).first()
+
 
 def document_images_path(instance, filename):
     return 'documents/%d/%s' % (instance.document.pk, filename)
@@ -291,12 +292,18 @@ class DocumentPart(OrderedModel):
     
     @property
     def binarized(self):
-        return self.workflow_state >= self.WORKFLOW_STATE_BINARIZED
+        try:
+            self.bw_image.file
+        except ValueError:
+            # catches ValueError: The 'bw_image' attribute has no file associated with it.
+            return False
+        else:
+            return True
     
     @property
     def segmented(self):
         return self.lines.count() > 0
-
+    
     def make_external_id(self):
         return 'eSc_page_%d' % self.pk
     
@@ -305,14 +312,12 @@ class DocumentPart(OrderedModel):
         return self.original_filename or os.path.split(self.image.path)[1]
     
     def calculate_progress(self):
-        if self.workflow_state < self.WORKFLOW_STATE_TRANSCRIBING:
-            return 0
-        transcribed = LineTranscription.objects.filter(line__document_part=self).count()
-        total = Line.objects.filter(document_part=self).count()
+        total = self.lines.count()
         if not total:
             return 0
+        transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         self.transcription_progress = min(int(transcribed / total * 100), 100)
-
+    
     def recalculate_ordering(self, text_direction=None, line_level_treshold=1/100):
         """
         Re-order the lines of the DocumentPart depending or text direction.
@@ -523,7 +528,7 @@ class DocumentPart(OrderedModel):
         else:
             os.rename(opti_name, self.image.file.name)
     
-    def binarize(self):
+    def binarize(self, threshold=None):
         if self.workflow_state < self.WORKFLOW_STATE_BINARIZING:
             self.workflow_state = self.WORKFLOW_STATE_BINARIZING
             self.save()
@@ -541,9 +546,12 @@ class DocumentPart(OrderedModel):
         bw_file = os.path.join(os.path.dirname(self.image.file.name), bw_file_name)
         with Image.open(self.image.path) as im:
             # threshold, zoom, escale, border, perc, range, low, high
-            res = binarization.nlbin(im)
+            if threshold is not None:
+                res = binarization.nlbin(im, threshold)
+            else:
+                res = binarization.nlbin(im)
             res.save(bw_file, format=form)
-
+        
         self.bw_image = document_images_path(self, bw_file_name)
         if self.workflow_state < self.WORKFLOW_STATE_BINARIZED:
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
@@ -619,6 +627,7 @@ class DocumentPart(OrderedModel):
                 document=self.document)
         
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
+        self.calculate_progress()
         self.save()
     
     def chain_tasks(self, *tasks):
@@ -782,7 +791,7 @@ def models_path(instance, filename):
 
 class OcrModel(Versioned, models.Model):
     name = models.CharField(max_length=256)
-    file = models.FileField(upload_to=models_path,
+    file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -810,19 +819,22 @@ class OcrModel(Versioned, models.Model):
         return self.training_accuracy * 100
     
     @classmethod
-    def train(cls, parts_qs, transcription, model=None, model_name=None, user=None):
+    def train(cls, parts_qs, transcription, model, user=None):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
-                btasks.append(part.task('binarize', commit=False))
-        if not (model or model_name):
-            raise ValueError("OcrModel.train() requires either a `model` or `model_name`.")
+                for task in part.task('binarize', commit=False):
+                    btasks.append(task)
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
                          transcription.pk,
-                         model_pk=model and model.pk or None,
-                         model_name=model_name,
+                         model_pk=model.pk,
                          user_pk=user and user.pk or None)
-        chord(set(btasks), ttask).delay()
+        chord(btasks, ttask).delay()
+
+    def cancel_training(self):
+        task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+        if task_id:
+            revoke(task_id, terminate=True)
     
     # versioning
     def pack(self, **kwargs):

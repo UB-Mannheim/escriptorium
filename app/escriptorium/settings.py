@@ -165,10 +165,11 @@ TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
-    Queue('default'),
+    Queue('default', routing_key='default'),
     Queue('img-processing', routing_key='img-processing'),
     Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
 )
+CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'core.tasks.*': {'queue': 'img-processing'},
     'core.tasks.train': {'queue': 'low-priority'},
@@ -212,16 +213,31 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
+
+        'kraken_logs': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(PROJECT_ROOT, 'logs', 'kraken', 'train.log'),
+        },
+        
         'console': {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
+        'kraken':{
+            'handlers': ['kraken_logs', 'console'],
+            'propagate': True
+        },
         'django': {
             'handlers': ['file', 'console'],
             'propagate': True,
         },
+        'core': {
+            'handlers': ['file', 'console'],
+            'propagate': True,
+        }
     },
 }
 
@@ -235,6 +251,11 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
     }
 }
+THUMBNAIL_OPTIMIZE_COMMAND = {
+    # 'png': '/usr/bin/optipng {filename}',
+    # 'gif': '/usr/bin/optipng {filename}',
+    'jpeg': '/usr/bin/jpegoptim {filename}'
+}
 
 VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 
@@ -243,7 +264,7 @@ REST_FRAMEWORK = {
         #'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
         'rest_framework.permissions.IsAuthenticated'
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
 }
 

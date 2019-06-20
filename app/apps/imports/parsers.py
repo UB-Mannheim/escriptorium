@@ -53,7 +53,8 @@ class XMLParser():
         return self.bbox(line_tag)
     
     def post_process(self, part):
-        pass
+        part.calculate_progress()
+        part.save()
     
     @property
     def total(self):
@@ -97,7 +98,7 @@ class XMLParser():
                             try:
                                 block_.box = self.block_bbox(block)
                             except TypeError:  # probably a dummy block
-                                block = None
+                                block_ = None
                             else:
                                 block_.save()
                         

@@ -74,7 +74,8 @@ class CoreFactory():
         nn = vgsl.TorchVGSLModel(spec)
         model_name = 'test-model'
         model = OcrModel.objects.create(name=model_name, document=document)
-        modeldir = os.path.join(settings.MEDIA_ROOT, model.file.field.upload_to)
+        modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
+            model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
         if not os.path.exists(modeldir):
             os.mkdir(modeldir)
         modelpath = os.path.join(modeldir, model_name)
