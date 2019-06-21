@@ -1,11 +1,15 @@
+/*
+Baseline segmenter
+*/
+
 class Line {
     constructor(segments, segmenter_) {
         this.deleting = null;
         this.segmenter = segmenter_;
-
+        
         var line_ = this;  // save in scope
         this.path = new Path({
-            strokeColor: 'blue',
+            strokeColor: segmenter_.mainColor,
             strokeWidth: 10,
             opacity: 0.6,
             selected: false,
@@ -36,25 +40,21 @@ class Line {
             onDoubleClick: function(event) {
                 var location = this.getNearestLocation(event.point);
                 this.insert(location.index+1, location);
-                this.smooth();
+                this.smooth({ type: 'catmull-rom', 'factor': 0.5 });
             }
         });
         this.path.line = this;  // necessary for multi selector intersection
+        
         segmenter_.purgeSelection();
         this.$deleteBtn = $('#delete-line').clone().appendTo($('#delete-line').parent());
         this.$deleteBtn.click($.proxy(function(event) {
-            this.unselect();
             this.delete();
         }, this));
     }
 
-    static fromEvent(event, segmenter_) {
-        return new Line([event.point], segmenter_);
-    }
-
     select() {
         this.path.selected = true;
-        this.path.strokeColor = 'teal';
+        this.path.strokeColor = this.segmenter.secondaryColor;
         this.$deleteBtn.css({
             left: this.path.bounds.topRight.x + 20,
             top: this.path.bounds.topRight.y -30
@@ -64,7 +64,7 @@ class Line {
 
     unselect() {
         this.path.selected = false;
-        this.path.strokeColor = 'blue';
+        this.path.strokeColor = this.segmenter.mainColor;
         this.$deleteBtn.hide();
         if (this.segmenter.deleting && this.segmenter.deleting.path == this.path) {
             $('#delete-point').hide();
@@ -73,16 +73,19 @@ class Line {
     }
 
     delete() {
+        this.unselect();
         this.segmenter.paths.pop(this.segmenter.paths.indexOf(this.path));
         this.path.remove();
     }
 }
 
 class Segmenter {
-    constructor(canvas) {
+    constructor(canvas, img, length_treshold=10) {
         this.canvas = canvas;
         this.paths = [];
         this.selection = [];
+        // the minimal length in pixels below which the line will be removed automatically
+        this.length_threshold = length_treshold;
         
         // needed?
         this.newLine = null;
@@ -96,6 +99,8 @@ class Segmenter {
         paper.settings.handleSize = 10;
         paper.setup(this.canvas);
         var tool = new Tool();
+
+        this.getColors(img);
         
         tool.onMouseDown = $.proxy(function(event) {
             if (!this.dragging) {
@@ -109,6 +114,7 @@ class Segmenter {
 
         tool.onMouseDrag = $.proxy(function(event) {
             if (this.newLine) {
+                // adding points to current line
                 this.newLine.path.add(event.point);
 		    } else if (event.event.ctrlKey) {
                 // multi move
@@ -120,7 +126,7 @@ class Segmenter {
                     }
                 }
             } else if (event.event.shiftKey) {
-                // multi selection
+                // multi lasso selection
                 if (!this.clip) {
                     let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
                     this.clip = new Path.Rectangle(shape, 0);
@@ -128,21 +134,24 @@ class Segmenter {
                     this.clip.strokeWidth = 2;
                     this.clip.strokeColor = 'black';
                     this.clip.dashArray = [10, 4];
+                    this.clip.originalPoint = event.point;
                 } else {
-                    if (this.clip.bounds.width + event.delta.x > 0) {
-                        this.clip.bounds.width += event.delta.x;
+                    this.clip.bounds.width = Math.max(1, Math.abs(this.clip.originalPoint.x - event.point.x));
+                    if (event.point.x > this.clip.originalPoint.x) {
+                        this.clip.bounds.x = this.clip.originalPoint.x;
                     } else {
-                        this.clip.bounds.x -= event.delta.x;
+                        this.clip.bounds.x = event.point.x;
                     }
-                    if (this.clip.bounds.height + event.delta.y > 0) {
-                        this.clip.bounds.height += event.delta.y;
+                    this.clip.bounds.height = Math.max(1, Math.abs(this.clip.originalPoint.y - event.point.y));
+                    if (event.point.y > this.clip.originalPoint.y) {
+                        this.clip.bounds.y = this.clip.originalPoint.y;
                     } else {
-                        this.clip.bounds.y += event.delta.y;
-                        this.clip.bounds.height += Math.abs(event.delta.y);
+                        this.clip.bounds.y = event.point.y;
                     }
+
                     for (let i in this.paths) {
-                        let inBounds = this.clip.getIntersections(this.paths[i]);
-                        if (inBounds.length) {
+                        if (this.paths[i].selected) {continue;}  // avoid calculs
+                        if (this.clip.intersects(this.paths[i]) || this.paths[i].isInside(this.clip.bounds)) {
                             this.paths[i].line.select();
                         }
                     }
@@ -160,6 +169,10 @@ class Segmenter {
         tool.onMouseUp = $.proxy(function(event) {
             this.dragging = null;
             if (this.newLine) {
+                if (this.newLine.path.length < this.length_treshold) {
+                    if (DEBUG) console.log('Erasing bogus line of length ' + this.newLine.path.length);
+                    this.newLine.delete();
+                }
                 this.newLine.path.simplify(12);
                 this.newLine = null;
             }
@@ -177,11 +190,19 @@ class Segmenter {
             }
             return false;
         }, this));
+
+        $(document).on('keyup', $.proxy(function(event) {
+            if (event.keyCode == 46)  { // supr
+                for (let i=this.selection.length-1; i >= 0; i--) {    
+                    this.selection[i].delete();
+                }
+            }
+        }, this));
     }
 
     createLine(event) {
         this.purgeSelection();
-        var line = Line.fromEvent(event, this);
+        var line = new Line([event.point], this);
         this.paths.push(line.path);
         return line;
     }
@@ -197,5 +218,61 @@ class Segmenter {
             this.selection[i].unselect();
         }
         this.selection = [];
+    }
+
+    getColors(img) {
+        function isGrey_(color) {
+            return (
+                Math.abs(color[0] - color[1]) < 30 &&
+                Math.abs(color[0] - color[2]) < 30 &&
+                Math.abs(color[1] - color[2]) < 30
+            );
+        }
+        
+        function hasColor_(pal, channel) {
+            for (let i in pal) {
+                if (isGrey_(pal[i])) {continue;}
+                if (pal[i][channel] == Math.max.apply(null, pal[i]) && pal[i][channel] > 100) {
+                    // the channel is dominant in this color
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function chooseColors(pal, depth=0) {
+            if (hasColor_(pal, 2)) {
+                // has blue
+                if (hasColor_(pal, 0)) {
+                    // has red
+                    if (hasColor_(pal, 1)) {
+                        // has green; the document is quite rich, start again with only the 2 main colors
+                        pal = pal.slice(0, 2);
+                        if (depth < 1) return chooseColors(pal, depth=depth+1);
+                        else return ['blue', 'teal']; // give up
+                    } else {
+                        return ['green', 'yellow'];
+                    }
+                } else {
+                    return ['red', 'orange'];
+                }
+            } else {
+                return ['blue', 'teal'];
+            }
+        }
+
+        const rgbToHex = (c) => '#' + [c[0], c[1], c[2]]
+              .map(x => x.toString(16).padStart(2, '0')).join('');
+        
+        var colorThief = new ColorThief();
+        let palette = colorThief.getPalette(img, 5);
+        if (DEBUG) {
+            for (let i in palette) {
+                $('#color'+i).css({backgroundColor: rgbToHex(palette[i]), padding: '10px'});
+            }
+        }
+        let choices = chooseColors(palette);
+        this.mainColor = choices[0];
+        this.secondaryColor = choices[1];
     }
 }

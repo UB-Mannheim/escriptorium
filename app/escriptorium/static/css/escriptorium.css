@@ -8,6 +8,9 @@ body {
 .hide {
     display: none;
 }
+.invisible {
+    visibility: hidden;
+}
 
 #delete-point, #delete-line {
     position: absolute;
