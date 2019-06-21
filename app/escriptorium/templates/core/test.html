@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% comment %}
+
+polygons
+history
+dynamic color
+cut through?
+regions?
+without baseline
+loading
+zoom? edit mode? gnnn
+
+{% endcomment %}
+
+{% block body %}
+<div style="position: relative;">
+    <img id="seg" src="/media/documents/56/hymn.png.1110x0_q85_crop-scale.jpg">
+    <canvas id="segmentation-canvas" resize></canvas>
+    <i id="delete-point" class="hide btn btn-sm btn-warning fas fa-trash"></i>
+    <i id="delete-line" class="hide btn btn-sm btn-danger fas fa-trash"></i>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/segmentation.js' %}" canvas="segmentation-canvas"></script>
+<script canvas="MyCanvas">
+paper.install(window);
+paper.settings.handleSize = 10;
+$(document).ready(function() {
+    $('#segmentation-canvas').css({
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        left: 0
+    });
+
+    var segmenter = new Segmenter(document.getElementById('segmentation-canvas'));
+});
+</script>
+{% endblock %}

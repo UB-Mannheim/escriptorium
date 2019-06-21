@@ -9,6 +9,10 @@ body {
     display: none;
 }
 
+#delete-point, #delete-line {
+    position: absolute;
+}
+
 .container {
   margin-right: auto;
   margin-left: auto;

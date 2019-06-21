@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from core.views import *
 
@@ -18,4 +19,6 @@ urlpatterns = [
     path('document/<int:pk>/publish/', PublishDocument.as_view(), name='document-publish'),
     path('document/<int:pk>/share/', ShareDocument.as_view(), name='document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(), name='document-parts-process'),
+
+    path('test/', TemplateView.as_view(template_name='core/test.html')),
 ]
