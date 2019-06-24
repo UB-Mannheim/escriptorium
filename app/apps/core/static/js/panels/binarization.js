@@ -1,8 +1,7 @@
-class BinarizationPanel {
-    constructor ($panel, opened) {
-        this.$panel = $panel;
-        this.opened = opened | false;
-        this.$container = $('.img-container', this.$panel);
+class BinarizationPanel extends Panel {
+    constructor ($panel, $tools, opened) {
+        super($panel, $tools, opened);
+
         zoom.register(this.$container);
         $('.img-container img', this.$panel).on('load', $.proxy(function() {
             zoom.refresh();
@@ -10,7 +9,7 @@ class BinarizationPanel {
     }
     
     load(part) {
-        this.part = part;
+        super.load(part);
         if (this.part.bw_image) {
             if (this.part.bw_image.thumbnails.large) {
                 $('.img-container img', this.$panel).attr('src', this.part.bw_image.thumbnails.large);
@@ -20,25 +19,5 @@ class BinarizationPanel {
         } else {
             $('.img-container img', this.$panel).attr('src', '');
         }
-        if (this.opened) this.open();
     }
-    
-    open() {
-        this.opened = true;
-        this.$panel.show();
-        Cookies.set('binar-panel-open', true);
-    }
-    
-    close() {
-        this.opened = false;
-        this.$panel.hide();
-        Cookies.set('binar-panel-open', false);
-    }
-    
-    toggle() {
-        if (this.opened) this.close();
-        else this.open();
-    }
-    
-    reset() {}
 }

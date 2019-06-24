@@ -231,13 +231,11 @@ class Box {
     }
 }
 
-class SegmentationPanel {
-    constructor ($panel, opened) {
-        this.$panel = $panel;
-        this.opened = opened | false;
+class SegmentationPanel extends Panel {
+    constructor ($panel, $tools, opened) {
+        super($panel, $tools, opened);
         this.seeBlocks = true;
         this.seeLines = true;
-        this.$container = $('.img-container', this.$panel);
         this.boxes = [];
         
         $('#viewer-blocks', this.$panel).click($.proxy(function(ev) {
@@ -259,6 +257,7 @@ class SegmentationPanel {
             ev.stopPropagation();
             this.createBoxAtMousePos(ev, 'line');
         }, this));
+        zoom.register(this.$container, true);
     }
     
     getRatio() {
@@ -300,10 +299,9 @@ class SegmentationPanel {
     }
     
     load(part) {
+        super.load(part);
         this.boxes = [];
         $('.line-box, .block-box').remove();
-        this.part = part;
-        if (this.opened) this.open();
         if (this.part.image.thumbnails) {
             $('img', this.$container).attr('src', this.part.image.thumbnails.large);
         } else {
@@ -312,28 +310,10 @@ class SegmentationPanel {
         this.getRatio();
         this.showBlocks();
         this.showLines();
-
-        zoom.register(this.$container, true);
-    }
-    
-    open() {
-        this.opened = true;
-        this.$panel.show();
-        Cookies.set('seg-panel-open', true);
-    }
-    
-    close() {
-        this.opened = false;
-        this.$panel.hide();
-        Cookies.set('seg-panel-open', false);
-    }
-    
-    toggle() {
-        if (this.opened) this.close();
-        else this.open();
     }
     
     reset() {
+        super.reset();
         if (this.opened) {
             this.getRatio();
             for (var i=0; i<this.boxes.length; i++) {

@@ -2,11 +2,11 @@
 Baseline segmenter
 */
 
-class Line {
+class SegmenterLine {
     constructor(segments, segmenter_) {
         this.segmenter = segmenter_;
-
         this.polygon = null;
+        this.selected = false;
         
         var line_ = this;  // save in scope
 
@@ -18,10 +18,14 @@ class Line {
             onMouseDown: function(event) {
                 segmenter_.dragging = this;
                 segmenter_.draggingPoint = this.getNearestLocation(event.point).segment;
-                if (!event.event.shiftKey && !event.event.ctrlKey) {
+                if (event.event.shiftKey) {
+                    line_.toggleSelect();
+                } else if (!event.event.shiftKey && !event.event.ctrlKey) {
                     segmenter_.purgeSelection();
+                    line_.select();
+                } else {
+                    line_.select();
                 }
-                line_.select();
                 $('#delete-point').hide();
             }
         });
@@ -32,10 +36,15 @@ class Line {
             opacity: 0.5,
             selected: false,
             onMouseDown: function(event) {
-                if (!event.event.shiftKey && !event.event.ctrlKey) {
+                if (event.event.shiftKey) {
+                    line_.toggleSelect();
+                } else if (!event.event.shiftKey && !event.event.ctrlKey) {
                     segmenter_.purgeSelection();
+                    line_.select();
+                } else {
+                    line_.select();
                 }
-                line_.select();
+                
                 var hit = this.hitTest(event.point, {
 	                segments: true,
 	                tolerance: 5
@@ -86,15 +95,11 @@ class Line {
     createPolygon() {
         for (let i in this.baseline.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baseline.segments[i]);
-        }        
-    }
-
-    recreatePolygon() {
-        if (this.polygon) this.polygon.removeSegments();
-        this.createPolygon();
+        }
     }
     
     select() {
+        if (this.selected) return;
         if (this.polygon && this.polygon.visible) this.polygon.selected = true;
         this.baseline.selected = true;
         this.baseline.strokeColor = this.segmenter.secondaryColor;
@@ -103,9 +108,11 @@ class Line {
             top: this.baseline.bounds.topRight.y -30
         }).show();
         this.segmenter.addToSelection(this);
+        this.selected = true;
     }
 
     unselect() {
+        if (!this.selected) return;
         if (this.polygon) this.polygon.selected = false;
         this.baseline.selected = false;
         this.baseline.strokeColor = this.segmenter.mainColor;
@@ -114,8 +121,14 @@ class Line {
             $('#delete-point').hide();
         }
         this.segmenter.removeFromSelection(this);
+        this.selected = false;
     }
 
+    toggleSelect() {
+        if (this.selected) this.unselect();
+        else this.select();
+    }
+    
     delete() {
         this.unselect();
         this.segmenter.paths.pop(this.segmenter.paths.indexOf(this.baseline));
@@ -267,7 +280,7 @@ class Segmenter {
 
     createLine(event) {
         this.purgeSelection();
-        var line = new Line([event.point], this);
+        var line = new SegmenterLine([event.point], this);
         this.paths.push(line.baseline);
         return line;
     }

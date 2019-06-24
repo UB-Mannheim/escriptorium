@@ -260,13 +260,11 @@ class TranscriptionLine {
     }
 }
 
-class TranscriptionPanel{
-    constructor ($panel, opened) {
-        this.$panel = $panel;
-        this.opened = opened;
+class TranscriptionPanel extends Panel {
+    constructor ($panel, $tools, opened) {
+        super($panel, $tools, opened);
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
-        this.$container = $('.img-container', this.$panel);
 
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
@@ -364,36 +362,24 @@ class TranscriptionPanel{
     }
     
     load(part) {
-        this.part = part;
+        super.load(part);
         this.api = API.part.replace('{part_pk}', this.part.pk);
         this.lines = [];
         $('.trans-box').remove();
         this.ratio = this.getRatio();
-        $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
+        if (this.part.image.thumbnails.large) {
+            $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
+        } else {
+            $('#trans-modal #modal-img-container img').attr('src', this.part.image.uri);
+        }
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }
         this.loadTranscriptions();
     }
     
-    open() {
-        this.opened = true;
-        this.$panel.show();
-        Cookies.set('trans-panel-open', true);
-    }
-    
-    close() {
-        this.opened = false;
-        this.$panel.hide();
-        Cookies.set('trans-panel-open', false);
-    }
-    
-    toggle() {
-        if (this.opened) this.close();
-        else this.open();
-    }
-    
     reset() {
+        super.reset();
         if (this.opened) {
             this.ratio = this.getRatio();
             for (var i=0; i<this.lines.length; i++) {

@@ -1,28 +1,24 @@
-var panels;
+var panels = {};
 var API = {
     document: '/api/documents/' + DOCUMENT_ID,
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
+
 var zoom = new WheelZoom({min_scale: 0.5, max_scale: 10});
 
 $(document).ready(function() {
-    var show_img = JSON.parse(Cookies.get('img-panel-open') || 'true');
-    var show_binar = JSON.parse(document.location.hash == '#bin' ||
-                                Cookies.get('binar-panel-open') || 'false');
-    var show_seg = JSON.parse(document.location.hash == '#seg' ||
-                              Cookies.get('seg-panel-open') || 'false');
-    var show_trans = JSON.parse(document.location.hash == '#trans' ||
-                                Cookies.get('trans-panel-open') || 'false');
-    panels = {
-        'source': new SourcePanel($('#img-panel, #img-tools'), show_img),
-        'binar': new BinarizationPanel($('#binar-panel, #binar-tools'), show_binar),
-        'seg': new SegmentationPanel($('#seg-panel, #seg-tools'), show_seg),
-        'trans': new TranscriptionPanel($('#trans-panel, #trans-tools'), show_trans)
-    };
-    if (show_img) $('#img-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
-    if (show_binar) $('#binar-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
-    if (show_seg) $('#seg-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
-    if (show_trans) $('#trans-panel-btn').addClass('btn-primary').removeClass('btn-secondary');
+    function makePanel(name, class_, visible) {
+	    var title = name + '-panel';
+	    var show = Cookies.get(title) && JSON.parse(Cookies.get(title)) || visible;
+	    panels[name] = new class_($('#'+title), $('#'+name+'-tools'), show);
+	    if (show) {
+	        $('#'+title+'-btn').addClass('btn-primary').removeClass('btn-secondary');
+	    }
+	}	
+	makePanel('source', SourcePanel, true);
+	makePanel('binar', BinarizationPanel, false);
+	makePanel('seg', SegmentationPanel, false);
+	makePanel('trans', TranscriptionPanel, false);
     
     function loadPart(pk, callback) {
         let uri = API.part.replace('{part_pk}', pk);

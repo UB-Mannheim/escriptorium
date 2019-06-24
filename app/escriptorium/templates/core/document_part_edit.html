@@ -12,7 +12,7 @@
 {% block extra_nav %}
 <div id="part-name" class="navbar-brand mx-3"></div>
 <div class="ml-auto">
-  <button id="img-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button id="source-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
   <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
   <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
   <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
@@ -22,7 +22,7 @@
 {% block nav_content %}
 <div class="row">
   <div class="col-sides"></div>
-  <div id="img-tools" class="col">
+  <div id="source-tools" class="col">
     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
   </div>
   <div id="binar-tools" class="col">
@@ -81,7 +81,7 @@
         <input id="zoom-range" type="range" name="zoom-range" class="form-control-range mt-1" orient="vertical" min="" max="" step="0.2">
       </div>
   </div>
-  <div id="img-panel" class="col panel">
+  <div id="source-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
         <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
@@ -180,6 +180,7 @@
 <script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
 <script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
 <script src="{% static 'js/wheelzoom.js' %}"></script>
+<script src="{% static 'js/panels/base.js' %}"></script>
 <script src="{% static 'js/panels/source.js' %}"></script>
 <script src="{% static 'js/panels/binarization.js' %}"></script>
 <script src="{% static 'js/panels/segmentation.js' %}"></script>
