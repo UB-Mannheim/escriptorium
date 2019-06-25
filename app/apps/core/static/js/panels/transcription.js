@@ -287,10 +287,11 @@ class TranscriptionPanel extends Panel {
             ev.preventDefault();
             window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + $(ev.target).data('format'));
         }, this));
-        
-        $("#trans-modal").draggable({
-            handle: ".modal-header"
-        });
+
+        // TODO!
+        // $("#trans-modal").draggable({
+        //     handle: ".modal-header"
+        // });
         $("#trans-modal").on('hide.bs.modal', function(ev) {
             currentLine.editing = false;
             $('.panel .overlay').fadeOut({queue:false});

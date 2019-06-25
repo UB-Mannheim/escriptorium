@@ -48,6 +48,14 @@ class WheelZoom {
         this.targets.push(target);
         this.containers.push(container);
     }
+
+    saveState() {
+        this.previousPos = {
+            x: this.pos.x,
+            y: this.pos.y
+        };
+        this.previousScale = this.scale;
+    }
     
 	scrolled(e) {
         if (this.disabled) return;
@@ -67,6 +75,7 @@ class WheelZoom {
 	                       y: (zoom_point.y - this.pos.y) / this.scale};
 
 	    // apply zoom
+        this.saveState();
 	    this.scale += delta * this.factor * this.scale;
         
 	    if(this.min_scale !== null) this.scale = Math.max(this.min_scale, this.scale);
@@ -81,6 +90,7 @@ class WheelZoom {
 	drag(e) {
         if (this.disabled) return;
 		e.preventDefault();
+        this.saveState();
 		this.pos.x += (e.pageX - this.previousEvent.pageX);
 		this.pos.y += (e.pageY - this.previousEvent.pageY);
 		this.previousEvent = e;
@@ -128,8 +138,18 @@ class WheelZoom {
             e.css('transform', 'scale('+this.scale+')')
              .css('transform', 'translate('+(this.pos.x)+'px,'+
                   (this.pos.y)+'px) scale('+this.scale+')'); }, this));
-        
-        this.events.trigger('wheelzoom.updated');
+
+        this.events.trigger('wheelzoom.updated', {
+            pos: this.pos,
+            scale: this.scale,
+            delta: {
+                pos: {
+                    x: this.pos.x-this.previousPos.x,
+                    y: this.pos.y-this.previousPos.y
+                },
+                scale: this.scale/this.previousScale
+            }
+        });
 	}
     
     getVisibleContainer() {
@@ -144,12 +164,14 @@ class WheelZoom {
         this.min_scale = this.options.min_scale || Math.min(
             $(window).width() / (this.size.w * this.initial_scale) * 0.9,
             $(window).height() / (this.size.h * this.initial_scale) * 0.9);
+        this.saveState();
         this.updateStyle();
     }
     
     reset() {
         let container = this.getVisibleContainer();
         this.pos = {x:0, y:0};
+        this.saveState();
 	    this.scale = this.initial_scale || 1;
         this.size = {w: container.width(), h: container.height()};
         this.updateStyle();

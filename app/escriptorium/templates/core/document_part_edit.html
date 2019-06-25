@@ -1,12 +1,6 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles thumbnail json %}
 
-{% block styles %}
-{{ block.super }}
-{# custom jquery ui build with draggable and resizable only #}
-    <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
-{% endblock %}
-
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_nav %}
@@ -36,6 +30,13 @@
       <div class="col mr-1">
         <button id="viewer-blocks" title="{% trans 'Toggle regions.' %}" class="btn btn-primary"><i class="fas fa-th-large"></i></button>
         <button id="viewer-lines" title="{% trans 'Toggle lines.' %}" class="btn btn-primary"><i class="fas fa-align-left"></i></button>
+      </div>
+      <div class="col mr-1">
+        <span id="color1" width="20px" height="20px">1</span>
+        <span id="color2" width="20px" height="20px">2</span>
+        <span id="color3" width="20px" height="20px">3</span>
+        <span id="color4" width="20px" height="20px">4</span>
+        <span id="color5" width="20px" height="20px">5</span>
       </div>
     </div>
   </div>
@@ -102,7 +103,9 @@
   <div id="seg-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
-        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" class="" width="100%"/>
+        <i id="delete-point" class="hide btn btn-sm btn-warning fas fa-trash"></i>
+        <i id="delete-line" class="hide btn btn-sm btn-danger fas fa-trash"></i>
         <div id="segmentation-overlay"></div>
       </div>
     </div>
@@ -176,14 +179,15 @@
   var DOCUMENT_ID = {{document.id}};
   var PART_ID = {{part.id}};
 </script>
-<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
-<script src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
-<script src="{% static 'js/wheelzoom.js' %}"></script>
-<script src="{% static 'js/panels/base.js' %}"></script>
-<script src="{% static 'js/panels/source.js' %}"></script>
-<script src="{% static 'js/panels/binarization.js' %}"></script>
-<script src="{% static 'js/panels/segmentation.js' %}"></script>
-<script src="{% static 'js/panels/transcription.js' %}"></script>
-<script src="{% static 'js/edit.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/panels/base.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/panels/source.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/panels/binarization.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/panels/segmentation.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/panels/transcription.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/edit.js' %}"></script>
 {% endblock %}

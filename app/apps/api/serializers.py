@@ -120,7 +120,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'block', 'box')
+        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'polygon')
     
     def create(self, validated_data):
         instance = super().create(validated_data)
@@ -129,12 +129,12 @@ class LineSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         instance.document_part.recalculate_ordering()
-        instance.box = validated_data.pop('box', ())  # make use of the property setter
+        # instance.box = validated_data.pop('box', ())  # make use of the property setter
         return super().update(instance, validated_data)
 
     def to_internal_value(self, data):
         value = super().to_internal_value(data)
-        value['box'] = json.loads(data['box'])
+        # value['box'] = json.loads(data['box'])
         return value
     
     

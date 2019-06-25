@@ -704,6 +704,7 @@ class Line(OrderedModel):  # Versioned,
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
     polygon = JSONField(null=True)
+    baseline = JSONField(null=True)
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
