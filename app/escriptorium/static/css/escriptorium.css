@@ -12,9 +12,13 @@ body {
     visibility: hidden;
 }
 
-canvas[resize] {
+canvas.resize {
     width: 100%;
     height: 100%;
+    position: absolute;
+    left: 0; 
+    min-width: 10px;
+    min-height: 10px;
 }
 
 #delete-point, #delete-line {
