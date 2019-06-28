@@ -8,6 +8,9 @@ body {
 .hide {
     display: none;
 }
+#delete-point, #delete-line {
+    position: absolute;
+}
 
 .container {
   margin-right: auto;
@@ -21,6 +24,8 @@ canvas.resize {
     height: 100%;
     top: 0;
     left: 0;
+    padding: 0;
+    margin: 0;
 }
 
 /* alerts */
