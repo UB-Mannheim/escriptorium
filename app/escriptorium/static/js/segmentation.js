@@ -1,5 +1,5 @@
 /*
-Baseline segmenter
+Baseline editor
 a javascript based baseline segmentation editor,
 requires paper.js and colorThief is optional.
 
@@ -37,7 +37,7 @@ class SegmenterLine {
             visible: this.segmenter.showPolygons,
             segments: this.polygon,
             onMouseDown: function(event) {
-                segmenter_.dragging = this;
+                segmenter_.dragging = line_;
                 segmenter_.draggingPoint = this.getNearestLocation(event.point).segment;
                 if (event.event.shiftKey) {
                     line_.toggleSelect();
@@ -60,7 +60,6 @@ class SegmenterLine {
             onMouseDown: function(event) {
                 line_.segmenter.dragging = line_;
                 line_.segmenter.draggingPoint = this.getNearestLocation(event.point).segment;
-                
                 if (event.event.shiftKey) {
                     line_.toggleSelect();
                 } else if (!event.event.shiftKey && !event.event.ctrlKey) {

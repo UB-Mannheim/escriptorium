@@ -28,13 +28,15 @@ zoom? edit mode? gnnn
   <img id="seg" width="100%" height="100%">
   {# <img id="seg" src="/media/documents/63/0_dbbbb_default.png" width="100%" height="100%"> #}
   {# <img id="seg" src="/media/documents/64/imports.png" width="100%" height="100%"> #}
-  <i id="delete-point" title="{% trans "Delete point." %}" class=" btn btn-sm btn-warning fas fa-trash"></i>
+  <i id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></i>
   <i id="delete-line" title="{% trans "Delete all selected lines." %}" class="hide btn btn-sm btn-danger fas fa-trash"></i>
 </div>
 <div class="d-inline-block ml-5" style="width: 40%; vertical-align: top;">
     <h2>Explanations</h2>
     <p>Wellcome to this beta test of the baseline editor and thank you for participating!
-    <br/>The goal is to determine whether it is better to create lines by clicking 1 time for each point or by draging the mouse over the image.</p>
+    <br/>The goal is to determine whether it is better to create lines by clicking 1 time for each point or by draging the mouse over the image.
+    <br/>Or even if there is yet a better solution.
+    </p>
 
     <h3>Usage</h3>
     <p>Drop a picture in the dashed rectangle to initialise the baseline editor.
@@ -45,7 +47,7 @@ zoom? edit mode? gnnn
     <br/>Click on a line to select it, then you can drag the line (the closest point) to update it.
     <br/>If you click exactly on a point, a yellow trash button <i class="fas fa-trash"></i> appears allowing to delete it.
     <br/>Double click on the line will create a new point at the mouse location.
-    <br/>shift+click allows to add a line to the selection, shift and dragging create a lasso selection tool.
+    <br/>shift+click allows to add a line to the selection, shift and dragging creates a lasso selection tool.
     <br/>ctrl+ dragging allows to move the entire selection at once.
     <br/>Hitting escape while drawing a line cancels it.
 
