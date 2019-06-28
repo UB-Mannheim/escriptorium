@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% comment %}
+TODO:
+cut through?
+loading ext
+
+integration:
+history
+regions
+zoom? edit mode? gnnn
+{% endcomment %}
+
+{% block body %}
+<div>
+    <button id="toggle-polygons" title="{% trans "Show line masks." %}" class="btn m-1 btn-info fas fa-mask"></button>
+    <button id="toggle-mode" title="{% trans "Toggle modes." %}" class="btn m-1 btn-info fas fa-hand-rock"></button>
+    <span id="color0" width="20px" height="20px">1</span>
+    <span id="color1" width="20px" height="20px">2</span>
+    <span id="color2" width="20px" height="20px">3</span>
+    <span id="color3" width="20px" height="20px">4</span>
+    <span id="color4" width="20px" height="20px">5</span>
+</div>
+<div id="container" class="w-50 d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
+  <img id="seg">
+  <i id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></i>
+  <i id="delete-line" title="{% trans "Delete all selected lines." %}" class="hide btn btn-sm btn-danger fas fa-trash"></i>
+</div>
+<div class="d-inline-block ml-5" style="width: 40%; vertical-align: top;">
+    <h2>Explanations</h2>
+    <p>Wellcome to this beta test of the baseline editor and thank you for participating!
+    <br/>The goal is to determine whether it is better to create lines by clicking 1 time for each point or by draging the mouse over the image.
+    <br/>Or even if there is yet a better solution.
+    </p>
+
+    <h3>Usage</h3>
+    <p>Drop a picture in the dashed rectangle to initialise the baseline editor.
+    <br/>The default mode is 'dragging', click and drag on the image to create a new line.
+    <br/>You can change the mode by clicking on the button <i class="fas fa-hand-rock"></i> on top of the editor.
+    <br/>In 'clicking' mode, click on the image to start a new line, click again to add points and right click to finish it.
+    <br/>
+    <br/>Click on a line to select it, then you can drag the line (the closest point) to update it.
+    <br/>If you click exactly on a point, a yellow trash button <i class="fas fa-trash"></i> appears allowing to delete it.
+    <br/>Double click on the line will create a new point at the mouse location.
+    <br/>shift+click allows to add a line to the selection, shift and dragging creates a lasso selection tool.
+    <br/>ctrl+ dragging allows to move the entire selection at once.
+    <br/>Hitting escape while drawing a line cancels it.
+
+    <br/><br/>Reload the editor (f5) if you want to try a new image.
+    </p>
+
+    <h3>Results</h3>
+    <p>What I'm most interested about is which is the most pleasant, the fastest and most precise to use depending on the different use cases.
+    <br/>Including short or long lines, curved or straigt, high or low resolution image and the different devices.
+    <br/>If the results are really not significant, ie if the preference doesn't go one way or the other, we may think about keeping both but it's really not ideal in term of maintenance.
+    </p>
+
+    <h3>Notes</h3>
+    <p>You can show the line mask <i class="fas fa-mask"></i> but it's not the focus of this test.
+    <br/>The colors chosen depends on the image, you can see the color palette on top of the image, the script is very naïve so if you encounter case where it doesn't work well also report it.
+    <br/>Please don't hesitate with any remarks or feedback,
+    <br/>Thank you.
+    </p>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
+<script>
+(function() {
+    var segmenter = null;
+    
+    function handleFileUpload(files, file) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            img.src = reader.result;         
+            segmenter = new Segmenter(img,
+                                      {delayInit:true});
+            img.addEventListener('load', function(ev) {
+                segmenter.init();
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    document.getElementById('toggle-mode').addEventListener('click', function(e) {
+        if (segmenter) {
+            segmenter.toggleMode();
+            e.target.classList.toggle('fa-mouse-pointer');
+            e.target.classList.toggle('fa-hand-rock');
+        }
+    });
+    
+    var img = document.getElementById('seg');
+    img.ondragstart = function(e) { return false; };
+    
+    var container = document.getElementById('container');
+    container.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+    }, false);
+
+    container.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    }, false);
+    
+    container.addEventListener('drop', function(e) {
+        e.preventDefault();
+        // var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg'];
+        if (e.dataTransfer && e.dataTransfer.files) {
+            var files = e.dataTransfer.files;
+            handleFileUpload(files, files[0]);
+        }
+    }, false);
+})();
+</script>
+{% endblock %}
