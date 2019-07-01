@@ -61,7 +61,7 @@ class TasksTestCase(CoreFactoryTestCase):
     def test_training_new_model(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
-        with self.assertNumQueries(69):
+        with self.assertNumQueries(35):
             response = self.client.post(uri, {
                 'document': self.part.document.pk,
                 'transcription': self.transcription.pk,
@@ -74,7 +74,7 @@ class TasksTestCase(CoreFactoryTestCase):
         model = self.factory.make_model(document=self.part.document)
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(16):
             response = self.client.post(uri, {
                 'document': self.part.document.pk,
                 'transcription': self.transcription.pk,
