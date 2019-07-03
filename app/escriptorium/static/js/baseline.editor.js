@@ -50,7 +50,7 @@ class SegmenterLine {
         
         this.baselinePath = new Path({
             strokeColor: segmenter_.mainColor,
-            strokeWidth: 12,
+            strokeWidth: 7,
             opacity: 0.5,
             segments: this.baseline,
             selected: false,
@@ -185,6 +185,7 @@ class Segmenter {
         this.newLine = null;
         this.dragging = null;
         this.selecting = null;
+        this.spliting = false;
         // this.draggingPoint = null;
         this.deleting = null;
         this.clip = null;  // draw a box for multi selection
@@ -195,6 +196,8 @@ class Segmenter {
         this.deletePointBtn = document.getElementById('delete-point');
         this.deleteLineBtn = document.getElementById('delete-line');
         this.togglePolygonsBtn = document.getElementById('toggle-polygons');
+        this.splitBtn = document.getElementById('split-lines');
+        this.mergeBtn = document.getElementById('merge-lines');
         
         // init paperjs
         if (!delayInit) {
@@ -208,13 +211,15 @@ class Segmenter {
         paper.setup(this.canvas);
         var tool = new Tool();
         this.getColors(this.img);
-
+        
         this.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         
         tool.onMouseDown = function(event) {
             if (event.event.which === 3 || event.event.button === 2) {
                 // right click
-                if (!this.newLine) {
+                if (this.spliting) {
+                    this.splitTool(event);
+                } else if (!this.newLine) {
                     // creates a new line
                     this.purgeSelection();
                     this.newLine = this.createLine([event.point]);
@@ -261,7 +266,11 @@ class Segmenter {
         }.bind(this);
 
         tool.onMouseMove = function(event) {
-            if (this.newLine && this.dragging) {
+            if (this.spliting && this.spliter) {
+                let point = this.spliter.lastSegment.point;
+                point.x += event.delta.x;
+                point.y += event.delta.y;
+            } else if (this.newLine && this.dragging) {
 			    this.dragging.point.x += event.delta.x;
 			    this.dragging.point.y += event.delta.y;
             }
@@ -339,6 +348,15 @@ class Segmenter {
             this.togglePolygons();
         }.bind(this));
 
+        this.splitBtn.addEventListener('click', function(event) {
+            this.spliting = true;
+            this.splitBtn.classList.toggle('btn-success');
+        }.bind(this));
+
+        this.mergeBtn.addEventListener('click', function(event) {
+            this.mergeSelection();
+        }.bind(this));
+        
         document.addEventListener('keyup', function(event) {
             if (event.keyCode == 27) { // escape
                 if (this.newLine) {
@@ -398,12 +416,12 @@ class Segmenter {
         this.lines.push(line);
         return line;
     }
-
+    
     updateLinesFromCanvas() {
         for (let i in this.lines) {
             if (this.lines[i].changed) {
                 this.lines[i].updateDataFromCanvas();
-                console.log('UPDATE LINE ' + i);
+                console.log('UPDATED LINE ' + i);
                 // TODO: trigger event or callback
                 this.lines[i].changed = false;
             }
@@ -486,6 +504,53 @@ class Segmenter {
                 }
             }
         }
+    }
+
+    splitTool(event) {
+        if (event.event.which === 3 || event.event.button === 2) {
+            // right click
+            if (!this.spliter) {
+                // create
+                this.spliter = new Path([event.point, event.point]);
+                this.spliter.opacity = 0.3;
+                this.spliter.strokeWidth = 2;
+                this.spliter.strokeColor = 'black';
+                this.spliter.dashArray = [10, 4];
+                this.spliter.originalPoint = event.point;
+            } else {
+                //close
+                this.spliter.add(event.point);
+                this.splitByPath(this.spliter);
+                this.spliting = false;
+                this.spliter = null;
+            }
+        }
+    }
+    
+    splitByPath(path) {
+        this.lines.forEach(function(line) {
+            let intersections = line.baselinePath.getIntersections(path);
+            intersections.forEach(function(location) {
+                // TODO flash intersections paths
+                let newLine = line.baselinePath.splitAt(location);
+                if(newLine) {
+                    let vector = location;
+                    vector.length = 10;
+                    // move the lines in opposite direction
+                    line.baselinePath.position.x -= vector;
+                    newLine.position.x += vector;
+                }
+            });
+        });
+    }
+
+    mergeSelection() {
+        if(this.selection.length < 2) return;
+        for(let i = 1; i < this.selection.length; i++) { //loop starts at 1!!
+            this.selection[0].baselinePath.join(this.selection[i].baselinePath);
+            this.selection[i].delete();
+        }
+        this.selection[0].changed = true;
     }
     
     getColors() {
