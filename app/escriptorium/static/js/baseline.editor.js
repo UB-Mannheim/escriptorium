@@ -108,6 +108,7 @@ class SegmenterLine {
         if (this.selected) return;
         if (this.polygonPath && this.polygonPath.visible) this.polygonPath.selected = true;
         this.baselinePath.selected = true;
+        this.baselinePath.bringToFront();
         this.baselinePath.strokeColor = this.segmenter.secondaryColor;
         this.segmenter.addToSelection(this);
         this.selected = true;
@@ -264,7 +265,7 @@ class Segmenter {
             // if we had something to select, it's already done
             this.selecting = null;
         }.bind(this);
-
+        
         tool.onMouseMove = function(event) {
             if (this.spliting && this.spliter) {
                 let point = this.spliter.lastSegment.point;
@@ -511,16 +512,20 @@ class Segmenter {
             // right click
             if (!this.spliter) {
                 // create
-                this.spliter = new Path([event.point, event.point]);
-                this.spliter.opacity = 0.3;
-                this.spliter.strokeWidth = 2;
-                this.spliter.strokeColor = 'black';
-                this.spliter.dashArray = [10, 4];
+                // this.spliter = new CompoundPath();
+                this.spliter = new Path({
+                    segments: [event.point, event.point],
+                    opacity: 1,
+                    strokeWidth: 2,
+                    strokeColor: 'grey',
+                    dashArray: [10, 4]
+                });
                 this.spliter.originalPoint = event.point;
             } else {
                 //close
                 this.spliter.add(event.point);
                 this.splitByPath(this.spliter);
+                this.spliter.remove();
                 this.spliting = false;
                 this.spliter = null;
             }
@@ -532,13 +537,16 @@ class Segmenter {
             let intersections = line.baselinePath.getIntersections(path);
             intersections.forEach(function(location) {
                 // TODO flash intersections paths
+                let vector = line.baselinePath.getNearestPoint(location);  // get curve for right angle
+                vector.length = 30;
+                console.log(vector.angle);
                 let newLine = line.baselinePath.splitAt(location);
                 if(newLine) {
-                    let vector = location;
-                    vector.length = 10;
+                    
                     // move the lines in opposite direction
-                    line.baselinePath.position.x -= vector;
-                    newLine.position.x += vector;
+                    
+                    line.baselinePath.lastSegment.point.position -= vector;
+                    newLine.firstSegment.point.position += vector ;
                 }
             });
         });
