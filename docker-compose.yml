@@ -109,14 +109,14 @@ volumes:
     driver_opts:
       type: none
       o: 'bind'
-      device: static/
+      device: $PWD/static/
    
    media:
     driver: local
     driver_opts:
       type: none
       o: 'bind'
-      device: media/
+      device: $PWD/media/
    
    postgres:   
    esdata:
