@@ -50,7 +50,7 @@ class SegmenterLine {
 
         if (baseline.segments) {  // already a paperjs.Path
             this.baselinePath = baseline;
-            this.baseline = baseline.exportJSON({asString: false}).segments;
+            this.updateDataFromCanvas();
         } else {
             this.baseline = baseline;
             this.baselinePath = new Path({
@@ -110,7 +110,19 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
-        this.getLineHeight();
+        // this.getLineHeight();
+    }
+
+    dragPolyEdges(j, delta) {
+        let poly = this.polygonPath;
+        if (poly && poly.segments.length) {
+            let top = poly.segments[this.baselinePath.segments.length*2 - j - 1].point;
+            let bottom = poly.segments[j].point;
+            top.x += delta.x;
+            top.y += delta.y;
+            bottom.x += delta.x;
+            bottom.y += delta.y;
+        }
     }
     
     select() {
@@ -145,11 +157,8 @@ class SegmenterLine {
     }
 
     updateDataFromCanvas() {
-        if (this.changed) {
-            this.baseline = this.baselinePath.exportJSON({asString: false}).segments;
-            this.polygon = this.polygonPath.exportJSON({asString: false}).segments;
-            this.changed = false;
-        }
+        this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
     }
     
     extend(point) {
@@ -182,7 +191,6 @@ class SegmenterLine {
             this.baseline.forEach(function(segment){
                 let top = this.polygonPath.segments[this.polygonPath.segments.length-segment.index-1];
                 let bottom = this.polygonPath.segments[segment.index];
-                console.log(top.subtract(bottom).length);
                 sum += top.subtract(bottom).length;
             }.bind(this));
             return sum / this.baseline.length;
@@ -312,6 +320,7 @@ class Segmenter {
                         let point = this.selection[i].baselinePath.segments[j].point;
                         point.x += event.delta.x;
                         point.y += event.delta.y;
+                        this.selection[i].dragPolyEdges(j, event.delta);
                     }
                     this.selection[i].changed = true;
                 }
@@ -319,20 +328,12 @@ class Segmenter {
                 // multi lasso selection
                 this.lassoSelection(event);
             } else if (this.dragging) {
-                // move closest point
 			    this.dragging.point.x += event.delta.x;
 			    this.dragging.point.y += event.delta.y;
+                if (this.dragging.path.line.baselinePath == this.dragging.path) {
+                    this.dragging.path.line.dragPolyEdges(this.dragging.index, event.delta);
+                }
                 this.dragging.path.line.changed = true;
-                // let poly = this.dragging.polygonPath;
-                // if (poly) {
-                //     let top = poly.segments[this.dragging.baselinePath.segments.length*2 -
-                //                             this.draggingPoint.index - 1].point;
-                //     let bottom = poly.segments[this.draggingPoint.index].point;
-                //     top.x += event.delta.x;
-                //     top.y += event.delta.y;
-                //     bottom.x += event.delta.x;
-                //     bottom.y += event.delta.y;
-                // }
             } else if (event.event.altKey) {
                 // view.rotate(0.1);
             }
@@ -491,7 +492,10 @@ class Segmenter {
     }
     
     load(data) {
-        // TODO
+        data.forEach(function(line) {
+            let newLine = this.createLine(line);
+            newLine.createPolygon();
+        }.bind(this));
     }
 
     lassoSelection(event) {
