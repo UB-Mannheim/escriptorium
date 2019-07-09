@@ -128,6 +128,7 @@ zoom? edit mode? gnnn
         let data = JSON.parse(iInput.value);
         data = data.map(poly => poly.map(pt => pt.map(coord => coord * imgRatio)));
         segmenter.load(data);
+        iInput.value = '';
     });
     
     document.getElementById('export-btn').addEventListener('click', function(e) {
