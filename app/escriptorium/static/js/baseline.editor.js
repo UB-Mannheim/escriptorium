@@ -14,7 +14,7 @@ new Segmenter(img);
   updateLineCallback
   deleteLineCallback
 
-segmenter.load(lines)
+  segmenter.load(lines)
 
 */
 
@@ -23,7 +23,7 @@ class SegmenterRegion {}
 class SegmenterLine {
     constructor(baseline, polygon, segmenter_) {
         this.segmenter = segmenter_;
-        this.baseline = baseline;
+
         this.polygon = polygon;
         this.selected = false;
         this.changed = false;
@@ -47,51 +47,59 @@ class SegmenterLine {
             }
         });
         this.polygonPath.line = this;
-        
-        this.baselinePath = new Path({
-            strokeColor: segmenter_.mainColor,
-            strokeWidth: 7,
-            opacity: 0.5,
-            segments: this.baseline,
-            selected: false,
-            visible: true,
-            onMouseDown: function(event) {
-                segmenter_.selecting = line_;
-                segmenter_.dragging = this.getNearestLocation(event.point).segment;
-                    
-                var hit = this.hitTest(event.point, {
-	                segments: true,
-	                tolerance: 5
-                });
-                if (hit && hit.type=='segment' &&
-                    hit.segment.index != 0 &&
-                    hit.segment.index != hit.segment.path.segments.length-1) {
-                    line_.segmenter.deleting = hit.segment;
-                }
-            },
-            onMouseUp: function(event) {
-                if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
-                    segmenter_.dragging = null;
-                }
-            },
-            onDoubleClick: function(event) {
-                let location = this.getNearestLocation(event.point);
-                let newSegment = this.insert(location.index+1, location);
-                this.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                line_.createPolygonEdgeForBaselineSegment(newSegment);
-                this.line.changed = true;
+
+        if (baseline.segments) {  // already a paperjs.Path
+            this.baselinePath = baseline;
+            this.baseline = baseline.exportJSON({asString: false}).segments;
+        } else {
+            this.baseline = baseline;
+            this.baselinePath = new Path({
+                strokeColor: segmenter_.mainColor,
+                strokeWidth: 7,
+                opacity: 0.5,
+                segments: this.baseline,
+                selected: false,
+                visible: true
+            });
+        }
+
+        this.baselinePath.onMouseDown = function(event) {
+            segmenter_.selecting = line_;
+            segmenter_.dragging = this.getNearestLocation(event.point).segment;
+            
+            var hit = this.hitTest(event.point, {
+	            segments: true,
+	            tolerance: 5
+            });
+            if (hit && hit.type=='segment' &&
+                hit.segment.index != 0 &&
+                hit.segment.index != hit.segment.path.segments.length-1) {
+                line_.segmenter.deleting = hit.segment;
             }
-        });
+        };
+        this.baselinePath.onMouseUp = function(event) {
+            if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
+                segmenter_.dragging = null;
+            }
+        };
+        this.baselinePath.onDoubleClick = function(event) {
+            let location = this.getNearestLocation(event.point);
+            let newSegment = this.insert(location.index+1, location);
+            this.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+            line_.createPolygonEdgeForBaselineSegment(newSegment);
+            this.line.changed = true;
+        };
         this.baselinePath.line = this;
     }
 
     createPolygonEdgeForBaselineSegment(segment) {
         let pt = segment.point;
         let upperVector = new Point({ angle: pt.angle - 90, length: 20 });
-        this.polygonPath.insert(segment.index, pt.add(upperVector));
+        let up = this.polygonPath.insert(segment.index, pt.add(upperVector));
 
         let lowerVector = new Point({ angle: pt.angle + 90, length: 10 });
-        this.polygonPath.insert(this.polygonPath.segments.length-segment.index, pt.add(lowerVector));
+        let low = this.polygonPath.insert(this.polygonPath.segments.length-segment.index, pt.add(lowerVector));
+        return [up, low];
     }
     deletePolygonsEdgeForBaselineSegment(segment) {
         this.polygonPath.removeSegment(this.polygonPath.segments.length-segment.index-1);
@@ -102,6 +110,7 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
+        this.getLineHeight();
     }
     
     select() {
@@ -165,6 +174,20 @@ class SegmenterLine {
         this.baselinePath.remove();
         this.polygonPath.remove();
         // TODO: trigger event or callback
+    }
+
+    getLineHeight() {
+        if (this.polygon) {
+            let sum = 0;
+            this.baseline.forEach(function(segment){
+                let top = this.polygonPath.segments[this.polygonPath.segments.length-segment.index-1];
+                let bottom = this.polygonPath.segments[segment.index];
+                console.log(top.subtract(bottom).length);
+                sum += top.subtract(bottom).length;
+            }.bind(this));
+            return sum / this.baseline.length;
+        }
+        return null;
     }
 }
 
@@ -371,37 +394,36 @@ class Segmenter {
                 for (let i=this.selection.length-1; i >= 0; i--) {    
                     this.selection[i].delete();
                 }
-            } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
-                this.copy = this.selection.map(a => [
-                    a.baselinePath.exportJSON({asString: false})[1].segments,
-                    a.polygonPath.exportJSON({asString: false})[1].segments
-                ]);
-            } else if (event.keyCode == 86 && event.ctrlKey) {  // Ctrl+V
-                if (this.copy && this.copy.length) {
-                    var vector, lastPt, beforeLastPt;
-                    if (this.lines.length >= 2) {
-                        lastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
-                        beforeLastPt = this.lines[this.lines.length-2].baselinePath.segments[0].point;
-                        vector = new Point(lastPt - beforeLastPt);
-                    } else {
-                        vector = { x: 0, y: 30 };
-                    }
+            // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
+            //     this.copy = this.selection.map(a => [
+            //         a.baselinePath.exportJSON({asString: false})[1].segments,
+            //         a.polygonPath.exportJSON({asString: false})[1].segments
+            //     ]);
+            // } else if (event.keyCode == 86 && event.ctrlKey) {  // Ctrl+V
+            //     if (this.copy && this.copy.length) {
+            //         var vector, lastPt, beforeLastPt;
+            //         if (this.lines.length >= 2) {
+            //             lastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
+            //             beforeLastPt = this.lines[this.lines.length-2].baselinePath.segments[0].point;
+            //             vector = new Point(lastPt - beforeLastPt);
+            //         } else {
+            //             vector = { x: 0, y: 30 };
+            //         }
                         
-                    for (let i in this.copy) {
-                        let newLine = this.createLine(this.copy[i][0], this.copy[i][1]);
-                        newLine.changed = true;
-                        if (lastPt) {
-                            let newLastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
-                            vector = new Point(
-                                (newLastPt.x - newLine.baseline[0][0]) + vector.x,
-                                (newLastPt.y - newLine.baseline[0][1]) + vector.y
-                            );
-                        }
-                        console.log(vector);
-                        newLine.baselinePath.translate(vector);
-                        newLine.polygonPath.translate(vector);
-                    }
-                }
+            //         for (let i in this.copy) {
+            //             let newLine = this.createLine(this.copy[i][0], this.copy[i][1]);
+            //             newLine.changed = true;
+            //             if (lastPt) {
+            //                 let newLastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
+            //                 vector = new Point(
+            //                     (newLastPt.x - newLine.baseline[0][0]) + vector.x,
+            //                     (newLastPt.y - newLine.baseline[0][1]) + vector.y
+            //                 );
+            //             }
+            //             newLine.baselinePath.translate(vector);
+            //             newLine.polygonPath.translate(vector);
+            //         }
+            //     }
             }
         }.bind(this));
 
@@ -517,7 +539,7 @@ class Segmenter {
                     segments: [event.point, event.point],
                     opacity: 1,
                     strokeWidth: 2,
-                    strokeColor: 'grey',
+                    strokeColor: 'red',
                     dashArray: [10, 4]
                 });
                 this.spliter.originalPoint = event.point;
@@ -536,20 +558,23 @@ class Segmenter {
         this.lines.forEach(function(line) {
             let intersections = line.baselinePath.getIntersections(path);
             intersections.forEach(function(location) {
-                // TODO flash intersections paths
-                let vector = line.baselinePath.getNearestPoint(location);  // get curve for right angle
-                vector.length = 30;
-                console.log(vector.angle);
+                let vector = line.baselinePath.getTangentAt(location);  // get curve for right angle
+                vector.length = 10;
                 let newLine = line.baselinePath.splitAt(location);
                 if(newLine) {
-                    
                     // move the lines in opposite direction
-                    
-                    line.baselinePath.lastSegment.point.position -= vector;
-                    newLine.firstSegment.point.position += vector ;
+                    line.baselinePath.lastSegment.point.x -= vector.x;
+                    line.baselinePath.lastSegment.point.y -= vector.y;
+                    newLine.firstSegment.point.x += vector.x;
+                    newLine.firstSegment.point.y += vector.y;
+                    let nl = this.createLine(newLine);
+                    line.polygonPath.removeSegments();
+                    line.createPolygon();
+                    nl.createPolygon();
+                    line.changed = true;
                 }
-            });
-        });
+            }.bind(this));
+        }.bind(this));
     }
 
     mergeSelection() {
@@ -558,6 +583,8 @@ class Segmenter {
             this.selection[0].baselinePath.join(this.selection[i].baselinePath);
             this.selection[i].delete();
         }
+        this.selection[0].polygonPath.removeSegments();
+        this.selection[0].createPolygon();
         this.selection[0].changed = true;
     }
     
