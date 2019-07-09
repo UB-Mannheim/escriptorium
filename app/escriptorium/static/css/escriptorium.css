@@ -380,7 +380,7 @@ i.panel-icon {
 #trans-modal #trans-input, #trans-rule {
     overflow: visible;
     margin-top: 1rem;
-    white-space: nowrap;
+    white-space: pre;
     padding: 0 2px;
     transform-origin: top left;
     box-shadow: none;
