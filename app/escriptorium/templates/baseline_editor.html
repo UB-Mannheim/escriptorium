@@ -11,6 +11,7 @@ Todo:
 * validation & errors
 * integration callbacks
 * regions
+* cursor (cisor move etc)
 * (history)
 
 {% endcomment %}
@@ -109,7 +110,6 @@ Todo:
         e.preventDefault();
     }, false);
     
-
     function containerOnClick(e) {
        document.getElementById('file-input').click();
     }
@@ -136,7 +136,6 @@ Todo:
         iInput.value = '';
         iInput.style.display = 'block';
         iInput.focus();
-        // [[[283,191],[671,190]],[[286,260],[794,301]],[[401,401],[401,401],[680,388]]]
     });
     iInput.addEventListener('blur', function(e) {
         if (!iInput.value) return;

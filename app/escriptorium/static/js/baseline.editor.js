@@ -9,6 +9,8 @@ new Segmenter(img);
   disableMasks=false
   mainColor
   secondaryColor
+  splitBtn
+  mergeBtn
 
   newLineCallback
   updateLineCallback
@@ -169,12 +171,9 @@ class SegmenterLine {
     }
     
     close() {
-        // called when drawing the last point of the line
-        if (this.baselinePath.segments.length > 5) {
-            this.baselinePath.simplify(10);
-        }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createPolygon();
+        this.changed = true;
     }
     
     delete() {
@@ -216,6 +215,7 @@ class Segmenter {
         // needed?
         this.newLine = null;
         this.dragging = null;
+        this.drawing = false;
         this.selecting = null;
         this.spliting = false;
         // this.draggingPoint = null;
@@ -249,43 +249,44 @@ class Segmenter {
         tool.onMouseDown = function(event) {
             if (event.event.which === 3 || event.event.button === 2) {
                 // right click
-                if (this.spliting) {
-                    this.splitTool(event);
-                } else if (!this.newLine) {
-                    // creates a new line
-                    this.purgeSelection();
-                    this.newLine = this.createLine([event.point]);
-                    let pt = this.newLine.extend(event.point);
-                    this.dragging = pt;
-                } else {
-                    // end the line
-                    this.newLine.changed = true;
-                    this.newLine.close();
-                    this.newLine = null;
-                    this.dragging = null;
-                    this.selecting = null;
-                }
-            } else {
-                // left click
                 if (this.newLine) {
                     // adds a point to the line
                     let pt = this.newLine.extend(event.point);
-                    this.dragging = pt;
-                } else if (this.deleting) {
-                    // we clicked on a point in the baseline
-                    this.deletePointBtn.style.left = this.deleting.point.x - 20 + 'px';
-                    this.deletePointBtn.style.top = this.deleting.point.y - 40 + 'px';
-                    this.deletePointBtn.style.display = 'inline';
+                    this.dragging = pt;                    
                 }
-                if (!event.event.ctrlKey) {
+            } else {
+                // left click
+                if (this.spliting) {
+                    this.splitTool(event);
+                } else if (!event.event.ctrlKey) {
                     if (this.selecting) {
                         if (event.event.shiftKey) {
                             this.selecting.toggleSelect();
-                        } else {
-                            this.purgeSelection(this.selecting);
-                            this.selecting.select();
                         }
+                        this.selecting.select();
+                        this.purgeSelection(this.selecting);
                     } else {
+                        if (this.deleting) {
+                            // we clicked on a point in the baseline
+                            this.deletePointBtn.style.left = this.deleting.point.x - 20 + 'px';
+                            this.deletePointBtn.style.top = this.deleting.point.y - 40 + 'px';
+                            this.deletePointBtn.style.display = 'inline';
+                        } 
+                        else if (!this.newLine) {
+                            if (!event.event.shiftKey) {
+                            // creates a new line
+                                this.purgeSelection();
+                                this.newLine = this.createLine([event.point]);
+                                let pt = this.newLine.extend(event.point);
+                                this.dragging = pt;
+                            }
+                        } else {
+                            // end the line
+                            this.newLine.close();
+                            this.newLine = null;
+                            this.dragging = null;
+                            this.selecting = null;
+                        }
                         this.purgeSelection();
                         this.deletePointBtn.style.display = 'none';
                         this.deleting = null;
@@ -313,6 +314,7 @@ class Segmenter {
                 // adding points to current line
                 var pt = this.newLine.extend(event.point);
                 this.dragging = pt;
+                this.drawing = true;
 		    } else if (event.event.ctrlKey) {
                 // multi move
                 for (let i in this.selection) {
@@ -350,6 +352,16 @@ class Segmenter {
             if (!this.newLine) {
                 this.dragging = null;
             }
+
+            if (this.drawing) {
+                this.newLine.baselinePath.simplify(10);
+                this.newLine.close();
+                this.newLine = null;
+                this.dragging = null;
+                this.selecting = null;
+            }
+
+            this.drawing = false;
         }.bind(this);
         
         this.deletePointBtn.addEventListener('click', function(event) {
@@ -534,27 +546,23 @@ class Segmenter {
     }
 
     splitTool(event) {
-        if (event.event.which === 3 || event.event.button === 2) {
-            // right click
-            if (!this.spliter) {
-                // create
-                // this.spliter = new CompoundPath();
-                this.spliter = new Path({
-                    segments: [event.point, event.point],
-                    opacity: 1,
-                    strokeWidth: 2,
-                    strokeColor: 'red',
-                    dashArray: [10, 4]
-                });
-                this.spliter.originalPoint = event.point;
-            } else {
-                //close
-                this.spliter.add(event.point);
-                this.splitByPath(this.spliter);
-                this.spliter.remove();
-                this.spliting = false;
-                this.spliter = null;
-            }
+        if (!this.spliter) {
+            // create
+            this.spliter = new Path({
+                segments: [event.point, event.point],
+                opacity: 1,
+                strokeWidth: 2,
+                strokeColor: 'red',
+                dashArray: [10, 4]
+            });
+            this.spliter.originalPoint = event.point;
+        } else {
+            //close
+            this.spliter.add(event.point);
+            this.splitByPath(this.spliter);
+            this.spliter.remove();
+            this.spliting = false;
+            this.spliter = null;
         }
     }
     
