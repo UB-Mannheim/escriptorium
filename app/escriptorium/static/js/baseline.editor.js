@@ -120,10 +120,8 @@ class SegmenterLine {
         if (poly && poly.segments.length) {
             let top = poly.segments[this.baselinePath.segments.length*2 - j - 1].point;
             let bottom = poly.segments[j].point;
-            top.x += delta.x;
-            top.y += delta.y;
-            bottom.x += delta.x;
-            bottom.y += delta.y;
+            this.segmenter.movePointInView(top, delta);
+            this.segmenter.movePointInView(bottom, delta);
         }
     }
     
@@ -300,12 +298,9 @@ class Segmenter {
         
         tool.onMouseMove = function(event) {
             if (this.spliting && this.spliter) {
-                let point = this.spliter.lastSegment.point;
-                point.x += event.delta.x;
-                point.y += event.delta.y;
+                this.movePointInView(this.spliter.lastSegment.point, event.delta);
             } else if (this.newLine && this.dragging) {
-			    this.dragging.point.x += event.delta.x;
-			    this.dragging.point.y += event.delta.y;
+                this.movePointInView(this.dragging.point, event.delta);
             }
         }.bind(this);
         
@@ -320,8 +315,7 @@ class Segmenter {
                 for (let i in this.selection) {
                     for(let j in this.selection[i].baselinePath.segments) {
                         let point = this.selection[i].baselinePath.segments[j].point;
-                        point.x += event.delta.x;
-                        point.y += event.delta.y;
+                        this.movePointInView(point, event.delta);
                         this.selection[i].dragPolyEdges(j, event.delta);
                     }
                     this.selection[i].changed = true;
@@ -330,8 +324,7 @@ class Segmenter {
                 // multi lasso selection
                 this.lassoSelection(event);
             } else if (this.dragging) {
-			    this.dragging.point.x += event.delta.x;
-			    this.dragging.point.y += event.delta.y;
+                this.movePointInView(this.dragging.point, event.delta);
                 if (this.dragging.path.line.baselinePath == this.dragging.path) {
                     this.dragging.path.line.dragPolyEdges(this.dragging.index, event.delta);
                 }
@@ -452,7 +445,16 @@ class Segmenter {
         this.lines.push(line);
         return line;
     }
-    
+
+    movePointInView(point, delta) {
+        point.x += delta.x;
+        point.y += delta.y;
+        if (point.x < 0) point.x = 0;
+        if (point.x > view.viewSize.width) point.x = view.viewSize.width;
+        if (point.y < 0) point.y = 0;
+        if (point.y > view.viewSize.height) point.y = view.viewSize.height;
+    }
+
     updateLinesFromCanvas() {
         for (let i in this.lines) {
             if (this.lines[i].changed) {
