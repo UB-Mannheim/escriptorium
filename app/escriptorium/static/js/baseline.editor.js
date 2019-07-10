@@ -162,13 +162,13 @@ class SegmenterLine {
     }
     
     extend(point) {
-        if (this.baselinePath.length > this.segmenter.lengthThreshold) {
-            this.baselinePath.visible = true;
-        }
         return this.baselinePath.add(point);
     }
     
     close() {
+        if (this.baselinePath.length < this.segmenter.lengthThreshold) {
+            this.delete();
+        }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createPolygon();
         this.changed = true;
@@ -254,25 +254,23 @@ class Segmenter {
                 }
             } else {
                 // left click
-                if (this.spliting) {
-                    this.splitTool(event);
-                } else if (!event.event.ctrlKey) {
+                if (!event.event.ctrlKey) {
                     if (this.selecting) {
                         if (event.event.shiftKey) {
                             this.selecting.toggleSelect();
-                        }
-                        this.selecting.select();
-                        this.purgeSelection(this.selecting);
-                    } else {
-                        if (this.deleting) {
+                        } else if (this.deleting) {
                             // we clicked on a point in the baseline
                             this.deletePointBtn.style.left = this.deleting.point.x - 20 + 'px';
                             this.deletePointBtn.style.top = this.deleting.point.y - 40 + 'px';
                             this.deletePointBtn.style.display = 'inline';
-                        } 
-                        else if (!this.newLine) {
+                        } else {
+                            this.selecting.select();
+                            this.purgeSelection(this.selecting);
+                        }
+                    } else if (!this.spliting) {
+                        if (!this.newLine) {
                             if (!event.event.shiftKey) {
-                            // creates a new line
+                                // creates a new line
                                 this.purgeSelection();
                                 this.newLine = this.createLine([event.point]);
                                 let pt = this.newLine.extend(event.point);
@@ -310,7 +308,9 @@ class Segmenter {
                 var pt = this.newLine.extend(event.point);
                 this.dragging = pt;
                 this.drawing = true;
-		    } else if (event.event.ctrlKey) {
+		    } else if (this.spliting) {
+                this.splitTool(event);
+            } else if (event.event.ctrlKey) {
                 // multi move
                 for (let i in this.selection) {
                     for(let j in this.selection[i].baselinePath.segments) {
@@ -336,6 +336,11 @@ class Segmenter {
 
         tool.onMouseUp = function(event) {
             if (this.clip) {
+                if(this.spliting) {
+                    this.splitByPath(this.clip);
+                    // this.spliting = false;
+                }
+                
                 this.clip.remove();
                 this.clip = null;
             } else {
@@ -350,7 +355,7 @@ class Segmenter {
                 this.newLine.baselinePath.simplify(10);
                 this.newLine.close();
                 this.newLine = null;
-                this.dragging = null;
+                // this.dragging = null;
                 this.selecting = null;
             }
 
@@ -379,7 +384,7 @@ class Segmenter {
         }.bind(this));
 
         this.splitBtn.addEventListener('click', function(event) {
-            this.spliting = true;
+            this.spliting = !this.spliting;
             this.splitBtn.classList.toggle('btn-success');
         }.bind(this));
 
@@ -512,14 +517,13 @@ class Segmenter {
         }.bind(this));
     }
 
-    lassoSelection(event) {
-        // draws a rectangle lasso selection tool that selects every line it crosses
+    selectionRectangle(event) {
         if (!this.clip) {
             let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
             this.clip = new Path.Rectangle(shape, 0);
-            this.clip.opacity = 0.3;
+            this.clip.opacity = 1;
             this.clip.strokeWidth = 2;
-            this.clip.strokeColor = 'black';
+            this.clip.strokeColor = 'grey';
             this.clip.dashArray = [10, 4];
             this.clip.originalPoint = event.point;
         } else {
@@ -535,66 +539,86 @@ class Segmenter {
             } else {
                 this.clip.bounds.y = event.point.y;
             }
-
-            for (let i in this.lines) {
-                let line = this.lines[i];
-                if (line.selected) {continue;}  // avoid calculs
-                if (this.clip.intersects(line.baselinePath) ||
-                    line.baselinePath.isInside(this.clip.bounds)) {
-                    line.select();
-                }
+        }
+    }
+    
+    lassoSelection(event) {
+        // draws a rectangle lasso selection tool that selects every line it crosses
+        this.selectionRectangle(event);
+        for (let i in this.lines) {
+            let line = this.lines[i];
+            if (line.selected) {continue;}  // avoid calculs
+            if (this.clip.intersects(line.baselinePath) ||
+                line.baselinePath.isInside(this.clip.bounds)) {
+                line.select();
             }
         }
     }
 
     splitTool(event) {
-        if (!this.spliter) {
-            // create
-            this.spliter = new Path({
-                segments: [event.point, event.point],
-                opacity: 1,
-                strokeWidth: 2,
-                strokeColor: 'red',
-                dashArray: [10, 4]
-            });
-            this.spliter.originalPoint = event.point;
-        } else {
-            //close
-            this.spliter.add(event.point);
-            this.splitByPath(this.spliter);
-            this.spliter.remove();
-            this.spliting = false;
-            this.spliter = null;
-        }
+        this.selectionRectangle(event);
+        this.lines.forEach(function(line) {
+            let intersections = line.baselinePath.getIntersections(this.clip);
+            for (var i = 0; i < intersections.length; i++) {
+                // cut locations helper
+                new Path.Circle({
+                    center: intersections[i].point,
+                    radius: 5,
+                    fillColor: 'red'
+                }).removeOnDrag().removeOnUp();
+
+                if (intersections.length) {
+                    // show what is going to be cut
+                    let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
+                    intersections.forEach(location => cut.add(location));
+                    cut.bringToFront();
+                    line.baselinePath.segments.forEach(function(segment) {
+                        if (this.clip.contains(segment.point)) {
+                            cut.insert(segment.index, segment);
+                        }
+                    }.bind(this));
+                }
+            }
+        }.bind(this));
     }
     
     splitByPath(path) {
         this.lines.forEach(function(line) {
             let intersections = line.baselinePath.getIntersections(path);
-            intersections.forEach(function(location) {
-                let vector = line.baselinePath.getTangentAt(location);  // get curve for right angle
-                vector.length = 10;
-                let newLine = line.baselinePath.splitAt(location);
-                if(newLine) {
-                    // move the lines in opposite direction
-                    line.baselinePath.lastSegment.point.x -= vector.x;
-                    line.baselinePath.lastSegment.point.y -= vector.y;
-                    newLine.firstSegment.point.x += vector.x;
-                    newLine.firstSegment.point.y += vector.y;
+            for (var i = 0; i < intersections.length; i += 2) {
+                if (i+1 >= intersections.length) {  // one intersection remaining
+                    // remove everything in the selection rectangle
+                    let location = intersections[i];
+                    let newSegment = line.baselinePath.insert(location.index+1, location);
+                    if (path.contains(line.baselinePath.firstSegment.point)) {
+                        line.baselinePath.removeSegments(0, newSegment.index);
+                    } else if (path.contains(line.baselinePath.lastSegment.point)) {
+                        line.baselinePath.removeSegments(newSegment.index+1);
+                    }
+                    line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+                    line.createPolygonEdgeForBaselineSegment(newSegment);
+                    line.changed = true;
+                } else {
+                    let newLine = line.baselinePath.splitAt(intersections[i+1]);
                     let nl = this.createLine(newLine);
+                    let trash = line.baselinePath.splitAt(intersections[i]);
                     line.polygonPath.removeSegments();
                     line.createPolygon();
                     nl.createPolygon();
                     line.changed = true;
+                    line = nl;
+                    trash.remove();
                 }
-            }.bind(this));
+            }
         }.bind(this));
     }
 
     mergeSelection() {
         if(this.selection.length < 2) return;
         for(let i = 1; i < this.selection.length; i++) { //loop starts at 1!!
-            this.selection[0].baselinePath.join(this.selection[i].baselinePath);
+            this.selection[0].baselinePath.join(this.selection[i].baselinePath, 10);
+        }
+        for(let i = this.selection.length - 1; i > 1; i--) {
             this.selection[i].delete();
         }
         this.selection[0].polygonPath.removeSegments();
