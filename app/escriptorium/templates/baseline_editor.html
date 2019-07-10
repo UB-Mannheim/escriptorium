@@ -2,14 +2,17 @@
 {% load i18n staticfiles %}
 
 {% comment %}
-TODO:
-cut through?
-loading ext
+Todo:
+* constraints
+* left click & free drawing & tablet
+* rectangle cut
+* click to upload
+* zoom
+* validation & errors
+* integration callbacks
+* regions
+* (history)
 
-integration:
-history
-regions
-zoom? edit mode? gnnn
 {% endcomment %}
 
 {% block body %}
@@ -26,8 +29,10 @@ zoom? edit mode? gnnn
   <button id="export-btn" title="{% trans "Export." %}" class="btn btn-primary ml-1 fas fa-file-export"></button>
   <input type="text" id="export-input" class="hide w-100"/>
   <input type="text" id="import-input" class="hide w-100"/>
+  
 </div>
-<div id="container" class="w-50 d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
+<div id="container" class="w-50 align-middle text-center d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
+  <input type="file" id="file-input" class="hide" />
   <img id="seg" class="w-100"/>
   <i id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></i>
   <i id="delete-line" title="{% trans "Delete all selected lines." %}" class="hide btn btn-sm btn-danger fas fa-trash"></i>
@@ -104,15 +109,25 @@ zoom? edit mode? gnnn
         e.preventDefault();
     }, false);
     
-    container.addEventListener('drop', function(e) {
+
+    function containerOnClick(e) {
+       document.getElementById('file-input').click();
+    }
+
+    function imgTransfer(e) {
         e.preventDefault();
         var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg', 'image/jpeg'];
-        if (e.dataTransfer && e.dataTransfer.files) {
-            var files = e.dataTransfer.files;
+        if (e.target.files || (e.dataTransfer && e.dataTransfer.files)) {
+            var files = e.target.files || e.dataTransfer.files;
             if (imageTypes.indexOf(files[0].type) == -1) return;
+            container.removeEventListener('click', containerOnClick);
             handleFileUpload(files, files[0]);
         }
-    }, false);
+    }
+
+    container.addEventListener('click', containerOnClick, false);
+    document.getElementById('file-input').addEventListener('change', imgTransfer, false);
+    container.addEventListener('drop', imgTransfer, false);
 
     var eInput = document.getElementById('export-input');
     var iInput = document.getElementById('import-input');
