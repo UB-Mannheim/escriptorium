@@ -46,6 +46,16 @@ class SegmenterLine {
                 if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
                     segmenter_.dragging = null;
                 }
+            },
+            onMouseMove: function(event) {
+                if (line_.selected) segmenter_.setCursor('grab');
+                else segmenter_.setCursor('pointer');
+            },
+            onMouseLeave: function(event) {
+                segmenter_.setCursor();
+            },
+            onMouseDrag: function(event) {
+                segmenter_.setCursor('move');
             }
         });
         this.polygonPath.line = this;
@@ -90,6 +100,26 @@ class SegmenterLine {
             this.smooth({ type: 'catmull-rom', 'factor': 0.2 });
             line_.createPolygonEdgeForBaselineSegment(newSegment);
             this.line.changed = true;
+        };
+        this.baselinePath.onMouseMove = function(event) {
+            if (line_.selected) segmenter_.setCursor('grab');
+            else segmenter_.setCursor('pointer');
+
+            var hit = this.hitTest(event.point, {
+	            segments: true,
+	            tolerance: 5
+            });
+            if (hit && hit.type=='segment' &&
+                hit.segment.index != 0 &&
+                hit.segment.index != hit.segment.path.segments.length-1) {
+                line_.segmenter.setCursor('pointer');
+            }
+        };
+        this.baselinePath.onMouseLeave = function(event) {
+            segmenter_.setCursor();
+        };
+        this.baselinePath.onMouseDrag = function(event) {
+            segmenter_.setCursor('move');
         };
         this.baselinePath.line = this;
     }
@@ -241,6 +271,7 @@ class Segmenter {
         paper.setup(this.canvas);
         var tool = new Tool();
         this.getColors(this.img);
+        this.setCursor();
         
         this.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         
@@ -258,14 +289,18 @@ class Segmenter {
                     if (this.selecting) {
                         if (event.event.shiftKey) {
                             this.selecting.toggleSelect();
-                        } else if (this.deleting) {
+                        } else {
+                            this.selecting.select();
+                            this.purgeSelection(this.selecting);
+                        }
+
+                        if (this.deleting) {
                             // we clicked on a point in the baseline
                             this.deletePointBtn.style.left = this.deleting.point.x - 20 + 'px';
                             this.deletePointBtn.style.top = this.deleting.point.y - 40 + 'px';
                             this.deletePointBtn.style.display = 'inline';
                         } else {
-                            this.selecting.select();
-                            this.purgeSelection(this.selecting);
+                            this.deletePointBtn.style.display = 'none';
                         }
                     } else if (!this.spliting) {
                         if (!this.newLine) {
@@ -338,7 +373,6 @@ class Segmenter {
             if (this.clip) {
                 if(this.spliting) {
                     this.splitByPath(this.clip);
-                    // this.spliting = false;
                 }
                 
                 this.clip.remove();
@@ -385,7 +419,7 @@ class Segmenter {
 
         this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
-            this.splitBtn.classList.toggle('btn-success');
+            this.setCursor();
         }.bind(this));
 
         this.mergeBtn.addEventListener('click', function(event) {
@@ -405,6 +439,12 @@ class Segmenter {
                 for (let i=this.selection.length-1; i >= 0; i--) {    
                     this.selection[i].delete();
                 }
+            } else if (event.keyCode == 67) { // C
+                this.spliting = !this.spliting;
+                this.setCursor();
+            } else if (event.keyCode == 77) { // M
+                this.togglePolygons();
+            }
             // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
             //     this.copy = this.selection.map(a => [
             //         a.baselinePath.exportJSON({asString: false})[1].segments,
@@ -435,11 +475,11 @@ class Segmenter {
             //             newLine.polygonPath.translate(vector);
             //         }
             //     }
-            }
+            
         }.bind(this));
 
         document.addEventListener('click', function(event) {
-            if (!event.target == this.canvas) {
+            if (event.target != this.canvas) {
                 this.purgeSelection();
             }
         }.bind(this));
@@ -490,8 +530,8 @@ class Segmenter {
         this.deleteLineBtn.style.display = 'inline';
     }
     removeFromSelection(line) {
-        this.deleteLineBtn.style.display = 'none';
         this.selection.pop(this.selection.indexOf(line));
+        if (this.selection.length == 0) this.deleteLineBtn.style.display = 'none';
     }
     purgeSelection(except) {
         for (let i=this.selection.length-1; i >= 0; i--) {
@@ -624,6 +664,14 @@ class Segmenter {
         this.selection[0].polygonPath.removeSegments();
         this.selection[0].createPolygon();
         this.selection[0].changed = true;
+    }
+
+    setCursor(style) {
+        if (style) {
+            this.canvas.style.cursor = style;
+        } else {
+            this.canvas.style.cursor = this.spliting?'url(/static/cursors/cut_cursor.png), auto':'copy';
+        }
     }
     
     getColors() {
