@@ -3,32 +3,34 @@
 
 {% comment %}
 Todo:
-* drag pt to merge
+* regions
 * zoom
+* drag pt to merge
 * validation & errors
 * integration callbacks
 * reset & viewport change
-* regions
-* cursor (cisor grab etc)
-* (history)
 * (tablet test)
-
 {% endcomment %}
 
 {% block body %}
-<div>
-  <button id="toggle-polygons" title="{% trans "Show line masks. (M)" %}" class="btn m-1 btn-info fas fa-mask"></button>
-  <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn m-1 btn-info fas fa-cut"></button>
-  <button id="merge-lines" title="{% trans "Merge selected lines." %}" class="btn m-1 btn-info fas fa-compress-arrows-alt"></button>
-  <span id="color0" width="20px" height="20px">1</span>
+<div class="mb-2">
+  <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info fas fa-mask"></button>
+
+  <button id="undo-btn" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-5 fas fa-undo" disabled></button>
+  <button id="redo-btn" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" disabled></button>
+
+  <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn ml-5 btn-info fas fa-cut"></button>
+  <button id="merge-lines" title="{% trans "Merge selected lines." %}" class="btn btn-info fas fa-compress-arrows-alt"></button>
+  <!--<span id="color0" width="20px" height="20px">1</span>
   <span id="color1" width="20px" height="20px">2</span>
   <span id="color2" width="20px" height="20px">3</span>
   <span id="color3" width="20px" height="20px">4</span>
-  <span id="color4" width="20px" height="20px">5</span>
+  <span id="color4" width="20px" height="20px">5</span>-->
+  
   <button id="import-btn" title="{% trans "Import." %}" class="btn btn-primary ml-5 fas fa-file-import"></button>
-  <button id="export-btn" title="{% trans "Export." %}" class="btn btn-primary ml-1 fas fa-file-export"></button>
-  <input type="text" id="export-input" class="hide w-100"/>
-  <input type="text" id="import-input" class="hide w-100"/>
+  <button id="export-btn" title="{% trans "Export." %}" class="btn btn-primary fas fa-file-export"></button>
+  <input type="text" id="export-input" class="hide w-100 form-control my-2"/>
+  <input type="text" id="import-input" class="hide w-100 form-control my-2"/>
   
 </div>
 <div id="container" class="w-50 align-middle text-center d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
@@ -79,18 +81,23 @@ Todo:
 <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
 <script>
+var segmenter = null;
+
 (function() {
-    var segmenter = null;
-    var imgRatio;
-    
     function handleFileUpload(files, file) {
         var reader = new FileReader();
         reader.onload = function() {
             img.src = reader.result;         
-            segmenter = new Segmenter(img,
-                                      {delayInit:true});
+            segmenter = new Segmenter(img, {
+                delayInit: true,
+                stateUpdateCallback: function(stateIndex, stateLength) {
+                    if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
+                    else document.getElementById('undo-btn').disabled = true;
+                    if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
+                    else document.getElementById('redo-btn').disabled = true;
+                }
+            });
             img.addEventListener('load', function(ev) {
-                imgRatio = this.width / this.naturalWidth;
                 segmenter.init();
             });
         };
@@ -110,7 +117,7 @@ Todo:
     }, false);
     
     function containerOnClick(e) {
-       document.getElementById('file-input').click();
+        document.getElementById('file-input').click();
     }
 
     function imgTransfer(e) {
@@ -123,11 +130,11 @@ Todo:
             handleFileUpload(files, files[0]);
         }
     }
-
+    
     container.addEventListener('click', containerOnClick, false);
     document.getElementById('file-input').addEventListener('change', imgTransfer, false);
     container.addEventListener('drop', imgTransfer, false);
-
+    
     var eInput = document.getElementById('export-input');
     var iInput = document.getElementById('import-input');
     document.getElementById('import-btn').addEventListener('click', function(e) {
@@ -138,22 +145,40 @@ Todo:
     });
     iInput.addEventListener('blur', function(e) {
         if (!iInput.value) return;
-        let data = JSON.parse(iInput.value);
-        data = data.map(poly => poly.map(pt => pt.map(coord => coord * imgRatio)));
-        segmenter.load(data);
-        iInput.value = '';
+        try {
+            let data = JSON.parse(iInput.value);
+            iInput.classList.remove('is-invalid');
+            segmenter.load(data.map(line => { return {baseline: line, mask: []}}));
+            iInput.value = '';
+        } catch(error) {
+            console.log(error);
+            iInput.classList.add('is-invalid');
+        }
     });
     
     document.getElementById('export-btn').addEventListener('click', function(e) {
         iInput.style.display = 'none';
-        eInput.value = JSON.stringify(segmenter.lines.map(function(line) {
-            return line.baseline.map(poly => poly.map(coord => Math.round(coord / imgRatio)));
-        }));
+        eInput.value = JSON.stringify(segmenter.exportJSON().map(line => line.baseline));
         eInput.style.display = 'block';
         eInput.focus();
         eInput.select();
     });
-    
+
+    // history undo/redo
+    document.addEventListener('keyup', function(event) {
+        if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
+            segmenter.loadPreviousState();
+        } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
+            segmenter.loadNextState();
+        }
+    });
+    document.getElementById('undo-btn').addEventListener('click', function(event) {
+        segmenter.loadPreviousState();
+    });
+    document.getElementById('redo-btn').addEventListener('click', function(event) {
+        segmenter.loadNextState();
+    });
+
 })();
 </script>
 {% endblock %}
