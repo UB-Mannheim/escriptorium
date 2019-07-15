@@ -79,26 +79,65 @@ Todo:
 {% block scripts %}
 <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/wheelzoom2.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
+
 <script>
-var segmenter = null;
+    var segmenter = null, zoom = null;
 
 (function() {
     function handleFileUpload(files, file) {
         var reader = new FileReader();
         reader.onload = function() {
-            img.src = reader.result;         
-            segmenter = new Segmenter(img, {
-                delayInit: true,
-                stateUpdateCallback: function(stateIndex, stateLength) {
-                    if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
-                    else document.getElementById('undo-btn').disabled = true;
-                    if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
-                    else document.getElementById('redo-btn').disabled = true;
-                }
-            });
+            img.src = reader.result;                 
+            segmenter.canvas.style.position = 'absolute';
+            
             img.addEventListener('load', function(ev) {
+                zoom.register(img, {mirror: true});
                 segmenter.init();
+                zoom.targets[0].container.appendChild(segmenter.canvas);
+
+                // segmenter zoom implementation
+                function onScroll(event) {
+                    event.target = img;
+                    var delta = zoom.scrolled(event);
+                    var pt = view.viewToProject(event.pageX, event.pageY);
+                    segmenter.canvas.style.width = img.width*zoom.scale + 'px';
+                    segmenter.canvas.style.height = img.height*zoom.scale + 'px';
+                    segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    segmenter.canvas.style.left = zoom.pos.x + 'px';
+                    // paper.view.scale(delta, pt);
+                    paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
+                    // view.bounds.x = zoom.pos.x;
+                    // view.bounds.y = zoom.pos.y;
+                    // view.bounds.width = img.width*zoom.scale;
+                    // view.bounds.height = img.height*zoom.scale;
+                    for (let i in segmenter.lines) {
+	                    segmenter.lines[i].baselinePath.scale(delta, [0, 0]);
+	                    segmenter.lines[i].maskPath.scale(delta, [0, 0]);
+	                }
+                }
+                segmenter.canvas.addEventListener('DOMMouseScroll', onScroll);
+                segmenter.canvas.addEventListener('mousewheel', onScroll);
+
+                function dragView(e) {
+                    img.classList.add('notransition');
+                    var delta = zoom.drag(e);
+                    segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    segmenter.canvas.style.left = zoom.pos.x + 'px';
+                }
+                function draggableView(e) {
+                    document.addEventListener('mousemove', dragView);
+                    document.addEventListener('mouseup', function(e) {
+                        document.removeEventListener('mousemove', dragView);
+                        img.classList.remove('notransition');
+                        zoom.previousEvent = null;
+                    });
+                }
+                view.on('mousedown', function(e) {
+                    // right click
+                    if (e.event.which === 3 || e.event.button === 2) { draggableView(e); }
+                });
             });
         };
         reader.readAsDataURL(file);
@@ -106,8 +145,20 @@ var segmenter = null;
     
     var img = document.getElementById('seg');
     img.ondragstart = function(e) { return false; };
-
+    segmenter = new Segmenter(img, {
+        delayInit: true,
+        stateUpdateCallback: function(stateIndex, stateLength) {
+            if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
+            else document.getElementById('undo-btn').disabled = true;
+            if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
+            else document.getElementById('redo-btn').disabled = true;
+        }
+    });
+    
     var container = document.getElementById('container');
+
+    zoom = new WheelZoom({});
+    
     container.addEventListener('dragenter', function(e) {
         e.preventDefault();
     }, false);
@@ -122,6 +173,7 @@ var segmenter = null;
 
     function imgTransfer(e) {
         e.preventDefault();
+        segmenter.reset();
         var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg', 'image/jpeg'];
         if (e.target.files || (e.dataTransfer && e.dataTransfer.files)) {
             var files = e.target.files || e.dataTransfer.files;

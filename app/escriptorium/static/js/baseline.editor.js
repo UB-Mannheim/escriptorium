@@ -49,6 +49,7 @@ class SegmenterLine {
                 }
             },
             onMouseMove: function(event) {
+                if (segmenter_.spliting) return;
                 if (line_.selected) segmenter_.setCursor('grab');
                 else segmenter_.setCursor('pointer');
             },
@@ -56,6 +57,7 @@ class SegmenterLine {
                 segmenter_.setCursor();
             },
             onMouseDrag: function(event) {
+                if (segmenter_.spliting) return;
                 segmenter_.setCursor('move');
             }
         });
@@ -103,6 +105,7 @@ class SegmenterLine {
             this.line.changed = true;
         };
         this.baselinePath.onMouseMove = function(event) {
+            if (segmenter_.spliting) return;
             if (line_.selected) segmenter_.setCursor('grab');
             else segmenter_.setCursor('pointer');
 
@@ -236,8 +239,9 @@ class Segmenter {
         this.img = image;
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
+        // this.raster = null;
         // insert after..
-        this.img.parentNode.insertBefore(this.canvas, this.img.nextElementSibling);
+        this.img.parentNode.insertBefore(this.canvas, this.img);
         this.imgRatio = 1;
         
         this.lines = [];
@@ -287,8 +291,14 @@ class Segmenter {
         this.setCursor();
         
         this.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
+        this.canvas.style.zIndex = 2;
+        
         this.imgRatio = this.img.width / this.img.naturalWidth;
+        this.canvas.style.width = this.img.width;
+        this.canvas.style.height = this.img.height;
+        // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
+        // this.raster.position = view.center;
+        this.img.style.display = 'hidden';
         
         this.addState();
         
@@ -412,7 +422,7 @@ class Segmenter {
             
             this.drawing = false;
         }.bind(this);
-        
+
         this.deletePointBtn.addEventListener('click', function(event) {
             if (this.deleting) {
                 let line = this.deleting.path.line;
@@ -456,7 +466,9 @@ class Segmenter {
                     this.dragging = null;
                 } else if (this.spliting) {
                     this.spliting = false;
-                    this.clip.remove();
+                    if (this.clip) this.clip.remove();
+                    this.splitBtn.classList.add('btn-info');
+                    this.splitBtn.classList.remove('btn-success');
                     this.setCursor();
                 } else {
                     this.purgeSelection();
@@ -511,6 +523,8 @@ class Segmenter {
                 this.purgeSelection();
             }
         }.bind(this));
+
+        return tool;
     }
     
     createLine(baseline, mask) {
@@ -677,6 +691,14 @@ class Segmenter {
         }
     }
 
+    startSplitting() {
+        
+    }
+
+    stopSplitting() {
+
+    }
+    
     splitTool(event) {
         this.selectionRectangle(event);
         this.lines.forEach(function(line) {
