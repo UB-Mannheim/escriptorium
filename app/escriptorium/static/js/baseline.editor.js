@@ -9,8 +9,14 @@ new Segmenter(img);
   disableMasks=false // td
   mainColor
   secondaryColor
-  splitBtn
-  mergeBtn
+  lengthTreshold=15,
+  delayInit=false,
+  stateUpdateCallback=null,
+  deletePointBtn=null,
+  deleteLineBtn=null,
+  toggleLineBtn=null,
+  splitBtn=null,
+  mergeBtn=null
 
   newLineCallback
   updateLineCallback
@@ -90,6 +96,8 @@ class SegmenterLine {
                 hit.segment.index != 0 &&
                 hit.segment.index != hit.segment.path.segments.length-1) {
                 line_.segmenter.deleting = hit.segment;
+            } else {
+                line_.segmenter.deleting = null;
             }
         };
         this.baselinePath.onMouseUp = function(event) {
@@ -235,7 +243,18 @@ class SegmenterLine {
 }
 
 class Segmenter {
-    constructor(image, {lengthTreshold=15, delayInit=false, stateUpdateCallback=null}) {
+    constructor(image, {lengthTreshold=15,
+                        delayInit=false,
+                        stateUpdateCallback=null,
+                        deletePointBtn=null,
+                        deleteLineBtn=null,
+                        toggleLineBtn=null,
+                        splitBtn=null,
+                        mergeBtn=null,
+                        disableMasks=false, // td
+                        mainColor=null,
+                        secondaryColor=null
+                       }) {
         this.img = image;
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
@@ -243,6 +262,8 @@ class Segmenter {
         // insert after..
         this.img.parentNode.insertBefore(this.canvas, this.img);
         this.imgRatio = 1;
+        this.mainColor = null;
+        this.secondaryColor = null;
         
         this.lines = [];
         this.selection = [];
@@ -256,7 +277,6 @@ class Segmenter {
         this.drawing = false;
         this.selecting = null;
         this.spliting = false;
-        // this.draggingPoint = null;
         this.deleting = null;
         this.clip = null;  // draw a box for multi selection
         this.copy = null;
@@ -266,12 +286,13 @@ class Segmenter {
         this.states = [];
         this.maxStates = 30;
         
-        // TODO: customizable
-        this.deletePointBtn = document.getElementById('delete-point');
-        this.deleteLineBtn = document.getElementById('delete-line');
-        this.toggleMasksBtn = document.getElementById('toggle-masks');
-        this.splitBtn = document.getElementById('split-lines');
-        this.mergeBtn = document.getElementById('merge-lines');
+        this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
+        this.deletePointBtn.style.zIndex = 3;
+        this.deleteLineBtn = deleteLineBtn || document.getElementById('delete-line');
+        this.deleteLineBtn.style.zIndex = 3;
+        this.toggleMasksBtn = toggleLineBtn || document.getElementById('toggle-masks');
+        this.splitBtn = splitBtn || document.getElementById('split-lines');
+        this.mergeBtn = mergeBtn || document.getElementById('merge-lines');
 
         // callbacks
         this.stateUpdateCallback = stateUpdateCallback;
@@ -323,8 +344,9 @@ class Segmenter {
 
                         if (this.deleting) {
                             // we clicked on a point in the baseline
-                            this.deletePointBtn.style.left = this.deleting.point.x - 20 + 'px';
-                            this.deletePointBtn.style.top = this.deleting.point.y - 40 + 'px';
+                            let pt = view.projectToView(this.deleting.point);
+                            this.deletePointBtn.style.left = pt.x - 20 + 'px';
+                            this.deletePointBtn.style.top = pt.y - 40 + 'px';
                             this.deletePointBtn.style.display = 'inline';
                         } else {
                             this.deletePointBtn.style.display = 'none';
@@ -391,13 +413,11 @@ class Segmenter {
                     this.dragging.path.line.dragPolyEdges(this.dragging.index, event.delta);
                 }
                 this.dragging.path.line.changed = true;
-            } else if (event.event.altKey) {
-                // view.rotate(0.1);
             }
         }.bind(this);
 
         tool.onMouseUp = function(event) {
-            if (this.drawing) {
+            if (this.drawing && this.newLine) {
                 this.newLine.baselinePath.simplify(10);
                 this.newLine.close();
                 this.newLine = null;
@@ -537,9 +557,9 @@ class Segmenter {
         point.x += delta.x;
         point.y += delta.y;
         if (point.x < 0) point.x = 0;
-        if (point.x > view.viewSize.width) point.x = view.viewSize.width;
+        if (point.x > this.img.width) point.x = this.img.width;
         if (point.y < 0) point.y = 0;
-        if (point.y > view.viewSize.height) point.y = view.viewSize.height;
+        if (point.y > this.img.height) point.y = this.img.height;
     }
 
     reset() {
@@ -625,12 +645,16 @@ class Segmenter {
             if (poly.visible && this.lines[i].selected) poly.selected = true;
         }
     }
-    
+
+    showDeleteLineBtn(line) {
+        let pt = view.projectToView(line.baselinePath.bounds.topRight);
+        this.deleteLineBtn.style.left = pt.x + 20 + "px";
+        this.deleteLineBtn.style.top = pt.y -30 + "px";
+        this.deleteLineBtn.style.display = 'inline';
+    }
     addToSelection(line) {
         if (this.selection.indexOf(line) == -1) this.selection.push(line);
-        this.deleteLineBtn.style.left = line.baselinePath.bounds.topRight.x + 20 + "px";
-        this.deleteLineBtn.style.top = line.baselinePath.bounds.topRight.y -30 + "px";
-        this.deleteLineBtn.style.display = 'inline';
+        this.showDeleteLineBtn(line);
     }
     removeFromSelection(line) {
         this.selection.pop(this.selection.indexOf(line));
@@ -823,7 +847,7 @@ class Segmenter {
         const rgbToHex = (c) => '#' + [c[0], c[1], c[2]]
               .map(x => x.toString(16).padStart(2, '0')).join('');
 
-        if (ColorThief !== undefined) {
+        if (ColorThief !== undefined && !this.mainColor) {
             var colorThief = new ColorThief();
             let palette = colorThief.getPalette(this.img, 5);
             // for (let i in palette) {

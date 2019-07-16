@@ -10,13 +10,18 @@ class zoomTarget {
     constructor(domElement) {
         // wrap the element in a container:
         var container = document.createElement('div');
+        var rotationContainer = document.createElement('div');
+
+        domElement.parentNode.insertBefore(container, domElement);
+        rotationContainer.appendChild(domElement);
+        container.appendChild(rotationContainer);
+        rotationContainer.style.transformOrigin = 'center';
         container.style.position = 'relative';
         container.style.overflow = 'hidden';
-        domElement.parentNode.insertBefore(container, domElement);
-        container.appendChild(domElement);
-        this.container = container;
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'transform 0.3s';
+        this.container = container;
+        this.rotationContainer = rotationContainer;
         this.element = domElement;
     }
 }
@@ -41,6 +46,7 @@ class WheelZoom {
         this.targets = [];
         this.previousEvent = null;
         this.scale = this.initialScale;
+        this.angle = 0;
         this.pos = {x:0, y:0};
     }
     
@@ -51,7 +57,7 @@ class WheelZoom {
         
         this.events.addEventListener('wheelzoom.reset', this.reset.bind(this));
         this.events.addEventListener('wheelzoom.refresh', this.refresh.bind(this));
-
+        
         this.size = {w:domElement.width * this.scale, h:domElement.height * this.scale};
         
         let target = new zoomTarget(domElement, this.scale, {});
@@ -99,13 +105,17 @@ class WheelZoom {
 	drag(e) {
         if (this.disabled) return null;
 		e.preventDefault();
-        var delta, oldPos={x: this.pos.x, y: this.pos.y};
-        
-		if (this.previousEvent) {
-            this.pos.x += (e.pageX - this.previousEvent.pageX);
-		    this.pos.y += (e.pageY - this.previousEvent.pageY);
-        }
+        var delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
 
+        if (this.previousEvent) {
+            if (e.altKey) {
+                this.angle = (this.angle + (e.pageX - this.previousEvent.pageX)) % 360;
+            } else {
+                this.pos.x += (e.pageX - this.previousEvent.pageX);
+		        this.pos.y += (e.pageY - this.previousEvent.pageY);
+            }
+        }
+            
 	    // Make sure the slide stays in its container area when zooming in/out
         if (this.scale > 1) {
 	        if (this.pos.x > 0) { this.pos.x = 0; }
@@ -135,7 +145,8 @@ class WheelZoom {
 		this.updateStyle();
         return {
             x: (this.pos.x - oldPos.x) / this.scale,
-            y: (this.pos.y - oldPos.y) / this.scale
+            y: (this.pos.y - oldPos.y) / this.scale,
+            angle: this.angle - oldAngle
         };
 	}
 
@@ -150,6 +161,7 @@ class WheelZoom {
         if (this.disabled) return;
 		e.preventDefault();
 		this.previousEvent = e;
+        this.rotationOrigin = e.point;
         // disable transition while dragging
         var target = this.targets.find(t => t.element == e.target);
         target.element.classList.add('notransition');
@@ -161,9 +173,13 @@ class WheelZoom {
         // apply scale first for transition effect
         this.targets.forEach(function(target, i) {
             // target.element.style.transform = 'scale('+this.scale+')';
-            target.element.style.transform = 'translate('+(this.pos.x)+'px,'+ (this.pos.y)+'px) '+
-                                             'scale('+this.scale+')';
-
+            // target.element.style.transformOrigin = 'center';
+            target.element.style.transform = 'translate('+(this.pos.x)+'px,'+(this.pos.y)+'px) '+
+                'scale('+this.scale+')';
+            if (this.rotationOrigin) {
+                target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
+                target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
+            }
         }.bind(this));
         // this.events.trigger('wheelzoom.updated');
 	}
