@@ -43,19 +43,23 @@ class SegmenterLine {
             closed: true,
             opacity: 0.1,
             fillColor: this.segmenter.mainColor,
+            selectedColor: this.segmenter.secondaryColor,
             visible: this.segmenter.showMasks,
             segments: this.mask,
             onMouseDown: function(event) {
+                if (segmenter_.newLine) return;
                 segmenter_.selecting = line_;
                 segmenter_.dragging = this.getNearestLocation(event.point).segment;
             },
             onMouseUp: function(event) {
+                if (segmenter_.newLine) return;
                 if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
                     segmenter_.dragging = null;
                 }
             },
             onMouseMove: function(event) {
                 if (segmenter_.spliting) return;
+                if (segmenter_.newLine) return;
                 if (line_.selected) segmenter_.setCursor('grab');
                 else segmenter_.setCursor('pointer');
             },
@@ -77,6 +81,8 @@ class SegmenterLine {
             this.baselinePath = new Path({
                 strokeColor: segmenter_.mainColor,
                 strokeWidth: 7,
+                strokeCap: 'round',
+                selectedColor: 'black',
                 opacity: 0.5,
                 segments: this.baseline,
                 selected: false,
@@ -85,6 +91,7 @@ class SegmenterLine {
         }
 
         this.baselinePath.onMouseDown = function(event) {
+            if (segmenter_.newLine) return;
             segmenter_.selecting = line_;
             segmenter_.dragging = this.getNearestLocation(event.point).segment;
             
@@ -101,6 +108,7 @@ class SegmenterLine {
             }
         };
         this.baselinePath.onMouseUp = function(event) {
+            if (segmenter_.newLine) return;
             if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
                 segmenter_.dragging = null;
             }
@@ -114,6 +122,7 @@ class SegmenterLine {
         };
         this.baselinePath.onMouseMove = function(event) {
             if (segmenter_.spliting) return;
+            if (segmenter_.newLine) return;
             if (line_.selected) segmenter_.setCursor('grab');
             else segmenter_.setCursor('pointer');
 
@@ -352,11 +361,13 @@ class Segmenter {
                             this.deletePointBtn.style.display = 'none';
                         }
                     } else if (!this.spliting) {
+                        this.purgeSelection();
+                        
                         if (!this.newLine) {
                             if (!event.event.shiftKey) {
                                 // creates a new line
-                                this.purgeSelection();
                                 this.newLine = this.createLine([event.point]);
+                                this.newLine.select();
                                 let pt = this.newLine.extend(event.point);
                                 this.dragging = pt;
                             }
@@ -367,7 +378,6 @@ class Segmenter {
                             this.dragging = null;
                             this.selecting = null;
                         }
-                        this.purgeSelection();
                         this.deletePointBtn.style.display = 'none';
                         this.deleting = null;
                     }
@@ -654,7 +664,7 @@ class Segmenter {
     }
     addToSelection(line) {
         if (this.selection.indexOf(line) == -1) this.selection.push(line);
-        this.showDeleteLineBtn(line);
+        if (!this.newLine) this.showDeleteLineBtn(line);
     }
     removeFromSelection(line) {
         this.selection.pop(this.selection.indexOf(line));
