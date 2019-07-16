@@ -2,32 +2,39 @@
 {% load i18n staticfiles %}
 
 {% comment %}
-TODO:
-cut through?
-loading ext
-
-integration:
-history
-regions
-zoom? edit mode? gnnn
+Todo:
+* regions
+* zoom
+* drag pt to merge
+* validation & errors
+* integration callbacks
+* reset & viewport change
+* (tablet test)
 {% endcomment %}
 
 {% block body %}
-<div>
-  <button id="toggle-polygons" title="{% trans "Show line masks." %}" class="btn m-1 btn-info fas fa-mask"></button>
-  <button id="split-lines" title="{% trans "Divide lines arround a drawn line." %}" class="btn m-1 btn-info fas fa-cut"></button>
-  <button id="merge-lines" title="{% trans "Merge selected lines." %}" class="btn m-1 btn-info fas fa-compress-arrows-alt"></button>
-  <span id="color0" width="20px" height="20px">1</span>
+<div class="mb-2">
+  <button id="zoom-reset-btn" title="{% trans "Reset zoom." %}" class="btn btn-info fas fa-search-minus"></button>
+  <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>
+
+  <button id="undo-btn" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" disabled></button>
+  <button id="redo-btn" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" disabled></button>
+
+  <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn ml-3 btn-info fas fa-cut"></button>
+  <button id="merge-lines" title="{% trans "Merge selected lines." %}" class="btn btn-info fas fa-compress-arrows-alt"></button>
+  <!--<span id="color0" width="20px" height="20px">1</span>
   <span id="color1" width="20px" height="20px">2</span>
   <span id="color2" width="20px" height="20px">3</span>
   <span id="color3" width="20px" height="20px">4</span>
-  <span id="color4" width="20px" height="20px">5</span>
-  <button id="import-btn" title="{% trans "Import." %}" class="btn btn-primary ml-5 fas fa-file-import"></button>
-  <button id="export-btn" title="{% trans "Export." %}" class="btn btn-primary ml-1 fas fa-file-export"></button>
-  <input type="text" id="export-input" class="hide w-100"/>
-  <input type="text" id="import-input" class="hide w-100"/>
+  <span id="color4" width="20px" height="20px">5</span>-->
+  
+  <button id="import-btn" title="{% trans "Import." %}" class="btn btn-primary ml-3 fas fa-file-import"></button>
+  <button id="export-btn" title="{% trans "Export." %}" class="btn btn-primary fas fa-file-export"></button>
+  <input type="text" id="export-input" class="hide w-100 form-control my-2"/>
+  <input type="text" id="import-input" class="hide w-100 form-control my-2"/>  
 </div>
-<div id="container" class="w-50 d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
+<div id="container" class="w-50 align-middle text-center d-inline-block" style="position: relative; min-height: 200px; border: 1px dashed teal;">
+  <input type="file" id="file-input" class="hide" />
   <img id="seg" class="w-100"/>
   <i id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></i>
   <i id="delete-line" title="{% trans "Delete all selected lines." %}" class="hide btn btn-sm btn-danger fas fa-trash"></i>
@@ -39,8 +46,8 @@ zoom? edit mode? gnnn
     </p>
 
     <h3>Usage</h3>
-    <p><b>Drop</b> a picture in the dashed rectangle to initialise the baseline editor.
-    <br/><b>Right click</b> on the image to <b>create</b> new line, <b>Left click</b> to <b>add points</b> and <b>right click</b> to finish it.
+    <p><b>Drop</b> a picture or click on the dashed rectangle to initialise the baseline editor.
+    <br/><b>Left click</b> on the image to <b>create</b> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to finish it.
     <br/>You can keep the mouse button pressed for free drawing.
     <br/>
     <br/><b>Left click</b> on a line to select it, then you can drag the line (the closest point) to update it.
@@ -48,7 +55,7 @@ zoom? edit mode? gnnn
     <br/>Double click on the line will create a new point at the mouse location.
     <br/>shift+click allows to add a line to the selection, shift and dragging creates a lasso selection tool.
     <br/>ctrl+dragging allows to move the entire selection at once.
-    <br/>Hitting escape while drawing a line cancels it.
+    <br/>Hitting escape while drawing a line cancels it. It also clears the selection.
 
     <br/><br/>Reload the editor (f5) if you want to try a new image.
     </p>
@@ -72,21 +79,75 @@ zoom? edit mode? gnnn
 {% block scripts %}
 <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/wheelzoom2.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
+
 <script>
+    var segmenter = null, zoom = null;
+
 (function() {
-    var segmenter = null;
-    var imgRatio;
-    
     function handleFileUpload(files, file) {
         var reader = new FileReader();
         reader.onload = function() {
-            img.src = reader.result;         
-            segmenter = new Segmenter(img,
-                                      {delayInit:true});
+            img.src = reader.result;                 
+            segmenter.canvas.style.position = 'absolute';
+            
             img.addEventListener('load', function(ev) {
-                imgRatio = this.width / this.naturalWidth;
+                zoom.register(img, {mirror: true});
                 segmenter.init();
+                zoom.targets[0].container.appendChild(segmenter.canvas);
+
+                // segmenter zoom implementation
+                function onScroll(event) {
+                    event.target = img;
+                    img.classList.add('notransition');  // can't match the animation in the canvas
+                    var delta = zoom.scrolled(event);
+                    var pt = view.viewToProject(event.pageX, event.pageY);
+                    segmenter.canvas.style.width = img.width*zoom.scale + 'px';
+                    segmenter.canvas.style.height = img.height*zoom.scale + 'px';
+                    segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    segmenter.canvas.style.left = zoom.pos.x + 'px';
+                    
+                    let t = {x: zoom.pos.x, y: zoom.pos.y};
+                    segmenter.deleteLineBtn.style.display = 'none';
+                    segmenter.deletePointBtn.style.display = 'none';
+                    segmenter.deleteLineBtn.style.transform = 'translate('+t.x+'px,'+t.y+'px)';
+                    segmenter.deletePointBtn.style.transform = 'translate('+t.x+'px,'+t.y+'px)';
+                    
+                    paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
+                    paper.view.scale(delta, [0, 0]);
+                }
+                segmenter.canvas.addEventListener('DOMMouseScroll', onScroll);
+                segmenter.canvas.addEventListener('mousewheel', onScroll);
+
+                function dragView(e) {
+                    img.classList.add('notransition');
+                    var delta = zoom.drag(e);
+                    segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    segmenter.canvas.style.left = zoom.pos.x + 'px';
+                    let pt = view.viewToProject({x: Math.min(zoom.pos.x*zoom.scale,img.width), y: Math.min(zoom.pos.y*zoom.scale, img.height)});
+                    segmenter.deleteLineBtn.style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
+                    segmenter.deletePointBtn.style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
+                    if (delta.angle) {
+                        for (let i in segmenter.lines) {
+                            segmenter.lines[i].baselinePath.rotate(delta.angle, view.viewToProject(zoom.rotationOrigin));
+                            segmenter.lines[i].maskPath.rotate(delta.angle, view.viewToProject(zoom.rotationOrigin));
+                        }
+                    }
+                }
+                function draggableView(e) {
+                    zoom.rotationOrigin = e.point;
+                    document.addEventListener('mousemove', dragView);
+                    document.addEventListener('mouseup', function(e) {
+                        document.removeEventListener('mousemove', dragView);
+                        img.classList.remove('notransition');
+                        zoom.previousEvent = null;
+                    });
+                }
+                view.on('mousedown', function(e) {
+                    // right click
+                    if (e.event.which === 3 || e.event.button === 2) { draggableView(e); }
+                });
             });
         };
         reader.readAsDataURL(file);
@@ -94,8 +155,20 @@ zoom? edit mode? gnnn
     
     var img = document.getElementById('seg');
     img.ondragstart = function(e) { return false; };
-
+    segmenter = new Segmenter(img, {
+        delayInit: true,
+        stateUpdateCallback: function(stateIndex, stateLength) {
+            if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
+            else document.getElementById('undo-btn').disabled = true;
+            if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
+            else document.getElementById('redo-btn').disabled = true;
+        }
+    });
+    
     var container = document.getElementById('container');
+
+    zoom = new WheelZoom({});
+    
     container.addEventListener('dragenter', function(e) {
         e.preventDefault();
     }, false);
@@ -104,16 +177,27 @@ zoom? edit mode? gnnn
         e.preventDefault();
     }, false);
     
-    container.addEventListener('drop', function(e) {
+    function containerOnClick(e) {
+        document.getElementById('file-input').click();
+    }
+
+    function imgTransfer(e) {
         e.preventDefault();
+        segmenter.reset();
         var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg', 'image/jpeg'];
-        if (e.dataTransfer && e.dataTransfer.files) {
-            var files = e.dataTransfer.files;
+        if (e.target.files || (e.dataTransfer && e.dataTransfer.files)) {
+            var files = e.target.files || e.dataTransfer.files;
             if (imageTypes.indexOf(files[0].type) == -1) return;
+            container.removeEventListener('click', containerOnClick);
             handleFileUpload(files, files[0]);
         }
-    }, false);
+    }
+    
+    container.addEventListener('click', containerOnClick, false);
 
+    document.getElementById('file-input').addEventListener('change', imgTransfer, false);
+    container.addEventListener('drop', imgTransfer, false);
+    
     var eInput = document.getElementById('export-input');
     var iInput = document.getElementById('import-input');
     document.getElementById('import-btn').addEventListener('click', function(e) {
@@ -121,26 +205,57 @@ zoom? edit mode? gnnn
         iInput.value = '';
         iInput.style.display = 'block';
         iInput.focus();
-        // [[[283,191],[671,190]],[[286,260],[794,301]],[[401,401],[401,401],[680,388]]]
     });
     iInput.addEventListener('blur', function(e) {
         if (!iInput.value) return;
-        let data = JSON.parse(iInput.value);
-        data = data.map(poly => poly.map(pt => pt.map(coord => coord * imgRatio)));
-        segmenter.load(data);
-        iInput.value = '';
+        try {
+            let data = JSON.parse(iInput.value);
+            iInput.classList.remove('is-invalid');
+            segmenter.load(data.map(line => { return {baseline: line, mask: []}}));
+            iInput.value = '';
+        } catch(error) {
+            iInput.classList.add('is-invalid');
+        }
     });
     
     document.getElementById('export-btn').addEventListener('click', function(e) {
         iInput.style.display = 'none';
-        eInput.value = JSON.stringify(segmenter.lines.map(function(line) {
-            return line.baseline.map(poly => poly.map(coord => Math.round(coord / imgRatio)));
-        }));
+        eInput.value = JSON.stringify(segmenter.exportJSON().map(line => line.baseline));
         eInput.style.display = 'block';
         eInput.focus();
         eInput.select();
     });
-    
+
+    // history undo/redo
+    document.addEventListener('keyup', function(event) {
+        if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
+            segmenter.loadPreviousState();
+        } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
+            segmenter.loadNextState();
+        }
+    });
+    document.getElementById('undo-btn').addEventListener('click', function(event) {
+        segmenter.loadPreviousState();
+    });
+    document.getElementById('redo-btn').addEventListener('click', function(event) {
+        segmenter.loadNextState();
+    });
+
+    document.getElementById('zoom-reset-btn').addEventListener('click', function(event) {
+        img.classList.add('notransition');
+        let zoomScale = zoom.scale;
+        zoom.reset();
+        segmenter.canvas.style.top = 0;
+        segmenter.canvas.style.left = 0;
+        segmenter.canvas.style.width = img.width + 'px';
+        segmenter.canvas.style.height = img.height + 'px';
+        segmenter.deleteLineBtn.style.display = 'none';
+        segmenter.deletePointBtn.style.display = 'none';
+        segmenter.deleteLineBtn.style.transform = 'none';
+        segmenter.deletePointBtn.style.transform = 'none';
+        paper.view.viewSize = [img.width, img.height];
+        paper.view.scale(1/zoomScale, [0, 0]);
+    });
 })();
 </script>
 {% endblock %}
