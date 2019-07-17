@@ -399,6 +399,7 @@ class Segmenter {
         tool.onMouseDrag = function(event) {
             if (this.newLine) {
                 // adding points to current line
+                this.newLine.unselect();
                 var pt = this.newLine.extend(event.point);
                 this.dragging = pt;
                 this.drawing = true;
