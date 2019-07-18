@@ -14,17 +14,18 @@ Options:
   secondaryColor
   lengthTreshold=15,
   delayInit=false,
-  stateUpdateCallback=null,
   deletePointBtn=null,
   deleteLineBtn=null,
   toggleLineBtn=null,
   splitBtn=null,
   mergeBtn=null
 
+  stateUpdateCallback=null,  // history (undo/redo)
   newLineCallback
   updateLineCallback
   deleteLineCallback
   stateUpdateCallback(stateIndex, stateLength)
+
 */
 
 function isRightClick(event) {
@@ -75,7 +76,7 @@ class SegmenterLine {
         let pt = segment.point;
         let upperVector = new Point({ angle: pt.angle - 90, length: 20 });
         let up = this.maskPath.insert(segment.index, pt.add(upperVector));
-
+        
         let lowerVector = new Point({ angle: pt.angle + 90, length: 10 });
         let low = this.maskPath.insert(this.maskPath.segments.length-segment.index, pt.add(lowerVector));
         return [up, low];
@@ -142,7 +143,7 @@ class SegmenterLine {
         }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createMask();
-        this.changed = true;
+        this.updateDataFromCanvas();
     }
     
     remove() {
@@ -200,7 +201,6 @@ class Segmenter {
         this.lengthThreshold = lengthTreshold;
         this.showMasks = false;
 
-        // needed?
         this.selecting = null;
         this.spliting = false;
         this.copy = null;
@@ -253,9 +253,6 @@ class Segmenter {
         this.addState();
         
         tool.onMouseDown = this.onMouseDown.bind(this);
-
-        //         let changes = this.updateLinesFromCanvas();
-        //         if (changes) this.addState();
         
         this.deleteLineBtn.addEventListener('click', function(event) {
             for (let i=this.selection.length-1; i >= 0; i--) {    
@@ -353,6 +350,14 @@ class Segmenter {
         return line;
     }
 
+    finishLine(line) {
+        line.close();
+        this.bindLineEvents(line);
+        line.unselect();
+        this.resetToolEvents();  // unregistering
+        this.addState();
+    }
+
     bindLineEvents(line) {
         line.baselinePath.onMouseDown = function(event) {
             if (event.event.ctrlKey) return;
@@ -390,6 +395,8 @@ class Segmenter {
             
             this.tool.onMouseUp = function(event) {
                 this.resetToolEvents();
+                let changes = this.updateLinesFromCanvas();
+                if (changes) this.addState();
             }.bind(this);
             
         }.bind(this);
@@ -525,7 +532,7 @@ class Segmenter {
             } else {
                 // create a new line
                 this.purgeSelection();
-                let newLine = this.createLine([event.point], null, true);
+                let newLine = this.createLine([[event.point.x, event.point.y]], null, true);
                 let point = newLine.extend(event.point).point;  // the point that we move around
 
                 // adds all the events bindings 
@@ -537,19 +544,12 @@ class Segmenter {
                     }
                     return false;
                 }.bind(this);
-                let finishLine = function(event) {
-                    newLine.close();
-                    this.bindLineEvents(newLine);
-                    newLine.unselect();
-                    this.resetToolEvents();  // unregistering
-                    document.removeEventListener('keyup', onCancel);
-                }.bind(this);
                 
                 this.tool.onMouseDown = function(event) {
                     if (isRightClick(event.event)) {
                         point = newLine.extend(event.point).point;
                     } else {
-                        finishLine();
+                        this.finishLine(newLine);
                     }
                 }.bind(this);
                 this.tool.onMouseMove = function(event) {
@@ -563,7 +563,7 @@ class Segmenter {
                     this.tool.onMouseMove = null; // we don't want the first point to move around
                     point = newLine.extend(event.point).point;
                     this.tool.onMouseUp = function(event) {
-                        finishLine();
+                        this.finishLine(newLine);
                         newLine.baselinePath.simplify(10);
                     }.bind(this);
                 }.bind(this);
