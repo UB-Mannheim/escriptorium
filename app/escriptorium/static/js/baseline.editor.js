@@ -41,6 +41,8 @@ class SegmenterLine {
         this.mask = mask;
         this.selected = false;
         this.changed = false;
+
+        this.directionHint = null;
         
         var line_ = this;  // save in scope
 
@@ -69,6 +71,8 @@ class SegmenterLine {
                 selected: false,
                 visible: true
             });
+
+            this.showDirection();
         }
     }
 
@@ -110,6 +114,8 @@ class SegmenterLine {
         this.baselinePath.selected = true;
         this.baselinePath.bringToFront();
         this.baselinePath.strokeColor = this.segmenter.secondaryColor;
+        if (this.directionHint) this.directionHint.visible = true;
+        else this.showDirection();
         this.segmenter.addToSelection(this);
         this.selected = true;
     }
@@ -121,6 +127,7 @@ class SegmenterLine {
         this.baselinePath.strokeColor = this.segmenter.mainColor;
         this.segmenter.removeFromSelection(this);
         this.segmenter.deletePointBtn.style.display = 'none';
+        this.directionHint.visible = false;
         this.selected = false;
     }
     
@@ -144,6 +151,7 @@ class SegmenterLine {
         }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createMask();
+        this.showDirection();
     }
     
     remove() {
@@ -156,6 +164,27 @@ class SegmenterLine {
     delete() {
         this.remove();
         /* Callback for line deletion */
+    }
+
+    showDirection() {
+        if (this.baselinePath.segments.length > 1) {
+            if (this.directionHint) this.directionHint.remove();
+            let vector = this.baselinePath.segments[1].point.subtract(this.baselinePath.firstSegment.point);
+            vector.length = 20;
+            var start = this.baselinePath.firstSegment.point;
+            var end = start.add(vector);
+            vector.length = 10;
+            this.directionHint =  new Path({
+                visible: this.selected,
+                shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 2,
+                strokeWidth: 1, strokeColor: this.segmenter.mainColor, opacity: 1,
+                segments:[
+                    end.add(vector.rotate(-150)),
+                    end,
+                    end.add(vector.rotate(150))]
+            });
+            this.directionHint.translate(vector.rotate(90));
+        }
     }
     
     setLineHeight() {
@@ -172,7 +201,7 @@ class SegmenterLine {
             // area implementation
             this.lineHeight = Math.abs(this.maskPath.area) / this.baselinePath.length;
             if (this.lineHeight) {
-                this.baselinePath.strokeWidth = this.lineHeight / 6;
+                this.baselinePath.strokeWidth = Math.max(this.lineHeight / 6, 3);
             }
         }
     }
@@ -285,15 +314,7 @@ class Segmenter {
         
         document.addEventListener('keyup', function(event) {
             if (event.keyCode == 27) { // escape
-                if (this.spliting) {
-                    this.spliting = false;
-                    if (this.clip) this.clip.remove();
-                    this.splitBtn.classList.add('btn-info');
-                    this.splitBtn.classList.remove('btn-success');
-                    this.setCursor();
-                } else {
-                    this.purgeSelection();
-                }
+                this.purgeSelection();
             } else if (event.keyCode == 46) { // supr
                 for (let i=this.selection.length-1; i >= 0; i--) {    
                     this.selection[i].delete();
@@ -359,7 +380,6 @@ class Segmenter {
     finishLine(line) {
         line.close();
         this.bindLineEvents(line);
-        line.unselect();
         this.resetToolEvents();  // unregistering
         this.addState();
     }
@@ -394,6 +414,7 @@ class Segmenter {
                     this.multiMove(event);
                 } else {
                     this.movePointInView(dragging.point, event.delta);
+                    line.showDirection();
                     line.dragPolyEdges(dragging.index, event.delta);
                     line.changed = true;
                 }
@@ -489,6 +510,7 @@ class Segmenter {
                 this.movePointInView(point, event.delta);
                 this.selection[i].dragPolyEdges(j, event.delta);
             }
+            this.selection[i].showDirection();
             this.selection[i].changed = true;
         }
     }
@@ -518,6 +540,7 @@ class Segmenter {
                         clip.remove();
                         this.resetToolEvents();
                         document.removeEventListener('keyup', onCancel);
+                        return false;
                     }
                 }.bind(this);
 
@@ -542,8 +565,8 @@ class Segmenter {
                         this.purgeSelection();
                         this.resetToolEvents();
                         document.removeEventListener('keyup', onCancel);
+                        return false;
                     }
-                    return false;
                 }.bind(this);
                 this.tool.onMouseDrag = function(event) {
                     this.updateSelectionRectangle(clip, event);
@@ -561,15 +584,16 @@ class Segmenter {
                 this.purgeSelection();
                 let newLine = this.createLine([[event.point.x, event.point.y]], null, true);
                 let point = newLine.extend(event.point).point;  // the point that we move around
-
+                newLine.showDirection();
+                
                 // adds all the events bindings 
                 let onCancel = function(event) {
                     if (event.keyCode == 27) {  // escape
-                        newLine.delete();
+                        newLine.remove();
                         this.resetToolEvents();
                         document.removeEventListener('keyup', onCancel);
+                        return false;
                     }
-                    return false;
                 }.bind(this);
                 
                 this.tool.onMouseDown = function(event) {
@@ -577,12 +601,14 @@ class Segmenter {
                         point = newLine.extend(event.point).point;
                     } else {
                         this.finishLine(newLine);
+                        document.removeEventListener('keyup', onCancel);
                     }
                 }.bind(this);
                 this.tool.onMouseMove = function(event) {
                     this.tool.onMouseDrag = null; // manually disable free drawing now to avoid having both
                     // follow the mouse cursor with the last created point
                     this.movePointInView(point, event.delta);
+                    newLine.showDirection();
                     newLine.select();  // select it to make drawing more precise
                 }.bind(this);
                 this.tool.onMouseDrag = function(event) {
@@ -592,6 +618,7 @@ class Segmenter {
                     this.tool.onMouseUp = function(event) {
                         newLine.baselinePath.simplify(10);
                         this.finishLine(newLine);
+                        document.removeEventListener('keyup', onCancel);
                     }.bind(this);
                 }.bind(this);
                 document.addEventListener('keyup', onCancel);
