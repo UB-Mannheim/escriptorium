@@ -90,9 +90,10 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
-        // this.getLineHeight();
+        this.updateDataFromCanvas();
+        this.setLineHeight();
     }
-
+    
     dragPolyEdges(j, delta) {
         let poly = this.maskPath;
         if (poly && poly.segments.length) {
@@ -143,7 +144,6 @@ class SegmenterLine {
         }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createMask();
-        this.updateDataFromCanvas();
     }
     
     remove() {
@@ -158,22 +158,28 @@ class SegmenterLine {
         /* Callback for line deletion */
     }
     
-    getLineHeight() {
+    setLineHeight() {
         if (this.mask) {
-            let sum = 0;
+            // distance avg implementation
+            /* let sum = 0;
             this.baseline.forEach(function(segment){
                 let top = this.maskPath.segments[this.maskPath.segments.length-segment.index-1];
                 let bottom = this.maskPath.segments[segment.index];
-                sum += top.subtract(bottom).length;
+                sum += top.distance(bottom);
             }.bind(this));
-            return sum / this.baseline.length;
+            return sum / this.baseline.length; */
+
+            // area implementation
+            this.lineHeight = Math.abs(this.maskPath.area) / this.baselinePath.length;
+            if (this.lineHeight) {
+                this.baselinePath.strokeWidth = this.lineHeight / 6;
+            }
         }
-        return null;
     }
 }
 
 class Segmenter {
-    constructor(image, {lengthTreshold=15,
+    constructor(image, {lengthTreshold=10,
                         delayInit=false,
                         stateUpdateCallback=null,
                         deletePointBtn=null,
@@ -431,8 +437,29 @@ class Segmenter {
             this.setCursor('move');
         }.bind(this);
 
+        // same for the masks
         line.maskPath.onMouseDown = function(event) {
+            if (event.event.ctrlKey) return;
             this.selecting = line;
+
+            var dragging = line.maskPath.getNearestLocation(event.point).segment;
+            this.tool.onMouseDrag = function(event) {
+                if (event.event.ctrlKey) {
+                    this.multiMove(event);
+                } else {
+                    this.movePointInView(dragging.point, event.delta);
+                    line.changed = true;
+                }
+            }.bind(this);
+            
+            this.tool.onMouseUp = function(event) {
+                this.resetToolEvents();
+                let changes = this.updateLinesFromCanvas();
+                if (changes) {
+                    this.addState();
+                    line.setLineHeight();
+                }
+            }.bind(this);
         }.bind(this);
         line.maskPath.onMouseMove = function(event) {
             if (line.selected) this.setCursor('grab');
@@ -563,8 +590,8 @@ class Segmenter {
                     this.tool.onMouseMove = null; // we don't want the first point to move around
                     point = newLine.extend(event.point).point;
                     this.tool.onMouseUp = function(event) {
-                        this.finishLine(newLine);
                         newLine.baselinePath.simplify(10);
+                        this.finishLine(newLine);
                     }.bind(this);
                 }.bind(this);
                 document.addEventListener('keyup', onCancel);
@@ -784,7 +811,6 @@ class Segmenter {
                     line.maskPath.removeSegments();
                     line.createMask();
                     nl.createMask();
-                    line.updateDataFromCanvas();
                     line = nl;
                     trash.remove();
                 }
