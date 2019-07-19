@@ -4,30 +4,82 @@ a javascript based baseline segmentation editor,
 requires paper.js and colorThief is optional.
 
 Usage:
-new Segmenter(img);
+var segmenter = new Segmenter(img, options);
+segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
+
+Options:
   lengthTreshold=15
   disableMasks=false // td
   mainColor
   secondaryColor
   lengthTreshold=15,
   delayInit=false,
-  stateUpdateCallback=null,
   deletePointBtn=null,
   deleteLineBtn=null,
   toggleLineBtn=null,
   splitBtn=null,
-  mergeBtn=null
+  mergeBtn=null,
+  upperLineHeight=15,
+  lowerLineHeight=5
 
+  stateUpdateCallback=null,  // history (undo/redo)
   newLineCallback
   updateLineCallback
   deleteLineCallback
   stateUpdateCallback(stateIndex, stateLength)
-  
-  segmenter.load(lines)
 
 */
 
-class SegmenterRegion {}
+function isRightClick(event) {
+    return event.which === 3 || event.button === 2;
+}
+
+class SegmenterRegion {
+    constructor(polygon, segmenter_) {
+        this.segmenter = segmenter_;
+        this.polygon = polygon;
+        this.selected = false;
+        this.changed = false;
+        this.polygonPath = new Path({
+            closed: true,
+            opacity: 0.2,
+            strokeColor: this.segmenter.mainColor,
+            strokeWidth: 1,
+            fillColor: this.segmenter.mode == 'regions' ? this.segmenter.secondaryColor : null,
+            // selectedColor: this.segmenter.secondaryColor,
+            visible: true,
+            segments: this.polygon
+        });
+    }
+
+    select() {
+        if (this.selected) return;
+        this.polygonPath.selected = true;
+        this.polygonPath.bringToFront();
+        this.segmenter.addToSelection(this);
+        this.selected = true;
+    }
+
+    unselect() {
+        if (!this.selected) return;
+        this.polygonPath.selected = false;
+        this.segmenter.removeFromSelection(this);
+        this.selected = false;
+    }
+
+    updateDataFromCanvas() {
+        this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+    }
+    
+    remove() {
+        this.polygonPath.remove();
+    }
+
+    delete() {
+        this.remove();
+        // td: callback
+    }
+}
 
 class SegmenterLine {
     constructor(baseline, mask, segmenter_) {
@@ -36,6 +88,8 @@ class SegmenterLine {
         this.mask = mask;
         this.selected = false;
         this.changed = false;
+
+        this.directionHint = null;
         
         var line_ = this;  // save in scope
 
@@ -43,32 +97,12 @@ class SegmenterLine {
             closed: true,
             opacity: 0.1,
             fillColor: this.segmenter.mainColor,
+            selectedColor: this.segmenter.secondaryColor,
             visible: this.segmenter.showMasks,
-            segments: this.mask,
-            onMouseDown: function(event) {
-                segmenter_.selecting = line_;
-                segmenter_.dragging = this.getNearestLocation(event.point).segment;
-            },
-            onMouseUp: function(event) {
-                if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
-                    segmenter_.dragging = null;
-                }
-            },
-            onMouseMove: function(event) {
-                if (segmenter_.spliting) return;
-                if (line_.selected) segmenter_.setCursor('grab');
-                else segmenter_.setCursor('pointer');
-            },
-            onMouseLeave: function(event) {
-                segmenter_.setCursor();
-            },
-            onMouseDrag: function(event) {
-                if (segmenter_.spliting) return;
-                segmenter_.setCursor('move');
-            }
+            segments: this.mask
         });
         this.maskPath.line = this;
-
+        
         if (baseline.segments) {  // already a paperjs.Path
             this.baselinePath = baseline;
             this.updateDataFromCanvas();
@@ -77,72 +111,26 @@ class SegmenterLine {
             this.baselinePath = new Path({
                 strokeColor: segmenter_.mainColor,
                 strokeWidth: 7,
+                strokeCap: 'round',
+                selectedColor: 'black',
                 opacity: 0.5,
                 segments: this.baseline,
                 selected: false,
                 visible: true
             });
+
+            this.showDirection();
         }
-
-        this.baselinePath.onMouseDown = function(event) {
-            segmenter_.selecting = line_;
-            segmenter_.dragging = this.getNearestLocation(event.point).segment;
-            
-            var hit = this.hitTest(event.point, {
-	            segments: true,
-	            tolerance: 5
-            });
-            if (hit && hit.type=='segment' &&
-                hit.segment.index != 0 &&
-                hit.segment.index != hit.segment.path.segments.length-1) {
-                line_.segmenter.deleting = hit.segment;
-            } else {
-                line_.segmenter.deleting = null;
-            }
-        };
-        this.baselinePath.onMouseUp = function(event) {
-            if(segmenter_.dragging && segmenter_.dragging.path == this.path) {
-                segmenter_.dragging = null;
-            }
-        };
-        this.baselinePath.onDoubleClick = function(event) {
-            let location = this.getNearestLocation(event.point);
-            let newSegment = this.insert(location.index+1, location);
-            this.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-            line_.createPolygonEdgeForBaselineSegment(newSegment);
-            this.line.changed = true;
-        };
-        this.baselinePath.onMouseMove = function(event) {
-            if (segmenter_.spliting) return;
-            if (line_.selected) segmenter_.setCursor('grab');
-            else segmenter_.setCursor('pointer');
-
-            var hit = this.hitTest(event.point, {
-	            segments: true,
-	            tolerance: 5
-            });
-            if (hit && hit.type=='segment' &&
-                hit.segment.index != 0 &&
-                hit.segment.index != hit.segment.path.segments.length-1) {
-                line_.segmenter.setCursor('pointer');
-            }
-        };
-        this.baselinePath.onMouseLeave = function(event) {
-            segmenter_.setCursor();
-        };
-        this.baselinePath.onMouseDrag = function(event) {
-            segmenter_.setCursor('move');
-        };
-        this.baselinePath.line = this;
     }
 
     createPolygonEdgeForBaselineSegment(segment) {
         let pt = segment.point;
-        let upperVector = new Point({ angle: pt.angle - 90, length: 20 });
-        let up = this.maskPath.insert(segment.index, pt.add(upperVector));
-
-        let lowerVector = new Point({ angle: pt.angle + 90, length: 10 });
-        let low = this.maskPath.insert(this.maskPath.segments.length-segment.index, pt.add(lowerVector));
+        let vector = segment.path.getNormalAt(segment.index);
+        vector.length = this.segmenter.upperLineHeight;
+        let up = this.maskPath.insert(segment.index, pt.add(vector));
+        
+        vector.length = this.segmenter.lowerLineHeight;
+        let low = this.maskPath.insert(this.maskPath.segments.length-segment.index, pt.subtract(vector));
         return [up, low];
     }
     deletePolygonsEdgeForBaselineSegment(segment) {
@@ -154,9 +142,10 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
-        // this.getLineHeight();
+        this.updateDataFromCanvas();
+        this.setLineHeight();
     }
-
+    
     dragPolyEdges(j, delta) {
         let poly = this.maskPath;
         if (poly && poly.segments.length) {
@@ -173,6 +162,8 @@ class SegmenterLine {
         this.baselinePath.selected = true;
         this.baselinePath.bringToFront();
         this.baselinePath.strokeColor = this.segmenter.secondaryColor;
+        if (this.directionHint) this.directionHint.visible = true;
+        else this.showDirection();
         this.segmenter.addToSelection(this);
         this.selected = true;
     }
@@ -182,15 +173,9 @@ class SegmenterLine {
         if (this.maskPath) this.maskPath.selected = false;
         this.baselinePath.selected = false;
         this.baselinePath.strokeColor = this.segmenter.mainColor;
-        if (this.segmenter.deleting && this.segmenter.deleting.path == this.baselinePath) {
-            this.segmenter.deletePointBtn.style.display = 'none';
-        }
         this.segmenter.removeFromSelection(this);
+        this.directionHint.visible = false;
         this.selected = false;
-        
-        // if (this.changed) {
-        //     // TODO: trigger event or callback
-        // }
     }
     
     toggleSelect() {
@@ -213,7 +198,6 @@ class SegmenterLine {
         }
         this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createMask();
-        this.changed = true;
     }
     
     remove() {
@@ -227,33 +211,63 @@ class SegmenterLine {
         this.remove();
         /* Callback for line deletion */
     }
+
+    showDirection() {
+        if (this.baselinePath.segments.length > 1) {
+            if (this.directionHint) this.directionHint.remove();
+            let vector = this.baselinePath.segments[1].point.subtract(this.baselinePath.firstSegment.point);
+            vector.length = 20;
+            var start = this.baselinePath.firstSegment.point;
+            var end = start.add(vector);
+            vector.length = 10;
+            this.directionHint =  new Path({
+                visible: this.selected,
+                shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
+                strokeWidth: 1, strokeColor: this.segmenter.mainColor, opacity: 1,
+                segments:[
+                    end.add(vector.rotate(-150)),
+                    end,
+                    end.add(vector.rotate(150))]
+            });
+            this.directionHint.translate(vector.rotate(90));
+        }
+    }
     
-    getLineHeight() {
+    setLineHeight() {
         if (this.mask) {
-            let sum = 0;
+            // distance avg implementation
+            /* let sum = 0;
             this.baseline.forEach(function(segment){
                 let top = this.maskPath.segments[this.maskPath.segments.length-segment.index-1];
                 let bottom = this.maskPath.segments[segment.index];
-                sum += top.subtract(bottom).length;
+                sum += top.distance(bottom);
             }.bind(this));
-            return sum / this.baseline.length;
+            return sum / this.baseline.length; */
+
+            // area implementation
+            this.lineHeight = Math.abs(this.maskPath.area) / this.baselinePath.length;
+            if (this.lineHeight) {
+                this.baselinePath.strokeWidth = Math.max(this.lineHeight / 6, 3);
+            }
         }
-        return null;
     }
 }
 
 class Segmenter {
-    constructor(image, {lengthTreshold=15,
+    constructor(image, {lengthTreshold=10,
                         delayInit=false,
                         stateUpdateCallback=null,
                         deletePointBtn=null,
                         deleteLineBtn=null,
                         toggleLineBtn=null,
+                        toggleRegionModeBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
                         disableMasks=false, // td
                         mainColor=null,
-                        secondaryColor=null
+                        secondaryColor=null,
+                        upperLineHeight=20,
+                        lowerLineHeight=10
                        }) {
         this.img = image;
         this.canvas = document.createElement('canvas');
@@ -264,24 +278,21 @@ class Segmenter {
         this.imgRatio = 1;
         this.mainColor = null;
         this.secondaryColor = null;
+        this.upperLineHeight = upperLineHeight;
+        this.lowerLineHeight = lowerLineHeight;
         
         this.lines = [];
+        this.regions = [];
         this.selection = [];
         // the minimal length in pixels below which the line will be removed automatically
         this.lengthThreshold = lengthTreshold;
         this.showMasks = false;
 
-        // needed?
-        this.newLine = null;
-        this.dragging = null;
-        this.drawing = false;
+        this.mode = 'lines'; // | 'regions'
         this.selecting = null;
         this.spliting = false;
-        this.deleting = null;
-        this.clip = null;  // draw a box for multi selection
         this.copy = null;
-        this.changed = [];
-
+        
         this.stateIndex = -1;
         this.states = [];
         this.maxStates = 30;
@@ -293,7 +304,8 @@ class Segmenter {
         this.toggleMasksBtn = toggleLineBtn || document.getElementById('toggle-masks');
         this.splitBtn = splitBtn || document.getElementById('split-lines');
         this.mergeBtn = mergeBtn || document.getElementById('merge-lines');
-
+        this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
+        
         // callbacks
         this.stateUpdateCallback = stateUpdateCallback;
         
@@ -304,15 +316,21 @@ class Segmenter {
     }
 
     init(event) {
-        paper.install(window);
         paper.settings.handleSize = 10;
+        paper.settings.hitTolerance = 10;  // Note: doesn't work?
+        paper.install(window);
         paper.setup(this.canvas);
-        var tool = new Tool();
-        this.getColors(this.img);
-        this.setCursor();
+
+        var hitOptions = { type : ('path'), segments: true, stroke: true, fill: true, tolerance: 5 };
         
+        var tool = new Tool();
+        this.setColors(this.img);
+        this.setCursor();
+
+        // disable right click menu
         this.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        this.canvas.style.zIndex = 2;
+        // make sure we capture clicks before the img
+        this.canvas.style.zIndex = this.canvas.style.zIndex + 1;
         
         this.imgRatio = this.img.width / this.img.naturalWidth;
         this.canvas.style.width = this.img.width;
@@ -323,143 +341,17 @@ class Segmenter {
         
         this.addState();
         
-        tool.onMouseDown = function(event) {
-            if (event.event.which === 3 || event.event.button === 2) {
-                // right click
-                if (this.newLine) {
-                    // adds a point to the line
-                    let pt = this.newLine.extend(event.point);
-                    this.dragging = pt;                    
-                }
-            } else {
-                // left click
-                if (!event.event.ctrlKey) {
-                    if (this.selecting) {
-                        if (event.event.shiftKey) {
-                            this.selecting.toggleSelect();
-                        } else {
-                            this.selecting.select();
-                            this.purgeSelection(this.selecting);
-                        }
-
-                        if (this.deleting) {
-                            // we clicked on a point in the baseline
-                            let pt = view.projectToView(this.deleting.point);
-                            this.deletePointBtn.style.left = pt.x - 20 + 'px';
-                            this.deletePointBtn.style.top = pt.y - 40 + 'px';
-                            this.deletePointBtn.style.display = 'inline';
-                        } else {
-                            this.deletePointBtn.style.display = 'none';
-                        }
-                    } else if (!this.spliting) {
-                        if (!this.newLine) {
-                            if (!event.event.shiftKey) {
-                                // creates a new line
-                                this.purgeSelection();
-                                this.newLine = this.createLine([event.point]);
-                                let pt = this.newLine.extend(event.point);
-                                this.dragging = pt;
-                            }
-                        } else {
-                            // end the line
-                            this.newLine.close();
-                            this.newLine = null;
-                            this.dragging = null;
-                            this.selecting = null;
-                        }
-                        this.purgeSelection();
-                        this.deletePointBtn.style.display = 'none';
-                        this.deleting = null;
-                    }
-                }
-            }
-            
-            // if we had something to select, it's already done
-            this.selecting = null;
-        }.bind(this);
+        tool.onMouseDown = this.onMouseDown.bind(this);
         
-        tool.onMouseMove = function(event) {
-            if (this.spliting && this.clip) {
-                this.movePointInView(this.clip.lastSegment.point, event.delta);
-            } else if (this.newLine && this.dragging) {
-                this.movePointInView(this.dragging.point, event.delta);
-            }
-        }.bind(this);
-        
-        tool.onMouseDrag = function(event) {
-            if (this.newLine) {
-                // adding points to current line
-                var pt = this.newLine.extend(event.point);
-                this.dragging = pt;
-                this.drawing = true;
-		    } else if (this.spliting) {
-                this.splitTool(event);
-            } else if (event.event.ctrlKey) {
-                // multi move
-                for (let i in this.selection) {
-                    for(let j in this.selection[i].baselinePath.segments) {
-                        let point = this.selection[i].baselinePath.segments[j].point;
-                        this.movePointInView(point, event.delta);
-                        this.selection[i].dragPolyEdges(j, event.delta);
-                    }
-                    this.selection[i].changed = true;
-                }
-            } else if (event.event.shiftKey) {
-                // multi lasso selection
-                this.lassoSelection(event);
-            } else if (this.dragging) {
-                this.movePointInView(this.dragging.point, event.delta);
-                if (this.dragging.path.line.baselinePath == this.dragging.path) {
-                    this.dragging.path.line.dragPolyEdges(this.dragging.index, event.delta);
-                }
-                this.dragging.path.line.changed = true;
-            }
-        }.bind(this);
-
-        tool.onMouseUp = function(event) {
-            if (this.drawing && this.newLine) {
-                this.newLine.baselinePath.simplify(10);
-                this.newLine.close();
-                this.newLine = null;
-                this.selecting = null;
-            }
-            
-            if (this.clip) {
-                if(this.spliting) {
-                    this.splitByPath(this.clip);
-                }
-                
-                this.clip.remove();
-                this.clip = null;
-            } else {
-                let changes = this.updateLinesFromCanvas();
-                if (changes) this.addState();
-            }
-            
-            if (!this.newLine) {
-                this.dragging = null;
-            }
-            
-            this.drawing = false;
-        }.bind(this);
-
-        this.deletePointBtn.addEventListener('click', function(event) {
-            if (this.deleting) {
-                let line = this.deleting.path.line;
-                line.deletePolygonsEdgeForBaselineSegment(this.deleting);
-                this.deleting.remove();
-                this.deletePointBtn.style.display = 'none';
-                this.deleting = null;
-                this.addState();
-            }
-            return false;
-        }.bind(this));
-
         this.deleteLineBtn.addEventListener('click', function(event) {
             for (let i=this.selection.length-1; i >= 0; i--) {    
                 this.selection[i].delete();
             }
             this.addState();
+        }.bind(this));
+
+        this.toggleRegionModeBtn.addEventListener('click', function(event) {
+            this.toggleRegionMode();
         }.bind(this));
         
         this.toggleMasksBtn.addEventListener('click', function(event) {
@@ -480,19 +372,7 @@ class Segmenter {
         
         document.addEventListener('keyup', function(event) {
             if (event.keyCode == 27) { // escape
-                if (this.newLine) {
-                    this.newLine.remove();
-                    this.newLine = null;
-                    this.dragging = null;
-                } else if (this.spliting) {
-                    this.spliting = false;
-                    if (this.clip) this.clip.remove();
-                    this.splitBtn.classList.add('btn-info');
-                    this.splitBtn.classList.remove('btn-success');
-                    this.setCursor();
-                } else {
-                    this.purgeSelection();
-                }
+                this.purgeSelection();
             } else if (event.keyCode == 46) { // supr
                 for (let i=this.selection.length-1; i >= 0; i--) {    
                     this.selection[i].delete();
@@ -504,6 +384,8 @@ class Segmenter {
                 this.setCursor();
             } else if (event.keyCode == 77) { // M
                 this.toggleMasks();
+            } else if (event.keyCode == 82) { // R
+                this.toggleRegionMode();
             }
             // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
             //     this.copy = this.selection.map(a => [
@@ -544,15 +426,393 @@ class Segmenter {
             }
         }.bind(this));
 
+        this.tool = tool;
         return tool;
     }
     
-    createLine(baseline, mask) {
+    createLine(baseline, mask, postponeEvents) {
         var line = new SegmenterLine(baseline, mask, this);
+        if (!postponeEvents) this.bindLineEvents(line);
         this.lines.push(line);
         return line;
     }
 
+    finishLine(line) {
+        line.close();
+        this.bindLineEvents(line);
+        this.resetToolEvents();  // unregistering
+        this.addState();
+    }
+
+    createRegion(polygon, postponeEvents) {
+        var region = new SegmenterRegion(polygon, this);
+        if (!postponeEvents) this.bindRegionEvents(region);
+        this.regions.push(region);
+        return region;
+    }
+
+    finishRegion(region) {
+        this.bindRegionEvents(region);
+        this.resetToolEvents();
+        region.updateDataFromCanvas();
+        this.addState();
+    }
+
+    bindRegionEvents(region) {
+        region.polygonPath.onMouseDown = function(event) {
+            if (event.event.ctrlKey || this.mode != 'regions') return;
+            this.selecting = region;
+            
+            var dragging = region.polygonPath.getNearestLocation(event.point).segment;
+            this.tool.onMouseDrag = function(event) {
+                if (event.event.ctrlKey) {
+                    this.multiMove(event);
+                } else {
+                    this.movePointInView(dragging.point, event.delta);
+                    region.changed = true;
+                }
+                
+            }.bind(this);
+
+            var hit = region.polygonPath.hitTest(event.point, {
+	            segments: true,
+	            tolerance: 20
+            });
+            if (hit && hit.type=='segment' && region.polygon.length > 3) {
+                let pt = view.projectToView(hit.segment.point);
+                this.deletePointBtn.style.left = pt.x - 20 + 'px';
+                this.deletePointBtn.style.top = pt.y - 40 + 'px';
+                this.deletePointBtn.style.display = 'inline';
+                this.deletePointBtn.addEventListener('click', function() {
+                    hit.segment.remove();
+                    this.deletePointBtn.style.display = 'none';
+                    region.updateDataFromCanvas();
+                    this.addState();
+                }.bind(this), {once: true});
+            }
+            this.tool.onMouseUp = function(event) {
+                this.resetToolEvents();
+                let changes = this.updateRegionsFromCanvas();
+                if (changes) this.addState();
+            }.bind(this);
+        }.bind(this);
+
+        region.polygonPath.onDoubleClick = function(event) {
+            if (event.event.ctrlKey || this.mode != 'regions') return;
+            let location = region.polygonPath.getNearestLocation(event.point);
+            let newSegment = region.polygonPath.insert(location.index+1, location);
+            region.changed = true;
+            this.addState();
+        }.bind(this);
+    }
+    
+    bindLineEvents(line) {
+        line.baselinePath.onMouseDown = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines' || this.selecting) return;
+            this.selecting = line;
+            var hit = line.baselinePath.hitTest(event.point, {
+	            segments: true,
+	            tolerance: 20
+            });
+            
+            if (hit && hit.type=='segment' &&
+                hit.segment.index != 0 &&
+                hit.segment.index != hit.segment.path.segments.length-1) {
+                let pt = view.projectToView(hit.segment.point);
+                this.deletePointBtn.style.left = pt.x - 20 + 'px';
+                this.deletePointBtn.style.top = pt.y - 40 + 'px';
+                this.deletePointBtn.style.display = 'inline';
+                this.deletePointBtn.addEventListener('click', function() {
+                    line.deletePolygonsEdgeForBaselineSegment(hit.segment);
+                    hit.segment.remove();
+                    this.deletePointBtn.style.display = 'none';
+                    this.addState();
+                }.bind(this), {once: true});
+            }
+            
+            var dragging = line.baselinePath.getNearestLocation(event.point).segment;
+            this.tool.onMouseDrag = function(event) {
+                if (event.event.ctrlKey) {
+                    this.multiMove(event);
+                } else {
+                    this.movePointInView(dragging.point, event.delta);
+                    line.showDirection();
+                    line.dragPolyEdges(dragging.index, event.delta);
+                    line.changed = true;
+                }
+            }.bind(this);
+            
+            this.tool.onMouseUp = function(event) {
+                this.resetToolEvents();
+                let changes = this.updateLinesFromCanvas();
+                if (changes) this.addState();
+            }.bind(this);
+            
+        }.bind(this);
+        
+        line.baselinePath.onDoubleClick = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+            let location = line.baselinePath.getNearestLocation(event.point);
+            let newSegment = line.baselinePath.insert(location.index+1, location);
+            line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+            line.createPolygonEdgeForBaselineSegment(newSegment);
+            line.changed = true;
+        }.bind(this);
+        
+        line.baselinePath.onMouseMove = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+            if (line.selected) this.setCursor('grab');
+            else this.setCursor('pointer');
+            var hit = line.baselinePath.hitTest(event.point, {
+	            segments: true,
+	            tolerance: 5
+            });
+            if (hit && hit.type=='segment' &&
+                hit.segment.index != 0 &&
+                hit.segment.index != hit.segment.path.segments.length-1) {
+                this.setCursor('pointer');
+            }
+        }.bind(this);
+        
+        line.baselinePath.onMouseLeave = function(event) {
+            this.setCursor();
+        }.bind(this);
+        
+        line.baselinePath.onMouseDrag = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+            this.setCursor('move');
+        }.bind(this);
+
+        // same for the masks
+        line.maskPath.onMouseDown = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+            this.selecting = line;
+
+            var dragging = line.maskPath.getNearestLocation(event.point).segment;
+            this.tool.onMouseDrag = function(event) {
+                if (event.event.ctrlKey) {
+                    this.multiMove(event);
+                } else {
+                    this.movePointInView(dragging.point, event.delta);
+                    line.changed = true;
+                }
+            }.bind(this);
+            
+            this.tool.onMouseUp = function(event) {
+                this.resetToolEvents();
+                let changes = this.updateLinesFromCanvas();
+                if (changes) {
+                    this.addState();
+                    line.setLineHeight();
+                }
+            }.bind(this);
+        }.bind(this);
+        line.maskPath.onMouseMove = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+            if (line.selected) this.setCursor('grab');
+            else this.setCursor('pointer');
+        }.bind(this);
+        line.maskPath.onMouseLeave = function(event) {
+           this.setCursor();
+        }.bind(this);
+        line.maskPath.onMouseDrag = function(event) {
+            if (event.event.ctrlKey || this.mode != 'lines') return;
+           this.setCursor('move');
+        }.bind(this);
+        
+    }
+    
+    resetToolEvents() {
+        this.tool.onMouseDown = this.onMouseDown.bind(this);
+        this.tool.onMouseDrag = this.onMouseDrag.bind(this);
+        this.tool.onMouseMove = null;
+        this.tool.onMouseUp = null;
+    }
+
+    multiMove(event) {
+        // multi move
+        if (this.mode == 'lines') {
+            for (let i in this.selection) {
+                this.movePointInView(this.selection[i].baselinePath.position, event.delta);
+                // this.selection[i].baselinePath.position = this.selection[i].baselinePath.position.add(event.delta);
+                this.selection[i].showDirection();
+                this.selection[i].changed = true;
+            }
+        } else if (this.mode == 'regions') {
+            for (let i in this.selection) {
+                this.movePointInView(this.selection[i].polygonPath.position, event.delta);
+                // this.selection[i].polygonPath.position = this.selection[i].polygonPath.position.add(event.delta);
+                this.selection[i].changed = true;
+            }
+        }
+    }
+    
+    onMouseDrag (event) {
+        if (event.event.ctrlKey) this.multiMove(event);
+    }
+    
+    onMouseDown (event) {
+        if (isRightClick(event.event)) return;
+        
+        if (this.selecting) {
+            // selection
+            if (event.event.shiftKey) {
+                this.selecting.toggleSelect();
+            } else {
+                this.selecting.select();
+                this.purgeSelection(this.selecting);
+            }
+        } else {
+            if (event.event.ctrlKey) return;
+            if (this.spliting) {
+                this.startCuter(event);
+            } else if (event.event.shiftKey) {
+                // lasso selection tool
+                this.startLassoSelection(event);
+            } else if (this.mode == 'regions') {
+                this.startNewRegion(event);
+            } else {  // mode = 'lines'
+                // create a new line
+                this.startNewLine(event);
+            }
+        }
+        // if we had something to select, it's already done
+        this.selecting = null;
+    }
+
+    startNewLine(event) {
+        this.purgeSelection();
+        let newLine = this.createLine([[event.point.x, event.point.y]], null, true);
+        let point = newLine.extend(event.point).point;  // the point that we move around
+        newLine.showDirection();
+        
+        // adds all the events bindings 
+        let onCancel = function(event) {
+            if (event.keyCode == 27) {  // escape
+                newLine.remove();
+                this.resetToolEvents();
+                document.removeEventListener('keyup', onCancel);
+                return false;
+            }
+        }.bind(this);
+        
+        this.tool.onMouseDown = function(event) {
+            if (isRightClick(event.event)) {
+                point = newLine.extend(event.point).point;
+            } else {
+                this.finishLine(newLine);
+                document.removeEventListener('keyup', onCancel);
+            }
+        }.bind(this);
+        this.tool.onMouseMove = function(event) {
+            this.tool.onMouseDrag = null; // manually disable free drawing now to avoid having both
+            // follow the mouse cursor with the last created point
+            this.movePointInView(point, event.delta);
+            newLine.showDirection();
+            newLine.select();  // select it to make drawing more precise
+        }.bind(this);
+        this.tool.onMouseDrag = function(event) {
+            // adding points to current line
+            this.tool.onMouseMove = null; // we don't want the first point to move around
+            point = newLine.extend(event.point).point;
+            this.tool.onMouseUp = function(event) {
+                newLine.baselinePath.simplify(10);
+                this.finishLine(newLine);
+                document.removeEventListener('keyup', onCancel);
+            }.bind(this);
+        }.bind(this);
+        document.addEventListener('keyup', onCancel);
+    }
+
+    startNewRegion(event) {
+        this.purgeSelection();
+        var originPoint = event.point;
+        let newRegion = this.createRegion([
+            [event.point.x, event.point.y],
+            [event.point.x, event.point.y+1],
+            [event.point.x+1, event.point.y+1],
+            [event.point.x+1, event.point.y]
+        ]);
+        newRegion.changed = true;
+        
+        let onCancel = function(event) {
+            if (event.keyCode == 27) {  // escape
+                newRegion.remove();
+                this.resetToolEvents();
+                document.removeEventListener('keyup', onCancel);
+                return false;
+            }
+        }.bind(this);
+        let onRegionDraw = function(event) {
+            newRegion.polygonPath.segments[1].point.y = event.point.y;
+            newRegion.polygonPath.segments[2].point.x = event.point.x;
+            newRegion.polygonPath.segments[2].point.y = event.point.y;
+            newRegion.polygonPath.segments[3].point.x = event.point.x;
+        }.bind(this);
+        
+        this.tool.onMouseDown = function(event) {
+            this.finishRegion(newRegion);
+            document.removeEventListener('keyup', onCancel);
+        }.bind(this);
+        this.tool.onMouseMove = onRegionDraw;
+        this.tool.onMouseDrag = function(event) {
+            this.tool.onMouseUp = function(event) {
+                this.finishRegion(newRegion);
+                document.removeEventListener('keyup', onCancel);
+            }.bind(this);
+            onRegionDraw(event);
+        }.bind(this);
+        document.addEventListener('keyup', onCancel);
+    }
+        
+    startCuter(event) {
+        // rectangle cutter
+        let clip = this.makeSelectionRectangle(event);
+        let onCancel = function(event) {
+            if (event.keyCode == 27) {  // escape
+                clip.remove();
+                this.resetToolEvents();
+                document.removeEventListener('keyup', onCancel);
+                return false;
+            }
+        }.bind(this);
+
+        this.tool.onMouseDrag = function(event) {
+            this.updateSelectionRectangle(clip, event);
+            this.splitHelper(clip, event);
+        }.bind(this);
+        this.tool.onMouseUp = function(event) {
+            this.splitByPath(clip);
+            clip.remove();
+            this.resetToolEvents();
+            document.removeEventListener('keyup', onCancel);
+        }.bind(this);
+        document.addEventListener('keyup', onCancel);
+    }
+
+    startLassoSelection(event) {
+        let clip = this.makeSelectionRectangle(event);
+        let onCancel = function(event) {
+            if (event.keyCode == 27) {  // escape
+                clip.remove();
+                this.purgeSelection();
+                this.resetToolEvents();
+                document.removeEventListener('keyup', onCancel);
+                return false;
+            }
+        }.bind(this);
+        this.tool.onMouseDrag = function(event) {
+            this.updateSelectionRectangle(clip, event);
+            this.lassoSelection(clip);
+        }.bind(this);
+        this.tool.onMouseUp = function(event) {
+            clip.remove();
+            this.resetToolEvents();
+            document.removeEventListener('keyup', onCancel);
+        }.bind(this);
+        document.addEventListener('keyup', onCancel);
+    }
+    
     movePointInView(point, delta) {
         point.x += delta.x;
         point.y += delta.y;
@@ -567,30 +827,51 @@ class Segmenter {
         for (let i=this.lines.length-1; i >= 0; i--) {
             this.lines[i].remove();
         };
+        for (let i=this.regions.length-1; i >= 0; i--) {
+            this.regions[i].remove();
+        };
         this.lines = [];
+        this.regions = [];
     }
     
     load(data) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
-        
-        data.forEach(function(line) {
-            let newLine = this.createLine(
-                line.baseline.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))),
-                line.mask.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))));
-            if (!newLine.mask) newLine.createMask();
-        }.bind(this));
+        if (data.lines) {
+            data.lines.forEach(function(line) {
+                let newLine = this.createLine(
+                    line.baseline.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))),
+                    line.mask.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))));
+                if (!newLine.mask) newLine.createMask();
+            }.bind(this));
+        }
+        if (data.regions) {   
+            data.regions.forEach(function(region) {
+                let newRegion = this.createRegion(
+                    region.map(poly => poly.map(coord => Math.round(coord * this.imgRatio)))
+                );
+            }.bind(this));
+        }
     }
     
     exportJSON() {
         /* Returns a list of lines containing each a baseline polygon and a mask polygon
-         * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
-        return this.lines.map(function(line) {
-            return {
-                baseline: line.baseline.map(poly => poly.map(coord => Math.round(coord / this.imgRatio))),
-                mask: line.mask.map(poly => poly.map(coord => Math.round(coord / this.imgRatio)))
-            };
-        }.bind(this));
+         * {
+              regions: [[[xr1, yr1], [xr2, yr2], [xr3, yr3]], [..]],
+              lines:[{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] 
+           }
+        */
+        return {
+            regions: this.regions.map(function(region) {
+                return region.polygon.map(poly => poly.map(coord => Math.round(coord / this.imgRatio)));
+            }.bind(this)),
+            lines: this.lines.map(function(line) {
+                return {
+                    baseline: line.baseline.map(poly => poly.map(coord => Math.round(coord / this.imgRatio))),
+                    mask: line.mask.map(poly => poly.map(coord => Math.round(coord / this.imgRatio)))
+                };
+            }.bind(this))
+        };
     }
 
     loadNextState() {
@@ -618,6 +899,7 @@ class Segmenter {
         this.states = this.states.slice(0, this.stateIndex); // cut the state branch
         this.states[this.stateIndex] = this.exportJSON();
         if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
+        console.log(this.states);
     }
     
     updateLinesFromCanvas() {
@@ -633,9 +915,25 @@ class Segmenter {
         }
         return changes;
     }
+
+    updateRegionsFromCanvas() {
+        var changes = false;
+        for (let i in this.regions) {
+            if (this.regions[i].changed) {
+                this.regions[i].updateDataFromCanvas();
+                console.log('UPDATED REGION ' + i);
+                // TODO: trigger event or callback
+                this.regions[i].changed = false;
+                changes = true;
+            }
+        }
+        return changes;
+    }
     
     toggleMasks() {
         this.showMasks = !this.showMasks;
+        this.toggleMasksBtn.classList.toggle('btn-success');
+        this.toggleMasksBtn.classList.toggle('btn-info');
         for (let i in this.lines) {
             let poly = this.lines[i].maskPath;
             poly.visible = !poly.visible;
@@ -646,18 +944,34 @@ class Segmenter {
         }
     }
 
+    toggleRegionMode() {
+        this.purgeSelection();
+        this.mode = this.mode == 'lines' ? 'regions' : 'lines';
+        this.toggleRegionModeBtn.classList.toggle('btn-info');
+        this.toggleRegionModeBtn.classList.toggle('btn-success');
+        this.regions.forEach(function(region) {
+            if (this.mode == 'lines') {
+                region.polygonPath.fillColor = null;
+            } else {
+                region.polygonPath.fillColor = this.secondaryColor;
+            }
+        }.bind(this));
+    }
+    
     showDeleteLineBtn(line) {
         let pt = view.projectToView(line.baselinePath.bounds.topRight);
         this.deleteLineBtn.style.left = pt.x + 20 + "px";
         this.deleteLineBtn.style.top = pt.y -30 + "px";
         this.deleteLineBtn.style.display = 'inline';
     }
-    addToSelection(line) {
-        if (this.selection.indexOf(line) == -1) this.selection.push(line);
-        this.showDeleteLineBtn(line);
+    addToSelection(obj) {
+        if (this.selection.indexOf(obj) == -1) this.selection.push(obj);
+        if (obj.baselinePath) this.showDeleteLineBtn(obj);
+        // if (obj.baselinePath) this.showDeleteRegionBtn(line); // todo
     }
     removeFromSelection(line) {
         this.selection.pop(this.selection.indexOf(line));
+        this.deletePointBtn.style.display = 'none';
         if (this.selection.length == 0) this.deleteLineBtn.style.display = 'none';
     }
     purgeSelection(except) {
@@ -674,61 +988,51 @@ class Segmenter {
     }
 
     resetViewSize() {
-        paper.view.viewSize = [this.img.innerWidth(), this.img.innerHeight()];
+        paper.view.viewSize = [this.img.width, this.img.height];
     }
     
-    selectionRectangle(event) {
-        if (!this.clip) {
-            let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
-            this.clip = new Path.Rectangle(shape, 0);
-            this.clip.opacity = 1;
-            this.clip.strokeWidth = 2;
-            this.clip.strokeColor = 'grey';
-            this.clip.dashArray = [10, 4];
-            this.clip.originalPoint = event.point;
+    makeSelectionRectangle(event) {
+        let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
+        var clip = new Path.Rectangle(shape, 0);
+        clip.opacity = 1;
+        clip.strokeWidth = 2;
+        clip.strokeColor = 'grey';
+        clip.dashArray = [10, 4];
+        clip.originalPoint = event.point;
+        return clip;
+    }
+
+    updateSelectionRectangle(clip, event) {
+        clip.bounds.width = Math.max(1, Math.abs(clip.originalPoint.x - event.point.x));
+        if (event.point.x > clip.originalPoint.x) {
+            clip.bounds.x = clip.originalPoint.x;
         } else {
-            this.clip.bounds.width = Math.max(1, Math.abs(this.clip.originalPoint.x - event.point.x));
-            if (event.point.x > this.clip.originalPoint.x) {
-                this.clip.bounds.x = this.clip.originalPoint.x;
-            } else {
-                this.clip.bounds.x = event.point.x;
-            }
-            this.clip.bounds.height = Math.max(1, Math.abs(this.clip.originalPoint.y - event.point.y));
-            if (event.point.y > this.clip.originalPoint.y) {
-                this.clip.bounds.y = this.clip.originalPoint.y;
-            } else {
-                this.clip.bounds.y = event.point.y;
-            }
+            clip.bounds.x = event.point.x;
+        }
+        clip.bounds.height = Math.max(1, Math.abs(clip.originalPoint.y - event.point.y));
+        if (event.point.y > clip.originalPoint.y) {
+            clip.bounds.y = clip.originalPoint.y;
+        } else {
+            clip.bounds.y = event.point.y;
         }
     }
     
-    lassoSelection(event) {
+    lassoSelection(clip) {
         // draws a rectangle lasso selection tool that selects every line it crosses
-        this.selectionRectangle(event);
         for (let i in this.lines) {
             let line = this.lines[i];
             if (line.selected) {continue;}  // avoid calculs
-            if (this.clip.intersects(line.baselinePath) ||
-                line.baselinePath.isInside(this.clip.bounds)) {
+            if (clip.intersects(line.baselinePath) ||
+                line.baselinePath.isInside(clip.bounds)) {
                 line.select();
             }
         }
     }
-
-    startSplitting() {
-        
-    }
-
-    stopSplitting() {
-
-    }
     
-    splitTool(event) {
-        this.selectionRectangle(event);
+    splitHelper(clip, event) {
         this.lines.forEach(function(line) {
-            let intersections = line.baselinePath.getIntersections(this.clip);
+            let intersections = line.baselinePath.getIntersections(clip);
             for (var i = 0; i < intersections.length; i++) {
-                // cut locations helper
                 new Path.Circle({
                     center: intersections[i].point,
                     radius: 5,
@@ -741,7 +1045,7 @@ class Segmenter {
                     intersections.forEach(location => cut.add(location));
                     cut.bringToFront();
                     line.baselinePath.segments.forEach(function(segment) {
-                        if (this.clip.contains(segment.point)) {
+                        if (clip.contains(segment.point)) {
                             cut.insert(segment.index, segment);
                         }
                     }.bind(this));
@@ -773,7 +1077,6 @@ class Segmenter {
                     line.maskPath.removeSegments();
                     line.createMask();
                     nl.createMask();
-                    line.updateDataFromCanvas();
                     line = nl;
                     trash.remove();
                 }
@@ -803,7 +1106,7 @@ class Segmenter {
         }
     }
     
-    getColors() {
+    setColors() {
         function isGrey_(color) {
             return (
                 Math.abs(color[0] - color[1]) < 30 &&
