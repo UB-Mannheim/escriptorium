@@ -899,7 +899,6 @@ class Segmenter {
         this.states = this.states.slice(0, this.stateIndex); // cut the state branch
         this.states[this.stateIndex] = this.exportJSON();
         if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
-        console.log(this.states);
     }
     
     updateLinesFromCanvas() {
@@ -915,7 +914,7 @@ class Segmenter {
         }
         return changes;
     }
-
+    
     updateRegionsFromCanvas() {
         var changes = false;
         for (let i in this.regions) {

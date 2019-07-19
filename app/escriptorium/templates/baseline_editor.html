@@ -212,7 +212,8 @@ Todo:
         try {
             let data = JSON.parse(iInput.value);
             iInput.classList.remove('is-invalid');
-            segmenter.load(data.map(line => { return {baseline: line, mask: []}}));
+            segmenter.load({lines: data.map(line => { return {baseline: line, mask: []}}),
+                            regions: []});
             iInput.value = '';
         } catch(error) {
             iInput.classList.add('is-invalid');
@@ -221,7 +222,7 @@ Todo:
     
     document.getElementById('export-btn').addEventListener('click', function(e) {
         iInput.style.display = 'none';
-        eInput.value = JSON.stringify(segmenter.exportJSON().map(line => line.baseline));
+        eInput.value = JSON.stringify(segmenter.exportJSON().lines.map(line => line.baseline));
         eInput.style.display = 'block';
         eInput.focus();
         eInput.select();
