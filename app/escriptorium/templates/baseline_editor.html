@@ -3,9 +3,7 @@
 
 {% comment %}
 Todo:
-* direction hint
 * merge fix  &| drag pt to merge
-* line height & baseline strokeWidth
 * regions
 
 * validation & errors
@@ -17,6 +15,8 @@ Todo:
 {% block body %}
 <div class="mb-2">
   <button id="zoom-reset-btn" title="{% trans "Reset zoom." %}" class="btn btn-info fas fa-search-minus"></button>
+
+  <button id="toggle-regions" title="{% trans "Switch to region mode." %}" class="btn btn-info ml-3 fas fa-th-large"></button>
   <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>
 
   <button id="undo-btn" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" disabled></button>
