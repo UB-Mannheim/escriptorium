@@ -7,22 +7,73 @@
 'use strict';
 
 class zoomTarget {
-    constructor(domElement) {
+    constructor(domElement, {map=false, mapScale=0.2, mapColors=['grey', 'white'], mapMargin=10, mapDuration=2}) {
         // wrap the element in a container:
         var container = document.createElement('div');
-        var rotationContainer = document.createElement('div');
+        // var rotationContainer = document.createElement('div');
 
+        
         domElement.parentNode.insertBefore(container, domElement);
-        rotationContainer.appendChild(domElement);
-        container.appendChild(rotationContainer);
-        rotationContainer.style.transformOrigin = 'center';
+        container.appendChild(domElement);
+        // rotationContainer.appendChild(domElement);
+        // container.appendChild(rotationContainer);
+        // rotationContainer.style.transformOrigin = 'center';
         container.style.position = 'relative';
         container.style.overflow = 'hidden';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'transform 0.3s';
         this.container = container;
-        this.rotationContainer = rotationContainer;
+        //this.rotationContainer = rotationContainer;
         this.element = domElement;
+
+        this.map = map;
+        if (this.map) {
+            this.mapScale = mapScale;
+            this.mapDuration = mapDuration;
+            this.mapTimer = null;
+            this.makeMap(mapMargin, mapColors);
+        }
+    }
+
+    update(pos, scale) {
+        this.element.style.transform = 'translate('+(pos.x)+'px,'+(pos.y)+'px) '+'scale('+scale+')';
+        if (this.map && scale > 1) {
+            this.mapWhole.style.opacity = 0.7;
+            this.mapCurrent.textContent = Math.round(scale*100)+'%';
+            this.mapCurrent.style.transform = 'translate('+(-pos.x*this.mapScale/scale)+'px,'+(-pos.y*this.mapScale/scale)+'px) '+'scale('+1/scale+')';
+
+            // fadeOut
+            if (this.mapTimer) clearInterval(this.mapTimer);
+            let nTicks = this.mapDuration * 1000 / 100;
+            let factor = this.mapWhole.style.opacity / nTicks;
+            this.mapTimer = setInterval(function () {
+                if (this.mapWhole.style.opacity <= 0){
+                    clearInterval(this.mapTimer);
+                }
+                this.mapWhole.style.opacity = this.mapWhole.style.opacity - factor;
+            }.bind(this), 100);
+        }
+    }
+
+    makeMap(mapMargin, mapColors) {        
+        this.mapWhole = document.createElement('div');
+        this.mapWhole.style.position = 'fixed';
+        this.mapWhole.style.top = this.container.getBoundingClientRect().y + mapMargin+'px';
+        this.mapWhole.style.left = this.container.getBoundingClientRect().x + mapMargin+'px';
+        this.mapWhole.style.width = (this.element.width*this.mapScale)+'px';
+        this.mapWhole.style.height = (this.element.height*this.mapScale)+'px';
+        this.mapWhole.style.opacity = 0;
+        this.mapWhole.style.backgroundColor = mapColors[0];
+        this.container.appendChild(this.mapWhole);
+        
+        this.mapCurrent = document.createElement('div');
+        this.mapCurrent.style.position = 'absolute';
+        this.mapCurrent.style.opacity = 0.5;
+        this.mapCurrent.style.width = '100%';
+        this.mapCurrent.style.height = '100%';
+        this.mapCurrent.style.backgroundColor = mapColors[1];
+        this.mapCurrent.style.transformOrigin = '0 0';
+        this.mapWhole.appendChild(this.mapCurrent);
     }
 }
 
@@ -31,7 +82,8 @@ class WheelZoom {
                  minScale=0.2,
                  maxScale=null,
                  initialScale=1,
-                 disabled=false}) {
+                 disabled=false
+                }) {
         this.factor = factor;
         this.minScale = minScale;
         this.maxScale = maxScale;
@@ -50,7 +102,7 @@ class WheelZoom {
         this.pos = {x:0, y:0};
     }
     
-    register(domElement, {mirror=false}) {
+    register(domElement, {mirror=false, map=false}) {
         this.minScale = this.minScale || Math.min(
             window.width / (this.size.w * this.initialScale) * 0.9,
             window.height / (this.size.h * this.initialScale) * 0.9);
@@ -60,7 +112,7 @@ class WheelZoom {
         
         this.size = {w:domElement.width * this.scale, h:domElement.height * this.scale};
         
-        let target = new zoomTarget(domElement, this.scale, {});
+        let target = new zoomTarget(domElement, {map: map});
         this.targets.push(target);
         if (!mirror) {
             // domElement.style.cursor = 'zoom-in';
@@ -161,7 +213,7 @@ class WheelZoom {
         if (this.disabled) return;
 		e.preventDefault();
 		this.previousEvent = e;
-        this.rotationOrigin = e.point;
+        // this.rotationOrigin = e.point;
         // disable transition while dragging
         var target = this.targets.find(t => t.element == e.target);
         target.element.classList.add('notransition');
@@ -174,12 +226,11 @@ class WheelZoom {
         this.targets.forEach(function(target, i) {
             // target.element.style.transform = 'scale('+this.scale+')';
             // target.element.style.transformOrigin = 'center';
-            target.element.style.transform = 'translate('+(this.pos.x)+'px,'+(this.pos.y)+'px) '+
-                'scale('+this.scale+')';
-            if (this.rotationOrigin) {
-                target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
-                target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
-            }
+            target.update(this.pos, this.scale);
+            // if (this.rotationOrigin) {
+            //     target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
+            //     target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
+            // }
         }.bind(this));
         // this.events.trigger('wheelzoom.updated');
 	}
@@ -194,7 +245,7 @@ class WheelZoom {
         // if (!container) return;
         // var target = container.children().first();
         // this.size = {w:target.width(), h:target.height()};
-        this.minScale = this.options.minScale || Math.min(
+        this.minScale = this.minScale || Math.min(
             window.width / (this.size.w * this.initialScale) * 0.9,
             window.height / (this.size.h * this.initialScale) * 0.9);
         this.updateStyle();

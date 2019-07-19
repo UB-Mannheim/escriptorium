@@ -4,7 +4,6 @@
 {% comment %}
 Todo:
 * merge fix  &| drag pt to merge
-* regions
 
 * validation & errors
 * integration callbacks
@@ -95,7 +94,7 @@ Todo:
             segmenter.canvas.style.position = 'absolute';
             
             img.addEventListener('load', function(ev) {
-                zoom.register(img, {mirror: true});
+                zoom.register(img, {mirror: true, map: true});
                 segmenter.init();
                 zoom.targets[0].container.appendChild(segmenter.canvas);
 
