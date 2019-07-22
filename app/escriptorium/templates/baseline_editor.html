@@ -103,7 +103,7 @@ Todo:
                     event.target = img;
                     img.classList.add('notransition');  // can't match the animation in the canvas
                     var delta = zoom.scrolled(event);
-                    var pt = view.viewToProject(event.pageX, event.pageY);
+
                     segmenter.canvas.style.width = img.width*zoom.scale + 'px';
                     segmenter.canvas.style.height = img.height*zoom.scale + 'px';
                     segmenter.canvas.style.top = zoom.pos.y + 'px';

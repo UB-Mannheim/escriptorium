@@ -128,9 +128,6 @@ class WheelZoom {
         if (this.disabled) return null;
         e.preventDefault();
         var oldScale = this.scale;
-        
-		var zoom_point = {x: e.pageX - e.target.offsetLeft,
-		                  y: e.pageY - e.target.offsetTop};
 		var delta = e.delta || e.wheelDelta;
 		if (delta === undefined) {
 	      //we are on firefox
@@ -139,17 +136,22 @@ class WheelZoom {
         // cap the delta to [-1,1] for cross browser consistency
 	    delta = Math.max(-1, Math.min(1, delta));
 	    // determine the point on where the slide is zoomed in
- 	    var zoom_target = {x: (zoom_point.x - this.pos.x) / this.scale,
-	                       y: (zoom_point.y - this.pos.y) / this.scale};
+        let bounds = e.target.getBoundingClientRect();
+		var zoom_point = {x: (e.pageX - bounds.x),
+		                  y: (e.pageY - bounds.y)};
 
 	    // apply zoom
 	    this.scale += delta * this.factor;
 	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
-        
-        this.pos.x = Math.round(-zoom_target.x * this.scale + zoom_point.x);
-		this.pos.y = Math.round(-zoom_target.y * this.scale + zoom_point.y);
 
+        // zpt * scale1 =  tpt * scale2
+ 	    var zoom_target = {x: zoom_point.x * oldScale / this.scale,
+	                       y: zoom_point.y * oldScale / this.scale};
+        
+        this.pos.x -= Math.round(zoom_point.x - zoom_target.x);
+		this.pos.y -= Math.round(zoom_point.y - zoom_target.y);
+                
         this.updateStyle();
         return this.scale / oldScale;
 	}
