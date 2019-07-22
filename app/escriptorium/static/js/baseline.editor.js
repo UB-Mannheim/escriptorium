@@ -67,6 +67,11 @@ class SegmenterRegion {
         this.selected = false;
     }
 
+    toggleSelect() {
+        if (this.selected) this.unselect();
+        else this.select();
+    }
+    
     updateDataFromCanvas() {
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
     }
@@ -662,6 +667,7 @@ class Segmenter {
                 this.selecting.select();
                 this.purgeSelection(this.selecting);
             }
+            this.selecting = null;
         } else {
             if (event.event.ctrlKey) return;
             if (this.spliting) {
@@ -676,8 +682,6 @@ class Segmenter {
                 this.startNewLine(event);
             }
         }
-        // if we had something to select, it's already done
-        this.selecting = null;
     }
 
     startNewLine(event) {
@@ -694,6 +698,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
+            return null;
         }.bind(this);
         
         this.tool.onMouseDown = function(event) {
@@ -742,6 +747,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
+            return null;
         }.bind(this);
         let onRegionDraw = function(event) {
             newRegion.polygonPath.segments[1].point.y = event.point.y;
@@ -775,6 +781,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
+            return null;
         }.bind(this);
 
         this.tool.onMouseDrag = function(event) {
@@ -800,6 +807,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
+            return null;
         }.bind(this);
         this.tool.onMouseDrag = function(event) {
             this.updateSelectionRectangle(clip, event);
@@ -968,21 +976,16 @@ class Segmenter {
         if (obj.baselinePath) this.showDeleteLineBtn(obj);
         // if (obj.baselinePath) this.showDeleteRegionBtn(line); // todo
     }
-    removeFromSelection(line) {
-        this.selection.pop(this.selection.indexOf(line));
+    removeFromSelection(obj) {
+        this.selection.slice(this.selection.indexOf(obj), 1);
         this.deletePointBtn.style.display = 'none';
         if (this.selection.length == 0) this.deleteLineBtn.style.display = 'none';
     }
     purgeSelection(except) {
         for (let i=this.selection.length-1; i >= 0; i--) {
-            if (!except || (except && except != this.selection[i])) {
+            if (!except || except != this.selection[i]) {
                 this.selection[i].unselect();
             }
-        }
-        if (except) {
-            this.selection = [except];
-        } else {
-            this.selection = [];
         }
     }
 
@@ -1106,6 +1109,8 @@ class Segmenter {
     }
     
     setColors() {
+        // Attempt to choose the best color for highlighting
+        
         function isGrey_(color) {
             return (
                 Math.abs(color[0] - color[1]) < 30 &&
