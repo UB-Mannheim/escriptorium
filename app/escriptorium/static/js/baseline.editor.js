@@ -106,8 +106,7 @@ class SegmenterLine {
             visible: this.segmenter.showMasks,
             segments: this.mask
         });
-        this.maskPath.line = this;
-        
+
         if (baseline.segments) {  // already a paperjs.Path
             this.baselinePath = baseline;
             this.updateDataFromCanvas();
@@ -131,6 +130,8 @@ class SegmenterLine {
     createPolygonEdgeForBaselineSegment(segment) {
         let pt = segment.point;
         let vector = segment.path.getNormalAt(segment.index);
+        if (Math.sin(vector.angle/180*Math.PI) > 0) vector = vector.rotate(180);  // right to left
+        
         vector.length = this.segmenter.upperLineHeight;
         let up = this.maskPath.insert(segment.index, pt.add(vector));
         
@@ -216,7 +217,7 @@ class SegmenterLine {
         this.remove();
         /* Callback for line deletion */
     }
-
+    
     showDirection() {
         if (this.baselinePath.segments.length > 1) {
             if (this.directionHint) this.directionHint.remove();
@@ -234,7 +235,8 @@ class SegmenterLine {
                     end,
                     end.add(vector.rotate(150))]
             });
-            this.directionHint.translate(vector.rotate(90));
+            if (Math.cos(vector.angle/180*Math.PI) > 0) this.directionHint.translate(vector.rotate(90));
+            else this.directionHint.translate(vector.rotate(-90));
         }
     }
     
@@ -639,7 +641,7 @@ class Segmenter {
         if (this.mode == 'lines') {
             for (let i in this.selection) {
                 this.movePointInView(this.selection[i].baselinePath.position, event.delta);
-                // this.selection[i].baselinePath.position = this.selection[i].baselinePath.position.add(event.delta);
+                this.movePointInView(this.selection[i].maskPath.position, event.delta);
                 this.selection[i].showDirection();
                 this.selection[i].changed = true;
             }
@@ -977,7 +979,7 @@ class Segmenter {
         // if (obj.baselinePath) this.showDeleteRegionBtn(line); // todo
     }
     removeFromSelection(obj) {
-        this.selection.slice(this.selection.indexOf(obj), 1);
+        this.selection.splice(this.selection.indexOf(obj), 1);
         this.deletePointBtn.style.display = 'none';
         if (this.selection.length == 0) this.deleteLineBtn.style.display = 'none';
     }
@@ -1088,16 +1090,38 @@ class Segmenter {
     }
     
     mergeSelection() {
-        if(this.selection.length < 2) return;
-        for(let i = 1; i < this.selection.length; i++) { //loop starts at 1!!
-            this.selection[0].baselinePath.join(this.selection[i].baselinePath, 10);
+        /* strategy is:
+          1) order the lines by their position,
+             line direction doesn't matter since .join() can merge from start or end points
+          2) join the lines 2 by 2 setting tolerance to the shortest distance between
+             the starting and ending points of both lines.
+          3) Delete the left over
+        */
+        
+        this.selection.sort(function(first, second) {
+            let vertical = false;  // todo
+            let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
+            let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
+            if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y;
+            else if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
+            else return first.baselinePath.position.x - second.baselinePath.position.x;
+        });
+        
+        while (this.selection.length > 1) {
+            let seg1 = this.selection[0].baselinePath.getNearestLocation(this.selection[1].baselinePath.interiorPoint);
+            let seg2 = this.selection[1].baselinePath.getNearestLocation(this.selection[0].baselinePath.interiorPoint);
+            this.selection[0].baselinePath.add(seg2);
+            this.selection[0].baselinePath.join(this.selection[1].baselinePath, seg1.point.getDistance(seg2.point));
+            
+            for (let i in this.selection[1].maskPath.segments) {
+                // Note: document advertise it's possible to insert more at once but couldn't make it work
+                let insertAt = seg1.segment.index + parseInt(i) + 1;
+                this.selection[0].maskPath.insert(insertAt, this.selection[1].maskPath.segments[i]);
+            }
+            
+            this.selection[1].delete();
         }
-        for(let i = this.selection.length - 1; i > 1; i--) {
-            this.selection[i].delete();
-        }
-        this.selection[0].maskPath.removeSegments();
-        this.selection[0].createMask();
-        this.selection[0].changed = true;
+        if (this.selection) this.selection[0].changed = true;
     }
 
     setCursor(style) {
