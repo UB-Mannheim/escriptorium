@@ -3,7 +3,8 @@
 
 {% comment %}
 Todo:
-* merge fix  &| drag pt to merge
+* reset polygon?
+* bind/unbind line to region
 
 * validation & errors
 * integration callbacks
@@ -14,15 +15,13 @@ Todo:
 {% block body %}
 <div class="mb-2">
   <button id="zoom-reset-btn" title="{% trans "Reset zoom." %}" class="btn btn-info fas fa-search-minus"></button>
-
-  <button id="toggle-regions" title="{% trans "Switch to region mode." %}" class="btn btn-info ml-3 fas fa-th-large"></button>
-  <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>
-
   <button id="undo-btn" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" disabled></button>
   <button id="redo-btn" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" disabled></button>
-
+  
+  <button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button>
+  <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>
   <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn ml-3 btn-info fas fa-cut"></button>
-  <button id="merge-lines" title="{% trans "Merge selected lines." %}" class="btn btn-info fas fa-compress-arrows-alt"></button>
+  
   <!--<span id="color0" width="20px" height="20px">1</span>
   <span id="color1" width="20px" height="20px">2</span>
   <span id="color2" width="20px" height="20px">3</span>
@@ -38,40 +37,39 @@ Todo:
   <input type="file" id="file-input" class="hide" />
   <img id="seg" class="w-100"/>
   <i id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></i>
-  <i id="delete-line" title="{% trans "Delete all selected lines." %}" class="hide btn btn-sm btn-danger fas fa-trash"></i>
+
+  <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
+  <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
 </div>
 <div class="d-inline-block ml-5" style="width: 40%; vertical-align: top;">
-    <h2>Explanations</h2>
-    <p>Wellcome to this beta test of the baseline editor and thank you for participating!
-      <br/>The goal is to test the editor in different conditions and gather feedbacks about it.
+    <h2>Usage</h2>
+    <p>
+      <b>Drop</b> a picture or click on the dashed rectangle to initialise the baseline editor.
+      <br/><br/><b>Left click</b> on the image to <b>create</b> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to finish it.
+      <br/>You can keep the mouse button pressed for free drawing.
+      <br/>Hitting escape while drawing a line cancels it. It also clears the selection.
     </p>
-
-    <h3>Usage</h3>
-    <p><b>Drop</b> a picture or click on the dashed rectangle to initialise the baseline editor.
-    <br/><b>Left click</b> on the image to <b>create</b> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to finish it.
-    <br/>You can keep the mouse button pressed for free drawing.
-    <br/>
-    <br/><b>Left click</b> on a line to select it, then you can drag the line (the closest point) to update it.
-    <br/>If you click exactly on a point, a yellow trash button <i class="fas fa-trash"></i> appears allowing to delete it.
-    <br/>Double click on the line will create a new point at the mouse location.
-    <br/>shift+click allows to add a line to the selection, shift and dragging creates a lasso selection tool.
-    <br/>ctrl+dragging allows to move the entire selection at once.
-    <br/>Hitting escape while drawing a line cancels it. It also clears the selection.
-
-    <br/><br/>Reload the editor (f5) if you want to try a new image.
+    <p>
+      <b>Left click</b> on a line to select it, then you can drag it's closest control point.
+      <br/>If you click exactly on a control point, a yellow trash button <i class="fas fa-trash"></i> appears allowing to delete it.
+      <br/><b>Double click</b> on the line will create a new control point at the mouse location.
+      <br/>You can go through your changes history back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons.
     </p>
-
-    <h3>Results</h3>
-    <p>What I'm most interested about is which is the most pleasant, the fastest and most precise to use depending on the different use cases.
-    <br/>Including short or long lines, curved or straigt, high or low resolution image and the different devices.
-    <br/>If the results are really not significant, ie if the preference doesn't go one way or the other, we may think about keeping both but it's really not ideal in term of maintenance.
+    <p>
+      Shift+click</b> allows to add or remove a line from the selection, shift and dragging creates a lasso selection tool.
+      <br/>Ctrl+drag allows to move the entire selection at once.
     </p>
-
-    <h3>Notes</h3>
-    <p>You can show the line mask <i class="fas fa-mask"></i> but it's not the focus of this test.
-    <br/>The colors chosen depends on the image, you can see the color palette on top of the image, the script is very naïve so if you encounter case where it doesn't work well also report it.
-    <br/>Please don't hesitate with any remarks or feedback,
-    <br/>Thank you.
+    <p>      
+      You can zoom with the mouse wheel or the device equivalent. Then pan the image with <b>Right click dragging</b>.
+    </p>
+    <p>  
+      By switching to region mode, you can create and edit regions like you would with lines.
+      <br/>The 'Show line masks' button allows the editing of line masks, each control point in the baselines have a lower and upper point in the control mask. You can use this to your advantage to fit the mask to the image very precisely. The line mask is used to compute the line height.
+      <br/>The Cut tool allows you to divide lines or delete a portion of them, select it in the toolbar and start cutting with <b>Left click</b>.
+      <br/>If you have more than one line selected, a button appears in the context menu to merge them, this will probably only work if the lines share the same direction.
+    </p>
+    <p>
+      Reload the editor (f5) if you want to try a new image.
     </p>
 </div>
 
@@ -103,16 +101,14 @@ Todo:
                     event.target = img;
                     img.classList.add('notransition');  // can't match the animation in the canvas
                     var delta = zoom.scrolled(event);
-                    var pt = view.viewToProject(event.pageX, event.pageY);
+
                     segmenter.canvas.style.width = img.width*zoom.scale + 'px';
                     segmenter.canvas.style.height = img.height*zoom.scale + 'px';
                     segmenter.canvas.style.top = zoom.pos.y + 'px';
                     segmenter.canvas.style.left = zoom.pos.x + 'px';
                     
                     let t = {x: zoom.pos.x, y: zoom.pos.y};
-                    segmenter.deleteLineBtn.style.display = 'none';
                     segmenter.deletePointBtn.style.display = 'none';
-                    segmenter.deleteLineBtn.style.transform = 'translate('+t.x+'px,'+t.y+'px)';
                     segmenter.deletePointBtn.style.transform = 'translate('+t.x+'px,'+t.y+'px)';
                     
                     paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
@@ -127,7 +123,6 @@ Todo:
                     segmenter.canvas.style.top = zoom.pos.y + 'px';
                     segmenter.canvas.style.left = zoom.pos.x + 'px';
                     let pt = view.viewToProject({x: Math.min(zoom.pos.x*zoom.scale,img.width), y: Math.min(zoom.pos.y*zoom.scale, img.height)});
-                    segmenter.deleteLineBtn.style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
                     segmenter.deletePointBtn.style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
                     if (delta.angle) {
                         for (let i in segmenter.lines) {
@@ -251,9 +246,7 @@ Todo:
         segmenter.canvas.style.left = 0;
         segmenter.canvas.style.width = img.width + 'px';
         segmenter.canvas.style.height = img.height + 'px';
-        segmenter.deleteLineBtn.style.display = 'none';
         segmenter.deletePointBtn.style.display = 'none';
-        segmenter.deleteLineBtn.style.transform = 'none';
         segmenter.deletePointBtn.style.transform = 'none';
         paper.view.viewSize = [img.width, img.height];
         paper.view.scale(1/zoomScale, [0, 0]);

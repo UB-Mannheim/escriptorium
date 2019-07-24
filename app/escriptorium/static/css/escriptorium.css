@@ -3,6 +3,7 @@ body {
     padding: 10px;
     padding-top: 70px;
     max-width: 1800px;
+    margin: auto;
 }
 
 .hide {

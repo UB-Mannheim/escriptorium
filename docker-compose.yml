@@ -105,18 +105,6 @@ services:
 
 volumes:
    static:
-    driver: local
-    driver_opts:
-      type: none
-      o: 'bind'
-      device: $PWD/static/
-   
    media:
-    driver: local
-    driver_opts:
-      type: none
-      o: 'bind'
-      device: $PWD/media/
-   
    postgres:   
    esdata:
