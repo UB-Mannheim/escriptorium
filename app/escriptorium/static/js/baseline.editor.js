@@ -985,8 +985,8 @@ class Segmenter {
         this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
         this.contextMenu.style.right = (this.img.getBoundingClientRect().right+10)+'px';
 
-        if (this.mode == 'lines' && this.selection.length > 1) this.mergeBtn.disabled = false;
-        else this.mergeBtn.disabled = true;
+        if (this.mode == 'lines' && this.selection.length > 1) this.mergeBtn.style.display = 'block';
+        else this.mergeBtn.style.display = 'none';
     }
     hideContextMenu() {
         this.contextMenu.style.display = 'none';
@@ -994,8 +994,7 @@ class Segmenter {
     
     addToSelection(obj) {
         if (this.selection.indexOf(obj) == -1) this.selection.push(obj);
-        if (obj.baselinePath) this.showContextMenu();
-        // if (obj.baselinePath) this.showDeleteRegionBtn(line); // todo
+        this.showContextMenu();
     }
     removeFromSelection(obj) {
         this.selection.splice(this.selection.indexOf(obj), 1);
