@@ -355,6 +355,10 @@ class Segmenter {
         // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
         // this.raster.position = view.center;
         this.img.style.display = 'hidden';
+
+        // context follows top right, width can only be calculated once shown
+        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
+        this.contextMenu.style.right = (this.img.getBoundingClientRect().right+10)+'px';
         
         this.addState();
         
@@ -978,13 +982,8 @@ class Segmenter {
     
     showContextMenu() {
         this.deleteSelectionBtn.style.display = 'inline';
-        this.mergeBtn.style.display = 'inline';
         this.contextMenu.style.display = 'block';
-
-        // context follows top right, width can only be calculated once shown
-        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
-        this.contextMenu.style.right = (this.img.getBoundingClientRect().right+10)+'px';
-
+        
         if (this.mode == 'lines' && this.selection.length > 1) this.mergeBtn.style.display = 'block';
         else this.mergeBtn.style.display = 'none';
     }
@@ -1000,6 +999,7 @@ class Segmenter {
         this.selection.splice(this.selection.indexOf(obj), 1);
         this.deletePointBtn.style.display = 'none';
         if (this.selection.length == 0) this.hideContextMenu();
+        if (this.selection.length < 2) this.mergeBtn.style.display = 'none';
     }
     purgeSelection(except) {
         for (let i=this.selection.length-1; i >= 0; i--) {
