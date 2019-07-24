@@ -15,7 +15,7 @@ Options:
   lengthTreshold=15,
   delayInit=false,
   deletePointBtn=null,
-  deleteLineBtn=null,
+  deleteSelectionBtn=null,
   toggleLineBtn=null,
   splitBtn=null,
   mergeBtn=null,
@@ -265,7 +265,7 @@ class Segmenter {
                         delayInit=false,
                         stateUpdateCallback=null,
                         deletePointBtn=null,
-                        deleteLineBtn=null,
+                        deleteSelectionBtn=null,
                         toggleLineBtn=null,
                         toggleRegionModeBtn=null,
                         splitBtn=null,
@@ -306,13 +306,23 @@ class Segmenter {
         
         this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
         this.deletePointBtn.style.zIndex = 3;
-        this.deleteLineBtn = deleteLineBtn || document.getElementById('delete-line');
-        this.deleteLineBtn.style.zIndex = 3;
         this.toggleMasksBtn = toggleLineBtn || document.getElementById('toggle-masks');
         this.splitBtn = splitBtn || document.getElementById('split-lines');
-        this.mergeBtn = mergeBtn || document.getElementById('merge-lines');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
-        
+        this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
+        this.mergeBtn = mergeBtn || document.getElementById('merge-selection');
+        // create a menu for the context buttons
+        this.contextMenu = document.createElement('div');
+        this.contextMenu.id = 'context-menu';
+        this.contextMenu.style.position = 'fixed';
+        this.contextMenu.style.display = 'none';
+        this.contextMenu.style.zIndex = 3;
+        this.contextMenu.style.border = '1px solid grey';
+        this.contextMenu.style.borderRadius = '5px';
+        this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
+        this.contextMenu.appendChild(this.mergeBtn);
+        this.contextMenu.appendChild(this.deleteSelectionBtn);        
+
         // callbacks
         this.stateUpdateCallback = stateUpdateCallback;
         
@@ -350,7 +360,7 @@ class Segmenter {
         
         tool.onMouseDown = this.onMouseDown.bind(this);
         
-        this.deleteLineBtn.addEventListener('click', function(event) {
+        this.deleteSelectionBtn.addEventListener('click', function(event) {
             for (let i=this.selection.length-1; i >= 0; i--) {    
                 this.selection[i].delete();
             }
@@ -374,7 +384,6 @@ class Segmenter {
 
         this.mergeBtn.addEventListener('click', function(event) {
             this.mergeSelection();
-            this.addState();
         }.bind(this));
         
         document.addEventListener('keyup', function(event) {
@@ -967,21 +976,31 @@ class Segmenter {
         }.bind(this));
     }
     
-    showDeleteLineBtn(line) {
-        let pt = view.projectToView(line.baselinePath.bounds.topRight);
-        this.deleteLineBtn.style.left = pt.x + 20 + "px";
-        this.deleteLineBtn.style.top = pt.y -30 + "px";
-        this.deleteLineBtn.style.display = 'inline';
+    showContextMenu() {
+        this.deleteSelectionBtn.style.display = 'inline';
+        this.mergeBtn.style.display = 'inline';
+        this.contextMenu.style.display = 'block';
+
+        // context follows top right, width can only be calculated once shown
+        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
+        this.contextMenu.style.right = (this.img.getBoundingClientRect().right+10)+'px';
+
+        if (this.mode == 'lines' && this.selection.length > 1) this.mergeBtn.disabled = false;
+        else this.mergeBtn.disabled = true;
     }
+    hideContextMenu() {
+        this.contextMenu.style.display = 'none';
+    }
+    
     addToSelection(obj) {
         if (this.selection.indexOf(obj) == -1) this.selection.push(obj);
-        if (obj.baselinePath) this.showDeleteLineBtn(obj);
+        if (obj.baselinePath) this.showContextMenu();
         // if (obj.baselinePath) this.showDeleteRegionBtn(line); // todo
     }
     removeFromSelection(obj) {
         this.selection.splice(this.selection.indexOf(obj), 1);
         this.deletePointBtn.style.display = 'none';
-        if (this.selection.length == 0) this.deleteLineBtn.style.display = 'none';
+        if (this.selection.length == 0) this.hideContextMenu();
     }
     purgeSelection(except) {
         for (let i=this.selection.length-1; i >= 0; i--) {
@@ -1099,11 +1118,10 @@ class Segmenter {
         */
         
         this.selection.sort(function(first, second) {
-            let vertical = false;  // todo
             let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
             let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
-            if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y;
-            else if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
+            // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
+            if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
             else return first.baselinePath.position.x - second.baselinePath.position.x;
         });
         
@@ -1121,7 +1139,10 @@ class Segmenter {
             
             this.selection[1].delete();
         }
-        if (this.selection) this.selection[0].changed = true;
+        if (this.selection.length) {
+            this.selection[0].updateDataFromCanvas();
+            this.addState();
+        }
     }
 
     setCursor(style) {
