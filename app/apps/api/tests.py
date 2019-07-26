@@ -73,7 +73,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(27):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -86,7 +86,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             resp = self.client.patch(
                 uri, {'transcription_progress': 50},
                 content_type='application/json')
@@ -97,7 +97,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-move',
                       kwargs={'document_pk': self.part2.document.pk,
                               'pk': self.part2.pk})
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {'index': 0})
             self.assertEqual(resp.status_code, 200)
 
@@ -245,7 +245,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
         
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(12):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,

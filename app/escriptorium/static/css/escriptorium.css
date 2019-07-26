@@ -3,22 +3,11 @@ body {
     padding: 10px;
     padding-top: 70px;
     max-width: 1800px;
+    margin: auto;
 }
 
 .hide {
     display: none;
-}
-.invisible {
-    visibility: hidden;
-}
-
-canvas.resize {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0; 
-    min-width: 10px;
-    min-height: 10px;
 }
 
 #delete-point, #delete-line {
@@ -29,6 +18,16 @@ canvas.resize {
   margin-right: auto;
   margin-left: auto;
   max-width: 1600px;
+}
+
+canvas.resize {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    padding: 0;
+    margin: 0;
 }
 
 /* alerts */
@@ -383,7 +382,7 @@ i.panel-icon {
 #trans-modal #trans-input, #trans-rule {
     overflow: visible;
     margin-top: 1rem;
-    white-space: nowrap;
+    white-space: pre;
     padding: 0 2px;
     transform-origin: top left;
     box-shadow: none;
