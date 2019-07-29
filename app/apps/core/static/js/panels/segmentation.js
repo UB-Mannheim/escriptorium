@@ -13,7 +13,6 @@ class SegmentationPanel extends Panel {
         this.seeBlocks = true;
         this.seeLines = true;
         this.$img = $('img', this.$container);
-        
         zoom.register(this.$img.get(0));
         this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true});
     }
@@ -26,22 +25,23 @@ class SegmentationPanel extends Panel {
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-        if (this.$img.complete) {
+
+        function init() {
             this.segmenter.init();
             this.segmenter.load(part);
             this.bindZoom();
         }
+        
+        if (this.$img.complete) init.bind(this)();
         this.$img.on('load', $.proxy(function(event) {
-            this.segmenter.init();
-            this.segmenter.load(part);
-            this.bindZoom();
+            init.bind(this)();
         }, this));
     }
     
     reset() {
         super.reset();
     }
-
+    
     bindZoom() {
         // simulates wheelzoom for canvas
         var img = this.$img.get(0);
@@ -57,6 +57,9 @@ class SegmentationPanel extends Panel {
             paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
             if (oldViewSize.width != paper.view.viewSize.width) {
                 paper.view.scale(paper.view.viewSize.width/oldViewSize.width, [0, 0]);
+                for (let i in zoom.targets) {
+                    zoom.targets[i].refreshMap();
+                }
             }
         }.bind(this));
     }

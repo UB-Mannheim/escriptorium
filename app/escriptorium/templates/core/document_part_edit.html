@@ -13,6 +13,8 @@
 </div>
 {% endblock %}
 
+{% block bodyclass %}part-edit-body{% endblock %}
+
 {% block nav_content %}
 <div class="row">
   <div class="col-sides"></div>
@@ -28,8 +30,8 @@
         <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
       </div>
       <div class="col mr-1 mb-2">
-        <button id="undo-btn" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" disabled></button>
-        <button id="redo-btn" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" disabled></button>
+        <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
+        <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
         
         <button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button>
         <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>

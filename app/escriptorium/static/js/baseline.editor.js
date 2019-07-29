@@ -166,6 +166,7 @@ class SegmenterLine {
         if (this.selected) return;
         if (this.maskPath && this.maskPath.visible) this.maskPath.selected = true;
         this.baselinePath.selected = true;
+        this.maskPath.bringToFront();
         this.baselinePath.bringToFront();
         this.baselinePath.strokeColor = this.segmenter.secondaryColor;
         if (this.directionHint) this.directionHint.visible = true;
@@ -270,6 +271,8 @@ class Segmenter {
                         toggleRegionModeBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
+                        undoBtn=null,
+                        redoBtn=null,
                         disableMasks=false, // td
                         mainColor=null,
                         secondaryColor=null,
@@ -310,6 +313,8 @@ class Segmenter {
         this.splitBtn = splitBtn || document.getElementById('split-lines');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
         this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
+        this.undoBtn = undoBtn || document.getElementById('undo');
+        this.redoBtn = redoBtn || document.getElementById('redo');
         this.mergeBtn = mergeBtn || document.getElementById('merge-selection');
         // create a menu for the context buttons
         this.contextMenu = document.createElement('div');
@@ -382,10 +387,16 @@ class Segmenter {
             this.splitBtn.classList.toggle('btn-success');
             this.setCursor();
         }.bind(this));
-
         this.mergeBtn.addEventListener('click', function(event) {
             this.mergeSelection();
         }.bind(this));
+        this.undoBtn.addEventListener('click', function(event) {
+            this.loadPreviousState();
+        }.bind(this));
+        this.redoBtn.addEventListener('click', function(event) {
+            this.loadNextState();
+        }.bind(this));
+
         
         document.addEventListener('keyup', function(event) {
             if (event.keyCode == 27) { // escape
@@ -403,7 +414,22 @@ class Segmenter {
                 this.toggleMasks();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
+            } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
+                event.preventDefault();
+                event.stopPropagation();
+                // select all
+                if (this.mode == 'lines') {
+                    for (let i in this.lines) this.lines[i].select();
+                } else if (this.mode == 'regions') {
+                    for (let i in this.regions) this.regions[i].select();
+                }
+                return false;
+            } else if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
+                this.loadPreviousState();
+            } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
+                this.loadNextState();
             }
+            
             // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
             //     this.copy = this.selection.map(a => [
             //         a.baselinePath.exportJSON({asString: false})[1].segments,
@@ -477,8 +503,8 @@ class Segmenter {
 
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function(event) {
-            if (event.event.ctrlKey || this.mode != 'regions') return;
-            if (!this.selecting) this.selecting = region;
+            if (event.event.ctrlKey || this.selecting || this.mode != 'regions') return;
+            this.selecting = region;
             
             var dragging = region.polygonPath.getNearestLocation(event.point).segment;
             this.tool.onMouseDrag = function(event) {
@@ -526,7 +552,8 @@ class Segmenter {
     bindLineEvents(line) {
         line.baselinePath.onMouseDown = function(event) {
             if (event.event.ctrlKey || this.mode != 'lines' || this.selecting) return;
-            if (!this.selecting) this.selecting = line;
+            
+            this.selecting = line;
             var hit = line.baselinePath.hitTest(event.point, {
 	            segments: true,
 	            tolerance: 20
@@ -602,7 +629,7 @@ class Segmenter {
 
         // same for the masks
         line.maskPath.onMouseDown = function(event) {
-            if (event.event.ctrlKey || this.mode != 'lines') return;
+            if (event.event.ctrlKey || this.selecting || this.mode != 'lines') return;
             this.selecting = line;
 
             var dragging = line.maskPath.getNearestLocation(event.point).segment;
@@ -911,14 +938,10 @@ class Segmenter {
         this.reset();
         this.load(this.states[this.stateIndex]);
 
-        // stateUpdateCallback: function(stateIndex, stateLength) {
-        //     if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
-        //     else document.getElementById('undo-btn').disabled = true;
-        //     if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
-        //     else document.getElementById('redo-btn').disabled = true;
-        // }
-        
-        if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
+        if (this.stateIndex > 0) this.undoBtn.disabled = false;
+        else this.undoBtn.disabled = true;
+        if (this.stateIndex < this.states.length-1) this.redoBtn.disabled = false;
+        else this.redoBtn.disabled = true;
     }
     
     addState() {
@@ -926,7 +949,8 @@ class Segmenter {
         else this.states = this.states.slice(1);
         this.states = this.states.slice(0, this.stateIndex); // cut the state branch
         this.states[this.stateIndex] = this.exportJSON();
-        if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
+        if (this.stateIndex > 0) this.undoBtn.disabled = false;
+        // if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
     }
     
     updateLinesFromCanvas() {

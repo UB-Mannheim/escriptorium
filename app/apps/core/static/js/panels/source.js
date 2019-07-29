@@ -3,9 +3,9 @@ class SourcePanel extends Panel {
         super($panel, $tools, opened);
         this.$img = $('.img-container img', this.$panel);
         zoom.register(this.$img.get(0), {map: true});
-        this.$img.on('load', $.proxy(function(data) {
-            zoom.refresh();
-        }, this));
+        // this.$img.on('load', $.proxy(function(data) {
+        //     zoom.refresh();
+        // }, this));
     }
     
     load(part) {

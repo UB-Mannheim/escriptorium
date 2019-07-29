@@ -37,9 +37,8 @@ class zoomTarget {
             this.mapTimer = null;
             this.mapMargin = mapMargin;
             this.makeMap(mapMargin, mapColors);
+            this.refreshMap();
         }
-
-        this.reset();
     }
 
     update(pos, scale) {
@@ -48,7 +47,9 @@ class zoomTarget {
         if (this.map && scale > 1) {
             this.mapWhole.style.opacity = 0.7;
             this.mapCurrent.textContent = Math.round(scale*100)+'%';
-            this.mapCurrent.style.transform = 'translate('+(-pos.x*this.mapScale/scale)+'px,'+(-pos.y*this.mapScale/scale)+'px) '+'scale('+1/scale+')';
+            this.mapCurrent.style.transform = ''+
+                'translate('+(-pos.x*this.mapScale/scale)+'px,'+(-pos.y*this.mapScale/scale)+'px) '+
+                'scale('+1/scale+')';
 
             // fadeOut
             if (this.mapTimer) clearInterval(this.mapTimer);
@@ -63,13 +64,13 @@ class zoomTarget {
         }
     }
 
-    reset() {
-        this.size = {w:this.element.width, h:this.element.height};
+    refreshMap() {
         if (this.map) {
-            this.mapWhole.style.top = this.container.getBoundingClientRect().y + this.mapMargin+'px';
-            this.mapWhole.style.left = this.container.getBoundingClientRect().x + this.mapMargin+'px';
-            this.mapWhole.style.width = (this.element.getBoundingClientRect().width*this.mapScale)+'px';
-            this.mapWhole.style.height = (this.element.getBoundingClientRect().height*this.mapScale)+'px';
+            let bounds = this.container.getBoundingClientRect();
+            this.mapWhole.style.top = (bounds.y + this.mapMargin) + 'px';
+            this.mapWhole.style.left = (bounds.x + this.mapMargin) + 'px';
+            this.mapWhole.style.width = (bounds.width * this.mapScale) + 'px';
+            this.mapWhole.style.height = (bounds.height * this.mapScale) + 'px';
         }
     }
     
@@ -156,7 +157,6 @@ class WheelZoom {
 
 	    // apply zoom
 	    this.scale += delta * this.factor;
-        console.log(this.minScale, this.scale);
 	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 
@@ -177,8 +177,8 @@ class WheelZoom {
 		e.preventDefault();
         let target = this.dragging;
         if (!target) return null;
+        let ts = target.container.getBoundingClientRect();
         let delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
-        let ts = target.size;
         
         if (this.previousEvent) {
             if (e.altKey) {
@@ -188,29 +188,29 @@ class WheelZoom {
 		        this.pos.y += (e.pageY - this.previousEvent.pageY);
             }
         }
-            
 	    // Make sure the slide stays in its container area when zooming in/out
         if (this.scale > 1) {
 	        if (this.pos.x > 0) { this.pos.x = 0; }
-	        if (this.pos.x  < ts.w - ts.w * this.scale) {
-                this.pos.x = ts.w - ts.w * this.scale;
+	        // if (this.pos.x < ts.width - ts.width * this.scale) {
+            if (this.pos.x + (target.element.width * this.scale) < ts.width) {
+                this.pos.x = ts.width - (target.element.width * this.scale);
             }
         } else {
 	        if (this.pos.x < 0) { this.pos.x = 0; }
-	        if (this.pos.x > ts.w - ts.w * this.scale) {
-                this.pos.x = ts.w - ts.w * this.scale;
+	        if (this.pos.x > ts.width - ts.width * this.scale) {
+                this.pos.x = ts.width - ts.width * this.scale;
             }
         }
         
         if (this.scale > 1) {
             if (this.pos.y > 0) { this.pos.y = 0; }
-	        if (this.pos.y < ts.h - ts.h * this.scale) {
-                this.pos.y = ts.h - ts.h * this.scale;
+	        if (this.pos.y < ts.height - ts.height * this.scale) {
+                this.pos.y = ts.height - ts.height * this.scale;
             }
         } else {
             if (this.pos.y < 0) { this.pos.y = 0; }
-            if (this.pos.y > ts.h - ts.h * this.scale) {
-                this.pos.y = ts.h - ts.h * this.scale;
+            if (this.pos.y > ts.height - ts.height * this.scale) {
+                this.pos.y = ts.height - ts.height * this.scale;
             }
         }
         
@@ -271,14 +271,8 @@ class WheelZoom {
     }
     
     reset() {
-        // TODO
-        // let container = this.getVisibleContainer();
         this.pos = {x:0, y:0};
 	    this.scale = this.initialScale || 1;
-        for (let i in this.targets) {
-            console.log('olé');
-            this.targets[i].reset();
-        }
         this.updateStyle();
     }
     
