@@ -78,7 +78,7 @@ Todo:
 {% block scripts %}
 <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/wheelzoom2.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
 
 <script>
@@ -152,13 +152,7 @@ Todo:
     var img = document.getElementById('seg');
     img.ondragstart = function(e) { return false; };
     segmenter = new Segmenter(img, {
-        delayInit: true,
-        stateUpdateCallback: function(stateIndex, stateLength) {
-            if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
-            else document.getElementById('undo-btn').disabled = true;
-            if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
-            else document.getElementById('redo-btn').disabled = true;
-        }
+        delayInit: true
     });
     
     var container = document.getElementById('container');

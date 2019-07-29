@@ -275,7 +275,7 @@ class Segmenter {
                         secondaryColor=null,
                         upperLineHeight=20,
                         lowerLineHeight=10
-                       }) {
+                       } = {}) {
         this.img = image;
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
@@ -344,8 +344,6 @@ class Segmenter {
         this.setColors(this.img);
         this.setCursor();
 
-        // disable right click menu
-        this.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         // make sure we capture clicks before the img
         this.canvas.style.zIndex = this.canvas.style.zIndex + 1;
         
@@ -358,8 +356,7 @@ class Segmenter {
 
         // context follows top right, width can only be calculated once shown
         this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
-        this.contextMenu.style.right = (this.img.getBoundingClientRect().right+10)+'px';
-        
+        this.contextMenu.style.margin = '10px';
         this.addState();
         
         tool.onMouseDown = this.onMouseDown.bind(this);
@@ -481,7 +478,7 @@ class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function(event) {
             if (event.event.ctrlKey || this.mode != 'regions') return;
-            this.selecting = region;
+            if (!this.selecting) this.selecting = region;
             
             var dragging = region.polygonPath.getNearestLocation(event.point).segment;
             this.tool.onMouseDrag = function(event) {
@@ -529,7 +526,7 @@ class Segmenter {
     bindLineEvents(line) {
         line.baselinePath.onMouseDown = function(event) {
             if (event.event.ctrlKey || this.mode != 'lines' || this.selecting) return;
-            this.selecting = line;
+            if (!this.selecting) this.selecting = line;
             var hit = line.baselinePath.hitTest(event.point, {
 	            segments: true,
 	            tolerance: 20
@@ -913,6 +910,14 @@ class Segmenter {
         if (index === undefined) return;
         this.reset();
         this.load(this.states[this.stateIndex]);
+
+        // stateUpdateCallback: function(stateIndex, stateLength) {
+        //     if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
+        //     else document.getElementById('undo-btn').disabled = true;
+        //     if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
+        //     else document.getElementById('redo-btn').disabled = true;
+        // }
+        
         if (this.stateUpdateCallback) this.stateUpdateCallback(this.stateIndex, this.states.length);
     }
     
@@ -1007,10 +1012,6 @@ class Segmenter {
                 this.selection[i].unselect();
             }
         }
-    }
-
-    resetViewSize() {
-        paper.view.viewSize = [this.img.width, this.img.height];
     }
     
     makeSelectionRectangle(event) {

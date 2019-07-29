@@ -4,7 +4,7 @@ var API = {
     part: '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
 
-var zoom = new WheelZoom({min_scale: 0.5, max_scale: 10});
+var zoom = new WheelZoom();
 
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
@@ -14,7 +14,7 @@ $(document).ready(function() {
 	    if (show) {
 	        $('#'+title+'-btn').addClass('btn-primary').removeClass('btn-secondary');
 	    }
-	}	
+	}
 	makePanel('source', SourcePanel, true);
 	makePanel('binar', BinarizationPanel, false);
 	makePanel('seg', SegmentationPanel, false);
@@ -55,7 +55,7 @@ $(document).ready(function() {
         }
         zoom.refresh();
     });
-
+    
     // previous and next buttons
     $('a#prev-part, a#next-part').click(function(ev) {
         ev.preventDefault();
@@ -69,15 +69,16 @@ $(document).ready(function() {
             panels[key].reset();
         }
     });
-
+    
     // zoom slider
-    $('#zoom-range').attr('min', zoom.min_scale);
-    $('#zoom-range').attr('max', zoom.max_scale);
+    $('#zoom-range').attr('min', zoom.minScale);
+    $('#zoom-range').attr('max', zoom.maxScale);
     $('#zoom-range').val(zoom.scale);
     
-    zoom.events.on('wheelzoom.updated', function(data) {
+    zoom.events.addEventListener('wheelzoom.updated', function(data) {
         $('#zoom-range').val(zoom.scale);
-    });    
+    });
+    
     $('#zoom-range').on('input', function(ev) {
         zoom.scale = parseFloat($(ev.target).val());
         zoom.refresh();
