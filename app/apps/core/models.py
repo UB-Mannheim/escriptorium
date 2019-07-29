@@ -129,8 +129,7 @@ class DocumentManager(models.Manager):
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
                 .prefetch_related('shared_with_groups')
                 .select_related('typology')
-                .distinct()
-        )
+                .distinct())
 
 
 class Document(models.Model):
@@ -201,11 +200,11 @@ class Document(models.Model):
     @property
     def is_archived(self):
         return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED
-
+    
     @cached_property
     def is_transcribing(self):
         return self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).first() is not None
-
+    
     @cached_property
     def default_text_direction(self):
         if self.main_script:
@@ -390,11 +389,10 @@ class DocumentPart(OrderedModel):
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
             return {}
-
+    
     @property
     def workflow(self):
         w = {}
-
         if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
             w['convert'] = 'ongoing'
         elif self.workflow_state > self.WORKFLOW_STATE_CONVERTING:
@@ -703,7 +701,7 @@ class Line(OrderedModel):  # Versioned,
     Represents a segmented line from a DocumentPart
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
-    polygon = JSONField(null=True)
+    mask = JSONField(null=True)
     baseline = JSONField(null=True)
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
@@ -731,13 +729,13 @@ class Line(OrderedModel):  # Versioned,
         return self.box[3] - self.box[1]
     
     def get_box(self):
-        return (*map(min, *self.polygon), *map(max, *self.polygon))
+        return (*map(min, *self.mask), *map(max, *self.mask))
     
     def set_box(self, box):
-        self.polygon = ((box[0], box[1]),
-                        (box[0], box[3]),
-                        (box[2], box[3]),
-                        (box[2], box[1]))
+        self.mask = ((box[0], box[1]),
+                     (box[0], box[3]),
+                     (box[2], box[3]),
+                     (box[2], box[1]))
     
     box = property(get_box, set_box)
     

@@ -14,7 +14,10 @@ class SegmentationPanel extends Panel {
         this.seeLines = true;
         this.$img = $('img', this.$container);
         zoom.register(this.$img.get(0));
-        this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true});
+        this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
+        this.segmenter.events.addEventListener('baseline-editor-lines-update', function(event) {
+            console.log('Save ', event.detail);
+        });
     }
     
     load(part) {
@@ -36,10 +39,6 @@ class SegmentationPanel extends Panel {
         this.$img.on('load', $.proxy(function(event) {
             init.bind(this)();
         }, this));
-    }
-    
-    reset() {
-        super.reset();
     }
     
     bindZoom() {

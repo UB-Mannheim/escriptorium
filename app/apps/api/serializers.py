@@ -120,7 +120,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'polygon')
+        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
     
     def create(self, validated_data):
         instance = super().create(validated_data)
