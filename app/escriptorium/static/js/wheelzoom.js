@@ -136,6 +136,7 @@ class WheelZoom {
         } else {
             target.container.classList.add('mirror');
         }
+        return target;
     }
     
 	scrolled(e) {

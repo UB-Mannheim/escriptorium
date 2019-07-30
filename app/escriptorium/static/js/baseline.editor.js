@@ -382,27 +382,27 @@ class Segmenter {
             this.addState();
         }.bind(this));
 
-        this.toggleRegionModeBtn.addEventListener('click', function(event) {
+        if (this.toggleRegionModeBtn) this.toggleRegionModeBtn.addEventListener('click', function(event) {
             this.toggleRegionMode();
         }.bind(this));
         
-        this.toggleMasksBtn.addEventListener('click', function(event) {
+        if (this.toggleMasksBtn) this.toggleMasksBtn.addEventListener('click', function(event) {
             this.toggleMasks();
         }.bind(this));
 
-        this.splitBtn.addEventListener('click', function(event) {
+        if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
             this.splitBtn.classList.toggle('btn-info');
             this.splitBtn.classList.toggle('btn-success');
             this.setCursor();
         }.bind(this));
-        this.mergeBtn.addEventListener('click', function(event) {
+        if (this.mergeBtn) this.mergeBtn.addEventListener('click', function(event) {
             this.mergeSelection();
         }.bind(this));
-        this.undoBtn.addEventListener('click', function(event) {
+        if (this.undoBtn) this.undoBtn.addEventListener('click', function(event) {
             this.loadPreviousState();
         }.bind(this));
-        this.redoBtn.addEventListener('click', function(event) {
+        if (this.redoBtn) this.redoBtn.addEventListener('click', function(event) {
             this.loadNextState();
         }.bind(this));
 
@@ -913,7 +913,8 @@ class Segmenter {
     }
 
     refresh() {
-        paper.view.viewSize = [this.img.naturalWidth, this.img.naturalHeight];
+        paper.view.viewSize = [this.img.getBoundingClientRect().width,
+                               this.img.getBoundingClientRect().height];
     }
     
     load(data) {
@@ -980,7 +981,7 @@ class Segmenter {
         else this.states = this.states.slice(1);
         this.states = this.states.slice(0, this.stateIndex); // cut the state branch
         this.states[this.stateIndex] = this.exportJSON();
-        if (this.stateIndex > 0) this.undoBtn.disabled = false;
+        if (this.stateIndex > 0 && this.undoBtn) this.undoBtn.disabled = false;
     }
 
     trigger(eventName, data) {

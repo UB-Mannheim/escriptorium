@@ -13,7 +13,7 @@ class SegmentationPanel extends Panel {
         this.seeBlocks = true;
         this.seeLines = true;
         this.$img = $('img', this.$container);
-        zoom.register(this.$img.get(0));
+        this.zoomTarget = zoom.register(this.$img.get(0), {map: true});
         this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
         this.segmenter.events.addEventListener('baseline-editor-lines-update', function(event) {
             console.log('Save ', event.detail);
@@ -55,16 +55,20 @@ class SegmentationPanel extends Panel {
             this.segmenter.canvas.style.left = zoom.pos.x + 'px';
             this.segmenter.canvas.style.width = img.width*zoom.scale + 'px';
             this.segmenter.canvas.style.height = img.height*zoom.scale + 'px';
-            
-            let oldViewSize = paper.view.viewSize;            
-            
-            paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
-            if (oldViewSize.width != paper.view.viewSize.width) {
-                paper.view.scale(paper.view.viewSize.width/oldViewSize.width, [0, 0]);
-                for (let i in zoom.targets) {
-                    zoom.targets[i].refreshMap();
-                }
+            if(e.detail.scale) {
+                paper.view.scale(1/paper.view.zoom, [0, 0]);
+                paper.view.scale(e.detail.scale, [0, 0]);
             }
+            // paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
+            // let oldViewSize = paper.view.viewSize;
+            // paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
+            // if (oldViewSize.width != paper.view.viewSize.width) {
+            //     paper.view.scale(paper.view.viewSize.width/oldViewSize.width, [0, 0]);
+            //     for (let i in zoom.targets) {
+            //         zoom.targets[i].refreshMap();
+            //     }
+            // }
+            this.segmenter.refresh();
         }.bind(this));
     }
 }

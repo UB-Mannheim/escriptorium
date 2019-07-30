@@ -7,6 +7,19 @@ var API = {
 var zoom = new WheelZoom();
 
 $(document).ready(function() {
+    function showMap() {
+        // show the map only on the first panel
+        let first = true;
+        for (let i in panels) {
+            if (panels[i].opened && first) {
+                panels[i].zoomTarget.mapWhole.style.display = 'block';
+                first = false;
+            } else {
+                panels[i].zoomTarget.mapWhole.style.display = 'none';
+            }
+        }
+    }
+    
     function makePanel(name, class_, visible) {
 	    var title = name + '-panel';
 	    var show = Cookies.get(title) && JSON.parse(Cookies.get(title)) || visible;
@@ -19,6 +32,7 @@ $(document).ready(function() {
 	makePanel('binar', BinarizationPanel, false);
 	makePanel('seg', SegmentationPanel, false);
 	// makePanel('trans', TranscriptionPanel, false);
+    showMap();
     
     function loadPart(pk, callback) {
         let uri = API.part.replace('{part_pk}', pk);
@@ -54,6 +68,7 @@ $(document).ready(function() {
             panels[key].reset();
         }
         zoom.refresh();
+        showMap();
     });
     
     // previous and next buttons
