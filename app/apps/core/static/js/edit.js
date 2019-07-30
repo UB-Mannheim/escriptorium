@@ -65,9 +65,9 @@ $(document).ready(function() {
     
     loadPart(PART_ID, function(data) {
         // needs to recalculate positions once everything is loaded
-        for (var key in panels) {
-            panels[key].reset();
-        }
+        // for (var key in panels) {
+        //     panels[key].reset();
+        // }
     });
     
     // zoom slider

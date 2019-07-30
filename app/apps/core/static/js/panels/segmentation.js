@@ -40,6 +40,11 @@ class SegmentationPanel extends Panel {
             init.bind(this)();
         }, this));
     }
+
+    reset() {
+        super.reset();
+        this.segmenter.refresh();
+    }
     
     bindZoom() {
         // simulates wheelzoom for canvas

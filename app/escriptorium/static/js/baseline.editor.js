@@ -298,7 +298,6 @@ class Segmenter {
         // this.raster = null;
         // insert after..
         this.img.parentNode.insertBefore(this.canvas, this.img);
-        this.imgRatio = 1;
         this.mainColor = null;
         this.secondaryColor = null;
         this.upperLineHeight = upperLineHeight;
@@ -347,7 +346,7 @@ class Segmenter {
         }
     }
 
-    init(event) {
+    init() {
         paper.settings.handleSize = 10;
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
@@ -360,9 +359,9 @@ class Segmenter {
         this.setCursor();
 
         // make sure we capture clicks before the img
-        this.canvas.style.zIndex = this.canvas.style.zIndex + 1;
+        this.canvas.style.zIndex = this.img.style.zIndex + 1;
+        this.refresh();
         
-        this.imgRatio = this.img.width / this.img.naturalWidth;
         this.canvas.style.width = this.img.width;
         this.canvas.style.height = this.img.height;
         // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
@@ -754,7 +753,7 @@ class Segmenter {
             }
         }
     }
-
+    
     startNewLine(event) {
         this.purgeSelection();
         let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
@@ -799,7 +798,7 @@ class Segmenter {
         }.bind(this);
         document.addEventListener('keyup', onCancel);
     }
-
+    
     startNewRegion(event) {
         this.purgeSelection();
         var originPoint = event.point;
@@ -841,7 +840,7 @@ class Segmenter {
         }.bind(this);
         document.addEventListener('keyup', onCancel);
     }
-        
+    
     startCuter(event) {
         // rectangle cutter
         let clip = this.makeSelectionRectangle(event);
@@ -867,7 +866,7 @@ class Segmenter {
         }.bind(this);
         document.addEventListener('keyup', onCancel);
     }
-
+    
     startLassoSelection(event) {
         let clip = this.makeSelectionRectangle(event);
         let onCancel = function(event) {
@@ -896,13 +895,13 @@ class Segmenter {
         point.x += delta.x;
         point.y += delta.y;
         if (point.x < 0) point.x = 0;
-        if (point.x > this.img.width) point.x = this.img.width;
+        if (point.x > this.img.naturalWidth) point.x = this.img.naturalWidth;
         if (point.y < 0) point.y = 0;
-        if (point.y > this.img.height) point.y = this.img.height;
+        if (point.y > this.img.naturalHeight) point.y = this.img.naturalHeight;
     }
-
+    
     reset() {
-        // TODO: reset imgRatio and internals stuff too
+        // clean everything from the view
         for (let i=this.lines.length-1; i >= 0; i--) {
             this.lines[i].remove();
         };
@@ -912,25 +911,25 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
     }
+
+    refresh() {
+        paper.view.viewSize = [this.img.naturalWidth, this.img.naturalHeight];
+    }
     
     load(data) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
         if (data.lines) {
             data.lines.forEach(function(line) {
-                let baseline = line.baseline && line.baseline.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))) || null,
-                    mask = line.mask && line.mask.map(poly => poly.map(coord => Math.round(coord * this.imgRatio))) || null;
                 let context = {};
                 if (this.idField) context[this.idField] = line[this.idField];
-                let newLine = this.createLine(baseline, mask, context);
+                let newLine = this.createLine(line.baseline, line.mask, context);
                 if (!newLine.mask) newLine.createMask();
             }.bind(this));
         }
         if (data.regions) {   
             data.regions.forEach(function(region) {
-                let newRegion = this.createRegion(
-                    region.map(poly => poly.map(coord => Math.round(coord * this.imgRatio)))
-                );
+                let newRegion = this.createRegion(region);
             }.bind(this));
         }
     }
@@ -943,13 +942,11 @@ class Segmenter {
            }
         */
         return {
-            regions: this.regions.map(function(region) {
-                return region.polygon.map(poly => poly.map(coord => Math.round(coord / this.imgRatio)));
-            }.bind(this)),
+            regions: this.regions.map(region => region.polygon),
             lines: this.lines.map(function(line) {
                 return {
-                    baseline: line.baseline && line.baseline.map(poly => poly.map(coord => Math.round(coord / this.imgRatio))) || null,
-                    mask: line.mask && line.mask.map(poly => poly.map(coord => Math.round(coord / this.imgRatio))) || null
+                    baseline: line.baseline,
+                    mask: line.mask
                 };
             }.bind(this))
         };
@@ -1000,7 +997,7 @@ class Segmenter {
                 changes.push(this.lines[i]);
             }
         }
-        if (changes) this.trigger('baseline-editor-lines-update', changes);
+        if (changes.length) this.trigger('baseline-editor-lines-update', changes);
         return changes;
     }
     
@@ -1013,7 +1010,7 @@ class Segmenter {
                 changes.push(this.regions[i]);
             }
         }
-        if (changes) this.trigger('baseline-editor:regions-update', changes);
+        if (changes.length) this.trigger('baseline-editor:regions-update', changes);
         return changes;
     }
     
@@ -1119,6 +1116,7 @@ class Segmenter {
     
     splitHelper(clip, event) {
         this.lines.forEach(function(line) {
+            if (!line.baselinePath) return;
             let intersections = line.baselinePath.getIntersections(clip);
             for (var i = 0; i < intersections.length; i++) {
                 new Path.Circle({
@@ -1132,7 +1130,7 @@ class Segmenter {
                     let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
                     intersections.forEach(location => cut.add(location));
                     cut.bringToFront();
-                    line.baselinePath.segments.forEach(function(segment) {
+                    path.segments.forEach(function(segment) {
                         if (clip.contains(segment.point)) {
                             cut.insert(segment.index, segment);
                         }
@@ -1144,6 +1142,7 @@ class Segmenter {
     
     splitByPath(path) {
         this.lines.forEach(function(line) {
+            if (!line.baselinePath) return;
             let intersections = line.baselinePath.getIntersections(path);
             for (var i = 0; i < intersections.length; i += 2) {
                 if (i+1 >= intersections.length) {  // one intersection remaining
