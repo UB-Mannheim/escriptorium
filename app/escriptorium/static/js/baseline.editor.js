@@ -285,6 +285,8 @@ class Segmenter {
                         idField='id'
                        } = {}) {
         this.img = image;
+        this.imgRatio = null;  // img may not be loaded yet
+
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
 
@@ -351,7 +353,7 @@ class Segmenter {
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
-
+        
         var hitOptions = { type : ('path'), segments: true, stroke: true, fill: true, tolerance: 5 };
         
         var tool = new Tool();
@@ -503,6 +505,7 @@ class Segmenter {
         this.bindLineEvents(line);
         this.resetToolEvents();  // unregistering
         this.addState();
+        this.trigger('baseline-editor:update', {lines: [line]});
     }
 
     createRegion(polygon, postponeEvents) {
@@ -517,6 +520,7 @@ class Segmenter {
         this.resetToolEvents();
         region.updateDataFromCanvas();
         this.addState();
+        this.trigger('baseline-editor:update', {regions: [region]});
     }
 
     bindRegionEvents(region) {
@@ -771,6 +775,7 @@ class Segmenter {
             return null;
         }.bind(this);
         
+        this.tool.activate();
         this.tool.onMouseDown = function(event) {
             if (isRightClick(event.event)) {
                 point = newLine.extend(event.point).point;
@@ -911,10 +916,15 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
     }
-
+    
     refresh() {
-        paper.view.viewSize = [this.img.getBoundingClientRect().width,
-                               this.img.getBoundingClientRect().height];
+        let bounds = this.img.getBoundingClientRect();
+        this.imgRatio = bounds.width / this.img.naturalWidth;
+        if (paper.view) {
+            this.deletePointBtn.style.display = 'none';
+            paper.view.viewSize = [bounds.width, bounds.height];
+            paper.view.scale(this.imgRatio/paper.view.zoom, [0, 0]);
+        }
     }
     
     load(data) {
@@ -998,7 +1008,7 @@ class Segmenter {
                 changes.push(this.lines[i]);
             }
         }
-        if (changes.length) this.trigger('baseline-editor-lines-update', changes);
+        if (changes.length) this.trigger('baseline-editor:update', {lines: changes});
         return changes;
     }
     
@@ -1011,7 +1021,7 @@ class Segmenter {
                 changes.push(this.regions[i]);
             }
         }
-        if (changes.length) this.trigger('baseline-editor:regions-update', changes);
+        if (changes.length) this.trigger('baseline-editor:update', {regions: changes});
         return changes;
     }
     

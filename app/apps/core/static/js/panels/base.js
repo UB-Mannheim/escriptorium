@@ -8,12 +8,13 @@ class Panel {
     
     load(part) {
         this.part = part;
+        this.api = API.part.replace('{part_pk}', this.part.pk);
 	    if (this.opened) this.open();    
 	}
     
     open() {
         this.opened = true;
-        this.$panel.show();
+        this.$panel.show(this.onShow.bind(this));
         this.$tools.show();
         Cookies.set(this.$panel.attr('id'), true);
     }
@@ -28,4 +29,5 @@ class Panel {
         else this.open();
     }
     reset() {}
+    onShow() {}
 }

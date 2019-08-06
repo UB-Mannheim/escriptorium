@@ -364,7 +364,6 @@ class TranscriptionPanel extends Panel {
     
     load(part) {
         super.load(part);
-        this.api = API.part.replace('{part_pk}', this.part.pk);
         this.lines = [];
         $('.trans-box').remove();
         this.ratio = this.getRatio();

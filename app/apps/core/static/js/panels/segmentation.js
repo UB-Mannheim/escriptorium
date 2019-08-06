@@ -15,9 +15,15 @@ class SegmentationPanel extends Panel {
         this.$img = $('img', this.$container);
         this.zoomTarget = zoom.register(this.$img.get(0), {map: true});
         this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
-        this.segmenter.events.addEventListener('baseline-editor-lines-update', function(event) {
-            console.log('Save ', event.detail);
-        });
+        this.segmenter.events.addEventListener('baseline-editor:update', function(event) {
+            let data = event.detail;
+            if (data.lines) data.lines.forEach(function(line, index) {
+                this.save(line, 'lines');
+            }.bind(this));
+            if (data.regions) data.regions.forEach(function(region, index) {
+                this.save(region, 'blocks');
+            }.bind(this));
+        }.bind(this));
     }
     
     load(part) {
@@ -28,46 +34,61 @@ class SegmentationPanel extends Panel {
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-
-        function init() {
-            this.segmenter.init();
-            this.segmenter.load(part);
-            this.bindZoom();
-        }
-        
-        if (this.$img.complete) init.bind(this)();
-        this.$img.on('load', $.proxy(function(event) {
-            init.bind(this)();
-        }, this));
+        this.part = part;
     }
 
+    onShow() {
+        this.segmenter.init();
+        this.segmenter.load(this.part);
+        this.bindZoom();
+    }
+    
+    save(obj, type) {
+        var post = {document_part: this.part.pk};
+        if (type=='lines') {
+            post['baseline'] = JSON.stringify(obj.baseline);
+            post['mask'] = JSON.stringify(obj.mask);
+            // post.block = this.block?this.block.pk:null; // todo
+        } else if (type == 'regions') {
+            post['box'] = obj.polygon;
+        }
+        
+        let uri = this.api + type + '/';
+        let pk = obj.context.pk;
+        if (pk) uri += pk+'/';
+        var requestType = pk?'PUT':'POST';
+        $.ajax({url: uri, type: requestType, data: post})
+            .done($.proxy(function(data) {
+                /* create corresponding transcription line */
+                // if (!pk && type == 'lines') {
+                //     panels['trans'].addLine(data);
+                // }
+                // Object.assign(this, data);
+                // TODO: checks ?
+                // this.updateApi();
+            }, this))
+            .fail(function(data){
+                alert("Couldn't save block:", data);
+            });
+        this.changed = false;
+    }
+    
     reset() {
         super.reset();
-        this.segmenter.refresh();
+        if (this.opened) {
+            this.segmenter.refresh();
+        }
     }
     
     bindZoom() {
         // simulates wheelzoom for canvas
         var img = this.$img.get(0);
         zoom.events.addEventListener('wheelzoom.updated', function(e) {
-            this.segmenter.deletePointBtn.style.display = 'none';
+            if (!this.opened) return;
             this.segmenter.canvas.style.top = zoom.pos.y + 'px';
             this.segmenter.canvas.style.left = zoom.pos.x + 'px';
             this.segmenter.canvas.style.width = img.width*zoom.scale + 'px';
             this.segmenter.canvas.style.height = img.height*zoom.scale + 'px';
-            if(e.detail.scale) {
-                paper.view.scale(1/paper.view.zoom, [0, 0]);
-                paper.view.scale(e.detail.scale, [0, 0]);
-            }
-            // paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
-            // let oldViewSize = paper.view.viewSize;
-            // paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
-            // if (oldViewSize.width != paper.view.viewSize.width) {
-            //     paper.view.scale(paper.view.viewSize.width/oldViewSize.width, [0, 0]);
-            //     for (let i in zoom.targets) {
-            //         zoom.targets[i].refreshMap();
-            //     }
-            // }
             this.segmenter.refresh();
         }.bind(this));
     }
