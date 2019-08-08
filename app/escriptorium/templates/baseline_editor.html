@@ -103,22 +103,7 @@ Todo:
                     segmenter.canvas.style.left = zoom.pos.x + 'px';
                     segmenter.canvas.style.width = img.width*zoom.scale + 'px';
                     segmenter.canvas.style.height = img.height*zoom.scale + 'px';
-                    // if(e.detail.scale) {
-                    //     paper.view.scale(1/paper.view.zoom, [0, 0]);
-                    //     paper.view.scale(e.detail.scale, [0, 0]);
-                    // }
-                    // paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
-                    // let oldViewSize = paper.view.viewSize;
-                    paper.view.viewSize = [img.naturalWidth*zoom.scale, img.naturalHeight*zoom.scale];
-console.log(paper.view.position);
-                    paper.view.position = [zoom.pos.x, zoom.pos.y];
-                    // if (oldViewSize.width != paper.view.viewSize.width) {
-                    //     paper.view.scale(paper.view.viewSize.width/oldViewSize.width, [0, 0]);
-                    //     for (let i in zoom.targets) {
-                    //         zoom.targets[i].refreshMap();
-                    //     }
-                    // }
-                    // segmenter.refresh();
+                    segmenter.refresh();
                 }.bind(this));
             });
         };

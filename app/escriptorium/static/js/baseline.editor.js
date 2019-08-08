@@ -16,7 +16,7 @@ Options:
   delayInit=false,
   deletePointBtn=null,
   deleteSelectionBtn=null,
-  toggleLineBtn=null,
+  toggleMasksBtn=null,
   splitBtn=null,
   mergeBtn=null,
   upperLineHeight=15,
@@ -77,7 +77,7 @@ class SegmenterRegion {
 
     delete() {
         this.remove();
-        // td: callback
+        this.segmenter.trigger('baseline-editor:delete', {regions: [this]});
     }
 }
 
@@ -219,7 +219,7 @@ class SegmenterLine {
 
     delete() {
         this.remove();
-        /* Callback for line deletion */
+        this.segmenter.trigger('baseline-editor:delete', {lines: [this]});
     }
     
     showDirection() {
@@ -269,7 +269,7 @@ class Segmenter {
                         delayInit=false,
                         deletePointBtn=null,
                         deleteSelectionBtn=null,
-                        toggleLineBtn=null,
+                        toggleMasksBtn=null,
                         toggleRegionModeBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
@@ -323,7 +323,7 @@ class Segmenter {
         
         this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
         this.deletePointBtn.style.zIndex = 3;
-        this.toggleMasksBtn = toggleLineBtn || document.getElementById('toggle-masks');
+        this.toggleMasksBtn = toggleMasksBtn || document.getElementById('toggle-masks');
         this.splitBtn = splitBtn || document.getElementById('split-lines');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
         this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
@@ -508,8 +508,17 @@ class Segmenter {
         this.trigger('baseline-editor:update', {lines: [line]});
     }
 
-    createRegion(polygon, postponeEvents) {
-        var region = new SegmenterRegion(polygon, this);
+    createRegion(polygon, context, postponeEvents) {
+        if (this.idField) {
+            if (context === undefined || context === null) {
+                context = {};
+            }
+            if (context[this.idField] === undefined) {
+                // make sure the client receives a value for its id, even if it's null for a new region
+                context[this.idField] = null;
+            }
+        }
+        var region = new SegmenterRegion(polygon, context, this);
         if (!postponeEvents) this.bindRegionEvents(region);
         this.regions.push(region);
         return region;
@@ -812,7 +821,7 @@ class Segmenter {
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
-        ]);
+        ], null);
         newRegion.changed = true;
         
         let onCancel = function(event) {
@@ -934,13 +943,16 @@ class Segmenter {
             data.lines.forEach(function(line) {
                 let context = {};
                 if (this.idField) context[this.idField] = line[this.idField];
+                if (!line.baseline) this.toggleMasks(true);
                 let newLine = this.createLine(line.baseline, line.mask, context);
                 if (!newLine.mask) newLine.createMask();
             }.bind(this));
         }
         if (data.regions) {   
             data.regions.forEach(function(region) {
-                let newRegion = this.createRegion(region);
+                let context = {};
+                if (this.idField) context[this.idField] = region[this.idField];
+                let newRegion = this.createRegion(region.box, context);
             }.bind(this));
         }
     }
@@ -1025,13 +1037,18 @@ class Segmenter {
         return changes;
     }
     
-    toggleMasks() {
-        this.showMasks = !this.showMasks;
-        this.toggleMasksBtn.classList.toggle('btn-success');
-        this.toggleMasksBtn.classList.toggle('btn-info');
+    toggleMasks(force) {
+        this.showMasks = force || !this.showMasks;
+        if (this.showMasks) {
+            this.toggleMasksBtn.classList.add('btn-success');
+            this.toggleMasksBtn.classList.remove('btn-info');
+        } else {
+            this.toggleMasksBtn.classList.add('btn-info');
+            this.toggleMasksBtn.classList.remove('btn-success');
+        }
         for (let i in this.lines) {
             let poly = this.lines[i].maskPath;
-            poly.visible = !poly.visible;
+            poly.visible = this.showMasks;
             // paperjs shows handles for invisible items :(
             // TODO: use layers?
             if (!poly.visible && poly.selected) poly.selected = false;
