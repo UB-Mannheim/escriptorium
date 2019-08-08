@@ -163,13 +163,16 @@ class SegmenterLine {
     
     select() {
         if (this.selected) return;
-        if (this.maskPath && this.maskPath.visible) this.maskPath.selected = true;
+        if (this.maskPath && this.maskPath.visible) {
+            this.maskPath.selected = true;
+            this.maskPath.bringToFront();
+        }
         if (this.baselinePath) {
             this.baselinePath.selected = true;
             this.baselinePath.bringToFront();
             this.baselinePath.strokeColor = this.segmenter.secondaryColor;
         }
-        if (this.maskPath) this.maskPath.bringToFront();
+        
         if (this.directionHint) this.directionHint.visible = true;
         else this.showDirection();
         this.segmenter.addToSelection(this);
@@ -256,7 +259,7 @@ class SegmenterLine {
             return sum / this.baseline.length; */
 
             // area implementation
-            this.lineHeight = Math.abs(this.maskPath.area) / this.baselinePath.length;
+            this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
             if (this.lineHeight) {
                 this.baselinePath.strokeWidth = Math.max(this.lineHeight / 6, 3);
             }
@@ -304,10 +307,7 @@ class Segmenter {
         this.secondaryColor = null;
         this.upperLineHeight = upperLineHeight;
         this.lowerLineHeight = lowerLineHeight;
-        
-        this.lines = [];
-        this.regions = [];
-        this.selection = [];
+
         // the minimal length in pixels below which the line will be removed automatically
         this.lengthThreshold = lengthTreshold;
         this.showMasks = false;
@@ -317,8 +317,6 @@ class Segmenter {
         this.spliting = false;
         this.copy = null;
         
-        this.stateIndex = -1;
-        this.states = [];
         this.maxStates = 30;
         
         this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
@@ -349,11 +347,17 @@ class Segmenter {
     }
 
     init() {
+        this.stateIndex = -1;
+                
+        this.lines = [];
+        this.regions = [];
+        this.selection = [];
+        this.states = [];
+        
         paper.settings.handleSize = 10;
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
-        
         var hitOptions = { type : ('path'), segments: true, stroke: true, fill: true, tolerance: 5 };
         
         var tool = new Tool();
@@ -408,7 +412,6 @@ class Segmenter {
             this.loadNextState();
         }.bind(this));
 
-        
         document.addEventListener('keyup', function(event) {
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
@@ -481,6 +484,7 @@ class Segmenter {
         }.bind(this));
 
         this.tool = tool;
+        this.tool.activate();
         return tool;
     }
     
@@ -590,7 +594,6 @@ class Segmenter {
                     isRightClick(event.event) ||
                     this.mode != 'lines' ||
                     this.selecting) return;
-                
                 this.selecting = line;
                 var hit = line.baselinePath.hitTest(event.point, {
 	                segments: true,
@@ -617,6 +620,7 @@ class Segmenter {
                     if (event.event.ctrlKey) {
                         this.multiMove(event);
                     } else {
+                        
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.showDirection();
@@ -784,7 +788,6 @@ class Segmenter {
             return null;
         }.bind(this);
         
-        this.tool.activate();
         this.tool.onMouseDown = function(event) {
             if (isRightClick(event.event)) {
                 point = newLine.extend(event.point).point;
@@ -915,15 +918,7 @@ class Segmenter {
     }
     
     reset() {
-        // clean everything from the view
-        for (let i=this.lines.length-1; i >= 0; i--) {
-            this.lines[i].remove();
-        };
-        for (let i=this.regions.length-1; i >= 0; i--) {
-            this.regions[i].remove();
-        };
-        this.lines = [];
-        this.regions = [];
+        if (paper.view) paper.view.remove();
     }
     
     refresh() {
@@ -1158,7 +1153,7 @@ class Segmenter {
                     let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
                     intersections.forEach(location => cut.add(location));
                     cut.bringToFront();
-                    path.segments.forEach(function(segment) {
+                    line.baselinePath.segments.forEach(function(segment) {
                         if (clip.contains(segment.point)) {
                             cut.insert(segment.index, segment);
                         }
@@ -1169,6 +1164,7 @@ class Segmenter {
     }
     
     splitByPath(path) {
+        var changes = [];
         this.lines.forEach(function(line) {
             if (!line.baselinePath) return;
             let intersections = line.baselinePath.getIntersections(path);
@@ -1192,12 +1188,15 @@ class Segmenter {
                     line.maskPath.removeSegments();
                     line.createMask();
                     nl.createMask();
+                    changes.push(nl);
+                    changes.push(line);
                     line = nl;
                     trash.remove();
                 }
             }
             if (i) this.addState();  // if there was any changes, save them
         }.bind(this));
+        this.trigger('baseline-editor:update', {lines: changes});
     }
     
     mergeSelection() {

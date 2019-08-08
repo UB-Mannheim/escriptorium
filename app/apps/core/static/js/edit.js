@@ -65,7 +65,7 @@ $(document).ready(function() {
         var panel = $(this).data('target');
         panels[panel].toggle();
         for (var key in panels) {
-            panels[key].reset();
+            panels[key].refresh();
         }
         zoom.refresh();
         showMap();
@@ -81,7 +81,7 @@ $(document).ready(function() {
     loadPart(PART_ID, function(data) {
         // needs to recalculate positions once everything is loaded
         // for (var key in panels) {
-        //     panels[key].reset();
+        //     panels[key].refresh();
         // }
     });
     

@@ -34,25 +34,34 @@ class SegmentationPanel extends Panel {
             }.bind(this));
         }.bind(this));
     }
+
+    init() {
+        function init_() {
+            this.segmenter.init();
+            this.segmenter.load({
+                lines: this.part.lines,
+                regions: this.part.blocks
+            });
+            this.bindZoom();
+        }
+
+        if (this.$img.get(0).complete) init_.bind(this)();
+        else this.$img.on('load', init_.bind(this));
+    }
     
     load(part) {
+        this.segmenter.reset();
         super.load(part);
-
         if (this.part.image.thumbnails) {
             this.$img.attr('src', this.part.image.thumbnails.large);
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-        this.part = part;
+        if (this.opened) this.init();
     }
 
     onShow() {
-        this.segmenter.init();
-        this.segmenter.load({
-            lines: this.part.lines,
-            regions: this.part.blocks
-        });
-        this.bindZoom();
+        this.init();
     }
     
     save(obj, type) {
@@ -74,7 +83,7 @@ class SegmentationPanel extends Panel {
                 // if (!pk && type == 'lines') {
                 //     panels['trans'].addLine(data);
                 // }
-                Object.assign(obj, data); // update the obj, particularily its pk if it's new
+                obj.context.pk = data.pk;
             }, this))
             .fail(function(data){
                 alert("Couldn't save block:", data);
@@ -91,15 +100,21 @@ class SegmentationPanel extends Panel {
         // }
     }
     
-    reset() {
-        super.reset();
+    refresh() {
+        super.refresh();
         if (this.opened) {
             this.segmenter.refresh();
         }
     }
+
+    reset() {
+        super.reset();
+        this.segmenter.reset();
+    }
     
     bindZoom() {
         // simulates wheelzoom for canvas
+        zoom.refresh();
         var img = this.$img.get(0);
         zoom.events.addEventListener('wheelzoom.updated', function(e) {
             if (!this.opened) return;

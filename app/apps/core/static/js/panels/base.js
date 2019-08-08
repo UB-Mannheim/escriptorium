@@ -28,6 +28,7 @@ class Panel {
         if (this.opened) this.close();
         else this.open();
     }
+    refresh() {}
     reset() {}
     onShow() {}
 }
