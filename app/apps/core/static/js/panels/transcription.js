@@ -265,7 +265,9 @@ class TranscriptionPanel extends Panel {
         super($panel, $tools, opened);
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
-
+        
+        this.zoomTarget = zoom.register(this.$container.get(0), {map: true});
+        
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
             $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
@@ -331,7 +333,6 @@ class TranscriptionPanel extends Panel {
         });
                 
         if (this.opened) this.open();
-        zoom.register(this.$container, true);
     }
 
     addLine(line, ratio) {
