@@ -8,16 +8,38 @@ class TranscriptionLine {
         this.editing = false;
         this.panel = panel;
         this.transcriptions = {};
+        this.page = document.getElementById('part-trans');
         
         this.api = this.panel.api + 'transcriptions/';
-        var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
+        // var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
+        var path;
+
+        function ptToStr(pt) {
+            return Math.round(pt[0]*panel.ratio)+' '+Math.round(pt[1]*panel.ratio);
+        }
+        
+        if (this.baseline) {
+            path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
+        } else {
+            // create a fake path based on the mask
+            path = 'M '+Math.round(this.mask[0][0]*panel.ratio)+' '+Math.round(this.mask[0][1]*panel.ratio)+
+                ' T '+Math.round(this.mask[1][0]*panel.ratio)+' '+Math.round(this.mask[1][1]*panel.ratio);
+        }
+        let pts = this.mask.flat(1).map(pt => Math.round(pt*panel.ratio));
+        var $el = $('<svg id="trans-box-line-'+this.pk+'">'+
+                    '<polygon fill="none" stroke="lightgrey" stroke-width="1" points="'+pts+'"/>'+
+                    '<path fill="none" id="textPath'+this.pk+'" stroke="blue" d="'+path+'"/>'+
+                    '<text lengthAdjust="spacingAndGlyphs">'+
+                      '<textPath xlink:href="#textPath'+this.pk+'" method="stretch"></textPath></text>'+  //lengthAdjust="spacingAndGlyphs" method="stretch" textLength="500" 
+                    '</svg>');
+        
         $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
         this.$element = $el;
         
-        this.textContainer = $('span', $el).first();
-        $('#part-trans').append($el);
+        this.textContainer = $('textPath', $el);
+        panel.content.appendChild($el.get(0));
         this.reset();
-        
+
         $el.on('mouseover', $.proxy(function(ev) {
             this.showOverlay();
         }, this));
@@ -38,45 +60,45 @@ class TranscriptionLine {
     }
     
     setPosition() {
-        this.$element.css({
-            left: this.box[0]*this.panel.ratio + 'px',
-            top: this.box[1]*this.panel.ratio + 'px',
-            width: (this.box[2] - this.box[0])*this.panel.ratio  + 'px',
-            height: (this.box[3] - this.box[1])*this.panel.ratio + 'px',
-            fontSize:  (this.box[3] - this.box[1])*this.panel.ratio*0.7 + 'px',
-            lineHeight: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
-        });
+        // this.$element.css({
+        //     left: this.box[0]*this.panel.ratio + 'px',
+        //     top: this.box[1]*this.panel.ratio + 'px',
+        //     width: (this.box[2] - this.box[0])*this.panel.ratio  + 'px',
+        //     height: (this.box[3] - this.box[1])*this.panel.ratio + 'px',
+        //     fontSize:  (this.box[3] - this.box[1])*this.panel.ratio*0.7 + 'px',
+        //     lineHeight: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
+        // });
     }
     
     scaleContent() {
-        this.textContainer.css({
-            display: 'inline-block', // can't calculate size otherwise
-            transform: 'none',
-            width: 'auto'
-        });
-        var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
-        let content = this.getText();
-        if (content) {
-            this.textContainer.css({
-                transform: 'scaleX('+scaleX+')',
-                width: 100/scaleX + '%', // fit in the container
-            });
-        } else {
-            this.textContainer.css({
-                transform: 'none',
-                width: '100%'
-            });
-        }
-        this.textContainer.css({display: 'block'});
+        // this.textContainer.css({
+        //     display: 'inline-block', // can't calculate size otherwise
+        //     transform: 'none',
+        //     width: 'auto'
+        // });
+        // var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
+        // let content = this.getText();
+        // if (content) {
+        //     this.textContainer.css({
+        //         transform: 'scaleX('+scaleX+')',
+        //         width: 100/scaleX + '%', // fit in the container
+        //     });
+        // } else {
+        //     this.textContainer.css({
+        //         transform: 'none',
+        //         width: '100%'
+        //     });
+        // }
+        // this.textContainer.css({display: 'block'});
     }
     
     showOverlay() {
-        $('.panel .overlay').css({
-            left: this.box[0]*this.panel.ratio + 'px',
-            top: this.box[1]*this.panel.ratio + 'px',
-            width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
-            height: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
-        }).stop(true).fadeIn(0.2);
+        // $('.panel .overlay').css({
+        //     left: this.box[0]*this.panel.ratio + 'px',
+        //     top: this.box[1]*this.panel.ratio + 'px',
+        //     width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
+        //     height: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
+        // }).stop(true).fadeIn(0.2);
     }
     
     getLineTranscription() {
@@ -94,6 +116,13 @@ class TranscriptionLine {
     
     setText() {
         this.textContainer.html(this.getText());
+
+        // adjust the text length to fit in the box
+        let textLength = this.textContainer.get(0).getComputedTextLength();
+        let pathLength = $('path', this.$element).get(0).getTotalLength();
+        if (textLength && pathLength) {
+            this.textContainer.get(0).parentNode.setAttribute('textLength', pathLength);
+        }
     }
     
     edit () {
@@ -140,8 +169,8 @@ class TranscriptionLine {
         
         // need to show the modal before calculating sizes
         $('#trans-modal').modal('show');
-        var originalWidth = (this.box[2] - this.box[0]);
-        var originalHeight = (this.box[3] - this.box[1]);
+        var originalWidth = (this.mask[2] - this.mask[0]);
+        var originalHeight = (this.mask[3] - this.mask[1]);
         var boxWidth = $('#modal-img-container').width();
         var ratio = boxWidth / originalWidth;
         var MAX_HEIGHT = 200;
@@ -184,11 +213,11 @@ class TranscriptionLine {
         }
         $el.css({display: 'block'}); // revert to block to take the full space available
         
-        $('#trans-modal #line-img').animate({
-            left: '-'+this.box[0]*ratio+'px',
-            top: '-'+(this.box[1]*ratio-context_top)+'px',
-            width: this.panel.part.image.size[0]*ratio + 'px'
-        }, 200);
+        // $('#trans-modal #line-img').animate({
+        //     left: '-'+this.box[0]*ratio+'px',
+        //     top: '-'+(this.box[1]*ratio-context_top)+'px',
+        //     width: this.panel.part.image.size[0]*ratio + 'px'
+        // }, 200);
 
         $el.focus();
     }
@@ -265,8 +294,9 @@ class TranscriptionPanel extends Panel {
         super($panel, $tools, opened);
         this.part = null;
         this.lines = [];  // list of TranscriptionLine != this.part.lines
-        
-        this.zoomTarget = zoom.register(this.$container.get(0), {map: true});
+
+        this.content = document.getElementById('part-trans');
+        this.zoomTarget = zoom.register(this.content, {map: true});
         
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
@@ -336,7 +366,8 @@ class TranscriptionPanel extends Panel {
     }
 
     addLine(line, ratio) {
-        this.lines.push(new TranscriptionLine(line, this));
+        let newLine = new TranscriptionLine(line, this);
+        this.lines.push(newLine);
     }
 
     getRatio() {
@@ -350,17 +381,19 @@ class TranscriptionPanel extends Panel {
                 for (var i=0; i<data.results.length; i++) {
                     let cur = data.results[i];
                     let lt = $('#trans-box-line-'+cur.line).data('TranscriptionLine');
-                    lt.transcriptions[this.selectedTranscription] = cur;
-                    lt.reset();
+                    if (lt) {
+                        lt.transcriptions[this.selectedTranscription] = cur;
+                        lt.reset();
+                    }
                 }
                 if (data.next) getNext(page+1);
             }, this));
         }, this);
         getNext(1);
         
-        $('.zoom-container', this.$container).css({
-            width: this.part.image.size[0]*this.ratio,
-            height: this.part.image.size[1]*this.ratio});
+        // $('.zoom-container', this.$container).css({
+        //     width: this.part.image.size[0]*this.ratio,
+        //     height: this.part.image.size[1]*this.ratio});
     }
     
     load(part) {
@@ -368,6 +401,13 @@ class TranscriptionPanel extends Panel {
         this.lines = [];
         $('.trans-box').remove();
         this.ratio = this.getRatio();
+
+        let container = this.content.parentNode;
+        container.style.height = '100%';
+        container.style.width = '100%';
+        // container.style.transformOrigin = '0 0';
+        // container.style.transform = 'scale('+this.ratio+')';
+        
         if (this.part.image.thumbnails.large) {
             $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
         } else {
@@ -387,9 +427,9 @@ class TranscriptionPanel extends Panel {
                 this.lines[i].reset();
             }
             
-            $('.zoom-container', this.$container).css({
-                width: this.part.image.size[0]*this.ratio,
-                height: this.part.image.size[1]*this.ratio});
+            // $('.zoom-container', this.$container).css({
+            //     width: this.part.image.size[0]*this.ratio,
+            //     height: this.part.image.size[1]*this.ratio});
         }
     }
 }

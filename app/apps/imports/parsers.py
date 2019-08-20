@@ -104,9 +104,11 @@ class XMLParser():
                         
                         for line in self.find(block, self.TAGS['line']):
                             id_ = line.get('ID')
+                            
                             try:
                                 assert id_ and id_.startswith('eSc_line_')
-                                attrs = {'pk': int(id_[len('eSc_line_'):])}
+                                attrs = {'document_part': part,
+                                         'pk': int(id_[len('eSc_line_'):])}
                             except (ValueError, AssertionError, TypeError):
                                 attrs = {'document_part': part,
                                          'block': block_,

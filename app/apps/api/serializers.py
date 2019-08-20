@@ -124,6 +124,13 @@ class LineSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         instance = super().create(validated_data)
+        # if instance.document_part.bw_image:
+        #     from kraken.lib.segmentation import calculate_polygonal_environment
+        #     with Image.open(instance.document_part.bw_image) as im:
+        #         mask = calculate_polygonal_environment(im, [instance.baseline])[0]
+        #         instance.mask = mask
+        #         print(mask)
+        #         instance.save()  # TODO: find a way to save only once
         instance.document_part.recalculate_ordering()
         return instance
     
