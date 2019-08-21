@@ -108,7 +108,18 @@
   
   <div id="trans-panel" class="col panel {{ document.default_text_direction }}">
     <div class="img-container">
-        <div id="part-trans"></div>
+      <div id="part-trans">
+        <svg width="100%" height="100%">
+          <g id="line-template">
+            <polygon fill="none" stroke="lightgrey" d=""/>
+            <path fill="none" stroke="blue" d=""></path>
+            <text lengthAdjust="spacingAndGlyphs">
+              <textPath></textPath>
+            </text>
+          </g>
+
+        </svg>
+      </div>
     </div>
   </div>
   <div class="col-sides">

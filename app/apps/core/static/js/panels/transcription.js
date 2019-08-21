@@ -1,95 +1,67 @@
 'use strict';
 var currentLine = null;
 var my_zone = moment.tz.guess();
+var SvgNS = "http://www.w3.org/2000/svg";
 
 class TranscriptionLine {
     constructor (line, panel) {
-        Object.assign(this, line);
+        //Object.assign(this, line);
+        this.pk = line.pk;
+        this.mask = line.mask;
+        this.baseline = line.baseline;
+        
         this.editing = false;
         this.panel = panel;
         this.transcriptions = {};
         this.page = document.getElementById('part-trans');
         
         this.api = this.panel.api + 'transcriptions/';
-        // var $el = $('<div id="trans-box-line-'+this.pk+'" class="trans-box"><span></span></div>');
-        var path;
-
+        
         function ptToStr(pt) {
             return Math.round(pt[0]*panel.ratio)+' '+Math.round(pt[1]*panel.ratio);
         }
-        
+
+        var path;
         if (this.baseline) {
             path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
         } else {
             // create a fake path based on the mask
-            path = 'M '+Math.round(this.mask[0][0]*panel.ratio)+' '+Math.round(this.mask[0][1]*panel.ratio)+
-                ' T '+Math.round(this.mask[1][0]*panel.ratio)+' '+Math.round(this.mask[1][1]*panel.ratio);
+            path = 'M '+ptToStr(this.mask[0])+' T '+ptToStr(this.mask[1]);
         }
-        let pts = this.mask.flat(1).map(pt => Math.round(pt*panel.ratio));
-        var $el = $('<svg id="trans-box-line-'+this.pk+'">'+
-                    '<polygon fill="none" stroke="lightgrey" stroke-width="1" points="'+pts+'"/>'+
-                    '<path fill="none" id="textPath'+this.pk+'" stroke="blue" d="'+path+'"/>'+
-                    '<text lengthAdjust="spacingAndGlyphs">'+
-                      '<textPath xlink:href="#textPath'+this.pk+'" method="stretch"></textPath></text>'+  //lengthAdjust="spacingAndGlyphs" method="stretch" textLength="500" 
-                    '</svg>');
+        let poly = this.mask.flat(1).map(pt => Math.round(pt*panel.ratio));
+
+        // copy template
+        let tmp = document.getElementById('line-template');
+        let newNode = tmp.cloneNode(true);
+        newNode.setAttribute('id', 'trans-box-line-'+this.pk);
+        let [polyElement, pathElement, textElement] = newNode.children;
+        polyElement.setAttribute('points', poly);
+        pathElement.setAttribute('id', 'textPath'+this.pk);
+        pathElement.setAttribute('d', path);
+        textElement.children[0].setAttribute('href', '#textPath'+this.pk);
         
-        $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
-        this.$element = $el;
+        // $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
+        this.element = newNode;
+        this.element.classList.add('trans-box');
         
-        this.textContainer = $('textPath', $el);
-        panel.content.appendChild($el.get(0));
+        this.textElement = textElement;
+        this.pathElement = pathElement;
+        panel.content.appendChild(newNode);
         this.reset();
 
-        $el.on('mouseover', $.proxy(function(ev) {
+        this.element.addEventListener('mouseover', function(ev) {
             this.showOverlay();
-        }, this));
-        $el.on('mouseleave', $.proxy(function(ev) {
+        }.bind(this));
+        this.element.addEventListener('mouseleave', function(ev) {
             if (!this.editing) $('.panel .overlay').fadeOut({queue:false});
-        }, this));
-        $el.on('click', $.proxy(function(ev) {
+        }.bind(this));
+        this.element.addEventListener('click', function(ev) {
             this.edit();
-        }, this));
+        }.bind(this));
     }
     
     reset() {
         this.setText();
-        this.textContainer.ready($.proxy(function(ev) {
-            this.setPosition();
-            this.scaleContent();
-        }, this));
-    }
-    
-    setPosition() {
-        // this.$element.css({
-        //     left: this.box[0]*this.panel.ratio + 'px',
-        //     top: this.box[1]*this.panel.ratio + 'px',
-        //     width: (this.box[2] - this.box[0])*this.panel.ratio  + 'px',
-        //     height: (this.box[3] - this.box[1])*this.panel.ratio + 'px',
-        //     fontSize:  (this.box[3] - this.box[1])*this.panel.ratio*0.7 + 'px',
-        //     lineHeight: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
-        // });
-    }
-    
-    scaleContent() {
-        // this.textContainer.css({
-        //     display: 'inline-block', // can't calculate size otherwise
-        //     transform: 'none',
-        //     width: 'auto'
-        // });
-        // var scaleX = (this.box[2] - this.box[0]) * this.panel.ratio / this.textContainer.width();
-        // let content = this.getText();
-        // if (content) {
-        //     this.textContainer.css({
-        //         transform: 'scaleX('+scaleX+')',
-        //         width: 100/scaleX + '%', // fit in the container
-        //     });
-        // } else {
-        //     this.textContainer.css({
-        //         transform: 'none',
-        //         width: '100%'
-        //     });
-        // }
-        // this.textContainer.css({display: 'block'});
     }
     
     showOverlay() {
@@ -115,13 +87,12 @@ class TranscriptionLine {
     }
     
     setText() {
-        this.textContainer.html(this.getText());
-
+        this.textElement.querySelector('textPath').textContent = this.getText();
         // adjust the text length to fit in the box
-        let textLength = this.textContainer.get(0).getComputedTextLength();
-        let pathLength = $('path', this.$element).get(0).getTotalLength();
+        let textLength = this.textElement.getComputedTextLength();
+        let pathLength = this.pathElement.getTotalLength();
         if (textLength && pathLength) {
-            this.textContainer.get(0).parentNode.setAttribute('textLength', pathLength);
+            this.textElement.setAttribute('textLength', pathLength);
         }
     }
     
@@ -133,46 +104,49 @@ class TranscriptionLine {
         var content = this.getText();
         currentLine = this;
         // form hidden values
-        $('#line-transcription-form [name=transcription]').val(this.panel.selectedTranscription);
-        $('#line-transcription-form [name=line]').val(this.pk);
-        
-        if (this.order == 0) { $("#trans-modal #prev-btn").attr('disabled', true); }
-        else { $("#trans-modal #prev-btn").attr('disabled', false); }
-        if (this.order == (this.panel.lines.length-1)) { $("#trans-modal #next-btn").attr('disabled', true); }
-        else { $("#trans-modal #next-btn").attr('disabled', false); }
+        document.querySelector('#line-transcription-form [name=transcription]').value = this.panel.selectedTranscription;
+        document.querySelector('#line-transcription-form [name=line]').value = this.pk;
 
-        $('#trans-modal #trans-input').val(content);
-        $('#trans-modal #trans-rule').html(content);
+        let prevBtn = document.querySelector("#trans-modal #prev-btn");
+        let nextBtn = document.querySelector("#trans-modal next-btn");
+        if (this.order == 0) { prevBtn.disabled = true; }
+        else { prevBtn.disabled = false; }
+        if (this.order == (this.panel.lines.length-1)) { nextBtn.disabled = true; }
+        else { nextBtn.disabled = false; }
+
+        document.querySelector('#trans-modal #trans-input').value = content;
+        document.querySelector('#trans-modal #trans-rule').textContent = content;
         
         // fill the history
-        var $container = $('#trans-modal #history tbody');
-        $container.empty();
+        let container = document.querySelector('#trans-modal #history tbody');
+        container.empty();
         var lt = this.getLineTranscription();
+        var noVersionBtn = document.querySelector('#no-versions');
         if (lt !== undefined) {
-            $('#new-version-btn').prop('disabled', false);
+            document.querySelector('#new-version-btn').disabled = false;
             var versions = lt.versions;
             if (versions && versions.length > 0) {
-                $('#no-versions').hide();
+                noVersionBtn.style.display = 'none';
                 for (var i=versions.length-1; i>=0; i--) {
                     this.addVersionLine(versions[i]);
                 }
             } else {
-                $('#no-versions').show();
+                noVersionBtn.style.display = 'block';
             }
         } else {
-            $('#no-versions').show();
-            $('#new-version-btn').prop('disabled', true);
+            noVersionBtn.style.display = 'block';
+            document.querySelector('#new-version-btn').disabled = true;
         }
 
         // reset width to recalculate ratio
-        $('#modal-img-container').css({width: '80%'});
+        let modalImgContainer = document.querySelector('#modal-img-container');
+        modalImgContainer.style.width = '80%';
         
         // need to show the modal before calculating sizes
-        $('#trans-modal').modal('show');
-        var originalWidth = (this.mask[2] - this.mask[0]);
-        var originalHeight = (this.mask[3] - this.mask[1]);
-        var boxWidth = $('#modal-img-container').width();
-        var ratio = boxWidth / originalWidth;
+        document.querySelector('#trans-modal').modal('show'); // TODO?!
+        var boxWidth = modalImgContainer.width();
+        var ratio = boxWidth / modalImgContainer.originalWidth;
+        let originalHeight = modalImgContainer.originalHeight;
         var MAX_HEIGHT = 200;
         if ((originalHeight * ratio) > MAX_HEIGHT) {
             ratio = ratio * originalHeight / MAX_HEIGHT;
@@ -180,38 +154,38 @@ class TranscriptionLine {
         let line_height = originalHeight * ratio;
         // multiply by 1.4 to add a bit of context
         let height = Math.max(Math.min(line_height*1.4, 200), 40);
-        let width = originalWidth * ratio;
+        let width = modalImgContainer.originalWidth * ratio;
         let context_top = (height - line_height) / 2;
-        $('#trans-modal #modal-img-container').animate({
+        document.querySelector('#trans-modal #modal-img-container').style.update({
             height: height + 'px',  // adds some context
             width: width + 'px'
         });
-        $('#trans-modal .overlay').css({
+        document.querySelector('#trans-modal .overlay').style.update({
             height: line_height + 'px',
             width: width + 'px',
             top: context_top
         });
         
         // try to make the input match the image
-        let $el = $('#trans-modal #trans-input, #trans-rule');
-        $el.css({
-            display: 'inline-block',  // change to inline-block temporarily to calculate width
-            width: 'auto',
-            fontSize: height * 0.7 + 'px',
-            lineHeight: height + 'px',
-            height: height + 'px'
-        });
-        if (content) {
-            var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
-            scaleX = Math.max(0.2, scaleX);
-            $el.css({
-                transform: 'scaleX('+ scaleX +')',
-                width: 100/scaleX + '%' // fit in the container
-            });
-        } else {
-            $el.css({transform: 'none', width: '100%'});
-        }
-        $el.css({display: 'block'}); // revert to block to take the full space available
+        let el = document.querySelector('#trans-modal #trans-input');
+        // $el.css({
+        //     display: 'inline-block',  // change to inline-block temporarily to calculate width
+        //     width: 'auto',
+        //     fontSize: height * 0.7 + 'px',
+        //     lineHeight: height + 'px',
+        //     height: height + 'px'
+        // });
+        // if (content) {
+        //     var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
+        //     scaleX = Math.max(0.2, scaleX);
+        //     $el.css({
+        //         transform: 'scaleX('+ scaleX +')',
+        //         width: 100/scaleX + '%' // fit in the container
+        //     });
+        // } else {
+        //     $el.css({transform: 'none', width: '100%'});
+        // }
+        // $el.css({display: 'block'}); // revert to block to take the full space available
         
         // $('#trans-modal #line-img').animate({
         //     left: '-'+this.box[0]*ratio+'px',
@@ -219,41 +193,41 @@ class TranscriptionLine {
         //     width: this.panel.part.image.size[0]*ratio + 'px'
         // }, 200);
 
-        $el.focus();
+        el.focus();
     }
 
     addVersionLine(version) {
-        var $container = $('#trans-modal #history tbody');
-        var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
-        date = date.substring(0, 23) + date.substring(26);
-        var $version = $('<tr id="rev-'+version.revision+'">'+
-                         '<th class="js-version-content w-75">'+version.data.content+'</th>'+
-                         '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
-                         '<td class="js-version-date" data-date="'+date+'"></td>'+
-                         '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
-                              '<i class="fas fa-file-upload"></i></button></td>'+
-                         '</tr>');
-        var $date = $('.js-version-date', $version);
-        var mom = moment.tz($date.data('date'), my_zone);
-        $date.html(mom.fromNow());
-        $date.attr('title', "Last changed: "+mom.format('LLLL'));
-        $container.prepend($version);
+        // var $container = document.querySelector('#trans-modal > #history tbody');
+        // var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
+        // date = date.substring(0, 23) + date.substring(26);
+        // var $version = $('<tr id="rev-'+version.revision+'">'+
+        //                  '<th class="js-version-content w-75">'+version.data.content+'</th>'+
+        //                  '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
+        //                  '<td class="js-version-date" data-date="'+date+'"></td>'+
+        //                  '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
+        //                       '<i class="fas fa-file-upload"></i></button></td>'+
+        //                  '</tr>');
+        // var $date = $('.js-version-date', $version);
+        // var mom = moment.tz($date.data('date'), my_zone);
+        // $date.html(mom.fromNow());
+        // $date.attr('title', "Last changed: "+mom.format('LLLL'));
+        // $container.prepend($version);
     }
     
     pushVersion() {
-        var lt = this.getLineTranscription();
-        var uri = this.api + lt.pk + '/new_version/';
-        $.post(uri, {}).done($.proxy(function(data) {
-            $('#no-versions').hide();
-            // this.getLineTranscription().versions.splice(0, 0, data);
-            this.addVersionLine(data);
-        }, this)).fail(function(data) {
-            alert(data);
-        });
+        // var lt = this.getLineTranscription();
+        // var uri = this.api + lt.pk + '/new_version/';
+        // $.post(uri, {}).done($.proxy(function(data) {
+        //     $('#no-versions').hide();
+        //     // this.getLineTranscription().versions.splice(0, 0, data);
+        //     this.addVersionLine(data);
+        // }, this)).fail(function(data) {
+        //     alert(data);
+        // });
     }
     
     save() {
-        var new_content = $('#trans-modal #trans-input').val();
+        var new_content = document.querySelector('#trans-modal #trans-input').value;
         if (this.getText() != new_content) {
             var type, uri;
             var lt = this.getLineTranscription();
@@ -285,7 +259,7 @@ class TranscriptionLine {
     }
 
     delete() {
-        this.$element.remove();
+        this.element.parentNode.removeChild(this.element);
     }
 }
 
@@ -293,74 +267,81 @@ class TranscriptionPanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
         this.part = null;
-        this.lines = [];  // list of TranscriptionLine != this.part.lines
+        this.lines = {};  // list of TranscriptionLine != this.part.lines
 
-        this.content = document.getElementById('part-trans');
+        let container = document.getElementById('part-trans');
+        this.content = container.getElementsByTagName('svg')[0];
+
         this.zoomTarget = zoom.register(this.content, {map: true});
-        
+
+        // load the user saved transcription
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
             $('#document-transcriptions').val(itrans[DOCUMENT_ID]);
         }
+
+        // save the user default transcription on change of the select input
         this.selectedTranscription = $('#document-transcriptions').val();
-        $('#document-transcriptions').change($.proxy(function(ev) {
-            this.selectedTranscription = $('#document-transcriptions').val();
-            for (var i=0; i<this.lines.length; i++) {
-                this.lines[i].reset();
-            }
+        document.querySelector('#document-transcriptions').addEventListener('change', function(ev) {
+            this.selectedTranscription = document.querySelector('#document-transcriptions').value;
+            // for (var i=0; i<this.lines.length; i++) {
+            //     this.lines[i].reset();
+            // }
             let data = {};
             data[DOCUMENT_ID] = this.selectedTranscription;
             this.loadTranscriptions();
             userProfile.set('initialTranscriptions', data);
-        }, this));
+        }.bind(this));
         
         /* export */
-        $('.js-export').click($.proxy(function(ev) {
+        document.querySelector('.js-export').addEventListener('click', function(ev) {
             ev.preventDefault();
-            window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + $(ev.target).data('format'));
-        }, this));
+            let format = ev.target.attributes['data-format'];
+            window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + format);
+        }.bind(this));
 
         // TODO!
         // $("#trans-modal").draggable({
         //     handle: ".modal-header"
         // });
-        $("#trans-modal").on('hide.bs.modal', function(ev) {
+        document.querySelector("#trans-modal").addEventListener('hide.bs.modal', function(ev) {
             currentLine.editing = false;
             $('.panel .overlay').fadeOut({queue:false});
         });
-        $("#trans-modal #prev-btn").click($.proxy(function(ev) {
+        document.querySelector("#trans-modal #prev-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order-1].edit();
-        }, this));
-        $("#trans-modal #next-btn").click($.proxy(function(ev) {
+        }.bind(this));
+        document.querySelector("#trans-modal #next-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order+1].edit();
-        }, this));
-        $('#trans-modal #new-version-btn').on('click', function (e, editor) {
+        }.bind(this));
+        document.querySelector('#trans-modal #new-version-btn').addEventListener('click', function (e, editor) {
             currentLine.pushVersion();
             $('#history').addClass('show');
-        });
-        $('#trans-modal #save-btn').on('click', function (e, editor) {
+        }.bind());
+        document.querySelector('#trans-modal #save-btn').addEventListener('click', function (e, editor) {
             currentLine.save();
             $('#trans-modal').modal('hide');
-        });
-        $('#trans-modal #save-continue-btn').on('click', $.proxy(function (e, editor) {
+        }.bind());
+        document.querySelector('#trans-modal #save-continue-btn').addEventListener('click', function (e, editor) {
             currentLine.save();
             if (this.lines[currentLine.order+1]) {
                 this.lines[currentLine.order+1].edit();
             } else {
-                $('#trans-modal').modal('hide');
+                document.querySelector('#trans-modal').modal('hide');
             }
-        }, this));
-        $(document).keydown(function(e) {
-	        if(e.originalEvent.key == 'Enter') {
-	            $('#trans-modal #save-continue-btn').trigger('click');
-	        }
-	    });
-        
-        $('#trans-modal').on('click', '.js-pull-state', function(ev) {
-            ev.preventDefault();
-            var $tr = 'tr#'+$(ev.target).data('rev');
-            $('#trans-modal #trans-input').val($('.js-version-content', $tr).html());
-        });
+        }.bind(this));
+        // TODO
+        // document.querySelector(document).keydown(function(e) {
+	    //     if(e.originalEvent.key == 'Enter') {
+	    //         document.querySelector('#trans-modal #save-continue-btn').trigger('click');
+	    //     }
+	    // });
+
+        // document.querySelector('#trans-modal .js-pull-state').addEventListener('click', function(ev) {
+        //     ev.preventDefault();
+        //     let tr = document.querySelector('tr#'+ev.target.attributes['data-rev']);
+        //     document.querySelector('#trans-modal #trans-input').value = tr.querySelector('.js-version-content', $tr).textContent;
+        // }.bind(this));
                 
         if (this.opened) this.open();
     }
@@ -371,35 +352,32 @@ class TranscriptionPanel extends Panel {
     }
 
     getRatio() {
-        return $('.img-container', this.$panel).width() / this.part.image.size[0];
+        return this.$panel.width() / this.part.image.size[0];
     }
 
     loadTranscriptions() {
-        let getNext = $.proxy(function(page) {
+        let getNext = function(page) {
             let uri = this.api + 'transcriptions/?transcription='+this.selectedTranscription+'&page=' + page;
-            $.get(uri, $.proxy(function(data) {
+            $.get(uri, function(data) {
                 for (var i=0; i<data.results.length; i++) {
                     let cur = data.results[i];
-                    let lt = $('#trans-box-line-'+cur.line).data('TranscriptionLine');
+                    let lt = this.lines.find(l => l.pk == cur.line);
                     if (lt) {
                         lt.transcriptions[this.selectedTranscription] = cur;
                         lt.reset();
                     }
                 }
                 if (data.next) getNext(page+1);
-            }, this));
-        }, this);
+            }.bind(this));
+        }.bind(this);
         getNext(1);
-        
-        // $('.zoom-container', this.$container).css({
-        //     width: this.part.image.size[0]*this.ratio,
-        //     height: this.part.image.size[1]*this.ratio});
     }
     
     load(part) {
         super.load(part);
         this.lines = [];
-        $('.trans-box').remove();
+        let lines = document.getElementsByTagName('trans-line');
+        if (lines) [].forEach.call(lines, e => this.content.removeChild(e));
         this.ratio = this.getRatio();
 
         let container = this.content.parentNode;
@@ -409,9 +387,9 @@ class TranscriptionPanel extends Panel {
         // container.style.transform = 'scale('+this.ratio+')';
         
         if (this.part.image.thumbnails.large) {
-            $('#trans-modal #modal-img-container img').attr('src', this.part.image.thumbnails.large);
+            document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.thumbnails.large);
         } else {
-            $('#trans-modal #modal-img-container img').attr('src', this.part.image.uri);
+            document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.uri);
         }
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
@@ -422,11 +400,10 @@ class TranscriptionPanel extends Panel {
     reset() {
         super.reset();
         if (this.opened) {
-            this.ratio = this.getRatio();
-            for (var i=0; i<this.lines.length; i++) {
-                this.lines[i].reset();
-            }
-            
+            // this.ratio = this.getRatio();
+            // for (var i=0; i<this.lines.length; i++) {
+            //     this.lines[i].reset();
+            // }          
             // $('.zoom-container', this.$container).css({
             //     width: this.part.image.size[0]*this.ratio,
             //     height: this.part.image.size[1]*this.ratio});
