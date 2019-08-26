@@ -12,6 +12,7 @@ from users.consumers import send_event
 from imports.parsers import make_parser, XML_EXTENSIONS
 
 
+# TODO: now that i think about it, it's probably a terrible idea to name something Import.
 class Import(models.Model):
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_STARTED = 1

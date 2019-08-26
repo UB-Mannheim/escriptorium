@@ -54,7 +54,6 @@ $(document).ready(function() {
             panels[key].refresh();
         }
         zoom.refresh();
-        showMap();
     });
     
     // previous and next buttons

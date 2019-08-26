@@ -345,10 +345,10 @@ i.panel-icon {
     height: 100%;
     transform-origin: 0 0;
 }
-.zoom-container {
-    transform-origin: 0 0;
+.js-zoom-target {
     box-shadow: 1px 0 4px 1px rgba(0,0,0,0.1);
 }
+
 #zoom-range {
     height: 100px;
 }

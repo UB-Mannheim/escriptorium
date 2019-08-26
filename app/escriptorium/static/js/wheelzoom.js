@@ -26,6 +26,7 @@ class zoomTarget {
         container.style.overflow = 'hidden';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'scale 0.3s';
+        domElement.classList.add('js-zoom-target');
         this.container = container;
         //this.rotationContainer = rotationContainer;
         this.element = domElement;
@@ -43,8 +44,11 @@ class zoomTarget {
 
     update(pos, scale) {
         this.element.style.transform = 'translate('+(pos.x)+'px,'+(pos.y)+'px) '+'scale('+scale+')';
-        
+    }
+
+    showMap(pos, scale) {
         if (this.map && scale > 1) {
+            this.refreshMap();
             this.mapWhole.style.opacity = 0.7;
             this.mapCurrent.textContent = Math.round(scale*100)+'%';
             this.mapCurrent.style.transform = ''+
@@ -63,7 +67,7 @@ class zoomTarget {
             }.bind(this), 100);
         }
     }
-
+    
     refreshMap() {
         if (this.map) {
             let bounds = this.container.getBoundingClientRect();
@@ -125,14 +129,21 @@ class WheelZoom {
         this.targets.push(target);
         if (!mirror) {
             // domElement.style.cursor = 'zoom-in';
-            target.container.addEventListener('mousewheel', this.scrolled.bind(this));
-            target.container.addEventListener('DOMMouseScroll', this.scrolled.bind(this)); // firefox
-            target.container.addEventListener('mousedown', function(event) {
+
+            function scroll(event) {
+                this.scrolling = target;
+                this.scrolled.bind(this)(event);
+            }
+            function drag(event) {
                 // in case of mask over the element, bc we bind to document so event.target can be whatever
                 if (!(event.which === 3 || event.button === 2)) return;  // right click only
                 this.dragging = target;
                 this.draggable.bind(this)(event);
-            }.bind(this));
+            }
+            
+            target.container.addEventListener('mousewheel', scroll.bind(this));
+            target.container.addEventListener('DOMMouseScroll', scroll.bind(this)); // firefox
+            target.container.addEventListener('mousedown', drag.bind(this));
         } else {
             target.container.classList.add('mirror');
         }
@@ -170,6 +181,7 @@ class WheelZoom {
 
         let diff = {scale: this.scale / oldScale};
         this.updateStyle(diff);
+        this.scrolling.showMap(this.pos, this.scale);
         return diff;
 	}
     
@@ -241,9 +253,6 @@ class WheelZoom {
 		this.previousEvent = event;
         // this.rotationOrigin = e.point;
         
-        // disable transition while dragging
-        // target.element.classList.add('notransition');
-
         // set bound event handlers
         this.bDrag = this.drag.bind(this);
         this.bRemDrag = this.removeDrag.bind(this);
