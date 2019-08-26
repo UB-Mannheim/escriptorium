@@ -79,10 +79,15 @@ class SegmentationPanel extends Panel {
         var requestType = pk?'PUT':'POST';
         $.ajax({url: uri, type: requestType, data: post})
             .done($.proxy(function(data) {
+                if (type == 'lines') {
                 /* create corresponding transcription line */
-                // if (!pk && type == 'lines') {
-                //     panels['trans'].addLine(data);
-                // }
+                    if (!pk) {
+                        panels['trans'].addLine(data);
+                    } else {
+                        var tl = panels['trans'].lines.find(l => l.pk==pk);
+                        if (tl) tl.update(data);
+                    }
+                }
                 obj.context.pk = data.pk;
             }, this))
             .fail(function(data){
@@ -94,10 +99,10 @@ class SegmentationPanel extends Panel {
     delete(obj, type) {
         let uri = this.api + type + '/' + obj.context.pk;
         $.ajax({url: uri, type:'DELETE'});
-        // if (type == 'line') {
-        //     var tl = $('#trans-box-line-'+this.pk).data('TranscriptionLine');
-        //     if (tl) tl.delete();
-        // }
+        if (type == 'lines') {
+            var tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
+            if (tl) tl.delete();
+        }
     }
     
     refresh() {

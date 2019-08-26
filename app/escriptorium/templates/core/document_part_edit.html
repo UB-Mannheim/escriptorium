@@ -111,7 +111,7 @@
       <div id="part-trans">
         <svg width="100%" height="100%">
           <g id="line-template">
-            <polygon fill="none" stroke="lightgrey" d=""/>
+            <polygon fill="none" stroke="lightgrey"/>
             <path fill="none" stroke="blue" d=""></path>
             <text lengthAdjust="spacingAndGlyphs">
               <textPath></textPath>
@@ -180,6 +180,7 @@
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
+  var READ_DIRECTION = '{{document.read_direction}}';
   var DOCUMENT_ID = {{document.id}};
   var PART_ID = {{part.id}};
 </script>

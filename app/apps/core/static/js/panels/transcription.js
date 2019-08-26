@@ -16,39 +16,27 @@ class TranscriptionLine {
         this.page = document.getElementById('part-trans');
         
         this.api = this.panel.api + 'transcriptions/';
-        
-        function ptToStr(pt) {
-            return Math.round(pt[0]*panel.ratio)+' '+Math.round(pt[1]*panel.ratio);
-        }
-
-        var path;
-        if (this.baseline) {
-            path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
-        } else {
-            // create a fake path based on the mask
-            path = 'M '+ptToStr(this.mask[0])+' T '+ptToStr(this.mask[1]);
-        }
-        let poly = this.mask.flat(1).map(pt => Math.round(pt*panel.ratio));
 
         // copy template
         let tmp = document.getElementById('line-template');
         let newNode = tmp.cloneNode(true);
         newNode.setAttribute('id', 'trans-box-line-'+this.pk);
         let [polyElement, pathElement, textElement] = newNode.children;
-        polyElement.setAttribute('points', poly);
-        pathElement.setAttribute('id', 'textPath'+this.pk);
-        pathElement.setAttribute('d', path);
         textElement.children[0].setAttribute('href', '#textPath'+this.pk);
-        
-        // $el.data('TranscriptionLine', this);  // allow segmentation to target that box easily
+                
         this.element = newNode;
+        this.panel.content.appendChild(newNode);
         this.element.classList.add('trans-box');
-        
+
+        this.polyElement = polyElement;
         this.textElement = textElement;
         this.pathElement = pathElement;
-        panel.content.appendChild(newNode);
-        this.reset();
+        this.pathElement.setAttribute('id', 'textPath'+this.pk);
+        
+        this.update(line);
+        this.setText();
 
+        this.element.setAttribute('pointer-events', 'visible');  // allows to click inside fill='none' elements
         this.element.addEventListener('mouseover', function(ev) {
             this.showOverlay();
         }.bind(this));
@@ -62,6 +50,32 @@ class TranscriptionLine {
     
     reset() {
         this.setText();
+    }
+
+    update(line) {
+        this.pk = line.pk;
+        this.mask = line.mask;
+        this.baseline = line.baseline;
+
+        var ratio = this.panel.ratio;
+        function ptToStr(pt) {
+            return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
+        }
+        
+        let poly = this.mask.flat(1).map(pt => Math.round(pt*this.panel.ratio));
+        this.polyElement.setAttribute('points', poly);
+        
+        var path;
+        if (this.baseline) {
+            path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
+        } else {
+            // create a fake path based on the mask
+            if (READ_DIRECTION == 'rtl') path = 'M '+ptToStr(this.mask[2])+' T '+ptToStr(this.mask[1]);
+            else path = 'M '+ptToStr(this.mask[1])+' T '+ptToStr(this.mask[2]);
+            // console.log(newNode);
+        }
+        
+        this.pathElement.setAttribute('d', path);
     }
     
     showOverlay() {
@@ -103,12 +117,8 @@ class TranscriptionLine {
 
         var content = this.getText();
         currentLine = this;
-        // form hidden values
-        document.querySelector('#line-transcription-form [name=transcription]').value = this.panel.selectedTranscription;
-        document.querySelector('#line-transcription-form [name=line]').value = this.pk;
-
         let prevBtn = document.querySelector("#trans-modal #prev-btn");
-        let nextBtn = document.querySelector("#trans-modal next-btn");
+        let nextBtn = document.querySelector("#trans-modal #next-btn");
         if (this.order == 0) { prevBtn.disabled = true; }
         else { prevBtn.disabled = false; }
         if (this.order == (this.panel.lines.length-1)) { nextBtn.disabled = true; }
@@ -119,7 +129,9 @@ class TranscriptionLine {
         
         // fill the history
         let container = document.querySelector('#trans-modal #history tbody');
-        container.empty();
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
         var lt = this.getLineTranscription();
         var noVersionBtn = document.querySelector('#no-versions');
         if (lt !== undefined) {
@@ -143,7 +155,7 @@ class TranscriptionLine {
         modalImgContainer.style.width = '80%';
         
         // need to show the modal before calculating sizes
-        document.querySelector('#trans-modal').modal('show'); // TODO?!
+        $('#trans-modal').modal('show');
         var boxWidth = modalImgContainer.width();
         var ratio = boxWidth / modalImgContainer.originalWidth;
         let originalHeight = modalImgContainer.originalHeight;
@@ -346,7 +358,7 @@ class TranscriptionPanel extends Panel {
         if (this.opened) this.open();
     }
 
-    addLine(line, ratio) {
+    addLine(line) {
         let newLine = new TranscriptionLine(line, this);
         this.lines.push(newLine);
     }
