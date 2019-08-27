@@ -47,23 +47,21 @@ class TranscriptionLine {
             this.edit();
         }.bind(this));
     }
-    
-    reset() {
-        this.setText();
-    }
 
-    update(line) {
-        this.pk = line.pk;
-        this.mask = line.mask;
-        this.baseline = line.baseline;
-
-        var ratio = this.panel.ratio;
+    makeShape() {
+        var ratio = this.panel.getRatio();
         function ptToStr(pt) {
             return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
         }
         
         let poly = this.mask.flat(1).map(pt => Math.round(pt*this.panel.ratio));
         this.polyElement.setAttribute('points', poly);
+
+        let area = 0;
+        for (let i=1; i<this.mask.length; i++) {
+            area += (this.mask[i-1][0]+this.mask[i][0]) * (this.mask[i-1][1]-this.mask[i][1]); 
+        }
+        area = Math.abs(area/2);
         
         var path;
         if (this.baseline) {
@@ -72,10 +70,24 @@ class TranscriptionLine {
             // create a fake path based on the mask
             if (READ_DIRECTION == 'rtl') path = 'M '+ptToStr(this.mask[2])+' T '+ptToStr(this.mask[1]);
             else path = 'M '+ptToStr(this.mask[1])+' T '+ptToStr(this.mask[2]);
-            // console.log(newNode);
         }
         
         this.pathElement.setAttribute('d', path);
+        let pathLength = this.pathElement.getTotalLength();
+        let lineHeight = Math.max(Math.min(Math.round(area / pathLength / 2), 100), 5);
+        this.textElement.style.fontSize =  lineHeight * 2/3 + 'px';
+    }
+    
+    reset() {
+        this.makeShape();
+        this.setText();
+    }
+
+    update(line) {
+        this.pk = line.pk;
+        this.mask = line.mask;
+        this.baseline = line.baseline;
+        this.makeShape();
     }
     
     showOverlay() {
@@ -409,16 +421,12 @@ class TranscriptionPanel extends Panel {
         this.loadTranscriptions();
     }
     
-    reset() {
-        super.reset();
+    refresh() {
         if (this.opened) {
-            // this.ratio = this.getRatio();
-            // for (var i=0; i<this.lines.length; i++) {
-            //     this.lines[i].reset();
-            // }          
-            // $('.zoom-container', this.$container).css({
-            //     width: this.part.image.size[0]*this.ratio,
-            //     height: this.part.image.size[1]*this.ratio});
+            this.ratio = this.getRatio();
+            for (var i=0; i<this.lines.length; i++) {
+                this.lines[i].reset();
+            }
         }
     }
 }

@@ -79,6 +79,9 @@ class SegmenterRegion {
         this.remove();
         this.segmenter.trigger('baseline-editor:delete', {regions: [this]});
     }
+    getPolygon() {
+        return this.polygon.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
+    }
 }
 
 class SegmenterLine {
@@ -107,7 +110,7 @@ class SegmenterLine {
                 this.baselinePath = baseline;
                 this.updateDataFromCanvas();
             } else {
-                this.baseline = baseline;
+                this.baseline = baseline.map(pt => [pt[0]*paper.view.zoom, pt[1]*paper.view.zoom]);
                 this.baselinePath = new Path({
                 strokeColor: segmenter_.mainColor,
                 strokeWidth: 7,
@@ -265,10 +268,18 @@ class SegmenterLine {
             }
         }
     }
+
+    getBaseline() {
+        return this.baseline.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
+    }
+    getMask() {
+        return this.mask.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
+    }
 }
 
 class Segmenter {
     constructor(image, {lengthTreshold=10,
+                        scale=1,
                         delayInit=false,
                         deletePointBtn=null,
                         deleteSelectionBtn=null,
@@ -310,6 +321,7 @@ class Segmenter {
 
         // the minimal length in pixels below which the line will be removed automatically
         this.lengthThreshold = lengthTreshold;
+        this.scale = scale;  // 
         this.showMasks = false;
 
         this.mode = 'lines'; // | 'regions'
@@ -392,9 +404,11 @@ class Segmenter {
             this.toggleRegionMode();
         }.bind(this));
         
-        if (this.toggleMasksBtn) this.toggleMasksBtn.addEventListener('click', function(event) {
-            this.toggleMasks();
-        }.bind(this));
+        if (this.toggleMasksBtn) {
+            this.toggleMasksBtn.addEventListener('click', function(event) {
+                this.toggleMasks();
+            }.bind(this));
+        }
 
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
@@ -773,7 +787,8 @@ class Segmenter {
     
     startNewLine(event) {
         this.purgeSelection();
-        let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
+        let newLine = this.createLine([[event.point.x/paper.view.zoom,
+                                        event.point.y/paper.view.zoom]], null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
         newLine.showDirection();
         
@@ -865,22 +880,25 @@ class Segmenter {
             if (event.keyCode == 27) {  // escape
                 clip.remove();
                 this.resetToolEvents();
+                document.removeEventListener('mouseup', finishCut);
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
             return null;
         }.bind(this);
-
+        let finishCut = function(event) {
+            this.splitByPath(clip);
+            clip.remove();
+            this.resetToolEvents();
+            document.removeEventListener('mouseUp', finishCut);
+            document.removeEventListener('keyup', onCancel);
+        }.bind(this);
+        
         this.tool.onMouseDrag = function(event) {
             this.updateSelectionRectangle(clip, event);
             this.splitHelper(clip, event);
         }.bind(this);
-        this.tool.onMouseUp = function(event) {
-            this.splitByPath(clip);
-            clip.remove();
-            this.resetToolEvents();
-            document.removeEventListener('keyup', onCancel);
-        }.bind(this);
+        document.addEventListener('mouseup', finishCut);
         document.addEventListener('keyup', onCancel);
     }
     
@@ -891,20 +909,25 @@ class Segmenter {
                 clip.remove();
                 this.purgeSelection();
                 this.resetToolEvents();
+                document.removeEventListener('mouseup', finishSelection);
                 document.removeEventListener('keyup', onCancel);
                 return false;
             }
             return null;
         }.bind(this);
+        let finishSelection = function(event) {
+            clip.remove();
+            this.resetToolEvents();
+            document.removeEventListener('mouseup', finishSelection);
+            document.removeEventListener('keyup', onCancel);
+        }.bind(this);
+        
         this.tool.onMouseDrag = function(event) {
             this.updateSelectionRectangle(clip, event);
             this.lassoSelection(clip);
         }.bind(this);
-        this.tool.onMouseUp = function(event) {
-            clip.remove();
-            this.resetToolEvents();
-            document.removeEventListener('keyup', onCancel);
-        }.bind(this);
+
+        document.addEventListener('mouseup', finishSelection);
         document.addEventListener('keyup', onCancel);
     }
     

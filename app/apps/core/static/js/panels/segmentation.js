@@ -57,7 +57,6 @@ class SegmentationPanel extends Panel {
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-        if (this.opened) this.init();
     }
 
     onShow() {
@@ -67,11 +66,11 @@ class SegmentationPanel extends Panel {
     save(obj, type) {
         var post = {document_part: this.part.pk};
         if (type=='lines') {
-            post['baseline'] = JSON.stringify(obj.baseline);
-            post['mask'] = JSON.stringify(obj.mask);
+            post['baseline'] = JSON.stringify(obj.getBaseline());
+            post['mask'] = JSON.stringify(obj.getMask());
             // post.block = this.block?this.block.pk:null; // todo
         } else if (type == 'blocks') {
-            post['box'] = JSON.stringify(obj.polygon);
+            post['box'] = JSON.stringify(obj.getPolygon());
         }
         let uri = this.api + type + '/';
         let pk = obj.context.pk;
@@ -123,6 +122,7 @@ class SegmentationPanel extends Panel {
         var img = this.$img.get(0);
         zoom.events.addEventListener('wheelzoom.updated', function(e) {
             if (!this.opened) return;
+            this.segmenter.scale = zoom.scale;
             this.segmenter.canvas.style.top = zoom.pos.y + 'px';
             this.segmenter.canvas.style.left = zoom.pos.x + 'px';
             this.segmenter.canvas.style.width = img.width*zoom.scale + 'px';
