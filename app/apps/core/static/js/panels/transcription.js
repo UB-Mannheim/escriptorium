@@ -5,10 +5,10 @@ var SvgNS = "http://www.w3.org/2000/svg";
 
 class TranscriptionLine {
     constructor (line, panel) {
-        //Object.assign(this, line);
         this.pk = line.pk;
         this.mask = line.mask;
         this.baseline = line.baseline;
+        this.order = line.order;
         
         this.editing = false;
         this.panel = panel;
@@ -59,7 +59,7 @@ class TranscriptionLine {
 
         let area = 0;
         for (let i=1; i<this.mask.length; i++) {
-            area += (this.mask[i-1][0]+this.mask[i][0]) * (this.mask[i-1][1]-this.mask[i][1]); 
+            area += (this.mask[i-1][0]* ratio+this.mask[i][0]* ratio) * (this.mask[i-1][1]* ratio-this.mask[i][1]* ratio); 
         }
         area = Math.abs(area/2);
         
@@ -74,8 +74,10 @@ class TranscriptionLine {
         
         this.pathElement.setAttribute('d', path);
         let pathLength = this.pathElement.getTotalLength();
-        let lineHeight = Math.max(Math.min(Math.round(area / pathLength / 2), 100), 5);
-        this.textElement.style.fontSize =  lineHeight * 2/3 + 'px';
+        let margin = this.polyElement.getBBox().height / 10;
+        let lineHeight = area / pathLength;
+        lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
+        this.textElement.style.fontSize =  lineHeight * (2/3) + 'px';
     }
     
     reset() {
@@ -123,12 +125,15 @@ class TranscriptionLine {
     }
     
     edit () {
+        // opens the modal and setup the line editing form
         if (currentLine) currentLine.editing = false;
         this.editing = true;
         this.showOverlay();
 
         var content = this.getText();
         currentLine = this;
+
+        // Pagination
         let prevBtn = document.querySelector("#trans-modal #prev-btn");
         let nextBtn = document.querySelector("#trans-modal #next-btn");
         if (this.order == 0) { prevBtn.disabled = true; }
@@ -136,10 +141,31 @@ class TranscriptionLine {
         if (this.order == (this.panel.lines.length-1)) { nextBtn.disabled = true; }
         else { nextBtn.disabled = false; }
 
-        document.querySelector('#trans-modal #trans-input').value = content;
-        document.querySelector('#trans-modal #trans-rule').textContent = content;
+        $('#trans-modal').modal('show');
         
-        // fill the history
+        let modalImgContainer = document.querySelector('#modal-img-container');
+        let img = modalImgContainer.querySelector('img#line-img');
+        let bounds = this.polyElement.getBBox();
+        img.style.transform = 'none';  // reset img width for calculations
+        let panelToImgRatio = this.panel.$panel.width() / img.width;
+        
+        // Line image
+        let ratio =  modalImgContainer.getBoundingClientRect().width / (bounds.width / panelToImgRatio);
+        modalImgContainer.style.height = Math.round(bounds.height/panelToImgRatio*ratio)+'px';
+        img.style.transformOrigin = '0 0';
+        img.style.transform = 'scale('+ratio+')';
+        img.style.left = -Math.round(bounds.x/panelToImgRatio*ratio)+'px';
+        img.style.top = -Math.round(bounds.y/panelToImgRatio*ratio)+'px';
+        
+        // Overlay
+
+
+        // Content input
+        let input = document.querySelector('#trans-modal #trans-input');
+        document.querySelector('#trans-modal #trans-input').value = content;
+        input.focus();
+        
+        // History
         let container = document.querySelector('#trans-modal #history tbody');
         while (container.firstChild) {
             container.removeChild(container.firstChild);
@@ -162,36 +188,38 @@ class TranscriptionLine {
             document.querySelector('#new-version-btn').disabled = true;
         }
 
-        // reset width to recalculate ratio
-        let modalImgContainer = document.querySelector('#modal-img-container');
-        modalImgContainer.style.width = '80%';
         
-        // need to show the modal before calculating sizes
-        $('#trans-modal').modal('show');
-        var boxWidth = modalImgContainer.width();
-        var ratio = boxWidth / modalImgContainer.originalWidth;
-        let originalHeight = modalImgContainer.originalHeight;
-        var MAX_HEIGHT = 200;
-        if ((originalHeight * ratio) > MAX_HEIGHT) {
-            ratio = ratio * originalHeight / MAX_HEIGHT;
-        }
-        let line_height = originalHeight * ratio;
-        // multiply by 1.4 to add a bit of context
-        let height = Math.max(Math.min(line_height*1.4, 200), 40);
-        let width = modalImgContainer.originalWidth * ratio;
-        let context_top = (height - line_height) / 2;
-        document.querySelector('#trans-modal #modal-img-container').style.update({
-            height: height + 'px',  // adds some context
-            width: width + 'px'
-        });
-        document.querySelector('#trans-modal .overlay').style.update({
-            height: line_height + 'px',
-            width: width + 'px',
-            top: context_top
-        });
+        
+        
+        // // reset width to recalculate ratio
+        // let modalImgContainer = document.querySelector('#modal-img-container');
+        // modalImgContainer.style.width = '80%';
+        
+        // // need to show the modal before calculating sizes
+        // 
+        // var boxWidth = modalImgContainer.getBoundingClientRect().width;
+        // console.log('-', boxWidth, modalImgContainer.querySelector('img').originalWidth);
+        // var ratio = boxWidth / modalImgContainer.querySelector('img').originalWidth;
+        // let originalHeight = modalImgContainer.originalHeight;
+        // var MAX_HEIGHT = 200;
+        // if ((originalHeight * ratio) > MAX_HEIGHT) {
+        //     ratio = ratio * originalHeight / MAX_HEIGHT;
+        // }
+        // let line_height = originalHeight * ratio;
+        // // multiply by 1.4 to add a bit of context
+        // let height = Math.max(Math.min(line_height*1.4, 200), 40);
+        // let width = modalImgContainer.originalWidth * ratio;
+        // let context_top = (height - line_height) / 2;
+        
+        // modalImgContainer.style.height = height + 'px';
+        // modalImgContainer.style.width = width + 'px';
+        // let overlay = document.querySelector('#trans-modal .overlay');
+        // overlay.style.height = line_height + 'px';
+        // overlay.style.width = width + 'px';
+        // overlay.style.top = context_top;
         
         // try to make the input match the image
-        let el = document.querySelector('#trans-modal #trans-input');
+        // let $el = $('#trans-modal #trans-input');
         // $el.css({
         //     display: 'inline-block',  // change to inline-block temporarily to calculate width
         //     width: 'auto',
@@ -210,14 +238,15 @@ class TranscriptionLine {
         //     $el.css({transform: 'none', width: '100%'});
         // }
         // $el.css({display: 'block'}); // revert to block to take the full space available
-        
+
+        // console.log(this.mask, ratio);
         // $('#trans-modal #line-img').animate({
-        //     left: '-'+this.box[0]*ratio+'px',
-        //     top: '-'+(this.box[1]*ratio-context_top)+'px',
+        //     left: '-'+this.mask[0][0]*ratio+'px',
+        //     top: '-'+(this.mask[0][1]*ratio-context_top)+'px',
         //     width: this.panel.part.image.size[0]*ratio + 'px'
         // }, 200);
 
-        el.focus();
+        // el.focus();
     }
 
     addVersionLine(version) {

@@ -93,8 +93,6 @@ class SegmenterLine {
         this.changed = false;
 
         this.directionHint = null;
-        
-        var line_ = this;  // save in scope
 
         this.maskPath = new Path({
             closed: true,
@@ -102,7 +100,7 @@ class SegmenterLine {
             fillColor: this.segmenter.mainColor,
             selectedColor: this.segmenter.secondaryColor,
             visible: !baseline || this.segmenter.showMasks,
-            segments: this.mask
+            segments: this.mask?this.mask.map(pt => [pt[0]*paper.view.zoom, pt[1]*paper.view.zoom]):null
         });
 
         if (baseline) {
@@ -270,10 +268,12 @@ class SegmenterLine {
     }
 
     getBaseline() {
-        return this.baseline.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
+        return this.baseline.map(pt => [Math.round(pt[0]/paper.view.zoom*this.segmenter.scale),
+                                        Math.round(pt[1]/paper.view.zoom*this.segmenter.scale)]);
     }
     getMask() {
-        return this.mask.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
+        return this.mask.map(pt => [Math.round(pt[0]/paper.view.zoom*this.segmenter.scale),
+                                    Math.round(pt[1]/paper.view.zoom*this.segmenter.scale)]);
     }
 }
 

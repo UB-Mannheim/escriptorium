@@ -150,7 +150,7 @@
         </button>
       </div>
       <div class="modal-body {{ document.default_text_direction }}">
-        <div id="modal-img-container">
+        <div id="modal-img-container" width="80%">
           <img id="line-img" src="{{ part.image|thumbnail_url:'large' }}" draggable="false" selectable="false"/>
           <div class="overlay"></div>
         </div>
@@ -158,7 +158,6 @@
         <input type="hidden" name="transcription"/>
         <input type="hidden" name="line"/>
         <input id="trans-input" name="content" class="form-control mb-2" />
-        <span id="trans-rule" name="content" class="form-control" /></span>
         <br>
         <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
         <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button>
