@@ -2,7 +2,7 @@ class SourcePanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
         this.$img = $('.img-container img', this.$panel);
-        this.zoomTarget = zoom.register(this.$img.get(0), {map: true});
+        this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
     }
     
     load(part) {

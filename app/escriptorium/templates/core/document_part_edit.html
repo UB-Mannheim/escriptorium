@@ -83,31 +83,67 @@
   </div>
   <div id="source-panel" class="col panel">
     <div class="img-container">
-      <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
-      <div class="overlay"></div>
+      <div class="zoom-container">
+        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <div class="overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="source-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#source-overlay)" />
+          </svg>
+        </div>
+      </div>
     </div>
   </div>
   
   <div id="binar-panel" class="col panel">
     <div class="img-container">
+      <div class="zoom-container">
       <img id="part-img" src="{{ part.bw_image|thumbnail_url:'large' }}" width="100%"/>
-      <div class="overlay"></div>
+      <div class="overlay">
+        <svg width="100%" height="100%">
+          <defs>
+            <mask id="bin-overlay">
+              <rect width="100%" height="100%" fill="white"/>
+              <polygon points=""/>
+            </mask>
+          </defs>
+          <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#bin-overlay)" />
+        </svg>
+      </div>
+      </div>
     </div>
   </div>
   
   <div id="seg-panel" class="col panel">
     <div class="img-container">
+      <div class="zoom-container">
         <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" class="" width="100%"/>
-        <button id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></button>
-        <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
-        <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
-
-        <div id="segmentation-overlay"></div>
+        <div id="segmentation-overlay" class="overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="seg-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#seg-overlay)" />
+          </svg>
+        </div>        
+      </div>
+      <button id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></button>
+      <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
+      <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
     </div>
   </div>
   
   <div id="trans-panel" class="col panel {{ document.default_text_direction }}">
     <div class="img-container">
+      <div class="zoom-container">
       <div id="part-trans">
         <svg width="100%" height="100%">
           <g id="line-template">
@@ -117,8 +153,8 @@
               <textPath></textPath>
             </text>
           </g>
-
         </svg>
+      </div>
       </div>
     </div>
   </div>

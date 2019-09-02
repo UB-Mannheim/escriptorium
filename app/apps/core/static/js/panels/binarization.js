@@ -2,10 +2,7 @@ class BinarizationPanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
         this.$img = $('.img-container img', this.$panel);
-        this.zoomTarget = zoom.register(this.$img.get(0), {map: true});
-        this.$img.on('load', $.proxy(function() {
-            zoom.refresh();
-        }, this));
+        this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
     }
     
     load(part) {

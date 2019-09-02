@@ -1,10 +1,7 @@
 /*
 TODO:
-- integration
 - help
-
 - list of regions / lines (?)
-
 */
 
 class SegmentationPanel extends Panel {
@@ -13,8 +10,12 @@ class SegmentationPanel extends Panel {
         this.seeBlocks = true;
         this.seeLines = true;
         this.$img = $('img', this.$container);
-        this.zoomTarget = zoom.register(this.$img.get(0), {map: true});
+        this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
         this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
+        // we need to move the baseline editor canvas so that it doesn't get caught by wheelzoom.
+        let canvas = this.segmenter.canvas;
+        canvas.parentNode.parentNode.appendChild(canvas);
+        
         this.segmenter.events.addEventListener('baseline-editor:update', function(event) {
             let data = event.detail;
             if (data.lines) data.lines.forEach(function(line, index) {
@@ -34,10 +35,10 @@ class SegmentationPanel extends Panel {
             }.bind(this));
         }.bind(this));
     }
-
+    
     init() {
         function init_() {
-            this.segmenter.init();
+            this.segmenter.init(this.part.image.size[0]);
             this.segmenter.load({
                 lines: this.part.lines,
                 regions: this.part.blocks
@@ -66,8 +67,13 @@ class SegmentationPanel extends Panel {
     save(obj, type) {
         var post = {document_part: this.part.pk};
         if (type=='lines') {
-            post['baseline'] = JSON.stringify(obj.getBaseline());
-            post['mask'] = JSON.stringify(obj.getMask());
+            // back to original's image coordinate system (instead of thumbnail's)
+            let ratio = this.part.image.size[0] / this.$img.get(0).naturalWidth;
+            console.log(this.$img.get(0).naturalWidth, this.part.image.size[0], ratio);
+            let line = obj.getBaseline().map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            post['baseline'] = JSON.stringify(line);
+            let mask = obj.getMask().map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            post['mask'] = JSON.stringify(mask);
             // post.block = this.block?this.block.pk:null; // todo
         } else if (type == 'blocks') {
             post['box'] = JSON.stringify(obj.getPolygon());
@@ -78,16 +84,18 @@ class SegmentationPanel extends Panel {
         var requestType = pk?'PUT':'POST';
         $.ajax({url: uri, type: requestType, data: post})
             .done($.proxy(function(data) {
+                obj.context.pk = data.pk;
                 if (type == 'lines') {
-                /* create corresponding transcription line */
-                    if (!pk) {
-                        panels['trans'].addLine(data);
-                    } else {
-                        var tl = panels['trans'].lines.find(l => l.pk==pk);
-                        if (tl) tl.update(data);
+                    /* create corresponding transcription line */
+                    if (panels['trans']) {
+                        if (!pk) {
+                            panels['trans'].addLine(data);
+                        } else {
+                            var tl = panels['trans'].lines.find(l => l.pk==pk);
+                            if (tl) { tl.update(data); }
+                        }
                     }
                 }
-                obj.context.pk = data.pk;
             }, this))
             .fail(function(data){
                 alert("Couldn't save block:", data);

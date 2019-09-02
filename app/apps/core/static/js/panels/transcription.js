@@ -93,12 +93,10 @@ class TranscriptionLine {
     }
     
     showOverlay() {
-        // $('.panel .overlay').css({
-        //     left: this.box[0]*this.panel.ratio + 'px',
-        //     top: this.box[1]*this.panel.ratio + 'px',
-        //     width: (this.box[2] - this.box[0])*this.panel.ratio + 'px',
-        //     height: (this.box[3] - this.box[1])*this.panel.ratio + 'px'
-        // }).stop(true).fadeIn(0.2);
+        let ratio = this.panel.getRatio();
+        let polygon = this.mask.map(pt => Math.round(pt[0]*ratio)+ ' '+Math.round(pt[1]*ratio)).join(',');
+        $('.panel .overlay polygon').attr('points', polygon);
+        $('.panel .overlay').stop(true).fadeIn(0.2);
     }
     
     getLineTranscription() {
@@ -325,7 +323,7 @@ class TranscriptionPanel extends Panel {
         let container = document.getElementById('part-trans');
         this.content = container.getElementsByTagName('svg')[0];
 
-        this.zoomTarget = zoom.register(this.content, {map: true});
+        this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
 
         // load the user saved transcription
         let itrans = userProfile.get('initialTranscriptions');

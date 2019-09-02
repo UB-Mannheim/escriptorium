@@ -14,6 +14,7 @@ class zoomTarget {
                              mapDuration=2}) {
         // wrap the element in a container:
         var container = document.createElement('div');
+        container.classList.add('js-wheelzoom-container');
         // disables right click menu
         container.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         // var rotationContainer = document.createElement('div');
@@ -24,6 +25,8 @@ class zoomTarget {
         // rotationContainer.style.transformOrigin = 'center';
         container.style.position = 'relative';
         container.style.overflow = 'hidden';
+        container.style.width = '100%';
+        container.style.height = '100%';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'scale 0.3s';
         domElement.classList.add('js-zoom-target');
@@ -80,12 +83,14 @@ class zoomTarget {
     
     makeMap(mapMargin, mapColors) {        
         this.mapWhole = document.createElement('div');
+        this.mapWhole.classList.add('wheelzoom-outter-map');
         this.mapWhole.style.position = 'fixed';
         this.mapWhole.style.opacity = 0;
         this.mapWhole.style.backgroundColor = mapColors[0];
         this.container.appendChild(this.mapWhole);
         
         this.mapCurrent = document.createElement('div');
+        this.mapCurrent.classList.add('wheelzoom-inner-map');
         this.mapCurrent.style.position = 'absolute';
         this.mapCurrent.style.opacity = 0.5;
         this.mapCurrent.style.width = '100%';
@@ -234,6 +239,7 @@ class WheelZoom {
             angle: this.angle - oldAngle
         };
 		this.updateStyle(diff);
+        this.dragging.showMap(this.pos, this.scale);
         return diff;
 	}
     

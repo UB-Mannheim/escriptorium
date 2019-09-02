@@ -9,16 +9,16 @@ var zoom = new WheelZoom();
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
 	    var title = name + '-panel';
-	    var show = Cookies.get(title) && JSON.parse(Cookies.get(title)) || visible;
+	    var show = Cookies.get(title) && JSON.parse(Cookies.get(title));
 	    panels[name] = new class_($('#'+title), $('#'+name+'-tools'), show);
 	    if (show) {
 	        $('#'+title+'-btn').addClass('btn-primary').removeClass('btn-secondary');
 	    }
 	}
-	makePanel('source', SourcePanel, true);
-	makePanel('binar', BinarizationPanel, false);
-	makePanel('seg', SegmentationPanel, false);
-	makePanel('trans', TranscriptionPanel, false);
+	makePanel('source', SourcePanel);
+	makePanel('binar', BinarizationPanel);
+	makePanel('seg', SegmentationPanel);
+	// makePanel('trans', TranscriptionPanel);
     
     function loadPart(pk, callback) {
         let uri = API.part.replace('{part_pk}', pk);

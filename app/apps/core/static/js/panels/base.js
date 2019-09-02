@@ -16,7 +16,7 @@ class Panel {
         this.opened = true;
         this.$panel.show(this.onShow.bind(this));
         this.$tools.show();
-        Cookies.set(this.$panel.attr('id'), true);
+        Cookies.set(this.$panel.attr('id'), true, {expires: 30});
     }
     close() {
         this.opened = false;

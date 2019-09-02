@@ -299,7 +299,6 @@ class Segmenter {
                         idField='id'
                        } = {}) {
         this.img = image;
-        this.imgRatio = null;  // img may not be loaded yet
 
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
@@ -370,7 +369,6 @@ class Segmenter {
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
-        var hitOptions = { type : ('path'), segments: true, stroke: true, fill: true, tolerance: 5 };
         
         var tool = new Tool();
         this.setColors(this.img);
@@ -384,8 +382,8 @@ class Segmenter {
         this.canvas.style.height = this.img.height;
         // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
         // this.raster.position = view.center;
-        this.img.style.display = 'hidden';
-
+        // this.img.style.display = 'hidden';
+        
         // context follows top right, width can only be calculated once shown
         this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
         this.contextMenu.style.margin = '10px';
@@ -946,11 +944,11 @@ class Segmenter {
     
     refresh() {
         let bounds = this.img.getBoundingClientRect();
-        this.imgRatio = bounds.width / this.img.naturalWidth;
+        let imgRatio = bounds.width / this.img.naturalWidth;
         if (paper.view) {
             this.deletePointBtn.style.display = 'none';
             paper.view.viewSize = [bounds.width, bounds.height];
-            paper.view.scale(this.imgRatio/paper.view.zoom, [0, 0]);
+            paper.view.scale(imgRatio/paper.view.zoom, [0, 0]);
         }
     }
     
