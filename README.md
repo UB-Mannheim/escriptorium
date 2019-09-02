@@ -43,38 +43,41 @@ To update:
 #### Dev (without docker)  
 Install in your environment of choice  
 * postgresql, setup a user and create a database (default name is escriptorium)  
+> sudo apt install postgresql postgresql-contrib  
+> sudo -i -u postgres  # switch to postgres user  
+> createuser --interactive  
+> Enter name of role to add: myusername  # use your system user name  
+> Shall the new role be a superuser? (y/n) y  
+> exit  # logout from postgres user  
+  
 * redis  
+> sudo apt-get install redis-server  
+  
 * elasticsearch  
 set max_map_count permanently  
 > $ sudo sysctl -w vm.max_map_count=262144  
   
 * env  
-> $ virtualenv env -p /usr/bin/python3.7 (any version >= 3.5 should work)  
+> apt-get install build-essential python-dev python3-dev  
+> $ virtualenv env -p /usr/bin/python3.6 (any version >= 3.6 should work)  
 > $ . env/bin/activate  
-> $ pip install -r requirements.txt  
+> $ pip install -r app/requirements.txt    
   
-  
-* if you want to use local settings the prefered way is to invoque manage.py with the --settings option  
-For example local_settings.py  
-```python
-from escriptorium.settings import *  
-  
-# requires pip install django-debug-toolbar  
-INSTALLED_APPS += ['debug_toolbar',]  
-MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]  
-INTERNAL_IPS += ['127.0.0.1',]  
-```  
-  
+* The default settings needs to be override for devs   
+> cp app/escriptorium/local_settings.py{.example,}  
+> edit app/escriptorium/local_settings.py  
+change the database role if need be, and then invoque manage.py with the --settings option in the commands bellow  
+> python manage.py runserver --settings=escriptorium.local_settings  
 it is recomanded to then make an alias for manage.py or set $DJANGO_SETTINGS_MODULE  
   
 * To run a basic celery worker listening on everything  
 > $ celery -A app.escriptorium worker -l INFO  
 To disable celery you can set `CELERY_TASK_ALWAYS_EAGER = True`  
 
-* Create the sql tables  
-> $ cd app && python manage.py migrate  
+* Create the sql tables   
+> $ cd app && python manage.py migrate (--settings=escriptorium.local_settings)  
   
 * Run the server  
-> $ cd app && python manage.py runserver  
+> $ cd app && python manage.py runserver (--settings=escriptorium.local_settings)  
   
 The website should be accessible at http://localhost:8000/  
