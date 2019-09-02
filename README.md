@@ -41,37 +41,49 @@ To update:
 > $ docker-compose up -d --build  
   
 #### Dev (without docker)  
-Install in your environment of choice  
+Install in your environment of choice:
+Examples below are given for a standard virtualenv/pip on ubuntu.
 * postgresql, setup a user and create a database (default name is escriptorium)  
-> sudo apt install postgresql postgresql-contrib  
-> sudo -i -u postgres  # switch to postgres user  
-> createuser --interactive  
-> Enter name of role to add: myusername  # use your system user name  
+> $ sudo apt install postgresql postgresql-contrib  
+> $ sudo -i -u postgres  # switch to postgres user  
+> $ createuser --interactive  
+> Enter name of role to add: <myusername>  # use your system user name  
 > Shall the new role be a superuser? (y/n) y  
-> exit  # logout from postgres user  
+> $ exit  # logout from postgres user  
   
 * redis  
-> sudo apt-get install redis-server  
+> $ sudo apt-get install redis-server  
   
 * elasticsearch  
 set max_map_count permanently  
 > $ sudo sysctl -w vm.max_map_count=262144  
   
+* third party tools
+> $ sudo apt-get install pngcrush
+  
 * env  
-> apt-get install build-essential python-dev python3-dev  
+> $ apt-get install build-essential python-dev python3-dev  
 > $ virtualenv env -p /usr/bin/python3.6 (any version >= 3.6 should work)  
 > $ . env/bin/activate  
 > $ pip install -r app/requirements.txt    
   
-* The default settings needs to be override for devs   
-> cp app/escriptorium/local_settings.py{.example,}  
-> edit app/escriptorium/local_settings.py  
-change the database role if need be, and then invoque manage.py with the --settings option in the commands bellow  
-> python manage.py runserver --settings=escriptorium.local_settings  
-it is recomanded to then make an alias for manage.py or set $DJANGO_SETTINGS_MODULE  
+* The default settings needs to be override for devs  
+> $ cp app/escriptorium/local_settings.py{.example,}  
+> $ edit app/escriptorium/local_settings.py
+  
+change for example the database role if need be, and then 
+  
+It is then recomanded to set $DJANGO_SETTINGS_MODULE
+  
+> $ export $DJANGO_SETTINGS_MODULE escriptorium.local_settings
+  
+And use something like (direnv)[https://direnv.net/] to automate it.
+  
+Another option is to point the --settings option of the commands to the module.
+  
   
 * To run a basic celery worker listening on everything  
-> $ celery -A app.escriptorium worker -l INFO  
+> $ celery -A escriptorium worker -l INFO  
 To disable celery you can set `CELERY_TASK_ALWAYS_EAGER = True`  
 
 * Create the sql tables   
