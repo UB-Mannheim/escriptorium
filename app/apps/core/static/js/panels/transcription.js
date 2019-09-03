@@ -146,16 +146,32 @@ class TranscriptionLine {
         let bounds = this.polyElement.getBBox();
         img.style.transform = 'none';  // reset img width for calculations
         let panelToImgRatio = this.panel.$panel.width() / img.width;
-        
+        let panelToTransRatio = modalImgContainer.getBoundingClientRect().width / bounds.width;
         // Line image
-        let ratio =  modalImgContainer.getBoundingClientRect().width / (bounds.width / panelToImgRatio);
-        modalImgContainer.style.height = Math.round(bounds.height/panelToImgRatio*ratio)+'px';
-        img.style.transformOrigin = '0 0';
-        img.style.transform = 'scale('+ratio+')';
-        img.style.left = -Math.round(bounds.x/panelToImgRatio*ratio)+'px';
-        img.style.top = -Math.round(bounds.y/panelToImgRatio*ratio)+'px';
+        // let ratio =  modalImgContainer.getBoundingClientRect().width / (bounds.width / panelToImgRatio);
+        let context = 20;
+        modalImgContainer.style.height = Math.round(bounds.height*panelToTransRatio)+'px';
+        img.style.width = this.panel.$panel.width()*panelToTransRatio + 'px';
+        
+        let left = Math.round(bounds.x*panelToTransRatio);
+        let top = Math.round(bounds.y*panelToTransRatio);
+        img.style.left = -left+'px';
+        img.style.top = -top+'px';
         
         // Overlay
+        let overlay = modalImgContainer.querySelector('.overlay');
+        // overlay.style.top = img.style.top;
+        // overlay.style.left = img.style.left;
+        // overlay.style.width = img.width+'px';
+        // overlay.style.height = img.height+'px';
+        console.log('#', this.panel.part.image.size[0], img.width);
+        let coordToTransRatio = this.panel.part.image.size[0] / img.width;
+        // console.log(coordToContainerRatio, left, panelToImgRatio, ratio, panelToImgRatio*ratio, left/(panelToImgRatio*ratio));
+        let polygon = this.mask.map(pt => {
+            return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
+                Math.round(pt[1]/coordToTransRatio-top);
+        }).join(',');
+        overlay.querySelector('polygon').setAttribute('points', polygon);
 
 
         // Content input

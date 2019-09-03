@@ -18,7 +18,7 @@ $(document).ready(function() {
 	makePanel('source', SourcePanel);
 	makePanel('binar', BinarizationPanel);
 	makePanel('seg', SegmentationPanel);
-	// makePanel('trans', TranscriptionPanel);
+	makePanel('trans', TranscriptionPanel);
     
     function loadPart(pk, callback) {
         let uri = API.part.replace('{part_pk}', pk);

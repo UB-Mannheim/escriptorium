@@ -324,6 +324,10 @@ form.inline-form {
 #binar-tools, #seg-tools, #trans-panel, #trans-tools {
     display: none;
 }
+#trans-panel .zoom-container {
+    height: 100%;
+}
+
 #img-panel, #binar-panel, #seg-panel, #trans-panel {
     min-height: calc(100vh - 200px);
 }
@@ -385,6 +389,8 @@ i.panel-icon {
 .overlay {
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     position: absolute;
     background-color: transparent;
     outline: 9999px solid rgba(0, 0, 0, 0.1);

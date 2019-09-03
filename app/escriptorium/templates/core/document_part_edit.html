@@ -188,7 +188,17 @@
       <div class="modal-body {{ document.default_text_direction }}">
         <div id="modal-img-container" width="80%">
           <img id="line-img" src="{{ part.image|thumbnail_url:'large' }}" draggable="false" selectable="false"/>
-          <div class="overlay"></div>
+          <div class="overlay">
+            <svg width="100%" height="100%">
+              <defs>
+                <mask id="modal-overlay">
+                  <rect width="100%" height="100%" fill="white"/>
+                  <polygon points=""/>
+                </mask>
+              </defs>
+              <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#modal-overlay)" />
+            </svg>
+          </div>
         </div>
         
         <input type="hidden" name="transcription"/>
