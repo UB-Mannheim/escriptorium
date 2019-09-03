@@ -79,9 +79,6 @@ class SegmenterRegion {
         this.remove();
         this.segmenter.trigger('baseline-editor:delete', {regions: [this]});
     }
-    getPolygon() {
-        return this.polygon.map(pt => [pt[0]/paper.view.zoom*this.segmenter.scale, pt[1]/paper.view.zoom*this.segmenter.scale]);
-    }
 }
 
 class SegmenterLine {
@@ -100,7 +97,7 @@ class SegmenterLine {
             fillColor: this.segmenter.mainColor,
             selectedColor: this.segmenter.secondaryColor,
             visible: !baseline || this.segmenter.showMasks,
-            segments: this.mask?this.mask.map(pt => [pt[0]*paper.view.zoom, pt[1]*paper.view.zoom]):null
+            segments: this.mask
         });
 
         if (baseline) {
@@ -108,7 +105,7 @@ class SegmenterLine {
                 this.baselinePath = baseline;
                 this.updateDataFromCanvas();
             } else {
-                this.baseline = baseline.map(pt => [pt[0]*paper.view.zoom, pt[1]*paper.view.zoom]);
+                this.baseline = baseline;
                 this.baselinePath = new Path({
                 strokeColor: segmenter_.mainColor,
                 strokeWidth: 7,
@@ -266,15 +263,6 @@ class SegmenterLine {
             }
         }
     }
-
-    getBaseline() {
-        return this.baseline.map(pt => [Math.round(pt[0]/paper.view.zoom*this.segmenter.scale),
-                                        Math.round(pt[1]/paper.view.zoom*this.segmenter.scale)]);
-    }
-    getMask() {
-        return this.mask.map(pt => [Math.round(pt[0]/paper.view.zoom*this.segmenter.scale),
-                                    Math.round(pt[1]/paper.view.zoom*this.segmenter.scale)]);
-    }
 }
 
 class Segmenter {
@@ -319,8 +307,7 @@ class Segmenter {
         this.lowerLineHeight = lowerLineHeight;
 
         // the minimal length in pixels below which the line will be removed automatically
-        this.lengthThreshold = lengthTreshold;
-        this.scale = scale;  // 
+        this.lengthThreshold = lengthTreshold; 
         this.showMasks = false;
 
         this.mode = 'lines'; // | 'regions'
@@ -785,8 +772,7 @@ class Segmenter {
     
     startNewLine(event) {
         this.purgeSelection();
-        let newLine = this.createLine([[event.point.x/paper.view.zoom,
-                                        event.point.y/paper.view.zoom]], null, null, true);
+        let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
         newLine.showDirection();
         

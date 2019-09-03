@@ -38,10 +38,21 @@ class SegmentationPanel extends Panel {
     
     init() {
         function init_() {
-            this.segmenter.init(this.part.image.size[0]);
+            this.segmenter.init();
+            let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
+            // change the coordinate system to fit the thumbnail
+            let lines = this.part.lines.map(l => { return {
+                pk: l.pk,
+                baseline: l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]),
+                mask: l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio])
+            }});
+            let regions = this.part.blocks.map(b => {
+                return {
+                    pk: b.pk,
+                    box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
+                }});
             this.segmenter.load({
-                lines: this.part.lines,
-                regions: this.part.blocks
+                lines: lines, regions: regions
             });
             this.bindZoom();
         }
@@ -66,17 +77,17 @@ class SegmentationPanel extends Panel {
     
     save(obj, type) {
         var post = {document_part: this.part.pk};
+        let ratio = this.part.image.size[0] / this.$img.get(0).naturalWidth;
         if (type=='lines') {
             // back to original's image coordinate system (instead of thumbnail's)
-            let ratio = this.part.image.size[0] / this.$img.get(0).naturalWidth;
-            console.log(this.$img.get(0).naturalWidth, this.part.image.size[0], ratio);
-            let line = obj.getBaseline().map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            let line = obj.baseline.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
             post['baseline'] = JSON.stringify(line);
-            let mask = obj.getMask().map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            let mask = obj.mask.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
             post['mask'] = JSON.stringify(mask);
             // post.block = this.block?this.block.pk:null; // todo
         } else if (type == 'blocks') {
-            post['box'] = JSON.stringify(obj.getPolygon());
+            let polygon = obj.polygon.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            post['box'] = JSON.stringify(polygon);
         }
         let uri = this.api + type + '/';
         let pk = obj.context.pk;
@@ -106,7 +117,7 @@ class SegmentationPanel extends Panel {
     delete(obj, type) {
         let uri = this.api + type + '/' + obj.context.pk;
         $.ajax({url: uri, type:'DELETE'});
-        if (type == 'lines') {
+        if (type == 'lines' && panels['trans']) {
             var tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
             if (tl) tl.delete();
         }
