@@ -58,10 +58,12 @@ class TranscriptionLine {
         this.polyElement.setAttribute('points', poly);
 
         let area = 0;
-        for (let i=1; i<this.mask.length; i++) {
-            area += (this.mask[i-1][0]* ratio+this.mask[i][0]* ratio) * (this.mask[i-1][1]* ratio-this.mask[i][1]* ratio); 
+        // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n), 
+        for (let i=0; i<this.mask.length; i++) {
+            let j = (i+1)%this.mask.length; // loop back to 1
+            area += this.mask[i][0]*this.mask[j][1] - this.mask[j][0]*this.mask[i][1];
         }
-        area = Math.abs(area/2);
+        area = Math.abs(area*ratio/2);
         
         var path;
         if (this.baseline) {
@@ -74,7 +76,6 @@ class TranscriptionLine {
         
         this.pathElement.setAttribute('d', path);
         let pathLength = this.pathElement.getTotalLength();
-        let margin = this.polyElement.getBBox().height / 10;
         let lineHeight = area / pathLength;
         lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
         this.textElement.style.fontSize =  lineHeight * (2/3) + 'px';
