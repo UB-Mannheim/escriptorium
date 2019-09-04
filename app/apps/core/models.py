@@ -1,3 +1,4 @@
+
 import re
 import math
 import logging
@@ -21,12 +22,12 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_delete
 
-
 from celery.result import AsyncResult
 from celery.task.control import inspect, revoke
 from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
+from kraken import pageseg, blla
 
 from versioning.models import Versioned
 from core.tasks import *
@@ -567,28 +568,32 @@ class DocumentPart(OrderedModel):
         
         with Image.open(self.bw_image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
-            options = {'maxcolseps': 1}
+            options = {}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
+                options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
             blocks = self.blocks.all()
             if blocks:
                 for block in blocks:
                     if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
                         continue
                     ic = im.crop(block.box)
-                    res = pageseg.segment(ic, **options)
+                    res = blla.segment(ic, **options)
                     # if script_detect:
                     #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
-                    for line in res['boxes']:
+                    for line in res['lines']:
                         Line.objects.create(
                             document_part=self, block=block,
                             box=(line[0]+block.box[0], line[1]+block.box[1],
                                  line[2]+block.box[0], line[3]+block.box[1]))
             else:
-                res = pageseg.segment(im, **options)
-                res['block'] = None
-                for line in res['boxes']:
-                    Line.objects.create(document_part=self, box=line)
+                res = blla.segment(im, **options)
+                for line in res['lines']:
+                    newline = Line.objects.create(
+                        document_part=self,
+                        baseline=line['baseline'],
+                        # invert pts coordinates to compensate a kraken bug
+                        mask=line['boundary'].tolist())
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()

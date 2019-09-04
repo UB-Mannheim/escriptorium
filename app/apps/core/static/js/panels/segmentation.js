@@ -80,13 +80,16 @@ class SegmentationPanel extends Panel {
         let ratio = this.part.image.size[0] / this.$img.get(0).naturalWidth;
         if (type=='lines') {
             // back to original's image coordinate system (instead of thumbnail's)
-            let line = obj.baseline.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            let line = obj.baseline.map(pt=>[Math.round(pt[0]*ratio),
+                                             Math.round(pt[1]*ratio)]);
             post['baseline'] = JSON.stringify(line);
-            let mask = obj.mask.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            let mask = obj.mask?obj.mask.map(pt=>[Math.round(pt[0]*ratio),
+                                                  Math.round(pt[1]*ratio)]):null;
             post['mask'] = JSON.stringify(mask);
             // post.block = this.block?this.block.pk:null; // todo
         } else if (type == 'blocks') {
-            let polygon = obj.polygon.map(pt=>[pt[0]*ratio, pt[1]*ratio]);
+            let polygon = obj.polygon.map(pt=>[Math.round(pt[0]*ratio),
+                                               Math.round(pt[1]*ratio)]);
             post['box'] = JSON.stringify(polygon);
         }
         let uri = this.api + type + '/';

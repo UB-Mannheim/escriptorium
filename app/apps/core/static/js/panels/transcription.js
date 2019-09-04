@@ -144,35 +144,28 @@ class TranscriptionLine {
         let modalImgContainer = document.querySelector('#modal-img-container');
         let img = modalImgContainer.querySelector('img#line-img');
         let bounds = this.polyElement.getBBox();
-        img.style.transform = 'none';  // reset img width for calculations
+        // img.style.transform = 'none';  // reset img width for calculations
         let panelToImgRatio = this.panel.$panel.width() / img.width;
         let panelToTransRatio = modalImgContainer.getBoundingClientRect().width / bounds.width;
+
         // Line image
-        // let ratio =  modalImgContainer.getBoundingClientRect().width / (bounds.width / panelToImgRatio);
         let context = 20;
-        modalImgContainer.style.height = Math.round(bounds.height*panelToTransRatio)+'px';
+        modalImgContainer.style.height = Math.round(bounds.height*panelToTransRatio)+2*context+'px';
         img.style.width = this.panel.$panel.width()*panelToTransRatio + 'px';
         
         let left = Math.round(bounds.x*panelToTransRatio);
         let top = Math.round(bounds.y*panelToTransRatio);
         img.style.left = -left+'px';
-        img.style.top = -top+'px';
+        img.style.top = -top+context+'px';
         
         // Overlay
         let overlay = modalImgContainer.querySelector('.overlay');
-        // overlay.style.top = img.style.top;
-        // overlay.style.left = img.style.left;
-        // overlay.style.width = img.width+'px';
-        // overlay.style.height = img.height+'px';
-        console.log('#', this.panel.part.image.size[0], img.width);
         let coordToTransRatio = this.panel.part.image.size[0] / img.width;
-        // console.log(coordToContainerRatio, left, panelToImgRatio, ratio, panelToImgRatio*ratio, left/(panelToImgRatio*ratio));
         let polygon = this.mask.map(pt => {
             return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
-                Math.round(pt[1]/coordToTransRatio-top);
+                   Math.round(pt[1]/coordToTransRatio-top+context);
         }).join(',');
         overlay.querySelector('polygon').setAttribute('points', polygon);
-
 
         // Content input
         let input = document.querySelector('#trans-modal #trans-input');
@@ -202,9 +195,6 @@ class TranscriptionLine {
             document.querySelector('#new-version-btn').disabled = true;
         }
 
-        
-        
-        
         // // reset width to recalculate ratio
         // let modalImgContainer = document.querySelector('#modal-img-container');
         // modalImgContainer.style.width = '80%';
@@ -442,16 +432,13 @@ class TranscriptionPanel extends Panel {
     
     load(part) {
         super.load(part);
+        if (this.lines) [].forEach.call(this.lines, e => this.content.removeChild(e.element));
         this.lines = [];
-        let lines = document.getElementsByTagName('trans-line');
-        if (lines) [].forEach.call(lines, e => this.content.removeChild(e));
-        this.ratio = this.getRatio();
 
+        this.ratio = this.getRatio();
         let container = this.content.parentNode;
         container.style.height = '100%';
         container.style.width = '100%';
-        // container.style.transformOrigin = '0 0';
-        // container.style.transform = 'scale('+this.ratio+')';
         
         if (this.part.image.thumbnails.large) {
             document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.thumbnails.large);
