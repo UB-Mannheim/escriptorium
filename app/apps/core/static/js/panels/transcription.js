@@ -172,6 +172,24 @@ class TranscriptionLine {
         // Content input
         let input = document.querySelector('#trans-modal #trans-input');
         document.querySelector('#trans-modal #trans-input').value = content;
+        let ruler = document.createElement('span');
+        ruler.style.position = 'absolute';
+        ruler.style.visibility = 'hidden';
+        ruler.textContent = content;
+        document.body.appendChild(ruler);
+        ruler.style.fontSize = bounds.height*panelToTransRatio+'px';
+        input.style.fontSize = bounds.height*panelToTransRatio+'px';
+        input.style.height = bounds.height*panelToTransRatio+'px';
+        if (content) {
+            var scaleX = Math.min(5,  modalImgContainer.clientWidth / ruler.clientWidth);
+            scaleX = Math.max(0.2, scaleX);
+            input.style.transform = 'scaleX('+ scaleX +')';
+            input.style.width = 100/scaleX + '%'; // fit in the container
+        } else {
+            input.css({transform: 'none', width: '100%'});
+        }
+        document.body.removeChild(ruler);  // done its job
+        
         input.focus();
         
         // History
@@ -196,63 +214,6 @@ class TranscriptionLine {
             noVersionBtn.style.display = 'block';
             document.querySelector('#new-version-btn').disabled = true;
         }
-
-        // // reset width to recalculate ratio
-        // let modalImgContainer = document.querySelector('#modal-img-container');
-        // modalImgContainer.style.width = '80%';
-        
-        // // need to show the modal before calculating sizes
-        // 
-        // var boxWidth = modalImgContainer.getBoundingClientRect().width;
-        // console.log('-', boxWidth, modalImgContainer.querySelector('img').originalWidth);
-        // var ratio = boxWidth / modalImgContainer.querySelector('img').originalWidth;
-        // let originalHeight = modalImgContainer.originalHeight;
-        // var MAX_HEIGHT = 200;
-        // if ((originalHeight * ratio) > MAX_HEIGHT) {
-        //     ratio = ratio * originalHeight / MAX_HEIGHT;
-        // }
-        // let line_height = originalHeight * ratio;
-        // // multiply by 1.4 to add a bit of context
-        // let height = Math.max(Math.min(line_height*1.4, 200), 40);
-        // let width = modalImgContainer.originalWidth * ratio;
-        // let context_top = (height - line_height) / 2;
-        
-        // modalImgContainer.style.height = height + 'px';
-        // modalImgContainer.style.width = width + 'px';
-        // let overlay = document.querySelector('#trans-modal .overlay');
-        // overlay.style.height = line_height + 'px';
-        // overlay.style.width = width + 'px';
-        // overlay.style.top = context_top;
-        
-        // try to make the input match the image
-        // let $el = $('#trans-modal #trans-input');
-        // $el.css({
-        //     display: 'inline-block',  // change to inline-block temporarily to calculate width
-        //     width: 'auto',
-        //     fontSize: height * 0.7 + 'px',
-        //     lineHeight: height + 'px',
-        //     height: height + 'px'
-        // });
-        // if (content) {
-        //     var scaleX = Math.min(5, originalWidth * ratio / $('#trans-rule').width());
-        //     scaleX = Math.max(0.2, scaleX);
-        //     $el.css({
-        //         transform: 'scaleX('+ scaleX +')',
-        //         width: 100/scaleX + '%' // fit in the container
-        //     });
-        // } else {
-        //     $el.css({transform: 'none', width: '100%'});
-        // }
-        // $el.css({display: 'block'}); // revert to block to take the full space available
-
-        // console.log(this.mask, ratio);
-        // $('#trans-modal #line-img').animate({
-        //     left: '-'+this.mask[0][0]*ratio+'px',
-        //     top: '-'+(this.mask[0][1]*ratio-context_top)+'px',
-        //     width: this.panel.part.image.size[0]*ratio + 'px'
-        // }, 200);
-
-        // el.focus();
     }
 
     addVersionLine(version) {
