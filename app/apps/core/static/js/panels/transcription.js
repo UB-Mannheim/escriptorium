@@ -85,7 +85,7 @@ class TranscriptionLine {
         this.makeShape();
         this.setText();
     }
-
+    
     update(line) {
         this.pk = line.pk;
         this.mask = line.mask;
@@ -119,7 +119,8 @@ class TranscriptionLine {
         let textLength = this.textElement.getComputedTextLength();
         let pathLength = this.pathElement.getTotalLength();
         if (textLength && pathLength) {
-            this.textElement.setAttribute('textLength', pathLength);
+            // this.textElement.setAttribute('textanchor', "middle");
+            this.textElement.setAttribute('textLength', pathLength+'px');
         }
     }
     

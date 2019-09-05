@@ -9,7 +9,6 @@ segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
 
 Options:
   lengthTreshold=15
-  disableMasks=false // td
   mainColor
   secondaryColor
   lengthTreshold=15,
@@ -277,7 +276,7 @@ class Segmenter {
                         mergeBtn=null,
                         undoBtn=null,
                         redoBtn=null,
-                        disableMasks=false, // td
+                        disableBindings=false,
                         mainColor=null,
                         secondaryColor=null,
                         upperLineHeight=20,
@@ -292,6 +291,7 @@ class Segmenter {
         this.canvas.className += 'resize';
 
         this.idField = idField;
+        this.disableBindings = disableBindings;
         
         // create a dummy tag for event bindings
         this.events = document.createElement('div');
@@ -410,8 +410,9 @@ class Segmenter {
         if (this.redoBtn) this.redoBtn.addEventListener('click', function(event) {
             this.loadNextState();
         }.bind(this));
-
+        
         document.addEventListener('keyup', function(event) {
+            if (this.disableBindings) return;
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
             } else if (event.keyCode == 46) { // supr

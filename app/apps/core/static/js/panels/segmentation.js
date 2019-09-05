@@ -34,6 +34,15 @@ class SegmentationPanel extends Panel {
                 this.delete(region, 'blocks');
             }.bind(this));
         }.bind(this));
+        
+        // avoid triggering keybindings events when not using the baseline segmenter
+        this.segmenter.disableBindings = true;
+        this.$panel.on('mouseover', function(e) {
+            this.segmenter.disableBindings = false;
+        }.bind(this));
+        this.$panel.on('mouseout', function(e) {
+            this.segmenter.disableBindings = true;
+        }.bind(this));
     }
     
     init() {
@@ -46,11 +55,10 @@ class SegmentationPanel extends Panel {
                 baseline: l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]),
                 mask: l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio])
             }});
-            let regions = this.part.blocks.map(b => {
-                return {
-                    pk: b.pk,
-                    box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
-                }});
+            let regions = this.part.blocks.map(b => { return {
+                pk: b.pk,
+                box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
+            }});
             this.segmenter.load({
                 lines: lines, regions: regions
             });

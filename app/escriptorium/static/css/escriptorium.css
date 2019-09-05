@@ -182,12 +182,10 @@ form.inline-form {
     padding: 0.5rem;
 }
 
-.help.open {
-    display: none;
+.help {
     cursor: pointer;
     color: var(--primary);
     text-shadow: 0 1px 0 #fff;
-    padding: 0;
     background-color: transparent;
     float: right;
     opacity: .5;
@@ -196,6 +194,11 @@ form.inline-form {
     opacity: 1;
 }
 
+.panel-tools .help-text {
+    z-index: 2;
+    position: absolute;
+    right: 0;
+}
 
 #viewer-container {
     margin: 0;
