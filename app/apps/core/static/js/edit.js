@@ -5,6 +5,7 @@ var API = {
 };
 
 var zoom = new WheelZoom();
+// var undoManager = new UndoManager();
 
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
@@ -67,7 +68,7 @@ $(document).ready(function() {
         // needs to recalculate positions once everything is loaded
         // for (var key in panels) {
         //     panels[key].refresh();
-        // }
+        // } 
     });
     
     // zoom slider

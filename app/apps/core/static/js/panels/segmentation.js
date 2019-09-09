@@ -70,7 +70,6 @@ class SegmentationPanel extends Panel {
     }
     
     load(part) {
-        this.segmenter.reset();
         super.load(part);
         if (this.part.image.thumbnails) {
             this.$img.attr('src', this.part.image.thumbnails.large);

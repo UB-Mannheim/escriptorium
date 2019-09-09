@@ -1,4 +1,3 @@
-
 import re
 import math
 import logging
@@ -593,7 +592,7 @@ class DocumentPart(OrderedModel):
                         document_part=self,
                         baseline=line['baseline'],
                         # invert pts coordinates to compensate a kraken bug
-                        mask=line['boundary'].tolist())
+                        mask=line['boundary'].tolist() if line['boundary'] is not None else None)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()

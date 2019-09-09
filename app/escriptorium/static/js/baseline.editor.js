@@ -315,8 +315,6 @@ class Segmenter {
         this.spliting = false;
         this.copy = null;
         
-        this.maxStates = 30;
-        
         this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
         this.deletePointBtn.style.zIndex = 3;
         this.toggleMasksBtn = toggleMasksBtn || document.getElementById('toggle-masks');
@@ -345,13 +343,13 @@ class Segmenter {
     }
 
     init() {
-        this.stateIndex = -1;
-                
         this.lines = [];
         this.regions = [];
         this.selection = [];
-        this.states = [];
+
+        // TODO: reset history
         
+        if (paper.view) paper.view.remove();
         paper.settings.handleSize = 10;
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
@@ -374,7 +372,6 @@ class Segmenter {
         // context follows top right, width can only be calculated once shown
         this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
         this.contextMenu.style.margin = '10px';
-        this.addState();
         
         tool.onMouseDown = this.onMouseDown.bind(this);
         
@@ -403,12 +400,6 @@ class Segmenter {
         }.bind(this));
         if (this.mergeBtn) this.mergeBtn.addEventListener('click', function(event) {
             this.mergeSelection();
-        }.bind(this));
-        if (this.undoBtn) this.undoBtn.addEventListener('click', function(event) {
-            this.loadPreviousState();
-        }.bind(this));
-        if (this.redoBtn) this.redoBtn.addEventListener('click', function(event) {
-            this.loadNextState();
         }.bind(this));
         
         document.addEventListener('keyup', function(event) {
@@ -611,7 +602,6 @@ class Segmenter {
                         line.deletePolygonsEdgeForBaselineSegment(hit.segment);
                         hit.segment.remove();
                         this.deletePointBtn.style.display = 'none';
-                        this.addState();
                     }.bind(this), {once: true});
                 }
                 
@@ -632,7 +622,7 @@ class Segmenter {
                 this.tool.onMouseUp = function(event) {
                     this.resetToolEvents();
                     let changes = this.updateLinesFromCanvas();
-                    if (changes) this.addState();
+                    if (changes) this.addState(changes);
                 }.bind(this);
                 
             }.bind(this);
@@ -925,8 +915,11 @@ class Segmenter {
         if (point.y > this.img.naturalHeight) point.y = this.img.naturalHeight;
     }
     
-    reset() {
-        if (paper.view) paper.view.remove();
+    empty() {
+        for (let i=this.lines.length-1; i>=0; i--) { this.lines[i].remove(); }
+        this.lines = [];
+        for (let i=this.regions.length-1; i>=0; i--) { this.regions[i].remove(); }
+        this.regions = [];
     }
     
     refresh() {
@@ -939,7 +932,7 @@ class Segmenter {
         }
     }
     
-    load(data) {
+    load(data, state=true) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
         if (data.lines) {
@@ -981,7 +974,7 @@ class Segmenter {
     loadNextState() {
         if (this.stateIndex >= this.states.length -1) return;
         this.stateIndex++;
-        this.loadState(this.stateIndex);        
+        this.loadState(this.stateIndex);
     }
     
     loadPreviousState() {
@@ -992,8 +985,8 @@ class Segmenter {
     
     loadState(index) {
         if (index === undefined) return;
-        this.reset();
-        this.load(this.states[this.stateIndex]);
+        this.empty();
+        this.load(this.states[this.stateIndex], false);
 
         if (this.stateIndex > 0) this.undoBtn.disabled = false;
         else this.undoBtn.disabled = true;
@@ -1078,11 +1071,12 @@ class Segmenter {
         this.contextMenu.style.display = 'block';
         if (this.mode == 'lines' && this.selection.length > 1) {
             // we can only merge if all lines contain a baseline
-            if (this.selection.filter(sel => sel.baselinePath === null).length > 0) {
+            if (this.selection.filter(sel => sel.baseline === null).length == 0) {
                  this.mergeBtn.style.display = 'block';
             }
+        } else {
+            this.mergeBtn.style.display = 'none';
         }
-        else this.mergeBtn.style.display = 'none';
     }
     hideContextMenu() {
         this.contextMenu.style.display = 'none';
@@ -1216,7 +1210,7 @@ class Segmenter {
           3) Delete the left over
         */
 
-        if (this.selection.filter(sel => sel.baselinePath !== null).length > 0) {
+        if (this.selection.filter(sel => sel.baselinePath === null).length > 0) {
             return;
         }
         
