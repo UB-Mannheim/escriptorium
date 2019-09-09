@@ -50,6 +50,7 @@ Examples below are given for a standard virtualenv/pip on ubuntu.
 > Enter name of role to add: <myusername>  # use your system user name  
 > Shall the new role be a superuser? (y/n) y  
 > $ exit  # logout from postgres user  
+> $ createdb escriptorium
   
 * redis  
 > $ sudo apt-get install redis-server  
