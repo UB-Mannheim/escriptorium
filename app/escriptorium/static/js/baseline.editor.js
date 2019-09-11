@@ -76,7 +76,7 @@ class SegmenterRegion {
 
     delete() {
         this.remove();
-        this.segmenter.trigger('baseline-editor:delete', {regions: [this]});
+        this.segmenter.trigger('baseline-editor:delete-region', this);
     }
 }
 
@@ -106,14 +106,14 @@ class SegmenterLine {
             } else {
                 this.baseline = baseline;
                 this.baselinePath = new Path({
-                strokeColor: segmenter_.mainColor,
-                strokeWidth: 7,
-                strokeCap: 'round',
-                selectedColor: 'black',
-                opacity: 0.5,
-                segments: this.baseline,
-                selected: false,
-                visible: true
+                    strokeColor: segmenter_.mainColor,
+                    strokeWidth: 7,
+                    strokeCap: 'round',
+                    selectedColor: 'black',
+                    opacity: 0.5,
+                    segments: this.baseline,
+                    selected: false,
+                    visible: true
                 });
             }
         } else {
@@ -193,6 +193,15 @@ class SegmenterLine {
         else this.select();
     }
 
+    update(baseline, mask) {
+        this.baseline = baseline;
+        this.baselinePath.removeSegments();
+        this.baselinePath.addSegments(baseline);
+        this.mask = mask;
+        this.maskPath.removeSegments();
+        this.maskPath.addSegments(mask);
+    }
+    
     updateDataFromCanvas() {
         if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
@@ -219,7 +228,7 @@ class SegmenterLine {
 
     delete() {
         this.remove();
-        this.segmenter.trigger('baseline-editor:delete', {lines: [this]});
+        this.segmenter.trigger('baseline-editor:delete-line', this);
     }
     
     showDirection() {
@@ -274,8 +283,6 @@ class Segmenter {
                         toggleRegionModeBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
-                        undoBtn=null,
-                        redoBtn=null,
                         disableBindings=false,
                         mainColor=null,
                         secondaryColor=null,
@@ -321,8 +328,6 @@ class Segmenter {
         this.splitBtn = splitBtn || document.getElementById('split-lines');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
         this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
-        this.undoBtn = undoBtn || document.getElementById('undo');
-        this.redoBtn = redoBtn || document.getElementById('redo');
         this.mergeBtn = mergeBtn || document.getElementById('merge-selection');
         // create a menu for the context buttons
         this.contextMenu = document.createElement('div');
@@ -379,7 +384,7 @@ class Segmenter {
             for (let i=this.selection.length-1; i >= 0; i--) {    
                 this.selection[i].delete();
             }
-            this.addState();
+            
         }.bind(this));
 
         if (this.toggleRegionModeBtn) this.toggleRegionModeBtn.addEventListener('click', function(event) {
@@ -429,10 +434,6 @@ class Segmenter {
                     for (let i in this.regions) this.regions[i].select();
                 }
                 return false;
-            } else if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
-                this.loadPreviousState();
-            } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
-                this.loadNextState();
             }
             
             // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
@@ -499,8 +500,7 @@ class Segmenter {
         line.close();
         this.bindLineEvents(line);
         this.resetToolEvents();  // unregistering
-        this.addState();
-        this.trigger('baseline-editor:update', {lines: [line]});
+        this.trigger('baseline-editor:new-line', line);
     }
 
     createRegion(polygon, context, postponeEvents) {
@@ -523,7 +523,6 @@ class Segmenter {
         this.bindRegionEvents(region);
         this.resetToolEvents();
         region.updateDataFromCanvas();
-        this.addState();
         this.trigger('baseline-editor:update', {regions: [region]});
     }
 
@@ -559,22 +558,21 @@ class Segmenter {
                     hit.segment.remove();
                     this.deletePointBtn.style.display = 'none';
                     region.updateDataFromCanvas();
-                    this.addState();
                 }.bind(this), {once: true});
             }
             this.tool.onMouseUp = function(event) {
                 this.resetToolEvents();
                 let changes = this.updateRegionsFromCanvas();
-                if (changes) this.addState();
+                if (changes) this.trigger('baseline-editor:update', {regions: [region]});
             }.bind(this);
         }.bind(this);
 
         region.polygonPath.onDoubleClick = function(event) {
+            // Creates a new control point in the region
             if (event.event.ctrlKey || this.mode != 'regions') return;
             let location = region.polygonPath.getNearestLocation(event.point);
             let newSegment = region.polygonPath.insert(location.index+1, location);
             region.changed = true;
-            this.addState();
         }.bind(this);
     }
     
@@ -621,8 +619,11 @@ class Segmenter {
                 
                 this.tool.onMouseUp = function(event) {
                     this.resetToolEvents();
+                    let previous = {baseline: line.baseline,
+                                    mask: line.mask};
                     let changes = this.updateLinesFromCanvas();
-                    if (changes) this.addState(changes);
+                    if (changes) this.trigger('baseline-editor:update-line',
+                                              {line: line, previous: previous});
                 }.bind(this);
                 
             }.bind(this);
@@ -682,9 +683,12 @@ class Segmenter {
                 
                 this.tool.onMouseUp = function(event) {
                     this.resetToolEvents();
+                    let previous = {baseline: line.baseline,
+                                    mask: line.mask};
                     let changes = this.updateLinesFromCanvas();
                     if (changes) {
-                        this.addState();
+                        this.trigger('baseline-editor:update-line',
+                                     {line: line, previous: previous});
                         line.setLineHeight();
                     }
                 }.bind(this);
@@ -932,7 +936,7 @@ class Segmenter {
         }
     }
     
-    load(data, state=true) {
+    load(data) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
         if (data.lines) {
@@ -971,37 +975,6 @@ class Segmenter {
         };
     }
 
-    loadNextState() {
-        if (this.stateIndex >= this.states.length -1) return;
-        this.stateIndex++;
-        this.loadState(this.stateIndex);
-    }
-    
-    loadPreviousState() {
-        if (this.stateIndex == 0) return;
-        this.stateIndex--;
-        this.loadState(this.stateIndex);
-    }
-    
-    loadState(index) {
-        if (index === undefined) return;
-        this.empty();
-        this.load(this.states[this.stateIndex], false);
-
-        if (this.stateIndex > 0) this.undoBtn.disabled = false;
-        else this.undoBtn.disabled = true;
-        if (this.stateIndex < this.states.length-1) this.redoBtn.disabled = false;
-        else this.redoBtn.disabled = true;
-    }
-    
-    addState() {
-        if (this.stateIndex < this.maxStates) this.stateIndex++;
-        else this.states = this.states.slice(1);
-        this.states = this.states.slice(0, this.stateIndex); // cut the state branch
-        this.states[this.stateIndex] = this.exportJSON();
-        if (this.stateIndex > 0 && this.undoBtn) this.undoBtn.disabled = false;
-    }
-
     trigger(eventName, data) {
         var event = new CustomEvent(eventName, {detail:data});
         this.events.dispatchEvent(event);
@@ -1016,7 +989,6 @@ class Segmenter {
                 changes.push(this.lines[i]);
             }
         }
-        if (changes.length) this.trigger('baseline-editor:update', {lines: changes});
         return changes;
     }
     
@@ -1029,7 +1001,6 @@ class Segmenter {
                 changes.push(this.regions[i]);
             }
         }
-        if (changes.length) this.trigger('baseline-editor:update', {regions: changes});
         return changes;
     }
     
@@ -1196,7 +1167,6 @@ class Segmenter {
                     trash.remove();
                 }
             }
-            if (i) this.addState();  // if there was any changes, save them
         }.bind(this));
         this.trigger('baseline-editor:update', {lines: changes});
     }
@@ -1238,7 +1208,7 @@ class Segmenter {
         }
         if (this.selection.length) {
             this.selection[0].updateDataFromCanvas();
-            this.addState();
+            // TODO: this.trigger('baseline-editor:update', {lines: ..});
         }
     }
 

@@ -126,8 +126,9 @@ class LineSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         if instance.document_part.bw_image:
             from kraken.lib.segmentation import calculate_polygonal_environment
-            with Image.open(instance.document_part.image) as im:
+            with Image.open(instance.document_part.bw_image) as im:
                 result = calculate_polygonal_environment(im, [instance.baseline])
+                
                 if result[0][0] is not None:  # couldn't expand region
                     instance.mask = result[0][0].tolist()
                     instance.save()  # TODO: find a way to save only once

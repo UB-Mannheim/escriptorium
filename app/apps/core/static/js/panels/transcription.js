@@ -186,7 +186,8 @@ class TranscriptionLine {
             input.style.transform = 'scaleX('+ scaleX +')';
             input.style.width = 100/scaleX + '%'; // fit in the container
         } else {
-            input.css({transform: 'none', width: '100%'});
+            input.style.transform = 'none';
+            input.style.width = '100%';
         }
         document.body.removeChild(ruler);  // done its job
         

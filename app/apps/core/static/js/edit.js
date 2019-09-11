@@ -5,7 +5,7 @@ var API = {
 };
 
 var zoom = new WheelZoom();
-// var undoManager = new UndoManager();
+var undoManager = new UndoManager();
 
 $(document).ready(function() {
     function makePanel(name, class_, visible) {

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    var closed = userProfile.get('closedHelps');
+    var closed = userProfile.get('closedHelps') || [];
     
     let clBtns = document.querySelectorAll('.help-text .close');
     clBtns.forEach(e => e.addEventListener('click', function(ev) {
