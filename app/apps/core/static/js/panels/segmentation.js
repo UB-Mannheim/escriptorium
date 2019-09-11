@@ -12,7 +12,7 @@ class SegmentationPanel extends Panel {
         this.$img = $('img', this.$container);
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
         this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
-        // we need to move the baseline editor canvas so that it doesn't get caught by wheelzoom.
+        // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
         canvas.parentNode.parentNode.appendChild(canvas);
 
@@ -21,19 +21,22 @@ class SegmentationPanel extends Panel {
         let undoBtn = document.querySelector('button#undo');
         let redoBtn = document.querySelector('button#redo');
         undoBtn.addEventListener('click', function(ev) {
-            if (undoManager.hasUndo()) undoManager.undo();
+            undoManager.undo();
             this.updateHistoryBtns();
         }.bind(this));
         redoBtn.addEventListener('click', function(ev) {
-            if (undoManager.hasRedo()) undoManager.redo();
+            undoManager.redo();
             this.updateHistoryBtns();
         }.bind(this));
-        // TODO: history keyboard bindings
-         // else if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
-         //        this.loadPreviousState();
-         //    } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
-         //        this.loadNextState();
-         //    }
+        document.addEventListener('keyup', function(event) {
+            if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
+                undoManager.undo();
+                this.updateHistoryBtns();
+            } else if (event.ctrlKey && event.keyCode == 89) {  // Ctrl+Y -> Redo
+                undoManager.redo();
+                this.updateHistoryBtns();
+            }
+        });
     }
 
     pushHistory(undo, redo) {
@@ -82,44 +85,23 @@ class SegmentationPanel extends Panel {
                 }.bind(this));
         }.bind(this));
 
-        // this.segmenter.events.addEventListener('baseline-editor:update-line', function(event) {
-        //     let line = event.detail.line;
-        //     let previous = event.detail.previous;
-        //     this.remoteSave('lines', line);
-        //     this.pushHistory(
-        //         function() {  //undo
-        //             line.update(previous.baseline, previous.mask);
-        //             this.remoteSave('lines', line);
-        //         }.bind(this),
-        //         function() {  // redo
-        //             console.log('REDO');
-        //             //line.update();
-        //             // this.remoteSave('lines', line);
-        //         }.bind(this)
-        //     ).bind(this);
-        // }.bind(this));
-        // this.segmenter.events.addEventListener('baseline-editor:update', function(event) {
-        //     let data = event.detail;
-        //     if (data.lines) data.lines.forEach(function(line, index) {
-        //         this.save(line, 'lines');
-        //         undoManager.add({
-        //             undo: function() {},
-        //             redo: function() {}
-        //         });
-        //     }.bind(this));
-        //     if (data.regions) data.regions.forEach(function(region, index) {
-        //         this.save(region, 'blocks');
-        //     }.bind(this));
-        // }.bind(this));
-        // this.segmenter.events.addEventListener('baseline-editor:delete', function(event) {
-        //     let data = event.detail;
-        //     if (data.lines) data.lines.forEach(function(line, index) {
-        //         this.delete(line, 'lines');
-        //     }.bind(this));
-        //     if (data.regions) data.regions.forEach(function(region, index) {
-        //         this.delete(region, 'blocks');
-        //     }.bind(this));
-        // }.bind(this));
+        this.segmenter.events.addEventListener('baseline-editor:update-line', function(event) {
+            let line = event.detail.line;
+            let previous = event.detail.previous;
+            this.remoteSave('lines', line);
+            console.log(this);
+            this.pushHistory(
+                function() {  //undo
+                    line.update(previous.baseline, previous.mask);
+                    this.remoteSave('lines', line);
+                    previous = line;
+                }.bind(this),
+                function() {  // redo
+                    line.update(previous.baseline, previous.mask);
+                    this.remoteSave('lines', line);
+                    previous = line;
+                }.bind(this));
+        }.bind(this));
         
         // avoid triggering keybindings events when not using the baseline segmenter
         this.segmenter.disableBindings = true;
