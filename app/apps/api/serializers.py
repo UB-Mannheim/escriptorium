@@ -129,7 +129,8 @@ class LineSerializer(serializers.ModelSerializer):
             result = calculate_polygonal_environment(im, [instance.baseline])
             
             if result[0][0] is not None:  # couldn't expand region
-                instance.mask = result[0][0]
+                from skimage.measure import approximate_polygon
+                instance.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
                 instance.save()  # TODO: find a way to save only once
         instance.document_part.recalculate_ordering()
         return instance

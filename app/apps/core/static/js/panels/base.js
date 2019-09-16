@@ -4,6 +4,10 @@ class Panel {
         this.$tools = $tools;
         this.opened = opened | false;
         this.$container = $('.img-container', this.$panel);
+
+        // disable right click menu
+        this.$panel.get(0).addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        
         window.addEventListener('resize', function() {
             this.refresh();
         }.bind(this));
