@@ -234,6 +234,15 @@ class SegmenterLine {
         this.remove();
         this.segmenter.trigger('baseline-editor:delete-line', this);
     }
+
+    reverse() {
+        if (this.baselinePath) {
+            let previous = {baseline: this.baseline, mask: this.mask};
+            this.baselinePath.reverse();
+            this.updateDataFromCanvas();
+            this.showDirection();
+        }
+    }
     
     showDirection() {
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
@@ -287,6 +296,7 @@ class Segmenter {
                         toggleRegionModeBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
+                        reverseBtn=null,
                         disableBindings=false,
                         mainColor=null,
                         secondaryColor=null,
@@ -333,6 +343,7 @@ class Segmenter {
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
         this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
         this.mergeBtn = mergeBtn || document.getElementById('merge-selection');
+        this.reverseBtn = reverseBtn || document.getElementById('reverse-selection');
         // create a menu for the context buttons
         this.contextMenu = document.createElement('div');
         this.contextMenu.id = 'context-menu';
@@ -343,6 +354,7 @@ class Segmenter {
         this.contextMenu.style.borderRadius = '5px';
         this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         this.contextMenu.appendChild(this.mergeBtn);
+        this.contextMenu.appendChild(this.reverseBtn);
         this.contextMenu.appendChild(this.deleteSelectionBtn);
         
         // init paperjs
@@ -408,6 +420,9 @@ class Segmenter {
         if (this.mergeBtn) this.mergeBtn.addEventListener('click', function(event) {
             this.mergeSelection();
         }.bind(this));
+        if (this.reverseBtn) this.reverseBtn.addEventListener('click', function(event) {
+            this.reverseSelection();
+        }.bind(this));
         
         document.addEventListener('keyup', function(event) {
             if (this.disableBindings) return;
@@ -472,7 +487,7 @@ class Segmenter {
         }.bind(this));
 
         document.addEventListener('click', function(event) {
-            if (event.target != this.canvas) {
+            if (event.target != this.canvas && !this.contextMenu.contains(event.target)) {
                 this.purgeSelection();
             }
         }.bind(this));
@@ -1008,7 +1023,8 @@ class Segmenter {
     }
     
     showContextMenu() {
-        this.deleteSelectionBtn.style.display = 'inline';
+        this.reverseBtn.style.display = 'block';
+        this.deleteSelectionBtn.style.display = 'block';
         this.contextMenu.style.display = 'block';
         if (this.mode == 'lines' && this.selection.length > 1) {
             // we can only merge if all lines contain a baseline
@@ -1139,6 +1155,12 @@ class Segmenter {
                 }
             }
         }.bind(this));
+    }
+
+    reverseSelection() {
+        for (let i=0; i < this.selection.length; i++) {
+            this.selection[i].reverse();
+        }
     }
     
     mergeSelection() {
