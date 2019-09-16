@@ -126,7 +126,6 @@ class LineSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
 
         with Image.open(instance.document_part.bw_image or instance.document_part.image) as im:
-            print(instance.baseline)
             result = calculate_polygonal_environment(im, [instance.baseline])
             
             if result[0][0] is not None:  # couldn't expand region
