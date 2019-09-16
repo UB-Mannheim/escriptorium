@@ -65,6 +65,7 @@ $(document).ready(function() {
     });
     
     loadPart(PART_ID, function(data) {
+        undoManager.clear();
         // needs to recalculate positions once everything is loaded
         // for (var key in panels) {
         //     panels[key].refresh();

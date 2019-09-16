@@ -4,6 +4,9 @@ class Panel {
         this.$tools = $tools;
         this.opened = opened | false;
         this.$container = $('.img-container', this.$panel);
+        window.addEventListener('resize', function() {
+            this.refresh();
+        }.bind(this));
     }
     
     load(part) {

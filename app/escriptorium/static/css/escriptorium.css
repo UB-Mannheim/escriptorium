@@ -321,6 +321,7 @@ form.inline-form {
 
 .col-sides {
     width: 30px;
+    margin: 0 15px;
 }
 
 #source-panel, #source-tools, #binar-panel, #seg-panel,
@@ -329,6 +330,11 @@ form.inline-form {
 }
 #trans-panel .zoom-container {
     height: 100%;
+}
+
+.col {
+    /* IMPORTANT: only way i found to prevent the panels from growing silently (thus getting bad img ratios) */
+    padding: 0;
 }
 
 #img-panel, #binar-panel, #seg-panel, #trans-panel {
@@ -358,7 +364,7 @@ i.panel-icon {
 #part-trans, #part-img {
     overflow: hidden;
     width: 100%;
-    /* height: 100%; */
+    height: 100%;
     transform-origin:top left;
 }
 

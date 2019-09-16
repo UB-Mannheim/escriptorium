@@ -53,18 +53,19 @@ class TranscriptionLine {
         function ptToStr(pt) {
             return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
         }
-        
-        let poly = this.mask.flat(1).map(pt => Math.round(pt*this.panel.ratio));
-        this.polyElement.setAttribute('points', poly);
 
-        let area = 0;
-        // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n), 
-        for (let i=0; i<this.mask.length; i++) {
-            let j = (i+1)%this.mask.length; // loop back to 1
-            area += this.mask[i][0]*this.mask[j][1] - this.mask[j][0]*this.mask[i][1];
+        if (this.mask) {
+            let poly = this.mask.flat(1).map(pt => Math.round(pt*ratio));
+            this.polyElement.setAttribute('points', poly);
+
+            var area = 0;
+            // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n), 
+            for (let i=0; i<this.mask.length; i++) {
+                let j = (i+1)%this.mask.length; // loop back to 1
+                area += this.mask[i][0]*this.mask[j][1] - this.mask[j][0]*this.mask[i][1];
+            }
+            area = Math.abs(area*ratio/2);
         }
-        area = Math.abs(area*ratio/2);
-        
         var path;
         if (this.baseline) {
             path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
@@ -75,8 +76,12 @@ class TranscriptionLine {
         }
         
         this.pathElement.setAttribute('d', path);
-        let pathLength = this.pathElement.getTotalLength();
-        let lineHeight = area / pathLength;
+        let lineHeight, pathLength = this.pathElement.getTotalLength();
+        if (this.mask) {
+            lineHeight = area / pathLength;
+        } else {
+            lineHeight = 30;
+        }
         lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
         this.textElement.style.fontSize =  lineHeight * (2/3) + 'px';
     }
@@ -177,9 +182,10 @@ class TranscriptionLine {
         ruler.style.visibility = 'hidden';
         ruler.textContent = content;
         document.body.appendChild(ruler);
-        ruler.style.fontSize = bounds.height*panelToTransRatio+'px';
-        input.style.fontSize = bounds.height*panelToTransRatio+'px';
-        input.style.height = bounds.height*panelToTransRatio+'px';
+        let lineHeight = Math.min(60, bounds.height*panelToTransRatio);
+        ruler.style.fontSize = lineHeight+'px';
+        input.style.fontSize = lineHeight+'px';
+        input.style.height = lineHeight+10+'px';
         if (content) {
             var scaleX = Math.min(5,  modalImgContainer.clientWidth / ruler.clientWidth);
             scaleX = Math.max(0.2, scaleX);
@@ -292,7 +298,6 @@ class TranscriptionPanel extends Panel {
 
         let container = document.getElementById('part-trans');
         this.content = container.getElementsByTagName('svg')[0];
-
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
 
         // load the user saved transcription
@@ -303,7 +308,8 @@ class TranscriptionPanel extends Panel {
 
         // save the user default transcription on change of the select input
         this.selectedTranscription = $('#document-transcriptions').val();
-        document.querySelector('#document-transcriptions').addEventListener('change', function(ev) {
+        let dts = document.querySelector('#document-transcriptions');
+        if (dts) dts.addEventListener('change', function(ev) {
             this.selectedTranscription = document.querySelector('#document-transcriptions').value;
             // for (var i=0; i<this.lines.length; i++) {
             //     this.lines[i].reset();
@@ -315,11 +321,11 @@ class TranscriptionPanel extends Panel {
         }.bind(this));
         
         /* export */
-        document.querySelector('.js-export').addEventListener('click', function(ev) {
-            ev.preventDefault();
-            let format = ev.target.attributes['data-format'];
-            window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + format);
-        }.bind(this));
+        // document.querySelector('.js-export').addEventListener('click', function(ev) {
+        //     ev.preventDefault();
+        //     let format = ev.target.attributes['data-format'];
+        //     window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + format);
+        // }.bind(this));
 
         // TODO!
         // $("#trans-modal").draggable({
@@ -398,11 +404,6 @@ class TranscriptionPanel extends Panel {
         super.load(part);
         if (this.lines) [].forEach.call(this.lines, e => this.content.removeChild(e.element));
         this.lines = [];
-
-        this.ratio = this.getRatio();
-        let container = this.content.parentNode;
-        container.style.height = '100%';
-        container.style.width = '100%';
         
         if (this.part.image.thumbnails.large) {
             document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.thumbnails.large);
@@ -412,12 +413,13 @@ class TranscriptionPanel extends Panel {
         for (var i=0; i < this.part.lines.length; i++) {
             this.addLine(this.part.lines[i]);
         }
+        
         this.loadTranscriptions();
+        // this.refresh();
     }
     
     refresh() {
         if (this.opened) {
-            this.ratio = this.getRatio();
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].reset();
             }

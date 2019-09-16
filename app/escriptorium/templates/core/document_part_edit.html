@@ -16,7 +16,7 @@
 {% block bodyclass %}part-edit-body{% endblock %}
 
 {% block nav_content %}
-<div class="row">
+<div class="row no-transition">
   <div class="col-sides"></div>
   <div id="source-tools" class="panel-tools col">
     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
@@ -111,7 +111,7 @@
   <div id="source-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
-        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" width="100%"/>
+        <img id="part-img" src="{# part.image|thumbnail_url:'large' #}"/>
         <div class="overlay">
           <svg width="100%" height="100%">
             <defs>
@@ -130,7 +130,7 @@
   <div id="binar-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
-      <img id="part-img" src="{{ part.bw_image|thumbnail_url:'large' }}" width="100%"/>
+      <img id="part-img" src="{# part.bw_image|thumbnail_url:'large' #}"/>
       <div class="overlay">
         <svg width="100%" height="100%">
           <defs>
@@ -149,7 +149,7 @@
   <div id="seg-panel" class="col panel">
     <div class="img-container">
       <div class="zoom-container">
-        <img id="part-img" src="{{ part.image|thumbnail_url:'large' }}" class="" width="100%"/>
+        <img id="part-img" src="{# part.image|thumbnail_url:'large' #}"/>
         <div id="segmentation-overlay" class="overlay">
           <svg width="100%" height="100%">
             <defs>
@@ -169,7 +169,7 @@
   </div>
   
   <div id="trans-panel" class="col panel {{ document.default_text_direction }}">
-    <div class="img-container">
+    <div class="img-container w-100 h-100">
       <div class="zoom-container">
       <div id="part-trans">
         <svg width="100%" height="100%">

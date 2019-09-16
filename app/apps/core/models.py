@@ -27,6 +27,7 @@ from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 from kraken import pageseg, blla
+from kraken.lib.util import is_bitonal
 
 from versioning.models import Versioned
 from core.tasks import *
@@ -509,6 +510,11 @@ class DocumentPart(OrderedModel):
         
         if self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTED
+        
+        with Image.open(self.image.path) as im:
+            if is_bitonal(im):
+                self.bw_image = self.image
+            
         self.save()
         
     def compress(self):
@@ -592,7 +598,7 @@ class DocumentPart(OrderedModel):
                         document_part=self,
                         baseline=line['baseline'],
                         # invert pts coordinates to compensate a kraken bug
-                        mask=line['boundary'].tolist() if line['boundary'] is not None else None)
+                        mask=line['boundary'] if line['boundary'] is not None else None)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
@@ -733,7 +739,10 @@ class Line(OrderedModel):  # Versioned,
         return self.box[3] - self.box[1]
     
     def get_box(self):
-        return (*map(min, *self.mask), *map(max, *self.mask))
+        if self.mask:
+            return (*map(min, *self.mask), *map(max, *self.mask))
+        else:
+            return (*map(min, *self.baseline), *map(max, *self.baseline))
     
     def set_box(self, box):
         self.mask = ((box[0], box[1]),

@@ -1,6 +1,5 @@
 /*
 TODO:
-- help
 - list of regions / lines (?)
 */
 
@@ -20,11 +19,11 @@ class SegmentationPanel extends Panel {
 
         let undoBtn = document.querySelector('button#undo');
         let redoBtn = document.querySelector('button#redo');
-        undoBtn.addEventListener('click', function(ev) {
+        if (undoBtn) undoBtn.addEventListener('click', function(ev) {
             undoManager.undo();
             this.updateHistoryBtns();
         }.bind(this));
-        redoBtn.addEventListener('click', function(ev) {
+        if (redoBtn) redoBtn.addEventListener('click', function(ev) {
             undoManager.redo();
             this.updateHistoryBtns();
         }.bind(this));
@@ -89,7 +88,6 @@ class SegmentationPanel extends Panel {
             let line = event.detail.line;
             let previous = event.detail.previous;
             this.remoteSave('lines', line);
-            console.log(this);
             this.pushHistory(
                 function() {  //undo
                     line.update(previous.baseline, previous.mask);
@@ -121,7 +119,7 @@ class SegmentationPanel extends Panel {
             let lines = this.part.lines.map(l => { return {
                 pk: l.pk,
                 baseline: l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]),
-                mask: l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio])
+                mask: l.mask?l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio]):null
             }});
             let regions = this.part.blocks.map(b => { return {
                 pk: b.pk,

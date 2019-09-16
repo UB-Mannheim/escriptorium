@@ -23,6 +23,10 @@ Options:
 
 */
 
+function polyEq(poly1, poly2) {
+    return poly1 && poly2 && poly1.length === poly2.length && poly1.every((pt, index) => pt[0] === poly2[index][0] && pt[1] === poly2[index][1]);
+}
+
 function isRightClick(event) {
     return event.which === 3 || event.button === 2;
 }
@@ -33,7 +37,6 @@ class SegmenterRegion {
         this.polygon = polygon;
         this.context = context;
         this.selected = false;
-        this.changed = false;
         this.polygonPath = new Path({
             closed: true,
             opacity: 0.2,
@@ -86,7 +89,6 @@ class SegmenterLine {
         this.mask = mask;
         this.context = context;
         this.selected = false;
-        this.changed = false;
 
         this.directionHint = null;
 
@@ -102,7 +104,6 @@ class SegmenterLine {
         if (baseline) {
             if(baseline.segments) {  // already a paperjs.Path
                 this.baselinePath = baseline;
-                this.updateDataFromCanvas();
             } else {
                 this.baseline = baseline;
                 this.baselinePath = new Path({
@@ -144,7 +145,6 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
-        this.updateDataFromCanvas();
         this.setLineHeight();
     }
     
@@ -203,8 +203,12 @@ class SegmenterLine {
     }
     
     updateDataFromCanvas() {
+        let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
+            this.segmenter.trigger('baseline-editor:update-line', {line: this, previous:previous});
+        }
     }
     
     extend(point) {
@@ -351,8 +355,6 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
         this.selection = [];
-
-        // TODO: reset history
         
         if (paper.view) paper.view.remove();
         paper.settings.handleSize = 10;
@@ -500,7 +502,7 @@ class Segmenter {
         line.close();
         this.bindLineEvents(line);
         this.resetToolEvents();  // unregistering
-        this.trigger('baseline-editor:new-line', line);
+        line.updateDataFromCanvas();
     }
 
     createRegion(polygon, context, postponeEvents) {
@@ -540,7 +542,6 @@ class Segmenter {
                     this.multiMove(event);
                 } else {
                     this.movePointInView(dragging.point, event.delta);
-                    region.changed = true;
                 }
                 
             }.bind(this);
@@ -572,7 +573,6 @@ class Segmenter {
             if (event.event.ctrlKey || this.mode != 'regions') return;
             let location = region.polygonPath.getNearestLocation(event.point);
             let newSegment = region.polygonPath.insert(location.index+1, location);
-            region.changed = true;
         }.bind(this);
     }
     
@@ -608,22 +608,16 @@ class Segmenter {
                     if (event.event.ctrlKey) {
                         this.multiMove(event);
                     } else {
-                        
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.showDirection();
                         line.dragPolyEdges(dragging.index, event.delta);
-                        line.changed = true;
                     }
                 }.bind(this);
                 
                 this.tool.onMouseUp = function(event) {
                     this.resetToolEvents();
-                    let previous = {baseline: line.baseline,
-                                    mask: line.mask};
-                    let changes = this.updateLinesFromCanvas();
-                    if (changes) this.trigger('baseline-editor:update-line',
-                                              {line: line, previous: previous});
+                    line.updateDataFromCanvas();
                 }.bind(this);
                 
             }.bind(this);
@@ -634,7 +628,6 @@ class Segmenter {
                 let newSegment = line.baselinePath.insert(location.index+1, location);
                 line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
                 line.createPolygonEdgeForBaselineSegment(newSegment);
-                line.changed = true;
             }.bind(this);
             
             line.baselinePath.onMouseMove = function(event) {
@@ -677,20 +670,12 @@ class Segmenter {
                         this.multiMove(event);
                     } else {
                         this.movePointInView(dragging.point, event.delta);
-                        line.changed = true;
                     }
                 }.bind(this);
                 
                 this.tool.onMouseUp = function(event) {
                     this.resetToolEvents();
-                    let previous = {baseline: line.baseline,
-                                    mask: line.mask};
-                    let changes = this.updateLinesFromCanvas();
-                    if (changes) {
-                        this.trigger('baseline-editor:update-line',
-                                     {line: line, previous: previous});
-                        line.setLineHeight();
-                    }
+                    line.updateDataFromCanvas();
                 }.bind(this);
             }.bind(this);
             line.maskPath.onMouseMove = function(event) {
@@ -722,13 +707,11 @@ class Segmenter {
                 this.movePointInView(this.selection[i].baselinePath.position, event.delta);
                 this.movePointInView(this.selection[i].maskPath.position, event.delta);
                 this.selection[i].showDirection();
-                this.selection[i].changed = true;
             }
         } else if (this.mode == 'regions') {
             for (let i in this.selection) {
                 this.movePointInView(this.selection[i].polygonPath.position, event.delta);
                 // this.selection[i].polygonPath.position = this.selection[i].polygonPath.position.add(event.delta);
-                this.selection[i].changed = true;
             }
         }
     }
@@ -819,7 +802,6 @@ class Segmenter {
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
         ], null);
-        newRegion.changed = true;
         
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
@@ -981,27 +963,15 @@ class Segmenter {
     }
     
     updateLinesFromCanvas() {
-        var changes = [];
         for (let i in this.lines) {
-            if (this.lines[i].changed) {
-                this.lines[i].updateDataFromCanvas();
-                this.lines[i].changed = false;
-                changes.push(this.lines[i]);
-            }
+            this.lines[i].updateDataFromCanvas();
         }
-        return changes;
     }
     
     updateRegionsFromCanvas() {
-        var changes = [];
         for (let i in this.regions) {
-            if (this.regions[i].changed) {
-                this.regions[i].updateDataFromCanvas();
-                this.regions[i].changed = false;
-                changes.push(this.regions[i]);
-            }
+            this.regions[i].updateDataFromCanvas();
         }
-        return changes;
     }
     
     toggleMasks(force) {
@@ -1140,6 +1110,7 @@ class Segmenter {
         var changes = [];
         this.lines.forEach(function(line) {
             if (!line.baselinePath) return;
+            
             let intersections = line.baselinePath.getIntersections(path);
             for (var i = 0; i < intersections.length; i += 2) {
                 if (i+1 >= intersections.length) {  // one intersection remaining
@@ -1152,23 +1123,22 @@ class Segmenter {
                         line.baselinePath.removeSegments(newSegment.index+1);
                     }
                     line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                    line.createPolygonEdgeForBaselineSegment(newSegment);
+                    // line.createPolygonEdgeForBaselineSegment(newSegment);
                     line.updateDataFromCanvas();
                 } else {
                     let newLine = line.baselinePath.splitAt(intersections[i+1]);
-                    let nl = this.createLine(newLine);
+                    let nl = this.createLine(newLine, null, null);
                     let trash = line.baselinePath.splitAt(intersections[i]);
-                    line.maskPath.removeSegments();
-                    line.createMask();
+                    // line.maskPath.removeSegments();
+                    // line.createMask();
                     nl.createMask();
-                    changes.push(nl);
-                    changes.push(line);
+                    line.updateDataFromCanvas();
+                    nl.updateDataFromCanvas();
                     line = nl;
                     trash.remove();
                 }
             }
         }.bind(this));
-        this.trigger('baseline-editor:update', {lines: changes});
     }
     
     mergeSelection() {
@@ -1197,18 +1167,14 @@ class Segmenter {
             let seg2 = this.selection[1].baselinePath.getNearestLocation(this.selection[0].baselinePath.interiorPoint);
             this.selection[0].baselinePath.add(seg2);
             this.selection[0].baselinePath.join(this.selection[1].baselinePath, seg1.point.getDistance(seg2.point));
-            
-            for (let i in this.selection[1].maskPath.segments) {
-                // Note: document advertise it's possible to insert more at once but couldn't make it work
-                let insertAt = seg1.segment.index + parseInt(i) + 1;
-                this.selection[0].maskPath.insert(insertAt, this.selection[1].maskPath.segments[i]);
-            }
+
+            let closeSeg = this.selection[0].maskPath.getNearestLocation(this.selection[1].maskPath.interiorPoint);
+            this.selection[0].maskPath.insertSegments(closeSeg.index+1, this.selection[1].maskPath.segments);
             
             this.selection[1].delete();
         }
         if (this.selection.length) {
             this.selection[0].updateDataFromCanvas();
-            // TODO: this.trigger('baseline-editor:update', {lines: ..});
         }
     }
 
@@ -1269,11 +1235,6 @@ class Segmenter {
         if (ColorThief !== undefined && !this.mainColor) {
             var colorThief = new ColorThief();
             let palette = colorThief.getPalette(this.img, 5);
-            // for (let i in palette) {
-            //     let el = document.getElementById('color'+i);
-            //     el.style.backgroundColor = rgbToHex(palette[i]);
-            //     el.style.padding = '10px';
-            // }
             let choices = chooseColors(palette);
             this.mainColor = choices[0];
             this.secondaryColor = choices[1];
