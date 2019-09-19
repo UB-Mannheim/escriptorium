@@ -307,7 +307,10 @@ class Segmenter {
                         idField='id'
                        } = {}) {
         this.img = image;
-
+        this.lines = [];
+        this.regions = [];
+        this.selection = [];
+        
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
 
@@ -332,6 +335,7 @@ class Segmenter {
         this.showMasks = false;
 
         this.mode = 'lines'; // | 'regions'
+        this.lines = [];
         this.selecting = null;
         this.spliting = false;
         this.copy = null;
@@ -353,9 +357,9 @@ class Segmenter {
         this.contextMenu.style.border = '1px solid grey';
         this.contextMenu.style.borderRadius = '5px';
         this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
-        this.contextMenu.appendChild(this.mergeBtn);
-        this.contextMenu.appendChild(this.reverseBtn);
-        this.contextMenu.appendChild(this.deleteSelectionBtn);
+        if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
+        if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+        if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
         
         // init paperjs
         if (!delayInit) {
@@ -363,11 +367,11 @@ class Segmenter {
         }
     }
 
-    init() {
-        this.lines = [];
-        this.regions = [];
-        this.selection = [];
-        
+    reset() {
+        this.empty();
+    }
+    
+    init() {        
         if (paper.view) paper.view.remove();
         paper.settings.handleSize = 10;
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
@@ -612,7 +616,7 @@ class Segmenter {
                     this.deletePointBtn.style.top = pt.y - 40 + 'px';
                     this.deletePointBtn.style.display = 'inline';
                     this.deletePointBtn.addEventListener('click', function() {
-                        line.deletePolygonsEdgeForBaselineSegment(hit.segment);
+                        // line.deletePolygonsEdgeForBaselineSegment(hit.segment);
                         hit.segment.remove();
                         this.deletePointBtn.style.display = 'none';
                     }.bind(this), {once: true});
@@ -626,7 +630,7 @@ class Segmenter {
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.showDirection();
-                        line.dragPolyEdges(dragging.index, event.delta);
+                        // line.dragPolyEdges(dragging.index, event.delta);
                     }
                 }.bind(this);
                 
@@ -768,7 +772,7 @@ class Segmenter {
         let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
         newLine.showDirection();
-        
+
         // adds all the events bindings 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
@@ -788,6 +792,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
             }
         }.bind(this);
+        
         this.tool.onMouseMove = function(event) {
             this.tool.onMouseDrag = null; // manually disable free drawing now to avoid having both
             // follow the mouse cursor with the last created point
@@ -805,7 +810,7 @@ class Segmenter {
                 document.removeEventListener('keyup', onCancel);
             }.bind(this);
         }.bind(this);
-        document.addEventListener('keyup', onCancel);
+        document.addEventListener('keyup', onCancel, {once: true});
     }
     
     startNewRegion(event) {
@@ -846,7 +851,7 @@ class Segmenter {
             }.bind(this);
             onRegionDraw(event);
         }.bind(this);
-        document.addEventListener('keyup', onCancel);
+        document.addEventListener('keyup', onCancel, {once: true});
     }
     
     startCuter(event) {
@@ -865,6 +870,7 @@ class Segmenter {
         let finishCut = function(event) {
             this.splitByPath(clip);
             clip.remove();
+            
             this.resetToolEvents();
             document.removeEventListener('mouseUp', finishCut);
             document.removeEventListener('keyup', onCancel);
@@ -874,8 +880,8 @@ class Segmenter {
             this.updateSelectionRectangle(clip, event);
             this.splitHelper(clip, event);
         }.bind(this);
-        document.addEventListener('mouseup', finishCut);
-        document.addEventListener('keyup', onCancel);
+        document.addEventListener('mouseup', finishCut, {once: true});
+        document.addEventListener('keyup', onCancel, {once: true});
     }
     
     startLassoSelection(event) {
@@ -1023,8 +1029,9 @@ class Segmenter {
     }
     
     showContextMenu() {
-        this.reverseBtn.style.display = 'block';
-        this.deleteSelectionBtn.style.display = 'block';
+        if (this.reverseBtn) this.reverseBtn.style.display = 'block';
+        if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+        
         this.contextMenu.style.display = 'block';
         if (this.mode == 'lines' && this.selection.length > 1) {
             // we can only merge if all lines contain a baseline

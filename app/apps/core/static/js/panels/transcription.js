@@ -83,7 +83,7 @@ class TranscriptionLine {
             lineHeight = 30;
         }
         lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
-        this.textElement.style.fontSize =  lineHeight * (2/3) + 'px';
+        this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
     }
     
     reset() {
@@ -119,7 +119,13 @@ class TranscriptionLine {
     }
     
     setText() {
-        this.textElement.querySelector('textPath').textContent = this.getText();
+        let content = this.getText();
+        this.textElement.querySelector('textPath').textContent = content;
+        if (content) {
+            this.polyElement.setAttribute('stroke', 'none');
+            this.pathElement.setAttribute('stroke', 'none');
+        }
+        
         // adjust the text length to fit in the box
         let textLength = this.textElement.getComputedTextLength();
         let pathLength = this.pathElement.getTotalLength();
@@ -127,6 +133,7 @@ class TranscriptionLine {
             // this.textElement.setAttribute('textanchor', "middle");
             this.textElement.setAttribute('textLength', pathLength+'px');
         }
+        
     }
     
     edit () {
@@ -349,20 +356,23 @@ class TranscriptionPanel extends Panel {
             currentLine.save();
             $('#trans-modal').modal('hide');
         }.bind());
-        document.querySelector('#trans-modal #save-continue-btn').addEventListener('click', function (e, editor) {
+
+        function saveAndContinue() {
             currentLine.save();
             if (this.lines[currentLine.order+1]) {
                 this.lines[currentLine.order+1].edit();
             } else {
-                document.querySelector('#trans-modal').modal('hide');
+                $('#trans-modal').modal('hide');
             }
+        }
+        document.querySelector('#trans-modal #save-continue-btn').addEventListener('click', function (e, editor) {
+            saveAndContinue.bind(this)();
         }.bind(this));
-        // TODO
-        // document.querySelector(document).keydown(function(e) {
-	    //     if(e.originalEvent.key == 'Enter') {
-	    //         document.querySelector('#trans-modal #save-continue-btn').trigger('click');
-	    //     }
-	    // });
+        document.querySelector('#trans-modal #trans-input').addEventListener('keyup', function(e) {
+	        if(e.key == 'Enter') {
+	            saveAndContinue.bind(this)();
+	        }
+	    }.bind(this));
 
         // document.querySelector('#trans-modal .js-pull-state').addEventListener('click', function(ev) {
         //     ev.preventDefault();

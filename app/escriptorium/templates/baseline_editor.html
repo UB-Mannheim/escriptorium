@@ -134,7 +134,7 @@ Todo:
 
     function imgTransfer(e) {
         e.preventDefault();
-        segmenter.reset();
+        segmenter.empty();
         var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg', 'image/jpeg'];
         if (e.target.files || (e.dataTransfer && e.dataTransfer.files)) {
             var files = e.target.files || e.dataTransfer.files;

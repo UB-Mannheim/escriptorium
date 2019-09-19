@@ -16,7 +16,7 @@ class zoomTarget {
         var container = document.createElement('div');
         container.classList.add('js-wheelzoom-container');
         // disables right click menu
-        if (!DEBUG) container.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        container.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         // var rotationContainer = document.createElement('div');
         domElement.parentNode.insertBefore(container, domElement);
         container.appendChild(domElement);
