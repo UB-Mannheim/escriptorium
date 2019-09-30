@@ -360,6 +360,8 @@ class Segmenter {
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
         if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
+
+        this.bindButtons();
         
         // init paperjs
         if (!delayInit) {
@@ -370,39 +372,12 @@ class Segmenter {
     reset() {
         this.empty();
     }
-    
-    init() {        
-        if (paper.view) paper.view.remove();
-        paper.settings.handleSize = 10;
-        paper.settings.hitTolerance = 10;  // Note: doesn't work?
-        paper.install(window);
-        paper.setup(this.canvas);
-        
-        var tool = new Tool();
-        this.setColors(this.img);
-        this.setCursor();
 
-        // make sure we capture clicks before the img
-        this.canvas.style.zIndex = this.img.style.zIndex + 1;
-        this.refresh();
-        
-        this.canvas.style.width = this.img.width;
-        this.canvas.style.height = this.img.height;
-        // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
-        // this.raster.position = view.center;
-        // this.img.style.display = 'hidden';
-        
-        // context follows top right, width can only be calculated once shown
-        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
-        this.contextMenu.style.margin = '10px';
-        
-        tool.onMouseDown = this.onMouseDown.bind(this);
-        
+    bindButtons() {
         this.deleteSelectionBtn.addEventListener('click', function(event) {
             for (let i=this.selection.length-1; i >= 0; i--) {    
                 this.selection[i].delete();
-            }
-            
+            }            
         }.bind(this));
 
         if (this.toggleRegionModeBtn) this.toggleRegionModeBtn.addEventListener('click', function(event) {
@@ -495,7 +470,35 @@ class Segmenter {
                 this.purgeSelection();
             }
         }.bind(this));
+    }
+    
+    init() {        
+        if (paper.view) paper.view.remove();
+        paper.settings.handleSize = 10;
+        paper.settings.hitTolerance = 10;  // Note: doesn't work?
+        paper.install(window);
+        paper.setup(this.canvas);
+        
+        var tool = new Tool();
+        this.setColors(this.img);
+        this.setCursor();
 
+        // make sure we capture clicks before the img
+        this.canvas.style.zIndex = this.img.style.zIndex + 1;
+        this.refresh();
+        
+        this.canvas.style.width = this.img.width;
+        this.canvas.style.height = this.img.height;
+        // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
+        // this.raster.position = view.center;
+        // this.img.style.display = 'hidden';
+        
+        // context follows top right, width can only be calculated once shown
+        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
+        this.contextMenu.style.margin = '10px';
+        
+        tool.onMouseDown = this.onMouseDown.bind(this);
+        
         this.tool = tool;
         this.tool.activate();
         return tool;
@@ -646,7 +649,7 @@ class Segmenter {
                 let location = line.baselinePath.getNearestLocation(event.point);
                 let newSegment = line.baselinePath.insert(location.index+1, location);
                 line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                line.createPolygonEdgeForBaselineSegment(newSegment);
+                //line.createPolygonEdgeForBaselineSegment(newSegment);
             }.bind(this);
             
             line.baselinePath.onMouseMove = function(event) {
@@ -1163,7 +1166,7 @@ class Segmenter {
             }
         }.bind(this));
     }
-
+    
     reverseSelection() {
         for (let i=0; i < this.selection.length; i++) {
             this.selection[i].reverse();
