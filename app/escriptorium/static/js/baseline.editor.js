@@ -216,10 +216,10 @@ class SegmenterLine {
     }
     
     close() {
-        if (this.baselinePath.length < this.segmenter.lengthThreshold) {
-            this.delete();
-        }
-        this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+        // if (this.baselinePath.length < this.segmenter.lengthThreshold) {
+        //     this.delete();
+        // }
+        // this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
         this.createMask();
     }
     
@@ -309,7 +309,7 @@ class Segmenter {
         this.img = image;
         this.lines = [];
         this.regions = [];
-        this.selection = [];
+        this.selection = {lines:[], segments:[], regions:[]};
         
         this.canvas = document.createElement('canvas');
         this.canvas.className += 'resize';
@@ -341,7 +341,7 @@ class Segmenter {
         this.copy = null;
         
         this.deletePointBtn = deletePointBtn || document.getElementById('delete-point');
-        this.deletePointBtn.style.zIndex = 3;
+        // this.deletePointBtn.style.zIndex = 3;
         this.toggleMasksBtn = toggleMasksBtn || document.getElementById('toggle-masks');
         this.splitBtn = splitBtn || document.getElementById('split-lines');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
@@ -359,8 +359,9 @@ class Segmenter {
         this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
         if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+        if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
-
+        
         this.bindButtons();
         
         // init paperjs
@@ -373,11 +374,36 @@ class Segmenter {
         this.empty();
     }
 
+    deleteSelectedLines() {
+        for (let i=this.selection.lines.length-1; i >= 0; i--) {    
+            this.selection.lines[i].delete();
+        }
+        this.showContextMenu();
+    }
+    deleteSelectedSegments() {
+        for (let i=this.selection.segments.length-1; i >= 0; i--) {
+            let segment = this.selection.segments[i];
+            if ((segment.path.closed && segment.path.segments.length > 3) ||
+                segment.path.segments.length > 2) {
+                this.selection.segments[i].remove();
+                this.selection.segments.pop();
+            }
+        }
+        
+        // using the fact that selecting a segment also selects its line
+        for (let i=0; i < this.selection.lines.length; i++) {    
+            this.selection.lines[i].updateDataFromCanvas();
+        }
+        this.showContextMenu();
+    }
+    
     bindButtons() {
         this.deleteSelectionBtn.addEventListener('click', function(event) {
-            for (let i=this.selection.length-1; i >= 0; i--) {    
-                this.selection[i].delete();
-            }            
+            this.deleteSelectedLines();
+        }.bind(this));
+
+        this.deletePointBtn.addEventListener('click', function() {
+            this.deleteSelectedSegments();
         }.bind(this));
 
         if (this.toggleRegionModeBtn) this.toggleRegionModeBtn.addEventListener('click', function(event) {
@@ -408,8 +434,10 @@ class Segmenter {
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
             } else if (event.keyCode == 46) { // supr
-                for (let i=this.selection.length-1; i >= 0; i--) {    
-                    this.selection[i].delete();
+                if (event.ctrlKey) {
+                    this.deleteSelectedSegments();
+                } else {
+                    this.deleteSelectedLines();
                 }
             } else if (event.keyCode == 67) { // C
                 this.spliting = !this.spliting;
@@ -562,7 +590,7 @@ class Segmenter {
             this.tool.onMouseDrag = function(event) {
                 if (event.event.ctrlKey) {
                     this.multiMove(event);
-                } else {
+                } else if (!event.event.shiftKey) {
                     this.movePointInView(dragging.point, event.delta);
                 }
                 
@@ -572,16 +600,9 @@ class Segmenter {
 	            segments: true,
 	            tolerance: 20
             });
-            if (hit && hit.type=='segment' && region.polygon.length > 3) {
-                let pt = view.projectToView(hit.segment.point);
-                this.deletePointBtn.style.left = pt.x - 20 + 'px';
-                this.deletePointBtn.style.top = pt.y - 40 + 'px';
-                this.deletePointBtn.style.display = 'inline';
-                this.deletePointBtn.addEventListener('click', function() {
-                    hit.segment.remove();
-                    this.deletePointBtn.style.display = 'none';
-                    region.updateDataFromCanvas();
-                }.bind(this), {once: true});
+            if (hit && hit.type=='segment') {
+                if (this.selection.segments.indexOf(hit.segment) === -1) this.addToSelection(hit.segment);
+                else this.removeFromSelection(hit.segment);
             }
             this.tool.onMouseUp = function(event) {
                 this.resetToolEvents();
@@ -610,26 +631,15 @@ class Segmenter {
 	                segments: true,
 	                tolerance: 20
                 });
-                
-                if (hit && hit.type=='segment' &&
-                    hit.segment.index != 0 &&
-                    hit.segment.index != hit.segment.path.segments.length-1) {
-                    let pt = view.projectToView(hit.segment.point);
-                    this.deletePointBtn.style.left = pt.x - 20 + 'px';
-                    this.deletePointBtn.style.top = pt.y - 40 + 'px';
-                    this.deletePointBtn.style.display = 'inline';
-                    this.deletePointBtn.addEventListener('click', function() {
-                        // line.deletePolygonsEdgeForBaselineSegment(hit.segment);
-                        hit.segment.remove();
-                        this.deletePointBtn.style.display = 'none';
-                    }.bind(this), {once: true});
+                if (hit && hit.type=='segment') {
+                    if (this.selection.segments.indexOf(hit.segment) === -1) this.addToSelection(hit.segment);
+                    else this.removeFromSelection(hit.segment);
                 }
-                
                 var dragging = line.baselinePath.getNearestLocation(event.point).segment;
                 this.tool.onMouseDrag = function(event) {
                     if (event.event.ctrlKey) {
                         this.multiMove(event);
-                    } else {
+                    } else if (!event.event.shiftKey) {
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.showDirection();
@@ -648,8 +658,8 @@ class Segmenter {
                 if (event.event.ctrlKey || this.mode != 'lines') return;
                 let location = line.baselinePath.getNearestLocation(event.point);
                 let newSegment = line.baselinePath.insert(location.index+1, location);
-                line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                //line.createPolygonEdgeForBaselineSegment(newSegment);
+                // line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+                // line.createPolygonEdgeForBaselineSegment(newSegment);
             }.bind(this);
             
             line.baselinePath.onMouseMove = function(event) {
@@ -660,9 +670,7 @@ class Segmenter {
 	                segments: true,
 	                tolerance: 5
                 });
-                if (hit && hit.type=='segment' &&
-                    hit.segment.index != 0 &&
-                    hit.segment.index != hit.segment.path.segments.length-1) {
+                if (hit && hit.type=='segment') {
                     this.setCursor('pointer');
                 }
             }.bind(this);
@@ -686,11 +694,19 @@ class Segmenter {
                     this.mode != 'lines') return;
                 this.selecting = line;
 
+                var hit = line.maskPath.hitTest(event.point, {
+	                segments: true,
+	                tolerance: 20
+                });
+                if (hit && hit.type=='segment') {
+                    if (this.selection.segments.indexOf(hit.segment) === -1) this.addToSelection(hit.segment);
+                    else this.removeFromSelection(hit.segment);
+                }
                 var dragging = line.maskPath.getNearestLocation(event.point).segment;
                 this.tool.onMouseDrag = function(event) {
                     if (event.event.ctrlKey) {
                         this.multiMove(event);
-                    } else {
+                    } else  if (!event.event.shiftKey) {
                         this.movePointInView(dragging.point, event.delta);
                     }
                 }.bind(this);
@@ -725,21 +741,33 @@ class Segmenter {
     multiMove(event) {
         // multi move
         if (this.mode == 'lines') {
-            for (let i in this.selection) {
-                this.movePointInView(this.selection[i].baselinePath.position, event.delta);
-                this.movePointInView(this.selection[i].maskPath.position, event.delta);
-                this.selection[i].showDirection();
+            if (this.selection.segments.length) {
+                for (let i in this.selection.segments) {
+                    this.movePointInView(this.selection.segments[i].point, event.delta);
+                    this.movePointInView(this.selection.segments[i].point, event.delta);
+                }
+                for (let i in this.selection.lines) {
+                    this.selection.lines[i].showDirection();
+                }
+            } else {
+                for (let i in this.selection.lines) {
+                    this.movePointInView(this.selection.lines[i].baselinePath.position, event.delta);
+                    this.movePointInView(this.selection.lines[i].maskPath.position, event.delta);
+                    this.selection.lines[i].showDirection();
+                }
             }
         } else if (this.mode == 'regions') {
-            for (let i in this.selection) {
-                this.movePointInView(this.selection[i].polygonPath.position, event.delta);
+            for (let i in this.selection.regions) {
+                this.movePointInView(this.selection.regions[i].polygonPath.position, event.delta);
                 // this.selection[i].polygonPath.position = this.selection[i].polygonPath.position.add(event.delta);
             }
         }
     }
     
     onMouseDrag (event) {
-        if (event.event.ctrlKey) this.multiMove(event);
+        if (event.event.ctrlKey) {
+            this.multiMove(event);
+        } 
     }
     
     onMouseDown (event) {
@@ -749,27 +777,30 @@ class Segmenter {
             // selection
             if (event.event.shiftKey) {
                 this.selecting.toggleSelect();
+                this.startLassoSelection(event);
             } else {
+                this.purgeSelection();
                 this.selecting.select();
-                this.purgeSelection(this.selecting);
             }
             this.selecting = null;
         } else {
             if (event.event.ctrlKey) return;
             if (this.spliting) {
                 this.startCuter(event);
+            } else if (this.mode == 'regions') {
+                this.startNewRegion(event);
             } else if (event.event.shiftKey) {
                 // lasso selection tool
                 this.startLassoSelection(event);
-            } else if (this.mode == 'regions') {
-                this.startNewRegion(event);
+            } else if (this.hasSelection()) {
+                this.purgeSelection();
             } else {  // mode = 'lines'
                 // create a new line
                 this.startNewLine(event);
             }
         }
     }
-    
+
     startNewLine(event) {
         this.purgeSelection();
         let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
@@ -936,7 +967,6 @@ class Segmenter {
         let bounds = this.img.getBoundingClientRect();
         let imgRatio = bounds.width / this.img.naturalWidth;
         if (paper.view) {
-            this.deletePointBtn.style.display = 'none';
             paper.view.viewSize = [bounds.width, bounds.height];
             paper.view.scale(imgRatio/paper.view.zoom, [0, 0]);
         }
@@ -1032,39 +1062,80 @@ class Segmenter {
     }
     
     showContextMenu() {
-        if (this.reverseBtn) this.reverseBtn.style.display = 'block';
-        if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
-        
-        this.contextMenu.style.display = 'block';
-        if (this.mode == 'lines' && this.selection.length > 1) {
+        if (!this.hasSelection()) {
+            this.contextMenu.style.display = 'none';
+            return;
+        }
+        if (this.deletePointBtn) {
+            if (this.selection.segments.length) {
+                this.deletePointBtn.style.display = 'block';
+            } else {
+                this.deletePointBtn.style.display = 'none';
+            }
+        }
+        if (this.selection.lines.length) {
+            if (this.reverseBtn) this.reverseBtn.style.display = 'block';
+            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+        }
+        if (this.selection.lines.length > 1) {
             // we can only merge if all lines contain a baseline
-            if (this.selection.filter(sel => sel.baseline === null).length == 0) {
+            if (this.selection.lines.filter(sel => sel.baseline === null).length == 0) {
                  this.mergeBtn.style.display = 'block';
             }
         } else {
             this.mergeBtn.style.display = 'none';
         }
+        this.contextMenu.style.display = 'block';
     }
-    hideContextMenu() {
-        this.contextMenu.style.display = 'none';
+
+    hasSelection() {
+        return (this.selection.lines.length > 0 ||
+                this.selection.segments.length > 0 ||
+                this.selection.regions.length > 0);
     }
     
     addToSelection(obj) {
-        if (this.selection.indexOf(obj) == -1) this.selection.push(obj);
-        this.showContextMenu();
-    }
-    removeFromSelection(obj) {
-        this.selection.splice(this.selection.indexOf(obj), 1);
-        this.deletePointBtn.style.display = 'none';
-        if (this.selection.length == 0) this.hideContextMenu();
-        if (this.selection.length < 2) this.mergeBtn.style.display = 'none';
-    }
-    purgeSelection(except) {
-        for (let i=this.selection.length-1; i >= 0; i--) {
-            if (!except || except != this.selection[i]) {
-                this.selection[i].unselect();
+        if (obj instanceof SegmenterLine) {
+            if (this.selection.lines.indexOf(obj) == -1) this.selection.lines.push(obj);
+        } else if (obj instanceof SegmenterRegion) {
+            if (this.selection.regions.indexOf(obj) == -1) this.selection.regions.push(obj);
+        } else {
+            // must be a segment
+            if (this.selection.segments.indexOf(obj) == -1) {
+                this.selection.segments.push(obj);
+                obj.point.selected = true;
             }
         }
+        this.showContextMenu();
+    }
+
+    removeFromSelection(obj) {
+        if (obj instanceof SegmenterLine) {
+            this.selection.lines.splice(this.selection.lines.indexOf(obj), 1);
+        } else if (obj instanceof SegmenterRegion) {
+            this.selection.regions.splice(this.selection.regions.indexOf(obj), 1);
+        } else {
+            this.selection.segments.splice(this.selection.segments.indexOf(obj), 1);
+            obj.point.selected = false;
+        }
+        this.showContextMenu();
+    }
+    
+    purgeSelection(except) {
+        for (let i=this.selection.lines.length-1; i >= 0; i--) {
+            if (!except || except != this.selection.lines[i]) {
+                this.selection.lines[i].unselect();
+            }
+        }
+        for (let i=this.selection.regions.length-1; i >= 0; i--) {
+            if (!except || except != this.selection.regions[i]) {
+                this.selection.regions[i].unselect();
+            }
+        }
+        for (let i=this.selection.segments.length-1; i >= 0; i--) {
+            this.removeFromSelection(this.selection.segments[i]);
+        }
+        this.showContextMenu();
     }
     
     makeSelectionRectangle(event) {
@@ -1094,15 +1165,23 @@ class Segmenter {
     }
     
     lassoSelection(clip) {
-        // draws a rectangle lasso selection tool that selects every line it crosses
+        // draws a rectangle lasso selection tool that selects every segment it crosses
         for (let i in this.lines) {
+            let allSegments;
             let line = this.lines[i];
-            if (line.selected) {continue;}  // avoid calculs
-            if (line.baselinePath && (
-                  clip.intersects(line.baselinePath) ||
-                  line.baselinePath.isInside(clip.bounds))) {
-                line.select();
+            if (this.showMasks) {
+                allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
+            } else {
+                allSegments = line.baselinePath.segments;
             }
+            for (let j in allSegments) {
+                let segment = allSegments[j];
+                if (segment.point.isInside(clip.bounds)) {
+                    this.addToSelection(segment);
+                    line.select();
+                }
+            }
+            if (line.baselinePath.intersects(clip)) line.select();
         }
     }
     
@@ -1148,7 +1227,7 @@ class Segmenter {
                     } else if (path.contains(line.baselinePath.lastSegment.point)) {
                         line.baselinePath.removeSegments(newSegment.index+1);
                     }
-                    line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
+                    // line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
                     // line.createPolygonEdgeForBaselineSegment(newSegment);
                     line.updateDataFromCanvas();
                 } else {
@@ -1168,8 +1247,8 @@ class Segmenter {
     }
     
     reverseSelection() {
-        for (let i=0; i < this.selection.length; i++) {
-            this.selection[i].reverse();
+        for (let i=0; i < this.selection.lines.length; i++) {
+            this.selection.lines[i].reverse();
         }
     }
     
@@ -1182,11 +1261,11 @@ class Segmenter {
           3) Delete the left over
         */
 
-        if (this.selection.filter(sel => sel.baselinePath === null).length > 0) {
+        if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
             return;
         }
         
-        this.selection.sort(function(first, second) {
+        this.selection.lines.sort(function(first, second) {
             let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
             let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
             // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
@@ -1194,19 +1273,19 @@ class Segmenter {
             else return first.baselinePath.position.x - second.baselinePath.position.x;
         });
         
-        while (this.selection.length > 1) {
-            let seg1 = this.selection[0].baselinePath.getNearestLocation(this.selection[1].baselinePath.interiorPoint);
-            let seg2 = this.selection[1].baselinePath.getNearestLocation(this.selection[0].baselinePath.interiorPoint);
-            this.selection[0].baselinePath.add(seg2);
-            this.selection[0].baselinePath.join(this.selection[1].baselinePath, seg1.point.getDistance(seg2.point));
+        while (this.selection.lines.length > 1) {
+            let seg1 = this.selection.lines[0].baselinePath.getNearestLocation(this.selection.lines[1].baselinePath.interiorPoint);
+            let seg2 = this.selection.lines[1].baselinePath.getNearestLocation(this.selection.lines[0].baselinePath.interiorPoint);
+            this.selection.lines[0].baselinePath.add(seg2);
+            this.selection.lines[0].baselinePath.join(this.selection.lines[1].baselinePath, seg1.point.getDistance(seg2.point));
 
-            let closeSeg = this.selection[0].maskPath.getNearestLocation(this.selection[1].maskPath.interiorPoint);
-            this.selection[0].maskPath.insertSegments(closeSeg.index+1, this.selection[1].maskPath.segments);
+            let closeSeg = this.selection.lines[0].maskPath.getNearestLocation(this.selection.lines[1].maskPath.interiorPoint);
+            this.selection.lines[0].maskPath.insertSegments(closeSeg.index+1, this.selection.lines[1].maskPath.segments);
             
-            this.selection[1].delete();
+            this.selection.lines[1].delete();
         }
-        if (this.selection.length) {
-            this.selection[0].updateDataFromCanvas();
+        if (this.selection.lines.length) {
+            this.selection.lines[0].updateDataFromCanvas();
         }
     }
 

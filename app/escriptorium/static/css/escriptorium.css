@@ -26,9 +26,6 @@ canvas.resize {
 
 }
 
-#delete-point, #delete-line {
-    position: absolute;
-}
 
 .container {
   margin-right: auto;

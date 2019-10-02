@@ -158,13 +158,18 @@ class TranscriptionLine {
         let modalImgContainer = document.querySelector('#modal-img-container');
         let img = modalImgContainer.querySelector('img#line-img');
         let bounds = this.polyElement.getBBox();
-        // img.style.transform = 'none';  // reset img width for calculations
         let panelToImgRatio = this.panel.$panel.width() / img.width;
         let panelToTransRatio = modalImgContainer.getBoundingClientRect().width / bounds.width;
 
         // Line image
         let context = 20;
-        modalImgContainer.style.height = Math.round(bounds.height*panelToTransRatio)+2*context+'px';
+        let lineHeight = Math.round(bounds.height*panelToTransRatio);
+        if (lineHeight > 100) {
+            // change the ratio so that the image can not get too big
+            panelToTransRatio = (100/lineHeight)*panelToTransRatio;
+            lineHeight = 100;
+        }
+        modalImgContainer.style.height = lineHeight+2*context+'px';
         img.style.width = this.panel.$panel.width()*panelToTransRatio + 'px';
         
         let left = Math.round(bounds.x*panelToTransRatio);
@@ -189,7 +194,7 @@ class TranscriptionLine {
         ruler.style.visibility = 'hidden';
         ruler.textContent = content;
         document.body.appendChild(ruler);
-        let lineHeight = Math.min(60, bounds.height*panelToTransRatio);
+
         ruler.style.fontSize = lineHeight+'px';
         input.style.fontSize = lineHeight+'px';
         input.style.height = lineHeight+10+'px';

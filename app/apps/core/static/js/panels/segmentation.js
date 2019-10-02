@@ -35,7 +35,7 @@ class SegmentationPanel extends Panel {
                 undoManager.redo();
                 this.updateHistoryBtns();
             }
-        });
+        }.bind(this));
     }
 
     pushHistory(undo, redo) {

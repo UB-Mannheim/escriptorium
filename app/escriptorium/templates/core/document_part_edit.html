@@ -51,14 +51,17 @@
               <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.
             </p>
             <p>
-              <b>Left click</b> on a line to select it, then you can drag it's closest control point.
-              <br/>If you click exactly on a control point, a yellow trash button <i class="fas fa-trash"></i> appears allowing to delete it.
+              <b>Left click</b> on a line to selects it, then you can drag it's closest control point.
               <br/><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.
               <br/>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons.
             </p>
             <p>
-              <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>, <b>shift and drag</b> creates a <u>lasso</u> selection tool.
-              <br/><b>Ctrl+drag</b> allows to move the entire selection at once.
+              <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,
+              <b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).
+              <br/><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).
+
+              <br/>The red trash <i class="text-danger fas fa-trash"></i> button allows to <b>delete</b> selected <b>lines/regions</b>,
+              <br/>The yellow trash button <i class="text-warning fas fa-trash"></i> only <b>deletes</b> selected control <b>points</b>.
             </p>
             {% endblocktrans %}
           </div>
@@ -162,7 +165,7 @@
           </svg>
         </div>        
       </div>
-      <button id="delete-point" title="{% trans "Delete point." %}" class="hide btn btn-sm btn-warning fas fa-trash"></button>
+      <button id="delete-point" title="{% trans "Delete selected points. (ctrl+suppr)" %}" class="hide btn btn-warning m-1 fas fa-trash"></button>
       <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
       <button id="reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
       <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
@@ -224,7 +227,7 @@
                   <polygon points=""/>
                 </mask>
               </defs>
-              <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#modal-overlay)" />
+              <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#modal-overlay)" />
             </svg>
           </div>
         </div>
