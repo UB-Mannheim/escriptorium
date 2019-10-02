@@ -200,8 +200,10 @@ class SegmentationPanel extends Panel {
         let uri = this.api + type + '/' + obj.context.pk;
         $.ajax({url: uri, type:'DELETE'});
         if (type == 'lines' && panels['trans']) {
-            var tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
+            let index = panels['trans'].lines.findIndex(l => l.pk==obj.context.pk);
+            let tl = panels['trans'].lines[index];
             if (tl) tl.delete();
+            panels['trans'].lines.splice(index, 1);
         }
     }
     

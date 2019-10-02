@@ -306,7 +306,7 @@ class TranscriptionPanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
         this.part = null;
-        this.lines = {};  // list of TranscriptionLine != this.part.lines
+        this.lines = [];  // list of TranscriptionLine != this.part.lines
 
         let container = document.getElementById('part-trans');
         this.content = container.getElementsByTagName('svg')[0];
@@ -414,11 +414,18 @@ class TranscriptionPanel extends Panel {
         }.bind(this);
         getNext(1);
     }
+
+    empty() {
+        let line;
+        while(this.lines.length) {
+            line = this.lines.pop();
+            line.delete();
+        }        
+    }
     
     load(part) {
         super.load(part);
-        if (this.lines) [].forEach.call(this.lines, e => this.content.removeChild(e.element));
-        this.lines = [];
+        this.empty();
         
         if (this.part.image.thumbnails.large) {
             document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.thumbnails.large);
