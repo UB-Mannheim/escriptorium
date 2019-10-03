@@ -194,12 +194,16 @@ class SegmenterLine {
     }
 
     update(baseline, mask) {
-        this.baseline = baseline;
-        this.baselinePath.removeSegments();
-        this.baselinePath.addSegments(baseline);
-        this.mask = mask;
-        this.maskPath.removeSegments();
-        this.maskPath.addSegments(mask);
+        if (baseline && baseline.length) {
+            this.baseline = baseline;
+            this.baselinePath.removeSegments();
+            this.baselinePath.addSegments(baseline);
+        }
+        if (mask && mask.length) {
+            this.mask = mask;
+            this.maskPath.removeSegments();
+            this.maskPath.addSegments(mask);
+        }
     }
     
     updateDataFromCanvas() {
@@ -782,6 +786,7 @@ class Segmenter {
                 this.purgeSelection();
                 this.selecting.select();
             }
+            this.trigger('baseline-editor:selection', {target: this.selecting, selection: this.selection});
             this.selecting = null;
         } else {
             if (event.event.ctrlKey) return;

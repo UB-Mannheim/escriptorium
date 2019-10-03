@@ -173,6 +173,12 @@ class LineViewSet(ModelViewSet):
         else:  # create
             return LineSerializer
 
+    @action(detail=True, methods=['post'])
+    def reset_mask(self, request, document_pk=None, part_pk=None, pk=None):
+        line = Line.objects.get(document_part=part_pk, pk=pk)
+        line.make_mask()
+        return Response({'status': 'done', 'mask': line.mask})
+
 
 class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100

@@ -15,8 +15,12 @@ class SegmentationPanel extends Panel {
         let canvas = this.segmenter.canvas;
         canvas.parentNode.parentNode.appendChild(canvas);
 
-        this.bindEditorEvents();
+        // inject a reset mask button in the contextual menu
+        this.resetMasksBtn = document.querySelector('#reset-masks');
+        this.segmenter.contextMenu.appendChild(this.resetMasksBtn);
 
+        this.bindEditorEvents();
+        
         let undoBtn = document.querySelector('button#undo');
         let redoBtn = document.querySelector('button#redo');
         if (undoBtn) undoBtn.addEventListener('click', function(ev) {
@@ -108,6 +112,24 @@ class SegmentationPanel extends Panel {
         }.bind(this));
         this.$panel.on('mouseout', function(e) {
             this.segmenter.disableBindings = true;
+        }.bind(this));
+
+        this.segmenter.events.addEventListener('baseline-editor:selection', function(event) {
+            // handle the injected button visibility
+            if (event.detail.selection.lines.length > 0) this.resetMasksBtn.style.display = 'block';
+            else this.resetMasksBtn.style.display = 'none';
+        }.bind(this));
+
+        this.resetMasksBtn.addEventListener('click', function(ev) {
+            let lines = this.segmenter.selection.lines;
+            for (let i=0; i<lines.length; i++) {
+                let line = lines[i];
+                let uri = this.api + 'lines/' + line.context.pk + '/reset_mask/';
+                $.ajax({url: uri, type: 'POST'}).done($.proxy(function(data) {
+                    let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
+                    line.update(false, this.convertPolygon(data.mask, ratio));
+                }.bind(this)));
+            }
         }.bind(this));
     }
     

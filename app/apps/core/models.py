@@ -28,6 +28,8 @@ from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 from kraken import pageseg, blla
 from kraken.lib.util import is_bitonal
+from kraken.lib.segmentation import calculate_polygonal_environment
+from skimage.measure import approximate_polygon
 
 from versioning.models import Versioned
 from core.tasks import *
@@ -755,6 +757,15 @@ class Line(OrderedModel):  # Versioned,
     def make_external_id(self):
         return self.external_id or 'eSc_line_%d' % self.pk
 
+    def make_mask(self, im=None):
+        if not im:
+            im = Image.open(self.document_part.bw_image or self.document_part.image)
+        result = calculate_polygonal_environment(im, [self.baseline])
+        
+        if result[0][0] is not None:  # couldn't expand region
+            self.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
+            self.save()
+
 
 class Transcription(models.Model):
     name = models.CharField(max_length=512)
@@ -802,10 +813,18 @@ def models_path(instance, filename):
 
 
 class OcrModel(Versioned, models.Model):
+    MODEL_JOB_SEGMENT = 1
+    MODEL_JOB_RECOGNIZE = 2
+    MODEL_JOB_CHOICES = (
+        (MODEL_JOB_SEGMENT, _("Segment")),
+        (MODEL_JOB_RECOGNIZE, _("Recognize"))
+    )
+    
     name = models.CharField(max_length=256)
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
+    job = models.PositiveSmallIntegerField(choices=MODEL_JOB_CHOICES)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     training = models.BooleanField(default=False)
     training_epoch = models.PositiveSmallIntegerField(default=0)
@@ -829,6 +848,10 @@ class OcrModel(Versioned, models.Model):
     @cached_property
     def accuracy_percent(self):
         return self.training_accuracy * 100
+
+    def segtrain(self, document, parts_qs, model, user=None):
+        segtrain.delay(self.pk, document.pk,
+                       list(parts_qs.values_list('pk', flat=True)))
     
     @classmethod
     def train(cls, parts_qs, transcription, model, user=None):

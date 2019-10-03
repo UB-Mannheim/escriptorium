@@ -30,8 +30,8 @@
         <i class="fas fa-file-import mr-1"></i>{% trans "Import" %}
       </button>
       <div class="dropdown-menu">
-        <a data-proc="import-iiif" class="js-proc-selected dropdown-item" href="#">IIIF</a>
-        <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">XML</a>
+        <a data-proc="import-iiif" class="js-proc-selected dropdown-item" href="#">Images (IIIF)</a>
+        <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">Transcriptions (XML)</a>
       </div>
     </div>
     {% with import=import_form.current_import %}
@@ -42,7 +42,15 @@
     {% endwith %}
     {% if user.is_staff %}
     {% with training_model=document.training_model %}
-    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if training_model %}blink{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <div class="btn-group ml-auto mr-1" role="group">
+    <button id="train-selected" type="button" class="btn btn-sm btn-primary dropdown-toggle {% if training_model %}blink{% endif %}" title="{% trans 'Train a segmenter/recognizer model.' %}" data-toggle="dropdown">
+      <i class="fas fa-subway mr-1"></i>{% trans "Train" %}
+    </button>
+    <div class="dropdown-menu">
+      <a data-proc="segtrain" class="js-proc-selected dropdown-item" href="#">Segmenter</a>
+      <a data-proc="train" class="js-proc-selected dropdown-item" href="#">Recognizer</a>
+    </div>
+    </div>
     <button id="cancel-training" class="btn btn-sm btn-warning {% if not training_model %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
     {% endwith %}
     {% endif %}
@@ -90,6 +98,7 @@
 {% include 'core/wizards/import_xml.html' with proc='import-xml' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
+{% include 'core/wizards/segtrain.html' with proc='segtrain' %}
 {% include 'core/wizards/train.html' with proc='train' %}
 {% include 'core/wizards/transcribe.html' with proc='transcribe' %}
 {% endblock %}

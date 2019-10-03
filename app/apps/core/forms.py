@@ -89,12 +89,14 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     TASK_BINARIZE = 'binarize'
     TASK_SEGMENT = 'segment'
     TASK_TRAIN = 'train'
+    TASK_SEGTRAIN = 'segtrain'
     TASK_TRANSCRIBE  = 'transcribe'
     task = forms.ChoiceField(choices=(
         (TASK_BINARIZE, 1),
         (TASK_SEGMENT, 2),
         (TASK_TRAIN, 3),
         (TASK_TRANSCRIBE, 4),
+        (TASK_SEGTRAIN, 5),
     ))
     parts = forms.CharField()
 
@@ -134,6 +136,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     new_model = forms.CharField(required=False, label=_('Model name'))
     train_model = forms.ModelChoiceField(queryset=OcrModel.objects.all(), label=_("Model"), required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+
+    # segtrain
     
     # typology = forms.ModelChoiceField(Typology, required=False,
     #                              limit_choices_to={'target': Typology.TARGET_PART})
@@ -185,6 +189,12 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        task = cleaned_data.get('task')
+
+        if task == 'segtrain':
+            model_job = OcrModel.MODEL_JOB_SEGMENT
+        else:
+            model_job = OcrModel.MODEL_JOB_RECOGNIZE
         
         if cleaned_data.get('train_model'):
             model = cleaned_data.get('train_model')
@@ -193,13 +203,15 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                 document=self.parts[0].document,
                 owner=self.user,
                 name=self.cleaned_data['upload_model'].name,
-                file=self.cleaned_data['upload_model'])
+                file=self.cleaned_data['upload_model'],
+                job=model_job)
         elif cleaned_data.get('new_model'):
             # file will be created by the training process
             model = OcrModel.objects.create(
                 document=self.parts[0].document,
                 owner=self.user,
-                name=self.cleaned_data['new_model'])
+                name=self.cleaned_data['new_model'],
+                job=model_job)
         elif cleaned_data.get('ocr_model'):
             model = cleaned_data.get('ocr_model')
         else:
@@ -237,6 +249,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                            self.cleaned_data['transcription'],
                            model,
                            user=self.user)
+            
+        elif task == self.TASK_SEGTRAIN:
+            model.segtrain(self.document, self.parts, model, user=self.user)
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):

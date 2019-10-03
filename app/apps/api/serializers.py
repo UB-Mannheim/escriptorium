@@ -5,7 +5,6 @@ import json
 from django.conf import settings
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
-from kraken.lib.segmentation import calculate_polygonal_environment
 
 from core.models import *
 
@@ -124,14 +123,7 @@ class LineSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         instance = super().create(validated_data)
-
-        with Image.open(instance.document_part.bw_image or instance.document_part.image) as im:
-            result = calculate_polygonal_environment(im, [instance.baseline])
-            
-            if result[0][0] is not None:  # couldn't expand region
-                from skimage.measure import approximate_polygon
-                instance.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
-                instance.save()  # TODO: find a way to save only once
+        instance.make_mask()
         instance.document_part.recalculate_ordering()
         return instance
     
