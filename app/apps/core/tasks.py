@@ -146,68 +146,67 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     try:
         model = OcrModel.objects.get(pk=model_pk)
         nn = vgsl.TorchVGSLModel.load_model(model.file.path)
-    except OcrModel.DoesNotExist:
-        # TODO create a new model from this one:
+        modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
+    except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
+        modelpath = os.path.join(settings.MEDIA_ROOT, model.name + '.mlmodel')
     
     try:
         model.training = True
         model.save()
         document = model.document
-
+        
         send_event('document', document.pk, "training:start", {
             "id": model.pk,
         })
         qs = DocumentPart.objects.filter(pk__in=part_pks)
-
+        
         batch, channels, height, width = nn.input
         transforms = generate_input_transforms(batch, height, width, channels, 0, valid_norm=False)
-        ground_truth = list(qs.values(baseline=F('line__baseline'),
-                                      image=F('line__document_part__image')))
+        ground_truth = list(qs.prefetch_related('lines'))
         
         np.random.shuffle(ground_truth)
         
         gt_set = BaselineSet(mode=None, im_transforms=transforms)
         val_set = BaselineSet(mode=None, im_transforms=transforms)
         
-        partition = int(len(ground_truth) / 10)
+        partition = max(1, int(len(ground_truth) / 10))
         
         for part in qs[partition:]:
-            gt_set.add(os.path.join(settings.MEDIA_ROOT, line.image), part.lines.values_list('baseline', flat=True))
-
+            print(part.image.path)
+            gt_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
+        
         for part in qs[:partition]:
-            val_set.add(os.path.join(settings.MEDIA_ROOT, line.image), part.lines.values_list('baseline', flat=True))
-
+            val_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
+            
         train_loader = DataLoader(gt_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
         test_loader = DataLoader(val_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
-
+        
         # set mode to training
-        nn.train()
         nn.set_num_threads(1)
-
+        nn.train()
+        
         #optim = getattr(torch.optim, optimizer)(nn.nn.parameters(), lr=0)
         optim = torch.optim.Adam(nn.nn.parameters(), lr=2e-4, weight_decay=1e-5)
         
         if 'accuracy' not in  nn.user_metadata:
             nn.user_metadata['accuracy'] = []
-
-        modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
             
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
         st_it = EarlyStopping(None, 5)
-        trainer = train.KrakenTrainer(model=nn,
-                                      optimizer=optim,
-                                      device=device,
-                                      filename_prefix=modelpath,
-                                      event_frequency=1.0,
-                                      train_set=train_loader,
-                                      val_set=val_set,
-                                      stopper=st_it,
-                                      loss_fn=baseline_label_loss_fn,
-                                      evaluator=baseline_label_evaluator_fn)
+        trainer = KrakenTrainer(model=nn,
+                                optimizer=optim,
+                                device=DEVICE,
+                                filename_prefix=modelpath,
+                                event_frequency=1.0,
+                                train_set=train_loader,
+                                val_set=val_set,
+                                stopper=st_it,
+                                loss_fn=baseline_label_loss_fn,
+                                evaluator=baseline_label_evaluator_fn)
 
         trainer.run(_print_eval, _draw_progressbar)
-        #nn.save_model(path=modelpath)
+        nn.save_model(path=modelpath)
         
     except Exception as e:
         send_event('document', document.pk, "training:error", {

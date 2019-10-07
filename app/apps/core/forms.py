@@ -134,10 +134,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     
     # train
     new_model = forms.CharField(required=False, label=_('Model name'))
-    train_model = forms.ModelChoiceField(queryset=OcrModel.objects.all(), label=_("Model"), required=False)
+    train_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                         label=_("Model"), required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
 
     # segtrain
+    segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                            label=_("Model"), required=False)
     
     # typology = forms.ModelChoiceField(Typology, required=False,
     #                              limit_choices_to={'target': Typology.TARGET_PART})
@@ -196,8 +199,10 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         else:
             model_job = OcrModel.MODEL_JOB_RECOGNIZE
         
-        if cleaned_data.get('train_model'):
+        if task == 'train' and cleaned_data.get('train_model'):
             model = cleaned_data.get('train_model')
+        elif task == 'segtrain' and cleaned_data.get('segtrain_model'):
+            model = cleaned_data.get('segtrain_model')
         elif cleaned_data.get('upload_model'):
             model = OcrModel.objects.create(
                 document=self.parts[0].document,
