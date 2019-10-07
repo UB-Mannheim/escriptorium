@@ -1,0 +1,16 @@
+{% extends 'core/wizards/_base.html' %}
+{% load i18n bootstrap %}
+
+{% block wizard_help %}
+<p>(PLACEHOLDER)</p>
+{% endblock %}
+
+{% block wizard_action %}action="{% url 'api:document-export' pk=object.pk %}" target="_blank"{% endblock %}
+
+{% block wizard_fields %}
+{% csrf_token %}
+{% render_field export_form.transcription %}
+{% render_field export_form.file_format %}
+{% endblock %}
+
+{% block wizard_submit %}{% trans "Export" %}{% endblock %}
