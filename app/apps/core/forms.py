@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
 from core.models import *
-from core.serializers import AltoParser, ParseError
 
 logger = logging.getLogger(__name__)
 

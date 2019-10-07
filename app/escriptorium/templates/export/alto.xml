@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
+	<Description>
+		<MeasurementUnit>pixel</MeasurementUnit>
+		<sourceImageInformation>
+			<fileName>{{ part.filename }}</fileName>
+		</sourceImageInformation>
+	</Description>
+  <Layout>
+    <Page HPOS="0" VPOS="0" WIDTH="{{ part.image.width }}" HEIGHT="{{ part.image.height }}" ID="page_{{line.document_part.pk}}">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="{{ part.image.width }}" HEIGHT="{{ part.image.height }}">
+        {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextBlock>{% endif %}
+        <TextBlock {% if line.block %}HPOS="{{ line.block.box.0 }}" VPOS="{{ line.block.box.1 }}" WIDTH="{{ line.block.width }}" HEIGHT="{{ line.block.height }}" ID="{{ line.block.make_external_id }}"{% endif%}>{% endifchanged %}
+	      <TextLine ID="{{ line.make_external_id }}" {% if line.baseline %}BASELINE="{% for pt in line.baseline %} {{ pt|join:"," }}{% endfor %}" {% endif %}HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}">
+	        <String CONTENT="{{ line.transcription.0.content }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}"></String>
+            {% if line.mask %}<Shape><Polygon POINTS="{% for pt in line.mask %} {{ pt|join:"," }}{% endfor %}"/></Shape>{% endif %}
+          </TextLine>{% endfor %}
+       </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

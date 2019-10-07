@@ -74,25 +74,12 @@
       <div class="col-auto mr-1">
         <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
       </div>
-      <div class="col mr-1">
+      <div class="col">
         <select id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
           {% for transcription in document.transcriptions.all %}
           <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
           {% endfor %}
         </select>
-      </div>
-      <div class="col-auto mb-2">
-        {% if document.transcriptions.count %}
-        <div class="btn-group ml-auto mr-1" role="group">
-          <button id="document-export" type="button" class="nav-item btn btn-primary dropdown-toggle" title="{% trans "Export" %}" data-toggle="dropdown">
-            <i class="fas fa-file-download"></i>
-          </button>
-          <div class="dropdown-menu">
-            <a data-format="alto" class="js-export dropdown-item">Alto</a>
-            <a data-format="text" class="js-export dropdown-item">Texte</a>
-          </div>
-        </div>
-        {% endif %}
       </div>
     </div>
   </div>

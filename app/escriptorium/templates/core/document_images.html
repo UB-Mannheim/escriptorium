@@ -40,6 +40,13 @@
       <button id="cancel-import" class="btn btn-sm btn-warning"><i class="fas fa-ban"></i></button>
     </span>
     {% endwith %}
+    
+    {% if document.transcriptions.count %}
+    <button id="document-export" type="button" class="btn btn-sm btn-primary js-proc-selected" title="{% trans "Export" %}" data-proc="export">
+      <i class="fas fa-file-export mr-1"></i>{% trans "Export" %}
+    </button>
+    {% endif %}
+    
     {% if user.is_staff %}
     {% with training_model=document.training_model %}
     <div class="btn-group ml-auto mr-1" role="group">
@@ -96,6 +103,7 @@
 {# Process wizards #}
 {% include 'core/wizards/import_iiif.html' with proc='import-iiif' %}
 {% include 'core/wizards/import_xml.html' with proc='import-xml' %}
+{% include 'core/wizards/export.html' with proc='export' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
 {% include 'core/wizards/segtrain.html' with proc='segtrain' %}

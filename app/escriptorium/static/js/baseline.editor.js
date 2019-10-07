@@ -179,9 +179,11 @@ class SegmenterLine {
     unselect() {
         if (!this.selected) return;
         if (this.maskPath) this.maskPath.selected = false;
-        if(this.baselinePath) {
+        if (this.baselinePath) {
             this.baselinePath.selected = false;
             this.baselinePath.strokeColor = this.segmenter.mainColor;
+            // also unselects any selected segments
+            this.maskPath.selected = false;
         }
         this.segmenter.removeFromSelection(this);
         if (this.directionHint) this.directionHint.visible = false;
@@ -941,6 +943,7 @@ class Segmenter {
             this.resetToolEvents();
             document.removeEventListener('mouseup', finishSelection);
             document.removeEventListener('keyup', onCancel);
+            this.trigger('baseline-editor:selection', {target: this.selecting, selection: this.selection});
         }.bind(this);
         
         this.tool.onMouseDrag = function(event) {

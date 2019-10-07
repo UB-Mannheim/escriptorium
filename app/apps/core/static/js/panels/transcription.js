@@ -331,13 +331,6 @@ class TranscriptionPanel extends Panel {
             this.loadTranscriptions();
             userProfile.set('initialTranscriptions', data);
         }.bind(this));
-        
-        /* export */
-        // document.querySelector('.js-export').addEventListener('click', function(ev) {
-        //     ev.preventDefault();
-        //     let format = ev.target.attributes['data-format'];
-        //     window.open(API.document + '/export/?transcription='+this.selectedTranscription+'&as=' + format);
-        // }.bind(this));
 
         // TODO!
         // $("#trans-modal").draggable({

@@ -528,14 +528,15 @@ $(document).ready(function() {
     });
     
     $('.process-part-form').submit(function(ev) {
+        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
+        if ($(this).is('[data-proc="export"]')) return true;  // resume normal form behavior
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');
-        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         $('#'+proc+'-wizard').modal('hide');
         $.ajax({
             url : $form.attr('action'),
-            type: "POST",
+            type: $form.attr('method'),
             data : new FormData($form.get(0)),
             processData: false,
             contentType: false

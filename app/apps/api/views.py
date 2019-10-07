@@ -1,9 +1,6 @@
 import itertools
 
 from django.db.models import Prefetch, Count
-from django.http import StreamingHttpResponse
-from django.template import loader
-from django.utils.text import slugify
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,7 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from api.serializers import *
 from core.models import *
-from imports.forms import ImportForm
+from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from users.consumers import send_event
 
@@ -26,11 +23,11 @@ class DocumentViewSet(ModelViewSet):
     def get_queryset(self):
         return Document.objects.for_user(self.request.user)
     
+    def form_error(self, msg):
+        return Response({'status': 'error', 'error': msg}, status=400)
+    
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
-        def error(msg):
-            return Response({'status': 'error', 'error': msg}, status=400)
-        
         document = self.get_object()
         form = ImportForm(document, request.user,
                           request.POST, request.FILES)
@@ -39,11 +36,11 @@ class DocumentViewSet(ModelViewSet):
             try:
                 form.process()
             except ParseError as e:
-                return error("Incorrectly formated file, couldn't parse it.")
+                return self.form_error("Incorrectly formated file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:
-            return error(json.dumps(form.errors))
-
+            return self.form_error(json.dumps(form.errors))
+    
     @action(detail=True, methods=['post'])
     def cancel_import(self, request, pk=None):
         document = self.get_object()
@@ -53,7 +50,7 @@ class DocumentViewSet(ModelViewSet):
             return Response({'status': 'canceled'})
         else:
             return Response({'status': 'already canceled'}, status=400)
-
+    
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
         document = self.get_object()
@@ -61,62 +58,14 @@ class DocumentViewSet(ModelViewSet):
         model.cancel_training()
         return Response({'status': 'canceled'})
     
-    @action(detail=True, methods=['get'])
-    def export(self, request, pk=None):            
-        format_ = request.GET.get('as', 'text')
-        try:
-            transcription = Transcription.objects.get(
-                document=pk, pk=request.GET.get('transcription'))
-        except Transcription.DoesNotExist:
-            return Response({'error': "Object 'transcription' is required."}, status=status.HTTP_400_BAD_REQUEST)
-        self.object = self.get_object()
-        
-        if format_ == 'text':
-            template = 'core/export/simple.txt'
-            content_type = 'text/plain'
-            extension = 'txt'
-            lines = (LineTranscription.objects.filter(transcription=transcription)
-                     .order_by('line__document_part', 'line__document_part__order', 'line__order'))
-            response = StreamingHttpResponse(['%s\n' % line.content for line in lines],
-                                             content_type=content_type)
-        elif format_ == 'alto':
-            template = 'core/export/alto.xml'
-            content_type = 'text/xml'
-            extension = 'xml'
-            document = self.get_object()
-            part_pks = document.parts.values_list('pk', flat=True)
-            start = loader.get_template('core/export/alto_start.xml').render()
-            end = loader.get_template('core/export/alto_end.xml').render()
-            part_tmpl = loader.get_template('core/export/alto_part.xml')
-            response = StreamingHttpResponse(itertools.chain([start],
-                                                             [part_tmpl.render({
-                                                                 'part': self.get_part_data(pk, transcription),
-                                                                 'counter': i})
-                                                              for i, pk in enumerate(part_pks)],
-                                                             [end]),
-                                             content_type=content_type)
+    @action(detail=True, methods=['post'])
+    def export(self, request, pk=None):
+        document = self.get_object()
+        form = ExportForm(document, request.POST)
+        if form.is_valid():
+            return form.stream()
         else:
-            return Response({'error': 'Invalid format.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        response['Content-Disposition'] = 'attachment; filename="export_%s_%s.%s"' % (
-            slugify(self.object.name), datetime.now().isoformat()[:16].replace('-', '_'), extension)
-        return response
-    
-    def get_part_data(self, part_pk, transcription):
-        return (DocumentPart.objects
-                .prefetch_related(
-                    Prefetch('blocks',
-                             to_attr='orphan_blocks',
-                             queryset=(Block.objects.annotate(num_lines=Count("line"))
-                                       .filter(num_lines=0))),
-                    Prefetch('lines',
-                             queryset=(Line.objects.all()
-                                       .select_related('block')
-                                       .prefetch_related(
-                                           Prefetch('transcriptions',
-                                          to_attr='transcription',
-                                          queryset=LineTranscription.objects.filter(transcription=transcription))))))
-                .get(pk=part_pk))
+            return self.form_error(json.dumps(form.errors))
 
 
 class PartViewSet(ModelViewSet):
@@ -172,7 +121,7 @@ class LineViewSet(ModelViewSet):
             return DetailedLineSerializer
         else:  # create
             return LineSerializer
-
+    
     @action(detail=True, methods=['post'])
     def reset_mask(self, request, document_pk=None, part_pk=None, pk=None):
         line = Line.objects.get(document_part=part_pk, pk=pk)

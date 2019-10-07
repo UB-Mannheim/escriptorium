@@ -145,11 +145,12 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     
     try:
         model = OcrModel.objects.get(pk=model_pk)
-        nn = vgsl.TorchVGSLModel.load_model(model.file.path)
-        modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
+        modelpath = model.file.path
+        nn = vgsl.TorchVGSLModel.load_model(modelpath)
     except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
-        modelpath = os.path.join(settings.MEDIA_ROOT, model.name + '.mlmodel')
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
     
     try:
         model.training = True
