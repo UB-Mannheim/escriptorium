@@ -128,6 +128,8 @@ class SegmentationPanel extends Panel {
                 $.ajax({url: uri, type: 'POST'}).done($.proxy(function(data) {
                     let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
                     line.update(false, this.convertPolygon(data.mask, ratio));
+                    var tl = panels['trans'].lines.find(l => l.pk==line.context.pk);
+                    if (tl) { tl.update(data); }
                 }.bind(this)));
             }
         }.bind(this));

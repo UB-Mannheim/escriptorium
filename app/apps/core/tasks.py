@@ -148,7 +148,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         modelpath = model.file.path
         nn = vgsl.TorchVGSLModel.load_model(modelpath)
     except ValueError:  # model is empty
-        nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
+        nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
+        # nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
     
@@ -174,7 +175,6 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         partition = max(1, int(len(ground_truth) / 10))
         
         for part in qs[partition:]:
-            print(part.image.path)
             gt_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
         
         for part in qs[:partition]:

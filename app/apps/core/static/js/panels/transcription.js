@@ -92,9 +92,9 @@ class TranscriptionLine {
     }
     
     update(line) {
-        this.pk = line.pk;
-        this.mask = line.mask;
-        this.baseline = line.baseline;
+        if(line.pk) this.pk = line.pk;
+        if(line.mask) this.mask = line.mask;
+        if(line.baseline) this.baseline = line.baseline;
         this.makeShape();
     }
     
