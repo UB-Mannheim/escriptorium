@@ -329,11 +329,6 @@ form.inline-form {
     height: 100%;
 }
 
-.col {
-    /* IMPORTANT: only way i found to prevent the panels from growing silently (thus getting bad img ratios) */
-    padding: 0;
-}
-
 #img-panel, #binar-panel, #seg-panel, #trans-panel {
     min-height: calc(100vh - 200px);
 }

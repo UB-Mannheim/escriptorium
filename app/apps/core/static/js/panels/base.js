@@ -18,8 +18,8 @@ class Panel {
     
     open() {
         this.opened = true;
-        this.$panel.show(this.onShow.bind(this));
-        this.$tools.show();
+        this.$panel.show(0, this.onShow.bind(this));
+        this.$tools.show(0);
         Cookies.set(this.$panel.attr('id'), true, {expires: 30});
     }
     close() {

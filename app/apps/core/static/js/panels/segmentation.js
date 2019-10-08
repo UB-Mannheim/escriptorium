@@ -15,7 +15,7 @@ class SegmentationPanel extends Panel {
         let canvas = this.segmenter.canvas;
         canvas.parentNode.parentNode.appendChild(canvas);
 
-        // inject a reset mask button in the contextual menu
+        // Inject a reset mask button in the contextual menu
         this.resetMasksBtn = document.querySelector('#reset-masks');
         this.segmenter.contextMenu.appendChild(this.resetMasksBtn);
 
@@ -142,7 +142,7 @@ class SegmentationPanel extends Panel {
             // change the coordinate system to fit the thumbnail
             let lines = this.part.lines.map(l => { return {
                 pk: l.pk,
-                baseline: l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]),
+                baseline: l.baseline?l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]):null,
                 mask: l.mask?l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio]):null
             }});
             let regions = this.part.blocks.map(b => { return {
@@ -154,23 +154,23 @@ class SegmentationPanel extends Panel {
             });
             this.bindZoom();
         }
-
+        
         if (this.$img.get(0).complete) init_.bind(this)();
         else this.$img.on('load', init_.bind(this));
     }
     
     load(part) {
+        this.segmenter.empty();
         super.load(part);
         if (this.part.image.thumbnails) {
             this.$img.attr('src', this.part.image.thumbnails.large);
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-    }
-
-    onShow() {
         this.init();
     }
+
+    onShow() {}
 
     convertPolygon(poly, ratio) {
         return poly.map(pt => [Math.round(pt[0]*ratio),

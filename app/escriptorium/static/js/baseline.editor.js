@@ -506,8 +506,7 @@ class Segmenter {
         }.bind(this));
     }
     
-    init() {        
-        if (paper.view) paper.view.remove();
+    init() {
         paper.settings.handleSize = 10;
         paper.settings.hitTolerance = 10;  // Note: doesn't work?
         paper.install(window);
