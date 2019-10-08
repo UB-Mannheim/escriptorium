@@ -138,10 +138,10 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     OcrModel = apps.get_model('core', 'OcrModel')
 
     def _print_eval(*args, **kwargs):
-        print(args, kwargs)
+        print('eval', args, kwargs)
 
     def _draw_progressbar(*args, **kwargs):
-        print(args, kwargs)
+        print('progress', args, kwargs)
     
     try:
         model = OcrModel.objects.get(pk=model_pk)
@@ -198,14 +198,17 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         trainer = KrakenTrainer(model=nn,
                                 optimizer=optim,
                                 device=DEVICE,
-                                filename_prefix=modelpath,
+                                filename_prefix=os.path.join(os.path.split(modelpath)[0], 'version'),
                                 event_frequency=1.0,
                                 train_set=train_loader,
                                 val_set=val_set,
                                 stopper=st_it,
                                 loss_fn=baseline_label_loss_fn,
                                 evaluator=baseline_label_evaluator_fn)
-
+        
+        if not os.path.exists(os.path.split(modelpath)[0]):
+            os.mkdir(os.path.split(modelpath)[0])
+        
         trainer.run(_print_eval, _draw_progressbar)
         nn.save_model(path=modelpath)
         
@@ -232,7 +235,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     
             
 @shared_task
-def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs):
+def segment(instance_pk, user_pk=None, model_pk=None,
+            steps=None, text_direction=None, override=None,
+            **kwargs):
     """
     steps can be either 'regions', 'lines' or 'both'
     """
@@ -243,6 +248,12 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
         return
 
+    try:
+        OcrModel = apps.get_model('core', 'OcrModel')
+        model = OcrModel.objects.get(pk=model_pk)
+    except:
+        model = None
+        
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -252,7 +263,10 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
         user = None
     
     try:
-        part.segment(steps=steps, text_direction=text_direction)
+        part.segment(steps=steps,
+                     override=override,
+                     text_direction=text_direction,
+                     model=model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),

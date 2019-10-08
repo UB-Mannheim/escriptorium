@@ -563,11 +563,11 @@ class DocumentPart(OrderedModel):
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
             self.save()
     
-    def segment(self, steps=None, text_direction=None):
+    def segment(self, steps=None, text_direction=None, model=None, override=False):
         # cleanup pre-existing
-        if steps in ['lines', 'both']:
+        if steps in ['lines', 'both'] and override:
             self.lines.all().delete()
-        if steps in ['regions', 'both']:
+        if steps in ['regions', 'both'] and override:
             self.blocks.all().delete()
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
@@ -578,6 +578,9 @@ class DocumentPart(OrderedModel):
             options = {}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
+            if model:
+                options['model'] = model
+            else:
                 options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
             blocks = self.blocks.all()
             if blocks:
@@ -809,7 +812,7 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
-    return 'models/%s/%s' % (slugify(filename), filename)
+    return 'models/%d/%s' % (instance.pk, slugify(filename))
 
 
 class OcrModel(Versioned, models.Model):

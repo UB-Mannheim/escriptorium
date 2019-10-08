@@ -114,11 +114,14 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                    'min': '0.1', 'max':'1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
-        ('regions', _('Regions')),
+        # ('regions', _('Regions')),
         ('lines', _('Lines')),
-        ('both', _('Lines and regions')))
+        # ('both', _('Lines and regions'))
+    )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
                                            initial='lines', required=False)
+    override = forms.BooleanField(required=False, initial=False,
+                                  help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
     TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
                               ('horizontal-rl', _("Horizontal r2l")),
                               ('vertical-lr', _("Vertical l2r")),
@@ -129,7 +132,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     upload_model = forms.FileField(required=False,
                                    validators=[FileExtensionValidator(
                                        allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
-    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects.all(), label=_("Model"), required=False)
+    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                       label=_("Model"), required=False)
     
     # train
     new_model = forms.CharField(required=False, label=_('Model name'))
@@ -138,6 +142,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
 
     # segtrain
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                       label=_("Model"), required=False)
     segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                             label=_("Model"), required=False)
     
@@ -190,39 +196,43 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         return model
 
     def clean(self):
-        cleaned_data = super().clean()
-        task = cleaned_data.get('task')
+        data = super().clean()
+        task = data.get('task')
 
-        if task == 'segtrain':
+        if task == self.TASK_SEGTRAIN:
             model_job = OcrModel.MODEL_JOB_SEGMENT
+            if len(self.parts) < 2:
+                raise forms.ValidationError("Segmentation training requires at least 2 images.")
         else:
             model_job = OcrModel.MODEL_JOB_RECOGNIZE
         
-        if task == 'train' and cleaned_data.get('train_model'):
-            model = cleaned_data.get('train_model')
-        elif task == 'segtrain' and cleaned_data.get('segtrain_model'):
-            model = cleaned_data.get('segtrain_model')
-        elif cleaned_data.get('upload_model'):
+        if task == self.TASK_TRAIN and data.get('train_model'):
+            model = data.get('train_model')
+        elif task == self.TASK_SEGTRAIN and data.get('segtrain_model'):
+            model = data.get('segtrain_model')
+        elif data.get('upload_model'):
             model = OcrModel.objects.create(
                 document=self.parts[0].document,
                 owner=self.user,
-                name=self.cleaned_data['upload_model'].name,
-                file=self.cleaned_data['upload_model'],
+                name=data['upload_model'].name,
+                file=data['upload_model'],
                 job=model_job)
-        elif cleaned_data.get('new_model'):
+        elif data.get('new_model'):
             # file will be created by the training process
             model = OcrModel.objects.create(
                 document=self.parts[0].document,
                 owner=self.user,
-                name=self.cleaned_data['new_model'],
+                name=data['new_model'],
                 job=model_job)
-        elif cleaned_data.get('ocr_model'):
-            model = cleaned_data.get('ocr_model')
+        elif data.get('ocr_model'):
+            model = data.get('ocr_model')
+        elif data.get('seg_model'):
+            model = data.get('seg_model')
         else:
             model = None
         
-        cleaned_data['model'] = model
-        return cleaned_data
+        data['model'] = model
+        return data
     
     def process(self):
         task = self.cleaned_data.get('task')
@@ -241,19 +251,23 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             for part in self.parts:
                 part.task('segment',
                           user_pk=self.user.pk,
-                          steps=self.cleaned_data['segmentation_steps'],
-                          text_direction=self.cleaned_data['text_direction'])
+                          steps=self.cleaned_data.get('segmentation_steps'),
+                          text_direction=self.cleaned_data.get('text_direction'),
+                          model_pk=model and model.pk or None,
+                          override=self.cleaned_data.get('override'))
         
         elif task == self.TASK_TRANSCRIBE:
             for part in self.parts:
-                part.task('transcribe', user_pk=self.user.pk, model_pk=model and model.pk or None)
+                part.task('transcribe',
+                          user_pk=self.user.pk,
+                          model_pk=model and model.pk or None)
         
         elif task == self.TASK_TRAIN:
             OcrModel.train(self.parts,
                            self.cleaned_data['transcription'],
                            model,
                            user=self.user)
-            
+        
         elif task == self.TASK_SEGTRAIN:
             model.segtrain(self.document, self.parts, model, user=self.user)
 

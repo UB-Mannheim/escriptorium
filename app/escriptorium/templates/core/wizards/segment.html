@@ -2,13 +2,15 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-<p>{% blocktrans %}Beware that any existing transcription will be lost!{% endblocktrans %}</p>
+<p>(PLACEHOLDER)</p>
 {% endblock %}
 
 {% block wizard_fields %}
 <div class="form-group">
+  {% render_field process_form.seg_model %}
   {% render_field process_form.segmentation_steps %}
   {% render_field process_form.text_direction %}
+  {% render_field process_form.override %}
 </div>
 {% endblock %}
 

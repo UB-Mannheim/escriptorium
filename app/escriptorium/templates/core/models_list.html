@@ -5,6 +5,7 @@
 <table id="models-table" class="table table-hover">
   <tr>
     <th class="w-50"></th>
+    <th>{% trans "Role" %}</th>
     <th class="w-25">{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
@@ -13,6 +14,7 @@
   {% for model in document.ocr_models.all %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
+    <td title="{% trans "Model role" %}">{{ model.get_job_display }}</td>
     <td>
       <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
       <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>

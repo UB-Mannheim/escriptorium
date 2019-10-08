@@ -1,3 +1,9 @@
+/*
+TODO:
+recalculate the line height on polygon update
+
+*/
+
 'use strict';
 var currentLine = null;
 var my_zone = moment.tz.guess();

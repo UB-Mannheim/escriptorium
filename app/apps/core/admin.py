@@ -24,6 +24,9 @@ class LineTranscriptionAdmin(admin.ModelAdmin):
 class ScriptAdmin(admin.ModelAdmin):
     list_display = ['name', 'text_direction']
     list_filter = ['text_direction']
+
+class OcrModelAdmin(admin.ModelAdmin):
+    list_display = ['name', 'job', 'owner', 'script']
     
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
@@ -31,4 +34,4 @@ admin.site.register(LineTranscription, LineTranscriptionAdmin)
 admin.site.register(Typology)
 admin.site.register(Script, ScriptAdmin)
 admin.site.register(Metadata)
-admin.site.register(OcrModel)
+admin.site.register(OcrModel, OcrModelAdmin)

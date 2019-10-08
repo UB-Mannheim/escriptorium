@@ -157,7 +157,8 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             content_type = 'text/xml'
             extension = 'xml'
             tplt = loader.get_template('export/alto.xml')
-            filename="export_%s_%s.zip" % (slugify(self.document.name), datetime.now().strftime('%y%m%d%H%M'))
+            filename="export_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
+                                           datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
             with ZipFile(buff, 'w') as zip_:
                 for part in parts:
@@ -172,8 +173,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                                          transcription=transcription)))})
                     zip_.writestr('%s.xml' % part.filename, page)
             # TODO: add METS file
-            response = HttpResponse(buff.getvalue())
-            response['Content-Type'] = 'application/x-zip-compressed'
-            response['Content-Disposition'] = 'attachment; "filename=%s"' % filename
+            response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
             return response
 
