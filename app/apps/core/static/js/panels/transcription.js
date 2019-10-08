@@ -101,7 +101,7 @@ class TranscriptionLine {
         if(line.pk) this.pk = line.pk;
         if(line.mask) this.mask = line.mask;
         if(line.baseline) this.baseline = line.baseline;
-        this.makeShape();
+        this.reset();
     }
     
     showOverlay() {
@@ -141,7 +141,6 @@ class TranscriptionLine {
             // this.textElement.setAttribute('textanchor', "middle");
             this.textElement.setAttribute('textLength', pathLength+'px');
         }
-        
     }
     
     edit () {
