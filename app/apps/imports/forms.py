@@ -18,7 +18,7 @@ from django.utils.text import slugify
 
 from bootstrap.forms import BootstrapFormMixin
 from core.models import Transcription, LineTranscription, DocumentPart
-from imports.models import Import
+from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import
 
@@ -28,10 +28,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         max_length=256,
         help_text=_("The name of the target transcription. Will default to '{format} Import'."))
-    parts = forms.CharField(required=False)
-    xml_file = forms.FileField(
+    upload_file = forms.FileField(
         required=False,
-        help_text=_("Alto or Abbyy XML."))
+        help_text=_("A single Alto XML file, or a zip file."))
     override = forms.BooleanField(
         initial=True, required=False,
         label=_("Override existing segmentation."),
@@ -48,7 +47,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
-        self.current_import = self.document.import_set.order_by('started_on').last()
+        self.current_import = (self.document.documentimport_set
+                               .filter(workflow_state__in=[DocumentImport.WORKFLOW_STATE_STARTED,
+                                                           DocumentImport.WORKFLOW_STATE_CREATED])
+                               .order_by('started_on').last())
         super().__init__(*args, **kwargs)
     
     def clean_iiif_uri(self):
@@ -59,36 +61,27 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         except json.decoder.JSONDecodeError:
             raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
     
-    def clean_parts(self):
-        try:
-            data = json.loads(self.cleaned_data.get('parts'))
-        except json.decoder.JSONDecodeError:
-            data = []
-        return data
-    
     def clean(self):
         cleaned_data = super().clean()
-        xml_file = self.cleaned_data.get('xml_file')
+        upload_file = self.cleaned_data.get('upload_file')
         if (not cleaned_data['resume_import']
-            and not xml_file
+            and not upload_file
             and not cleaned_data['iiif_uri']):
             raise forms.ValidationError(_("Choose one type of import."))
         
-        if xml_file:
+        if upload_file:
             try:
-                parser = make_parser(xml_file,
-                                     name=cleaned_data.get('name'),
-                                     override=cleaned_data.get('override'))
+                parser = make_parser(
+                    self.document,
+                    upload_file,
+                    name=cleaned_data.get('name'))
                 parser.validate()
+                cleaned_data['total'] = parser.total
             except ParseError as e:
-                msg = _("Couldn't parse the given xml file or its validation failed.")
+                msg = _("Couldn't parse the given file or its validation failed")
                 if len(e.args):
-                    msg += " %s" % e.args[0]
+                    msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
-            if parser and parser.total != len(cleaned_data['parts']):
-                raise forms.ValidationError(
-                    _("The number of pages in the import {num_pages} file doesn't match the number of selected images {num_images}.").format(
-                      num_pages=len(parser.pages), num_images=len(cleaned_data['parts'])))
         
         return cleaned_data
     
@@ -96,19 +89,19 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         if self.cleaned_data['resume_import'] and self.current_import.failed:
             self.instance = self.current_import
         else:
-            imp = Import(
+            imp = DocumentImport(
                 document = self.document,
                 name=self.cleaned_data['name'],
                 override=self.cleaned_data['override'],
-                started_by = self.user,
-                parts=self.cleaned_data.get('parts'))
+                total=self.cleaned_data['total'],  # added to the dict by clean()
+                started_by = self.user)
             if self.cleaned_data.get('iiif_uri'):
                 content = json.dumps(self.cleaned_data.get('iiif_uri'))
                 imp.import_file.save(
                     'iiif_manifest.json',
                     ContentFile(content.encode()))
-            elif self.cleaned_data.get('xml_file'):
-                imp.import_file = self.cleaned_data.get('xml_file')
+            elif self.cleaned_data.get('upload_file'):
+                imp.import_file = self.cleaned_data.get('upload_file')
             
             imp.save()
             self.instance = imp
@@ -133,8 +126,9 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
     
     def clean_parts(self):
-        pks = self.data.getlist('parts')
         pks = json.loads(self.data.get('parts'))
+        if len(pks) < 1:
+            raise forms.ValidationError(_("Select at least one image to export."))
         parts = DocumentPart.objects.filter(
             document=self.document, pk__in=pks)
         return parts

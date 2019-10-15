@@ -2,14 +2,13 @@ from django.apps import apps
 
 from celery import shared_task
 
-from imports.parsers import AltoParser
 from users.consumers import send_event
 
 
 @shared_task(bind=True)
 def document_import(task, import_pk, resume=True, task_id=None):
-    Import = apps.get_model('imports', 'Import')
-    imp = Import.objects.get(pk=import_pk)  # let it fail    
+    DocumentImport = apps.get_model('imports', 'DocumentImport')
+    imp = DocumentImport.objects.get(pk=import_pk)  # let it fail    
     imp.task_id = task.request.id
     try:
         send_event('document', imp.document.pk, "import:start", {

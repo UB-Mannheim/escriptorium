@@ -12,8 +12,7 @@ from users.consumers import send_event
 from imports.parsers import make_parser, XML_EXTENSIONS
 
 
-# TODO: now that i think about it, it's probably a terrible idea to name something Import.
-class Import(models.Model):
+class DocumentImport(models.Model):
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_STARTED = 1
     WORKFLOW_STATE_DONE = 2
@@ -25,6 +24,7 @@ class Import(models.Model):
         (WORKFLOW_STATE_ERROR, 'Error'),
     )
     
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
     started_on = models.DateTimeField(auto_now_add=True)
     started_by = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL)
@@ -35,8 +35,7 @@ class Import(models.Model):
         null=True, blank=True, max_length=512)
 
     name = models.CharField(max_length=256, blank=True)
-    override = models.BooleanField(default=True)
-    parts = ArrayField(models.IntegerField(), blank=True)
+    override = models.BooleanField(default=False)
     import_file = models.FileField(
         upload_to='import_src/',
         validators=[FileExtensionValidator(
@@ -44,7 +43,7 @@ class Import(models.Model):
     
     task_id = models.CharField(max_length=64, blank=True)
     processed = models.PositiveIntegerField(default=0)
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    total = models.PositiveIntegerField(default=None, null=True, blank=True)
     
     class Meta:
         ordering = ('-started_on',)
@@ -56,15 +55,11 @@ class Import(models.Model):
     @property
     def ongoing(self):
         return self.workflow_state == self.WORKFLOW_STATE_STARTED
-    
-    @property
-    def total(self):
-        return self.parser.total
-    
+        
     @cached_property
     def parser(self):
-        return make_parser(self.import_file, name=self.name, override=self.override)
-
+        return make_parser(self.document, self.import_file, name=self.name)
+    
     def is_cancelable(self):
         return self.workflow_state < self.WORKFLOW_STATE_DONE
     
@@ -80,9 +75,9 @@ class Import(models.Model):
         try:
             self.workflow_state = self.WORKFLOW_STATE_STARTED
             self.save()
-            parts = DocumentPart.objects.filter(pk__in=self.parts)
+                        
             start_at = resume and self.processed or 0
-            for obj in self.parser.parse(self.document, parts, start_at=start_at):
+            for obj in self.parser.parse(start_at=start_at, override=self.override):
                 self.processed += 1
                 self.save()
                 yield obj

@@ -37,7 +37,7 @@
     {% with import=import_form.current_import %}
     <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
       <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
-      <button id="cancel-import" class="btn btn-sm btn-warning"><i class="fas fa-ban"></i></button>
+      <button id="cancel-import" class="btn btn-sm btn-warning mr-1"><i class="fas fa-ban"></i></button>
     </span>
     {% endwith %}
     
@@ -102,7 +102,7 @@
 
 {# Process wizards #}
 {% include 'core/wizards/import_iiif.html' with proc='import-iiif' %}
-{% include 'core/wizards/import_xml.html' with proc='import-xml' %}
+{% include 'core/wizards/import_file.html' with proc='import-xml' %}
 {% include 'core/wizards/export.html' with proc='export' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
