@@ -1,15 +1,15 @@
-from django.db import models
-from django.utils.functional import cached_property
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
+from django.db import models
+from django.utils.translation import gettext as _
+from django.utils.functional import cached_property
 
 #from celery.task.control import revoke
 from escriptorium.celery import app
 
 from core.models import Document, DocumentPart, Transcription
 from users.models import User
-from users.consumers import send_event
-from imports.parsers import make_parser, XML_EXTENSIONS
+from imports.parsers import make_parser, XML_EXTENSIONS, ParseError
 
 
 class DocumentImport(models.Model):
@@ -77,7 +77,9 @@ class DocumentImport(models.Model):
             self.save()
                         
             start_at = resume and self.processed or 0
-            for obj in self.parser.parse(start_at=start_at, override=self.override):
+            for obj in self.parser.parse(start_at=start_at,
+                                         override=self.override,
+                                         user=self.started_by):
                 self.processed += 1
                 self.save()
                 yield obj

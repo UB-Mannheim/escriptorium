@@ -44,7 +44,7 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def cancel_import(self, request, pk=None):
         document = self.get_object()
-        current_import = document.import_set.order_by('started_on').last()
+        current_import = document.documentimport_set.order_by('started_on').last()
         if current_import.is_cancelable():
             current_import.cancel()
             return Response({'status': 'canceled'})

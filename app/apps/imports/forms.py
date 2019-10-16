@@ -55,11 +55,37 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
-        try:
-            if uri:
-                return requests.get(uri).json()
-        except json.decoder.JSONDecodeError:
-            raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+        
+        if uri:
+            try:
+                content = requests.get(uri).content
+                buf = io.BytesIO(content)
+                buf.name = 'tmp.json'
+                parser = make_parser(self.document, buf)
+                parser.validate()
+                self.cleaned_data['total'] = parser.total
+                return content
+            except json.decoder.JSONDecodeError:
+                raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+            except ParseError as e:
+                msg = _("Couldn't parse the given file or its validation failed")
+                if len(e.args):
+                    msg += ": %s" % e.args[0]
+                raise forms.ValidationError(msg)
+
+    def clean_upload_file(self):
+        upload_file = self.cleaned_data.get('upload_file')
+        if upload_file:
+            try:
+                parser = make_parser(self.document, upload_file)
+                parser.validate()
+                self.cleaned_data['total'] = parser.total
+            except ParseError as e:
+                msg = _("Couldn't parse the given file or its validation failed")
+                if len(e.args):
+                    msg += ": %s" % e.args[0]
+                raise forms.ValidationError(msg)
+            return upload_file
     
     def clean(self):
         cleaned_data = super().clean()
@@ -68,20 +94,6 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             and not upload_file
             and not cleaned_data['iiif_uri']):
             raise forms.ValidationError(_("Choose one type of import."))
-        
-        if upload_file:
-            try:
-                parser = make_parser(
-                    self.document,
-                    upload_file,
-                    name=cleaned_data.get('name'))
-                parser.validate()
-                cleaned_data['total'] = parser.total
-            except ParseError as e:
-                msg = _("Couldn't parse the given file or its validation failed")
-                if len(e.args):
-                    msg += ": %s" % e.args[0]
-                raise forms.ValidationError(msg)
         
         return cleaned_data
     
@@ -93,13 +105,13 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 document = self.document,
                 name=self.cleaned_data['name'],
                 override=self.cleaned_data['override'],
-                total=self.cleaned_data['total'],  # added to the dict by clean()
+                total=self.cleaned_data['total'],  # added to the dict by clean_*()
                 started_by = self.user)
             if self.cleaned_data.get('iiif_uri'):
-                content = json.dumps(self.cleaned_data.get('iiif_uri'))
+                content = self.cleaned_data.get('iiif_uri')
                 imp.import_file.save(
                     'iiif_manifest.json',
-                    ContentFile(content.encode()))
+                    ContentFile(content))
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
             

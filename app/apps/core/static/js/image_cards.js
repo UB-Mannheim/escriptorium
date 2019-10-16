@@ -419,13 +419,18 @@ $(document).ready(function() {
     $alertsContainer.on('import:progress', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
         $('#import-selected').addClass('blink');
+        $('#cancel-import').show();
         if (data.progress) {
             $('#import-counter').text(data.progress+"/"+data.total);
         }
     });
+    $alertsContainer.on('import:warning', function(ev, data) {
+        Alert.add(Date.now(), data.reason, 'warning');
+    });
     $alertsContainer.on('import:fail', function(ev, data) {
         $('#import-counter').text('failed');
         $('#import-selected').removeClass('blink');
+        $('#cancel-import').hide();
         Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
     });
     $alertsContainer.on('import:done', function(ev, data) {
