@@ -57,22 +57,7 @@ class SegmentationPanel extends Panel {
         else redoBtn.disabled = true;
     }
     
-    bindEditorEvents() {
-        this.segmenter.events.addEventListener('baseline-editor:new-line', function(event) {
-            let line = event.detail;
-            this.remoteSave('lines', line);
-            this.pushHistory(
-                function() {  // undo
-                    line.remove();
-                    this.remoteDelete('lines', line);
-                }.bind(this),
-                function() {  // redo
-                    let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
-                    line = this.segmenter.createLine(line.baseline, line.mask);
-                    this.remoteSave('lines', line);
-                }.bind(this));
-        }.bind(this));
-        
+    bindEditorEvents() {        
         this.segmenter.events.addEventListener('baseline-editor:delete-line', function(event) {
             let line = event.detail;
             this.remoteDelete('lines', line);
@@ -90,19 +75,35 @@ class SegmentationPanel extends Panel {
 
         this.segmenter.events.addEventListener('baseline-editor:update-line', function(event) {
             let line = event.detail.line;
-            let previous = event.detail.previous;
+            let newdata = {baseline: line.baseline, mask: line.mask};
+            let previousdata = event.detail.previous;
             this.remoteSave('lines', line);
-            this.pushHistory(
-                function() {  //undo
-                    line.update(previous.baseline, previous.mask);
-                    this.remoteSave('lines', line);
-                    previous = line;
-                }.bind(this),
-                function() {  // redo
-                    line.update(previous.baseline, previous.mask);
-                    this.remoteSave('lines', line);
-                    previous = line;
-                }.bind(this));
+            
+            if(!line.context.pk) {
+                // new line
+                this.pushHistory(
+                    function() {  // undo
+                        line.remove();
+                        this.remoteDelete('lines', line);
+                    }.bind(this),
+                    function() {  // redo
+                        let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
+                        line = this.segmenter.createLine(line.baseline, line.mask);
+                        this.remoteSave('lines', line);
+                    }.bind(this)
+                );
+            } else {
+                this.pushHistory(
+                    function() {  //undo
+                        line.update(previousdata.baseline, previousdata.mask);
+                        this.remoteSave('lines', line);
+                    }.bind(this),
+                    function() {  // redo
+                        line.update(newdata.baseline, newdata.mask);
+                        this.remoteSave('lines', line);
+                    }.bind(this)
+                );
+            }
         }.bind(this));
         
         // avoid triggering keybindings events when not using the baseline segmenter

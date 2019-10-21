@@ -762,7 +762,10 @@ class Line(OrderedModel):  # Versioned,
 
     def make_mask(self, im=None):
         if not im:
-            im = Image.open(self.document_part.bw_image or self.document_part.image)
+            if not self.document_part.bw_image:
+                # do the binarizaton 'live' since Kraken will do it anyway
+                self.document_part.binarize()
+            im = Image.open(self.document_part.bw_image)
         result = calculate_polygonal_environment(im, [self.baseline])
         
         if result[0][0] is not None:  # couldn't expand region

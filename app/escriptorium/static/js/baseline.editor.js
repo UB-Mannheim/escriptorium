@@ -105,7 +105,7 @@ class SegmenterLine {
             if(baseline.segments) {  // already a paperjs.Path
                 this.baselinePath = baseline;
             } else {
-                this.baseline = baseline;
+                this.baseline = baseline.map(pt=>[Math.round(pt[0]), Math.round(pt[1])]);
                 this.baselinePath = new Path({
                     strokeColor: segmenter_.mainColor,
                     strokeWidth: 7,
@@ -219,14 +219,6 @@ class SegmenterLine {
     
     extend(point) {
         return this.baselinePath.add(point);
-    }
-    
-    close() {
-        // if (this.baselinePath.length < this.segmenter.lengthThreshold) {
-        //     this.delete();
-        // }
-        // this.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-        this.createMask();
     }
     
     remove() {
@@ -554,10 +546,13 @@ class Segmenter {
     }
 
     finishLine(line) {
-        line.close();
-        this.bindLineEvents(line);
+        if (line.baselinePath.length < this.lengthThreshold) {
+            line.remove();
+        } else {
+            this.bindLineEvents(line);
+            line.updateDataFromCanvas();
+        }
         this.resetToolEvents();  // unregistering
-        line.updateDataFromCanvas();
     }
 
     createRegion(polygon, context, postponeEvents) {
@@ -988,7 +983,6 @@ class Segmenter {
                 if (this.idField) context[this.idField] = line[this.idField];
                 if (!line.baseline) this.toggleMasks(true);
                 let newLine = this.createLine(line.baseline, line.mask, context);
-                if (!newLine.mask) newLine.createMask();
             }.bind(this));
         }
         if (data.regions) {   
@@ -1234,16 +1228,11 @@ class Segmenter {
                     } else if (path.contains(line.baselinePath.lastSegment.point)) {
                         line.baselinePath.removeSegments(newSegment.index+1);
                     }
-                    // line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                    // line.createPolygonEdgeForBaselineSegment(newSegment);
                     line.updateDataFromCanvas();
                 } else {
                     let newLine = line.baselinePath.splitAt(intersections[i+1]);
                     let nl = this.createLine(newLine, null, null);
                     let trash = line.baselinePath.splitAt(intersections[i]);
-                    // line.maskPath.removeSegments();
-                    // line.createMask();
-                    nl.createMask();
                     line.updateDataFromCanvas();
                     nl.updateDataFromCanvas();
                     line = nl;
