@@ -39,7 +39,7 @@ class ParserDocument():
         # should return the number of elements returned by parse()
         raise NotImplementedError
 
-    def parse(self, start_index=0, override=False):
+    def parse(self, start_index=0, override=False, user=None):
         # iterator over created document parts
         raise NotImplementedError
 
@@ -121,7 +121,7 @@ class AltoParser(ParserDocument):
                 name=self.name)
         return transcription
     
-    def parse(self, start_at=0, override=False):
+    def parse(self, start_at=0, override=False, user=None):
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         # find the filename to
@@ -251,7 +251,7 @@ class IIIFManifestParser(ParserDocument):
     def total(self):
         return len(self.canvases)
     
-    def parse(self, start_at=0, override=False):
+    def parse(self, start_at=0, override=False, user=None):
         try:
             for metadata in self.manifest['metadata']:
                 if metadata['value']:

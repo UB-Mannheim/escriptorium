@@ -716,8 +716,8 @@ class Line(OrderedModel):  # Versioned,
     Represents a segmented line from a DocumentPart
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
-    mask = JSONField(null=True)
-    baseline = JSONField(null=True)
+    mask = JSONField(null=True)  # Closed Polygon: [[x1, y1], [x2, y2], ..]
+    baseline = JSONField(null=True)  # Polygon: [[x1, y1], [x2, y2], ..]
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
@@ -815,18 +815,18 @@ def models_path(instance, filename):
     return 'models/%d/%s' % (instance.pk, slugify(filename))
 
 
-class OcrModel(Versioned, models.Model):
+class OcrModel(Versioned, models.Model):    
+    name = models.CharField(max_length=256)
+    file = models.FileField(upload_to=models_path, null=True,
+                            validators=[FileExtensionValidator(
+                                allowed_extensions=['mlmodel'])])
+
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
     MODEL_JOB_CHOICES = (
         (MODEL_JOB_SEGMENT, _("Segment")),
         (MODEL_JOB_RECOGNIZE, _("Recognize"))
     )
-    
-    name = models.CharField(max_length=256)
-    file = models.FileField(upload_to=models_path, null=True,
-                            validators=[FileExtensionValidator(
-                                allowed_extensions=['mlmodel'])])
     job = models.PositiveSmallIntegerField(choices=MODEL_JOB_CHOICES)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     training = models.BooleanField(default=False)
