@@ -588,12 +588,9 @@ class Segmenter {
             
             var dragging = region.polygonPath.getNearestLocation(event.point).segment;
             this.tool.onMouseDrag = function(event) {
-                if (event.event.ctrlKey) {
-                    this.multiMove(event);
-                } else if (!event.event.shiftKey) {
+                if (!event.event.shiftKey) {
                     this.movePointInView(dragging.point, event.delta);
                 }
-                
             }.bind(this);
 
             var hit = region.polygonPath.hitTest(event.point, {
@@ -638,9 +635,7 @@ class Segmenter {
                 }
                 var dragging = line.baselinePath.getNearestLocation(event.point).segment;
                 this.tool.onMouseDrag = function(event) {
-                    if (event.event.ctrlKey) {
-                        this.multiMove(event);
-                    } else if (!event.event.shiftKey) {
+                    if (!event.event.shiftKey) {
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.showDirection();
@@ -741,26 +736,19 @@ class Segmenter {
 
     multiMove(event) {
         // multi move
-        if (this.mode == 'lines') {
-            if (this.selection.segments.length) {
-                for (let i in this.selection.segments) {
-                    this.movePointInView(this.selection.segments[i].point, event.delta);
-                    this.movePointInView(this.selection.segments[i].point, event.delta);
-                }
-                for (let i in this.selection.lines) {
-                    this.selection.lines[i].showDirection();
-                }
-            } else {
-                for (let i in this.selection.lines) {
-                    this.movePointInView(this.selection.lines[i].baselinePath.position, event.delta);
-                    this.movePointInView(this.selection.lines[i].maskPath.position, event.delta);
-                    this.selection.lines[i].showDirection();
-                }
+        if (this.selection.segments.length) {
+            for (let i in this.selection.segments) {
+                this.movePointInView(this.selection.segments[i].point, event.delta);
+                this.movePointInView(this.selection.segments[i].point, event.delta);
             }
-        } else if (this.mode == 'regions') {
-            for (let i in this.selection.regions) {
-                this.movePointInView(this.selection.regions[i].polygonPath.position, event.delta);
-                // this.selection[i].polygonPath.position = this.selection[i].polygonPath.position.add(event.delta);
+            for (let i in this.selection.lines) {
+                this.selection.lines[i].showDirection();
+            }
+        } else {
+            for (let i in this.selection.lines) {
+                this.movePointInView(this.selection.lines[i].baselinePath.position, event.delta);
+                this.movePointInView(this.selection.lines[i].maskPath.position, event.delta);
+                this.selection.lines[i].showDirection();
             }
         }
     }
@@ -768,7 +756,13 @@ class Segmenter {
     onMouseDrag(event) {
         if (event.event.ctrlKey) {
             this.multiMove(event);
-        } 
+            this.tool.onMouseUp = function(event) {
+                this.resetToolEvents();
+                for (let i in this.selection.lines) {
+                    this.selection.lines[i].updateDataFromCanvas();
+                }
+            }.bind(this);
+        }
     }
     
     onMouseDown(event) {
