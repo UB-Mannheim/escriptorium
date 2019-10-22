@@ -61,7 +61,7 @@ class CoreFactory():
     def make_image_file(self, name='test.png'):
         file = BytesIO()
         file.name = name
-        image = Image.new('RGB', size=(50, 50), color=(155, 0, 0))
+        image = Image.new('RGB', size=(60, 60), color=(155, 0, 0))
         draw = ImageDraw.Draw(image)
         draw.rectangle([20,20,30,30], fill=(0,0,155))
         draw.polygon([(20,20),(20,30), (25,15)], fill=(0,155,0))

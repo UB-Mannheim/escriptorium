@@ -766,6 +766,7 @@ class Line(OrderedModel):  # Versioned,
                 # do the binarizaton 'live' since Kraken will do it anyway
                 self.document_part.binarize()
             im = Image.open(self.document_part.bw_image)
+        
         result = calculate_polygonal_environment(im, [self.baseline])
         
         if result[0][0] is not None:  # couldn't expand region

@@ -86,7 +86,7 @@ class ZipParser(ParserDocument):
 
 
 class AltoParser(ParserDocument):
-    DEFAULT_NAME = _("Zip Import")
+    DEFAULT_NAME = _("Alto Import")
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
 
     def __init__(self, *args, **kwargs):
