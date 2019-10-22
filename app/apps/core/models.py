@@ -745,15 +745,15 @@ class Line(OrderedModel):  # Versioned,
     
     def get_box(self):
         if self.mask:
-            return (*map(min, *self.mask), *map(max, *self.mask))
+            return [*map(min, *self.mask), *map(max, *self.mask)]
         else:
-            return (*map(min, *self.baseline), *map(max, *self.baseline))
+            return [*map(min, *self.baseline), *map(max, *self.baseline)]
     
     def set_box(self, box):
-        self.mask = ((box[0], box[1]),
+        self.mask = [(box[0], box[1]),
                      (box[0], box[3]),
                      (box[2], box[3]),
-                     (box[2], box[1]))
+                     (box[2], box[1])]
     
     box = property(get_box, set_box)
     

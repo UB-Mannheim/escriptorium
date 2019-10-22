@@ -30,11 +30,12 @@ class ParserDocument():
     
     DEFAULT_NAME = None
     
-    def __init__(self, document, fh, transcription_name=None):
-        self.file = fh
+    def __init__(self, document, file_handler, transcription_name=None):
+        self.file = file_handler
         self.document = document
         self.name = transcription_name or self.DEFAULT_NAME
-    
+
+    @property
     def total(self):
         # should return the number of elements returned by parse()
         raise NotImplementedError
@@ -87,6 +88,13 @@ class ZipParser(ParserDocument):
 class AltoParser(ParserDocument):
     DEFAULT_NAME = _("Zip Import")
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.root = etree.parse(self.file).getroot()
+        except (AttributeError, etree.XMLSyntaxError) as e:
+            raise ParseError("Invalid XML. %s" % e.args[0])
     
     def validate(self):
         try:
@@ -102,14 +110,13 @@ class AltoParser(ParserDocument):
         except:
             raise ParseError("Can't reach validation document %s." % self.SCHEMA)
         else:
-            
-            xmlschema = etree.XMLSchema(schema_root)
             try:
-                self.root = etree.parse(self.file).getroot()
+                xmlschema = etree.XMLSchema(schema_root)
                 xmlschema.assertValid(self.root)
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 raise ParseError("Document didn't validate. %s" % e.args[0])
-
+    
+    @property
     def total(self):
         # An alto file always describes 1 'document part'
         return 1
@@ -122,9 +129,7 @@ class AltoParser(ParserDocument):
         return transcription
     
     def parse(self, start_at=0, override=False, user=None):
-        if not self.root:
-            self.root = etree.parse(self.file).getroot()
-        # find the filename to
+        # find the filename to match with existing images
         try:
             filename = self.root.find('Description/sourceImageInformation/fileName', self.root.nsmap).text
         except (IndexError, AttributeError) as e:
@@ -133,7 +138,7 @@ class AltoParser(ParserDocument):
         try:
             part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
         except IndexError:
-            raise ParseError("No match found for file %s with filename %s." % (self.file.name, filename))
+            raise ParseError(_("No match found for file {} with filename <{}>.").format(self.file.name, filename))
         else:            
             # if something fails, revert everything for this document part
             with transaction.atomic():
@@ -192,26 +197,33 @@ class AltoParser(ParserDocument):
                             line_ = Line(**attrs)
                         baseline = line.get('BASELINE')
                         if baseline is not None:
-                            line_.baseline = [list(map(int, pt.split(',')))
-                                              for pt in baseline.split(' ')]
-
+                            try:
+                                line_.baseline = [list(map(int, pt.split(',')))
+                                                  for pt in baseline.split(' ')]
+                            except ValueError:
+                                logger.warning('Invalid baseline %s' % baseline)
+                        
                         polygon = line.find('Shape/Polygon', self.root.nsmap)
                         if polygon is not None:
-                            line_.mask = [list(map(int, pt.split(',')))
-                                          for pt in polygon.get('POINTS').split(' ')]
+                            try:
+                                line_.mask = [list(map(int, pt.split(',')))
+                                              for pt in polygon.get('POINTS').split(' ')]
+                            except ValueError:
+                                logger.warning('Invalid polygon %s' % polygon)
                         else:
                             line_.box = [int(line.get('HPOS')),
                                          int(line.get('VPOS')),
                                          int(line.get('HPOS')) + int(line.get('WIDTH')),
                                          int(line.get('VPOS')) + int(line.get('HEIGHT'))]
                         line_.save()
-                        content = ' '.join([e.get('CONTENT') for e in line.findall('String', self.root.nsmap)])
+                        content = ' '.join([e.get('CONTENT')
+                                            for e in line.findall('String', self.root.nsmap)])
                         try:
                             # lazily creates the Transcription on the fly if need be cf transcription() property
                             lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
                         except LineTranscription.DoesNotExist:
                             lt = LineTranscription(version_source='import',
-                                                   version_author=self.name,
+                                                   version_author=user and user.username or '',
                                                    transcription=self.transcription,
                                                    line=line_)
                         else:
@@ -219,13 +231,14 @@ class AltoParser(ParserDocument):
                                 lt.new_version()  # save current content in history
                             except NoChangeException:
                                 pass
+                        finally:
                             lt.content = content
                             lt.save()
                             
             # TODO: store glyphs too        
             logger.info('Uncompressed and parsed %s' % self.file.name)
             part.calculate_progress()
-            return part
+            return [part]
 
 
 class IIIFManifestParser(ParserDocument):
@@ -302,6 +315,7 @@ def make_parser(document, file_handler, name=None):
     if ext in XML_EXTENSIONS:
         try:
             root = etree.parse(file_handler).getroot()
+            file_handler.seek(0)  # not ideal but validation needs to read it again.
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:

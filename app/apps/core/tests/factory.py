@@ -58,9 +58,9 @@ class CoreFactory():
         tr = Transcription.objects.create(**attrs)
         return tr
     
-    def make_image_file(self):
+    def make_image_file(self, name='test.png'):
         file = BytesIO()
-        file.name = 'test.png'
+        file.name = name
         image = Image.new('RGB', size=(50, 50), color=(155, 0, 0))
         draw = ImageDraw.Draw(image)
         draw.rectangle([20,20,30,30], fill=(0,0,155))

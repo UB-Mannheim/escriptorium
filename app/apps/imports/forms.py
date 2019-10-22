@@ -48,8 +48,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         self.document = document
         self.user = user
         self.current_import = (self.document.documentimport_set
-                               .filter(workflow_state__in=[DocumentImport.WORKFLOW_STATE_STARTED,
-                                                           DocumentImport.WORKFLOW_STATE_CREATED])
+                               .filter(workflow_state__in=[
+                                   DocumentImport.WORKFLOW_STATE_ERROR,
+                                   DocumentImport.WORKFLOW_STATE_STARTED,
+                                   DocumentImport.WORKFLOW_STATE_CREATED])
                                .order_by('started_on').last())
         super().__init__(*args, **kwargs)
     
@@ -89,9 +91,8 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     
     def clean(self):
         cleaned_data = super().clean()
-        upload_file = self.cleaned_data.get('upload_file')
         if (not cleaned_data['resume_import']
-            and not upload_file
+            and not cleaned_data.get('upload_file')
             and not cleaned_data['iiif_uri']):
             raise forms.ValidationError(_("Choose one type of import."))
         
@@ -114,7 +115,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                     ContentFile(content))
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
-            
+
             imp.save()
             self.instance = imp
         return self.instance
