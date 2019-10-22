@@ -309,6 +309,134 @@ class IIIFManifestParser(ParserDocument):
             raise ParseError(e)
 
 
+class PagexmlParser(ParserDocument):
+    DEFAULT_NAME = _("Zip Import")
+    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd'
+
+    def validate(self):
+        try:
+            response = requests.get(self.SCHEMA)
+            content = response.content
+            schema_root = etree.XML(content)
+        except:
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+        else:
+
+            xmlschema = etree.XMLSchema(schema_root)
+            try:
+                self.root = etree.parse(self.file).getroot()
+                xmlschema.assertValid(self.root)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                raise ParseError("Document didn't validate. %s" % e.args[0])
+
+    def parse(self, start_at=0, override=False):
+        if not self.root:
+            self.root = etree.parse(self.file).getroot()
+        # find the filename to
+        try:
+            filename = self.root.find('Page', self.root.nsmap).get('imageFilename')
+        except (IndexError, AttributeError) as e:
+            raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
+
+        try:
+            part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
+        except IndexError:
+            raise ParseError("No match found for file %s with filename %s." % (self.file.name, filename))
+        else:
+            # if something fails, revert everything for this document part
+            with transaction.atomic():
+                if override:
+                    part.lines.all().delete()
+                    part.blocks.all().delete()
+
+                block = None
+
+                for block in self.root.findall('Page/TextRegion', self.root.nsmap):
+                    id_ = block.get('id')
+                    if id_ and id_.startswith('eSc_dummyblock_'):
+                        block_ = None
+                    else:
+                        try:
+                            assert id_ and id_.startswith('eSc_textblock_')
+                            attrs = {'pk': int(id_[len('eSc_textblock_'):])}
+                        except (ValueError, AssertionError, TypeError):
+                            attrs = {'document_part': part,
+                                     'external_id': id_}
+                        try:
+                            block_ = Block.objects.get(**attrs)
+                        except Block.DoesNotExist:
+                            # not found, create it then
+                            block_ = Block(**attrs)
+
+                        try:
+                            coords = block.find('Coords').get('points')
+                            start = coords.split(' ')[0]
+                            end = coords.split(' ')[2]
+                            block_.box = [int(start.split(',')[0]),
+                                          int(start.split(',')[1]),
+                                          int(end.split(',')[0]),
+                                          int(end.split(',')[1])]
+                        except TypeError:
+                            # probably a dummy block from another app
+                            block_ = None
+                        else:
+                            block_.save()
+
+                    for line in block.findall('TextLine', self.root.nsmap):
+                        id_ = line.get('id')
+                        try:
+                            assert id_ and id_.startswith('eSc_line_')
+                            attrs = {'document_part': part,
+                                     'pk': int(id_[len('eSc_line_'):])}
+                        except (ValueError, AssertionError, TypeError):
+                            attrs = {'document_part': part,
+                                     'block': block_,
+                                     'external_id': id_}
+                        try:
+                            line_ = Line.objects.get(**attrs)
+                        except Line.DoesNotExist:
+                            # not found, create it then
+                            line_ = Line(**attrs)
+                        baseline = line.find('BASELINE').get('points')
+                        if baseline is not None:
+                            #  to check if the baseline is good
+                            line_.baseline = [list(map(int, pt.split(',')))
+                                              for pt in baseline.split(' ')]
+                        # i didn't find any polygon
+                        #  polygon == TextLine/Coords
+                        polygon = line.find('Coords', self.root.nsmap)
+                        if polygon is not None:
+                            line_.mask = [list(map(int, pt.split(',')))
+                                          for pt in polygon.get('points').split(' ')]
+                        # else:
+                        #     line_.box = [int(line.get('HPOS')),
+                        #                  int(line.get('VPOS')),
+                        #                  int(line.get('HPOS')) + int(line.get('WIDTH')),
+                        #                  int(line.get('VPOS')) + int(line.get('HEIGHT'))]
+                        line_.save()
+                        content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
+                        try:
+                            # lazily creates the Transcription on the fly if need be cf transcription() property
+                            lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
+                        except LineTranscription.DoesNotExist:
+                            lt = LineTranscription(version_source='import',
+                                                   version_author=self.name,
+                                                   transcription=self.transcription,
+                                                   line=line_)
+                        else:
+                            try:
+                                lt.new_version()  # save current content in history
+                            except NoChangeException:
+                                pass
+                            lt.content = content
+                            lt.save()
+
+            # TODO: store glyphs too
+            logger.info('Uncompressed and parsed %s' % self.file.name)
+            part.calculate_progress()
+            return part
+
+
 def make_parser(document, file_handler, name=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
@@ -326,6 +454,8 @@ def make_parser(document, file_handler, name=None):
         #     return AbbyyParser(root, name=name)
         if 'alto' in schema:
             return AltoParser(document, file_handler, transcription_name=name)
+        elif 'PcGts' in schema:
+            return PagexmlParser(document, file_handler, transcription_name=name)
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
     elif ext == 'json':
