@@ -631,6 +631,7 @@ class Segmenter {
 	                segments: true,
 	                tolerance: 20
                 });
+                
                 if (hit && hit.type=='segment') {
                     if (this.selection.segments.indexOf(hit.segment) === -1) this.addToSelection(hit.segment);
                     else this.removeFromSelection(hit.segment);
@@ -764,13 +765,13 @@ class Segmenter {
         }
     }
     
-    onMouseDrag (event) {
+    onMouseDrag(event) {
         if (event.event.ctrlKey) {
             this.multiMove(event);
         } 
     }
     
-    onMouseDown (event) {
+    onMouseDown(event) {
         if (isRightClick(event.event)) return;
         
         if (this.selecting) {
@@ -779,8 +780,8 @@ class Segmenter {
                 this.selecting.toggleSelect();
                 this.startLassoSelection(event);
             } else {
-                this.purgeSelection();
                 this.selecting.select();
+                this.purgeSelection(this.selecting);
             }
             this.trigger('baseline-editor:selection', {target: this.selecting, selection: this.selection});
             this.selecting = null;
@@ -1104,7 +1105,7 @@ class Segmenter {
             // must be a segment
             if (this.selection.segments.indexOf(obj) == -1) {
                 this.selection.segments.push(obj);
-                obj.point.selected = true;
+                obj.selected = true;
             }
         }
         this.showContextMenu();
@@ -1134,7 +1135,9 @@ class Segmenter {
             }
         }
         for (let i=this.selection.segments.length-1; i >= 0; i--) {
-            this.removeFromSelection(this.selection.segments[i]);
+            if (!except || except.baselinePath != this.selection.segments[i].path) {
+                this.removeFromSelection(this.selection.segments[i]);
+            }
         }
         this.showContextMenu();
     }

@@ -178,7 +178,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
             box=[0, 0, 10, 10],
             document_part=self.part,
             block=None)
-
+    
     # not used
     #def test_detail(self):
     #def test_list(self):
