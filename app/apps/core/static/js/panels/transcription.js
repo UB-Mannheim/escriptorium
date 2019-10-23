@@ -339,10 +339,9 @@ class TranscriptionPanel extends Panel {
             userProfile.set('initialTranscriptions', data);
         }.bind(this));
 
-        // TODO!
-        // $("#trans-modal").draggable({
-        //     handle: ".modal-header"
-        // });
+        $("#trans-modal").draggable({
+            handle: ".modal-header"
+        });
         document.querySelector("#trans-modal").addEventListener('hide.bs.modal', function(ev) {
             currentLine.editing = false;
             $('.panel .overlay').fadeOut({queue:false});
