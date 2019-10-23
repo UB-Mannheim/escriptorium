@@ -13,7 +13,7 @@ class Panel {
     load(part) {
         this.part = part;
         this.api = API.part.replace('{part_pk}', this.part.pk);
-	    if (this.opened) this.open();    
+	    if (this.opened) this.open();
 	}
     
     open() {
@@ -22,17 +22,20 @@ class Panel {
         this.$tools.show(0);
         Cookies.set(this.$panel.attr('id'), true, {expires: 30});
     }
+    
     close() {
         this.opened = false;
         this.$panel.hide();
         this.$tools.hide();
         Cookies.set(this.$panel.attr('id'), false);
     }
+    
     toggle() {
         if (this.opened) this.close();
         else this.open();
     }
-    refresh() {}
-    reset() {}
+    
+    refresh() {}  // usually: data didn't change but some context did
+    reset() {}  // usually: restart from scratch
     onShow() {}
 }
