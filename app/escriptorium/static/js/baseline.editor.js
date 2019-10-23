@@ -178,12 +178,16 @@ class SegmenterLine {
 
     unselect() {
         if (!this.selected) return;
-        if (this.maskPath) this.maskPath.selected = false;
+        if (this.maskPath) {
+            // also unselects any selected segments
+            // this.maskPath.selected = false;
+            for (let i=0; i<this.maskPath.segments; i++) {
+                this.segmenter.removeFromSelection(this.maskPath.segments[i]); 
+            }
+        }
         if (this.baselinePath) {
             this.baselinePath.selected = false;
             this.baselinePath.strokeColor = this.segmenter.mainColor;
-            // also unselects any selected segments
-            this.maskPath.selected = false;
         }
         this.segmenter.removeFromSelection(this);
         if (this.directionHint) this.directionHint.visible = false;
@@ -194,7 +198,7 @@ class SegmenterLine {
         if (this.selected) this.unselect();
         else this.select();
     }
-
+    
     update(baseline, mask) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
@@ -490,8 +494,8 @@ class Segmenter {
             //     }
             
         }.bind(this));
-
-        document.addEventListener('click', function(event) {
+        
+        document.addEventListener('mousedown', function(event) {
             if (event.target != this.canvas && !this.contextMenu.contains(event.target)) {
                 this.purgeSelection();
             }
