@@ -602,7 +602,6 @@ class DocumentPart(OrderedModel):
                     newline = Line.objects.create(
                         document_part=self,
                         baseline=line['baseline'],
-                        # invert pts coordinates to compensate a kraken bug
                         mask=line['boundary'] if line['boundary'] is not None else None)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED

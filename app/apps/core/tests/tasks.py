@@ -29,9 +29,9 @@ class TasksTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_BINARIZED)
     
-        b = Block.objects.create(document_part=self.part,
-                                 box=[0,0]+[self.part.image.width, self.part.image.height])
-        self.part.blocks.add(b)
+        # b = Block.objects.create(document_part=self.part,
+        #                          box=[0,0]+[self.part.image.width, self.part.image.height])
+        # self.part.blocks.add(b)
         self.part.segment()
         self.assertEqual(self.part.workflow_state,
                          self.part.WORKFLOW_STATE_SEGMENTED)
@@ -61,7 +61,7 @@ class TasksTestCase(CoreFactoryTestCase):
     def test_training_new_model(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
-        with self.assertNumQueries(35):
+        with self.assertNumQueries(18):
             response = self.client.post(uri, {
                 'document': self.part.document.pk,
                 'transcription': self.transcription.pk,
