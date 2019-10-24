@@ -856,12 +856,11 @@ class OcrModel(Versioned, models.Model):
     def accuracy_percent(self):
         return self.training_accuracy * 100
 
-    def segtrain(self, document, parts_qs, model, user=None):
+    def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk, document.pk,
                        list(parts_qs.values_list('pk', flat=True)))
     
-    @classmethod
-    def train(cls, parts_qs, transcription, model, user=None):
+    def train(self, parts_qs, transcription, user=None):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
@@ -869,14 +868,23 @@ class OcrModel(Versioned, models.Model):
                     btasks.append(task)
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
                          transcription.pk,
-                         model_pk=model.pk,
+                         model_pk=self.pk,
                          user_pk=user and user.pk or None)
         chord(btasks, ttask).delay()
 
     def cancel_training(self):
-        task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
-        if task_id:
-            revoke(task_id, terminate=True)
+        try:
+            if self.job == self.MODEL_JOB_RECOGNIZE:
+                task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+            elif self.job == self.MODEL_JOB_SEGMENT:
+                task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
+        except (TypeError, KeyError) as e:
+            raise ProcessFailureException(_("Couldn't find the training task."))
+        else:
+            if task_id:
+                revoke(task_id, terminate=True)
+                self.training = False
+                self.save()
     
     # versioning
     def pack(self, **kwargs):

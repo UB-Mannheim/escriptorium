@@ -1,4 +1,5 @@
 import itertools
+import logging
 
 from django.db.models import Prefetch, Count
 
@@ -13,6 +14,8 @@ from core.models import *
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from users.consumers import send_event
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentViewSet(ModelViewSet):
@@ -55,7 +58,11 @@ class DocumentViewSet(ModelViewSet):
     def cancel_training(self, request, pk=None):
         document = self.get_object()
         model = document.ocr_models.filter(training=True).last()
-        model.cancel_training()
+        try:
+            model.cancel_training()
+        except Exception as e:
+            logger.exception(e)
+            return Response({'status': 'failed'}, status=400)
         return Response({'status': 'canceled'})
     
     @action(detail=True, methods=['post'])

@@ -137,8 +137,25 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
-    def _print_eval(*args, **kwargs):
-        print('eval', args, kwargs)
+    def _print_eval(epoch=0, precision=0, recall=0, f1=0,
+                    mcc=0, val_metric=0):
+        model.refresh_from_db()
+        model.training_epoch = epoch
+        model.training_accuracy = float(precision)
+        # model.training_total = chars
+        # model.training_errors = error
+        new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
+        model.new_version(file=new_version_filename)
+        model.save()
+        
+        send_event('document', document.pk, "training:eval", {
+            "id": model.pk,
+            'versions': model.versions,
+            'epoch': epoch,
+            'accuracy': float(precision)
+            # 'chars': chars,
+            # 'error': error
+        })
 
     def _draw_progressbar(*args, **kwargs):
         print('progress', args, kwargs)
