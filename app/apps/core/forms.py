@@ -160,7 +160,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['train_model'].queryset = OcrModel.objects.filter(document=self.document)
+        self.fields['train_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['segtrain_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['ocr_model'].queryset = OcrModel.objects.filter(
             Q(document=None, script=document.main_script)
             | Q(document=self.document))

@@ -180,7 +180,7 @@ class SegmenterLine {
         if (!this.selected) return;
         if (this.maskPath) {
             // also unselects any selected segments
-            // this.maskPath.selected = false;
+            this.maskPath.selected = false;
             for (let i=0; i<this.maskPath.segments; i++) {
                 this.segmenter.removeFromSelection(this.maskPath.segments[i]); 
             }
