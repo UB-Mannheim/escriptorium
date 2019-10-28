@@ -453,7 +453,7 @@ class PagexmlParser(ParserDocument):
             # TODO: store glyphs too
             logger.info('Uncompressed and parsed %s' % self.file.name)
             part.calculate_progress()
-            return part
+            return [part]
 
 
 def make_parser(document, file_handler, name=None):
