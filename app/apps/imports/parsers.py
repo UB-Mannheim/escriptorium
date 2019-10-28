@@ -324,6 +324,13 @@ class PagexmlParser(ParserDocument):
     def total(self):
         return 1
 
+    @cached_property
+    def transcription(self):
+        transcription, created = Transcription.objects.get_or_create(
+            document=self.document,
+            name=self.name)
+        return transcription
+
     def validate(self):
         try:
             # response = requests.get(self.SCHEMA)
@@ -340,7 +347,7 @@ class PagexmlParser(ParserDocument):
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 raise ParseError("Document didn't validate. %s" % e.args[0])
 
-    def parse(self, start_at=0, override=False):
+    def parse(self, start_at=0, override=False, user=None):
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         # find the filename to
@@ -380,7 +387,8 @@ class PagexmlParser(ParserDocument):
                             block_ = Block(**attrs)
 
                         try:
-                            coords = block.find('Coords').get('points')
+
+                            coords = block.find('Coords', self.root.nsmap).get('points')
                             start = coords.split(' ')[0]
                             end = coords.split(' ')[2]
                             block_.box = [int(start.split(',')[0]),
@@ -408,7 +416,7 @@ class PagexmlParser(ParserDocument):
                         except Line.DoesNotExist:
                             # not found, create it then
                             line_ = Line(**attrs)
-                        baseline = line.find('BASELINE').get('points')
+                        baseline = line.find('Baseline', self.root.nsmap).get('points')
                         if baseline is not None:
                             #  to check if the baseline is good
                             line_.baseline = [list(map(int, pt.split(',')))
