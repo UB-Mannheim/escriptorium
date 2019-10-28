@@ -765,10 +765,13 @@ class Line(OrderedModel):  # Versioned,
                 # do the binarizaton 'live' since Kraken will do it anyway
                 self.document_part.binarize()
             im = Image.open(self.document_part.bw_image)
+
+        try:
+            result = calculate_polygonal_environment(im, [self.baseline])[0][0]
+        except IndexError:
+            result = None
         
-        result = calculate_polygonal_environment(im, [self.baseline])
-        
-        if result[0][0] is not None:  # couldn't expand region
+        if result is not None:  # couldn't expand region
             self.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
             self.save()
 
