@@ -217,3 +217,33 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             # this time we erased the existing line
             self.assertEqual(self.part1.lines.count(), 3)
+
+    def test_pagexml_single_no_match(self):
+        self.part1.original_filename = 'temp'
+        self.part1.save()
+
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'pagexml_test.xml'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            with self.assertNumQueries(11):
+                # with self.assertRaises(ParseError):  # doesn't work?!
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                # Note: the ParseError is raised by the processing of the import, not the validation!
+                # the error is sent via websocket so no need to catch it here
+                self.assertEqual(response.status_code, 200)
+
+        # failed, didn't create anythng
+        self.assertEqual(self.part1.blocks.count(), 0)
+        self.assertEqual(self.part1.lines.count(), 0)
+
+        # import was created since the form validated
+        imp = DocumentImport.objects.first()
+        self.assertTrue(imp.error_message, 'No match found')
+
+        self.part1.original_filename = 'test1.png'
+        self.part1.save()
+
+

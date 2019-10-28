@@ -311,20 +311,31 @@ class IIIFManifestParser(ParserDocument):
 
 class PagexmlParser(ParserDocument):
     DEFAULT_NAME = _("Zip Import")
-    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd'
+    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent_validate.xsd'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.root = etree.parse(self.file).getroot()
+        except (AttributeError, etree.XMLSyntaxError) as e:
+            raise ParseError("Invalid XML. %s" % e.args[0])
+
+    @property
+    def total(self):
+        return 1
 
     def validate(self):
         try:
-            response = requests.get(self.SCHEMA)
-            content = response.content
+            # response = requests.get(self.SCHEMA)
+            # content = response.content
+            from django.contrib.staticfiles.storage import staticfiles_storage
+            content = staticfiles_storage.open('pagexml-schema.xsd').read()
             schema_root = etree.XML(content)
         except:
             raise ParseError("Can't reach validation document %s." % self.SCHEMA)
         else:
-
-            xmlschema = etree.XMLSchema(schema_root)
             try:
-                self.root = etree.parse(self.file).getroot()
+                xmlschema = etree.XMLSchema(schema_root)
                 xmlschema.assertValid(self.root)
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 raise ParseError("Document didn't validate. %s" % e.args[0])
@@ -454,7 +465,7 @@ def make_parser(document, file_handler, name=None):
         #     return AbbyyParser(root, name=name)
         if 'alto' in schema:
             return AltoParser(document, file_handler, transcription_name=name)
-        elif 'PcGts' in schema:
+        elif 'PAGE' in schema:
             return PagexmlParser(document, file_handler, transcription_name=name)
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
