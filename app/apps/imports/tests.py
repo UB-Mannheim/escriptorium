@@ -22,6 +22,9 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.part2 = self.factory.make_part(name='part 2',
                                             document=self.document,
                                             original_filename='test2.png')
+        self.part3 = self.factory.make_part(name='part 3',
+                                            document=self.document,
+                                            original_filename='test3.png')
         self.client.force_login(self.document.owner)
 
     def test_alto_single_no_match(self):
@@ -246,4 +249,36 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.part1.original_filename = 'test1.png'
         self.part1.save()
 
+    def test_parse_pagexml(self):
+        trans = Transcription.objects.create(name="test import", document=self.document)
+        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
+        l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
+        lt = LineTranscription.objects.create(transcription=trans, line=l)
+
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'pagexml_test.xml'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+        #     response = self.client.post(uri, {
+        #         'name': "test import",
+        #         'upload_file': SimpleUploadedFile(filename, fh.read())
+        #     })
+        #     self.assertEqual(response.content, b'{"status":"ok"}')
+        #     self.assertEqual(response.status_code, 200)
+        #     self.assertEqual(self.document.transcriptions.count(), 2)  # manual and 'test import'
+        #     self.assertEqual(self.part1.lines.count(), 3)
+
+            fh.seek(0)
+            response = self.client.post(uri, {
+                'upload_file': SimpleUploadedFile(filename, fh.read())
+            })
+
+            self.assertEqual(response.content, b'{"status":"ok"}')
+            self.assertEqual(response.status_code, 200)
+            # we created a new transcription
+            self.assertEqual(self.document.transcriptions.count(), 3)
+            # still the same number of lines
+            self.assertEqual(self.part3.lines.count(), 21)
+            self.assertEqual(self.part3.blocks.count(), 2)
+            line = self.part3.lines.first()
 
