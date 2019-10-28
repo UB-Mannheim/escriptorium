@@ -182,11 +182,11 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(self.part1.lines.count(), 3)
 
     def test_override(self):
-        trans = Transcription.objects.create(name="ALTO Import", document=self.document)
+        trans = Transcription.objects.create(name="Alto Import", document=self.document)
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l, content="test history")
-
+        
         # historic line without external_id
         b2 = Block.objects.create(document_part=self.part1, box=[0, 0, 100, 100])
         l2 = Line.objects.create(document_part=self.part1, block=b2, box=[10,10,50,20])
@@ -204,9 +204,9 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(self.part1.lines.count(), 4)  # 3 from import + 1 existing
             lt.refresh_from_db()
-
-            # TODO
-            # self.assertEqual(lt.history[0].content, 'test history')
+            
+            self.assertEqual(len(lt.history), 1)
+            self.assertEqual(lt.history[0].content, 'test history')
             
             fh.seek(0)
             response = self.client.post(uri, {

@@ -280,33 +280,36 @@ class TranscriptionLine {
     }
 
     addVersionLine(version) {
-        // var $container = document.querySelector('#trans-modal > #history tbody');
-        // var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
-        // date = date.substring(0, 23) + date.substring(26);
-        // var $version = $('<tr id="rev-'+version.revision+'">'+
-        //                  '<th class="js-version-content w-75">'+version.data.content+'</th>'+
-        //                  '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
-        //                  '<td class="js-version-date" data-date="'+date+'"></td>'+
-        //                  '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
-        //                       '<i class="fas fa-file-upload"></i></button></td>'+
-        //                  '</tr>');
-        // var $date = $('.js-version-date', $version);
-        // var mom = moment.tz($date.data('date'), my_zone);
-        // $date.html(mom.fromNow());
-        // $date.attr('title', "Last changed: "+mom.format('LLLL'));
-        // $container.prepend($version);
+        var container = document.querySelector('#trans-modal #history tbody');
+        var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
+        date = date.substring(0, 23) + date.substring(26);
+        var $version = $('<tr id="rev-'+version.revision+'">'+
+                         '<th class="js-version-content w-75">'+version.data.content+'</th>'+
+                         '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
+                         '<td class="js-version-date" data-date="'+date+'"></td>'+
+                         '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
+                              '<i class="fas fa-file-upload"></i></button></td>'+
+                         '</tr>');
+        var $date = $('.js-version-date', $version);
+        var mom = moment.tz($date.data('date'), my_zone);
+        $date.html(mom.fromNow());
+        $date.attr('title', "Last changed: "+mom.format('LLLL'));
+        $(container).prepend($version);
     }
     
     pushVersion() {
-        // var lt = this.getLineTranscription();
-        // var uri = this.api + lt.pk + '/new_version/';
-        // $.post(uri, {}).done($.proxy(function(data) {
-        //     $('#no-versions').hide();
-        //     // this.getLineTranscription().versions.splice(0, 0, data);
-        //     this.addVersionLine(data);
-        // }, this)).fail(function(data) {
-        //     alert(data);
-        // });
+        /*
+          Save the current content of the transcription into the history
+          Note: not the content of the input, the actual db content!
+         */
+        var lt = this.getLineTranscription();
+        var uri = this.api + lt.pk + '/new_version/';
+        $.post(uri, {}).done($.proxy(function(data) {
+            $('#no-versions').hide();
+            this.addVersionLine(data);
+        }, this)).fail(function(data) {
+            alert(data);
+        });
     }
     
     save() {

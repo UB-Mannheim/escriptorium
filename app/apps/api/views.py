@@ -13,6 +13,7 @@ from api.serializers import *
 from core.models import *
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
+from versioning.models import NoChangeException
 from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,10 @@ class LineTranscriptionViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
-        lt.new_version()
-        lt.save()
-        return Response(lt.versions[0], status=status.HTTP_201_CREATED)
+        try:
+            lt.new_version()
+            lt.save()
+        except NoChangeException:
+            return Response({})
+        else:
+            return Response(lt.versions[0], status=status.HTTP_201_CREATED)

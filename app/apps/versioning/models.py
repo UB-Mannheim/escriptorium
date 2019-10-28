@@ -24,7 +24,7 @@ class Versioned(models.Model):
     
     API:
     instance.history : is a property returning a list of instances corresponding to the versions.
-    instance.new_version() : store the current data in versions.
+    instance.new_version() : store the current data in versions. Does not call save().
     instance.revert(revision) : store the current data in versions and revert to the given revision
                                 does not call save(), it needs to be done manually.
     instance.delete_revision(revision)
