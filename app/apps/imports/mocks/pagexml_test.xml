@@ -10,7 +10,7 @@ TRP</Creator>
         <TranskribusMetadata docId="218635" pageId="9377652" pageNr="1" tsid="16181013"
                              status="IN_PROGRESS" userId="198" imgUrl="https://files.transkribus.eu/Get?id=IGCWFROGSHEQTNTPACSBRMTW" xmlUrl="https://files.transkribus.eu/Get?id=ZDOBVJAWMVGPUHOZVTSSWCSG" imageId="6101684"/>
     </Metadata>
-    <Page imageFilename="smmj_159_back_pastedown.png" imageWidth="738" imageHeight="1139">
+    <Page imageFilename="test3.png" imageWidth="738" imageHeight="1139">
         <ReadingOrder>
             <OrderedGroup id="ro_1569865711215" caption="Regions reading order">
                 <RegionRefIndexed index="0" regionRef="r1"/>
