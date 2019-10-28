@@ -573,7 +573,7 @@ class DocumentPart(OrderedModel):
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
         
-        with Image.open(self.bw_image.file.name) as im:
+        with Image.open(self.image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
             options = {}  # {'maxcolseps': 1}
             if text_direction:
