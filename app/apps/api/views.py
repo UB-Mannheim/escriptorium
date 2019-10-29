@@ -53,7 +53,7 @@ class DocumentViewSet(ModelViewSet):
             current_import.cancel()
             return Response({'status': 'canceled'})
         else:
-            return Response({'status': 'already canceled'}, status=400)
+            return Response({'status': 'already stopped'}, status=400)
     
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):

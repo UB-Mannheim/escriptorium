@@ -1,4 +1,5 @@
 import os.path
+from unittest import mock
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -217,7 +218,54 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             # this time we erased the existing line
             self.assertEqual(self.part1.lines.count(), 3)
+    
+    def test_iiif(self):
+        filename = 'iiif.json'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        with open(mock_path, 'rb') as fh:
+            imp = DocumentImport(
+                document=self.document,
+                name='test',
+                started_by = self.document.owner
+            )
+            imp.import_file.save(
+                'iiif_manifest.json',
+                ContentFile(fh.read()))
 
+            # we don't go through the form but we want to test json validation
+            imp.parser.validate()
+            imp.save()
+        
+        # mock images grabbing
+        filename = 'test.png'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            # mock the image grabbing
+            mock_resp = mock.Mock(content=fh.read(), status_code=200)
+            with mock.patch('requests.get', return_value=mock_resp):
+                for part in imp.process():  # exaust the generator
+                    pass
+        
+        self.assertEqual(imp.workflow_state, imp.WORKFLOW_STATE_DONE)
+        self.assertEqual(imp.processed, 5)
+        self.assertEqual(self.document.parts.count(), 7)  # +2 from factory
+    
+    def test_cancel(self):
+        # Note: not actually testing celery's revoke
+        imp = DocumentImport.objects.create(
+                document=self.document,
+                import_file=ContentFile('', name='doesntmatter.xml'),
+                workflow_state=DocumentImport.WORKFLOW_STATE_STARTED,
+                processed=0)
+        uri = reverse('api:document-cancel-import', kwargs={'pk': self.document.pk})
+        response = self.client.post(uri)
+        self.assertEqual(response.status_code, 200)
+        
+        # already canceled
+        response = self.client.post(uri)
+        self.assertEqual(response.status_code, 400)
+        
 
 class DocumentExportTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -301,3 +349,12 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                      'file_format':'text',
                                      'parts': json.dumps(['a', 'b'])})
         self.assertEqual(response.status_code, 400)
+
+        # no img
+        response = self.client.post(reverse('api:document-export',
+                                            kwargs={'pk': self.trans.document.pk,}),
+                                    {'transcription': self.trans.pk,
+                                     'file_format': 'text',
+                                     'parts': json.dumps([])})
+        self.assertEqual(response.status_code, 400)
+        

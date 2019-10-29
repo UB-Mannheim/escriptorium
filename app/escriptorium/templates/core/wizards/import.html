@@ -9,16 +9,18 @@
 
 {% block wizard_fields %}
 {% if import_form.current_import and import_form.current_import.ongoing %}
-{% trans "Import is ongoing, please wait for it to be finished." %}
+<span class="text-warning">{% trans "Import is already ongoing, please wait for it to be finished or cancel it." %}</span>
 {% else %}
 {% if import_form.current_import.failed %}
+<h5>{% trans "Resume previous import." %}</h5>
 <div id="import-resume">
-  {% blocktrans with progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
+  {% blocktrans with filename=import_form.current_import.filename progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import ({{filename}}) failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
   {% if import_form.current_import.error_message %}
   <br/>{% trans "Reason:" %} {{ import_form.current_import.error_message }}
   {% endif %}
   {% render_field import_form.resume_import %}
 </div>
+<h5>{% trans "Or" %}</h5>
 {% endif %}
 {% endif %}
 {% endblock %}
