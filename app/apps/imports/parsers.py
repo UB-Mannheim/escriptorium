@@ -447,7 +447,9 @@ class PagexmlParser(ParserDocument):
                                 lt.new_version()  # save current content in history
                             except NoChangeException:
                                 pass
+                        finally:
                             lt.content = content
+
                             lt.save()
 
             # TODO: store glyphs too

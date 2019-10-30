@@ -127,7 +127,8 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 class ExportForm(BootstrapFormMixin, forms.Form):
     FORMAT_CHOICES = (
         ('alto', 'Alto'),
-        ('text', 'Text')
+        ('text', 'Text'),
+        ('pagexml', 'Pagexml')
     )
     parts = forms.CharField()
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
@@ -164,7 +165,8 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             content_type = 'text/xml'
             extension = 'xml'
             tplt = loader.get_template('export/alto.xml')
-            filename="export_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
+            filename="export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
+                                            file_format,
                                            datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
             with ZipFile(buff, 'w') as zip_:
@@ -182,5 +184,30 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             # TODO: add METS file
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            return response
+
+        elif file_format == 'pagexml':
+            tplt = loader.get_template('export/pagexml.xml')
+            filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
+                                                file_format,
+                                                datetime.now().strftime('%Y%m%d%H%M'))
+            buff = io.BytesIO()
+            with ZipFile(buff, 'w') as zip_:
+                for part in parts:
+                    page = tplt.render({
+                        'part': part,
+                        'lines': part.lines
+                            .order_by('block__order', 'order')
+                            .prefetch_related(
+                            Prefetch('transcriptions',
+                                     to_attr='transcription',
+                                     queryset=LineTranscription.objects.filter(
+                                         transcription=transcription)))})
+                    zip_.writestr('%s.xml' % part.filename, page)
+            response = HttpResponse(buff.getvalue(), content_type='application/x-zip-compressed')
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            return response
+        else:
+            response = HttpResponse('we cannot export to this format')
             return response
 
