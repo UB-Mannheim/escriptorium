@@ -2,12 +2,15 @@
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
 	<Metadata>
 		<Creator>escriptorium</Creator>
+		<Created>2019-09-27T23:23:02.181+02:00</Created>
+        <LastChange>2019-09-27T23:23:02.181+02:00</LastChange>
 	</Metadata>
 	<Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
         {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
             <TextRegion {% if line.block %}id="{{ line.block.make_external_id }}"{% else %}id="eSc_dummyblock_"
-        {% endif%} >{% endifchanged %}
-        <Coords points="{{ line.block.box.0 }},{{ line.block.box.1 }} {{ line.block.box.0 }},{{ line.block.box.3 }} {{ line.block.box.2 }},{{ line.block.box.3 }} {{ line.block.box.2 }},{{ line.block.box.1 }} "/>
+        {% endif%} >
+            <Coords points="{{ line.block.box.0 }},{{ line.block.box.1 }} {{ line.block.box.0 }},{{ line.block.box.3 }} {{ line.block.box.2 }},{{ line.block.box.3 }} {{ line.block.box.2 }},{{ line.block.box.1 }}"/>
+        {% endifchanged %}
         <TextLine id="{{ line.make_external_id }}">
             {% if line.mask %}
               <Coords points="{% for pt in line.mask %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>

@@ -325,114 +325,117 @@ class PagexmlParser(ParserDocument):
         return len(self.root.findall('Page', self.root.nsmap))
 
     def parse(self, start_at=0, override=False, user=None):
+        parts = []
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         # find the filename to
-        try:
-            filename = self.root.find('Page', self.root.nsmap).get('imageFilename')
-        except (IndexError, AttributeError) as e:
-            raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
+        for page in self.root.findall('Page', self.root.nsmap):
 
-        try:
-            part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
-        except IndexError:
-            raise ParseError("No match found for file %s with filename %s." % (self.file.name, filename))
-        else:
-            # if something fails, revert everything for this document part
-            with transaction.atomic():
-                if override:
-                    part.lines.all().delete()
-                    part.blocks.all().delete()
+            try:
+                filename = page.get('imageFilename')
+            except (IndexError, AttributeError) as e:
+                raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
 
-                block = None
+            try:
+                part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
+            except IndexError:
+                raise ParseError("No match found for file %s with filename %s." % (self.file.name, filename))
+            else:
+                # if something fails, revert everything for this document part
+                with transaction.atomic():
+                    if override:
+                        part.lines.all().delete()
+                        part.blocks.all().delete()
 
-                for block in self.root.findall('Page/TextRegion', self.root.nsmap):
-                    id_ = block.get('id')
-                    if id_ and id_.startswith('eSc_dummyblock_'):
-                        block_ = None
-                    else:
-                        try:
-                            assert id_ and id_.startswith('eSc_textblock_')
-                            attrs = {'pk': int(id_[len('eSc_textblock_'):])}
-                        except (ValueError, AssertionError, TypeError):
-                            attrs = {'document_part': part,
-                                     'external_id': id_}
-                        try:
-                            block_ = Block.objects.get(**attrs)
-                        except Block.DoesNotExist:
-                            # not found, create it then
-                            block_ = Block(**attrs)
+                    block = None
 
-                        try:
-
-                            coords = block.find('Coords', self.root.nsmap).get('points')
-                            start = coords.split(' ')[0]
-                            end = coords.split(' ')[2]
-                            block_.box = [int(start.split(',')[0]),
-                                          int(start.split(',')[1]),
-                                          int(end.split(',')[0]),
-                                          int(end.split(',')[1])]
-                        except TypeError:
-                            # probably a dummy block from another app
+                    for block in page.findall('TextRegion', self.root.nsmap):
+                        id_ = block.get('id')
+                        if id_ and id_.startswith('eSc_dummyblock_'):
                             block_ = None
                         else:
-                            block_.save()
-
-                    for line in block.findall('TextLine', self.root.nsmap):
-                        id_ = line.get('id')
-                        try:
-                            assert id_ and id_.startswith('eSc_line_')
-                            attrs = {'document_part': part,
-                                     'pk': int(id_[len('eSc_line_'):])}
-                        except (ValueError, AssertionError, TypeError):
-                            attrs = {'document_part': part,
-                                     'block': block_,
-                                     'external_id': id_}
-                        try:
-                            line_ = Line.objects.get(**attrs)
-                        except Line.DoesNotExist:
-                            # not found, create it then
-                            line_ = Line(**attrs)
-                        baseline = line.find('Baseline', self.root.nsmap).get('points')
-                        if baseline is not None:
-                            #  to check if the baseline is good
-                            line_.baseline = [list(map(int, pt.split(',')))
-                                              for pt in baseline.split(' ')]
-                        # i didn't find any polygon
-                        #  polygon == TextLine/Coords
-                        polygon = line.find('Coords', self.root.nsmap)
-                        if polygon is not None:
-                            line_.mask = [list(map(int, pt.split(',')))
-                                          for pt in polygon.get('points').split(' ')]
-                        # else:
-                        #     line_.box = [int(line.get('HPOS')),
-                        #                  int(line.get('VPOS')),
-                        #                  int(line.get('HPOS')) + int(line.get('WIDTH')),
-                        #                  int(line.get('VPOS')) + int(line.get('HEIGHT'))]
-                        line_.save()
-                        content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
-                        try:
-                            # lazily creates the Transcription on the fly if need be cf transcription() property
-                            lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
-                        except LineTranscription.DoesNotExist:
-                            lt = LineTranscription(version_source='import',
-                                                   version_author=self.name,
-                                                   transcription=self.transcription,
-                                                   line=line_)
-                        else:
                             try:
-                                lt.new_version()  # save current content in history
-                            except NoChangeException:
-                                pass
-                        finally:
-                            lt.content = content
+                                assert id_ and id_.startswith('eSc_textblock_')
+                                attrs = {'pk': int(id_[len('eSc_textblock_'):])}
+                            except (ValueError, AssertionError, TypeError):
+                                attrs = {'document_part': part,
+                                         'external_id': id_}
+                            try:
+                                block_ = Block.objects.get(**attrs)
+                            except Block.DoesNotExist:
+                                # not found, create it then
+                                block_ = Block(**attrs)
 
-                            lt.save()
+                            try:
 
-            # TODO: store glyphs too
-            logger.info('Uncompressed and parsed %s' % self.file.name)
-            part.calculate_progress()
-            return [part]
+                                coords = block.find('Coords', self.root.nsmap).get('points')
+                                start = coords.split(' ')[0]
+                                end = coords.split(' ')[2]
+                                block_.box = [int(start.split(',')[0]),
+                                              int(start.split(',')[1]),
+                                              int(end.split(',')[0]),
+                                              int(end.split(',')[1])]
+                            except TypeError:
+                                # probably a dummy block from another app
+                                block_ = None
+                            else:
+                                block_.save()
+
+                        for line in block.findall('TextLine', self.root.nsmap):
+                            id_ = line.get('id')
+                            try:
+                                assert id_ and id_.startswith('eSc_line_')
+                                attrs = {'document_part': part,
+                                         'pk': int(id_[len('eSc_line_'):])}
+                            except (ValueError, AssertionError, TypeError):
+                                attrs = {'document_part': part,
+                                         'block': block_,
+                                         'external_id': id_}
+                            try:
+                                line_ = Line.objects.get(**attrs)
+                            except Line.DoesNotExist:
+                                # not found, create it then
+                                line_ = Line(**attrs)
+                            baseline = line.find('Baseline', self.root.nsmap).get('points')
+                            if baseline is not None:
+                                #  to check if the baseline is good
+                                line_.baseline = [list(map(int, pt.split(',')))
+                                                  for pt in baseline.split(' ')]
+                            # i didn't find any polygon
+                            #  polygon == TextLine/Coords
+                            polygon = line.find('Coords', self.root.nsmap)
+                            if polygon is not None:
+                                line_.mask = [list(map(int, pt.split(',')))
+                                              for pt in polygon.get('points').split(' ')]
+                            # else:
+                            #     line_.box = [int(line.get('HPOS')),
+                            #                  int(line.get('VPOS')),
+                            #                  int(line.get('HPOS')) + int(line.get('WIDTH')),
+                            #                  int(line.get('VPOS')) + int(line.get('HEIGHT'))]
+                            line_.save()
+                            content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
+                            try:
+                                # lazily creates the Transcription on the fly if need be cf transcription() property
+                                lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
+                            except LineTranscription.DoesNotExist:
+                                lt = LineTranscription(version_source='import',
+                                                       version_author=self.name,
+                                                       transcription=self.transcription,
+                                                       line=line_)
+                            else:
+                                try:
+                                    lt.new_version()  # save current content in history
+                                except NoChangeException:
+                                    pass
+                            finally:
+                                lt.content = content
+                                lt.save()
+
+                # TODO: store glyphs too
+                logger.info('Uncompressed and parsed %s' % self.file.name)
+                part.calculate_progress()
+                parts.append(part)
+        return [part]
 
 
 def make_parser(document, file_handler, name=None):

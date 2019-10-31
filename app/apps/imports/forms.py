@@ -161,7 +161,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
         
-        elif file_format == 'alto' or file_format == '':
+        elif file_format == 'alto' or file_format == 'pagexml':
             content_type = 'text/xml'
             extension = 'xml'
             filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
