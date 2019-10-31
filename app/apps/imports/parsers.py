@@ -435,7 +435,7 @@ class PagexmlParser(ParserDocument):
                 logger.info('Uncompressed and parsed %s' % self.file.name)
                 part.calculate_progress()
                 parts.append(part)
-        return [part]
+        return parts
 
 
 def make_parser(document, file_handler, name=None):
