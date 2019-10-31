@@ -44,6 +44,29 @@ class ParserDocument():
         # iterator over created document parts
         raise NotImplementedError
 
+    @cached_property
+    def transcription(self):
+        transcription, created = Transcription.objects.get_or_create(
+            document=self.document,
+            name=self.name)
+        return transcription
+
+    def validate(self):
+        try:
+            # response = requests.get(self.SCHEMA)
+            # content = response.content
+            from django.contrib.staticfiles.storage import staticfiles_storage
+            content = staticfiles_storage.open(self.SCHEMA_FILE).read()
+            schema_root = etree.XML(content)
+        except:
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+        else:
+            try:
+                xmlschema = etree.XMLSchema(schema_root)
+                xmlschema.assertValid(self.root)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                raise ParseError("Document didn't validate. %s" % e.args[0])
+
 
 class ZipParser(ParserDocument):
     """
@@ -86,8 +109,9 @@ class ZipParser(ParserDocument):
 
 
 class AltoParser(ParserDocument):
-    DEFAULT_NAME = _("Zip Import")
+    DEFAULT_NAME = _("Default Alto Import")
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
+    SCHEMA_FILE = 'alto-4-1-baselines.xsd'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,38 +119,11 @@ class AltoParser(ParserDocument):
             self.root = etree.parse(self.file).getroot()
         except (AttributeError, etree.XMLSyntaxError) as e:
             raise ParseError("Invalid XML. %s" % e.args[0])
-    
-    def validate(self):
-        try:
-            # response = requests.get(self.SCHEMA)
-            # content = response.content
 
-            # NOTE:
-            # waiting for new version of alto because of https://github.com/altoxml/schema/issues/32
-            # in the meantime we use our own version
-            from django.contrib.staticfiles.storage import staticfiles_storage
-            content = staticfiles_storage.open('alto-4-1-baselines.xsd').read()
-            schema_root = etree.XML(content)
-        except:
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
-        else:
-            try:
-                xmlschema = etree.XMLSchema(schema_root)
-                xmlschema.assertValid(self.root)
-            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                raise ParseError("Document didn't validate. %s" % e.args[0])
-    
     @property
     def total(self):
         # An alto file always describes 1 'document part'
         return 1
-    
-    @cached_property
-    def transcription(self):
-        transcription, created = Transcription.objects.get_or_create(
-                document=self.document,
-                name=self.name)
-        return transcription
     
     def parse(self, start_at=0, override=False, user=None):
         # find the filename to match with existing images
@@ -310,8 +307,9 @@ class IIIFManifestParser(ParserDocument):
 
 
 class PagexmlParser(ParserDocument):
-    DEFAULT_NAME = _("Zip Import")
-    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent_validate.xsd'
+    DEFAULT_NAME = _("Default PageXML Import")
+    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
+    SCHEMA_FILE = 'pagexml-schema.xsd'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -322,30 +320,9 @@ class PagexmlParser(ParserDocument):
 
     @property
     def total(self):
-        return 1
-
-    @cached_property
-    def transcription(self):
-        transcription, created = Transcription.objects.get_or_create(
-            document=self.document,
-            name=self.name)
-        return transcription
-
-    def validate(self):
-        try:
-            # response = requests.get(self.SCHEMA)
-            # content = response.content
-            from django.contrib.staticfiles.storage import staticfiles_storage
-            content = staticfiles_storage.open('pagexml-schema.xsd').read()
-            schema_root = etree.XML(content)
-        except:
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
-        else:
-            try:
-                xmlschema = etree.XMLSchema(schema_root)
-                xmlschema.assertValid(self.root)
-            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                raise ParseError("Document didn't validate. %s" % e.args[0])
+        if not self.root:
+            self.root = etree.parse(self.file).getroot()
+        return len(self.root.findall('Page', self.root.nsmap))
 
     def parse(self, start_at=0, override=False, user=None):
         if not self.root:
