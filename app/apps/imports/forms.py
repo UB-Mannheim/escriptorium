@@ -161,14 +161,19 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
         
-        elif file_format == 'alto':
+        elif file_format == 'alto' or file_format == '':
             content_type = 'text/xml'
             extension = 'xml'
-            tplt = loader.get_template('export/alto.xml')
-            filename="export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
-                                            file_format,
-                                           datetime.now().strftime('%Y%m%d%H%M'))
+            filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
+                                                file_format,
+                                                datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
+            if file_format == 'pagexml':
+                tplt = loader.get_template('export/pagexml.xml')
+            else:
+                tplt = loader.get_template('export/alto.xml')
+
+
             with ZipFile(buff, 'w') as zip_:
                 for part in parts:
                     page = tplt.render({
@@ -185,29 +190,3 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
             return response
-
-        elif file_format == 'pagexml':
-            tplt = loader.get_template('export/pagexml.xml')
-            filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
-                                                file_format,
-                                                datetime.now().strftime('%Y%m%d%H%M'))
-            buff = io.BytesIO()
-            with ZipFile(buff, 'w') as zip_:
-                for part in parts:
-                    page = tplt.render({
-                        'part': part,
-                        'lines': part.lines
-                            .order_by('block__order', 'order')
-                            .prefetch_related(
-                            Prefetch('transcriptions',
-                                     to_attr='transcription',
-                                     queryset=LineTranscription.objects.filter(
-                                         transcription=transcription)))})
-                    zip_.writestr('%s.xml' % part.filename, page)
-            response = HttpResponse(buff.getvalue(), content_type='application/x-zip-compressed')
-            response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            return response
-        else:
-            response = HttpResponse('we cannot export to this format')
-            return response
-
