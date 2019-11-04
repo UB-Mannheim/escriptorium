@@ -51,6 +51,8 @@ class ParserDocument():
             name=self.name)
         return transcription
 
+
+class XMLParser:
     def validate(self):
         try:
             # response = requests.get(self.SCHEMA)
@@ -108,7 +110,7 @@ class ZipParser(ParserDocument):
                         yield part
 
 
-class AltoParser(ParserDocument):
+class AltoParser(ParserDocument,XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
     SCHEMA_FILE = 'alto-4-1-baselines.xsd'
@@ -306,7 +308,7 @@ class IIIFManifestParser(ParserDocument):
             raise ParseError(e)
 
 
-class PagexmlParser(ParserDocument):
+class PagexmlParser(ParserDocument, XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
