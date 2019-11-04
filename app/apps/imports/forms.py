@@ -125,10 +125,14 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
 
 class ExportForm(BootstrapFormMixin, forms.Form):
+    ALTO_FORMAT = "alto"
+    PAGEXML_FORMAT = "pagexml"
+    TEXT_FORMAT = "text"
+
     FORMAT_CHOICES = (
-        ('alto', 'Alto'),
-        ('text', 'Text'),
-        ('pagexml', 'Pagexml')
+        (ALTO_FORMAT, 'Alto'),
+        (TEXT_FORMAT, 'Text'),
+        (PAGEXML_FORMAT, 'Pagexml')
     )
     parts = forms.CharField()
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
@@ -152,7 +156,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         parts = self.cleaned_data['parts']
         transcription = self.cleaned_data['transcription']
         
-        if file_format == 'text':
+        if file_format == self.TEXT_FORMAT:
             content_type = 'text/plain'
             lines = (LineTranscription.objects
                      .filter(transcription=transcription, line__document_part__in=parts)
@@ -161,18 +165,17 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
         
-        elif file_format == 'alto' or file_format == 'pagexml':
+        elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
             content_type = 'text/xml'
             extension = 'xml'
             filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
                                                 file_format,
                                                 datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
-            if file_format == 'pagexml':
+            if file_format == self.PAGEXML_FORMAT:
                 tplt = loader.get_template('export/pagexml.xml')
             else:
                 tplt = loader.get_template('export/alto.xml')
-
 
             with ZipFile(buff, 'w') as zip_:
                 for part in parts:
@@ -185,7 +188,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                                      to_attr='transcription',
                                      queryset=LineTranscription.objects.filter(
                                          transcription=transcription)))})
-                    zip_.writestr('%s.xml' % part.filename, page)
+                    zip_.writestr('%s.xml' % part.filename.split('.')[0], page)
             # TODO: add METS file
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
