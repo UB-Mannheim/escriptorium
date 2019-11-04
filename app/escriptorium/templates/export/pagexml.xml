@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"  standalone="yes"?>
+{% load export_tags %}<?xml version="1.0" encoding="UTF-8"  standalone="yes"?>
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
 	<Metadata>
 		<Creator>escriptorium</Creator>
-		<Created>2019-09-27T23:23:02.181+02:00</Created>
-        <LastChange>2019-09-27T23:23:02.181+02:00</LastChange>
+		<Created>{%current_time %}</Created>
+        <LastChange>{%current_time %}</LastChange>
 	</Metadata>
 	<Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
         {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
@@ -22,7 +22,9 @@
                 </TextEquiv>
             {% endif %}
           </TextLine>
-        {% if forloop.last %}</TextRegion>{% endif %}
+        {% if forloop.last %}<TextEquiv>
+                    <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
+                </TextEquiv></TextRegion>{% endif %}
         {% endfor %}
 	</Page>
 </PcGts>
