@@ -398,11 +398,14 @@ class PagexmlParser(ParserDocument, XMLParser):
                             except Line.DoesNotExist:
                                 # not found, create it then
                                 line_ = Line(**attrs)
-                            baseline = line.find('Baseline', self.root.nsmap).get('points')
-                            if baseline is not None:
-                                #  to check if the baseline is good
+                            try :
+                                baseline = line.find('Baseline', self.root.nsmap)
                                 line_.baseline = [list(map(int, pt.split(',')))
-                                                  for pt in baseline.split(' ')]
+                                                  for pt in baseline.get('points').split(' ')]
+
+                            except AttributeError:
+                                #  to check if the baseline is good
+                                line_.baseline = None
                             # i didn't find any polygon
                             #  polygon == TextLine/Coords
                             polygon = line.find('Coords', self.root.nsmap)
@@ -415,8 +418,13 @@ class PagexmlParser(ParserDocument, XMLParser):
                             #                  int(line.get('HPOS')) + int(line.get('WIDTH')),
                             #                  int(line.get('VPOS')) + int(line.get('HEIGHT'))]
                             line_.save()
-                            content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
+                            words = line.findall('Word', self.root.nsmap)
+                            if len(words) > 0:
+                                content = ' '.join([e.text for e in line.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
+                            else:
+                                content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
                             try:
+
                                 # lazily creates the Transcription on the fly if need be cf transcription() property
                                 lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
                             except LineTranscription.DoesNotExist:
