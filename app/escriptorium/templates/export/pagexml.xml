@@ -17,10 +17,10 @@
             {% endif %}
             {% if line.baseline %}
                  <Baseline points="{% for pt in line.baseline %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
-                <TextEquiv>
+            {% endif %}
+            <TextEquiv>
                     <Unicode>{{ line.transcription.0.content }}</Unicode>
                 </TextEquiv>
-            {% endif %}
           </TextLine>
         {% if forloop.last %}<TextEquiv>
                     <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
