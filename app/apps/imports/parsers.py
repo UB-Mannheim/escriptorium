@@ -373,10 +373,8 @@ class PagexmlParser(ParserDocument, XMLParser):
                                 coords = block.find('Coords', self.root.nsmap).get('points')
                                 start = coords.split(' ')[0]
                                 end = coords.split(' ')[2]
-                                block_.box = [int(start.split(',')[0]),
-                                              int(start.split(',')[1]),
-                                              int(end.split(',')[0]),
-                                              int(end.split(',')[1])]
+                                block_.box = [list(map(int, pt.split(',')))
+                                              for pt in coords.split(' ')]
                             except TypeError:
                                 # probably a dummy block from another app
                                 block_ = None
