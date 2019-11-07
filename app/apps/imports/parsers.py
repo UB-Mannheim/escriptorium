@@ -317,6 +317,9 @@ class PagexmlParser(ParserDocument, XMLParser):
         super().__init__(*args, **kwargs)
         try:
             self.root = etree.parse(self.file).getroot()
+            #  Transkribus file vaidate it with Transkribus schema
+            if b'/pagecontent/2013' in etree.tostring(self.root):
+                self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
         except (AttributeError, etree.XMLSyntaxError) as e:
             raise ParseError("Invalid XML. %s" % e.args[0])
 
