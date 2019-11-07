@@ -325,6 +325,7 @@ class PagexmlParser(ParserDocument, XMLParser):
 
     @property
     def total(self):
+        # pagexml file can contain multiple parts
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         return len(self.root.findall('Page', self.root.nsmap))
@@ -333,7 +334,7 @@ class PagexmlParser(ParserDocument, XMLParser):
         parts = []
         if not self.root:
             self.root = etree.parse(self.file).getroot()
-        # find the filename to
+        # pagexml file can contain multiple parts
         for page in self.root.findall('Page', self.root.nsmap):
 
             try:
@@ -374,8 +375,7 @@ class PagexmlParser(ParserDocument, XMLParser):
                             try:
 
                                 coords = block.find('Coords', self.root.nsmap).get('points')
-                                start = coords.split(' ')[0]
-                                end = coords.split(' ')[2]
+                                #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
                                 block_.box = [list(map(int, pt.split(',')))
                                               for pt in coords.split(' ')]
                             except TypeError:
@@ -413,13 +413,10 @@ class PagexmlParser(ParserDocument, XMLParser):
                             if polygon is not None:
                                 line_.mask = [list(map(int, pt.split(',')))
                                               for pt in polygon.get('points').split(' ')]
-                            # else:
-                            #     line_.box = [int(line.get('HPOS')),
-                            #                  int(line.get('VPOS')),
-                            #                  int(line.get('HPOS')) + int(line.get('WIDTH')),
-                            #                  int(line.get('VPOS')) + int(line.get('HEIGHT'))]
+
                             line_.save()
                             words = line.findall('Word', self.root.nsmap)
+                            # pagexml can have content for each word inside a word tag or the whole line in textline tag
                             if len(words) > 0:
                                 content = ' '.join([e.text for e in line.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
                             else:
