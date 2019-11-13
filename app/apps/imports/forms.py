@@ -205,9 +205,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                                  to_attr='transcription',
                                  queryset=LineTranscription.objects.filter(
                                      transcription=transcription)))})
-                with open('%s.xml' % part.filename.split('.')[0], 'w') as f:
-                    f.write(page)
-                    response = HttpResponse(page, content_type='text/xml')
-                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
-                    return response
+                response = HttpResponse(page, content_type='text/xml')
+                response['Content-Disposition'] = 'attachment; filename=%s' % filename
+                return response
 
