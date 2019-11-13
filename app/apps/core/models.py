@@ -573,7 +573,7 @@ class DocumentPart(OrderedModel):
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
         
-        with Image.open(self.bw_image.file.name) as im:
+        with Image.open(self.image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
             options = {}  # {'maxcolseps': 1}
             if text_direction:
@@ -602,7 +602,6 @@ class DocumentPart(OrderedModel):
                     newline = Line.objects.create(
                         document_part=self,
                         baseline=line['baseline'],
-                        # invert pts coordinates to compensate a kraken bug
                         mask=line['boundary'] if line['boundary'] is not None else None)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
@@ -766,9 +765,13 @@ class Line(OrderedModel):  # Versioned,
                 # do the binarizaton 'live' since Kraken will do it anyway
                 self.document_part.binarize()
             im = Image.open(self.document_part.bw_image)
-        result = calculate_polygonal_environment(im, [self.baseline])
+
+        try:
+            result = calculate_polygonal_environment(im, [self.baseline])[0][0]
+        except IndexError:
+            result = None
         
-        if result[0][0] is not None:  # couldn't expand region
+        if result is not None:  # couldn't expand region
             self.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
             self.save()
 
@@ -855,12 +858,11 @@ class OcrModel(Versioned, models.Model):
     def accuracy_percent(self):
         return self.training_accuracy * 100
 
-    def segtrain(self, document, parts_qs, model, user=None):
+    def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk, document.pk,
                        list(parts_qs.values_list('pk', flat=True)))
     
-    @classmethod
-    def train(cls, parts_qs, transcription, model, user=None):
+    def train(self, parts_qs, transcription, user=None):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
@@ -868,14 +870,23 @@ class OcrModel(Versioned, models.Model):
                     btasks.append(task)
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
                          transcription.pk,
-                         model_pk=model.pk,
+                         model_pk=self.pk,
                          user_pk=user and user.pk or None)
         chord(btasks, ttask).delay()
 
     def cancel_training(self):
-        task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
-        if task_id:
-            revoke(task_id, terminate=True)
+        try:
+            if self.job == self.MODEL_JOB_RECOGNIZE:
+                task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+            elif self.job == self.MODEL_JOB_SEGMENT:
+                task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
+        except (TypeError, KeyError) as e:
+            raise ProcessFailureException(_("Couldn't find the training task."))
+        else:
+            if task_id:
+                revoke(task_id, terminate=True)
+                self.training = False
+                self.save()
     
     # versioning
     def pack(self, **kwargs):

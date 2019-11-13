@@ -1,4 +1,5 @@
 import os.path
+from unittest import mock
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -185,11 +186,11 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(self.part1.lines.count(), 3)
 
     def test_override(self):
-        trans = Transcription.objects.create(name="ALTO Import", document=self.document)
+        trans = Transcription.objects.create(name="Alto Import", document=self.document)
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l, content="test history")
-
+        
         # historic line without external_id
         b2 = Block.objects.create(document_part=self.part1, box=[0, 0, 100, 100])
         l2 = Line.objects.create(document_part=self.part1, block=b2, box=[10,10,50,20])
@@ -207,9 +208,9 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(self.part1.lines.count(), 4)  # 3 from import + 1 existing
             lt.refresh_from_db()
-
-            # TODO
-            # self.assertEqual(lt.history[0].content, 'test history')
+            
+            self.assertEqual(len(lt.history), 1)
+            self.assertEqual(lt.history[0].content, 'test history')
             
             fh.seek(0)
             response = self.client.post(uri, {
@@ -220,6 +221,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             # this time we erased the existing line
             self.assertEqual(self.part1.lines.count(), 3)
+
 
     def test_pagexml_single_no_match(self):
         self.part1.original_filename = 'temp'
@@ -282,3 +284,141 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(self.part3.blocks.count(), 2)
             line = self.part3.lines.first()
 
+    def test_iiif(self):
+        filename = 'iiif.json'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        with open(mock_path, 'rb') as fh:
+            imp = DocumentImport(
+                document=self.document,
+                name='test',
+                started_by = self.document.owner
+            )
+            imp.import_file.save(
+                'iiif_manifest.json',
+                ContentFile(fh.read()))
+
+            # we don't go through the form but we want to test json validation
+            imp.parser.validate()
+            imp.save()
+        
+        # mock images grabbing
+        filename = 'test.png'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            # mock the image grabbing
+            mock_resp = mock.Mock(content=fh.read(), status_code=200)
+            with mock.patch('requests.get', return_value=mock_resp):
+                for part in imp.process():  # exaust the generator
+                    pass
+        
+        self.assertEqual(imp.workflow_state, imp.WORKFLOW_STATE_DONE)
+        self.assertEqual(imp.processed, 5)
+        self.assertEqual(self.document.parts.count(), 7)  # +2 from factory
+    
+    def test_cancel(self):
+        # Note: not actually testing celery's revoke
+        imp = DocumentImport.objects.create(
+                document=self.document,
+                import_file=ContentFile('', name='doesntmatter.xml'),
+                workflow_state=DocumentImport.WORKFLOW_STATE_STARTED,
+                processed=0)
+        uri = reverse('api:document-cancel-import', kwargs={'pk': self.document.pk})
+        response = self.client.post(uri)
+        self.assertEqual(response.status_code, 200)
+        
+        # already canceled
+        response = self.client.post(uri)
+        self.assertEqual(response.status_code, 400)
+        
+
+class DocumentExportTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.trans = self.factory.make_transcription()
+        self.user = self.trans.document.owner  # shortcut
+        self.parts = []
+        for i in range(1, 3):
+            part = self.factory.make_part(name='part %d' % i,
+                                     document=self.trans.document)
+            self.parts.append(part)
+            for j in range(1, 4):
+                l = Line.objects.create(document_part=part,
+                                        box=(0,0,1,1))
+                LineTranscription.objects.create(
+                    line=l,
+                    transcription=self.trans,
+                    content='line %d:%d' % (i,j))
+    
+    def test_simple(self):
+        self.client.force_login(self.user)
+        with self.assertNumQueries(6):
+            response = self.client.post(reverse('api:document-export',
+                                            kwargs={'pk': self.trans.document.pk}),
+                                    {'transcription': self.trans.pk,
+                                     'file_format': 'text',
+                                     'parts': json.dumps([str(p.pk) for p in self.parts])})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(''.join([c.decode() for c in response.streaming_content]),
+                         "line 1:1\nline 1:2\nline 1:3\nline 2:1\nline 2:2\nline 2:3\n")
+    
+    def test_alto(self):
+        self.client.force_login(self.user)
+        with self.assertNumQueries(10):  # should be 8 + 4*part
+            response = self.client.post(reverse('api:document-export',
+                                                kwargs={'pk': self.trans.document.pk,}),
+                                        {'transcription': self.trans.pk,
+                                         'file_format':'alto',
+                                         'parts': json.dumps([str(p.pk) for p in self.parts])})
+
+        self.assertEqual(response.status_code, 200)
+        #self.assertEqual(response.content, '')
+    
+    def test_alto_qs_scaling(self):
+        for i in range(4, 20):
+            part = self.factory.make_part(name='part %d' % i,
+                                          document=self.trans.document)
+            block = Block.objects.create(document_part=part, box=(0,0,1,1))
+            for j in range(1, 4):
+                l = Line.objects.create(document_part=part,
+                                        block=block,
+                                        box=(0,0,1,1))
+                LineTranscription.objects.create(
+                    line=l,
+                    transcription=self.trans,
+                    content='line %d:%d' % (i,j))
+        self.client.force_login(self.user)
+        #with self.assertNumQueries(80):
+        response = self.client.post(reverse('api:document-export',
+                                            kwargs={'pk': self.trans.document.pk,}),
+                                    {'transcription': self.trans.pk,
+                                     'file_format': 'text',
+                                     'parts': json.dumps([str(p.pk) for p in self.parts])})
+        self.assertEqual(response.status_code, 200)
+    
+    def test_invalid(self):
+        self.client.force_login(self.user)
+        # invalid file format
+        response = self.client.post(reverse('api:document-export',
+                                       kwargs={'pk': self.trans.document.pk}),
+                                        {'transcription': self.trans.pk,
+                                         'file_format':'pouet',
+                                         'parts': json.dumps([str(p.pk) for p in self.parts])})
+        self.assertEqual(response.status_code, 400)
+
+        # invalid pk
+        response = self.client.post(reverse('api:document-export',
+                                            kwargs={'pk': self.trans.document.pk}),
+                                    {'transcription': self.trans.pk,
+                                     'file_format':'text',
+                                     'parts': json.dumps(['a', 'b'])})
+        self.assertEqual(response.status_code, 400)
+
+        # no img
+        response = self.client.post(reverse('api:document-export',
+                                            kwargs={'pk': self.trans.document.pk,}),
+                                    {'transcription': self.trans.pk,
+                                     'file_format': 'text',
+                                     'parts': json.dumps([])})
+        self.assertEqual(response.status_code, 400)

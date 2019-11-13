@@ -160,7 +160,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['train_model'].queryset = OcrModel.objects.filter(document=self.document)
+        self.fields['train_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['segtrain_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['ocr_model'].queryset = OcrModel.objects.filter(
             Q(document=None, script=document.main_script)
             | Q(document=self.document))
@@ -229,7 +230,11 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         elif data.get('seg_model'):
             model = data.get('seg_model')
         else:
-            model = None
+            if task in (self.TASK_TRAIN, self.TASK_SEGTRAIN):
+                raise forms.ValidationError(
+                    _("Either select a name for your new model or an existing one."))
+            else:
+                model = None
         
         data['model'] = model
         return data
@@ -263,13 +268,14 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                           model_pk=model and model.pk or None)
         
         elif task == self.TASK_TRAIN:
-            OcrModel.train(self.parts,
-                           self.cleaned_data['transcription'],
-                           model,
-                           user=self.user)
+            model.train(self.parts,
+                        self.cleaned_data['transcription'],
+                        user=self.user)
         
         elif task == self.TASK_SEGTRAIN:
-            model.segtrain(self.document, self.parts, model, user=self.user)
+            model.segtrain(self.document,
+                           self.parts,
+                           user=self.user)
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):

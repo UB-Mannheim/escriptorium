@@ -1,3 +1,5 @@
+import os.path
+
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -41,12 +43,16 @@ class DocumentImport(models.Model):
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json',])])
     
-    task_id = models.CharField(max_length=64, blank=True)
+    task_id = models.CharField(max_length=64, blank=True)  # celery task id
     processed = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=None, null=True, blank=True)
     
     class Meta:
         ordering = ('-started_on',)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.import_file.name)
     
     @property
     def failed(self):
@@ -66,10 +72,9 @@ class DocumentImport(models.Model):
     def cancel(self):
         self.workflow_state = self.WORKFLOW_STATE_ERROR
         self.error_message = 'canceled'
-        if self.task_id:
-            #revoke(self.task_id, terminate=True)
-            app.control.revoke(self.task_id, terminate=True)
         self.save()
+        if self.task_id:
+            app.control.revoke(self.task_id, terminate=True)
     
     def process(self, resume=True):
         try:
@@ -85,8 +90,9 @@ class DocumentImport(models.Model):
                 yield obj
             self.workflow_state = self.WORKFLOW_STATE_DONE
             self.save()
+            
         except Exception as e:
-            self.worflow_state = self.WORKFLOW_STATE_ERROR
+            self.workflow_state = self.WORKFLOW_STATE_ERROR
             self.error_message = str(e)
             self.save()
             raise e

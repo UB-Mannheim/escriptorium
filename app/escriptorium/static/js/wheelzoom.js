@@ -208,24 +208,21 @@ class WheelZoom {
         }
 	    // Make sure the slide stays in its container area when zooming in/out
         if (this.scale > 1) {
-	        if (this.pos.x > 0) { this.pos.x = 0; }
-	        // if (this.pos.x < ts.width - ts.width * this.scale) {
-            if (this.pos.x + (target.element.width * this.scale) < ts.width) {
-                this.pos.x = ts.width - (target.element.width * this.scale);
-            }
-        } else {
-	        if (this.pos.x < 0) { this.pos.x = 0; }
-	        if (this.pos.x > ts.width - ts.width * this.scale) {
+            if (this.pos.x > 0) { this.pos.x = 0; }
+            if (this.pos.x < ts.width - ts.width * this.scale) {
                 this.pos.x = ts.width - ts.width * this.scale;
             }
-        }
-        
-        if (this.scale > 1) {
+            
             if (this.pos.y > 0) { this.pos.y = 0; }
 	        if (this.pos.y < ts.height - ts.height * this.scale) {
                 this.pos.y = ts.height - ts.height * this.scale;
             }
         } else {
+            if (this.pos.x < 0) { this.pos.x = 0; }
+	        if (this.pos.x > ts.width - ts.width * this.scale) {
+                this.pos.x = ts.width - ts.width * this.scale;
+            }
+            
             if (this.pos.y < 0) { this.pos.y = 0; }
             if (this.pos.y > ts.height - ts.height * this.scale) {
                 this.pos.y = ts.height - ts.height * this.scale;

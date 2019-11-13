@@ -110,8 +110,10 @@ class ZipParser(ParserDocument):
                         yield part
 
 
+
 class AltoParser(ParserDocument,XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
+
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
     SCHEMA_FILE = 'alto-4-1-baselines.xsd'
 

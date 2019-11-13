@@ -61,7 +61,7 @@ class CoreFactory():
     def make_image_file(self, name='test.png'):
         file = BytesIO()
         file.name = name
-        image = Image.new('RGB', size=(50, 50), color=(155, 0, 0))
+        image = Image.new('RGB', size=(60, 60), color=(155, 0, 0))
         draw = ImageDraw.Draw(image)
         draw.rectangle([20,20,30,30], fill=(0,0,155))
         draw.polygon([(20,20),(20,30), (25,15)], fill=(0,155,0))
@@ -69,15 +69,17 @@ class CoreFactory():
         file.seek(0)
         return file
 
-    def make_model(self, document=None):
+    def make_model(self, job=OcrModel.MODEL_JOB_RECOGNIZE, document=None):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
         model_name = 'test-model'
-        model = OcrModel.objects.create(name=model_name, document=document)
+        model = OcrModel.objects.create(name=model_name,
+                                        document=document,
+                                        job=job)
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
             model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
         if not os.path.exists(modeldir):
-            os.mkdir(modeldir)
+            os.makedirs(modeldir)
         modelpath = os.path.join(modeldir, model_name)
         nn.save_model(path=modelpath)
         model.file = modelpath
@@ -85,10 +87,27 @@ class CoreFactory():
         return model
     
     def make_content(self, part, amount=30, transcription=None):
+        line_height = 30
+        line_width = 50
+        line_margin = 10
+        
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
         for i in range(amount):
-            line = Line.objects.create(document_part=part, box=[i*10, 5, i*10+10, 100])
+            line = Line.objects.create(document_part=part,
+                                       baseline=[
+                                           [line_margin, i*line_height],
+                                           [line_margin+line_width, i*line_height]],
+                                       mask=[
+                                           [line_margin, i*line_height+line_margin],
+                                           [line_margin+line_width, i*line_height+line_margin],
+                                           [line_margin+line_width, i*line_height-line_margin],
+                                           [line_margin, i*line_height-line_margin],
+                                       ],
+                                       box=[
+                                           line_margin, i*line_height-line_margin,
+                                           line_margin+line_width, i*line_height-line_margin
+                                       ])
             LineTranscription.objects.create(transcription=transcription, line=line, content='test %d' % i)
 
 

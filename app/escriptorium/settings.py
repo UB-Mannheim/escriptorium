@@ -260,7 +260,7 @@ VERSIONING_DEFAULT_SOURCE = 'escriptorium'
 IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
-KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(MEDIA_ROOT, 'models/cbad.mlmodel')
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(APPS_DIR, 'core/static/offsplit.mlmodel')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

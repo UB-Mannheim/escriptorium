@@ -6,6 +6,7 @@ TODO:
 class SegmentationPanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
+        this.loaded = false;
         this.seeBlocks = true;
         this.seeLines = true;
         this.$img = $('img', this.$container);
@@ -137,27 +138,22 @@ class SegmentationPanel extends Panel {
     }
     
     init() {
-        function init_() {
-            this.segmenter.init();
-            let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
-            // change the coordinate system to fit the thumbnail
-            let lines = this.part.lines.map(l => { return {
-                pk: l.pk,
-                baseline: l.baseline?l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]):null,
-                mask: l.mask?l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio]):null
-            }});
-            let regions = this.part.blocks.map(b => { return {
-                pk: b.pk,
-                box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
-            }});
-            this.segmenter.load({
-                lines: lines, regions: regions
-            });
-            this.bindZoom();
-        }
-        
-        if (this.$img.get(0).complete) init_.bind(this)();
-        else this.$img.on('load', init_.bind(this));
+        this.segmenter.init();
+        let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
+        // change the coordinates ratio to fit the thumbnail
+        let lines = this.part.lines.map(l => { return {
+            pk: l.pk,
+            baseline: l.baseline?l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]):null,
+            mask: l.mask?l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio]):null
+        };});
+        let regions = this.part.blocks.map(b => { return {
+            pk: b.pk,
+            box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
+        };});
+        this.segmenter.load({
+            lines: lines, regions: regions
+        });
+        this.bindZoom();
     }
     
     load(part) {
@@ -168,10 +164,19 @@ class SegmentationPanel extends Panel {
         } else {
             this.$img.attr('src', this.part.image.uri);
         }
-        this.init();
+        if (this.opened) {
+            if (this.$img.get(0).complete) { this.init(); }
+            else { this.$img.on('load', this.init.bind(this)); }
+        }
+        this.loaded = true;
     }
 
-    onShow() {}
+    onShow() {
+        if (this.loaded) {
+            if (this.$img.get(0).complete) { this.init(); }
+            else { this.$img.on('load', this.init.bind(this)); }
+        }
+    }
 
     convertPolygon(poly, ratio) {
         return poly.map(pt => [Math.round(pt[0]*ratio),

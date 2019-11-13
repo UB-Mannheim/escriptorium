@@ -78,3 +78,21 @@ To disable celery you can set `CELERY_TASK_ALWAYS_EAGER = True`
 > $ cd app && python manage.py runserver  
   
 The website should be accessible at http://localhost:8000/  
+
+
+## Running tests
+
+Simply run  
+> $ python manage.py test  
+
+To run the tests for a single app  
+> $ python manage.py test api  
+  
+Or a single test (example)  
+> $ python manage.py test api.tests.DocumentViewSetTestCase.test_list  
+  
+Coverage  
+> $ coverage run --omit=*/env/* manage.py test  
+> $ coverage report -m  
+
+

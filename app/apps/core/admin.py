@@ -26,7 +26,7 @@ class ScriptAdmin(admin.ModelAdmin):
     list_filter = ['text_direction']
 
 class OcrModelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'job', 'owner', 'script']
+    list_display = ['name', 'job', 'owner', 'script', 'training']
     
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)

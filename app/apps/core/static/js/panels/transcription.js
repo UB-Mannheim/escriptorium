@@ -1,9 +1,3 @@
-/*
-TODO:
-recalculate the line height on polygon update
-
-*/
-
 'use strict';
 var currentLine = null;
 var my_zone = moment.tz.guess();
@@ -13,7 +7,14 @@ class TranscriptionLine {
     constructor (line, panel) {
         this.pk = line.pk;
         this.mask = line.mask;
-        this.baseline = line.baseline;
+        
+        if (line.baseline && line.baseline.length > 1) {
+            this.baseline = line.baseline;
+        } else {
+            console.log('Warning: baseline for #'+(line.order+1)+'('+line.pk+') is invalid, creating a fake one!');
+            this.baseline = this.make_fake_baseline();
+        }
+        
         this.order = line.order;
         
         this.editing = false;
@@ -22,7 +23,7 @@ class TranscriptionLine {
         this.page = document.getElementById('part-trans');
         
         this.api = this.panel.api + 'transcriptions/';
-
+        
         // copy template
         let tmp = document.getElementById('line-template');
         let newNode = tmp.cloneNode(true);
@@ -33,15 +34,15 @@ class TranscriptionLine {
         this.element = newNode;
         this.panel.content.appendChild(newNode);
         this.element.classList.add('trans-box');
-
+        
         this.polyElement = polyElement;
         this.textElement = textElement;
         this.pathElement = pathElement;
         this.pathElement.setAttribute('id', 'textPath'+this.pk);
-        
-        this.update(line);
-        this.setText();
 
+        this.makeShape();
+        this.setText();
+        
         this.element.setAttribute('pointer-events', 'visible');  // allows to click inside fill='none' elements
         this.element.addEventListener('mouseover', function(ev) {
             this.showOverlay();
@@ -56,24 +57,26 @@ class TranscriptionLine {
 
     makeShape() {
         var ratio = this.panel.getRatio();
+        
         function ptToStr(pt) {
             return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
         }
-
-        if (this.mask) {
+        
+        if (this.mask && this.mask.length > 2) {
             let poly = this.mask.flat(1).map(pt => Math.round(pt*ratio));
             this.polyElement.setAttribute('points', poly);
 
             var area = 0;
             // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n), 
-            for (let i=0; i<this.mask.length; i++) {
-                let j = (i+1)%this.mask.length; // loop back to 1
-                area += this.mask[i][0]*this.mask[j][1] - this.mask[j][0]*this.mask[i][1];
+            for (let i=0; i<poly.length; i++) {
+                let j = (i+1) % poly.length; // loop back to 1
+                area += poly[i][0]*poly[j][1] - poly[j][0]*poly[i][1];
             }
             area = Math.abs(area*ratio/2);
         }
+
         var path;
-        if (this.baseline) {
+        if (this.baseline && this.baseline.length > 1) {
             path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
         } else {
             // create a fake path based on the mask
@@ -90,6 +93,25 @@ class TranscriptionLine {
         }
         lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
         this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
+    }
+
+    make_fake_baseline() {
+        function distance (pt1, pt2) {
+            let a = pt1[0]-pt2[0];
+            let b = pt1[1]-pt2[1];
+            return Math.sqrt(a*a+b*b);
+        }
+        
+        // strategy is to find the longest segment and use that
+        let largest = null;
+        for (let i=0; i<this.mask.length; i++) {
+            for (let j=1; i<this.mask.length; i++) {
+                if (!largest || distance(this.mask[i], this.mask[j]) > distance(largest[0], largest[1])) {
+                    largest = [this.mask[i], this.mask[j]];
+                }
+            }
+        }
+        return largest;
     }
     
     reset() {
@@ -128,7 +150,9 @@ class TranscriptionLine {
     
     setText() {
         let content = this.getText();
+        
         this.textElement.querySelector('textPath').textContent = content;
+        
         if (content) {
             this.polyElement.setAttribute('stroke', 'none');
             this.pathElement.setAttribute('stroke', 'none');
@@ -148,10 +172,8 @@ class TranscriptionLine {
         if (currentLine) currentLine.editing = false;
         this.editing = true;
         this.showOverlay();
-
         var content = this.getText();
         currentLine = this;
-
         // Pagination
         let prevBtn = document.querySelector("#trans-modal #prev-btn");
         let nextBtn = document.querySelector("#trans-modal #next-btn");
@@ -159,12 +181,19 @@ class TranscriptionLine {
         else { prevBtn.disabled = false; }
         if (this.order == (this.panel.lines.length-1)) { nextBtn.disabled = true; }
         else { nextBtn.disabled = false; }
-
+        
         $('#trans-modal').modal('show');
         
         let modalImgContainer = document.querySelector('#modal-img-container');
         let img = modalImgContainer.querySelector('img#line-img');
-        let bounds = this.polyElement.getBBox();
+
+        let bounds;
+        if (this.mask && this.mask.length > 1) {
+            bounds = this.polyElement.getBBox();
+        } else {
+            bounds = this.pathElement.getBBox();
+        }
+        
         let panelToImgRatio = this.panel.$panel.width() / img.width;
         let panelToTransRatio = modalImgContainer.getBoundingClientRect().width / bounds.width;
 
@@ -187,11 +216,13 @@ class TranscriptionLine {
         // Overlay
         let overlay = modalImgContainer.querySelector('.overlay');
         let coordToTransRatio = this.panel.part.image.size[0] / img.width;
-        let polygon = this.mask.map(pt => {
-            return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
-                   Math.round(pt[1]/coordToTransRatio-top+context);
-        }).join(',');
-        overlay.querySelector('polygon').setAttribute('points', polygon);
+        if (this.mask) {
+            let polygon = this.mask.map(pt => {
+                return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
+                    Math.round(pt[1]/coordToTransRatio-top+context);
+            }).join(',');
+            overlay.querySelector('polygon').setAttribute('points', polygon);
+        }
 
         // Content input
         let input = document.querySelector('#trans-modal #trans-input');
@@ -243,33 +274,36 @@ class TranscriptionLine {
     }
 
     addVersionLine(version) {
-        // var $container = document.querySelector('#trans-modal > #history tbody');
-        // var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
-        // date = date.substring(0, 23) + date.substring(26);
-        // var $version = $('<tr id="rev-'+version.revision+'">'+
-        //                  '<th class="js-version-content w-75">'+version.data.content+'</th>'+
-        //                  '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
-        //                  '<td class="js-version-date" data-date="'+date+'"></td>'+
-        //                  '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
-        //                       '<i class="fas fa-file-upload"></i></button></td>'+
-        //                  '</tr>');
-        // var $date = $('.js-version-date', $version);
-        // var mom = moment.tz($date.data('date'), my_zone);
-        // $date.html(mom.fromNow());
-        // $date.attr('title', "Last changed: "+mom.format('LLLL'));
-        // $container.prepend($version);
+        var container = document.querySelector('#trans-modal #history tbody');
+        var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
+        date = date.substring(0, 23) + date.substring(26);
+        var $version = $('<tr id="rev-'+version.revision+'">'+
+                         '<th class="js-version-content w-75">'+version.data.content+'</th>'+
+                         '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
+                         '<td class="js-version-date" data-date="'+date+'"></td>'+
+                         '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
+                              '<i class="fas fa-file-upload"></i></button></td>'+
+                         '</tr>');
+        var $date = $('.js-version-date', $version);
+        var mom = moment.tz($date.data('date'), my_zone);
+        $date.html(mom.fromNow());
+        $date.attr('title', "Last changed: "+mom.format('LLLL'));
+        $(container).prepend($version);
     }
     
     pushVersion() {
-        // var lt = this.getLineTranscription();
-        // var uri = this.api + lt.pk + '/new_version/';
-        // $.post(uri, {}).done($.proxy(function(data) {
-        //     $('#no-versions').hide();
-        //     // this.getLineTranscription().versions.splice(0, 0, data);
-        //     this.addVersionLine(data);
-        // }, this)).fail(function(data) {
-        //     alert(data);
-        // });
+        /*
+          Save the current content of the transcription into the history
+          Note: not the content of the input, the actual db content!
+         */
+        var lt = this.getLineTranscription();
+        var uri = this.api + lt.pk + '/new_version/';
+        $.post(uri, {}).done($.proxy(function(data) {
+            $('#no-versions').hide();
+            this.addVersionLine(data);
+        }, this)).fail(function(data) {
+            alert(data);
+        });
     }
     
     save() {
@@ -330,19 +364,15 @@ class TranscriptionPanel extends Panel {
         let dts = document.querySelector('#document-transcriptions');
         if (dts) dts.addEventListener('change', function(ev) {
             this.selectedTranscription = document.querySelector('#document-transcriptions').value;
-            // for (var i=0; i<this.lines.length; i++) {
-            //     this.lines[i].reset();
-            // }
             let data = {};
             data[DOCUMENT_ID] = this.selectedTranscription;
             this.loadTranscriptions();
             userProfile.set('initialTranscriptions', data);
         }.bind(this));
 
-        // TODO!
-        // $("#trans-modal").draggable({
-        //     handle: ".modal-header"
-        // });
+        $("#trans-modal").draggable({
+            handle: ".modal-header"
+        });
         document.querySelector("#trans-modal").addEventListener('hide.bs.modal', function(ev) {
             currentLine.editing = false;
             $('.panel .overlay').fadeOut({queue:false});

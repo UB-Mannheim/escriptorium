@@ -15,7 +15,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 from easy_thumbnails.files import get_thumbnailer
 
 from versioning.models import NoChangeException
-from core.models import Document, DocumentPart
+from core.models import Document, DocumentPart, ProcessFailureException
 from core.forms import *
 from imports.forms import ImportForm, ExportForm
 

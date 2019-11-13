@@ -47,12 +47,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
-        self.current_import = (self.document.documentimport_set
-                               .filter(workflow_state__in=[
-                                   DocumentImport.WORKFLOW_STATE_ERROR,
-                                   DocumentImport.WORKFLOW_STATE_STARTED,
-                                   DocumentImport.WORKFLOW_STATE_CREATED])
-                               .order_by('started_on').last())
+        self.current_import = self.document.documentimport_set.order_by('started_on').last()
         super().__init__(*args, **kwargs)
     
     def clean_iiif_uri(self):
@@ -60,13 +55,16 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         
         if uri:
             try:
-                content = requests.get(uri).content
+                resp = requests.get(uri)
+                content = resp.content
                 buf = io.BytesIO(content)
                 buf.name = 'tmp.json'
                 parser = make_parser(self.document, buf)
                 parser.validate()
                 self.cleaned_data['total'] = parser.total
                 return content
+            except requests.exceptions.RequestException:
+                raise forms.ValidationError(_("The document is unreachable, unreadable or the host timed out."))
             except json.decoder.JSONDecodeError:
                 raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
             except ParseError as e:
@@ -74,7 +72,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 if len(e.args):
                     msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
-
+    
     def clean_upload_file(self):
         upload_file = self.cleaned_data.get('upload_file')
         if upload_file:
@@ -115,7 +113,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                     ContentFile(content))
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
-
+            
             imp.save()
             self.instance = imp
         return self.instance
@@ -147,8 +145,11 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         pks = json.loads(self.data.get('parts'))
         if len(pks) < 1:
             raise forms.ValidationError(_("Select at least one image to export."))
-        parts = DocumentPart.objects.filter(
-            document=self.document, pk__in=pks)
+        try:
+            parts = DocumentPart.objects.filter(
+                document=self.document, pk__in=pks)
+        except ValueError:
+            raise forms.ValidationError(_("Invalid part primary key."))
         return parts
 
     def stream(self):

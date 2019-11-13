@@ -1,4 +1,5 @@
 import itertools
+import logging
 
 from django.db.models import Prefetch, Count
 
@@ -12,7 +13,10 @@ from api.serializers import *
 from core.models import *
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
+from versioning.models import NoChangeException
 from users.consumers import send_event
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentViewSet(ModelViewSet):
@@ -49,13 +53,17 @@ class DocumentViewSet(ModelViewSet):
             current_import.cancel()
             return Response({'status': 'canceled'})
         else:
-            return Response({'status': 'already canceled'}, status=400)
+            return Response({'status': 'already stopped'}, status=400)
     
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
         document = self.get_object()
         model = document.ocr_models.filter(training=True).last()
-        model.cancel_training()
+        try:
+            model.cancel_training()
+        except Exception as e:
+            logger.exception(e)
+            return Response({'status': 'failed'}, status=400)
         return Response({'status': 'canceled'})
     
     @action(detail=True, methods=['post'])
@@ -155,6 +163,10 @@ class LineTranscriptionViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
-        lt.new_version()
-        lt.save()
-        return Response(lt.versions[0], status=status.HTTP_201_CREATED)
+        try:
+            lt.new_version()
+            lt.save()
+        except NoChangeException:
+            return Response({})
+        else:
+            return Response(lt.versions[0], status=status.HTTP_201_CREATED)

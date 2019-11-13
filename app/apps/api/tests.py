@@ -178,7 +178,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
             box=[0, 0, 10, 10],
             document_part=self.part,
             block=None)
-
+    
     # not used
     #def test_detail(self):
     #def test_list(self):
@@ -188,10 +188,10 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(17):
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
-                'box': '[10, 10, 50, 50]'
+                'baseline': '[[10, 10], [50, 50]]'
             })
         self.assertEqual(resp.status_code, 201)        
         
