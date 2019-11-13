@@ -165,18 +165,13 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
         
-        elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
-            content_type = 'text/xml'
-            extension = 'xml'
+        elif file_format == self.ALTO_FORMAT:
+
             filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
                                                 file_format,
                                                 datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
-            if file_format == self.PAGEXML_FORMAT:
-                tplt = loader.get_template('export/pagexml.xml')
-            else:
-                tplt = loader.get_template('export/alto.xml')
-
+            tplt = loader.get_template('export/alto.xml')
             with ZipFile(buff, 'w') as zip_:
                 for part in parts:
                     page = tplt.render({
@@ -189,7 +184,30 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                                      queryset=LineTranscription.objects.filter(
                                          transcription=transcription)))})
                     zip_.writestr('%s.xml' % part.filename.split('.')[0], page)
-            # TODO: add METS file
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            # TODO: add METS file
             return response
+
+        elif file_format == self.PAGEXML_FORMAT:
+            filename = "export_%s_%s_%s.xml" % (slugify(self.document.name).replace('-', '_'),
+                                            file_format,
+                                            datetime.now().strftime('%Y%m%d%H%M'))
+            tplt = loader.get_template('export/pagexml.xml')
+
+            for part in parts:
+                page = tplt.render({
+                    'part': part,
+                    'lines': part.lines
+                    .order_by('block__order', 'order')
+                    .prefetch_related(
+                        Prefetch('transcriptions',
+                                 to_attr='transcription',
+                                 queryset=LineTranscription.objects.filter(
+                                     transcription=transcription)))})
+                with open('%s.xml' % part.filename.split('.')[0], 'w') as f:
+                    f.write(page)
+                    response = HttpResponse(page, content_type='text/xml')
+                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+                    return response
+
