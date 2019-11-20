@@ -159,7 +159,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     def _draw_progressbar(*args, **kwargs):
         print('progress', args, kwargs)
-    
+
     try:
         model = OcrModel.objects.get(pk=model_pk)
         modelpath = model.file.path
@@ -167,14 +167,13 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
         # nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
-        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
-    
+        upload_to = model.file.field.upload_to(model, '')
+        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to, model.name + '.mlmodel')
+        model.file = modelpath
     try:
         model.training = True
         model.save()
         document = model.document
-        
         send_event('document', document.pk, "training:start", {
             "id": model.pk,
         })
@@ -209,7 +208,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         
         if 'accuracy' not in  nn.user_metadata:
             nn.user_metadata['accuracy'] = []
-            
+        
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
         st_it = EarlyStopping(None, 5)
         trainer = KrakenTrainer(model=nn,
@@ -225,7 +224,6 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.mkdir(os.path.split(modelpath)[0])
-        
         trainer.run(_print_eval, _draw_progressbar)
         nn.save_model(path=modelpath)
         
@@ -418,7 +416,7 @@ def train_(qs, document, transcription, model=None, user=None):
     def _progress(*args, **kwargs):
         logger.debug('progress', args, kwargs)
     
-    def _print_eval(epoch=0, accuracy=0, chars=0, error=0):
+    def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy

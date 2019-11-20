@@ -579,7 +579,7 @@ class DocumentPart(OrderedModel):
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
-                options['model'] = model
+                options['model'] = model.file.path
             else:
                 options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
             blocks = self.blocks.all()
@@ -818,7 +818,8 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
-    return 'models/%d/%s' % (instance.pk, slugify(filename))
+    fn, ext = os.path.splitext(filename)
+    return 'models/%d/%s.%s' % (instance.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):    

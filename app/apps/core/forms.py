@@ -216,8 +216,11 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                 document=self.parts[0].document,
                 owner=self.user,
                 name=data['upload_model'].name,
-                file=data['upload_model'],
                 job=model_job)
+            # Note: needs to save the file in a second step because the path needs the db PK
+            model.file=data['upload_model']
+            model.save()
+            
         elif data.get('new_model'):
             # file will be created by the training process
             model = OcrModel.objects.create(
