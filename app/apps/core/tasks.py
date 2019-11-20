@@ -167,8 +167,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
         # nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
-        upload_to = model.file.field.upload_to(model, '')
-        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to, model.name + '.mlmodel')
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
         model.file = modelpath
     try:
         model.training = True
@@ -223,6 +223,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                                 evaluator=baseline_label_evaluator_fn)
         
         if not os.path.exists(os.path.split(modelpath)[0]):
+
             os.mkdir(os.path.split(modelpath)[0])
         trainer.run(_print_eval, _draw_progressbar)
         nn.save_model(path=modelpath)
