@@ -131,7 +131,7 @@ class TranscriptionLine {
             let ratio = this.panel.getRatio();
             let polygon = this.mask.map(pt => Math.round(pt[0]*ratio)+ ' '+Math.round(pt[1]*ratio)).join(',');
             $('.panel .overlay polygon').attr('points', polygon);
-            $('.panel .overlay').stop(true).fadeIn(0.2);
+            $('.panel .overlay').stop(true).fadeIn(0.2, function() {$(this).css('opacity', 1);});
         }
     }
     
