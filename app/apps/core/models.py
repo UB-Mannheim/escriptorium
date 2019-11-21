@@ -735,7 +735,7 @@ class Line(OrderedModel):  # Versioned,
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
-    block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
+    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'

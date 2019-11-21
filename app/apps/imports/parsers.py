@@ -410,6 +410,7 @@ class PagexmlParser(ParserDocument, XMLParser):
                                     block_.full_clean()
                                 except ValidationError as e:
                                     raise ParseError(e)
+                                block_.save()
 
                         for line in block.findall('TextLine', self.root.nsmap):
                             id_ = line.get('id')
