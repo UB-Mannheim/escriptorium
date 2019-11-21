@@ -682,17 +682,15 @@ class DocumentPart(OrderedModel):
 
 
 def validate_polygon(value):
+    if value is None:
+        return
     try:
         value[0][0]
-    except (TypeError, KeyError):
+    except (TypeError, KeyError, IndexError):
         raise ValidationError(
             _('%(value)s is not a polygon - a 2 dimensional array.'),
             params={'value': value})
-    if len(value) < 3:
-        raise ValidationError(
-            _("%(value)s doesn't have the required 3 points to form a polygon."),
-            params={'value': value})
-    
+
 
 class Block(OrderedModel, models.Model):
     """
