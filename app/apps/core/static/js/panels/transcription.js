@@ -78,10 +78,6 @@ class TranscriptionLine {
         var path;
         if (this.baseline && this.baseline.length > 1) {
             path = 'M '+this.baseline.map(pt => ptToStr(pt)).join(' L ');
-        } else {
-            // create a fake path based on the mask
-            if (READ_DIRECTION == 'rtl') path = 'M '+ptToStr(this.mask[2])+' T '+ptToStr(this.mask[1]);
-            else path = 'M '+ptToStr(this.mask[1])+' T '+ptToStr(this.mask[2]);
         }
         
         this.pathElement.setAttribute('d', path);
@@ -96,22 +92,11 @@ class TranscriptionLine {
     }
 
     make_fake_baseline() {
-        function distance (pt1, pt2) {
-            let a = pt1[0]-pt2[0];
-            let b = pt1[1]-pt2[1];
-            return Math.sqrt(a*a+b*b);
-        }
-        
-        // strategy is to find the longest segment and use that
-        let largest = null;
-        for (let i=0; i<this.mask.length; i++) {
-            for (let j=1; i<this.mask.length; i++) {
-                if (!largest || distance(this.mask[i], this.mask[j]) > distance(largest[0], largest[1])) {
-                    largest = [this.mask[i], this.mask[j]];
-                }
-            }
-        }
-        return largest;
+        // create a fake path based on the mask,
+        // right most point to left most, in case of tie, choose the bottom most
+        var min = this.mask.reduce((minPt, curPt) => (curPt[0] <= minPt[0]) ? (curPt[1]>=minPt[1]?curPt:minPt) : minPt);
+        var max = this.mask.reduce((maxPt, curPt) => (curPt[0] >= maxPt[0]) ? (curPt[1]>=maxPt[1]?curPt:maxPt) : maxPt);
+        return [min, max];
     }
     
     reset() {
