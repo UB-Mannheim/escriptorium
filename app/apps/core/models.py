@@ -710,15 +710,36 @@ class Block(OrderedModel, models.Model):
     
     class Meta(OrderedModel.Meta):
         pass
-    
+
+    class Meta(OrderedModel.Meta):
+        pass
+
+    # returns the box to [xmin,ymin,xmax,ymax] to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto
+    @property
+    def alto_box(self):
+        return [*map(min, *self.box), *map(max, *self.box)]
+
     @property
     def width(self):
-        return self.box[2] - self.box[0]
-    
+        return self.alto_box[2] - self.alto_box[0]
+
     @property
     def height(self):
-        return self.box[3] - self.box[1]
-    
+        return self.alto_box[3] - self.alto_box[1]
+
+    @property
+    def hpos(self):
+        return self.alto_box[0]
+
+    @property
+    def vpos(self):
+        return self.alto_box[1]
+
+    # coordinates in <TextRegion>
+    @property
+    def box_coordinates(self):
+        return ' '.join(','.join(map(str, pt)) for pt in self.box)
+
     def make_external_id(self):
         return self.external_id or 'eSc_textblock_%d' % self.pk
 
