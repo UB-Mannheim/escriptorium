@@ -9,6 +9,7 @@ import zipfile
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.forms import ValidationError
 from django.utils.translation import gettext as _
 from django.utils.functional import cached_property
 
@@ -92,7 +93,7 @@ class ZipParser(ParserDocument):
     
     def parse(self, start_at=0, override=False, user=None):
         with zipfile.ZipFile(self.file) as zfh:
-            for index, finfo in enumerate(zfh.infolist()):                
+            for index, finfo in enumerate(zfh.infolist()):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
@@ -171,14 +172,22 @@ class AltoParser(ParserDocument,XMLParser):
                             block_ = Block(**attrs)
 
                         try:
-                            block_.box = [int(block.get('HPOS')),
-                                          int(block.get('VPOS')),
-                                          int(block.get('HPOS')) + int(block.get('WIDTH')),
-                                          int(block.get('VPOS')) + int(block.get('HEIGHT'))]
+                            x = int(block.get('HPOS'))
+                            y = int(block.get('VPOS'))
+                            w = int(block.get('WIDTH'))
+                            h = int(block.get('HEIGHT'))
+                            block_.box = [[x, y],
+                                          [x+w, y],
+                                          [x+w, y+h],
+                                          [x, y+h]]
                         except TypeError:
                             # probably a dummy block from another app
                             block_ = None
                         else:
+                            try:
+                                block_.full_clean()
+                            except ValidationError as e:
+                                raise ParseError(e)
                             block_.save()
 
                     for line in block.findall('TextLine', self.root.nsmap):
@@ -198,11 +207,20 @@ class AltoParser(ParserDocument,XMLParser):
                             line_ = Line(**attrs)
                         baseline = line.get('BASELINE')
                         if baseline is not None:
+                            # sometimes baseline is just a single number,
+                            # an offset maybe it's not super clear
                             try:
-                                line_.baseline = [list(map(int, pt.split(',')))
-                                                  for pt in baseline.split(' ')]
+                                int(baseline)
                             except ValueError:
-                                logger.warning('Invalid baseline %s' % baseline)
+                                # it's an expected polygon
+                                try:
+                                    line_.baseline = [list(map(int, pt.split(',')))
+                                                      for pt in baseline.split(' ')]
+                                except ValueError:
+                                    logger.warning('Invalid baseline %s' % baseline)
+
+                            else:
+                                line_.baseline = None
                         
                         polygon = line.find('Shape/Polygon', self.root.nsmap)
                         if polygon is not None:
@@ -216,6 +234,10 @@ class AltoParser(ParserDocument,XMLParser):
                                          int(line.get('VPOS')),
                                          int(line.get('HPOS')) + int(line.get('WIDTH')),
                                          int(line.get('VPOS')) + int(line.get('HEIGHT'))]
+                        try:
+                            line_.full_clean()
+                        except ValidationError as e:
+                            raise ParseError(e)
                         line_.save()
                         content = ' '.join([e.get('CONTENT')
                                             for e in line.findall('String', self.root.nsmap)])
@@ -384,6 +406,10 @@ class PagexmlParser(ParserDocument, XMLParser):
                                 # probably a dummy block from another app
                                 block_ = None
                             else:
+                                try:
+                                    block_.full_clean()
+                                except ValidationError as e:
+                                    raise ParseError(e)
                                 block_.save()
 
                         for line in block.findall('TextLine', self.root.nsmap):
@@ -415,7 +441,10 @@ class PagexmlParser(ParserDocument, XMLParser):
                             if polygon is not None:
                                 line_.mask = [list(map(int, pt.split(',')))
                                               for pt in polygon.get('points').split(' ')]
-
+                            try:
+                                line_.full_clean()
+                            except ValidationError as e:
+                                raise ParseError(e)
                             line_.save()
                             words = line.findall('Word', self.root.nsmap)
                             # pagexml can have content for each word inside a word tag or the whole line in textline tag

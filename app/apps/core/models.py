@@ -16,6 +16,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.files.storage import FileSystemStorage
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
+from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -680,14 +681,28 @@ class DocumentPart(OrderedModel):
         return tasks
 
 
+def validate_polygon(value):
+    try:
+        value[0][0]
+    except (TypeError, KeyError):
+        raise ValidationError(
+            _('%(value)s is not a polygon - a 2 dimensional array.'),
+            params={'value': value})
+    if len(value) < 3:
+        raise ValidationError(
+            _("%(value)s doesn't have the required 3 points to form a polygon."),
+            params={'value': value})
+    
+
 class Block(OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic 
     example: a paragraph, a margin note or floating text
     """
     # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField()
-    typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
+    box = JSONField(validators=[validate_polygon])
+    typology = models.ForeignKey(Typology, null=True, blank=True,
+                                 on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_BLOCK})
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
                                       related_name='blocks')
@@ -736,12 +751,12 @@ class Line(OrderedModel):  # Versioned,
     Represents a segmented line from a DocumentPart
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
-    mask = JSONField(null=True)  # Closed Polygon: [[x1, y1], [x2, y2], ..]
-    baseline = JSONField(null=True)  # Polygon: [[x1, y1], [x2, y2], ..]
+    mask = JSONField(null=True, blank=True, validators=[validate_polygon])  # Closed Polygon: [[x1, y1], [x2, y2], ..]
+    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])  # Polygon: [[x1, y1], [x2, y2], ..]
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
-    block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
+    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'
