@@ -708,41 +708,24 @@ class Block(OrderedModel, models.Model):
 
     @property
     def width(self):
-        try:
-            return self.box[2] - self.box[0]
-        except TypeError:
-            return self.alto_box[2] - self.alto_box[0]
+        return self.alto_box[2] - self.alto_box[0]
 
     @property
     def height(self):
-        try:
-            return self.box[3] - self.box[1]
-        except TypeError:
-            return self.alto_box[3] - self.alto_box[1]
+        return self.alto_box[3] - self.alto_box[1]
 
     @property
     def hpos(self):
-        if (isinstance(self.box[0], int)):
-            return self.box[0]
-        else:
-            return self.alto_box[0]
+        return self.alto_box[0]
 
     @property
     def vpos(self):
-        if (isinstance(self.box[1], int)):
-            return self.box[1]
-        else:
-            return self.alto_box[1]
+        return self.alto_box[1]
 
     # coordinates in <TextRegion>
     @property
     def box_coordinates(self):
-
-        if isinstance(self.box[0], int):
-            return "{},{} {},{} {},{} {},{}".format(self.box[0], self.box[1], self.box[0], self.box[3], self.box[2],
-                                                    self.box[3], self.box[2], self.box[1])
-        else:
-            return ' '.join(','.join(map(str, pt)) for pt in self.box)
+        return ' '.join(','.join(map(str, pt)) for pt in self.box)
 
     def make_external_id(self):
         return self.external_id or 'eSc_textblock_%d' % self.pk
