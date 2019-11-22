@@ -82,6 +82,16 @@ class ZipParser(ParserDocument):
             with zipfile.ZipFile(self.file) as zfh:
                 if zfh.testzip() is not None:
                     raise ParseError(_("File appears to not be a valid zip."))
+                for i,finfo in enumerate(zfh.infolist()):
+                    with zfh.open(finfo) as zipedfh:
+                        try:
+                            root = etree.parse(zipedfh).getroot()
+                        except etree.XMLSyntaxError as e:
+                            raise ParseError(e.msg)
+                        try:
+                            schema = root.nsmap[None]
+                        except KeyError:
+                            raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
         except:
             raise ParseError(_("Zip file appears to be corrupted."))
     
@@ -97,7 +107,7 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    alto_parser = AltoParser(self.document, zipedfh)
+                    alto_parser = make_parser(self.document, zipedfh)
                     try:
                         alto_parser.validate()
                         part = alto_parser.parse(override=override)
@@ -356,7 +366,7 @@ class PagexmlParser(ParserDocument, XMLParser):
 
     def parse(self, start_at=0, override=False, user=None):
         parts = []
-        if not self.root:
+        if self.root is not None:
             self.root = etree.parse(self.file).getroot()
         # pagexml file can contain multiple parts
         for page in self.root.findall('Page', self.root.nsmap):
@@ -481,20 +491,20 @@ def make_parser(document, file_handler, name=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
-        try:
-            root = etree.parse(file_handler).getroot()
-            file_handler.seek(0)  # not ideal but validation needs to read it again.
-        except etree.XMLSyntaxError as e:
-            raise ParseError(e.msg)
-        try:
-            schema = root.nsmap[None]
-        except KeyError:
-            raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
-        # if 'abbyy' in schema:  # Not super robust
-        #     return AbbyyParser(root, name=name)
-        if 'alto' in schema:
+        # try:
+        #     root = etree.parse(file_handler).getroot()
+        #     file_handler.seek(0)  # not ideal but validation needs to read it again.
+        # except etree.XMLSyntaxError as e:
+        #     raise ParseError(e.msg)
+        # try:
+        #     schema = root.nsmap[None]
+        # except KeyError:
+        #     raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
+        # # if 'abbyy' in schema:  # Not super robust
+        # #     return AbbyyParser(root, name=name)
+        if b'alto' in file_handler.read():
             return AltoParser(document, file_handler, transcription_name=name)
-        elif 'PAGE' in schema:
+        elif b'PcGts' in file_handler.read():
             return PagexmlParser(document, file_handler, transcription_name=name)
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
