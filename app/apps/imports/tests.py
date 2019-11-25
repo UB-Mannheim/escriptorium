@@ -8,10 +8,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from imports.models import DocumentImport
-from imports.parsers import ParseError
+from imports.parsers import AltoParser
 from core.models import *
 from core.tests.factory import CoreFactoryTestCase 
-    
+
 
 class XmlImportTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -186,7 +186,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(self.part1.lines.count(), 3)
 
     def test_override(self):
-        trans = Transcription.objects.create(name="Alto Import", document=self.document)
+        trans = Transcription.objects.create(name=AltoParser.DEFAULT_NAME, document=self.document)
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l, content="test history")
@@ -224,32 +224,30 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
 
     def test_pagexml_single_no_match(self):
-        self.part1.original_filename = 'temp'
-        self.part1.save()
+
+        self.part3.original_filename = 'temp'
+        self.part3.save()
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'pagexml_test.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(11):
+            with self.assertNumQueries(12):
                 # with self.assertRaises(ParseError):  # doesn't work?!
-                response = self.client.post(uri, {
-                    'upload_file': SimpleUploadedFile(filename, fh.read())
-                })
+
+                response = self.client.post(uri, {'upload_file': SimpleUploadedFile(filename, fh.read())})
                 # Note: the ParseError is raised by the processing of the import, not the validation!
                 # the error is sent via websocket so no need to catch it here
                 self.assertEqual(response.status_code, 200)
 
         # failed, didn't create anythng
-        self.assertEqual(self.part1.blocks.count(), 0)
-        self.assertEqual(self.part1.lines.count(), 0)
-
+        self.assertEqual(self.part3.blocks.count(), 0)
+        self.assertEqual(self.part3.lines.count(), 0)
         # import was created since the form validated
         imp = DocumentImport.objects.first()
         self.assertTrue(imp.error_message, 'No match found')
-
-        self.part1.original_filename = 'test1.png'
-        self.part1.save()
+        self.part3.original_filename = 'test3.png'
+        self.part3.save()
 
     def test_parse_pagexml(self):
         trans = Transcription.objects.create(name="test import", document=self.document)
@@ -314,7 +312,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         
         self.assertEqual(imp.workflow_state, imp.WORKFLOW_STATE_DONE)
         self.assertEqual(imp.processed, 5)
-        self.assertEqual(self.document.parts.count(), 7)  # +2 from factory
+        self.assertEqual(self.document.parts.count(), 8)  # +2 from factory # change 7 by 8 i addedpart 3 manuallly
     
     def test_cancel(self):
         # Note: not actually testing celery's revoke
