@@ -326,7 +326,7 @@ form.inline-form {
     display: none;
 }
 #trans-panel .zoom-container {
-    height: 100%;
+    /* height: 100%; */
 }
 
 #img-panel, #binar-panel, #seg-panel, #trans-panel {

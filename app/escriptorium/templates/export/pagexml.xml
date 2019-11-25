@@ -8,7 +8,7 @@
 	<Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
         {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
             <TextRegion {% if line.block %}id="{{ line.block.make_external_id }}">
-               <Coords points="{% for pt in line.block.box %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
+               <Coords points="{{ line.block.box_coordinates }}"/>
         {% endif%}
         {% endifchanged %}
         <TextLine id="{{ line.make_external_id }}">

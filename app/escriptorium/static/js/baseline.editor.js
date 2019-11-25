@@ -215,7 +215,7 @@ class SegmenterLine {
     updateDataFromCanvas() {
         let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
-        if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        if (this.maskPath.segments.length) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
             this.segmenter.trigger('baseline-editor:update-line', {line: this, previous:previous});
         }

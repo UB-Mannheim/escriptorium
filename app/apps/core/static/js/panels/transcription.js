@@ -452,11 +452,13 @@ class TranscriptionPanel extends Panel {
         }
         
         this.loadTranscriptions();
+        this.content.setAttribute('height', this.part.image.size[1] * this.getRatio());
         // this.refresh();
     }
     
     refresh() {
         if (this.opened) {
+            this.content.setAttribute('height', this.part.image.size[1] * this.getRatio());
             for (var i=0; i<this.lines.length; i++) {
                 this.lines[i].reset();
             }
