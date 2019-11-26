@@ -1,5 +1,5 @@
-kombu==4.2.2.post1
-celery==4.2.1
+git+https://github.com/celery/kombu.git
+git+https://github.com/celery/celery.git
 Pillow==5.4.1
 Django==2.1.4
 redis==3.2.1

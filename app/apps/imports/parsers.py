@@ -55,12 +55,6 @@ class ParserDocument():
 
 class XMLParser:
 
-    def __init__(self, document,file_handler, root, transcription_name=None):
-        self.root = root
-        self.document = document
-        self.file = file_handler
-        self.name = transcription_name or self.DEFAULT_NAME
-
     def validate(self):
         try:
             # response = requests.get(self.SCHEMA)
@@ -129,12 +123,18 @@ class ZipParser(ParserDocument):
 
 
 
-class AltoParser(XMLParser, ParserDocument):
+class AltoParser(ParserDocument,XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
 
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
     SCHEMA_FILE = 'alto-4-1-baselines.xsd'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.root = etree.parse(self.file).getroot()
+        except (AttributeError, etree.XMLSyntaxError) as e:
+            raise ParseError("Invalid XML. %s" % e.args[0])
 
     @property
     def total(self):
@@ -343,7 +343,7 @@ class IIIFManifestParser(ParserDocument):
             raise ParseError(e)
 
 
-class PagexmlParser(XMLParser, ParserDocument):
+class PagexmlParser(ParserDocument, XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
@@ -351,6 +351,7 @@ class PagexmlParser(XMLParser, ParserDocument):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
+            self.root = etree.parse(self.file).getroot()
             #  Transkribus file vaidate it with Transkribus schema
             if b'/pagecontent/2013' in etree.tostring(self.root):
                 self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
@@ -360,8 +361,8 @@ class PagexmlParser(XMLParser, ParserDocument):
     @property
     def total(self):
         # pagexml file can contain multiple parts
-        # if not self.root:
-        #     self.root = etree.parse(self.file).getroot()
+        if not self.root:
+            self.root = etree.parse(self.file).getroot()
         return len(self.root.findall('Page', self.root.nsmap))
 
     def parse(self, start_at=0, override=False, user=None):
@@ -491,21 +492,20 @@ def make_parser(document, file_handler, name=None):
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
         try:
-            doc = etree.parse(file_handler)
-            root = doc.getroot()
-            # file_handler.seek(0)  # not ideal but validation needs to read it again.
+            root = etree.parse(file_handler).getroot()
+            file_handler.seek(0)  # not ideal but validation needs to read it again.
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:
             schema = root.nsmap[None]
         except KeyError:
             raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
-        # # if 'abbyy' in schema:  # Not super robust
-        # #     return AbbyyParser(root, name=name)
+        # if 'abbyy' in schema:  # Not super robust
+        #     return AbbyyParser(root, name=name)
         if 'alto' in schema:
-            return AltoParser(document,file_handler, root, transcription_name=name)
+            return AltoParser(document, file_handler, transcription_name=name)
         elif 'PAGE' in schema:
-            return PagexmlParser(document,file_handler, root, transcription_name=name)
+            return PagexmlParser(document, file_handler, transcription_name=name)
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
     elif ext == 'json':
