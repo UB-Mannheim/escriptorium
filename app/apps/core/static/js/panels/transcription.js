@@ -259,7 +259,8 @@ class TranscriptionLine {
     }
 
     addVersionLine(version) {
-        var container = document.querySelector('#trans-modal #history tbody');
+        var modal = document.querySelector('#trans-modal');
+        var container = modal.querySelector('#history tbody');
         var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
         date = date.substring(0, 23) + date.substring(26);
         var $version = $('<tr id="rev-'+version.revision+'">'+
@@ -274,6 +275,12 @@ class TranscriptionLine {
         $date.html(mom.fromNow());
         $date.attr('title', "Last changed: "+mom.format('LLLL'));
         $(container).prepend($version);
+        
+        var line = $version.get(0);
+        line.querySelector('.js-pull-state').addEventListener('click', function(ev) {
+            ev.preventDefault();
+            modal.querySelector('#trans-input').value = line.querySelector('.js-version-content').textContent;
+        }.bind(this));
     }
     
     pushVersion() {
@@ -286,8 +293,8 @@ class TranscriptionLine {
         $.post(uri, {}).done($.proxy(function(data) {
             $('#no-versions').hide();
             this.addVersionLine(data);
-        }, this)).fail(function(data) {
-            alert(data);
+        }, this)).fail(function(response, data) {
+            alert(response.responseText);
         });
     }
     
@@ -355,24 +362,25 @@ class TranscriptionPanel extends Panel {
             userProfile.set('initialTranscriptions', data);
         }.bind(this));
 
-        $("#trans-modal").draggable({
+        var modal = document.getElementById('trans-modal');
+        $(modal).draggable({
             handle: ".modal-header"
         });
-        document.querySelector("#trans-modal").addEventListener('hide.bs.modal', function(ev) {
+        modal.addEventListener('hide.bs.modal', function(ev) {
             currentLine.editing = false;
             $('.panel .overlay').fadeOut({queue:false});
         });
-        document.querySelector("#trans-modal #prev-btn").addEventListener('click', function(ev) {
+        modal.querySelector("#prev-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order-1].edit();
         }.bind(this));
-        document.querySelector("#trans-modal #next-btn").addEventListener('click', function(ev) {
+        modal.querySelector("#next-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order+1].edit();
         }.bind(this));
-        document.querySelector('#trans-modal #new-version-btn').addEventListener('click', function (e, editor) {
+        modal.querySelector('#new-version-btn').addEventListener('click', function (e, editor) {
             currentLine.pushVersion();
             $('#history').addClass('show');
         }.bind());
-        document.querySelector('#trans-modal #save-btn').addEventListener('click', function (e, editor) {
+        modal.querySelector('#save-btn').addEventListener('click', function (e, editor) {
             currentLine.save();
             $('#trans-modal').modal('hide');
         }.bind());
@@ -393,13 +401,6 @@ class TranscriptionPanel extends Panel {
 	            saveAndContinue.bind(this)();
 	        }
 	    }.bind(this));
-
-        var pullBtn = document.querySelector('#trans-modal button.js-pull-state');
-        if (pullBtn) pullBtn.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            let tr = document.querySelector('tr#'+ev.target.attributes['data-rev']);
-            document.querySelector('#trans-modal #trans-input').value = tr.querySelector('.js-version-content').textContent;
-        }.bind(this));
                 
         if (this.opened) this.open();
     }

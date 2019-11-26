@@ -167,6 +167,6 @@ class LineTranscriptionViewSet(ModelViewSet):
             lt.new_version(author=request.user.username)
             lt.save()
         except NoChangeException:
-            return Response({'warning': 'No changes detected.'})
+            return Response({'warning': 'No changes detected.'}, status=400)
         else:
             return Response(lt.versions[0], status=status.HTTP_201_CREATED)
