@@ -255,7 +255,7 @@ THUMBNAIL_OPTIMIZE_COMMAND = {
     'jpeg': '/usr/bin/jpegoptim {filename}'
 }
 
-VERSIONING_DEFAULT_SOURCE = 'escriptorium'
+VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 IIIF_IMPORT_QUALITY = 'full'
 

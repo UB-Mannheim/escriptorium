@@ -11,7 +11,7 @@ class TranscriptionLine {
         if (line.baseline && line.baseline.length > 1) {
             this.baseline = line.baseline;
         } else {
-            console.log('Warning: baseline for #'+(line.order+1)+'('+line.pk+') is invalid, creating a fake one!');
+            // console.log('Warning: baseline for #'+(line.order+1)+'('+line.pk+') is invalid, creating a fake one!');
             this.baseline = this.make_fake_baseline();
         }
         
@@ -263,8 +263,8 @@ class TranscriptionLine {
         var date = version.updated_at.replace('T', ' ');  // makes it moment.js compliant
         date = date.substring(0, 23) + date.substring(26);
         var $version = $('<tr id="rev-'+version.revision+'">'+
-                         '<th class="js-version-content w-75">'+version.data.content+'</th>'+
-                         '<td>'+version.author+(version.source?'<br/>'+version.source:'')+'</td>'+
+                         '<th class="js-version-content w-50">'+version.data.content+'</th>'+
+                         '<td>'+version.author+(version.source?' ('+version.source+')':'')+'</td>'+
                          '<td class="js-version-date" data-date="'+date+'"></td>'+
                          '<td><button class="btn btn-sm btn-info js-pull-state" title="Load this state" data-rev="rev-'+version.revision+'">'+
                               '<i class="fas fa-file-upload"></i></button></td>'+
@@ -394,11 +394,12 @@ class TranscriptionPanel extends Panel {
 	        }
 	    }.bind(this));
 
-        // document.querySelector('#trans-modal .js-pull-state').addEventListener('click', function(ev) {
-        //     ev.preventDefault();
-        //     let tr = document.querySelector('tr#'+ev.target.attributes['data-rev']);
-        //     document.querySelector('#trans-modal #trans-input').value = tr.querySelector('.js-version-content', $tr).textContent;
-        // }.bind(this));
+        var pullBtn = document.querySelector('#trans-modal button.js-pull-state');
+        if (pullBtn) pullBtn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            let tr = document.querySelector('tr#'+ev.target.attributes['data-rev']);
+            document.querySelector('#trans-modal #trans-input').value = tr.querySelector('.js-version-content').textContent;
+        }.bind(this));
                 
         if (this.opened) this.open();
     }

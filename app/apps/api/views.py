@@ -164,9 +164,9 @@ class LineTranscriptionViewSet(ModelViewSet):
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
         try:
-            lt.new_version()
+            lt.new_version(author=request.user.username)
             lt.save()
         except NoChangeException:
-            return Response({})
+            return Response({'warning': 'No changes detected.'})
         else:
             return Response(lt.versions[0], status=status.HTTP_201_CREATED)
