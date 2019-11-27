@@ -72,7 +72,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(39):
+            with self.assertNumQueries(46):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -84,7 +84,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(imp.error_message, None)
         self.assertEqual(imp.workflow_state, DocumentImport.WORKFLOW_STATE_DONE) 
         self.assertEqual(self.part1.blocks.count(), 1)
-        self.assertEqual(self.part1.blocks.first().box, [0, 0, 850, 1083])
+        self.assertEqual(self.part1.blocks.first().box, [[0, 0], [850, 0], [850, 1083], [0, 1083]])
         self.assertEqual(self.part1.lines.count(), 3)
         self.assertEqual(self.part1.lines.first().box, [160, 771, 220, 799])
         self.assertEqual(self.part1.lines.first().transcriptions.first().content, 'This is a test')
@@ -96,7 +96,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single_baselines.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(29):
+            with self.assertNumQueries(32):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -108,7 +108,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(imp.error_message, None)
         self.assertEqual(imp.workflow_state, DocumentImport.WORKFLOW_STATE_DONE) 
         self.assertEqual(self.part1.blocks.count(), 1)
-        self.assertEqual(self.part1.blocks.first().box, [0, 0, 850, 1083])
+        self.assertEqual(self.part1.blocks.first().box,[[0,0],[850,0],[850,1083],[0,1083]])
         self.assertEqual(self.part1.lines.count(), 1)
         line = self.part1.lines.first()
         self.assertEqual(line.baseline, [[160,771], [170,772], [190,782], [220,772]])
@@ -120,7 +120,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(54):
+            with self.assertNumQueries(64):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -156,8 +156,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(imp.workflow_state, imp.WORKFLOW_STATE_DONE)
 
     def test_name(self):
-        trans = Transcription.objects.create(name="test import", document=self.document)
-        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
+        trans = Transcription.objects.create(name=AltoParser.DEFAULT_NAME, document=self.document)
+        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[[0, 0],[100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l)
 
@@ -166,7 +166,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
             response = self.client.post(uri, {
-                'name': "test import",
+                'name': AltoParser.DEFAULT_NAME,
                 'upload_file': SimpleUploadedFile(filename, fh.read())
             })
             self.assertEqual(response.content, b'{"status":"ok"}')
@@ -181,18 +181,18 @@ class XmlImportTestCase(CoreFactoryTestCase):
             self.assertEqual(response.content, b'{"status":"ok"}')
             self.assertEqual(response.status_code, 200)
             # we created a new transcription
-            self.assertEqual(self.document.transcriptions.count(), 3)
+            self.assertEqual(self.document.transcriptions.count(), 2)
             # still the same number of lines
             self.assertEqual(self.part1.lines.count(), 3)
 
     def test_override(self):
         trans = Transcription.objects.create(name=AltoParser.DEFAULT_NAME, document=self.document)
-        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
+        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[[0, 0],[100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l, content="test history")
         
         # historic line without external_id
-        b2 = Block.objects.create(document_part=self.part1, box=[0, 0, 100, 100])
+        b2 = Block.objects.create(document_part=self.part1, box=[[0, 0],[100, 100]])
         l2 = Line.objects.create(document_part=self.part1, block=b2, box=[10,10,50,20])
         lt2 = LineTranscription.objects.create(transcription=trans, line=l2, content="test dummy")
 
@@ -251,7 +251,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
     def test_parse_pagexml(self):
         trans = Transcription.objects.create(name="test import", document=self.document)
-        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[0, 0, 100, 100])
+        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[[0, 0],[100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l)
 
