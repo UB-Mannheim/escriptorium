@@ -8,6 +8,9 @@ class TranscriptionLine {
         this.pk = line.pk;
         this.mask = line.mask;
         
+        this.BASELINE_COLOR = 'blue';
+        this.MASK_COLOR = 'lightgrey';
+        
         if (line.baseline && line.baseline.length > 1) {
             this.baseline = line.baseline;
         } else {
@@ -135,12 +138,14 @@ class TranscriptionLine {
     
     setText() {
         let content = this.getText();
-        
         this.textElement.querySelector('textPath').textContent = content;
         
         if (content) {
             this.polyElement.setAttribute('stroke', 'none');
             this.pathElement.setAttribute('stroke', 'none');
+        } else {
+            this.polyElement.setAttribute('stroke', this.MASK_COLOR);
+            this.pathElement.setAttribute('stroke', this.BASELINE_COLOR);
         }
         
         // adjust the text length to fit in the box
@@ -418,13 +423,15 @@ class TranscriptionPanel extends Panel {
         let getNext = function(page) {
             let uri = this.api + 'transcriptions/?transcription='+this.selectedTranscription+'&page=' + page;
             $.get(uri, function(data) {
-                for (var i=0; i<data.results.length; i++) {
-                    let cur = data.results[i];
-                    let lt = this.lines.find(l => l.pk == cur.line);
-                    if (lt) {
-                        lt.transcriptions[this.selectedTranscription] = cur;
-                        lt.reset();
+                for (var i=0; i<this.lines.length; i++) {
+                    let line = this.lines[i];
+                    let lt = data.results.find(l => l.line == line.pk);
+                    if (lt !== undefined) {
+                        line.transcriptions[this.selectedTranscription] = lt;
+                    } else {
+                        delete line.transcriptions[this.selectedTranscription];
                     }
+                    line.reset();
                 }
                 if (data.next) getNext(page+1);
             }.bind(this));
@@ -455,7 +462,6 @@ class TranscriptionPanel extends Panel {
         
         this.loadTranscriptions();
         this.content.setAttribute('height', this.part.image.size[1] * this.getRatio());
-        // this.refresh();
     }
     
     refresh() {
