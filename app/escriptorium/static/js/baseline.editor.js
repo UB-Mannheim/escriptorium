@@ -257,7 +257,9 @@ class SegmenterLine {
             this.directionHint =  new Path({
                 visible: this.selected,
                 shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
-                strokeWidth: 1, strokeColor: this.segmenter.mainColor, opacity: 1,
+                strokeWidth: 1,
+                strokeColor: this.segmenter.mainColor,
+                opacity: 1,
                 segments:[
                     end.add(vector.rotate(-150)),
                     end,
@@ -290,7 +292,6 @@ class SegmenterLine {
 
 class Segmenter {
     constructor(image, {lengthTreshold=10,
-                        scale=1,
                         delayInit=false,
                         deletePointBtn=null,
                         deleteSelectionBtn=null,
@@ -508,16 +509,16 @@ class Segmenter {
         paper.install(window);
         paper.setup(this.canvas);
         
+        // make sure we capture clicks before the img
+        this.canvas.style.zIndex = this.img.style.zIndex + 1;
+
+        this.lastImgWidth = this.img.naturalWidth;
+        this.refresh();
+        
         var tool = new Tool();
         this.setColors(this.img);
         this.setCursor();
 
-        // make sure we capture clicks before the img
-        this.canvas.style.zIndex = this.img.style.zIndex + 1;
-        this.refresh();
-        
-        this.canvas.style.width = this.img.width;
-        this.canvas.style.height = this.img.height;
         // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
         // this.raster.position = view.center;
         // this.img.style.display = 'hidden';
@@ -966,11 +967,13 @@ class Segmenter {
     
     refresh() {
         let bounds = this.img.getBoundingClientRect();
-        let imgRatio = bounds.width / this.img.naturalWidth;
+        let imgRatio = (bounds.width / this.img.naturalWidth) *
+            (this.img.naturalWidth / this.lastImgWidth);
         if (paper.view) {
-            paper.view.viewSize = [bounds.width, bounds.height];
+            paper.view.setViewSize([bounds.width, bounds.height]);
             paper.view.scale(imgRatio/paper.view.zoom, [0, 0]);
         }
+        this.lastImgWidth = this.img.naturalWidth;
     }
     
     load(data) {

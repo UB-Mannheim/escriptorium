@@ -159,7 +159,7 @@ class SegmentationPanel extends Panel {
     load(part) {
         this.segmenter.empty();
         super.load(part);
-        if (this.part.image.thumbnails) {
+        if (this.part.image.thumbnails && this.part.image.thumbnails.large) {
             this.$img.attr('src', this.part.image.thumbnails.large);
         } else {
             this.$img.attr('src', this.part.image.uri);
@@ -179,6 +179,7 @@ class SegmentationPanel extends Panel {
     }
 
     convertPolygon(poly, ratio) {
+        if (poly === null) return null;
         return poly.map(pt => [Math.round(pt[0]*ratio),
                                Math.round(pt[1]*ratio)]);
     }
@@ -255,12 +256,10 @@ class SegmentationPanel extends Panel {
         var img = this.$img.get(0);
         zoom.events.addEventListener('wheelzoom.updated', function(e) {
             if (!this.opened) return;
-            this.segmenter.scale = zoom.scale;
             this.segmenter.canvas.style.top = zoom.pos.y + 'px';
             this.segmenter.canvas.style.left = zoom.pos.x + 'px';
             this.segmenter.canvas.style.width = img.width*zoom.scale + 'px';
             this.segmenter.canvas.style.height = img.height*zoom.scale + 'px';
-            this.segmenter.refresh();
         }.bind(this));
     }
 }

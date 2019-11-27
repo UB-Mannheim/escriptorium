@@ -20,6 +20,8 @@ $(document).ready(function() {
 	makePanel('binar', BinarizationPanel);
 	makePanel('seg', SegmentationPanel);
 	makePanel('trans', TranscriptionPanel);
+
+    var current_part = null;
     
     function loadPart(pk, callback) {
         let uri = API.part.replace('{part_pk}', pk);
@@ -27,6 +29,8 @@ $(document).ready(function() {
             for (var key in panels) {
                 panels[key].load(data);
             }
+            current_part = data;
+            
             /* previous and next button */
             window.history.pushState({},"", document.location.href.replace(/(part\/)\d+(\/edit)/, '$1'+data.pk+'$2'));
             if (data.previous) $('a#prev-part').data('target', data.previous).show();
@@ -63,7 +67,7 @@ $(document).ready(function() {
         var pk = $(this).data('target');
         loadPart(pk);
     });
-    
+
     loadPart(PART_ID, function(data) {
         undoManager.clear();
     });
@@ -72,8 +76,23 @@ $(document).ready(function() {
     $('#zoom-range').attr('min', zoom.minScale);
     $('#zoom-range').attr('max', zoom.maxScale);
     $('#zoom-range').val(zoom.scale);
+
+    var fullSizeImg = document.createElement('img');
+    fullSizeImg.addEventListener('load', function() {
+        panels['source'].$img.attr('src', this.src);
+        panels['source'].refresh();  // doesn't do anything for now but might in the future
+        panels['seg'].$img.attr('src', this.src);
+        panels['seg'].refresh(); // coordinates changes
+    }, false);
     
     zoom.events.addEventListener('wheelzoom.updated', function(data) {
+        if (zoom.scale > 1 && current_part !== null) {
+            // zooming in, load the full size image if it's not done already to make sure the resolution is good enough to read stuff..
+            if (!fullSizeImg.src.endsWith(current_part.image.uri)) {
+                // check because load event triggers each time...
+                fullSizeImg.src = current_part.image.uri;
+            }
+        }
         $('#zoom-range').val(zoom.scale);
     });
     
