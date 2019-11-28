@@ -54,6 +54,7 @@ class ParserDocument():
 
 
 class XMLParser:
+
     def validate(self):
         try:
             # response = requests.get(self.SCHEMA)
@@ -82,6 +83,10 @@ class ZipParser(ParserDocument):
             with zipfile.ZipFile(self.file) as zfh:
                 if zfh.testzip() is not None:
                     raise ParseError(_("File appears to not be a valid zip."))
+                for i,finfo in enumerate(zfh.infolist()):
+                    with zfh.open(finfo) as zipedfh:
+                        parser = make_parser(self.document, zipedfh)
+                        parser.validate()
         except:
             raise ParseError(_("Zip file appears to be corrupted."))
     
@@ -97,10 +102,9 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    alto_parser = AltoParser(self.document, zipedfh)
+                    parser = make_parser(self.document, zipedfh)
                     try:
-                        alto_parser.validate()
-                        part = alto_parser.parse(override=override)
+                        part = parser.parse(override=override)
                     except ParseError as e:
                         # we let go to try other documents
                         msg = _("Parse error in {filename}: {error}").format(filename=self.file.name, error=e.args[0])
@@ -356,9 +360,8 @@ class PagexmlParser(ParserDocument, XMLParser):
 
     def parse(self, start_at=0, override=False, user=None):
         parts = []
-        if not self.root:
-            self.root = etree.parse(self.file).getroot()
-        # pagexml file can contain multiple parts
+
+         # pagexml file can contain multiple parts
         for page in self.root.findall('Page', self.root.nsmap):
 
             try:

@@ -1,5 +1,6 @@
-kombu==4.2.2.post1
-celery==4.2.1
+#for python 3.7 you need recent versions of celery (> 4.2)
+git+https://github.com/celery/kombu.git@4.6.6#egg=kombu
+git+https://github.com/celery/celery.git@4.4.0rc4#egg=celery
 Pillow==5.4.1
 Django==2.1.4
 redis==3.2.1
