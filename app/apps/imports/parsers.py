@@ -85,14 +85,8 @@ class ZipParser(ParserDocument):
                     raise ParseError(_("File appears to not be a valid zip."))
                 for i,finfo in enumerate(zfh.infolist()):
                     with zfh.open(finfo) as zipedfh:
-                        try:
-                            root = etree.parse(zipedfh).getroot()
-                        except etree.XMLSyntaxError as e:
-                            raise ParseError(e.msg)
-                        try:
-                            schema = root.nsmap[None]
-                        except KeyError:
-                            raise ParseError("Couldn't determine xml schema, xmlns attribute missing on root element.")
+                        parser = make_parser(self.document, zipedfh)
+                        parser.validate()
         except:
             raise ParseError(_("Zip file appears to be corrupted."))
     
@@ -108,10 +102,9 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    alto_parser = make_parser(self.document, zipedfh)
+                    parser = make_parser(self.document, zipedfh)
                     try:
-                        alto_parser.validate()
-                        part = alto_parser.parse(override=override)
+                        part = parser.parse(override=override)
                     except ParseError as e:
                         # we let go to try other documents
                         msg = _("Parse error in {filename}: {error}").format(filename=self.file.name, error=e.args[0])
