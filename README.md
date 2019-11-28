@@ -49,7 +49,7 @@ set max_map_count permanently
 > $ sudo sysctl -w vm.max_map_count=262144  
   
 * env  
-> $ virtualenv env -p /usr/bin/python3.7 (any version >= 3.5 should work)  
+> $ virtualenv env -p python3.7 (any version >= 3.7 should work)  
 > $ . env/bin/activate  
 > $ pip install -r requirements.txt  
   
