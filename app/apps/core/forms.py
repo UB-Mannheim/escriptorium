@@ -120,6 +120,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
                                            initial='lines', required=False)
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                       label=_("Model"), required=False)
     override = forms.BooleanField(required=False, initial=False,
                                   help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
     TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
@@ -142,8 +144,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
 
     # segtrain
-    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
-                                       label=_("Model"), required=False)
     segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                             label=_("Model"), required=False)
     
@@ -162,6 +162,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         self.fields['binarizer'].widget.attrs['disabled'] = True
         self.fields['train_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['segtrain_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['seg_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['ocr_model'].queryset = OcrModel.objects.filter(
             Q(document=None, script=document.main_script)
             | Q(document=self.document))
@@ -200,7 +201,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         data = super().clean()
         task = data.get('task')
 
-        if task == self.TASK_SEGTRAIN:
+        if task == self.TASK_SEGMENT:
+            model_job = OcrModel.MODEL_JOB_SEGMENT
+        elif task == self.TASK_SEGTRAIN:
             model_job = OcrModel.MODEL_JOB_SEGMENT
             if len(self.parts) < 2:
                 raise forms.ValidationError("Segmentation training requires at least 2 images.")

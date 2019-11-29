@@ -583,27 +583,28 @@ class DocumentPart(OrderedModel):
                 options['model'] = model.file.path
             else:
                 options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
-            blocks = self.blocks.all()
-            if blocks:
-                for block in blocks:
-                    if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
-                        continue
-                    ic = im.crop(block.box)
-                    res = blla.segment(ic, **options)
-                    # if script_detect:
-                    #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
-                    for line in res['lines']:
-                        Line.objects.create(
-                            document_part=self, block=block,
-                            box=(line[0]+block.box[0], line[1]+block.box[1],
-                                 line[2]+block.box[0], line[3]+block.box[1]))
-            else:
-                res = blla.segment(im, **options)
-                for line in res['lines']:
-                    newline = Line.objects.create(
-                        document_part=self,
-                        baseline=line['baseline'],
-                        mask=line['boundary'] if line['boundary'] is not None else None)
+            # blocks = self.blocks.all()
+            # if blocks:
+            #     for block in blocks:
+            #         if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
+            #             continue
+            #         ic = im.crop(block.box)
+            #         res = blla.segment(ic, **options)
+            #         # if script_detect:
+            #         #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
+            #         for line in res['lines']:
+            #             Line.objects.create(
+            #                 document_part=self, block=block,
+            #                 box=(line[0]+block.box[0], line[1]+block.box[1],
+            #                      line[2]+block.box[0], line[3]+block.box[1]))
+            # else:
+            res = blla.segment(im, **options)
+            for line in res['lines']:
+                mask = line['boundary'] if line['boundary'] is not None else None
+                newline = Line.objects.create(
+                    document_part=self,
+                    baseline=line['baseline'],
+                    mask=mask)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
