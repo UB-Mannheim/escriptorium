@@ -681,6 +681,20 @@ class DocumentPart(OrderedModel):
         
         return tasks
 
+    def make_masks(self):
+        # if not self.bw_image:
+        #     # do the binarizaton 'live' since Kraken will do it anyway
+        #     self.binarize()
+        im = Image.open(self.image).convert('L')
+        lines = self.lines.all()  # needs to store the qs result
+        baselines = [l.baseline for l in lines]
+        masks = calculate_polygonal_environment(im, baselines)
+        for line, mask in zip(lines, masks):
+            # need to invert the coordinates, Kraken bug?
+            line.mask = list(map(lambda pt: [pt[1], pt[0]], mask))
+            # line.mask = mask
+            line.save()
+
 
 def validate_polygon(value):
     if value is None:
@@ -781,22 +795,6 @@ class Line(OrderedModel):  # Versioned,
     
     def make_external_id(self):
         return self.external_id or 'eSc_line_%d' % self.pk
-
-    def make_mask(self, im=None):
-        if not im:
-            if not self.document_part.bw_image:
-                # do the binarizaton 'live' since Kraken will do it anyway
-                self.document_part.binarize()
-            im = Image.open(self.document_part.bw_image)
-
-        try:
-            result = calculate_polygonal_environment(im, [self.baseline])[0][0]
-        except IndexError:
-            result = None
-        
-        if result is not None:  # couldn't expand region
-            self.mask = approximate_polygon(np.array(result[0][0]), 5).tolist()
-            self.save()
 
 
 class Transcription(models.Model):

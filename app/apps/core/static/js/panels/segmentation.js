@@ -15,11 +15,9 @@ class SegmentationPanel extends Panel {
         // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
         canvas.parentNode.parentNode.appendChild(canvas);
-
-        // Inject a reset mask button in the contextual menu
+        
         this.resetMasksBtn = document.querySelector('#reset-masks');
-        this.segmenter.contextMenu.appendChild(this.resetMasksBtn);
-
+        
         this.bindEditorEvents();
         
         let undoBtn = document.querySelector('button#undo');
@@ -64,7 +62,6 @@ class SegmentationPanel extends Panel {
             this.remoteDelete('lines', line);
             this.pushHistory(
                 function() {  // undo
-                    let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
                     line = this.segmenter.createLine(line.baseline, line.mask);
                     this.remoteSave('lines', line);
                 }.bind(this),
@@ -88,7 +85,6 @@ class SegmentationPanel extends Panel {
                         this.remoteDelete('lines', line);
                     }.bind(this),
                     function() {  // redo
-                        let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
                         line = this.segmenter.createLine(line.baseline, line.mask);
                         this.remoteSave('lines', line);
                     }.bind(this)
@@ -116,43 +112,32 @@ class SegmentationPanel extends Panel {
             this.segmenter.disableBindings = true;
         }.bind(this));
 
-        this.segmenter.events.addEventListener('baseline-editor:selection', function(event) {
-            // handle the injected button visibility
-            if (event.detail.selection.lines.length > 0) this.resetMasksBtn.style.display = 'block';
-            else this.resetMasksBtn.style.display = 'none';
-        }.bind(this));
-
         this.resetMasksBtn.addEventListener('click', function(ev) {
             let lines = this.segmenter.selection.lines;
-            for (let i=0; i<lines.length; i++) {
-                let line = lines[i];
-                let uri = this.api + 'lines/' + line.context.pk + '/reset_mask/';
-                $.ajax({url: uri, type: 'POST'}).done($.proxy(function(data) {
-                    let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
-                    line.update(false, this.convertPolygon(data.mask, ratio));
+            // for (let i=0; i<lines.length; i++) {
+            let uri = this.api + 'reset_masks/';
+            $.ajax({url: uri, type: 'POST', data: {lines: lines.map(l=>l.pk)}})
+                .done(function(data) {
+                    line.update(false, data.mask);
                     var tl = panels['trans'].lines.find(l => l.pk==line.context.pk);
                     if (tl) { tl.update(data); }
-                }.bind(this)));
-            }
+                }.bind(this))
+                .fail(function(e) { alert(e); });
+            // }
         }.bind(this));
     }
     
     init() {
-        this.segmenter.init();
+        // we use a thumbnail so its size might not be the same as advertised in the api
         let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
-        // change the coordinates ratio to fit the thumbnail
-        let lines = this.part.lines.map(l => { return {
-            pk: l.pk,
-            baseline: l.baseline?l.baseline.map(pt => [pt[0]*ratio, pt[1]*ratio]):null,
-            mask: l.mask?l.mask.map(pt => [pt[0]*ratio, pt[1]*ratio]):null
-        };});
-        let regions = this.part.blocks.map(b => { return {
-            pk: b.pk,
-            box: b.box.map(pt => [pt[0]*ratio, pt[1]*ratio])
-        };});
+        this.segmenter.scale = ratio;
+        this.segmenter.init();
+        
         this.segmenter.load({
-            lines: lines, regions: regions
+            lines: this.part.lines,
+            regions: this.part.regions
         });
+        
         this.bindZoom();
     }
     
@@ -186,17 +171,12 @@ class SegmentationPanel extends Panel {
     
     remoteSave(type, obj) {
         var post = {document_part: this.part.pk};
-        let ratio = this.part.image.size[0] / this.$img.get(0).naturalWidth;
         if (type=='lines') {
-            // back to original's image coordinate system (instead of thumbnail's)
-            let line = this.convertPolygon(obj.baseline, ratio);
-            post['baseline'] = JSON.stringify(line);
-            let mask = obj.mask ? this.convertPolygon(obj.mask, ratio) : null;
-            post['mask'] = JSON.stringify(mask);
-            // post.block = this.block?this.block.pk:null; // todo
+            post['baseline'] = JSON.stringify(obj.baseline);
+            post['mask'] = JSON.stringify(obj.mask);
+            post['block'] = this.block?this.block.pk:null; // todo
         } else if (type == 'blocks') {
-            let polygon = this.convertPolygon(obj.polygon);
-            post['box'] = JSON.stringify(polygon);
+            post['box'] = JSON.stringify(obj.polygon);
         }
         let uri = this.api + type + '/';
         let pk = obj.context.pk;
@@ -205,10 +185,8 @@ class SegmentationPanel extends Panel {
         $.ajax({url: uri, type: requestType, data: post})
             .done($.proxy(function(data) {
                 obj.context.pk = data.pk;
-                
                 if (type == 'lines') {
-                    obj.update(this.convertPolygon(data.baseline, 1/ratio),
-                               this.convertPolygon(data.mask, 1/ratio));
+                    obj.update(data.baseline, data.mask);
                     /* create corresponding transcription line */
                     if (panels['trans']) {
                         if (!pk) {
@@ -219,7 +197,7 @@ class SegmentationPanel extends Panel {
                         }
                     }
                 } else if (type == 'regions') {
-                    obj.update(this.convertPolygon(data.polygon, 1/ratio));
+                    obj.update(data.polygon);
                 }
             }, this))
             .fail(function(data){
@@ -244,7 +222,7 @@ class SegmentationPanel extends Panel {
             this.segmenter.refresh();
         }
     }
-
+    
     reset() {
         super.reset();
         this.segmenter.reset();
@@ -252,14 +230,14 @@ class SegmentationPanel extends Panel {
     
     bindZoom() {
         // simulates wheelzoom for canvas
-        zoom.refresh();
         var img = this.$img.get(0);
         zoom.events.addEventListener('wheelzoom.updated', function(e) {
             if (!this.opened) return;
             this.segmenter.canvas.style.top = zoom.pos.y + 'px';
             this.segmenter.canvas.style.left = zoom.pos.x + 'px';
-            this.segmenter.canvas.style.width = img.width*zoom.scale + 'px';
-            this.segmenter.canvas.style.height = img.height*zoom.scale + 'px';
+            if (e.detail && e.detail.scale) {
+                this.segmenter.refresh();
+            }
         }.bind(this));
     }
 }

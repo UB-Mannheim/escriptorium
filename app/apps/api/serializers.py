@@ -123,7 +123,6 @@ class LineSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         instance = super().create(validated_data)
-        instance.make_mask()
         instance.document_part.recalculate_ordering()
         return instance
     

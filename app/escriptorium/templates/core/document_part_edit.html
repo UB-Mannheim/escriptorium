@@ -35,7 +35,8 @@
         
         <!--button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button-->
         <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info ml-3 fas fa-mask"></button>
-        <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn ml-3 btn-info fas fa-cut"></button>
+        <button id="reset-masks" title="{% trans "Reset the mask of selected (or all) lines." %}" class="btn btn-warning fas fa-theater-masks"></button>
+        <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-info fas fa-cut"></button>
 
         {# help #}
         <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help"></button>
@@ -156,7 +157,6 @@
       <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
       <button id="reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
       <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
-      <button id="reset-masks" title="{% trans "Reset the mask of selected lines." %}" class="hide btn m-1 btn-warning fas fa-theater-masks"></button>
     </div>
   </div>
   

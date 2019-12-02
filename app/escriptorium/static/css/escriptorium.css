@@ -14,18 +14,12 @@ body {
     visibility: hidden;
 }
 
-canvas.resize {
-    position: absolute;
-    left: 0;
+#seg-panel canvas {
     min-width: 10px;
     min-height: 10px;
-    top: 0;
-    left: 0;
     padding: 0;
     margin: 0;
-
 }
-
 
 .container {
   margin-right: auto;

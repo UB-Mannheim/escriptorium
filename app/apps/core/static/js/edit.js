@@ -37,10 +37,8 @@ $(document).ready(function() {
             else $('a#prev-part').hide();
             if (data.next) $('a#next-part').data('target', data.next).show();
             else $('a#next-part').hide();
-
-            if (data.image && data.image.uri) {
-                $('#part-name').html(data.title).attr('title', '<'+data.filename+'>');
-            }
+            
+            $('#part-name').html(data.title).attr('title', '<'+data.filename+'>');
             
             // set the 'image' tab btn to select the corresponding image
             var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
@@ -58,7 +56,7 @@ $(document).ready(function() {
         for (var key in panels) {
             panels[key].refresh();
         }
-        zoom.refresh();
+        // zoom.refresh();
     });
     
     // previous and next buttons
@@ -70,6 +68,7 @@ $(document).ready(function() {
 
     loadPart(PART_ID, function(data) {
         undoManager.clear();
+        fullSizeImg.src = '';
     });
     
     // zoom slider
@@ -82,14 +81,14 @@ $(document).ready(function() {
         panels['source'].$img.attr('src', this.src);
         panels['source'].refresh();  // doesn't do anything for now but might in the future
         panels['seg'].$img.attr('src', this.src);
-        panels['seg'].refresh(); // coordinates changes
+        panels['seg'].segmenter.scale = 1;
     }, false);
     
     zoom.events.addEventListener('wheelzoom.updated', function(data) {
         if (zoom.scale > 1 && current_part !== null) {
             // zooming in, load the full size image if it's not done already to make sure the resolution is good enough to read stuff..
             if (!fullSizeImg.src.endsWith(current_part.image.uri)) {
-                // check because load event triggers each time...
+                // check if it changed because load event triggers each time...
                 fullSizeImg.src = current_part.image.uri;
             }
         }

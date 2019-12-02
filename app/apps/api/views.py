@@ -111,6 +111,14 @@ class PartViewSet(ModelViewSet):
         del part.tasks  # reset cache
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
+    @action(detail=True, methods=['post'])
+    def reset_masks(self, request, document_pk=None, pk=None):
+        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part.make_masks()
+        return Response({
+            'status': 'done',
+            'masks': [line.mask for line in part.lines.all()]})
+
 
 class BlockViewSet(ModelViewSet):
     queryset = Block.objects.all()
@@ -129,12 +137,6 @@ class LineViewSet(ModelViewSet):
             return DetailedLineSerializer
         else:  # create
             return LineSerializer
-    
-    @action(detail=True, methods=['post'])
-    def reset_mask(self, request, document_pk=None, part_pk=None, pk=None):
-        line = Line.objects.get(document_part=part_pk, pk=pk)
-        line.make_mask()
-        return Response({'status': 'done', 'mask': line.mask})
 
 
 class LargeResultsSetPagination(PageNumberPagination):

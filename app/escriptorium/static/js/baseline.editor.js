@@ -292,6 +292,10 @@ class SegmenterLine {
 
 class Segmenter {
     constructor(image, {lengthTreshold=10,
+                        // scale = real coordinates to image coordinates
+                        // for example if drawing on a 1000px wide thumbnail for a 'real' 3000px wide image,
+                        // the scale would be 1/3, the container (DOM) width is irrelevant here.
+                        scale=1,
                         delayInit=false,
                         deletePointBtn=null,
                         deleteSelectionBtn=null,
@@ -314,8 +318,14 @@ class Segmenter {
         this.regions = [];
         this.selection = {lines:[], segments:[], regions:[]};
         
+        this.scale = scale;
         this.canvas = document.createElement('canvas');
-        this.canvas.className += 'resize';
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.top = 0;
+        this.canvas.style.left = 0;
+        this.canvas.style.width = this.img.width;
+        this.canvas.style.height = this.img.height;
+        // this.canvas.className += 'resize';
 
         this.idField = idField;
         this.disableBindings = disableBindings;
@@ -376,7 +386,7 @@ class Segmenter {
     reset() {
         this.empty();
     }
-
+    
     deleteSelectedLines() {
         for (let i=this.selection.lines.length-1; i >= 0; i--) {    
             this.selection.lines[i].delete();
@@ -509,11 +519,10 @@ class Segmenter {
         paper.install(window);
         paper.setup(this.canvas);
         
+        this.refresh();
+        
         // make sure we capture clicks before the img
         this.canvas.style.zIndex = this.img.style.zIndex + 1;
-
-        this.lastImgWidth = this.img.naturalWidth;
-        this.refresh();
         
         var tool = new Tool();
         this.setColors(this.img);
@@ -966,14 +975,19 @@ class Segmenter {
     }
     
     refresh() {
-        let bounds = this.img.getBoundingClientRect();
-        let imgRatio = (bounds.width / this.img.naturalWidth) *
-            (this.img.naturalWidth / this.lastImgWidth);
+        /*
+          Call when either the available space or the source image size changed.
+        */
+        
         if (paper.view) {
-            paper.view.setViewSize([bounds.width, bounds.height]);
-            paper.view.scale(imgRatio/paper.view.zoom, [0, 0]);
+            let bounds = this.img.getBoundingClientRect();
+            let imgRatio = (bounds.width / this.img.naturalWidth);
+            let ratio = imgRatio/paper.view.zoom*this.scale;
+            this.canvas.style.width = bounds.width + 'px';
+            this.canvas.style.height = bounds.height + 'px';
+            paper.view.viewSize = [bounds.width, bounds.height];
+            paper.view.scale(ratio, [0, 0]);
         }
-        this.lastImgWidth = this.img.naturalWidth;
     }
     
     load(data) {
