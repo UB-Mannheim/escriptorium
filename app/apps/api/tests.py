@@ -141,11 +141,15 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
         with self.assertNumQueries(5):
+            # 1-2: auth
+            # 3 select document_part
+            # 4 select max block order
+            # 5 insert
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
-                'box': [10,10,50,50]
+                'box': '[[10,10], [50,50]]'
             })
-        self.assertEqual(resp.status_code, 201)        
+        self.assertEqual(resp.status_code, 201, resp.content)
 
     def test_update(self):
         self.client.force_login(self.user)
@@ -155,9 +159,9 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
                               'pk': self.block.pk})
         with self.assertNumQueries(4):
             resp = self.client.patch(uri, {
-                'box': [100,100,150,150]
+                'box': '[[100,100], [150,150]]'
             }, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200, resp.content)
 
 
 class LineViewSetTestCase(CoreFactoryTestCase):
@@ -188,7 +192,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(11):
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
                 'baseline': '[[10, 10], [50, 50]]'
@@ -203,7 +207,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                               'pk': self.block.pk})
         with self.assertNumQueries(4):
             resp = self.client.patch(uri, {
-                'box': [100,100,150,150]
+                'box': '[[100,100], [150,150]]'
             }, content_type='application/json')
         self.assertEqual(resp.status_code, 200)
 
