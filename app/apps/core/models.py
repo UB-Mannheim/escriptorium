@@ -690,9 +690,7 @@ class DocumentPart(OrderedModel):
         baselines = [l.baseline for l in lines]
         masks = calculate_polygonal_environment(im, baselines)
         for line, mask in zip(lines, masks):
-            # need to invert the coordinates, Kraken bug?
-            line.mask = list(map(lambda pt: [pt[1], pt[0]], mask))
-            # line.mask = mask
+            line.mask = mask
             line.save()
 
 
