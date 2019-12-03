@@ -15,9 +15,9 @@ from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 from easy_thumbnails.files import get_thumbnailer
 
 from versioning.models import NoChangeException
-from core.models import Document, DocumentPart
+from core.models import Document, DocumentPart, ProcessFailureException
 from core.forms import *
-from imports.forms import ImportForm
+from imports.forms import ImportForm, ExportForm
 
 
 class Home(TemplateView):
@@ -131,6 +131,7 @@ class DocumentImages(LoginRequiredMixin, DetailView):
         context['upload_form'] = UploadImageForm(document=self.object)
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
+        context['export_form'] = ExportForm(self.object)
         return context
 
 

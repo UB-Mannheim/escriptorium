@@ -21,8 +21,8 @@ from celery.signals import *
 from easy_thumbnails.files import get_thumbnailer
 from kraken import binarization, pageseg, rpred
 from kraken.lib import vgsl, train as kraken_train, models as kraken_models
-from kraken.lib.dataset import GroundTruthDataset, generate_input_transforms, compute_error
-from kraken.lib.train import TrainScheduler, EarlyStopping, KrakenTrainer
+from kraken.lib.dataset import PolygonGTDataset, BaselineSet, generate_input_transforms, compute_error  # GroundTruthDataset
+from kraken.lib.train import TrainScheduler, EarlyStopping, KrakenTrainer, baseline_label_evaluator_fn, baseline_label_loss_fn
 from kraken.lib.exceptions import KrakenStopTrainingException
 from torch.utils.data import DataLoader
 
@@ -121,8 +121,139 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-success", level='success')
 
 
+@shared_task(bind=True)
+def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+    
+    redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
+    
+    Line = apps.get_model('core', 'Line')
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    OcrModel = apps.get_model('core', 'OcrModel')
+
+    def _print_eval(epoch=0, precision=0, recall=0, f1=0,
+                    mcc=0, val_metric=0):
+        model.refresh_from_db()
+        model.training_epoch = epoch
+        model.training_accuracy = float(precision)
+        # model.training_total = chars
+        # model.training_errors = error
+        new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
+        model.new_version(file=new_version_filename)
+        model.save()
+        
+        send_event('document', document.pk, "training:eval", {
+            "id": model.pk,
+            'versions': model.versions,
+            'epoch': epoch,
+            'accuracy': float(precision)
+            # 'chars': chars,
+            # 'error': error
+        })
+
+    def _draw_progressbar(*args, **kwargs):
+        print('progress', args, kwargs)
+
+    try:
+        model = OcrModel.objects.get(pk=model_pk)
+        modelpath = model.file.path
+        nn = vgsl.TorchVGSLModel.load_model(modelpath)
+    except ValueError:  # model is empty
+        nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
+        # nn = vgsl.TorchVGSLModel.load_model(settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL)
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
+        model.file = modelpath
+    try:
+        model.training = True
+        model.save()
+        document = model.document
+        send_event('document', document.pk, "training:start", {
+            "id": model.pk,
+        })
+        qs = DocumentPart.objects.filter(pk__in=part_pks)
+        
+        batch, channels, height, width = nn.input
+        transforms = generate_input_transforms(batch, height, width, channels, 0, valid_norm=False)
+        ground_truth = list(qs.prefetch_related('lines'))
+        
+        np.random.shuffle(ground_truth)
+        
+        gt_set = BaselineSet(mode=None, im_transforms=transforms)
+        val_set = BaselineSet(mode=None, im_transforms=transforms)
+        
+        partition = max(1, int(len(ground_truth) / 10))
+        
+        for part in qs[partition:]:
+            gt_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
+        
+        for part in qs[:partition]:
+            val_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
+            
+        train_loader = DataLoader(gt_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
+        test_loader = DataLoader(val_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
+        
+        # set mode to training
+        nn.set_num_threads(1)
+        nn.train()
+        
+        #optim = getattr(torch.optim, optimizer)(nn.nn.parameters(), lr=0)
+        optim = torch.optim.Adam(nn.nn.parameters(), lr=2e-4, weight_decay=1e-5)
+        
+        if 'accuracy' not in  nn.user_metadata:
+            nn.user_metadata['accuracy'] = []
+        
+        DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        st_it = EarlyStopping(None, 5)
+        trainer = KrakenTrainer(model=nn,
+                                optimizer=optim,
+                                device=DEVICE,
+                                filename_prefix=os.path.join(os.path.split(modelpath)[0], 'version'),
+                                event_frequency=1.0,
+                                train_set=train_loader,
+                                val_set=val_set,
+                                stopper=st_it,
+                                loss_fn=baseline_label_loss_fn,
+                                evaluator=baseline_label_evaluator_fn)
+        
+        if not os.path.exists(os.path.split(modelpath)[0]):
+
+            os.mkdir(os.path.split(modelpath)[0])
+        trainer.run(_print_eval, _draw_progressbar)
+        nn.save_model(path=modelpath)
+        
+    except Exception as e:
+        send_event('document', document.pk, "training:error", {
+            "id": model.pk,
+        })
+        if user:
+            user.notify(_("Something went wrong during the segmenter training process!"),
+                        id="training-error", level='danger')
+        logger.exception(e)
+    else:
+        if user:
+            user.notify(_("Training finished!"),
+                        id="training-success",
+                        level='success')
+    finally:
+        model.training = False
+        model.save()
+        
+        send_event('document', document.pk, "training:done", {
+            "id": model.pk,
+        })
+    
+            
 @shared_task
-def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs):
+def segment(instance_pk, user_pk=None, model_pk=None,
+            steps=None, text_direction=None, override=None,
+            **kwargs):
     """
     steps can be either 'regions', 'lines' or 'both'
     """
@@ -133,6 +264,12 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
         logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
         return
 
+    try:
+        OcrModel = apps.get_model('core', 'OcrModel')
+        model = OcrModel.objects.get(pk=model_pk)
+    except:
+        model = None
+        
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -142,7 +279,10 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
         user = None
     
     try:
-        part.segment(steps=steps, text_direction=text_direction)
+        part.segment(steps=steps,
+                     override=override,
+                     text_direction=text_direction,
+                     model=model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
@@ -158,20 +298,25 @@ def segment(instance_pk, user_pk=None, steps=None, text_direction=None, **kwargs
 
 def add_data_to_training_set(data, target_set):
     # reorder the lines inside the set to make sure we only open the image once
-    data.sort(key=lambda e: e['image'])
-    im = None
+    # data.sort(key=lambda e: e['image'])
+    # im = None
     for i, lt in enumerate(data):
-        if lt['image'] != im:
-            if im:
-                logger.debug('Closing', im)
-                im.close()  # close previous image
-            im = Image.open(os.path.join(settings.MEDIA_ROOT, lt['image']))
-            logger.debug('Opened', im)
-        logger.debug('Loading {} {} {}'.format(i, lt['box'], lt['content']))
-        target_set.add_loaded(im.crop(lt['box']), lt['content'])
+        # if lt['image'] != im:
+        #     if im:
+        #         logger.debug('Closing', im)
+        #         im.close()  # close previous image
+        #     im = Image.open(os.path.join(settings.MEDIA_ROOT, lt['image']))
+        #     logger.debug('Opened', im)
+        logger.debug('Loading {} {} {} {}'.format(i, lt['baseline'], lt['mask'], lt['content']))
+        
+        # def add(self, image: Union[str, Image.Image], text: str, baseline: List[Tuple[int, int]], boundary: List[Tuple[int, int]]):
+        target_set.add(os.path.join(settings.MEDIA_ROOT, lt['image']),
+                       lt['content'],
+                       lt['baseline'],
+                       lt['mask'])
         yield i, lt
     
-    im.close()
+    # im.close()
 
 
 def train_(qs, document, transcription, model=None, user=None):
@@ -187,21 +332,23 @@ def train_(qs, document, transcription, model=None, user=None):
     
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
-                                  box=F('line__box'),
+                                  baseline=F('line__baseline'),
+                                  mask=F('line__mask'),
                                   image=F('line__document_part__image')))
     # is it a good idea with a very large number of lines?
     np.random.shuffle(ground_truth)
     
-    gt_set = GroundTruthDataset(normalization='NFD',  # ['NFD', 'NFKD', 'NFC', 'NFKC']
-                                whitespace_normalization=True,
-                                reorder=True,
-                                im_transforms=transforms,
-                                preload=False)
-    val_set = GroundTruthDataset(normalization='NFD',
-                                 whitespace_normalization=True,
-                                 reorder=True,
-                                 im_transforms=transforms,
-                                 preload=True)
+    # GroundTruthDataset
+    gt_set = PolygonGTDataset(normalization='NFD',  # ['NFD', 'NFKD', 'NFC', 'NFKC']
+                              whitespace_normalization=True,
+                              reorder=True,
+                              im_transforms=transforms,
+                              preload=False)
+    val_set = PolygonGTDataset(normalization='NFD',
+                               whitespace_normalization=True,
+                               reorder=True,
+                               im_transforms=transforms,
+                               preload=True)
     
     partition = int(len(ground_truth) / 10)
     for i, data in add_data_to_training_set(ground_truth[partition:], gt_set):
@@ -247,7 +394,7 @@ def train_(qs, document, transcription, model=None, user=None):
         upload_to = model.file.name
         fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
         modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
-
+    
     val_set.training_set = list(zip(val_set._images, val_set._gt))
     # #nn.train()
     nn.set_num_threads(1)
@@ -270,7 +417,7 @@ def train_(qs, document, transcription, model=None, user=None):
     def _progress(*args, **kwargs):
         logger.debug('progress', args, kwargs)
     
-    def _print_eval(epoch=0, accuracy=0, chars=0, error=0):
+    def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy
@@ -291,7 +438,6 @@ def train_(qs, document, transcription, model=None, user=None):
     trainer.run(_print_eval, _progress)
     best_version = os.path.join(fulldir, 'version_{}.mlmodel'.format(trainer.stopper.best_epoch))
     shutil.copy(best_version, modelpath)
-        
 
 
 @shared_task(bind=True)
@@ -347,7 +493,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
             "id": model.pk,
         })
 
-
+        
 @shared_task
 def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
     try:

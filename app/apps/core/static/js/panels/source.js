@@ -1,41 +1,16 @@
-class SourcePanel {
-    constructor ($panel, opened) {
-        this.$panel = $panel;
-        this.opened = opened | false;
-        this.$container = $('.img-container', this.$panel);
-        zoom.register(this.$container);
-        $('.img-container img', this.$panel).on('load', $.proxy(function(data) {
-            zoom.refresh();
-        }, this));
-    }
-
-    load(part) {
-        this.part = part;
-
-        if (this.part.image.thumbnails.large) {
-            $('.img-container img', this.$panel).attr('src', this.part.image.thumbnails.large);
-        } else {
-            $('.img-container img', this.$panel).attr('src', this.part.image.uri);
-        }
-        if (this.opened) this.open();
+class SourcePanel extends Panel {
+    constructor ($panel, $tools, opened) {
+        super($panel, $tools, opened);
+        this.$img = $('.img-container img', this.$panel);
+        this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
     }
     
-    open() {
-        this.opened = true;
-        this.$panel.show();
-        Cookies.set('img-panel-open', true);
+    load(part) {
+        super.load(part);
+        if (this.part.image.thumbnails.large) {
+            this.$img.attr('src', this.part.image.thumbnails.large);
+        } else {
+            this.$img.attr('src', this.part.image.uri);
+        }
     }
-
-    close() {
-        this.opened = false;
-        this.$panel.hide();
-        Cookies.set('img-panel-open', false);
-    }
-
-    toggle() {
-        if (this.opened) this.close();
-        else this.open();
-    }
-
-    reset() {}
 }

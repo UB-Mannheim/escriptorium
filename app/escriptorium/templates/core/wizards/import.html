@@ -2,23 +2,25 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-<p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
+<p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}}(DEPRECATED) for details.{% endblocktrans %}</p>
 {% endblock %}
 
 {% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
 
 {% block wizard_fields %}
 {% if import_form.current_import and import_form.current_import.ongoing %}
-{% trans "Import is ongoing, please wait for it to be finished." %}
+<span class="text-warning">{% trans "Import is already ongoing, please wait for it to be finished or cancel it." %}</span>
 {% else %}
 {% if import_form.current_import.failed %}
+<h5>{% trans "Resume previous import." %}</h5>
 <div id="import-resume">
-  {% blocktrans with progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
+  {% blocktrans with filename=import_form.current_import.filename progress=import_form.current_import.processed total=import_form.current_import.parser.total %}Previous import ({{filename}}) failed at step {{ progress }}/{{ total }}.{% endblocktrans %}
   {% if import_form.current_import.error_message %}
   <br/>{% trans "Reason:" %} {{ import_form.current_import.error_message }}
   {% endif %}
   {% render_field import_form.resume_import %}
 </div>
+<h5>{% trans "Or" %}</h5>
 {% endif %}
 {% endif %}
 {% endblock %}

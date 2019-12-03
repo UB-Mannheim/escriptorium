@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
   <Description>
 	<MeasurementUnit>pixel</MeasurementUnit>
 	<sourceImageInformation>
-	  <fileName>/fake/path/doesnt/matter/test.png</fileName>
+	  <fileName>test1.png</fileName>
 	</sourceImageInformation>
 	<OCRProcessing ID="OCR_0">
 	  <ocrProcessingStep>
@@ -15,32 +15,15 @@
 	  </ocrProcessingStep>
 	</OCRProcessing>
   </Description>
-
   <Layout>
     <Page WIDTH="850" HEIGHT="1083" PHYSICAL_IMG_NR="0" ID="page_0">
 	  <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
 		<TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
-		  <TextLine ID="line_0"
-					HPOS="160"
-					VPOS="771" 
-					WIDTH="0" 
-					HEIGHT="28">
-			<String ID="0"
-					CONTENT="i" 
-					HPOS="160" 
-					VPOS="771"
-					WIDTH="0" 
-					HEIGHT="28" 
-					WC="0.9995">
-			  <Glyph ID="0" 
-					 CONTENT="i"
-					 HPOS="160"
-					 VPOS="771"
-					 WIDTH="0"
-					 HEIGHT="28"
-					 GC="0.9995">
-			  </Glyph>
-			</String>
+		  <TextLine ID="line_0" HPOS="160" VPOS="771" WIDTH="60" HEIGHT="28" BASELINE="160,771 170,772 190,782 220,772">
+            <Shape>
+              <Polygon POINTS="158,770 225,770 225,750 158,750"/>
+            </Shape>
+            <String ID="segment_0" CONTENT="This is a test" HPOS="160" VPOS="771" WIDTH="20"  HEIGHT="28"></String>
 		  </TextLine>
         </TextBlock>
       </PrintSpace>

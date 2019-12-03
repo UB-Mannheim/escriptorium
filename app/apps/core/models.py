@@ -16,17 +16,21 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.files.storage import FileSystemStorage
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
+from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_delete
-
 
 from celery.result import AsyncResult
 from celery.task.control import inspect, revoke
 from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
+from kraken import pageseg, blla
+from kraken.lib.util import is_bitonal
+from kraken.lib.segmentation import calculate_polygonal_environment
+from skimage.measure import approximate_polygon
 
 from versioning.models import Versioned
 from core.tasks import *
@@ -129,8 +133,7 @@ class DocumentManager(models.Manager):
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
                 .prefetch_related('shared_with_groups')
                 .select_related('typology')
-                .distinct()
-        )
+                .distinct())
 
 
 class Document(models.Model):
@@ -201,11 +204,11 @@ class Document(models.Model):
     @property
     def is_archived(self):
         return self.workflow_state == self.WORKFLOW_STATE_ARCHIVED
-
+    
     @cached_property
     def is_transcribing(self):
         return self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).first() is not None
-
+    
     @cached_property
     def default_text_direction(self):
         if self.main_script:
@@ -390,11 +393,10 @@ class DocumentPart(OrderedModel):
             return json.loads(redis_.get('process-%d' % self.pk) or '{}')
         except json.JSONDecodeError:
             return {}
-
+    
     @property
     def workflow(self):
         w = {}
-
         if self.workflow_state == self.WORKFLOW_STATE_CONVERTING:
             w['convert'] = 'ongoing'
         elif self.workflow_state > self.WORKFLOW_STATE_CONVERTING:
@@ -511,6 +513,11 @@ class DocumentPart(OrderedModel):
         
         if self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTED
+        
+        with Image.open(self.image.path) as im:
+            if is_bitonal(im):
+                self.bw_image = self.image
+            
         self.save()
         
     def compress(self):
@@ -557,40 +564,47 @@ class DocumentPart(OrderedModel):
             self.workflow_state = self.WORKFLOW_STATE_BINARIZED
             self.save()
     
-    def segment(self, steps=None, text_direction=None):
+    def segment(self, steps=None, text_direction=None, model=None, override=False):
         # cleanup pre-existing
-        if steps in ['lines', 'both']:
+        if steps in ['lines', 'both'] and override:
             self.lines.all().delete()
-        if steps in ['regions', 'both']:
+        if steps in ['regions', 'both'] and override:
             self.blocks.all().delete()
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
         
-        with Image.open(self.bw_image.file.name) as im:
+        with Image.open(self.image.file.name) as im:
             # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
-            options = {'maxcolseps': 1}
+            options = {}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
-            blocks = self.blocks.all()
-            if blocks:
-                for block in blocks:
-                    if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
-                        continue
-                    ic = im.crop(block.box)
-                    res = pageseg.segment(ic, **options)
-                    # if script_detect:
-                    #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
-                    for line in res['boxes']:
-                        Line.objects.create(
-                            document_part=self, block=block,
-                            box=(line[0]+block.box[0], line[1]+block.box[1],
-                                 line[2]+block.box[0], line[3]+block.box[1]))
+            if model:
+                options['model'] = model.file.path
             else:
-                res = pageseg.segment(im, **options)
-                res['block'] = None
-                for line in res['boxes']:
-                    Line.objects.create(document_part=self, box=line)
+                options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            # blocks = self.blocks.all()
+            # if blocks:
+            #     for block in blocks:
+            #         if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
+            #             continue
+            #         ic = im.crop(block.box)
+            #         res = blla.segment(ic, **options)
+            #         # if script_detect:
+            #         #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
+            #         for line in res['lines']:
+            #             Line.objects.create(
+            #                 document_part=self, block=block,
+            #                 box=(line[0]+block.box[0], line[1]+block.box[1],
+            #                      line[2]+block.box[0], line[3]+block.box[1]))
+            # else:
+            res = blla.segment(im, **options)
+            for line in res['lines']:
+                mask = line['boundary'] if line['boundary'] is not None else None
+                newline = Line.objects.create(
+                    document_part=self,
+                    baseline=line['baseline'],
+                    mask=mask)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
@@ -667,6 +681,29 @@ class DocumentPart(OrderedModel):
         
         return tasks
 
+    def make_masks(self):
+        # if not self.bw_image:
+        #     # do the binarizaton 'live' since Kraken will do it anyway
+        #     self.binarize()
+        im = Image.open(self.image).convert('L')
+        lines = self.lines.all()  # needs to store the qs result
+        baselines = [l.baseline for l in lines]
+        masks = calculate_polygonal_environment(im, baselines)
+        for line, mask in zip(lines, masks):
+            line.mask = mask
+            line.save()
+
+
+def validate_polygon(value):
+    if value is None:
+        return
+    try:
+        value[0][0]
+    except (TypeError, KeyError, IndexError):
+        raise ValidationError(
+            _('%(value)s is not a polygon - a 2 dimensional array.'),
+            params={'value': value})
+
 
 class Block(OrderedModel, models.Model):
     """
@@ -674,8 +711,9 @@ class Block(OrderedModel, models.Model):
     example: a paragraph, a margin note or floating text
     """
     # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField()
-    typology = models.ForeignKey(Typology, null=True, on_delete=models.SET_NULL,
+    box = JSONField(validators=[validate_polygon])
+    typology = models.ForeignKey(Typology, null=True, blank=True,
+                                 on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_BLOCK})
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
                                       related_name='blocks')
@@ -685,15 +723,24 @@ class Block(OrderedModel, models.Model):
     
     class Meta(OrderedModel.Meta):
         pass
-    
+
+    class Meta(OrderedModel.Meta):
+        pass
+
+    @property
+    def coordinates_box(self):
+        """Cast the box field to the format [xmin,ymin,xmax,ymax] to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto"""
+
+        return [*map(min, *self.box), *map(max, *self.box)]
+
     @property
     def width(self):
-        return self.box[2] - self.box[0]
-    
+        return self.coordinates_box[2] - self.coordinates_box[0]
+
     @property
     def height(self):
-        return self.box[3] - self.box[1]
-    
+        return self.coordinates_box[3] - self.coordinates_box[1]
+
     def make_external_id(self):
         return self.external_id or 'eSc_textblock_%d' % self.pk
 
@@ -702,11 +749,13 @@ class Line(OrderedModel):  # Versioned,
     """
     Represents a segmented line from a DocumentPart
     """
-    # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField()
-    document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
+    # box = gis_models.PolygonField()  # in case we use PostGIS
+    mask = JSONField(null=True, blank=True, validators=[validate_polygon])  # Closed Polygon: [[x1, y1], [x2, y2], ..]
+    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])  # Polygon: [[x1, y1], [x2, y2], ..]
+    document_part = models.ForeignKey(DocumentPart,
+                                      on_delete=models.CASCADE,
                                       related_name='lines')
-    block = models.ForeignKey(Block, null=True, on_delete=models.SET_NULL)
+    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL)
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'
@@ -719,7 +768,7 @@ class Line(OrderedModel):  # Versioned,
     
     def __str__(self):
         return '%s#%d' % (self.document_part, self.order)
-
+    
     @property
     def width(self):
         return self.box[2] - self.box[0]
@@ -727,6 +776,20 @@ class Line(OrderedModel):  # Versioned,
     @property
     def height(self):
         return self.box[3] - self.box[1]
+    
+    def get_box(self):
+        if self.mask:
+            return [*map(min, *self.mask), *map(max, *self.mask)]
+        else:
+            return [*map(min, *self.baseline), *map(max, *self.baseline)]
+    
+    def set_box(self, box):
+        self.mask = [(box[0], box[1]),
+                     (box[0], box[3]),
+                     (box[2], box[3]),
+                     (box[2], box[1])]
+    
+    box = property(get_box, set_box)
     
     def make_external_id(self):
         return self.external_id or 'eSc_line_%d' % self.pk
@@ -738,13 +801,13 @@ class Transcription(models.Model):
                                  related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     DEFAULT_NAME = 'manual'
     
     class Meta:
         ordering = ('-updated_at',)
         unique_together = (('name', 'document'),)
-
+        
     def __str__(self):
         return self.name
 
@@ -774,14 +837,23 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
-    return 'models/%s/%s' % (slugify(filename), filename)
+    fn, ext = os.path.splitext(filename)
+    return 'models/%d/%s.%s' % (instance.pk, slugify(fn), ext)
 
 
-class OcrModel(Versioned, models.Model):
+class OcrModel(Versioned, models.Model):    
     name = models.CharField(max_length=256)
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
+
+    MODEL_JOB_SEGMENT = 1
+    MODEL_JOB_RECOGNIZE = 2
+    MODEL_JOB_CHOICES = (
+        (MODEL_JOB_SEGMENT, _("Segment")),
+        (MODEL_JOB_RECOGNIZE, _("Recognize"))
+    )
+    job = models.PositiveSmallIntegerField(choices=MODEL_JOB_CHOICES)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     training = models.BooleanField(default=False)
     training_epoch = models.PositiveSmallIntegerField(default=0)
@@ -805,9 +877,12 @@ class OcrModel(Versioned, models.Model):
     @cached_property
     def accuracy_percent(self):
         return self.training_accuracy * 100
+
+    def segtrain(self, document, parts_qs, user=None):
+        segtrain.delay(self.pk, document.pk,
+                       list(parts_qs.values_list('pk', flat=True)))
     
-    @classmethod
-    def train(cls, parts_qs, transcription, model, user=None):
+    def train(self, parts_qs, transcription, user=None):
         btasks = []
         for part in parts_qs:
             if not part.binarized:
@@ -815,14 +890,23 @@ class OcrModel(Versioned, models.Model):
                     btasks.append(task)
         ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
                          transcription.pk,
-                         model_pk=model.pk,
+                         model_pk=self.pk,
                          user_pk=user and user.pk or None)
         chord(btasks, ttask).delay()
 
     def cancel_training(self):
-        task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
-        if task_id:
-            revoke(task_id, terminate=True)
+        try:
+            if self.job == self.MODEL_JOB_RECOGNIZE:
+                task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+            elif self.job == self.MODEL_JOB_SEGMENT:
+                task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
+        except (TypeError, KeyError) as e:
+            raise ProcessFailureException(_("Couldn't find the training task."))
+        else:
+            if task_id:
+                revoke(task_id, terminate=True)
+                self.training = False
+                self.save()
     
     # versioning
     def pack(self, **kwargs):

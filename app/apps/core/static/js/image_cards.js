@@ -13,7 +13,7 @@ var lastSelected = null;
 function openWizard(proc) {        
     var selected_num = partCard.getSelectedPks().length;
         
-    if(proc != 'import-iiif' && selected_num < 1) {
+    if(!proc.startsWith('import') && selected_num < 1) {
         alert('Select at least one image.');
         return;
     }
@@ -419,13 +419,18 @@ $(document).ready(function() {
     $alertsContainer.on('import:progress', function(ev, data) {
         $('#import-counter').parent().addClass('ongoing');
         $('#import-selected').addClass('blink');
+        $('#cancel-import').show();
         if (data.progress) {
             $('#import-counter').text(data.progress+"/"+data.total);
         }
     });
+    $alertsContainer.on('import:warning', function(ev, data) {
+        Alert.add(Date.now(), data.reason, 'warning');
+    });
     $alertsContainer.on('import:fail', function(ev, data) {
         $('#import-counter').text('failed');
         $('#import-selected').removeClass('blink');
+        $('#cancel-import').hide();
         Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
     });
     $alertsContainer.on('import:done', function(ev, data) {
@@ -528,14 +533,15 @@ $(document).ready(function() {
     });
     
     $('.process-part-form').submit(function(ev) {
+        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
+        if ($(this).is('[data-proc="export"]')) return true;  // resume normal form behavior
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');
-        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         $('#'+proc+'-wizard').modal('hide');
         $.ajax({
             url : $form.attr('action'),
-            type: "POST",
+            type: $form.attr('method'),
             data : new FormData($form.get(0)),
             processData: false,
             contentType: false

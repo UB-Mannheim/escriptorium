@@ -1,34 +1,43 @@
-$(document).ready(function() {
-    let closed = userProfile.get('closedHelps');
+document.addEventListener("DOMContentLoaded", function() {
+    var closed = userProfile.get('closedHelps') || [];
     
-    $('.help-text .close').click(function(ev) {
-        let btn = $(ev.target);
-        let container = btn.parents('.js-help-container');
+    let clBtns = document.querySelectorAll('.help-text .close');
+    clBtns.forEach(e => e.addEventListener('click', function(ev) {
+        let btn = ev.target.closest('button');
+        let alert = btn.parentNode;
+        let container = alert.parentNode;
         if (!closed) closed = [];
-        if (container.attr('id')) {
-            closed.push(container.attr('id'));
+        if (alert.getAttribute('id')) {
+            closed.push(alert.getAttribute('id'));
             userProfile.set('closedHelps', closed);
         }
-        $('.alert.help-text', container).hide();
-        $('button.help.open', container).show();
-    });
+        alert.style.display = 'none';
+    }));
 
-    $('button.help.open').click(function(ev) {
-        let btn = $(ev.target);
-        let container = btn.parents('.js-help-container');
-        let helpIndex = closed.indexOf(container.attr('id'));
-        if (helpIndex != -1) closed.splice(helpIndex, 1);
+    let btns = document.querySelectorAll('button.help');
+    btns.forEach(e => e.addEventListener('click', function(ev){
+        let btn = ev.target.closest('button');
+        let container = btn.parentNode;
+        let helpText = container.querySelector('.alert.help-text');
+        let helpIndex = closed.indexOf(container.getAttribute('id'));
+        if (window.getComputedStyle(helpText).display == 'none') {
+            // open
+            if (helpIndex != -1) closed.splice(helpIndex, 1);
+            container.querySelector('.alert.help-text').style.display = 'block';
+        } else {
+            // close
+            if (helpIndex == -1) closed.push(container.getAttribute('id'));
+            container.querySelector('.alert.help-text').style.display = 'none';
+        }
         userProfile.set('closedHelps', closed);
-        
-        $('.alert.help-text', container).show();
-        $('button.help.open', container).hide();
-    });
+    }));
     
     if (closed) {
         closed.forEach(function(e, i) {
-            let container = $('.js-help-container#'+e);
-            $('.alert.help-text', container).hide();
-            $('button.help.open', container).show();
+            let container = document.querySelector('.js-help-container#'+e);
+            if (container) {
+                container.querySelector('.alert.help-text').style.display = 'none';
+            }
         });
     }
 });

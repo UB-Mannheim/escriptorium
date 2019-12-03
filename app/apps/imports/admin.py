@@ -1,5 +1,5 @@
 from django.contrib import admin
 
-from imports.models import Import
+from imports.models import DocumentImport
 
-admin.site.register(Import)
+admin.site.register(DocumentImport)

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'ordered_model',
     'easy_thumbnails',
+    'easy_thumbnails.optimize',
     'channels',
     'rest_framework',
     
@@ -153,8 +154,6 @@ CACHES = {
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
 
-KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
-
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -215,17 +214,20 @@ LOGGING = {
         },
 
         'kraken_logs': {
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'kraken', 'train.log'),
         },
-        
         'console': {
-            'level': 'ERROR',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
+        'requests':{
+            'handlers': ['file', 'console'],
+            'propagate': True,
+        },
         'kraken':{
             'handlers': ['kraken_logs', 'console'],
             'propagate': True
@@ -247,17 +249,22 @@ THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
         'list': {'size': (50, 50), 'crop': 'center'},
-        'card': {'size': (180, 180), 'crop': 'center'},
-        'large': {'size': (1110, 0), 'crop': 'scale', 'upscale': False}
+        'card': {'size': (180, 180), 'crop': 'smart'},
+        'large': {'size': (1000, 1000), 'crop': False, 'upscale': False}
     }
 }
 THUMBNAIL_OPTIMIZE_COMMAND = {
     # 'png': '/usr/bin/optipng {filename}',
     # 'gif': '/usr/bin/optipng {filename}',
-    'jpeg': '/usr/bin/jpegoptim {filename}'
+    'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
 }
 
-VERSIONING_DEFAULT_SOURCE = 'escriptorium'
+VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
+
+IIIF_IMPORT_QUALITY = 'full'
+
+KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(APPS_DIR, 'core/static/offsplit.mlmodel')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

@@ -1,4 +1,5 @@
 .rtl {
+    /* Note: doesn't seem to work in svgs, it messes up text lines coordinates */
     direction: rtl;
 }
 

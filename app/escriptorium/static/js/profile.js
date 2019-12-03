@@ -26,6 +26,6 @@ class Profile {
     }
 }
 
-$(document).ready(function() {
+document.addEventListener("DOMContentLoaded", function() {
     userProfile = new Profile();
 });

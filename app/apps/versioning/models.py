@@ -24,7 +24,7 @@ class Versioned(models.Model):
     
     API:
     instance.history : is a property returning a list of instances corresponding to the versions.
-    instance.new_version() : store the current data in versions.
+    instance.new_version() : store the current data in versions. Does not call save().
     instance.revert(revision) : store the current data in versions and revert to the given revision
                                 does not call save(), it needs to be done manually.
     instance.delete_revision(revision)
@@ -95,7 +95,7 @@ class Versioned(models.Model):
         instance.delete = _dummy_db
         return instance
     
-    def new_version(self, **kwargs):
+    def new_version(self, author=None, **kwargs):
         packed = self.pack(**kwargs)
         if self.versions:
             last = self.versions[0]
@@ -106,6 +106,8 @@ class Versioned(models.Model):
         if len(self.versions) > self.version_history_max_length:
             self.delete_revision(self.versions[self.version_history_max_length]['revision'])
         self.revision = uuid.uuid4()  # new revision number
+        if author is not None:
+            self.version_author = author
         self.version_created_at = datetime.utcnow()
         self.version_updated_at = datetime.utcnow()
     

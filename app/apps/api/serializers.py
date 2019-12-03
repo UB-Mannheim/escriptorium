@@ -6,7 +6,6 @@ from django.conf import settings
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
 
-
 from core.models import *
 
 logger = logging.getLogger(__name__)
@@ -120,7 +119,7 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
 class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'block', 'box')
+        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
     
     def create(self, validated_data):
         instance = super().create(validated_data)
@@ -129,9 +128,15 @@ class LineSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         instance.document_part.recalculate_ordering()
+        # instance.box = validated_data.pop('box', ())  # make use of the property setter
         return super().update(instance, validated_data)
-
-
+    
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        # value['box'] = json.loads(data['box'])
+        return value
+    
+    
 class DetailedLineSerializer(LineSerializer):
     block = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
