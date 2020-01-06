@@ -109,7 +109,7 @@ class SegmenterLine {
                 this.baselinePath = new Path({
                     strokeColor: segmenter_.mainColor,
                     strokeWidth: 7,
-                    strokeCap: 'round',
+                    strokeCap: 'butt',
                     selectedColor: 'black',
                     opacity: 0.5,
                     segments: this.baseline,
