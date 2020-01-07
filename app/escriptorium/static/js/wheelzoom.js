@@ -284,9 +284,10 @@ class WheelZoom {
     }
     
     reset() {
+        let oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
         this.pos = {x:0, y:0};
 	    this.scale = this.initialScale || 1;
-        this.updateStyle();
+        this.updateStyle({x: -oldPos.x, y:-oldPos.y, scale: 1/oldAngle});
     }
     
     disable() {
