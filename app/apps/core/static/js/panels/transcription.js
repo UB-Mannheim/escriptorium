@@ -229,7 +229,11 @@ class TranscriptionLine {
         ruler.style.fontSize = lineHeight+'px';
         input.style.fontSize = lineHeight+'px';
         input.style.height = lineHeight+10+'px';
-        input.style.marginLeft = context+'px';
+        if (READ_DIRECTION == 'rtl') {
+            input.style.marginRight = context+'px';
+        } else {
+            input.style.marginLeft = context+'px';
+        }
         if (content) {
             let lineWidth = bounds.width*panelToTransRatio;
             var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
