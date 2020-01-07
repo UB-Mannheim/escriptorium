@@ -428,6 +428,9 @@ i.panel-icon {
 #trans-modal .modal-body{
     overflow: visible;
 }
+#trans-modal .modal-lg {
+    max-width: 80%;
+}
 
 .trans-box {
     position: absolute !important;

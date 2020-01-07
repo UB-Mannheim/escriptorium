@@ -183,25 +183,28 @@ class TranscriptionLine {
         } else {
             bounds = this.pathElement.getBBox();
         }
-        
-        let panelToImgRatio = this.panel.$panel.width() / img.width;
-        let panelToTransRatio = modalImgContainer.getBoundingClientRect().width / bounds.width;
+
+        let hContext = 0.5; // in percentage
+        let panelToTransRatio = modalImgContainer.getBoundingClientRect().width /
+                                               (bounds.width+2*bounds.height*hContext);
 
         // Line image
-        let context = 20;
+        var MAX_HEIGHT = 150;
         let lineHeight = Math.round(bounds.height*panelToTransRatio);
-        if (lineHeight > 100) {
+        if (lineHeight > MAX_HEIGHT) {
             // change the ratio so that the image can not get too big
-            panelToTransRatio = (100/lineHeight)*panelToTransRatio;
-            lineHeight = 100;
+            panelToTransRatio = (MAX_HEIGHT/lineHeight)*panelToTransRatio;
+            lineHeight = MAX_HEIGHT;
         }
-        modalImgContainer.style.height = lineHeight+2*context+'px';
-        img.style.width = this.panel.$panel.width()*panelToTransRatio + 'px';
+        let context = hContext*lineHeight;
+        let visuHeight = lineHeight + 2*context;
+        modalImgContainer.style.height = visuHeight+'px';
+        img.style.width = this.panel.$panel.width()*panelToTransRatio +'px';
         
-        let left = Math.round(bounds.x*panelToTransRatio);
-        let top = Math.round(bounds.y*panelToTransRatio);
+        let left = Math.round(bounds.x*panelToTransRatio)-context;
+        let top = Math.round(bounds.y*panelToTransRatio)-context;
         img.style.left = -left+'px';
-        img.style.top = -top+context+'px';
+        img.style.top = -top+'px';
         
         // Overlay
         let overlay = modalImgContainer.querySelector('.overlay');
@@ -209,7 +212,7 @@ class TranscriptionLine {
         if (this.mask) {
             let polygon = this.mask.map(pt => {
                 return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
-                    Math.round(pt[1]/coordToTransRatio-top+context);
+                    Math.round(pt[1]/coordToTransRatio-top);
             }).join(',');
             overlay.querySelector('polygon').setAttribute('points', polygon);
         }
@@ -226,14 +229,16 @@ class TranscriptionLine {
         ruler.style.fontSize = lineHeight+'px';
         input.style.fontSize = lineHeight+'px';
         input.style.height = lineHeight+10+'px';
+        input.style.marginLeft = context+'px';
         if (content) {
-            var scaleX = Math.min(5,  modalImgContainer.clientWidth / ruler.clientWidth);
+            let lineWidth = bounds.width*panelToTransRatio;
+            var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
             scaleX = Math.max(0.2, scaleX);
             input.style.transform = 'scaleX('+ scaleX +')';
-            input.style.width = 100/scaleX + '%'; // fit in the container
+            input.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)'; // fit in the container
         } else {
             input.style.transform = 'none';
-            input.style.width = '100%';
+            input.style.width = 'calc(100% - '+context+'px)';
         }
         document.body.removeChild(ruler);  // done its job
         
