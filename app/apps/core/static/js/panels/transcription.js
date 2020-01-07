@@ -189,7 +189,8 @@ class TranscriptionLine {
                                                (bounds.width+2*bounds.height*hContext);
 
         // Line image
-        var MAX_HEIGHT = 150;
+        // 800 is letting space for margins and showing the history
+        var MAX_HEIGHT = Math.max(100, (document.body.clientHeight-850) / 3);
         let lineHeight = Math.round(bounds.height*panelToTransRatio);
         if (lineHeight > MAX_HEIGHT) {
             // change the ratio so that the image can not get too big
@@ -215,6 +216,9 @@ class TranscriptionLine {
                     Math.round(pt[1]/coordToTransRatio-top);
             }).join(',');
             overlay.querySelector('polygon').setAttribute('points', polygon);
+            overlay.style.display = 'block';
+        } else {
+            overlay.style.display = 'none';
         }
 
         // Content input
