@@ -113,17 +113,23 @@ class SegmentationPanel extends Panel {
         }.bind(this));
 
         this.resetMasksBtn.addEventListener('click', function(ev) {
-            let lines = this.segmenter.selection.lines;
-            // for (let i=0; i<lines.length; i++) {
             let uri = this.api + 'reset_masks/';
-            $.ajax({url: uri, type: 'POST', data: {lines: lines.map(l=>l.pk)}})
+            this.resetMasksBtn.disabled=true;
+            $.ajax({url: uri, type: 'POST'})
                 .done(function(data) {
-                    line.update(false, data.mask);
-                    var tl = panels['trans'].lines.find(l => l.pk==line.context.pk);
-                    if (tl) { tl.update(data); }
+                    if (data.lines) {
+                        for (let i=0; i<data.lines.length; i++) {
+                            // update segmentation panel
+                            let line = this.segmenter.lines.find(l => l.context.pk==data.lines[i].id);
+                            if (line) { line.update(false, data.lines[i].mask); }
+                            // update translation panel
+                            var tl = panels['trans'].lines.find(l => l.pk==data.lines[i].id);
+                            if (tl) { tl.update(data.lines[i]); }
+                        }
+                    }
                 }.bind(this))
-                .fail(function(e) { alert(e); });
-            // }
+                .fail(function(e) { alert(e); })
+                .always(function(e) { this.resetMasksBtn.disabled=false; }.bind(this));
         }.bind(this));
     }
     
@@ -209,8 +215,7 @@ class SegmentationPanel extends Panel {
         let uri = this.api + type + '/' + obj.context.pk;
         $.ajax({url: uri, type:'DELETE'});
         if (type == 'lines' && panels['trans']) {
-            let index = panels['trans'].lines.findIndex(l => l.pk==obj.context.pk);
-            let tl = panels['trans'].lines[index];
+            let tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
             if (tl) tl.delete();
             panels['trans'].lines.splice(index, 1);
         }

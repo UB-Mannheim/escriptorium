@@ -405,8 +405,9 @@ class Segmenter {
     deleteSelectedSegments() {
         for (let i=this.selection.segments.length-1; i >= 0; i--) {
             let segment = this.selection.segments[i];
-            if ((segment.path.closed && segment.path.segments.length > 3) ||
-                segment.path.segments.length > 2) {
+            if (segment.path && (
+                (segment.path.closed && segment.path.segments.length > 3) ||
+                    segment.path.segments.length > 2)) {
                 this.selection.segments[i].remove();
                 this.selection.segments.pop();
             }
@@ -622,7 +623,7 @@ class Segmenter {
             });
             if (hit && hit.type=='segment') {
                 if (this.selection.segments.findIndex(
-                    e => e.path.id == obj.path.id && e.index == obj.index) == -1) {
+                    e => e.path.id == hit.segment.path.id && e.index == hit.segment.index) == -1) {
                     this.addToSelection(hit.segment);
                 } else {
                     this.removeFromSelection(hit.segment);
@@ -658,7 +659,7 @@ class Segmenter {
                 
                 if (hit && hit.type=='segment') {
                     if (this.selection.segments.findIndex(
-                        e => e.path.id == obj.path.id && e.index == obj.index) == -1) {
+                        e => e.path && e.path.id == hit.segment.path.id && e.index == hit.segment.index) == -1) {
                         this.addToSelection(hit.segment);
                     } else {
                         this.removeFromSelection(hit.segment);
@@ -727,7 +728,7 @@ class Segmenter {
                 });
                 if (hit && hit.type=='segment') {
                     if (this.selection.segments.findIndex(
-                        e => e.path.id == obj.path.id && e.index == obj.index) == -1) {
+                        e => e.path.id == hit.segment.path.id && e.index == hit.segment.index) == -1) {
                         this.addToSelection(hit.segment);
                     } else {
                         this.removeFromSelection(hit.segment);
@@ -854,6 +855,7 @@ class Segmenter {
                 point = newLine.extend(event.point).point;
             } else {
                 this.finishLine(newLine);
+                newLine.unselect();
                 document.removeEventListener('keyup', onCancel);
             }
         }.bind(this);

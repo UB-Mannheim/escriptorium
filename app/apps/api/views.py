@@ -117,7 +117,8 @@ class PartViewSet(ModelViewSet):
         part.make_masks()
         return Response({
             'status': 'done',
-            'masks': [line.mask for line in part.lines.all()]})
+            'lines': [{'id':line.pk, 'mask': line.mask}
+                      for line in part.lines.all()]})
 
 
 class BlockViewSet(ModelViewSet):
