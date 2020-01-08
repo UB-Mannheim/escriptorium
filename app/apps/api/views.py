@@ -114,7 +114,10 @@ class PartViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def reset_masks(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
-        part.make_masks()
+        try:
+            part.make_masks()
+        except:
+            return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({
             'status': 'done',
             'lines': [{'id':line.pk, 'mask': line.mask}

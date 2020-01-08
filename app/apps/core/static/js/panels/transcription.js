@@ -157,10 +157,11 @@ class TranscriptionLine {
         }
     }
     
-    edit () {
+    edit() {
         // opens the modal and setup the line editing form
         if (currentLine) currentLine.editing = false;
         this.editing = true;
+        this.panel.modalZoom.reset();
         this.showOverlay();
         var content = this.getText();
         currentLine = this;
@@ -184,13 +185,13 @@ class TranscriptionLine {
             bounds = this.pathElement.getBBox();
         }
 
-        let hContext = 0.5; // in percentage
+        let hContext = 0.35; // in percentage
         let panelToTransRatio = modalImgContainer.getBoundingClientRect().width /
                                                (bounds.width+2*bounds.height*hContext);
 
         // Line image
-        // 800 is letting space for margins and showing the history
-        var MAX_HEIGHT = Math.max(100, (document.body.clientHeight-850) / 3);
+        // 400 is letting space for margins and showing the history
+        var MAX_HEIGHT = Math.max(25, (document.body.clientHeight-400) / 3);
         let lineHeight = Math.round(bounds.height*panelToTransRatio);
         if (lineHeight > MAX_HEIGHT) {
             // change the ratio so that the image can not get too big
@@ -363,6 +364,9 @@ class TranscriptionPanel extends Panel {
         this.content = container.getElementsByTagName('svg')[0];
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
 
+        this.modalZoom = new WheelZoom({minScale:1});
+        this.editModalZoomTarget = this.modalZoom.register(document.querySelector('#trans-modal #modal-img-container'));
+        
         // load the user saved transcription
         let itrans = userProfile.get('initialTranscriptions');
         if (itrans && itrans[DOCUMENT_ID]) {
