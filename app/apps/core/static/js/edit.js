@@ -96,8 +96,11 @@ $(document).ready(function() {
     });
     
     $('#zoom-range').on('input', function(ev) {
-        zoom.scale = parseFloat($(ev.target).val());
-        zoom.refresh();
+        let openPanel = panels[Object.keys(panels).find(k=>panels[k].opened===true)];
+        let container = openPanel.$container.get(0);
+        let target = {x: container.clientWidth/2-zoom.pos.x,
+                      y: container.clientHeight/2-zoom.pos.y};
+        zoom.zoomTo(target, parseFloat($(ev.target).val())-zoom.scale);
     });
     $('#zoom-reset').on('click', function(ev) {
         zoom.reset();

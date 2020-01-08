@@ -154,12 +154,27 @@ class WheelZoom {
         }
         return target;
     }
+
+    zoomTo(target, delta) {
+        let oldScale = this.scale;
+        this.scale += delta;
+
+	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
+        if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
+
+        var diff = {scale: this.scale / oldScale};
+        this.pos.x -= Math.round((target.x - target.x / diff.scale)*diff.scale);
+        this.pos.y -= Math.round((target.y - target.y / diff.scale)*diff.scale);
+        
+        this.updateStyle(diff);
+        this.targets[0].showMap(this.pos, this.scale);
+        return diff;
+    }
     
 	scrolled(e) {
         if (this.disabled) return null;
         e.preventDefault();
         
-        var oldScale = this.scale;
 		var delta = e.delta || e.wheelDelta;
 		if (delta === undefined) {
 	      //we are on firefox
@@ -169,25 +184,10 @@ class WheelZoom {
 	    delta = Math.max(-1, Math.min(1, delta));
 	    // determine the point on where the slide is zoomed in
         let bounds = e.target.getBoundingClientRect();
-		var zoom_point = {x: (e.pageX - bounds.x),
-		                  y: (e.pageY - bounds.y)};
+		var zoom_point = {x: (e.pageX - bounds.x - document.documentElement.scrollLeft),
+		                  y: (e.pageY - bounds.y - document.documentElement.scrollTop)};
 
-	    // apply zoom
-	    this.scale += delta * this.factor;
-	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
-        if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
-
-        // zpt * scale1 =  tpt * scale2
- 	    var zoom_target = {x: zoom_point.x * oldScale / this.scale,
-	                       y: zoom_point.y * oldScale / this.scale};
-        
-        this.pos.x -= Math.round(zoom_point.x - zoom_target.x);
-		this.pos.y -= Math.round(zoom_point.y - zoom_target.y);
-
-        let diff = {scale: this.scale / oldScale};
-        this.updateStyle(diff);
-        this.scrolling.showMap(this.pos, this.scale);
-        return diff;
+        return this.zoomTo(zoom_point, delta * this.factor);
 	}
     
 	drag(e) {
@@ -274,10 +274,6 @@ class WheelZoom {
         var event = new CustomEvent('wheelzoom.updated', {detail:delta});
         if (this.events) this.events.dispatchEvent(event);
 	}
-    
-    getVisibleContainer() {
-        return this.containers.find(function(e) { return e.is(':visible:not(.mirror)') && e.height() != 0;});
-    }
     
     refresh() {
         this.updateStyle();
