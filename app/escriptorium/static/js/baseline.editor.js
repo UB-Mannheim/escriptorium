@@ -959,10 +959,12 @@ class Segmenter {
             document.removeEventListener('keyup', onCancel);
             this.trigger('baseline-editor:selection', {target: this.selecting, selection: this.selection});
         }.bind(this);
-        
+
+        let allLines = this.selection.lines.length && this.selection.lines || this.lines;
+        let tmpSelected = [];
         this.tool.onMouseDrag = function(event) {
             this.updateSelectionRectangle(clip, event);
-            this.lassoSelection(clip);
+            this.lassoSelection(clip, allLines, tmpSelected);
         }.bind(this);
 
         document.addEventListener('mouseup', finishSelection);
@@ -1145,7 +1147,7 @@ class Segmenter {
             this.selection.regions.splice(this.selection.regions.findIndex(e => e.id == obj.id), 1);
         } else {
             // must be a segment
-            let fi = this.selection.segments.findIndex(e => e.path && e.path.id == obj.path.id && e.index == obj.index);
+            let fi = this.selection.segments.findIndex(e => e.path && obj.path && e.path.id == obj.path.id && e.index == obj.index);
             if (fi !== -1) {
                 this.selection.segments.splice(fi, 1);
                 obj.point.selected = false;
@@ -1199,11 +1201,11 @@ class Segmenter {
         }
     }
     
-    lassoSelection(clip) {
+    lassoSelection(clip, allLines, tmpSelected) {
         // draws a rectangle lasso selection tool that selects every segment it crosses
-        for (let i in this.lines) {
+        for (let i in allLines) {
             let allSegments;
-            let line = this.lines[i];
+            let line = allLines[i];
             if (this.showMasks) {
                 allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
             } else {
@@ -1213,10 +1215,18 @@ class Segmenter {
                 let segment = allSegments[j];
                 if (segment.point.isInside(clip.bounds)) {
                     this.addToSelection(segment);
+                    tmpSelected.push(segment);
                     line.select();
+                } else {
+                    let fi = tmpSelected.findIndex(s=>s.path && s.path.id == segment.path.id && s.index==segment.index);
+                    if (fi !== -1) {
+                        tmpSelected.slice(fi);
+                        this.removeFromSelection(segment);
+                    }
                 }
             }
             if (line.baselinePath.intersects(clip)) line.select();
+            else if (allLines.length == this.lines.length) line.unselect();
         }
     }
     
