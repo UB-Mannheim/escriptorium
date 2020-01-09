@@ -174,9 +174,6 @@ class SegmenterLine {
             this.baselinePath.bringToFront();
             this.baselinePath.strokeColor = this.segmenter.secondaryColor;
         }
-        
-        if (this.directionHint) this.directionHint.visible = true;
-        else this.showDirection();
         this.segmenter.addToSelection(this);
         this.selected = true;
     }
@@ -186,8 +183,10 @@ class SegmenterLine {
         // also unselects any selected segments
         if (this.maskPath) {
             this.maskPath.selected = false;
-            for (let i=0; i<this.maskPath.segments; i++) {
-                this.segmenter.removeFromSelection(this.maskPath.segments[i]); 
+            for (let i=0; i<this.maskPath.segments.length; i++) {
+                if (this.maskPath.segments[i].point.selected) {
+                    this.segmenter.removeFromSelection(this.maskPath.segments[i]);
+                }
             }
         }
         if (this.baselinePath) {
@@ -198,7 +197,6 @@ class SegmenterLine {
             }
         }
         this.segmenter.removeFromSelection(this);
-        if (this.directionHint) this.directionHint.visible = false;
         this.selected = false;
     }
     
@@ -257,25 +255,18 @@ class SegmenterLine {
     
     showDirection() {
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
-            if (this.directionHint) this.directionHint.remove();
-            let vector = this.baselinePath.segments[1].point.subtract(this.baselinePath.firstSegment.point);
-            vector.length = 20;
+            if (!this.directionHint) {
+                this.directionHint =  new Path({
+                    visible: true,
+                    shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
+                    strokeWidth: 2,
+                    strokeColor: this.segmenter.mainColor
+                });
+            }
             var start = this.baselinePath.firstSegment.point;
-            var end = start.add(vector);
-            vector.length = 10;
-            this.directionHint =  new Path({
-                visible: this.selected,
-                shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
-                strokeWidth: 1,
-                strokeColor: this.segmenter.mainColor,
-                opacity: 1,
-                segments:[
-                    end.add(vector.rotate(-150)),
-                    end,
-                    end.add(vector.rotate(150))]
-            });
-            if (Math.cos(vector.angle/180*Math.PI) > 0) this.directionHint.translate(vector.rotate(90));
-            else this.directionHint.translate(vector.rotate(-90));
+            let vector = this.baselinePath.getNormalAt(0);
+            vector.length = 50;
+            this.directionHint.segments= [start.subtract(vector), start.add(vector)];
         }
     }
     
@@ -525,10 +516,9 @@ class Segmenter {
     
     init() {
         paper.settings.handleSize = 10;
-        paper.settings.hitTolerance = 10;  // Note: doesn't work?
+        paper.settings.hitTolerance = 0;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
-        
         this.refresh();
         
         // make sure we capture clicks before the img
@@ -728,7 +718,7 @@ class Segmenter {
                 });
                 if (hit && hit.type=='segment') {
                     if (this.selection.segments.findIndex(
-                        e => e.path.id == hit.segment.path.id && e.index == hit.segment.index) == -1) {
+                        e => e.path && e.path.id == hit.segment.path.id && e.index == hit.segment.index) == -1) {
                         this.addToSelection(hit.segment);
                     } else {
                         this.removeFromSelection(hit.segment);
@@ -1142,7 +1132,7 @@ class Segmenter {
         } else {
             // must be a segment
             if (this.selection.segments.findIndex(
-                    e => e.path && e.path.id == obj.path.id && e.index == obj.index) == -1) {
+                e => e.path && e.path.id == obj.path.id && e.index == obj.index) == -1) {
                 this.selection.segments.push(obj);
                 obj.selected = true;
             }
@@ -1156,9 +1146,12 @@ class Segmenter {
         } else if (obj instanceof SegmenterRegion) {
             this.selection.regions.splice(this.selection.regions.findIndex(e => e.id == obj.id), 1);
         } else {
-            this.selection.segments.splice(this.selection.segments.findIndex(
-                e => e.path && e.path.id == obj.path.id && e.index == obj.index), 1);
-            obj.point.selected = false;
+            // must be a segment
+            let fi = this.selection.segments.findIndex(e => e.path && e.path.id == obj.path.id && e.index == obj.index);
+            if (fi !== -1) {
+                this.selection.segments.splice(fi, 1);
+                obj.point.selected = false;
+            }
         }
         this.showContextMenu();
     }
@@ -1186,7 +1179,7 @@ class Segmenter {
         let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
         var clip = new Path.Rectangle(shape, 0);
         clip.opacity = 1;
-        clip.strokeWidth = 2;
+        clip.strokeWidth = 2/this.scale;
         clip.strokeColor = 'grey';
         clip.dashArray = [10, 4];
         clip.originalPoint = event.point;
