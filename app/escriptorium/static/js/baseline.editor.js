@@ -113,7 +113,7 @@ class SegmenterLine {
                 this.baseline = baseline.map(pt=>[Math.round(pt[0]), Math.round(pt[1])]);
                 this.baselinePath = new Path({
                     strokeColor: segmenter_.mainColor,
-                    strokeWidth: 7,
+                    strokeWidth: Math.max(3, 7/this.segmenter.scale),
                     strokeCap: 'butt',
                     selectedColor: 'black',
                     opacity: 0.5,
@@ -122,6 +122,7 @@ class SegmenterLine {
                     visible: true
                 });
             }
+            this.setLineHeight();
         } else {
             // No baseline !
             this.baseline = null;
@@ -150,7 +151,6 @@ class SegmenterLine {
         for (let i in this.baselinePath.segments) {
             this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
         }
-        this.setLineHeight();
     }
     
     dragPolyEdges(j, delta) {
@@ -216,6 +216,7 @@ class SegmenterLine {
             this.maskPath.removeSegments();
             this.maskPath.addSegments(mask);
         }
+        this.setLineHeight();
     }
     
     updateDataFromCanvas() {
@@ -259,13 +260,14 @@ class SegmenterLine {
                 this.directionHint =  new Path({
                     visible: true,
                     shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
-                    strokeWidth: 2,
+                    strokeWidth: Math.max(2, 4 / this.segmenter.scale),
+                    opacity: 0.5,
                     strokeColor: this.segmenter.mainColor
                 });
             }
             var start = this.baselinePath.firstSegment.point;
             let vector = this.baselinePath.getNormalAt(0);
-            vector.length = 50;
+            vector.length = this.lineHeight / 3;
             this.directionHint.segments= [start.subtract(vector), start.add(vector)];
         }
     }
@@ -283,9 +285,6 @@ class SegmenterLine {
 
             // area implementation
             this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
-            if (this.lineHeight) {
-                this.baselinePath.strokeWidth = Math.max(this.lineHeight / 6, 3);
-            }
         }
     }
 }
@@ -314,6 +313,7 @@ class Segmenter {
                         idField='id'
                        } = {}) {
         this.img = image;
+        this.mode = 'lines'; // | 'regions'
         this.lines = [];
         this.regions = [];
         this.selection = {lines:[], segments:[], regions:[]};
@@ -347,8 +347,6 @@ class Segmenter {
         this.lengthThreshold = lengthTreshold; 
         this.showMasks = false;
 
-        this.mode = 'lines'; // | 'regions'
-        this.lines = [];
         this.selecting = null;
         this.spliting = false;
         this.copy = null;
@@ -1179,7 +1177,7 @@ class Segmenter {
         let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
         var clip = new Path.Rectangle(shape, 0);
         clip.opacity = 1;
-        clip.strokeWidth = 2/this.scale;
+        clip.strokeWidth = Math.max(2, 2/this.scale);
         clip.strokeColor = 'grey';
         clip.dashArray = [10, 4];
         clip.originalPoint = event.point;
@@ -1321,6 +1319,11 @@ class Segmenter {
         }
     }
 
+    getAverageLineHeight() {
+        console.log(this.lines, this.lines.map(l=>l.getLineHeight()));
+        return this.lines.map(l=>l.getLineHeight()).reduce((a,b)=>a+b)/this.lines.length;
+    }
+    
     setCursor(style) {
         if (style) {
             this.canvas.style.cursor = style;

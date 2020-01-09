@@ -116,7 +116,8 @@ class PartViewSet(ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         try:
             part.make_masks()
-        except:
+        except Exception as e:
+            logger.exception(e)
             return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({
             'status': 'done',
