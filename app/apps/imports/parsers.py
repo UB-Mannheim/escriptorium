@@ -69,7 +69,7 @@ class XMLParser(ParserDocument):
             content = staticfiles_storage.open(self.SCHEMA_FILE).read()
             schema_root = etree.XML(content)
         except:
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
         else:
             try:
                 xmlschema = etree.XMLSchema(schema_root)
@@ -337,7 +337,7 @@ class IIIFManifestParser(ParserDocument):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
-    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
+    # SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
 
     def validate(self):
@@ -446,9 +446,9 @@ class PagexmlParser(XMLParser):
                             words = line.findall('Word', self.root.nsmap)
                             # pagexml can have content for each word inside a word tag or the whole line in textline tag
                             if len(words) > 0:
-                                content = ' '.join([e.text for e in line.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
+                                content = ' '.join([e.text if e.text is not None else '' for e in line.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
                             else:
-                                content = ' '.join([e.text for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
+                                content = ' '.join([e.text if e.text is not None else '' for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
                             try:
 
                                 # lazily creates the Transcription on the fly if need be cf transcription() property
