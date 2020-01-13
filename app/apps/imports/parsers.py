@@ -53,8 +53,14 @@ class ParserDocument():
         return transcription
 
 
-class XMLParser:
-
+class XMLParser(ParserDocument):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.root = etree.parse(self.file).getroot()
+        except (AttributeError, etree.XMLSyntaxError) as e:
+            raise ParseError("Invalid XML. %s" % e.args[0])
+    
     def validate(self):
         try:
             # response = requests.get(self.SCHEMA)
@@ -116,18 +122,11 @@ class ZipParser(ParserDocument):
 
 
 
-class AltoParser(ParserDocument,XMLParser):
+class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
 
     SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
     SCHEMA_FILE = 'alto-4-1-baselines.xsd'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.root = etree.parse(self.file).getroot()
-        except (AttributeError, etree.XMLSyntaxError) as e:
-            raise ParseError("Invalid XML. %s" % e.args[0])
 
     @property
     def total(self):
@@ -336,21 +335,16 @@ class IIIFManifestParser(ParserDocument):
             raise ParseError(e)
 
 
-class PagexmlParser(ParserDocument, XMLParser):
+class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.root = etree.parse(self.file).getroot()
-            #  Transkribus file vaidate it with Transkribus schema
-            if b'/pagecontent/2013' in etree.tostring(self.root):
-                self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
-        except (AttributeError, etree.XMLSyntaxError) as e:
-            raise ParseError("Invalid XML. %s" % e.args[0])
-
+    def validate(self):
+        if b'/pagecontent/2013' in etree.tostring(self.root):
+            self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
+        super().validate()
+        
     @property
     def total(self):
         # pagexml file can contain multiple parts
