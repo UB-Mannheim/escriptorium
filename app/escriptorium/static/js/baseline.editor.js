@@ -88,12 +88,13 @@ class SegmenterRegion {
 }
 
 class SegmenterLine {
-    constructor(baseline, mask, context, segmenter_) {
+    constructor(baseline, mask, readDirection, context, segmenter_) {
         this.id = generateUniqueId();
         this.segmenter = segmenter_;
         this.mask = mask;
         this.context = context;
         this.selected = false;
+        this.readDirection = readDirection;
 
         this.directionHint = null;
 
@@ -122,7 +123,6 @@ class SegmenterLine {
                     visible: true
                 });
             }
-            this.setLineHeight();
         } else {
             // No baseline !
             this.baseline = null;
@@ -236,6 +236,7 @@ class SegmenterLine {
         this.unselect();
         if(this.baselinePath) this.baselinePath.remove();
         if(this.maskPath) this.maskPath.remove();
+        if(this.directionHint) this.directionHint.remove();
         this.segmenter.lines.splice(this.segmenter.lines.findIndex(e => e.id == this.id), 1);
     }
 
@@ -265,26 +266,28 @@ class SegmenterLine {
                     strokeColor: this.segmenter.mainColor
                 });
             }
-            var start = this.baselinePath.firstSegment.point;
+            let start;
+            if (this.readDirection == 'ltr') {
+                start = this.baselinePath.firstSegment.point;
+            } else {
+                start = this.baselinePath.lastSegment.point;
+            }
             let vector = this.baselinePath.getNormalAt(0);
             vector.length = this.lineHeight / 3;
-            this.directionHint.segments= [start.subtract(vector), start.add(vector)];
+            this.directionHint.segments = [start.subtract(vector), start.add(vector)];
         }
     }
     
     setLineHeight() {
-        if (this.baseline && this.mask) {
-            // distance avg implementation
-            /* let sum = 0;
-            this.baseline.forEach(function(segment){
-                let top = this.maskPath.segments[this.maskPath.segments.length-segment.index-1];
-                let bottom = this.maskPath.segments[segment.index];
-                sum += top.distance(bottom);
-            }.bind(this));
-            return sum / this.baseline.length; */
-
-            // area implementation
-            this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
+        if (this.baseline) {
+            if (this.mask) {
+                // area implementation
+                this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
+            } else if (this.segmenter.lines.length >= 2) {
+                // distance avg implementation
+                this.lineHeight = this.segmenter.getAverageLineHeight();
+            }
+            this.showDirection();
         }
     }
 }
@@ -308,6 +311,8 @@ class Segmenter {
                         secondaryColor=null,
                         upperLineHeight=20,
                         lowerLineHeight=10,
+                        // when creating a line, which direction should it take.
+                        defaultReadDirection='ltr',
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
                         idField='id'
@@ -551,7 +556,13 @@ class Segmenter {
                 context[this.idField] = null;
             }
         }
-        var line = new SegmenterLine(baseline, mask, context, this);
+        // the line direction of the baseline should always be from left to right
+        // the text direction can be opposite of that (rtl).
+        if (baseline[0][0] > baseline[baseline.length-1][0]) {
+            baseline.reverse();
+        }
+        
+        var line = new SegmenterLine(baseline, mask, this.readDirection, context, this);
         if (!postponeEvents) this.bindLineEvents(line);
         this.lines.push(line);
         return line;
@@ -1021,6 +1032,10 @@ class Segmenter {
                 let newRegion = this.createRegion(region.box, context);
             }.bind(this));
         }
+        // once everything is load we can calculate line heights etc
+        for (let i in this.lines) {
+            this.lines[i].setLineHeight();
+        }
     }
     
     exportJSON() {
@@ -1330,8 +1345,9 @@ class Segmenter {
     }
 
     getAverageLineHeight() {
-        console.log(this.lines, this.lines.map(l=>l.getLineHeight()));
-        return this.lines.map(l=>l.getLineHeight()).reduce((a,b)=>a+b)/this.lines.length;
+        if (this.averageLineHeight) return this.averageLineHeight;
+        this.averageLineHeight = this.lines.map(l=>l.baseline[0][0]).reduce((a,b)=>b-a)/this.lines.length;
+        return this.averageLineHeight;
     }
     
     setCursor(style) {
