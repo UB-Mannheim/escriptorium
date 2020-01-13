@@ -11,7 +11,11 @@ class SegmentationPanel extends Panel {
         this.seeLines = true;
         this.$img = $('img', this.$container);
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
-        this.segmenter = new Segmenter(this.$img.get(0), {delayInit:true, idField:'pk'});
+        this.segmenter = new Segmenter(this.$img.get(0), {
+            delayInit:true,
+            idField:'pk',
+            defaultReadDirection: READ_DIRECTION
+        });
         // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
         canvas.parentNode.parentNode.appendChild(canvas);
