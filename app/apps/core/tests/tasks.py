@@ -8,15 +8,15 @@ from core.tests.factory import CoreFactoryTestCase
 
 
 class TasksTestCase(CoreFactoryTestCase):
-    def setUp(self):
-        super().setUp()
-        self.part = self.factory.make_part()
-        self.factory.make_part(document=self.part.document)
-        self.factory.make_part(document=self.part.document)
-        self.transcription = self.factory.make_transcription(document=self.part.document)
-        self.factory.make_content(self.part, transcription=self.transcription)
-        for part in self.part.document.parts.all():
-            part.binarize()
+    # def setUp(self):
+    #     super().setUp()
+    #     self.part = self.factory.make_part()
+    #     self.factory.make_part(document=self.part.document)
+    #     self.factory.make_part(document=self.part.document)
+    #     self.transcription = self.factory.make_transcription(document=self.part.document)
+    #     self.factory.make_content(self.part, transcription=self.transcription)
+    #     # for part in self.part.document.parts.all():
+    #     #     part.binarize()
     
     def test_workflow(self):
         self.assertEqual(self.part.workflow_state,
@@ -58,7 +58,7 @@ class TasksTestCase(CoreFactoryTestCase):
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
     
-    def test_training_new_model(self):
+    def test_train_new_transcription_model(self):
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
         with self.assertNumQueries(18):
@@ -70,7 +70,7 @@ class TasksTestCase(CoreFactoryTestCase):
                 'new_model': 'new_test_model'})
         self.assertEqual(response.status_code, 200)
     
-    def test_training_existing_model(self):
+    def test_train_existing_transcription_model(self):
         model = self.factory.make_model(document=self.part.document)
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
@@ -82,3 +82,43 @@ class TasksTestCase(CoreFactoryTestCase):
                 'task': 'train',
                 'train_model': model.pk})
         self.assertEqual(response.status_code, 200)
+    
+    def test_process_segment(self):
+        self.part = self.factory.make_part()
+        self.client.force_login(self.part.document.owner)
+        uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
+        with self.assertNumQueries(14):
+            response = self.client.post(uri, {
+                'document': self.part.document.pk,
+                'parts': json.dumps([self.part.pk]),
+                'task': 'segment'})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(self.part.lines.count(), 3)
+    
+    def test_train_new_segmentation_model(self):
+        self.part = self.factory.make_part(image_asset='segmentation/default.png')
+        baselines = [[[13,31],[848,37]], [[99,93],[850,106]], [[15,157],[837,165]]]
+        for baseline in baselines:
+            l = Line.objects.create(document_part=self.part, baseline=baseline)
+        self.part2 = self.factory.make_part(image_asset='segmentation/default2.png')
+        baselines = [[[24,33],[225,42],[376,40],[524,46], [657,43],[731,56]],
+                     [[52,81],[701,91]],
+                     [[51,120],[233,123],[360,119],[673,127],[722,136]],
+                     [[5,158],[155,165],[305,165],[540,170],[554,165],[689,177],[733,196]]]
+        for baseline in baselines:
+            l = Line.objects.create(document_part=self.part2, baseline=baseline)
+            
+        self.client.force_login(self.part.document.owner)
+        uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
+        with self.assertNumQueries(14):
+            response = self.client.post(uri, {
+                'document': self.part.document.pk,
+                'parts': json.dumps([self.part.pk, self.part2.pk]),
+                'task': 'segtrain',
+                'new_model': 'new_seg_model'
+            })
+            self.assertEqual(response.status_code, 200, response.content)
+            self.assertEqual(self.part.lines.count(), 3)
+    
+    def test_train_existing_segmentation_model(self):
+        pass

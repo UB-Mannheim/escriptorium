@@ -39,9 +39,13 @@ class CoreFactory():
         return Document.objects.create(**attrs)
     
     def make_part(self, **kwargs):
+        if 'image_asset' in kwargs:
+            img = self.make_asset_file(asset_name=kwargs.pop('image_asset'))
+        else:
+            img = self.make_asset_file()
         attrs = kwargs.copy()
         attrs['document'] = attrs.get('document') or self.make_document()
-        img = self.make_image_file()
+        
         attrs.setdefault('image', SimpleUploadedFile(
             name=img.name,
             content=img.read(),
@@ -69,6 +73,15 @@ class CoreFactory():
         file.seek(0)
         return file
 
+    def make_asset_file(self, name='test.png', asset_name='default.png'):
+        fp = os.path.join(os.path.dirname(__file__), 'assets', asset_name)
+        with Image.open(fp, 'r') as image:
+            file = BytesIO()
+            file.name = name
+            image.save(file, 'png')
+            file.seek(0)
+        return file
+    
     def make_model(self, job=OcrModel.MODEL_JOB_RECOGNIZE, document=None):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
