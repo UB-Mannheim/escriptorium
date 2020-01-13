@@ -7,9 +7,9 @@
 	</Metadata>
 	<Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
         {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
-            <TextRegion {% if line.block %}id="{{ line.block.make_external_id }}">
-               <Coords points="{% box_coordinates line.block.box %}"/>
-        {% endif%}
+            <TextRegion{% if line.block %} id="{{ line.block.make_external_id }}"{% endif %}>
+               {% if line.block %}<Coords points="{% box_coordinates line.block.box %}"/>{% endif%}
+        
         {% endifchanged %}
         <TextLine id="{{ line.make_external_id }}">
             {% if line.mask %}
@@ -24,7 +24,8 @@
           </TextLine>
         {% if forloop.last %}<TextEquiv>
                     <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
-                </TextEquiv></TextRegion>{% endif %}
+                </TextEquiv>
+            </TextRegion>{% endif %}
         {% endfor %}
 	</Page>
 </PcGts>
