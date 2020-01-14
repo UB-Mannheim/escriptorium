@@ -1002,15 +1002,17 @@ class Segmenter {
         /*
           Call when either the available space or the source image size changed.
         */
-        
         if (paper.view) {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);
             let ratio = imgRatio/paper.view.zoom*this.scale;
             this.canvas.style.width = bounds.width + 'px';
             this.canvas.style.height = bounds.height + 'px';
-            paper.view.viewSize = [bounds.width, bounds.height];
-            paper.view.scale(ratio, [0, 0]);
+            if (paper.view.viewSize[0] != bounds.width &&
+                paper.view.viewSize[1] != bounds.height) {
+                paper.view.viewSize = [bounds.width, bounds.height];
+                paper.view.scale(ratio, [0, 0]);
+            }
         }
     }
     
@@ -1183,7 +1185,10 @@ class Segmenter {
             }
         }
         for (let i=this.selection.segments.length-1; i >= 0; i--) {
-            if (!except || except.baselinePath != this.selection.segments[i].path) {
+            if (this.selection.segments[i].path == null){
+                // clean up any remaining references (paperjs bug?)
+                this.selection.segments.splice(i);
+            } else if (!except || except.baselinePath != this.selection.segments[i].path) {
                 this.removeFromSelection(this.selection.segments[i]);
             }
         }
@@ -1233,7 +1238,8 @@ class Segmenter {
                     tmpSelected.push(segment);
                     line.select();
                 } else {
-                    let fi = tmpSelected.findIndex(s=>s.path && s.path.id == segment.path.id && s.index==segment.index);
+                    let fi = tmpSelected.findIndex(s=>s.path && s.path.id == segment.path.id
+                                                   && s.index==segment.index);
                     if (fi !== -1) {
                         tmpSelected.slice(fi);
                         this.removeFromSelection(segment);

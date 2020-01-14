@@ -7,7 +7,6 @@
 <div id="part-name" class="navbar-brand mx-3"></div>
 <div class="ml-auto">
   <button id="source-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
-  <button id="binar-panel-btn" type="button" data-target="binar" class="open-panel nav-item btn btn-secondary" title="{% trans "Binarization" %}"><i class="fas fa-adjust"></i></button>
   <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
   <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
 </div>
@@ -21,15 +20,14 @@
   <div id="source-tools" class="panel-tools col">
     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
   </div>
-  <div id="binar-tools" class="panel-tools col">
-    <i title="{% trans 'Binarization Panel' %}" class="panel-icon fas fa-adjust"></i>
-  </div>
   <div id="seg-tools" class="panel-tools col">
     <div class="form-row">
       <div class="col-auto mr-1">
         <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
       </div>
       <div class="col mr-1 mb-2">
+        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-outline-dark ml-3 fas fa-adjust hide" autocomplete="off"></button>
+        
         <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
         <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
         
@@ -114,25 +112,6 @@
             <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#source-overlay)" />
           </svg>
         </div>
-      </div>
-    </div>
-  </div>
-  
-  <div id="binar-panel" class="col panel">
-    <div class="img-container">
-      <div class="zoom-container">
-      <img id="part-img" src="{# part.bw_image|thumbnail_url:'large' #}"/>
-      <div class="overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="bin-overlay">
-              <rect width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#bin-overlay)" />
-        </svg>
-      </div>
       </div>
     </div>
   </div>
@@ -260,7 +239,6 @@
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/panels/base.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/panels/source.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/panels/binarization.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/panels/segmentation.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/panels/transcription.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/edit.js' %}"></script>

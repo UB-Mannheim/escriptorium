@@ -17,7 +17,6 @@ $(document).ready(function() {
 	    }
 	}
 	makePanel('source', SourcePanel);
-	makePanel('binar', BinarizationPanel);
 	makePanel('seg', SegmentationPanel);
 	makePanel('trans', TranscriptionPanel);
 
@@ -79,8 +78,10 @@ $(document).ready(function() {
     fullSizeImg.addEventListener('load', function() {
         panels['source'].$img.attr('src', this.src);
         panels['source'].refresh();  // doesn't do anything for now but might in the future
-        panels['seg'].$img.attr('src', this.src);
-        panels['seg'].segmenter.scale = 1;
+        if (panels['seg'].colorMode == 'color') {
+            panels['seg'].$img.attr('src', this.src);
+            panels['seg'].refresh();
+        }
     }, false);
     
     zoom.events.addEventListener('wheelzoom.updated', function(data) {

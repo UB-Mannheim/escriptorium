@@ -170,7 +170,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
 
     @cached_property
     def parts(self):
-        pks = self.data.getlist('parts')
         pks = json.loads(self.data.get('parts'))
         parts = DocumentPart.objects.filter(
             document=self.document, pk__in=pks)

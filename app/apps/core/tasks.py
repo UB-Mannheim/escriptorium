@@ -287,7 +287,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
                         id="segmentation-error", level='danger')
-        part.workflow_state = part.WORKFLOW_STATE_BINARIZED
+        part.workflow_state = part.WORKFLOW_STATE_CONVERTED
         part.save()
         logger.exception(e)
     else:

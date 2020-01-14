@@ -10,6 +10,7 @@ class SegmentationPanel extends Panel {
         this.seeBlocks = true;
         this.seeLines = true;
         this.$img = $('img', this.$container);
+        this.colorMode = 'color';
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
         this.segmenter = new Segmenter(this.$img.get(0), {
             delayInit:true,
@@ -34,6 +35,18 @@ class SegmentationPanel extends Panel {
             undoManager.redo();
             this.updateHistoryBtns();
         }.bind(this));
+        
+        this.toggleBinaryBtn = document.querySelector('button#toggle-binary');
+        this.toggleBinaryBtn.addEventListener('click', function(ev) {
+            if (this.colorMode == 'color') this.colorMode = 'binary';
+            else this.colorMode = 'color';
+            if (this.loaded) {
+                this.$img.attr('src', this.getImgSrcUri());
+                if (this.$img.get(0).complete) { this.refresh(); }
+                else this.$img.one('load', this.refresh());
+            }
+        }.bind(this));
+        
         document.addEventListener('keyup', function(event) {
             if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
                 undoManager.undo();
@@ -150,18 +163,28 @@ class SegmentationPanel extends Panel {
         
         this.bindZoom();
     }
+
+    getImgSrcUri() {
+        if (this.colorMode == 'binary' && this.part.bw_image) {
+            return this.part.bw_image.uri;
+        } else {
+            if (this.part.image.thumbnails && this.part.image.thumbnails.large) {
+                return this.part.image.thumbnails.large;
+            } else {
+                return this.part.image.uri;
+            }
+        }
+    }
     
     load(part) {
         this.segmenter.empty();
         super.load(part);
-        if (this.part.image.thumbnails && this.part.image.thumbnails.large) {
-            this.$img.attr('src', this.part.image.thumbnails.large);
-        } else {
-            this.$img.attr('src', this.part.image.uri);
-        }
+        this.$img.attr('src', this.getImgSrcUri());
+        if (this.part.bw_image) this.toggleBinaryBtn.classList.remove('hide');
+        else this.toggleBinaryBtn.classList.add('hide');
         if (this.opened) {
             if (this.$img.get(0).complete) { this.init(); }
-            else { this.$img.on('load', this.init.bind(this)); }
+            else { this.$img.one('load', this.init.bind(this)); }
         }
         this.loaded = true;
     }
@@ -169,7 +192,7 @@ class SegmentationPanel extends Panel {
     onShow() {
         if (this.loaded) {
             if (this.$img.get(0).complete) { this.init(); }
-            else { this.$img.on('load', this.init.bind(this)); }
+            else { this.$img.one('load', this.init.bind(this)); }
         }
     }
 
@@ -228,6 +251,8 @@ class SegmentationPanel extends Panel {
     refresh() {
         super.refresh();
         if (this.opened) {
+            let ratio = this.$img.get(0).naturalWidth / this.part.image.size[0];
+            this.segmenter.scale = ratio;
             this.segmenter.refresh();
         }
     }

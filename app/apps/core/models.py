@@ -255,8 +255,8 @@ class DocumentPart(OrderedModel):
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
     WORKFLOW_STATE_CONVERTED = 2
-    WORKFLOW_STATE_BINARIZING = 3
-    WORKFLOW_STATE_BINARIZED = 4
+    # WORKFLOW_STATE_BINARIZING = 3  # legacy
+    # WORKFLOW_STATE_BINARIZED = 4
     WORKFLOW_STATE_SEGMENTING = 5
     WORKFLOW_STATE_SEGMENTED = 6
     WORKFLOW_STATE_TRANSCRIBING = 7
@@ -264,8 +264,6 @@ class DocumentPart(OrderedModel):
         (WORKFLOW_STATE_CREATED, _("Created")),
         (WORKFLOW_STATE_CONVERTING, _("Converting")),
         (WORKFLOW_STATE_CONVERTED, _("Converted")),
-        (WORKFLOW_STATE_BINARIZING, _("Binarizing")),
-        (WORKFLOW_STATE_BINARIZED, _("Binarized")),
         (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
         (WORKFLOW_STATE_SEGMENTED, _("Segmented")),
         (WORKFLOW_STATE_TRANSCRIBING, _("Transcribing")),
@@ -401,10 +399,6 @@ class DocumentPart(OrderedModel):
             w['convert'] = 'ongoing'
         elif self.workflow_state > self.WORKFLOW_STATE_CONVERTING:
             w['convert'] = 'done'
-        if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            w['binarize'] = 'ongoing'
-        elif self.workflow_state > self.WORKFLOW_STATE_BINARIZING:
-            w['binarize'] = 'done'
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             w['segment'] = 'ongoing'
         elif self.workflow_state > self.WORKFLOW_STATE_SEGMENTING:
@@ -444,11 +438,8 @@ class DocumentPart(OrderedModel):
         uncancelable = ['core.tasks.convert',
                         'core.tasks.lossless_compression',
                         'core.tasks.generate_part_thumbnails']
-        if self.workflow_state == self.WORKFLOW_STATE_BINARIZING:
-            self.workflow_state = self.WORKFLOW_STATE_CONVERTED
-            self.save()
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
-            self.workflow_state = self.WORKFLOW_STATE_BINARIZED
+            self.workflow_state = self.WORKFLOW_STATE_CONVERTED
             self.save()
         
         for task_name, task in self.tasks.items():
@@ -483,8 +474,7 @@ class DocumentPart(OrderedModel):
         
         tasks_map = {  # map a task to a workflow state it should go back to if failed
             'core.tasks.convert': (self.WORKFLOW_STATE_CONVERTING, self.WORKFLOW_STATE_CREATED),
-            'core.tasks.binarize': (self.WORKFLOW_STATE_BINARIZING, self.WORKFLOW_STATE_CONVERTED),
-            'core.tasks.segment': (self.WORKFLOW_STATE_SEGMENTING, self.WORKFLOW_STATE_BINARIZED),
+            'core.tasks.segment': (self.WORKFLOW_STATE_SEGMENTING, self.WORKFLOW_STATE_CONVERTED),
             'core.tasks.transcribe': (self.WORKFLOW_STATE_TRANSCRIBING, self.WORKFLOW_STATE_SEGMENTED),
         }
         for task_name in tasks_map:
@@ -536,10 +526,6 @@ class DocumentPart(OrderedModel):
             os.rename(opti_name, self.image.file.name)
     
     def binarize(self, threshold=None):
-        if self.workflow_state < self.WORKFLOW_STATE_BINARIZING:
-            self.workflow_state = self.WORKFLOW_STATE_BINARIZING
-            self.save()
-        
         fname = os.path.basename(self.image.file.name)
         # should be formated to png already by by lossless_compression but better safe than sorry
         form = None
@@ -560,9 +546,7 @@ class DocumentPart(OrderedModel):
             res.save(bw_file, format=form)
         
         self.bw_image = document_images_path(self, bw_file_name)
-        if self.workflow_state < self.WORKFLOW_STATE_BINARIZED:
-            self.workflow_state = self.WORKFLOW_STATE_BINARIZED
-            self.save()
+        self.save()
     
     def segment(self, steps=None, text_direction=None, model=None, override=False):
         # cleanup pre-existing
@@ -620,7 +604,7 @@ class DocumentPart(OrderedModel):
             text_direction = (text_direction
                               or (self.document.main_script and self.document.main_script.text_direction)
                               or 'horizontal-lr')
-            with Image.open(self.bw_image.file.name) as im:
+            with Image.open(self.image.file.name) as im:
                 for line in lines:
                     it = rpred.rpred(
                         model_, im,
@@ -652,7 +636,6 @@ class DocumentPart(OrderedModel):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
-        tasks_order = ['convert', 'binarize', 'segment', 'transcribe']
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             sig = convert.si(self.pk)
             
@@ -663,14 +646,11 @@ class DocumentPart(OrderedModel):
                 sig.link(lossless_compression.si(self.pk))
             tasks.append(sig)
         
-        if (task_name == 'binarize'
-            or (tasks_order.index(task_name) > tasks_order.index('binarize')
-                and not self.binarized)):
+        if task_name == 'binarize':
             tasks.append(binarize.si(self.pk, **kwargs))
         
-        if (task_name == 'segment'
-            or (tasks_order.index(task_name) > tasks_order.index('segment')
-                and not self.segmented)):
+        if (task_name == 'segment' or (task_name=='transcribe'
+                                       and not self.segmented)):
             tasks.append(segment.si(self.pk, **kwargs))
         
         if task_name == 'transcribe':
@@ -682,9 +662,6 @@ class DocumentPart(OrderedModel):
         return tasks
 
     def make_masks(self):
-        # if not self.bw_image:
-        #     # do the binarizaton 'live' since Kraken will do it anyway
-        #     self.binarize()
         im = Image.open(self.image).convert('L')
         lines = self.lines.all()  # needs to store the qs result
         baselines = [l.baseline for l in lines]
