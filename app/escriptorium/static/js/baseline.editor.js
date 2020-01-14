@@ -1236,7 +1236,6 @@ class Segmenter {
                 if (segment.point.isInside(clip.bounds)) {
                     this.addToSelection(segment);
                     tmpSelected.push(segment);
-                    line.select();
                 } else {
                     let fi = tmpSelected.findIndex(s=>s.path && s.path.id == segment.path.id
                                                    && s.index==segment.index);
@@ -1246,7 +1245,7 @@ class Segmenter {
                     }
                 }
             }
-            if (line.baselinePath.intersects(clip)) line.select();
+            if (line.baselinePath.intersects(clip) || line.baselinePath.isInside(clip.bounds)) line.select();
             else if (allLines.length == this.lines.length) line.unselect();
         }
     }
