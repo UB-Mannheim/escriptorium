@@ -192,7 +192,7 @@ class TranscriptionLine {
         // Line image
         // 400 is letting space for margins and showing the history
         var MAX_HEIGHT = Math.max(25, (document.body.clientHeight-400) / 3);
-        let lineHeight = Math.round(bounds.height*panelToTransRatio);
+        let lineHeight = Math.max(10, Math.round(bounds.height*panelToTransRatio));
         if (lineHeight > MAX_HEIGHT) {
             // change the ratio so that the image can not get too big
             panelToTransRatio = (MAX_HEIGHT/lineHeight)*panelToTransRatio;
@@ -231,9 +231,10 @@ class TranscriptionLine {
         ruler.textContent = content;
         document.body.appendChild(ruler);
 
-        ruler.style.fontSize = lineHeight+'px';
-        input.style.fontSize = lineHeight+'px';
-        input.style.height = lineHeight+10+'px';
+        let fontHeight = Math.min(lineHeight, 60);
+        ruler.style.fontSize = fontHeight+'px';
+        input.style.fontSize = fontHeight+'px';
+        input.style.height = fontHeight+10+'px';
         if (READ_DIRECTION == 'rtl') {
             input.style.marginRight = context+'px';
         } else {
@@ -364,7 +365,7 @@ class TranscriptionPanel extends Panel {
         this.content = container.getElementsByTagName('svg')[0];
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
 
-        this.modalZoom = new WheelZoom({minScale:1});
+        this.modalZoom = new WheelZoom({minScale: 1});
         this.editModalZoomTarget = this.modalZoom.register(document.querySelector('#trans-modal #modal-img-container'));
         
         // load the user saved transcription
