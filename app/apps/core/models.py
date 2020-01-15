@@ -319,7 +319,7 @@ class DocumentPart(OrderedModel):
         transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         self.transcription_progress = min(int(transcribed / total * 100), 100)
     
-    def recalculate_ordering(self, text_direction=None, line_level_treshold=1/100):
+    def recalculate_ordering(self, text_direction=None, line_level_treshold=2/100):
         """
         Re-order the lines of the DocumentPart depending or text direction.
         Beware 'text direction' is different from reading order,
@@ -335,19 +335,19 @@ class DocumentPart(OrderedModel):
         
         imgsize = (self.image.width, self.image.height)
         imgbox = ((0, 0), imgsize)
-        
+
         def origin_pt(shape):
             if text_direction == 'rl':
-                return min(shape, key=lambda pt: pt[0])
-            else:
                 return max(shape, key=lambda pt: pt[0])
+            else:
+                return min(shape, key=lambda pt: pt[0])
         
         def cmp_pts(a, b):
             try:
                 # 2 lines more or less on the same level
                 if abs(b[1] - a[1]) < line_level_treshold * imgsize[1]:
-                    return abs(b[0] - origin_pt(imgbox)[0]) - abs(a[0]- origin_pt(imgbox)[0])
-                return abs(b[1] - origin_pt(imgbox)[1]) - abs(a[1] - origin_pt(imgbox)[1])
+                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
+                return a[1] - b[1]
             except TypeError as e:  # invalid line
                 return 0
         

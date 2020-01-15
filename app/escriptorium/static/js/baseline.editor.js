@@ -1327,6 +1327,7 @@ class Segmenter {
     }
 
     getMaxOrder() {
+        if (!this.lines.length) return 0;
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
     }
     
