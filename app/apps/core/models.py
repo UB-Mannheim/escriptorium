@@ -332,32 +332,28 @@ class DocumentPart(OrderedModel):
         text_direction = (text_direction
                           or (self.document.main_script and self.document.main_script.text_direction[-2:])
                           or 'lr')
-        def origin_pt(box):
-            if text_direction == 'rl':
-                return (box[2], box[1])
-            else:
-                return (box[0], box[1])
         
         imgsize = (self.image.width, self.image.height)
-        imgbox = (0, 0) + imgsize
+        imgbox = ((0, 0), imgsize)
+        
+        def origin_pt(shape):
+            if text_direction == 'rl':
+                return min(shape, key=lambda pt: pt[0])
+            else:
+                return max(shape, key=lambda pt: pt[0])
+        
         def cmp_pts(a, b):
-            def cmp_(a, b):
-                # 2 lines more or less on the same level
-                if abs(a[1] - b[1]) < line_level_treshold * imgsize[1]:
-                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
-                return abs(a[1] - origin_pt(imgbox)[1]) - abs(b[1] - origin_pt(imgbox)[1])
-
             try:
-                if a[0] != b[0]:
-                    return cmp_(a[0], b[0])
-                return cmp_(a[1], b[1])
-            except TypeError:  # invalid line
+                # 2 lines more or less on the same level
+                if abs(b[1] - a[1]) < line_level_treshold * imgsize[1]:
+                    return abs(b[0] - origin_pt(imgbox)[0]) - abs(a[0]- origin_pt(imgbox)[0])
+                return abs(b[1] - origin_pt(imgbox)[1]) - abs(a[1] - origin_pt(imgbox)[1])
+            except TypeError as e:  # invalid line
                 return 0
         
         # fetch all lines and regroup them by block
         qs = self.lines.select_related('block').all()
-        ls = [(l, (origin_pt(l.block.box), origin_pt(l.box))
-               if l.block else (origin_pt(l.box), origin_pt(l.box)))
+        ls = [(l, origin_pt(l.block.box) if l.block else origin_pt(l.baseline))
               for l in qs]
         
         # sort depending on the distance to the origin

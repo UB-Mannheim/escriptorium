@@ -6,6 +6,12 @@ var API = {
 
 var zoom = new WheelZoom();
 var undoManager = new UndoManager();
+var fullSizeImgLoaded = false;
+function preloadImage(url, callback) {
+    var img=new Image();
+    img.src=url;
+    img.onload = callback;
+}
 
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
@@ -66,31 +72,25 @@ $(document).ready(function() {
 
     loadPart(PART_ID, function(data) {
         undoManager.clear();
-        fullSizeImg.src = '';
+        fullSizeImgLoaded = false;
     });
     
     // zoom slider
     $('#zoom-range').attr('min', zoom.minScale);
     $('#zoom-range').attr('max', zoom.maxScale);
     $('#zoom-range').val(zoom.scale);
-
-    var fullSizeImg = document.createElement('img');
-    fullSizeImg.addEventListener('load', function() {
-        panels['source'].$img.attr('src', this.src);
-        panels['source'].refresh();  // doesn't do anything for now but might in the future
-        if (panels['seg'].colorMode == 'color') {
-            panels['seg'].$img.attr('src', this.src);
-            panels['seg'].refresh();
-        }
-    }, false);
     
     zoom.events.addEventListener('wheelzoom.updated', function(data) {
-        if (zoom.scale > 1 && current_part !== null) {
+        if (current_part !== null && zoom.scale > 1) {
             // zooming in, load the full size image if it's not done already to make sure the resolution is good enough to read stuff..
-            if (!fullSizeImg.src.endsWith(current_part.image.uri)) {
-                // check if it changed because load event triggers each time...
-                fullSizeImg.src = current_part.image.uri;
-            }
+            preloadImage(current_part.image.uri, function() {
+                panels['source'].$img.attr('src', this.src);
+                panels['source'].refresh();  // doesn't do anything for now but might in the future
+                if (panels['seg'].colorMode == 'color') {
+                    panels['seg'].$img.attr('src', this.src);
+                    panels['seg'].refresh();
+                }
+            });
         }
         $('#zoom-range').val(zoom.scale);
     });

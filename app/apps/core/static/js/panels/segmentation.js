@@ -41,12 +41,14 @@ class SegmentationPanel extends Panel {
             if (this.colorMode == 'color') this.colorMode = 'binary';
             else this.colorMode = 'color';
             if (this.loaded) {
-                this.$img.attr('src', this.getImgSrcUri());
-                if (this.$img.get(0).complete) { this.refresh(); }
-                else this.$img.one('load', this.refresh());
+                let src = this.getImgSrcUri();
+                preloadImage(src, function() {
+                    this.$img.attr('src', src);
+                    this.refresh();
+                }.bind(this));
             }
         }.bind(this));
-        
+                
         document.addEventListener('keyup', function(event) {
             if (event.ctrlKey && event.keyCode == 90) {  // Ctrl+Z -> Undo
                 undoManager.undo();
@@ -168,7 +170,7 @@ class SegmentationPanel extends Panel {
         if (this.colorMode == 'binary' && this.part.bw_image) {
             return this.part.bw_image.uri;
         } else {
-            if (this.part.image.thumbnails && this.part.image.thumbnails.large) {
+            if (this.part.image.thumbnails && this.part.image.thumbnails.large && !fullSizeImgLoaded) {
                 return this.part.image.thumbnails.large;
             } else {
                 return this.part.image.uri;

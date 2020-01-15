@@ -88,14 +88,14 @@ class SegmenterRegion {
 }
 
 class SegmenterLine {
-    constructor(baseline, mask, readDirection, context, segmenter_) {
+    constructor(order, baseline, mask, readDirection, context, segmenter_) {
         this.id = generateUniqueId();
+        this.order = order;
         this.segmenter = segmenter_;
         this.mask = mask;
         this.context = context;
         this.selected = false;
         this.readDirection = readDirection;
-
         this.directionHint = null;
 
         this.maskPath = new Path({
@@ -127,6 +127,8 @@ class SegmenterLine {
             // No baseline !
             this.baseline = null;
         }
+
+        this.showOrdering();
         this.showDirection();
     }
 
@@ -237,9 +239,10 @@ class SegmenterLine {
         if(this.baselinePath) this.baselinePath.remove();
         if(this.maskPath) this.maskPath.remove();
         if(this.directionHint) this.directionHint.remove();
+        if(this.orderDisplay) this.orderDisplay.remove();
         this.segmenter.lines.splice(this.segmenter.lines.findIndex(e => e.id == this.id), 1);
     }
-
+    
     delete() {
         this.unselect();
         this.remove();
@@ -254,7 +257,30 @@ class SegmenterLine {
             this.showDirection();
         }
     }
-    
+
+    showOrdering() {
+        if (!this.orderDisplay) {
+            let anchor = (this.readDirection == 'ltr' ?
+                          this.baselinePath.firstSegment.point :
+                          this.baselinePath.lastSegment.point);
+            let circle = new Shape.Circle(anchor, 10/this.segmenter.scale);
+            circle.translate([0, -10]),
+            circle.fillColor = 'yellow';
+            circle.strokeColor = 'black';
+            // circle.visible = false;
+            let text = new PointText(anchor);
+            text.fillColor = 'black';
+            text.fontSize = 10 / this.segmenter.scale;
+            text.fontWeight = 'bold';
+            text.justification = 'center';
+            text.content = parseInt(this.order)+1;
+            this.orderDisplay = new Group({
+                children: [circle, text]
+            });
+            this.orderDisplay.visible = this.segmenter.showLineNumbers;
+        }
+    }
+
     showDirection() {
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
             if (!this.directionHint) {
@@ -274,6 +300,7 @@ class SegmenterLine {
             }
             let vector = this.baselinePath.getNormalAt(0);
             vector.length = this.lineHeight / 3;
+            this.directionHint.sendToBack();
             this.directionHint.segments = [start.subtract(vector), start.add(vector)];
         }
     }
@@ -303,6 +330,7 @@ class Segmenter {
                         deleteSelectionBtn=null,
                         toggleMasksBtn=null,
                         toggleRegionModeBtn=null,
+                        toggleOrderingBtn=null,
                         splitBtn=null,
                         mergeBtn=null,
                         reverseBtn=null,
@@ -322,6 +350,7 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
         this.selection = {lines:[], segments:[], regions:[]};
+        this.defaultReadDirection = defaultReadDirection;
         
         this.scale = scale;
         this.canvas = document.createElement('canvas');
@@ -351,6 +380,7 @@ class Segmenter {
         // the minimal length in pixels below which the line will be removed automatically
         this.lengthThreshold = lengthTreshold; 
         this.showMasks = false;
+        this.showLineNumbers = false;
 
         this.selecting = null;
         this.spliting = false;
@@ -360,6 +390,7 @@ class Segmenter {
         // this.deletePointBtn.style.zIndex = 3;
         this.toggleMasksBtn = toggleMasksBtn || document.getElementById('toggle-masks');
         this.splitBtn = splitBtn || document.getElementById('split-lines');
+        this.toggleOrderingBtn = toggleOrderingBtn || document.querySelector('button#toggle-order');
         this.toggleRegionModeBtn = toggleRegionModeBtn || document.getElementById('toggle-regions');
         this.deleteSelectionBtn = deleteSelectionBtn || document.getElementById('delete-selection');
         this.mergeBtn = mergeBtn || document.getElementById('merge-selection');
@@ -446,6 +477,10 @@ class Segmenter {
             this.reverseSelection();
         }.bind(this));
 
+        if (this.toggleOrderingBtn) this.toggleOrderingBtn.addEventListener('click', function(ev) {
+            this.toggleOrdering();
+        }.bind(this));
+        
         document.addEventListener('keyup', function(event) {
             if (this.disableBindings) return;
             if (event.keyCode == 27) { // escape
@@ -546,7 +581,7 @@ class Segmenter {
         return tool;
     }
     
-    createLine(baseline, mask, context, postponeEvents) {
+    createLine(order, baseline, mask, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -562,7 +597,8 @@ class Segmenter {
             baseline.reverse();
         }
         
-        var line = new SegmenterLine(baseline, mask, this.readDirection, context, this);
+        if (!order) order = this.getMaxOrder() + 1;
+        var line = new SegmenterLine(order, baseline, mask, this.defaultReadDirection, context, this);
         if (!postponeEvents) this.bindLineEvents(line);
         this.lines.push(line);
         return line;
@@ -834,7 +870,7 @@ class Segmenter {
 
     startNewLine(event) {
         this.purgeSelection();
-        let newLine = this.createLine([[event.point.x, event.point.y]], null, null, true);
+        let newLine = this.createLine(null, [[event.point.x, event.point.y]], null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
         newLine.showDirection();
 
@@ -1019,22 +1055,20 @@ class Segmenter {
     load(data) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
-        if (data.lines) {
-            data.lines.forEach(function(line) {
-                let context = {};
-                if (this.idField) context[this.idField] = line[this.idField];
-                if (!line.baseline) this.toggleMasks(true);
-                let newLine = this.createLine(line.baseline, line.mask, context);
-            }.bind(this));
+        for (let i in data.lines) {
+            let line = data.lines[i];
+            let context = {};
+            if (this.idField) context[this.idField] = line[this.idField];
+            if (!line.baseline) this.toggleMasks(true);
+            let newLine = this.createLine(i, line.baseline, line.mask, context);
         }
-        if (data.regions) {   
-            data.regions.forEach(function(region) {
-                let context = {};
-                if (this.idField) context[this.idField] = region[this.idField];
-                let newRegion = this.createRegion(region.box, context);
-            }.bind(this));
+        for (let i in data.regions) {
+            let region = data.regions[i];
+            let context = {};
+            if (this.idField) context[this.idField] = region[this.idField];
+            let newRegion = this.createRegion(region.order, region.box, context);
         }
-        // once everything is load we can calculate line heights etc
+        // once everything is loaded we can calculate line heights etc
         for (let i in this.lines) {
             this.lines[i].setLineHeight();
         }
@@ -1094,6 +1128,22 @@ class Segmenter {
         }
     }
 
+    toggleOrdering() {
+        this.showLineNumbers = !this.showLineNumbers;
+        for (let i in this.lines) {
+            let line = this.lines[i];
+            line.orderDisplay.visible = this.showLineNumbers;
+        }
+        if (this.showLineNumbers) {
+            this.toggleOrderingBtn.classList.add('btn-success');
+            this.toggleOrderingBtn.classList.remove('btn-info');
+        } else {
+            this.toggleOrderingBtn.classList.add('btn-info');
+            this.toggleOrderingBtn.classList.remove('btn-success');
+        }
+
+    }
+    
     toggleRegionMode() {
         this.purgeSelection();
         this.mode = this.mode == 'lines' ? 'regions' : 'lines';
@@ -1275,6 +1325,10 @@ class Segmenter {
             }
         }.bind(this));
     }
+
+    getMaxOrder() {
+        return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
+    }
     
     splitByPath(path) {
         var changes = [];
@@ -1295,7 +1349,7 @@ class Segmenter {
                     line.updateDataFromCanvas();
                 } else {
                     let newLine = line.baselinePath.splitAt(intersections[i+1]);
-                    let nl = this.createLine(newLine, null, null);
+                    let nl = this.createLine(null, newLine, null, null);
                     let trash = line.baselinePath.splitAt(intersections[i]);
                     line.updateDataFromCanvas();
                     nl.updateDataFromCanvas();
