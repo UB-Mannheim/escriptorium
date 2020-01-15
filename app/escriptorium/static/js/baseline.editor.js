@@ -593,7 +593,7 @@ class Segmenter {
         }
         // the line direction of the baseline should always be from left to right
         // the text direction can be opposite of that (rtl).
-        if (baseline[0][0] > baseline[baseline.length-1][0]) {
+        if (baseline !== null && baseline[0][0] > baseline[baseline.length-1][0]) {
             baseline.reverse();
         }
         

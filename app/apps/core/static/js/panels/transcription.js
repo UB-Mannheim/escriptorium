@@ -396,9 +396,22 @@ class TranscriptionPanel extends Panel {
         modal.querySelector("#prev-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order-1].edit();
         }.bind(this));
+
+        document.querySelector("#trans-modal").addEventListener('keydown', function(ev) {
+            if(ev.keyCode==38){
+                this.lines[currentLine.order-1].edit();
+            }
+        }.bind(this));
         modal.querySelector("#next-btn").addEventListener('click', function(ev) {
             this.lines[currentLine.order+1].edit();
         }.bind(this));
+
+        document.querySelector("#trans-modal").addEventListener('keydown', function(ev) {
+            if(ev.keyCode==40) {
+                this.lines[currentLine.order + 1].edit();
+            }
+        }.bind(this));
+
         modal.querySelector('#new-version-btn').addEventListener('click', function (e, editor) {
             currentLine.pushVersion();
             $('#history').addClass('show');

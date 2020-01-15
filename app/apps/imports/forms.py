@@ -184,7 +184,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                                      to_attr='transcription',
                                      queryset=LineTranscription.objects.filter(
                                          transcription=transcription)))})
-                    zip_.writestr('%s.xml' % part.filename.split('.')[0], page)
+                    zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
             # TODO: add METS file
