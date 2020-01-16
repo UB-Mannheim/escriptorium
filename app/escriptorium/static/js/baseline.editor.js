@@ -97,16 +97,7 @@ class SegmenterLine {
         this.selected = false;
         this.readDirection = readDirection;
         this.directionHint = null;
-
-        this.maskPath = new Path({
-            closed: true,
-            opacity: 0.1,
-            fillColor: this.segmenter.mainColor,
-            selectedColor: this.segmenter.secondaryColor,
-            visible: !baseline || this.segmenter.showMasks,
-            segments: this.mask
-        });
-
+        
         if (baseline) {
             if(baseline.segments) {  // already a paperjs.Path
                 this.baselinePath = baseline;
@@ -128,10 +119,27 @@ class SegmenterLine {
             this.baseline = null;
         }
 
+        if (this.mask) {
+            this.makeMaskPath();
+        } else {
+            this.maskPath = null;
+        }
+        
         this.showOrdering();
         this.showDirection();
     }
-
+    
+    makeMaskPath() {
+        this.maskPath = new Path({
+            closed: true,
+            opacity: 0.1,
+            fillColor: this.segmenter.mainColor,
+            selectedColor: this.segmenter.secondaryColor,
+            visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
+            segments: this.mask
+        });
+    }
+    
     createPolygonEdgeForBaselineSegment(segment) {
         let pt = segment.point;
         let vector = segment.path.getNormalAt(segment.index);
@@ -214,6 +222,10 @@ class SegmenterLine {
             this.baselinePath.addSegments(baseline);
         }
         if (mask && mask.length) {
+            if (! this.maskPath) {
+                this.makeMaskPath();
+                this.segmenter.bindMaskEvents(this);
+            }
             this.mask = mask;
             this.maskPath.removeSegments();
             this.maskPath.addSegments(mask);
@@ -224,10 +236,11 @@ class SegmenterLine {
     updateDataFromCanvas() {
         let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
-        if (this.maskPath.segments.length) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
             this.segmenter.trigger('baseline-editor:update-line', {line: this, previous:previous});
         }
+        this.showDirection();
     }
     
     extend(point) {
@@ -580,6 +593,12 @@ class Segmenter {
         this.tool.activate();
         return tool;
     }
+
+    fixOrdering(line) {
+        if (line.baselinePath.firstSegment.point.x > line.baselinePath.lastSegment.point.x) {
+            line.baselinePath.reverse();
+        }
+    }
     
     createLine(order, baseline, mask, context, postponeEvents) {
         if (this.idField) {
@@ -591,20 +610,22 @@ class Segmenter {
                 context[this.idField] = null;
             }
         }
-        // the line direction of the baseline should always be from left to right
-        // the text direction can be opposite of that (rtl).
-        if (baseline !== null && baseline[0][0] > baseline[baseline.length-1][0]) {
-            baseline.reverse();
-        }
         
         if (!order) order = this.getMaxOrder() + 1;
         var line = new SegmenterLine(order, baseline, mask, this.defaultReadDirection, context, this);
-        if (!postponeEvents) this.bindLineEvents(line);
+        this.fixOrdering(line);
+        if (!postponeEvents) {
+            this.bindLineEvents(line);
+            this.bindMaskEvents(line);
+        }
         this.lines.push(line);
         return line;
     }
 
     finishLine(line) {
+        // the line direction of the baseline should always be from left to right
+        // the text direction can be opposite of that (rtl).
+        this.fixOrdering(line);
         if (line.baselinePath.length < this.lengthThreshold) {
             line.remove();
         } else {
@@ -747,7 +768,9 @@ class Segmenter {
             //     this.setCursor('move');
             // }.bind(this);
         }
-            
+    }
+    
+    bindMaskEvents(line) {   
         // same for the masks
         if (line.maskPath) {
             line.maskPath.onMouseDown = function(event) {
@@ -1120,11 +1143,13 @@ class Segmenter {
         }
         for (let i in this.lines) {
             let poly = this.lines[i].maskPath;
-            poly.visible = this.showMasks;
-            // paperjs shows handles for invisible items :(
-            // TODO: use layers?
-            if (!poly.visible && poly.selected) poly.selected = false;
-            if (poly.visible && this.lines[i].selected) poly.selected = true;
+            if (poly) {
+                poly.visible = this.showMasks;
+                // paperjs shows handles for invisible items :(
+                // TODO: use layers?
+                if (!poly.visible && poly.selected) poly.selected = false;
+                if (poly.visible && this.lines[i].selected) poly.selected = true;
+            }
         }
     }
 
@@ -1276,7 +1301,7 @@ class Segmenter {
         for (let i in allLines) {
             let allSegments;
             let line = allLines[i];
-            if (this.showMasks) {
+            if (this.showMasks && line.maskPath) {
                 allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
             } else {
                 allSegments = line.baselinePath.segments;
@@ -1381,22 +1406,26 @@ class Segmenter {
         }
         
         this.selection.lines.sort(function(first, second) {
-            let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
-            let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
-            // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
-            if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
-            else return first.baselinePath.position.x - second.baselinePath.position.x;
+            // let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
+            // let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
+            // // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
+            // if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
+            // else 
+            return first.baselinePath.position.x - second.baselinePath.position.x;
         });
         
         while (this.selection.lines.length > 1) {
-            let seg1 = this.selection.lines[0].baselinePath.getNearestLocation(this.selection.lines[1].baselinePath.interiorPoint);
-            let seg2 = this.selection.lines[1].baselinePath.getNearestLocation(this.selection.lines[0].baselinePath.interiorPoint);
-            this.selection.lines[0].baselinePath.add(seg2);
-            this.selection.lines[0].baselinePath.join(this.selection.lines[1].baselinePath, seg1.point.getDistance(seg2.point));
+            let l1 = this.selection.lines[0], l2 = this.selection.lines[1];
+            if (l1.baselinePath !== null && l2.baselinePath != null) {
+                let seg1 = l1.baselinePath.getNearestLocation(l2.baselinePath.firstPoint);  // assuming the line direction is rtl
+                let seg2 = l2.baselinePath.getNearestLocation(l1.baselinePath.lastPoint);
+                l1.baselinePath.addSegments(l2.baselinePath.segments);
+            }
+            if (l1.maskPath != null && l2.maskPath != null) {
+                let closeSeg = l1.maskPath.getNearestLocation(l2.maskPath.interiorPoint);
+                l1.maskPath.insertSegments(closeSeg.index+1, l2.maskPath.segments.slice(0, -1));
+            }
 
-            let closeSeg = this.selection.lines[0].maskPath.getNearestLocation(this.selection.lines[1].maskPath.interiorPoint);
-            this.selection.lines[0].maskPath.insertSegments(closeSeg.index+1, this.selection.lines[1].maskPath.segments);
-            
             this.selection.lines[1].delete();
         }
         if (this.selection.lines.length) {
