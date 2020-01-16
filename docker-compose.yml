@@ -63,8 +63,7 @@ services:
       context: ./app
     env_file: variables.env
     depends_on:
-      - db
-      - redis
+      - web
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
@@ -73,7 +72,8 @@ services:
   celery-low-priority:
     <<: *celery-main
     command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10"
-
+    depends_on:
+      - web
   flower:
     image: mher/flower
     command: ["flower", "--broker=redis://redis:6379/0", "--port=5555"]
