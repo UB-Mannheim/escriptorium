@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  app:
+  app: &app 
     build:
       context: ./app
     env_file: variables.env
@@ -13,17 +13,20 @@ services:
     depends_on:
       - db
       - redis
-  
+    command: /bin/true
+
   web:
-    image: escriptorium-app-image
+    <<: *app
     command: uwsgi --ini /usr/src/app/uwsgi.ini
 
 
   channelserver:
-    image: escriptorium-app-image
+    <<: *app
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
+    depends_on:
+      - web
 
   db:
     image: postgres:10.5-alpine
@@ -63,14 +66,14 @@ services:
   #   # networks:  # use this if adding nodes
   #   #   - esnet
   
-  celery-main: &celery-main
-    image: escriptorium-app-image
+  celery-main:
+    <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10"
     depends_on:
       - web
 
   celery-low-priority:
-    image: escriptorium-app-image
+    <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10"
     depends_on:
       - web
