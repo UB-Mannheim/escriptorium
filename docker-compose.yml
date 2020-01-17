@@ -1,11 +1,11 @@
 version: "3.7"
 
 services:
-  web: &web
+  app:
     build:
       context: ./app
     env_file: variables.env
-    command: uwsgi --ini /usr/src/app/uwsgi.ini
+    image: escriptorium-app-image
     volumes:
       # - ./app/:/usr/src/app/
       - static:/usr/src/app/static
@@ -13,9 +13,14 @@ services:
     depends_on:
       - db
       - redis
+  
+  web:
+    image: escriptorium-app-image
+    command: uwsgi --ini /usr/src/app/uwsgi.ini
+
 
   channelserver:
-    <<: *web
+    image: escriptorium-app-image
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
@@ -59,21 +64,17 @@ services:
   #   #   - esnet
   
   celery-main: &celery-main
-    build:
-      context: ./app
-    env_file: variables.env
+    image: escriptorium-app-image
+    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10"
     depends_on:
       - web
-    volumes:
-      - static:/usr/src/app/static
-      - media:/usr/src/app/media
-    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10"
-  
+
   celery-low-priority:
-    <<: *celery-main
+    image: escriptorium-app-image
     command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10"
     depends_on:
       - web
+  
   flower:
     image: mher/flower
     command: ["flower", "--broker=redis://redis:6379/0", "--port=5555"]
