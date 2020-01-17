@@ -88,14 +88,14 @@ class SegmenterRegion {
 }
 
 class SegmenterLine {
-    constructor(order, baseline, mask, readDirection, context, segmenter_) {
+    constructor(order, baseline, mask, textDirection, context, segmenter_) {
         this.id = generateUniqueId();
         this.order = order;
         this.segmenter = segmenter_;
         this.mask = mask;
         this.context = context;
         this.selected = false;
-        this.readDirection = readDirection;
+        this.textDirection = textDirection;
         this.directionHint = null;
         
         if (baseline) {
@@ -273,23 +273,24 @@ class SegmenterLine {
 
     showOrdering() {
         if (!this.orderDisplay) {
-            let anchor = (this.readDirection == 'ltr' ?
+            let anchor = (this.textDirection == 'lr' ?
                           this.baselinePath.firstSegment.point :
                           this.baselinePath.lastSegment.point);
-            let circle = new Shape.Circle(anchor, 10/this.segmenter.scale);
-            circle.translate([0, -10]),
+            let offset = 10/this.segmenter.scale;
+            let circle = new Shape.Circle(anchor, offset);
             circle.fillColor = 'yellow';
             circle.strokeColor = 'black';
-            // circle.visible = false;
             let text = new PointText(anchor);
             text.fillColor = 'black';
-            text.fontSize = 10 / this.segmenter.scale;
+            text.fontSize = offset;
             text.fontWeight = 'bold';
             text.justification = 'center';
+            text.translate([0, offset/3]);
             text.content = parseInt(this.order)+1;
             this.orderDisplay = new Group({
                 children: [circle, text]
             });
+            this.orderDisplay.translate([0, -offset]);  // moves it out of the way a bit.
             this.orderDisplay.visible = this.segmenter.showLineNumbers;
         }
     }
@@ -306,7 +307,7 @@ class SegmenterLine {
                 });
             }
             let start;
-            if (this.readDirection == 'ltr') {
+            if (this.textDirection == 'lr') {
                 start = this.baselinePath.firstSegment.point;
             } else {
                 start = this.baselinePath.lastSegment.point;
@@ -353,7 +354,7 @@ class Segmenter {
                         upperLineHeight=20,
                         lowerLineHeight=10,
                         // when creating a line, which direction should it take.
-                        defaultReadDirection='ltr',
+                        defaultTextDirection='lr',
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
                         idField='id'
@@ -363,7 +364,7 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
         this.selection = {lines:[], segments:[], regions:[]};
-        this.defaultReadDirection = defaultReadDirection;
+        this.defaultTextDirection = defaultTextDirection;
         
         this.scale = scale;
         this.canvas = document.createElement('canvas');
@@ -612,7 +613,7 @@ class Segmenter {
         }
         
         if (!order) order = this.getMaxOrder() + 1;
-        var line = new SegmenterLine(order, baseline, mask, this.defaultReadDirection, context, this);
+        var line = new SegmenterLine(order, baseline, mask, this.defaultTextDirection, context, this);
         this.fixOrdering(line);
         if (!postponeEvents) {
             this.bindLineEvents(line);
@@ -621,7 +622,7 @@ class Segmenter {
         this.lines.push(line);
         return line;
     }
-
+    
     finishLine(line) {
         // the line direction of the baseline should always be from left to right
         // the text direction can be opposite of that (rtl).
@@ -1352,7 +1353,7 @@ class Segmenter {
     }
 
     getMaxOrder() {
-        if (!this.lines.length) return 0;
+        if (!this.lines.length) return -1;
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
     }
     
