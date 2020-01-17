@@ -351,7 +351,9 @@ class TranscriptionLine {
     }
 
     delete() {
-        this.element.parentNode.removeChild(this.element);
+        if(this.element.parentNode != null){
+            this.element.parentNode.removeChild(this.element);
+        }
     }
 }
 
