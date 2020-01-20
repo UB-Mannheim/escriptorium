@@ -5,7 +5,6 @@ services:
     build:
       context: ./app
     env_file: variables.env
-    image: escriptorium-app-image
     volumes:
       # - ./app/:/usr/src/app/
       - static:/usr/src/app/static
@@ -18,7 +17,6 @@ services:
   web:
     <<: *app
     command: uwsgi --ini /usr/src/app/uwsgi.ini
-
 
   channelserver:
     <<: *app
