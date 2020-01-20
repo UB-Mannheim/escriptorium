@@ -122,7 +122,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                                            initial='lines', required=False)
     seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                        label=_("Model"), required=False)
-    override = forms.BooleanField(required=False, initial=False,
+    override = forms.BooleanField(required=False, initial=True,
                                   help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
     TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
                               ('horizontal-rl', _("Horizontal r2l")),

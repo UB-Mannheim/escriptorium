@@ -34,7 +34,7 @@
         <!--button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button-->
         <button id="toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info ml-3 fas fa-sort-numeric-down" autocomplete="off"></button>
         <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
-        <button id="reset-masks" title="{% trans "Reset the mask of selected (or all) lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
+        <button id="reset-masks" title="{% trans "Reset and Recalculate the mask of all lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
         <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
 
         {# help #}
@@ -225,6 +225,7 @@
 {{ block.super }}
 <script type="text/javascript">
   var READ_DIRECTION = '{{document.read_direction}}';
+  var TEXT_DIRECTION = '{{document.main_script.text_direction}}'
   var DOCUMENT_ID = {{document.id}};
   var PART_ID = {{part.id}};
 </script>

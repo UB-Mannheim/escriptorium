@@ -15,7 +15,7 @@ class SegmentationPanel extends Panel {
         this.segmenter = new Segmenter(this.$img.get(0), {
             delayInit:true,
             idField:'pk',
-            defaultReadDirection: READ_DIRECTION
+            defaultTextDirection: TEXT_DIRECTION.slice(-2)
         });
         // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
@@ -81,6 +81,7 @@ class SegmentationPanel extends Panel {
             this.remoteDelete('lines', line);
             this.pushHistory(
                 function() {  // undo
+                    // FIXME: missing parameters to this
                     line = this.segmenter.createLine(line.baseline, line.mask);
                     this.remoteSave('lines', line);
                 }.bind(this),
@@ -104,6 +105,7 @@ class SegmentationPanel extends Panel {
                         this.remoteDelete('lines', line);
                     }.bind(this),
                     function() {  // redo
+                        // FIXME: missing parameters to this
                         line = this.segmenter.createLine(line.baseline, line.mask);
                         this.remoteSave('lines', line);
                     }.bind(this)

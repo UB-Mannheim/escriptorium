@@ -88,25 +88,16 @@ class SegmenterRegion {
 }
 
 class SegmenterLine {
-    constructor(order, baseline, mask, readDirection, context, segmenter_) {
+    constructor(order, baseline, mask, textDirection, context, segmenter_) {
         this.id = generateUniqueId();
         this.order = order;
         this.segmenter = segmenter_;
         this.mask = mask;
         this.context = context;
         this.selected = false;
-        this.readDirection = readDirection;
+        this.textDirection = textDirection;
         this.directionHint = null;
-
-        this.maskPath = new Path({
-            closed: true,
-            opacity: 0.1,
-            fillColor: this.segmenter.mainColor,
-            selectedColor: this.segmenter.secondaryColor,
-            visible: !baseline || this.segmenter.showMasks,
-            segments: this.mask
-        });
-
+        
         if (baseline) {
             if(baseline.segments) {  // already a paperjs.Path
                 this.baselinePath = baseline;
@@ -128,10 +119,27 @@ class SegmenterLine {
             this.baseline = null;
         }
 
+        if (this.mask) {
+            this.makeMaskPath();
+        } else {
+            this.maskPath = null;
+        }
+        
         this.showOrdering();
         this.showDirection();
     }
-
+    
+    makeMaskPath() {
+        this.maskPath = new Path({
+            closed: true,
+            opacity: 0.1,
+            fillColor: this.segmenter.mainColor,
+            selectedColor: this.segmenter.secondaryColor,
+            visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
+            segments: this.mask
+        });
+    }
+    
     createPolygonEdgeForBaselineSegment(segment) {
         let pt = segment.point;
         let vector = segment.path.getNormalAt(segment.index);
@@ -214,6 +222,10 @@ class SegmenterLine {
             this.baselinePath.addSegments(baseline);
         }
         if (mask && mask.length) {
+            if (! this.maskPath) {
+                this.makeMaskPath();
+                this.segmenter.bindMaskEvents(this);
+            }
             this.mask = mask;
             this.maskPath.removeSegments();
             this.maskPath.addSegments(mask);
@@ -224,10 +236,11 @@ class SegmenterLine {
     updateDataFromCanvas() {
         let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
-        if (this.maskPath.segments.length) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
             this.segmenter.trigger('baseline-editor:update-line', {line: this, previous:previous});
         }
+        this.showDirection();
     }
     
     extend(point) {
@@ -260,23 +273,24 @@ class SegmenterLine {
 
     showOrdering() {
         if (!this.orderDisplay) {
-            let anchor = (this.readDirection == 'ltr' ?
+            let anchor = (this.textDirection == 'lr' ?
                           this.baselinePath.firstSegment.point :
                           this.baselinePath.lastSegment.point);
-            let circle = new Shape.Circle(anchor, 10/this.segmenter.scale);
-            circle.translate([0, -10]),
+            let offset = 10/this.segmenter.scale;
+            let circle = new Shape.Circle(anchor, offset);
             circle.fillColor = 'yellow';
             circle.strokeColor = 'black';
-            // circle.visible = false;
             let text = new PointText(anchor);
             text.fillColor = 'black';
-            text.fontSize = 10 / this.segmenter.scale;
+            text.fontSize = offset;
             text.fontWeight = 'bold';
             text.justification = 'center';
+            text.translate([0, offset/3]);
             text.content = parseInt(this.order)+1;
             this.orderDisplay = new Group({
                 children: [circle, text]
             });
+            this.orderDisplay.translate([0, -offset]);  // moves it out of the way a bit.
             this.orderDisplay.visible = this.segmenter.showLineNumbers;
         }
     }
@@ -293,7 +307,7 @@ class SegmenterLine {
                 });
             }
             let start;
-            if (this.readDirection == 'ltr') {
+            if (this.textDirection == 'lr') {
                 start = this.baselinePath.firstSegment.point;
             } else {
                 start = this.baselinePath.lastSegment.point;
@@ -340,7 +354,7 @@ class Segmenter {
                         upperLineHeight=20,
                         lowerLineHeight=10,
                         // when creating a line, which direction should it take.
-                        defaultReadDirection='ltr',
+                        defaultTextDirection='lr',
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
                         idField='id'
@@ -350,7 +364,7 @@ class Segmenter {
         this.lines = [];
         this.regions = [];
         this.selection = {lines:[], segments:[], regions:[]};
-        this.defaultReadDirection = defaultReadDirection;
+        this.defaultTextDirection = defaultTextDirection;
         
         this.scale = scale;
         this.canvas = document.createElement('canvas');
@@ -580,6 +594,12 @@ class Segmenter {
         this.tool.activate();
         return tool;
     }
+
+    fixOrdering(line) {
+        if (line.baselinePath.firstSegment.point.x > line.baselinePath.lastSegment.point.x) {
+            line.baselinePath.reverse();
+        }
+    }
     
     createLine(order, baseline, mask, context, postponeEvents) {
         if (this.idField) {
@@ -591,20 +611,22 @@ class Segmenter {
                 context[this.idField] = null;
             }
         }
-        // the line direction of the baseline should always be from left to right
-        // the text direction can be opposite of that (rtl).
-        if (baseline !== null && baseline[0][0] > baseline[baseline.length-1][0]) {
-            baseline.reverse();
-        }
         
         if (!order) order = this.getMaxOrder() + 1;
-        var line = new SegmenterLine(order, baseline, mask, this.defaultReadDirection, context, this);
-        if (!postponeEvents) this.bindLineEvents(line);
+        var line = new SegmenterLine(order, baseline, mask, this.defaultTextDirection, context, this);
+        this.fixOrdering(line);
+        if (!postponeEvents) {
+            this.bindLineEvents(line);
+            this.bindMaskEvents(line);
+        }
         this.lines.push(line);
         return line;
     }
-
+    
     finishLine(line) {
+        // the line direction of the baseline should always be from left to right
+        // the text direction can be opposite of that (rtl).
+        this.fixOrdering(line);
         if (line.baselinePath.length < this.lengthThreshold) {
             line.remove();
         } else {
@@ -747,7 +769,9 @@ class Segmenter {
             //     this.setCursor('move');
             // }.bind(this);
         }
-            
+    }
+    
+    bindMaskEvents(line) {   
         // same for the masks
         if (line.maskPath) {
             line.maskPath.onMouseDown = function(event) {
@@ -1120,11 +1144,13 @@ class Segmenter {
         }
         for (let i in this.lines) {
             let poly = this.lines[i].maskPath;
-            poly.visible = this.showMasks;
-            // paperjs shows handles for invisible items :(
-            // TODO: use layers?
-            if (!poly.visible && poly.selected) poly.selected = false;
-            if (poly.visible && this.lines[i].selected) poly.selected = true;
+            if (poly) {
+                poly.visible = this.showMasks;
+                // paperjs shows handles for invisible items :(
+                // TODO: use layers?
+                if (!poly.visible && poly.selected) poly.selected = false;
+                if (poly.visible && this.lines[i].selected) poly.selected = true;
+            }
         }
     }
 
@@ -1276,7 +1302,7 @@ class Segmenter {
         for (let i in allLines) {
             let allSegments;
             let line = allLines[i];
-            if (this.showMasks) {
+            if (this.showMasks && line.maskPath) {
                 allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
             } else {
                 allSegments = line.baselinePath.segments;
@@ -1327,7 +1353,7 @@ class Segmenter {
     }
 
     getMaxOrder() {
-        if (!this.lines.length) return 0;
+        if (!this.lines.length) return -1;
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
     }
     
@@ -1381,22 +1407,26 @@ class Segmenter {
         }
         
         this.selection.lines.sort(function(first, second) {
-            let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
-            let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
-            // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
-            if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
-            else return first.baselinePath.position.x - second.baselinePath.position.x;
+            // let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
+            // let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
+            // // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
+            // if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
+            // else 
+            return first.baselinePath.position.x - second.baselinePath.position.x;
         });
         
         while (this.selection.lines.length > 1) {
-            let seg1 = this.selection.lines[0].baselinePath.getNearestLocation(this.selection.lines[1].baselinePath.interiorPoint);
-            let seg2 = this.selection.lines[1].baselinePath.getNearestLocation(this.selection.lines[0].baselinePath.interiorPoint);
-            this.selection.lines[0].baselinePath.add(seg2);
-            this.selection.lines[0].baselinePath.join(this.selection.lines[1].baselinePath, seg1.point.getDistance(seg2.point));
+            let l1 = this.selection.lines[0], l2 = this.selection.lines[1];
+            if (l1.baselinePath !== null && l2.baselinePath != null) {
+                let seg1 = l1.baselinePath.getNearestLocation(l2.baselinePath.firstPoint);  // assuming the line direction is rtl
+                let seg2 = l2.baselinePath.getNearestLocation(l1.baselinePath.lastPoint);
+                l1.baselinePath.addSegments(l2.baselinePath.segments);
+            }
+            if (l1.maskPath != null && l2.maskPath != null) {
+                let closeSeg = l1.maskPath.getNearestLocation(l2.maskPath.interiorPoint);
+                l1.maskPath.insertSegments(closeSeg.index+1, l2.maskPath.segments.slice(0, -1));
+            }
 
-            let closeSeg = this.selection.lines[0].maskPath.getNearestLocation(this.selection.lines[1].maskPath.interiorPoint);
-            this.selection.lines[0].maskPath.insertSegments(closeSeg.index+1, this.selection.lines[1].maskPath.segments);
-            
             this.selection.lines[1].delete();
         }
         if (this.selection.lines.length) {

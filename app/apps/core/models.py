@@ -319,42 +319,32 @@ class DocumentPart(OrderedModel):
         transcribed = LineTranscription.objects.filter(line__document_part=self).count()
         self.transcription_progress = min(int(transcribed / total * 100), 100)
     
-    def recalculate_ordering(self, text_direction=None, line_level_treshold=2/100):
+    def recalculate_ordering(self, read_direction=None):
         """
-        Re-order the lines of the DocumentPart depending or text direction.
-        Beware 'text direction' is different from reading order,
-        it represents the order of the blocks of text.
-
-        line_level_treshold is a percentage of the total size of the image,
-        for which blocks should be considered on the same 'line',
-        in which case x is used.
+        Re-order the lines of the DocumentPart depending on read direction.
         """
-        text_direction = (text_direction
-                          or (self.document.main_script and self.document.main_script.text_direction[-2:])
-                          or 'lr')
+        read_direction = read_direction or self.document.read_direction
+        imgbox = ((0, 0), (self.image.width, self.image.height))
         
-        imgsize = (self.image.width, self.image.height)
-        imgbox = ((0, 0), imgsize)
-
         def origin_pt(shape):
-            if text_direction == 'rl':
+            if read_direction == Document.READ_DIRECTION_RTL:
                 return max(shape, key=lambda pt: pt[0])
             else:
                 return min(shape, key=lambda pt: pt[0])
-        
-        def cmp_pts(a, b):
-            try:
-                # 2 lines more or less on the same level
-                if abs(b[1] - a[1]) < line_level_treshold * imgsize[1]:
-                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0]- origin_pt(imgbox)[0])
-                return a[1] - b[1]
-            except TypeError as e:  # invalid line
-                return 0
-        
         # fetch all lines and regroup them by block
         qs = self.lines.select_related('block').all()
         ls = [(l, origin_pt(l.block.box) if l.block else origin_pt(l.baseline))
               for l in qs]
+        ords = list(map(lambda l:l[1][1], ls))
+        averageLineHeight = (max(ords) - min(ords)) / len(ls)
+        def cmp_pts(a, b):
+            try:
+                # 2 lines more or less on the same level
+                if abs(b[1] - a[1]) < averageLineHeight:
+                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0] - origin_pt(imgbox)[0])
+                return a[1] - b[1]
+            except TypeError as e:  # invalid line
+                return 0
         
         # sort depending on the distance to the origin
         ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_pts(a[1], b[1])))
@@ -544,7 +534,7 @@ class DocumentPart(OrderedModel):
         self.bw_image = document_images_path(self, bw_file_name)
         self.save()
     
-    def segment(self, steps=None, text_direction=None, model=None, override=False):
+    def segment(self, steps=None, text_direction=None, read_direction=None, model=None, override=False):
         # cleanup pre-existing
         if steps in ['lines', 'both'] and override:
             self.lines.all().delete()
@@ -560,9 +550,10 @@ class DocumentPart(OrderedModel):
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
-                options['model'] = model.file.path
+                model_path = model.file.path
             else:
-                options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+                model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            options['model'] = vgsl.TorchVGSLModel.load_model(model_path)
             # blocks = self.blocks.all()
             # if blocks:
             #     for block in blocks:
@@ -588,7 +579,7 @@ class DocumentPart(OrderedModel):
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
-        self.recalculate_ordering(text_direction=text_direction)
+        self.recalculate_ordering(read_direction=read_direction)
     
     def transcribe(self, model=None, text_direction=None):
         if model:
