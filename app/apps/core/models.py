@@ -550,9 +550,10 @@ class DocumentPart(OrderedModel):
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
-                options['model'] = model.file.path
+                model_path = model.file.path
             else:
-                options['model'] = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+                model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            options['model'] = vgsl.TorchVGSLModel.load_model(model_path)
             # blocks = self.blocks.all()
             # if blocks:
             #     for block in blocks:
