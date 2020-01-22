@@ -125,6 +125,20 @@ class SegmenterLine {
             this.maskPath = null;
         }
         
+        this.refresh();
+    }
+
+    fixOrdering() {
+        // if (this.baselinePath) this.baselinePath.reorient(true, false);
+        // if (this.maskPath) this.maskPath.reorient(true, false);
+        if (this.baselinePath.firstSegment.point.x > this.baselinePath.lastSegment.point.x) {
+            this.baselinePath.reverse();
+        }
+    }
+    
+    refresh() {
+        this.fixOrdering();
+        this.setLineHeight();
         this.showOrdering();
         this.showDirection();
     }
@@ -186,6 +200,7 @@ class SegmenterLine {
         }
         this.segmenter.addToSelection(this);
         this.selected = true;
+        if (this.orderDisplay) this.orderDisplay.bringToFront();
     }
 
     unselect() {
@@ -235,12 +250,17 @@ class SegmenterLine {
     
     updateDataFromCanvas() {
         let previous = {baseline: this.baseline, mask: this.mask};
-        if (this.baselinePath) this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
-        if (this.maskPath) this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        if (this.baselinePath) {
+            this.baselinePath.reduce();  // removes unecessary segments
+            this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        }
+        if (this.maskPath) {
+            this.maskPath.reduce();
+            this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
+        }
         if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
             this.segmenter.trigger('baseline-editor:update-line', {line: this, previous:previous});
         }
-        this.showDirection();
     }
     
     extend(point) {
@@ -266,53 +286,61 @@ class SegmenterLine {
         if (this.baselinePath) {
             let previous = {baseline: this.baseline, mask: this.mask};
             this.baselinePath.reverse();
+            this.refresh();
             this.updateDataFromCanvas();
-            this.showDirection();
         }
     }
 
     showOrdering() {
+        let anchor = (this.textDirection == 'lr' ?
+                      this.baselinePath.firstSegment.point :
+                      this.baselinePath.lastSegment.point);
+        let offset = 10, circle, text;
         if (!this.orderDisplay) {
-            let anchor = (this.textDirection == 'lr' ?
-                          this.baselinePath.firstSegment.point :
-                          this.baselinePath.lastSegment.point);
-            let offset = 10/this.segmenter.scale;
-            let circle = new Shape.Circle(anchor, offset);
+            circle = new Shape.Circle(anchor, offset);
             circle.fillColor = 'yellow';
             circle.strokeColor = 'black';
-            let text = new PointText(anchor);
+            text = new PointText(anchor);
             text.fillColor = 'black';
             text.fontSize = offset;
             text.fontWeight = 'bold';
             text.justification = 'center';
-            text.translate([0, offset/3]);
             text.content = parseInt(this.order)+1;
             this.orderDisplay = new Group({
                 children: [circle, text]
             });
-            this.orderDisplay.translate([0, -offset]);  // moves it out of the way a bit.
-            this.orderDisplay.visible = this.segmenter.showLineNumbers;
+            this.orderDisplay.scale(1/this.segmenter.scale);
+            // for some reason we need to reposition it after scaling
+            text.position = anchor;
+        } else {
+            let circle = this.orderDisplay.children[0], text = this.orderDisplay.children[1];
+            circle.position = anchor;
+            text.position = anchor;
         }
+        this.orderDisplay.visible = this.segmenter.showLineNumbers;
+        this.orderDisplay.bringToFront();
     }
 
     showDirection() {
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
-            if (!this.directionHint) {
+            if (this.directionHint === null) {
                 this.directionHint =  new Path({
                     visible: true,
-                    shadowColor: 'white', shadowOffset: new Point(1,1), shadowBlur: 1,
                     strokeWidth: Math.max(2, 4 / this.segmenter.scale),
                     opacity: 0.5,
                     strokeColor: this.segmenter.mainColor
                 });
             }
-            let start;
-            if (this.textDirection == 'lr') {
-                start = this.baselinePath.firstSegment.point;
-            } else {
-                start = this.baselinePath.lastSegment.point;
-            }
-            let vector = this.baselinePath.getNormalAt(0);
+        }
+        let start;
+        if (this.textDirection == 'lr') {
+            start = this.baselinePath.firstSegment.point;
+        } else {
+            start = this.baselinePath.lastSegment.point;
+        }
+        let vector = this.baselinePath.getNormalAt(0);
+        if (vector) {
+            if (!this.lineHeight) this.setLineHeight();
             vector.length = this.lineHeight / 3;
             this.directionHint.sendToBack();
             this.directionHint.segments = [start.subtract(vector), start.add(vector)];
@@ -320,15 +348,14 @@ class SegmenterLine {
     }
     
     setLineHeight() {
-        if (this.baseline) {
-            if (this.mask) {
+        if (this.baselinePath) {
+            if (this.maskPath) {
                 // area implementation
                 this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
             } else if (this.segmenter.lines.length >= 2) {
                 // distance avg implementation
                 this.lineHeight = this.segmenter.getAverageLineHeight();
             }
-            this.showDirection();
         }
     }
 }
@@ -419,7 +446,9 @@ class Segmenter {
         this.contextMenu.style.borderRadius = '5px';
         this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
-        if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+
+        // doesn't do anything anymore..
+        // if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
         
@@ -594,12 +623,6 @@ class Segmenter {
         this.tool.activate();
         return tool;
     }
-
-    fixOrdering(line) {
-        if (line.baselinePath.firstSegment.point.x > line.baselinePath.lastSegment.point.x) {
-            line.baselinePath.reverse();
-        }
-    }
     
     createLine(order, baseline, mask, context, postponeEvents) {
         if (this.idField) {
@@ -612,9 +635,9 @@ class Segmenter {
             }
         }
         
-        if (!order) order = this.getMaxOrder() + 1;
+        if (!order) order = parseInt(this.getMaxOrder()) + 1;
         var line = new SegmenterLine(order, baseline, mask, this.defaultTextDirection, context, this);
-        this.fixOrdering(line);
+        line.fixOrdering();
         if (!postponeEvents) {
             this.bindLineEvents(line);
             this.bindMaskEvents(line);
@@ -626,13 +649,14 @@ class Segmenter {
     finishLine(line) {
         // the line direction of the baseline should always be from left to right
         // the text direction can be opposite of that (rtl).
-        this.fixOrdering(line);
+        line.fixOrdering();
         if (line.baselinePath.length < this.lengthThreshold) {
             line.remove();
         } else {
             this.bindLineEvents(line);
             line.updateDataFromCanvas();
         }
+        line.setLineHeight();
         this.resetToolEvents();  // unregistering
     }
 
@@ -727,7 +751,7 @@ class Segmenter {
                     if (!event.event.shiftKey) {
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
-                        line.showDirection();
+                        line.refresh();
                         // line.dragPolyEdges(dragging.index, event.delta);
                     }
                 }.bind(this);
@@ -837,13 +861,14 @@ class Segmenter {
                 this.movePointInView(this.selection.segments[i].point, delta);
             }
             for (let i in this.selection.lines) {
-                this.selection.lines[i].showDirection();
+                this.selection.lines[i].refresh();
             }
         } else {
             for (let i in this.selection.lines) {
-                this.movePointInView(this.selection.lines[i].baselinePath.position, delta);
-                this.movePointInView(this.selection.lines[i].maskPath.position, delta);
-                this.selection.lines[i].showDirection();
+                let l = this.selection.lines[i];
+                if(l.baselinePath) this.movePointInView(l.baselinePath.position, delta);
+                if(l.maskPath) this.movePointInView(l.maskPath.position, delta);
+                l.refresh();
             }
         }
     }
@@ -896,7 +921,6 @@ class Segmenter {
         this.purgeSelection();
         let newLine = this.createLine(null, [[event.point.x, event.point.y]], null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
-        newLine.showDirection();
 
         // adds all the events bindings 
         let onCancel = function(event) {
@@ -1358,30 +1382,57 @@ class Segmenter {
     }
     
     splitByPath(path) {
-        var changes = [];
         this.lines.forEach(function(line) {
-            if (!line.baselinePath) return;
-            
-            let intersections = line.baselinePath.getIntersections(path);
-            for (var i = 0; i < intersections.length; i += 2) {
-                if (i+1 >= intersections.length) {  // one intersection remaining
-                    // remove everything in the selection rectangle
-                    let location = intersections[i];
-                    let newSegment = line.baselinePath.insert(location.index+1, location);
-                    if (path.contains(line.baselinePath.firstSegment.point)) {
-                        line.baselinePath.removeSegments(0, newSegment.index);
-                    } else if (path.contains(line.baselinePath.lastSegment.point)) {
-                        line.baselinePath.removeSegments(newSegment.index+1);
+            if (line.baselinePath !== null) {
+                let intersections = line.baselinePath.getIntersections(path);
+                for (var i = 0; i < intersections.length; i += 2) {
+                    if (i+1 >= intersections.length) {  // one intersection remaining
+                        // remove everything in the selection rectangle
+                        let location = intersections[i];
+                        let newSegment = line.baselinePath.insert(location.index+1, location);
+                        if (path.contains(line.baselinePath.firstSegment.point)) {
+                            line.baselinePath.removeSegments(0, newSegment.index);
+                        } else if (path.contains(line.baselinePath.lastSegment.point)) {
+                            line.baselinePath.removeSegments(newSegment.index+1);
+                        }
+                        if (line.maskPath) {
+                            let normal = line.baselinePath.getNormalAt(intersections[i].offset);
+                            normal.length = line.maskPath.bounds.height;
+                            let anchor = intersections[i].point;
+                            let p = new Path.Line(anchor.subtract(normal), anchor.add(normal));
+                            let its = line.maskPath.getIntersections(p);
+                            line.maskPath.splitAt(its[1]);
+                            let trash = line.maskPath.splitAt(its[0]);
+                            trash.remove();
+                        }
+                    } else {
+                        let newMask = null;
+                        
+                        // projects the intersections into the mask to cut it as well.
+                        if (line.maskPath !== null) {
+                            let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
+                            let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
+                            // extends the normals to the image boundaries
+                            normal1.length = normal2.length = line.maskPath.bounds.height;
+                            let anchor1 = intersections[i].point;
+                            let anchor2 = intersections[i+1].point;
+                            let clip = new Path([
+                                anchor1.add(normal1),
+                                anchor1.subtract(normal1),
+                                anchor2.subtract(normal2),
+                                anchor2.add(normal2)]);
+                            let ng = line.maskPath.divide(clip, {insert: false});
+                            line.maskPath.segments = ng.children[0].segments;
+                            newMask = ng.children[1];
+                        }
+                        let split = line.baselinePath.splitAt(intersections[i+1]);
+                        let trash = line.baselinePath.splitAt(intersections[i]);
+                        trash.remove();
+                        let newLine = this.createLine(null, split, newMask && newMask.segments || null, null);
+                        newLine.updateDataFromCanvas();
                     }
+                    
                     line.updateDataFromCanvas();
-                } else {
-                    let newLine = line.baselinePath.splitAt(intersections[i+1]);
-                    let nl = this.createLine(null, newLine, null, null);
-                    let trash = line.baselinePath.splitAt(intersections[i]);
-                    line.updateDataFromCanvas();
-                    nl.updateDataFromCanvas();
-                    line = nl;
-                    trash.remove();
                 }
             }
         }.bind(this));
