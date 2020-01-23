@@ -264,7 +264,7 @@ VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
-KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(APPS_DIR, 'core/static/offsplit.mlmodel')
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'offsplit.mlmodel')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
