@@ -125,24 +125,39 @@ class XMLParser(ParserDocument):
 
     def get_filename(self, pageTag):
         raise NotImplementedError
-
+    
+    def get_pages(self):
+        raise NotImplementedError
+    
     def get_blocks(self, pageTag):
         raise NotImplementedError
-
+    
     def get_lines(self, blockTag):
         raise NotImplementedError
     
     def update_block(self, block, blockTag):
         raise NotImplementedError
-
+    
     def update_line(self, line, lineTag):
         raise NotImplementedError
-
-    def update_line_relations(self, line, lineTag):
-        raise NotImplementedError
     
-    def get_pages(self):
-        raise NotImplementedError
+    def make_transcription(self, line, lineTag, content, user=None):
+        try:
+            # lazily creates the Transcription on the fly if need be cf transcription() property
+            lt = LineTranscription.objects.get(transcription=self.transcription, line=line)
+        except LineTranscription.DoesNotExist:
+            lt = LineTranscription(version_source='import',
+                                   version_author=user and user.username or '',
+                                   transcription=self.transcription,
+                                   line=line)
+        else:
+            try:
+                lt.new_version()  # save current content in history
+            except NoChangeException:
+                pass
+        finally:
+            lt.content = content
+            lt.save()
     
     def parse(self, start_at=0, override=False, user=None):
         for pageTag in self.get_pages():
@@ -216,7 +231,9 @@ class XMLParser(ParserDocument):
                                 line.save()
                             
                             # needs to be done after line is created!
-                            self.update_line_relations(line, lineTag, user=user)
+                            tc = self.get_transcription_content(lineTag)
+                            if tc:
+                                self.make_transcription(line, lineTag, tc, user=user)
             
             # TODO: store glyphs too
             logger.info('Uncompressed and parsed %s' % self.file.name)
@@ -291,25 +308,10 @@ class AltoParser(XMLParser):
                         int(lineTag.get('VPOS')),
                         int(lineTag.get('HPOS')) + int(lineTag.get('WIDTH')),
                         int(lineTag.get('VPOS')) + int(lineTag.get('HEIGHT'))]
-    
-    def update_line_relations(self, line, lineTag, user=None):
-        try:
-            # lazily creates the Transcription on the fly if need be cf transcription() property
-            lt = LineTranscription.objects.get(transcription=self.transcription, line=line)
-        except LineTranscription.DoesNotExist:
-            lt = LineTranscription(version_source='import',
-                                   version_author=user and user.username or '',
-                                   transcription=self.transcription,
-                                   line=line)
-        else:
-            try:
-                lt.new_version()  # save current content in history
-            except NoChangeException:
-                pass
-        finally:
-            lt.content = ' '.join([e.get('CONTENT')
-                                   for e in lineTag.findall('String', self.root.nsmap)])
-            lt.save()
+
+    def get_transcription_content(self, lineTag):
+        return ' '.join([e.get('CONTENT')
+                         for e in lineTag.findall('String', self.root.nsmap)])
 
 
 class PagexmlParser(XMLParser):
@@ -328,125 +330,55 @@ class PagexmlParser(XMLParser):
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         return len(self.root.findall('Page', self.root.nsmap))
+    
+    def get_filename(self, pageTag):
+        try:
+            filename = pageTag.get('imageFilename')
+        except (IndexError, AttributeError) as e:
+            raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
+        else:
+            return filename
+    
+    def get_pages(self):
+        return self.root.findall('Page', self.root.nsmap)
+    
+    def get_blocks(self, pageTag):
+        return [(b.get('id'), b) for b in
+                pageTag.findall('TextRegion', self.root.nsmap)]
+    
+    def get_lines(self, blockTag):
+        return [(l.get('id'), l) for l in
+                blockTag.findall('TextLine', self.root.nsmap)]
 
-    def parse(self, start_at=0, override=False, user=None):
-        parts = []
+    def update_block(self, block, blockTag):
+        coords = blockTag.find('Coords', self.root.nsmap).get('points')
+        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
+        block.box = [list(map(int, pt.split(',')))
+                     for pt in coords.split(' ')]
 
-        # pagexml file can contain multiple parts
-        for page in self.root.findall('Page', self.root.nsmap):
-            try:
-                filename = page.get('imageFilename')
-            except (IndexError, AttributeError) as e:
-                raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
-            
-            try:
-                part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
-            except IndexError:
-                raise ParseError("No match found for file %s with filename %s." % (self.file.name, filename))
-            else:
-                # if something fails, revert everything for this document part
-                with transaction.atomic():
-                    if override:
-                        part.lines.all().delete()
-                        part.blocks.all().delete()
-                        
-                    block = None
-                    
-                    for block in page.findall('TextRegion', self.root.nsmap):
-                        id_ = block.get('id')
-                        if id_ and id_.startswith('eSc_dummyblock_'):
-                            block_ = None
-                        else:
-                            try:
-                                assert id_ and id_.startswith('eSc_textblock_')
-                                attrs = {'pk': int(id_[len('eSc_textblock_'):])}
-                            except (ValueError, AssertionError, TypeError):
-                                attrs = {'document_part': part,
-                                         'external_id': id_}
-                            try:
-                                block_ = Block.objects.get(**attrs)
-                            except Block.DoesNotExist:
-                                # not found, create it then
-                                block_ = Block(**attrs)
+    def update_line(self, line, lineTag):
+        try :
+            baseline = lineTag.find('Baseline', self.root.nsmap)
+            line.baseline = [list(map(int, pt.split(',')))
+                             for pt in baseline.get('points').split(' ')]
+        except AttributeError:
+            #  to check if the baseline is good
+            line.baseline = None
 
-                            try:
-                                coords = block.find('Coords', self.root.nsmap).get('points')
-                                #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-                                block_.box = [list(map(int, pt.split(',')))
-                                              for pt in coords.split(' ')]
-                            except TypeError:
-                                # probably a dummy block from another app
-                                block_ = None
-                            else:
-                                try:
-                                    block_.full_clean()
-                                except ValidationError as e:
-                                    raise ParseError(e)
-                                block_.save()
+        polygon = lineTag.find('Coords', self.root.nsmap)
+        if polygon is not None:
+            line.mask = [list(map(int, pt.split(',')))
+                         for pt in polygon.get('points').split(' ')]
 
-                        for line in block.findall('TextLine', self.root.nsmap):
-                            id_ = line.get('id')
-                            try:
-                                assert id_ and id_.startswith('eSc_line_')
-                                attrs = {'document_part': part,
-                                         'pk': int(id_[len('eSc_line_'):])}
-                            except (ValueError, AssertionError, TypeError):
-                                attrs = {'document_part': part,
-                                         'block': block_,
-                                         'external_id': id_}
-                            try:
-                                line_ = Line.objects.get(**attrs)
-                            except Line.DoesNotExist:
-                                # not found, create it then
-                                line_ = Line(**attrs)
-                            try :
-                                baseline = line.find('Baseline', self.root.nsmap)
-                                line_.baseline = [list(map(int, pt.split(',')))
-                                                  for pt in baseline.get('points').split(' ')]
-
-                            except AttributeError:
-                                #  to check if the baseline is good
-                                line_.baseline = None
-                            # i didn't find any polygon
-                            #  polygon == TextLine/Coords
-                            polygon = line.find('Coords', self.root.nsmap)
-                            if polygon is not None:
-                                line_.mask = [list(map(int, pt.split(',')))
-                                              for pt in polygon.get('points').split(' ')]
-                            try:
-                                line_.full_clean()
-                            except ValidationError as e:
-                                raise ParseError(e)
-                            line_.save()
-                            words = line.findall('Word', self.root.nsmap)
-                            # pagexml can have content for each word inside a word tag or the whole line in textline tag
-                            if len(words) > 0:
-                                content = ' '.join([e.text if e.text is not None else '' for e in line.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
-                            else:
-                                content = ' '.join([e.text if e.text is not None else '' for e in line.findall('TextEquiv/Unicode', self.root.nsmap)])
-                            try:
-
-                                # lazily creates the Transcription on the fly if need be cf transcription() property
-                                lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
-                            except LineTranscription.DoesNotExist:
-                                lt = LineTranscription(version_source='import',
-                                                       version_author=self.name,
-                                                       transcription=self.transcription,
-                                                       line=line_)
-                            else:
-                                try:
-                                    lt.new_version()  # save current content in history
-                                except NoChangeException:
-                                    pass
-                            finally:
-                                lt.content = content
-                                lt.save()
-
-                # TODO: store glyphs too
-                logger.info('Uncompressed and parsed %s' % self.file.name)
-                part.calculate_progress()
-                parts.append(part)
-        return parts
+    def get_transcription_content(self, lineTag):
+        words = lineTag.findall('Word', self.root.nsmap)
+        # pagexml can have content for each word inside a word tag or the whole line in textline tag
+        if len(words) > 0:
+            return ' '.join([e.text if e.text is not None else ''
+                             for e in lineTag.findall('Word/TextEquiv/Unicode', self.root.nsmap)])
+        else:
+            return ' '.join([e.text if e.text is not None else ''
+                             for e in lineTag.findall('TextEquiv/Unicode', self.root.nsmap)])
 
 
 class IIIFManifestParser(ParserDocument):
