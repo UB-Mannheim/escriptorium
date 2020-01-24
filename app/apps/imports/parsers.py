@@ -68,7 +68,8 @@ class ZipParser(ParserDocument):
                     with zfh.open(finfo) as zipedfh:
                         parser = make_parser(self.document, zipedfh)
                         parser.validate()
-        except:
+        except Exception as e:
+            logger.exception(e)
             raise ParseError(_("Zip file appears to be corrupted."))
     
     @property
@@ -97,12 +98,15 @@ class ZipParser(ParserDocument):
 
 
 class XMLParser(ParserDocument):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.root = etree.parse(self.file).getroot()
-        except (AttributeError, etree.XMLSyntaxError) as e:
-            raise ParseError("Invalid XML. %s" % e.args[0])
+    def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
+        if xml_root:
+            self.root = xml_root
+        else:
+            try:
+                self.root = etree.parse(self.file).getroot()
+            except (AttributeError, etree.XMLSyntaxError) as e:
+                raise ParseError("Invalid XML. %s" % e.args[0])
+        super().__init__(document, file_handler, transcription_name=transcription_name)
     
     def validate(self):
         try:
@@ -153,12 +157,14 @@ class AltoParser(XMLParser):
                 for blockTag in self.root.findall('Layout/Page/PrintSpace/TextBlock', self.root.nsmap):
                     id_ = blockTag.get('ID')
                     if id_ and not id_.startswith('eSc_dummyblock_'):
-                        try: 
+                        try:
                             if id_.startswith('eSc_textblock_'):
                                 internal_id = int(id_[len('eSc_textblock_'):])    
-                                block_ = Block.objects.get(pk=internal_id)
-                            else:       
-                                block_ = Block.objects.get(external_id=id_)
+                                block_ = Block.objects.get(document_part=part,
+                                                           pk=internal_id)
+                            else:
+                                block_ = Block.objects.get(document_part=part,
+                                                           external_id=id_)
                         except Block.DoesNotExist:
                             block_ = None
                     else:
@@ -167,7 +173,7 @@ class AltoParser(XMLParser):
                     if block_ is None:
                         # not found, create it then
                         block_ = Block(document_part=part, external_id=id_)
-
+                    
                     try:
                         x = int(blockTag.get('HPOS'))
                         y = int(blockTag.get('VPOS'))
@@ -180,13 +186,14 @@ class AltoParser(XMLParser):
                     except TypeError:
                         # probably a dummy block from another app
                         block_ = None
+                        
                     else:
                         try:
                             block_.full_clean()
                         except ValidationError as e:
                             raise ParseError(e)
                         block_.save()
-
+                    
                     for lineTag in blockTag.findall('TextLine', self.root.nsmap):
                         id_ = lineTag.get('ID')
                         if id_:
@@ -195,7 +202,8 @@ class AltoParser(XMLParser):
                                     line_ = Line.objects.get(document_part=part,
                                                              pk=int(id_[len('eSc_line_'):]))
                                 else:
-                                    line_ = Line.objects.get(document_part=part, external_id=id_)
+                                    line_ = Line.objects.get(document_part=part,
+                                                             external_id=id_)
                             except Line.DoesNotExist:
                                 # not found, create it then
                                 line_ = Line(document_part=part, block=block_, external_id=id_)
@@ -472,7 +480,6 @@ def make_parser(document, file_handler, name=None):
     if ext in XML_EXTENSIONS:
         try:
             root = etree.parse(file_handler).getroot()
-            file_handler.seek(0)  # not ideal but validation needs to read it again.
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:
@@ -482,9 +489,9 @@ def make_parser(document, file_handler, name=None):
         # if 'abbyy' in schema:  # Not super robust
         #     return AbbyyParser(root, name=name)
         if 'alto' in schema:
-            return AltoParser(document, file_handler, transcription_name=name)
+            return AltoParser(document, file_handler, transcription_name=name, xml_root=root)
         elif 'PAGE' in schema:
-            return PagexmlParser(document, file_handler, transcription_name=name)
+            return PagexmlParser(document, file_handler, transcription_name=name, xml_root=root)
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
     elif ext == 'json':

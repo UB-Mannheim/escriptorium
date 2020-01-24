@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from imports.models import DocumentImport
-from imports.parsers import AltoParser
+from imports.parsers import AltoParser, ParseError
 from core.models import *
 from core.tests.factory import CoreFactoryTestCase 
 
@@ -31,18 +31,18 @@ class XmlImportTestCase(CoreFactoryTestCase):
     def test_alto_single_no_match(self):
         self.part1.original_filename = 'temp'
         self.part1.save()
-
+        
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
             with self.assertNumQueries(12):
-                #with self.assertRaises(ParseError):  # doesn't work?!
+                #with self.assertRaises(ParseError):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
-                # Note: the ParseError is raised by the processing of the import, not the validation!
-                # the error is sent via websocket so no need to catch it here
+                # # Note: the ParseError is raised by the processing of the import, not the validation!
+                # # the error is sent via websocket so no need to catch it here
                 self.assertEqual(response.status_code, 200)
 
         # failed, didn't create anythng
@@ -124,7 +124,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
-                self.assertEqual(response.content, b'{"status":"ok"}')
+                self.assertEqual(response.content, b'{"status":"ok"}', response.content)
                 self.assertEqual(response.status_code, 200)
 
         self.assertEqual(DocumentImport.objects.count(), 1)
@@ -259,16 +259,6 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'pagexml_test.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-        #     response = self.client.post(uri, {
-        #         'name': "test import",
-        #         'upload_file': SimpleUploadedFile(filename, fh.read())
-        #     })
-        #     self.assertEqual(response.content, b'{"status":"ok"}')
-        #     self.assertEqual(response.status_code, 200)
-        #     self.assertEqual(self.document.transcriptions.count(), 2)  # manual and 'test import'
-        #     self.assertEqual(self.part1.lines.count(), 3)
-
-            fh.seek(0)
             response = self.client.post(uri, {
                 'upload_file': SimpleUploadedFile(filename, fh.read())
             })
