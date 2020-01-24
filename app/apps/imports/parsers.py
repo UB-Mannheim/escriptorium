@@ -84,22 +84,21 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    parser = make_parser(self.document, zipedfh)
+                    parser = make_parser(self.document, zipedfh)                
                     try:
-                        part = parser.parse(override=override)
+                        for part in parser.parse(override=override):
+                            yield part
                     except ParseError as e:
                         # we let go to try other documents
                         msg = _("Parse error in {filename}: {error}").format(filename=self.file.name, error=e.args[0])
                         logger.warning(msg)
                         if user:
                             user.notify(msg, id="import:warning", level='warning')
-                    else:
-                        yield part
 
 
 class XMLParser(ParserDocument):
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
-        if xml_root:
+        if xml_root is not None:
             self.root = xml_root
         else:
             try:
@@ -124,6 +123,106 @@ class XMLParser(ParserDocument):
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 raise ParseError("Document didn't validate. %s" % e.args[0])
 
+    def get_filename(self, pageTag):
+        raise NotImplementedError
+
+    def get_blocks(self, pageTag):
+        raise NotImplementedError
+
+    def get_lines(self, blockTag):
+        raise NotImplementedError
+    
+    def update_block(self, block, blockTag):
+        raise NotImplementedError
+
+    def update_line(self, line, lineTag):
+        raise NotImplementedError
+
+    def update_line_relations(self, line, lineTag):
+        raise NotImplementedError
+    
+    def get_pages(self):
+        raise NotImplementedError
+    
+    def parse(self, start_at=0, override=False, user=None):
+        for pageTag in self.get_pages():
+            # find the filename to match with existing images
+            filename = self.get_filename(pageTag)
+            try:
+                part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
+            except IndexError:
+                raise ParseError(_("No match found for file {} with filename <{}>.").format(self.file.name, filename))
+            else:
+                # if something fails, revert everything for this document part
+                with transaction.atomic():
+                    if override:
+                        part.lines.all().delete()
+                        part.blocks.all().delete()
+                    
+                    for block_id, blockTag in self.get_blocks(pageTag):
+                        if block_id and not block_id.startswith('eSc_dummyblock_'):
+                            try:
+                                if block_id.startswith('eSc_textblock_'):
+                                    internal_id = int(block_id[len('eSc_textblock_'):])    
+                                    block = Block.objects.get(document_part=part,
+                                                           pk=internal_id)
+                                else:
+                                    block = Block.objects.get(document_part=part,
+                                                              external_id=block_id)
+                            except Block.DoesNotExist:
+                                block = None
+                        else:
+                            block = None
+                        
+                        if block is None:
+                            # not found, create it then
+                            block = Block(document_part=part, external_id=block_id)
+                        try:
+                            self.update_block(block, blockTag)
+                        except TypeError:
+                            block = None
+                        else:
+                            try:
+                                block.full_clean()
+                            except ValidationError as e:
+                                raise ParseError(e)
+                            else:
+                                block.save()
+
+                        for line_id, lineTag in self.get_lines(blockTag):
+                            if line_id:
+                                try:
+                                    if line_id.startswith('eSc_line_'):
+                                        line = Line.objects.get(document_part=part,
+                                                                pk=int(line_id[len('eSc_line_'):]))
+                                    else:
+                                        line = Line.objects.get(document_part=part,
+                                                                external_id=line_id)
+                                except Line.DoesNotExist:
+                                    line = None
+                            else:
+                                line = None
+                            
+                            if line is None:
+                                # not found, create it then
+                                line = Line(document_part=part, block=block, external_id=line_id)
+                            
+                            self.update_line(line, lineTag)
+                            try:
+                                line.full_clean()
+                            except ValidationError as e:
+                                raise ParseError(e)
+                            else:
+                                line.save()
+                            
+                            # needs to be done after line is created!
+                            self.update_line_relations(line, lineTag, user=user)
+            
+            # TODO: store glyphs too
+            logger.info('Uncompressed and parsed %s' % self.file.name)
+            part.calculate_progress()
+            yield part
+
 
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
@@ -135,138 +234,82 @@ class AltoParser(XMLParser):
     def total(self):
         # An alto file always describes 1 'document part'
         return 1
-    
-    def parse(self, start_at=0, override=False, user=None):
-        # find the filename to match with existing images
+
+    def get_filename(self, pageTag):
         try:
             filename = self.root.find('Description/sourceImageInformation/fileName', self.root.nsmap).text
         except (IndexError, AttributeError) as e:
             raise ParseError("The alto file should contain a Description/sourceImageInformation/fileName tag for matching.")
-            
+        else:
+            return filename
+    
+    def get_pages(self):
+        return self.root.findall('Layout/Page', self.root.nsmap)
+    
+    def get_blocks(self, pageTag):
+        return [(b.get('ID'), b) for b in
+                pageTag.findall('PrintSpace/TextBlock', self.root.nsmap)]
+    
+    def get_lines(self, blockTag):
+        return [(l.get('ID'), l) for l in
+                blockTag.findall('TextLine', self.root.nsmap)]
+    
+    def update_block(self, block, blockTag):
+        x = int(blockTag.get('HPOS'))
+        y = int(blockTag.get('VPOS'))
+        w = int(blockTag.get('WIDTH'))
+        h = int(blockTag.get('HEIGHT'))
+        block.box = [[x, y],
+                     [x+w, y],
+                     [x+w, y+h],
+                     [x, y+h]]
+    
+    def update_line(self, line, lineTag):
+        baseline = lineTag.get('BASELINE')
+        if baseline is not None:
+            # sometimes baseline is just a single number,
+            # an offset maybe it's not super clear
+            try:
+                int(baseline)
+            except ValueError:
+                # it's an expected polygon
+                try:
+                    line.baseline = [list(map(int, pt.split(',')))
+                                      for pt in baseline.split(' ')]
+                except ValueError:
+                    logger.warning('Invalid baseline %s' % baseline)
+        
+        polygon = lineTag.find('Shape/Polygon', self.root.nsmap)
+        if polygon is not None:
+            try:
+                line.mask = [list(map(int, pt.split(',')))
+                             for pt in polygon.get('POINTS').split(' ')]
+            except ValueError:
+                logger.warning('Invalid polygon %s' % polygon)
+        else:
+            line.box = [int(lineTag.get('HPOS')),
+                        int(lineTag.get('VPOS')),
+                        int(lineTag.get('HPOS')) + int(lineTag.get('WIDTH')),
+                        int(lineTag.get('VPOS')) + int(lineTag.get('HEIGHT'))]
+    
+    def update_line_relations(self, line, lineTag, user=None):
         try:
-            part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
-        except IndexError:
-            raise ParseError(_("No match found for file {} with filename <{}>.").format(self.file.name, filename))
-        else:            
-            # if something fails, revert everything for this document part
-            with transaction.atomic():
-                if override:
-                    part.lines.all().delete()
-                    part.blocks.all().delete()
-
-                for blockTag in self.root.findall('Layout/Page/PrintSpace/TextBlock', self.root.nsmap):
-                    id_ = blockTag.get('ID')
-                    if id_ and not id_.startswith('eSc_dummyblock_'):
-                        try:
-                            if id_.startswith('eSc_textblock_'):
-                                internal_id = int(id_[len('eSc_textblock_'):])    
-                                block_ = Block.objects.get(document_part=part,
-                                                           pk=internal_id)
-                            else:
-                                block_ = Block.objects.get(document_part=part,
-                                                           external_id=id_)
-                        except Block.DoesNotExist:
-                            block_ = None
-                    else:
-                        block_ = None
-                    
-                    if block_ is None:
-                        # not found, create it then
-                        block_ = Block(document_part=part, external_id=id_)
-                    
-                    try:
-                        x = int(blockTag.get('HPOS'))
-                        y = int(blockTag.get('VPOS'))
-                        w = int(blockTag.get('WIDTH'))
-                        h = int(blockTag.get('HEIGHT'))
-                        block_.box = [[x, y],
-                                      [x+w, y],
-                                      [x+w, y+h],
-                                      [x, y+h]]
-                    except TypeError:
-                        # probably a dummy block from another app
-                        block_ = None
-                        
-                    else:
-                        try:
-                            block_.full_clean()
-                        except ValidationError as e:
-                            raise ParseError(e)
-                        block_.save()
-                    
-                    for lineTag in blockTag.findall('TextLine', self.root.nsmap):
-                        id_ = lineTag.get('ID')
-                        if id_:
-                            try:
-                                if id_.startswith('eSc_line_'):
-                                    line_ = Line.objects.get(document_part=part,
-                                                             pk=int(id_[len('eSc_line_'):]))
-                                else:
-                                    line_ = Line.objects.get(document_part=part,
-                                                             external_id=id_)
-                            except Line.DoesNotExist:
-                                # not found, create it then
-                                line_ = Line(document_part=part, block=block_, external_id=id_)
-                        else:
-                            line_ = None
-                        
-                        baseline = lineTag.get('BASELINE')
-                        if baseline is not None:
-                            # sometimes baseline is just a single number,
-                            # an offset maybe it's not super clear
-                            try:
-                                int(baseline)
-                            except ValueError:
-                                # it's an expected polygon
-                                try:
-                                    line_.baseline = [list(map(int, pt.split(',')))
-                                                      for pt in baseline.split(' ')]
-                                except ValueError:
-                                    logger.warning('Invalid baseline %s' % baseline)
-
-                            else:
-                                line_.baseline = None
-                        
-                        polygon = lineTag.find('Shape/Polygon', self.root.nsmap)
-                        if polygon is not None:
-                            try:
-                                line_.mask = [list(map(int, pt.split(',')))
-                                              for pt in polygon.get('POINTS').split(' ')]
-                            except ValueError:
-                                logger.warning('Invalid polygon %s' % polygon)
-                        else:
-                            line_.box = [int(lineTag.get('HPOS')),
-                                         int(lineTag.get('VPOS')),
-                                         int(lineTag.get('HPOS')) + int(lineTag.get('WIDTH')),
-                                         int(lineTag.get('VPOS')) + int(lineTag.get('HEIGHT'))]
-                        try:
-                            line_.full_clean()
-                        except ValidationError as e:
-                            raise ParseError(e)
-                        line_.save()
-                        content = ' '.join([e.get('CONTENT')
-                                            for e in lineTag.findall('String', self.root.nsmap)])
-                        try:
-                            # lazily creates the Transcription on the fly if need be cf transcription() property
-                            lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
-                        except LineTranscription.DoesNotExist:
-                            lt = LineTranscription(version_source='import',
-                                                   version_author=user and user.username or '',
-                                                   transcription=self.transcription,
-                                                   line=line_)
-                        else:
-                            try:
-                                lt.new_version()  # save current content in history
-                            except NoChangeException:
-                                pass
-                        finally:
-                            lt.content = content
-                            lt.save()
-                            
-            # TODO: store glyphs too        
-            logger.info('Uncompressed and parsed %s' % self.file.name)
-            part.calculate_progress()
-            return [part]
+            # lazily creates the Transcription on the fly if need be cf transcription() property
+            lt = LineTranscription.objects.get(transcription=self.transcription, line=line)
+        except LineTranscription.DoesNotExist:
+            lt = LineTranscription(version_source='import',
+                                   version_author=user and user.username or '',
+                                   transcription=self.transcription,
+                                   line=line)
+        else:
+            try:
+                lt.new_version()  # save current content in history
+            except NoChangeException:
+                pass
+        finally:
+            lt.content = ' '.join([e.get('CONTENT')
+                                   for e in lineTag.findall('String', self.root.nsmap)])
+            lt.save()
 
 
 class PagexmlParser(XMLParser):
