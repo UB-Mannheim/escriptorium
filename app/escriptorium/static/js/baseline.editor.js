@@ -1391,25 +1391,25 @@ class Segmenter {
                     if (i+1 >= intersections.length) {  // one intersection remaining
                         // remove everything in the selection rectangle
                         let location = intersections[i];
+                        if (line.maskPath) {
+                            line.maskPath.reorient(true);
+                            let normal = line.baselinePath.getNormalAt(intersections[i].offset);
+                            normal.length = line.maskPath.bounds.height;
+                            let anchor = intersections[i].point;
+                            let p = new Path.Line(anchor.subtract(normal), anchor.add(normal));
+                            let inters = line.maskPath.getIntersections(p);
+                            if (inters.length > 1) {
+                                line.maskPath.splitAt(inters[1]);
+                                let trash = line.maskPath.splitAt(inters[0]);
+                                trash.remove();
+                                line.maskPath.closePath();
+                            }
+                        }
                         let newSegment = line.baselinePath.insert(location.index+1, location);
                         if (path.contains(line.baselinePath.firstSegment.point)) {
                             line.baselinePath.removeSegments(0, newSegment.index);
                         } else if (path.contains(line.baselinePath.lastSegment.point)) {
                             line.baselinePath.removeSegments(newSegment.index+1);
-                        }
-                        if (line.maskPath) {
-                            let normal = line.baselinePath.getNormalAt(intersections[i].offset);
-                            normal.length = line.maskPath.bounds.height;
-                            let anchor = intersections[i].point;
-                            let p = new Path.Line(anchor.subtract(normal), anchor.add(normal));
-                            let its = line.maskPath.getIntersections(p);
-                            line.maskPath.splitAt(its[1]);
-                            let mask2 = line.maskPath.splitAt(its[0]);
-                            if (mask2.interiorPoint.isInside(path.bounds)) {
-                                mask2.remove();
-                            } else {
-                                line.update(null, mask2.segments);
-                            }
                         }
                     } else {
                         let newMask = null;
@@ -1418,7 +1418,6 @@ class Segmenter {
                         if (line.maskPath !== null) {
                             let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
                             let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
-                            // extends the normals to the image boundaries
                             normal1.length = normal2.length = line.maskPath.bounds.height;
                             let anchor1 = intersections[i].point;
                             let anchor2 = intersections[i+1].point;
@@ -1430,10 +1429,10 @@ class Segmenter {
                                 fillColor: 'red'});
                             clip.removeOnDown();
                             let ng = line.maskPath.divide(clip, {insert: false});
-                            console.log(ng);
                             if (ng.children && ng.children.length == 3) {
-                                line.maskPath.remove();
+                                line.maskPath.removeSegments();
                                 ng.children[0].segments.forEach(s=>line.maskPath.add(s));
+                                line.maskPath.closePath();
                                 newMask = ng.children[1];
                             }
                         }
