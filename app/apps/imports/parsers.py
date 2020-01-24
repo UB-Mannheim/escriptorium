@@ -53,31 +53,6 @@ class ParserDocument():
         return transcription
 
 
-class XMLParser(ParserDocument):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.root = etree.parse(self.file).getroot()
-        except (AttributeError, etree.XMLSyntaxError) as e:
-            raise ParseError("Invalid XML. %s" % e.args[0])
-    
-    def validate(self):
-        try:
-            # response = requests.get(self.SCHEMA)
-            # content = response.content
-            from django.contrib.staticfiles.storage import staticfiles_storage
-            content = staticfiles_storage.open(self.SCHEMA_FILE).read()
-            schema_root = etree.XML(content)
-        except:
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
-        else:
-            try:
-                xmlschema = etree.XMLSchema(schema_root)
-                xmlschema.assertValid(self.root)
-            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                raise ParseError("Document didn't validate. %s" % e.args[0])
-
-
 class ZipParser(ParserDocument):
     """
     For now only deals with a flat list of Alto files
@@ -121,6 +96,30 @@ class ZipParser(ParserDocument):
                         yield part
 
 
+class XMLParser(ParserDocument):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.root = etree.parse(self.file).getroot()
+        except (AttributeError, etree.XMLSyntaxError) as e:
+            raise ParseError("Invalid XML. %s" % e.args[0])
+    
+    def validate(self):
+        try:
+            # response = requests.get(self.SCHEMA)
+            # content = response.content
+            from django.contrib.staticfiles.storage import staticfiles_storage
+            content = staticfiles_storage.open(self.SCHEMA_FILE).read()
+            schema_root = etree.XML(content)
+        except:
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
+        else:
+            try:
+                xmlschema = etree.XMLSchema(schema_root)
+                xmlschema.assertValid(self.root)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                raise ParseError("Document didn't validate. %s" % e.args[0])
+
 
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
@@ -151,64 +150,59 @@ class AltoParser(XMLParser):
                     part.lines.all().delete()
                     part.blocks.all().delete()
 
-                block = None
-                # pages = self.root.findall('Page', self.root.nsmap)
-                # for page in pages:
-                #     if page.get('ID') != 'dummy':
-                #         block = Block.objects.create()
+                for blockTag in self.root.findall('Layout/Page/PrintSpace/TextBlock', self.root.nsmap):
+                    id_ = blockTag.get('ID')
+                    if id_ and not id_.startswith('eSc_dummyblock_'):
+                        try: 
+                            if id_.startswith('eSc_textblock_'):
+                                internal_id = int(id_[len('eSc_textblock_'):])    
+                                block_ = Block.objects.get(pk=internal_id)
+                            else:       
+                                block_ = Block.objects.get(external_id=id_)
+                        except Block.DoesNotExist:
+                            block_ = None
+                    else:
+                        block_ = None
+                    
+                    if block_ is None:
+                        # not found, create it then
+                        block_ = Block(document_part=part, external_id=id_)
 
-                for block in self.root.findall('Layout/Page/PrintSpace/TextBlock', self.root.nsmap):
-                    id_ = block.get('ID')
-                    if id_ and id_.startswith('eSc_dummyblock_'):
+                    try:
+                        x = int(blockTag.get('HPOS'))
+                        y = int(blockTag.get('VPOS'))
+                        w = int(blockTag.get('WIDTH'))
+                        h = int(blockTag.get('HEIGHT'))
+                        block_.box = [[x, y],
+                                      [x+w, y],
+                                      [x+w, y+h],
+                                      [x, y+h]]
+                    except TypeError:
+                        # probably a dummy block from another app
                         block_ = None
                     else:
                         try:
-                            assert id_ and id_.startswith('eSc_textblock_')
-                            attrs = {'pk': int(id_[len('eSc_textblock_'):])}
-                        except (ValueError, AssertionError, TypeError):
-                            attrs = {'document_part': part,
-                                     'external_id': id_}
-                        try:
-                            block_ = Block.objects.get(**attrs)
-                        except Block.DoesNotExist:
-                            # not found, create it then
-                            block_ = Block(**attrs)
+                            block_.full_clean()
+                        except ValidationError as e:
+                            raise ParseError(e)
+                        block_.save()
 
-                        try:
-                            x = int(block.get('HPOS'))
-                            y = int(block.get('VPOS'))
-                            w = int(block.get('WIDTH'))
-                            h = int(block.get('HEIGHT'))
-                            block_.box = [[x, y],
-                                          [x+w, y],
-                                          [x+w, y+h],
-                                          [x, y+h]]
-                        except TypeError:
-                            # probably a dummy block from another app
-                            block_ = None
-                        else:
+                    for lineTag in blockTag.findall('TextLine', self.root.nsmap):
+                        id_ = lineTag.get('ID')
+                        if id_:
                             try:
-                                block_.full_clean()
-                            except ValidationError as e:
-                                raise ParseError(e)
-                            block_.save()
-
-                    for line in block.findall('TextLine', self.root.nsmap):
-                        id_ = line.get('ID')
-                        try:
-                            assert id_ and id_.startswith('eSc_line_')
-                            attrs = {'document_part': part,
-                                     'pk': int(id_[len('eSc_line_'):])}
-                        except (ValueError, AssertionError, TypeError):
-                            attrs = {'document_part': part,
-                                     'block': block_,
-                                     'external_id': id_}
-                        try:
-                            line_ = Line.objects.get(**attrs)
-                        except Line.DoesNotExist:
-                            # not found, create it then
-                            line_ = Line(**attrs)
-                        baseline = line.get('BASELINE')
+                                if id_.startswith('eSc_line_'):
+                                    line_ = Line.objects.get(document_part=part,
+                                                             pk=int(id_[len('eSc_line_'):]))
+                                else:
+                                    line_ = Line.objects.get(document_part=part, external_id=id_)
+                            except Line.DoesNotExist:
+                                # not found, create it then
+                                line_ = Line(document_part=part, block=block_, external_id=id_)
+                        else:
+                            line_ = None
+                        
+                        baseline = lineTag.get('BASELINE')
                         if baseline is not None:
                             # sometimes baseline is just a single number,
                             # an offset maybe it's not super clear
@@ -225,7 +219,7 @@ class AltoParser(XMLParser):
                             else:
                                 line_.baseline = None
                         
-                        polygon = line.find('Shape/Polygon', self.root.nsmap)
+                        polygon = lineTag.find('Shape/Polygon', self.root.nsmap)
                         if polygon is not None:
                             try:
                                 line_.mask = [list(map(int, pt.split(',')))
@@ -233,17 +227,17 @@ class AltoParser(XMLParser):
                             except ValueError:
                                 logger.warning('Invalid polygon %s' % polygon)
                         else:
-                            line_.box = [int(line.get('HPOS')),
-                                         int(line.get('VPOS')),
-                                         int(line.get('HPOS')) + int(line.get('WIDTH')),
-                                         int(line.get('VPOS')) + int(line.get('HEIGHT'))]
+                            line_.box = [int(lineTag.get('HPOS')),
+                                         int(lineTag.get('VPOS')),
+                                         int(lineTag.get('HPOS')) + int(lineTag.get('WIDTH')),
+                                         int(lineTag.get('VPOS')) + int(lineTag.get('HEIGHT'))]
                         try:
                             line_.full_clean()
                         except ValidationError as e:
                             raise ParseError(e)
                         line_.save()
                         content = ' '.join([e.get('CONTENT')
-                                            for e in line.findall('String', self.root.nsmap)])
+                                            for e in lineTag.findall('String', self.root.nsmap)])
                         try:
                             # lazily creates the Transcription on the fly if need be cf transcription() property
                             lt = LineTranscription.objects.get(transcription=self.transcription, line=line_)
@@ -267,74 +261,6 @@ class AltoParser(XMLParser):
             return [part]
 
 
-class IIIFManifestParser(ParserDocument):
-    @cached_property
-    def manifest(self):
-        try:
-            return json.loads(self.file.read())
-        except (json.JSONDecodeError) as e:
-            raise ParseError(e)
-    
-    @cached_property
-    def canvases(self):
-        try:
-            return self.manifest['sequences'][0]['canvases']
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
-    
-    def validate(self):
-        if len(self.canvases) < 1:
-            raise ParseError(_("Empty manifesto."))
-    
-    @property
-    def total(self):
-        return len(self.canvases)
-    
-    def parse(self, start_at=0, override=False, user=None):
-        try:
-            for metadata in self.manifest['metadata']:
-                if metadata['value']:
-                    md, created = Metadata.objects.get_or_create(name=metadata['label'])
-                    DocumentMetadata.objects.get_or_create(
-                        document=self.document,
-                        key=md,
-                        value=metadata['value'][:512])
-        except KeyError as e:
-            pass
-        
-        try:
-            for i, canvas in enumerate(self.canvases):
-                if i < start_at:
-                    continue
-                resource = canvas['images'][0]['resource']
-                url = resource['@id']
-                uri_template =  '{image}/{region}/{size}/{rotation}/{quality}.{format}'
-                url = uri_template.format(
-                    image=resource['service']['@id'],
-                    region='full',
-                    size=getattr(settings, 'IIIF_IMPORT_QUALITY', 'full'),
-                    rotation=0,
-                    quality='default',
-                    format='jpg')  # we could gain some time by fetching png, but it's not implemented everywhere.
-                r = requests.get(url, stream=True, verify=False)
-                if r.status_code != 200:
-                    raise ParseError('Invalid image url: %s' % url)
-                part = DocumentPart(
-                    document=self.document,
-                    source=url)
-                if 'label' in resource:
-                    part.name = resource['label']
-                # iiif file names are always default.jpg or close to
-                name = '%d_%s_%s' % (i, uuid.uuid4().hex[:5], url.split('/')[-1])
-                part.original_filename = name
-                part.image.save(name, ContentFile(r.content), save=False)
-                part.save()
-                yield part
-                time.sleep(0.1)  # avoid being throttled
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
-
-
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     # SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
@@ -355,14 +281,13 @@ class PagexmlParser(XMLParser):
     def parse(self, start_at=0, override=False, user=None):
         parts = []
 
-         # pagexml file can contain multiple parts
+        # pagexml file can contain multiple parts
         for page in self.root.findall('Page', self.root.nsmap):
-
             try:
                 filename = page.get('imageFilename')
             except (IndexError, AttributeError) as e:
                 raise ParseError("The PageXml file should contain an attribute imageFilename in Page tag for matching.")
-
+            
             try:
                 part = DocumentPart.objects.filter(document=self.document, original_filename=filename)[0]
             except IndexError:
@@ -373,9 +298,9 @@ class PagexmlParser(XMLParser):
                     if override:
                         part.lines.all().delete()
                         part.blocks.all().delete()
-
+                        
                     block = None
-
+                    
                     for block in page.findall('TextRegion', self.root.nsmap):
                         id_ = block.get('id')
                         if id_ and id_.startswith('eSc_dummyblock_'):
@@ -394,7 +319,6 @@ class PagexmlParser(XMLParser):
                                 block_ = Block(**attrs)
 
                             try:
-
                                 coords = block.find('Coords', self.root.nsmap).get('points')
                                 #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
                                 block_.box = [list(map(int, pt.split(',')))
@@ -472,6 +396,74 @@ class PagexmlParser(XMLParser):
                 part.calculate_progress()
                 parts.append(part)
         return parts
+
+
+class IIIFManifestParser(ParserDocument):
+    @cached_property
+    def manifest(self):
+        try:
+            return json.loads(self.file.read())
+        except (json.JSONDecodeError) as e:
+            raise ParseError(e)
+    
+    @cached_property
+    def canvases(self):
+        try:
+            return self.manifest['sequences'][0]['canvases']
+        except (KeyError, IndexError) as e:
+            raise ParseError(e)
+    
+    def validate(self):
+        if len(self.canvases) < 1:
+            raise ParseError(_("Empty manifesto."))
+    
+    @property
+    def total(self):
+        return len(self.canvases)
+    
+    def parse(self, start_at=0, override=False, user=None):
+        try:
+            for metadata in self.manifest['metadata']:
+                if metadata['value']:
+                    md, created = Metadata.objects.get_or_create(name=metadata['label'])
+                    DocumentMetadata.objects.get_or_create(
+                        document=self.document,
+                        key=md,
+                        value=metadata['value'][:512])
+        except KeyError as e:
+            pass
+        
+        try:
+            for i, canvas in enumerate(self.canvases):
+                if i < start_at:
+                    continue
+                resource = canvas['images'][0]['resource']
+                url = resource['@id']
+                uri_template =  '{image}/{region}/{size}/{rotation}/{quality}.{format}'
+                url = uri_template.format(
+                    image=resource['service']['@id'],
+                    region='full',
+                    size=getattr(settings, 'IIIF_IMPORT_QUALITY', 'full'),
+                    rotation=0,
+                    quality='default',
+                    format='jpg')  # we could gain some time by fetching png, but it's not implemented everywhere.
+                r = requests.get(url, stream=True, verify=False)
+                if r.status_code != 200:
+                    raise ParseError('Invalid image url: %s' % url)
+                part = DocumentPart(
+                    document=self.document,
+                    source=url)
+                if 'label' in resource:
+                    part.name = resource['label']
+                # iiif file names are always default.jpg or close to
+                name = '%d_%s_%s' % (i, uuid.uuid4().hex[:5], url.split('/')[-1])
+                part.original_filename = name
+                part.image.save(name, ContentFile(r.content), save=False)
+                part.save()
+                yield part
+                time.sleep(0.1)  # avoid being throttled
+        except (KeyError, IndexError) as e:
+            raise ParseError(e)
 
 
 def make_parser(document, file_handler, name=None):
