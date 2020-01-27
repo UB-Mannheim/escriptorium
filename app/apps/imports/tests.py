@@ -120,12 +120,12 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            #with self.assertNumQueries(64):
-            response = self.client.post(uri, {
-                'upload_file': SimpleUploadedFile(filename, fh.read())
-            })
-            self.assertEqual(response.content, b'{"status":"ok"}', response.content)
-            self.assertEqual(response.status_code, 200)
+            with self.assertNumQueries(64):
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                self.assertEqual(response.content, b'{"status":"ok"}', response.content)
+                self.assertEqual(response.status_code, 200)
 
         self.assertEqual(DocumentImport.objects.count(), 1)
         self.assertEqual(DocumentImport.objects.first().workflow_state, DocumentImport.WORKFLOW_STATE_DONE)
