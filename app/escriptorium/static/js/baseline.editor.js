@@ -272,7 +272,7 @@ class SegmenterLine {
     }
 
     showOrdering() {
-        if (!this.orderDisplay) {
+        if (!this.orderDisplay && this.baselinePath) {
             let anchor = (this.textDirection == 'lr' ?
                           this.baselinePath.firstSegment.point :
                           this.baselinePath.lastSegment.point);

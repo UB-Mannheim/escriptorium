@@ -64,10 +64,10 @@ class ZipParser(ParserDocument):
             with zipfile.ZipFile(self.file) as zfh:
                 if zfh.testzip() is not None:
                     raise ParseError(_("File appears to not be a valid zip."))
-                for i,finfo in enumerate(zfh.infolist()):
-                    with zfh.open(finfo) as zipedfh:
-                        parser = make_parser(self.document, zipedfh)
-                        parser.validate()
+                # for i,finfo in enumerate(zfh.infolist()):
+                #     with zfh.open(finfo) as zipedfh:
+                #         parser = make_parser(self.document, zipedfh)
+                #         parser.validate()
         except Exception as e:
             logger.exception(e)
             raise ParseError(_("Zip file appears to be corrupted."))
