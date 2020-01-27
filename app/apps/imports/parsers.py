@@ -291,16 +291,16 @@ class AltoParser(XMLParser):
             except ValueError:
                 # it's an expected polygon
                 try:
-                    line.baseline = [list(map(int, pt.split(',')))
-                                      for pt in baseline.split(' ')]
+                    coords = tuple(map(float, baseline.split(' ')))
+                    line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
                     logger.warning('Invalid baseline %s' % baseline)
         
         polygon = lineTag.find('Shape/Polygon', self.root.nsmap)
         if polygon is not None:
             try:
-                line.mask = [list(map(int, pt.split(',')))
-                             for pt in polygon.get('POINTS').split(' ')]
+                coords = tuple(map(float, polygon.get('POINTS').split(' ')))
+                line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
                 logger.warning('Invalid polygon %s' % polygon)
         else:

@@ -313,9 +313,11 @@ class SegmenterLine {
                 start = this.baselinePath.lastSegment.point;
             }
             let vector = this.baselinePath.getNormalAt(0);
-            vector.length = this.lineHeight / 3;
-            this.directionHint.sendToBack();
-            this.directionHint.segments = [start.subtract(vector), start.add(vector)];
+            if (vector) {
+                vector.length = this.lineHeight / 3;
+                this.directionHint.sendToBack();
+                this.directionHint.segments = [start.subtract(vector), start.add(vector)];
+            }
         }
     }
     
