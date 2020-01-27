@@ -147,7 +147,7 @@ class SegmenterLine {
         this.maskPath = new Path({
             closed: true,
             opacity: 0.1,
-            fillColor: this.segmenter.mainColor,
+            fillColor: this.order % 2 ? this.segmenter.mainColor: this.segmenter.tertiaryColor,
             selectedColor: this.segmenter.secondaryColor,
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
             segments: this.mask
@@ -330,7 +330,7 @@ class SegmenterLine {
                     visible: true,
                     strokeWidth: Math.max(2, 4 / this.segmenter.scale),
                     opacity: 0.5,
-                    strokeColor: this.segmenter.mainColor
+                    strokeColor: this.segmenter.tertiaryColor
                 });
             }
             let start;
@@ -380,6 +380,7 @@ class Segmenter {
                         disableBindings=false,
                         mainColor=null,
                         secondaryColor=null,
+                        tertiaryColor=null,
                         upperLineHeight=20,
                         lowerLineHeight=10,
                         // when creating a line, which direction should it take.
@@ -511,7 +512,7 @@ class Segmenter {
 
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
-            this.splitBtn.classList.toggle('btn-info');
+            this.splitBtn.classList.toggle('btn-warning');
             this.splitBtn.classList.toggle('btn-success');
             this.setCursor();
         }.bind(this));
@@ -538,7 +539,7 @@ class Segmenter {
                 }
             } else if (event.keyCode == 67) { // C
                 this.spliting = !this.spliting;
-                this.splitBtn.classList.toggle('btn-info');
+                this.splitBtn.classList.toggle('btn-warning');
                 this.splitBtn.classList.toggle('btn-success');
                 this.setCursor();
             } else if (event.keyCode == 77) { // M
@@ -1413,11 +1414,16 @@ class Segmenter {
                         }
                     } else {
                         let newMask = null;
-                        
+                        console.log(line.baselinePath.firstSegment.point, line.baselinePath.lastSegment.point);
+                        // calculate the normals before splitting
+                        let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
+                        let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
+                        let split = line.baselinePath.splitAt(intersections[i+1]);
+                        let trash = line.baselinePath.splitAt(intersections[i]);
+                        trash.remove();
+
                         // projects the intersections into the mask to cut it as well.
                         if (line.maskPath !== null) {
-                            let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
-                            let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
                             normal1.length = normal2.length = line.maskPath.bounds.height;
                             let anchor1 = intersections[i].point;
                             let anchor2 = intersections[i+1].point;
@@ -1429,17 +1435,37 @@ class Segmenter {
                                 fillColor: 'red'});
                             clip.removeOnDown();
                             let ng = line.maskPath.divide(clip, {insert: false});
-                            if (ng.children && ng.children.length == 3) {
-                                line.maskPath.removeSegments();
-                                ng.children[0].segments.forEach(s=>line.maskPath.add(s));
-                                line.maskPath.closePath();
-                                newMask = ng.children[1];
+                            if (ng.children) {
+                                console.log(line.baselinePath.firstSegment.point, line.baselinePath.lastSegment.point, );
+                                let fp = line.baselinePath.firstSegment.point;
+                                let lp = line.baselinePath.lastSegment.point;
+                                let fp2 = split.firstSegment.point;
+                                let lp2 = split.lastSegment.point;                                
+                                for (i in ng.children) {
+                                    // let ip = ng.children[i].bounds.center;
+                                    let ip = split.interiorPoint;
+                                    // let ip = line.baselinePath.interiorPoint;
+                                    new Path.Circle({center: ip, radius: 50, fillColor: 'black'}).removeOnDown();
+                                    let matrix = [[fp.x - lp.x, ip.x - lp.x],
+                                                  [fp.y - lp.y, ip.y - fp.y]];
+                                    console.log('poly ', i, 'old line', math.det(matrix), matrix);
+
+                                    // ip = ng.children[i].bounds.center;
+                                    let matrix2 = [[fp2.x - lp2.x, ip.x - lp2.x],
+                                                   [fp2.y - lp2.y, ip.y - fp2.y]];
+                                    console.log('poly ', i, 'new line', math.det(matrix2), matrix2);
+                                }
+                                
+                                if (ng.children && ng.children.length == 3) {
+                                    line.maskPath.removeSegments();
+                                    ng.children[0].segments.forEach(s=>line.maskPath.add(s));
+                                    line.maskPath.closePath();
+                                    newMask = ng.children[1].segments;
+                                }
                             }
                         }
-                        let split = line.baselinePath.splitAt(intersections[i+1]);
-                        let trash = line.baselinePath.splitAt(intersections[i]);
-                        trash.remove();
-                        let newLine = this.createLine(null, split, newMask && newMask.segments || null, null);
+                        
+                        let newLine = this.createLine(null, split, newMask || null, null);
                         newLine.updateDataFromCanvas();
                     }
 
@@ -1481,8 +1507,6 @@ class Segmenter {
         while (this.selection.lines.length > 1) {
             let l1 = this.selection.lines[0], l2 = this.selection.lines[1];
             if (l1.baselinePath !== null && l2.baselinePath != null) {
-                let seg1 = l1.baselinePath.getNearestLocation(l2.baselinePath.firstPoint);  // assuming the line direction is rtl
-                let seg2 = l2.baselinePath.getNearestLocation(l1.baselinePath.lastPoint);
                 l1.baselinePath.addSegments(l2.baselinePath.segments);
             }
             if (l1.maskPath != null && l2.maskPath != null) {
@@ -1543,15 +1567,15 @@ class Segmenter {
                         // has green; the document is quite rich, start again with only the 2 main colors
                         pal = pal.slice(0, 2);
                         if (depth < 1) return chooseColors(pal, depth=depth+1);
-                        else return ['blue', 'teal']; // give up
+                        else return ['blue', 'teal', 'purple']; // give up
                     } else {
-                        return ['green', 'yellow'];
+                        return ['green', 'yellow', 'orange'];
                     }
                 } else {
-                    return ['red', 'orange'];
+                    return ['red', 'yellow', 'orange'];
                 }
             } else {
-                return ['blue', 'teal'];
+                return ['blue', 'teal', 'purple'];
             }
         }
         
@@ -1564,9 +1588,11 @@ class Segmenter {
             let choices = chooseColors(palette);
             this.mainColor = choices[0];
             this.secondaryColor = choices[1];
+            this.tertiaryColor = choices[2];
         } else {
             this.mainColor = 'blue';
             this.secondaryColor = 'teal';
+            this.tertiaryColor = 'purple';
         }
     }
 }
