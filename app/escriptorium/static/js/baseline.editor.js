@@ -720,7 +720,7 @@ class Segmenter {
             this.tool.onMouseUp = function(event) {
                 this.resetToolEvents();
                 let changes = this.updateRegionsFromCanvas();
-                if (changes) this.trigger('baseline-editor:update', {regions: [region]});
+                // if (changes) this.trigger('baseline-editor:update', {regions: [region]});
             }.bind(this);
         }.bind(this);
 
@@ -1423,7 +1423,6 @@ class Segmenter {
                         }
                     } else {
                         let newMask = null;
-                        console.log(line.baselinePath.firstSegment.point, line.baselinePath.lastSegment.point);
                         // calculate the normals before splitting
                         let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
                         let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
