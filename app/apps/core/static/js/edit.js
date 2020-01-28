@@ -80,20 +80,20 @@ $(document).ready(function() {
     $('#zoom-range').attr('max', zoom.maxScale);
     $('#zoom-range').val(zoom.scale);
     
-    zoom.events.addEventListener('wheelzoom.updated', function(data) {
-        if (current_part !== null && zoom.scale > 1) {
-            // zooming in, load the full size image if it's not done already to make sure the resolution is good enough to read stuff..
-            preloadImage(current_part.image.uri, function() {
-                panels['source'].$img.attr('src', this.src);
-                panels['source'].refresh();  // doesn't do anything for now but might in the future
-                if (panels['seg'].colorMode == 'color') {
-                    panels['seg'].$img.attr('src', this.src);
-                    panels['seg'].refresh();
-                }
-            });
-        }
-        $('#zoom-range').val(zoom.scale);
-    });
+    // zoom.events.addEventListener('wheelzoom.updated', function(data) {
+    //     if (current_part !== null && zoom.scale > 1) {
+    //         // zooming in, load the full size image if it's not done already to make sure the resolution is good enough to read stuff..
+    //         preloadImage(current_part.image.uri, function() {
+    //             panels['source'].$img.attr('src', this.src);
+    //             panels['source'].refresh();  // doesn't do anything for now but might in the future
+    //             if (panels['seg'].colorMode == 'color') {
+    //                 panels['seg'].$img.attr('src', this.src);
+    //                 panels['seg'].refresh();
+    //             }
+    //         });
+    //     }
+    //     $('#zoom-range').val(zoom.scale);
+    // });
     
     $('#zoom-range').on('input', function(ev) {
         let openPanel = panels[Object.keys(panels).find(k=>panels[k].opened===true)];

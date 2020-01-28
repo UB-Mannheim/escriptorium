@@ -4,6 +4,6 @@
 .#*
 env/
 __pycache__
-static/
-media/
+./app/static/
+./app/media/
 *.log
