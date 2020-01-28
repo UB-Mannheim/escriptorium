@@ -152,6 +152,8 @@ class SegmenterLine {
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
             segments: this.mask
         });
+        // too resource intensive :(
+        // if (this.mask.length > this.segmenter.maxSegments) this.maskPath.simplify();
     }
     
     createPolygonEdgeForBaselineSegment(segment) {
@@ -383,6 +385,7 @@ class Segmenter {
                         tertiaryColor=null,
                         upperLineHeight=20,
                         lowerLineHeight=10,
+                        maxSegments=50,
                         // when creating a line, which direction should it take.
                         defaultTextDirection='lr',
                         // field to store and reuse in output from loaded data
@@ -420,6 +423,7 @@ class Segmenter {
         this.secondaryColor = null;
         this.upperLineHeight = upperLineHeight;
         this.lowerLineHeight = lowerLineHeight;
+        this.maxSegments = maxSegments;
 
         // the minimal length in pixels below which the line will be removed automatically
         this.lengthThreshold = lengthTreshold; 
@@ -1384,6 +1388,11 @@ class Segmenter {
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
     }
     
+    getDeterminant(v1, v2) {
+        let matrix = [[v1.x, v2.x], [v1.y, v2.y]];
+        return math.det(matrix);
+    }
+    
     splitByPath(path) {
         this.lines.forEach(function(line) {
             if (line.baseline !== null) {
@@ -1421,46 +1430,44 @@ class Segmenter {
                         let split = line.baselinePath.splitAt(intersections[i+1]);
                         let trash = line.baselinePath.splitAt(intersections[i]);
                         trash.remove();
-
+                        
                         // projects the intersections into the mask to cut it as well.
                         if (line.maskPath !== null) {
                             normal1.length = normal2.length = line.maskPath.bounds.height;
                             let anchor1 = intersections[i].point;
                             let anchor2 = intersections[i+1].point;
-                            let clip = new Path({
-                                segments:[anchor1.add(normal1),
-                                          anchor1.subtract(normal1),
-                                          anchor2.subtract(normal2),
-                                          anchor2.add(normal2)],
-                                fillColor: 'red'});
-                            clip.removeOnDown();
+                            let clip = new Path({segments:[
+                                anchor1.add(normal1),
+                                anchor1.subtract(normal1),
+                                anchor2.subtract(normal2),
+                                anchor2.add(normal2)]});
                             let ng = line.maskPath.divide(clip, {insert: false});
+                            clip.remove();
+                            // we are left with 3 polygons,
+                            // calculating the determinant of the normals against their center point
+                            // to determine on which side they are.
                             if (ng.children) {
-                                console.log(line.baselinePath.firstSegment.point, line.baselinePath.lastSegment.point, );
+                                let a = intersections[i].point, b = intersections[i+1].point;
                                 let fp = line.baselinePath.firstSegment.point;
                                 let lp = line.baselinePath.lastSegment.point;
                                 let fp2 = split.firstSegment.point;
-                                let lp2 = split.lastSegment.point;                                
-                                for (i in ng.children) {
-                                    // let ip = ng.children[i].bounds.center;
-                                    let ip = split.interiorPoint;
-                                    // let ip = line.baselinePath.interiorPoint;
-                                    new Path.Circle({center: ip, radius: 50, fillColor: 'black'}).removeOnDown();
-                                    let matrix = [[fp.x - lp.x, ip.x - lp.x],
-                                                  [fp.y - lp.y, ip.y - fp.y]];
-                                    console.log('poly ', i, 'old line', math.det(matrix), matrix);
-
-                                    // ip = ng.children[i].bounds.center;
-                                    let matrix2 = [[fp2.x - lp2.x, ip.x - lp2.x],
-                                                   [fp2.y - lp2.y, ip.y - fp2.y]];
-                                    console.log('poly ', i, 'new line', math.det(matrix2), matrix2);
-                                }
-                                
-                                if (ng.children && ng.children.length == 3) {
-                                    line.maskPath.removeSegments();
-                                    ng.children[0].segments.forEach(s=>line.maskPath.add(s));
-                                    line.maskPath.closePath();
-                                    newMask = ng.children[1].segments;
+                                let lp2 = split.lastSegment.point;
+                                // if we have more than 3 we don't know what to do with them
+                                for (let n in ng.children.slice(0, 3)) {
+                                    let ip = ng.children[n].bounds.center;
+                                    // test it against both lines
+                                    let det1 = this.getDeterminant(normal1, {x:ip.x-a.x, y:ip.y-a.y});
+                                    let det2 = this.getDeterminant(normal2, {x:ip.x-b.x, y:ip.y-b.y});
+                                    // pattern should be -- / ++ / -+
+                                    if (Math.sign(det1) == Math.sign(det2)) {
+                                        if (det1<0) {
+                                            line.maskPath.removeSegments();
+                                            ng.children[n].segments.forEach(s=>line.maskPath.add(s));
+                                            line.maskPath.closePath();
+                                        } else {
+                                            newMask = ng.children[n].segments;
+                                        }
+                                    }
                                 }
                             }
                         }
