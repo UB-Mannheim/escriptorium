@@ -177,13 +177,12 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                 for part in parts:
                     page = tplt.render({
                         'part': part,
-                        'lines': part.lines
-                        .order_by('block__order', 'order')
-                        .prefetch_related(
-                            Prefetch('transcriptions',
-                                     to_attr='transcription',
-                                     queryset=LineTranscription.objects.filter(
-                                         transcription=transcription)))})
+                        'lines': part.lines.order_by('block__order', 'order')
+                                           .prefetch_related(
+                                               Prefetch('transcriptions',
+                                                        to_attr='transcription',
+                                                        queryset=LineTranscription.objects.filter(
+                                                            transcription=transcription)))})
                     zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
             response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
             response['Content-Disposition'] = 'attachment; filename=%s' % filename

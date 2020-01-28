@@ -302,6 +302,7 @@ class SegmenterLine {
         let offset = 10, circle, text;
         if (!this.orderDisplay) {
             circle = new Shape.Circle(anchor, offset);
+
             circle.fillColor = 'yellow';
             circle.strokeColor = 'black';
             text = new PointText(anchor);
@@ -344,6 +345,7 @@ class SegmenterLine {
             let vector = this.baselinePath.getNormalAt(0);
             if (vector) {
                 if (!this.lineHeight) this.setLineHeight();
+
                 vector.length = this.lineHeight / 3;
                 this.directionHint.sendToBack();
                 this.directionHint.segments = [start.subtract(vector), start.add(vector)];
