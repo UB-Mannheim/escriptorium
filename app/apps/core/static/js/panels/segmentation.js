@@ -6,6 +6,7 @@ TODO:
 class SegmentationPanel extends Panel {
     constructor ($panel, $tools, opened) {
         super($panel, $tools, opened);
+        this.loading = false;
         this.loaded = false;
         this.seeBlocks = true;
         this.seeLines = true;
@@ -75,7 +76,7 @@ class SegmentationPanel extends Panel {
         else redoBtn.disabled = true;
     }
     
-    bindEditorEvents() {        
+    bindEditorEvents() {
         this.segmenter.events.addEventListener('baseline-editor:delete-line', function(event) {
             let line = event.detail;
             this.remoteDelete('lines', line);
@@ -166,6 +167,7 @@ class SegmentationPanel extends Panel {
         });
         
         this.bindZoom();
+        this.loading = false;
     }
 
     getImgSrcUri() {
@@ -181,20 +183,25 @@ class SegmentationPanel extends Panel {
     }
     
     load(part) {
+        this.loaded = false;
         this.segmenter.empty();
         super.load(part);
         this.$img.attr('src', this.getImgSrcUri());
         if (this.part.bw_image) this.toggleBinaryBtn.classList.remove('hide');
         else this.toggleBinaryBtn.classList.add('hide');
         if (this.opened) {
+            this.loading = true;
             if (this.$img.get(0).complete) { this.init(); }
             else { this.$img.one('load', this.init.bind(this)); }
+        } else {
+            this.loading = false;
         }
         this.loaded = true;
     }
 
     onShow() {
-        if (this.loaded) {
+        if (this.loaded && !this.loading) {
+            this.loading = true;
             if (this.$img.get(0).complete) { this.init(); }
             else { this.$img.one('load', this.init.bind(this)); }
         }
