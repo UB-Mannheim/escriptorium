@@ -136,8 +136,9 @@ class WheelZoom {
             // domElement.style.cursor = 'zoom-in';
 
             function scroll(event) {
-                if (event.altKey) return;  // suposed to move in history
-                if (event.ctrlKey) return;  // browser zoom
+                // looks like it breaks on some configurations?
+                // if (event.altKey) return;  // suposed to move in history
+                // if (event.ctrlKey) return;  // browser zoom
                 this.scrolling = target;
                 this.scrolled.bind(this)(event);
             }
