@@ -166,13 +166,15 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
         
-        elif file_format == self.ALTO_FORMAT:
-
+        elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
             filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
                                                 file_format,
                                                 datetime.now().strftime('%Y%m%d%H%M'))
             buff = io.BytesIO()
-            tplt = loader.get_template('export/alto.xml')
+            if file_format == self.ALTO_FORMAT:
+                tplt = loader.get_template('export/alto.xml')
+            elif file_format == self.PAGEXML_FORMAT:
+                tplt = loader.get_template('export/pagexml.xml')
             with ZipFile(buff, 'w') as zip_:
                 for part in parts:
                     page = tplt.render({
@@ -188,24 +190,3 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
             # TODO: add METS file
             return response
-
-        elif file_format == self.PAGEXML_FORMAT:
-            filename = "export_%s_%s_%s.xml" % (slugify(self.document.name).replace('-', '_'),
-                                            file_format,
-                                            datetime.now().strftime('%Y%m%d%H%M'))
-            tplt = loader.get_template('export/pagexml.xml')
-
-            for part in parts:
-                page = tplt.render({
-                    'part': part,
-                    'lines': part.lines
-                    .order_by('block__order', 'order')
-                    .prefetch_related(
-                        Prefetch('transcriptions',
-                                 to_attr='transcription',
-                                 queryset=LineTranscription.objects.filter(
-                                     transcription=transcription)))})
-                response = HttpResponse(page, content_type='text/xml')
-                response['Content-Disposition'] = 'attachment; filename=%s' % filename
-                return response
-

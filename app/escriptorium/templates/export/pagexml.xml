@@ -1,31 +1,25 @@
 {% load export_tags %}<?xml version="1.0" encoding="UTF-8"  standalone="yes"?>
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd">
-	<Metadata>
-		<Creator>escriptorium</Creator>
-		<Created>{%current_time %}</Created>
-        <LastChange>{%current_time %}</LastChange>
-	</Metadata>
-	<Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
-        {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
-            <TextRegion id="{{ line.block.make_external_id|default:'esc1' }}">
-               {% if line.block %}<Coords points="{% box_coordinates line.block.box %}"/>{% endif%}
-        
-        {% endifchanged %}
-        <TextLine id="{{ line.make_external_id }}">
-            {% if line.mask %}
-              <Coords points="{% for pt in line.mask %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
-            {% endif %}
-            {% if line.baseline %}
-                 <Baseline points="{% for pt in line.baseline %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
-            {% endif %}
-            <TextEquiv>
-                    <Unicode>{{ line.transcription.0.content }}</Unicode>
-                </TextEquiv>
-          </TextLine>
-        {% if forloop.last %}<TextEquiv>
-                    <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
-                </TextEquiv>
-            </TextRegion>{% endif %}
-        {% endfor %}
-	</Page>
+  <Metadata>
+	<Creator>escriptorium</Creator>
+	<Created>{% current_time %}</Created>
+    <LastChange>{% current_time %}</LastChange>
+  </Metadata>
+  <Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
+    {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
+    <TextRegion id="{{ line.block.make_external_id|default:'dummy_esc_block_' }}">
+      {% if line.block %}<Coords points="{% box_coordinates line.block.box %}"/>{% endif%}{% endifchanged %}
+      <TextLine id="{{ line.make_external_id }}">
+        {% if line.mask %}<Coords points="{% for pt in line.mask %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>{% endif %}
+        {% if line.baseline %}<Baseline points="{% for pt in line.baseline %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>{% endif %}
+        <TextEquiv>
+          <Unicode>{{ line.transcription.0.content }}</Unicode>
+        </TextEquiv>
+      </TextLine>
+      {% if forloop.last %}<TextEquiv>
+        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
+      </TextEquiv>
+    </TextRegion>{% endif %}
+    {% endfor %}
+  </Page>
 </PcGts>
