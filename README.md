@@ -22,80 +22,8 @@ In the end, it was decided that it would be easier to keep a clean directory tre
   
   
 ## Install
-#### Docker
-Install git, docker and docker-compose  
-Fetch the source:  
-> $ git clone git@gitlab.inria.fr:scripta/escriptorium.git  
+Two options, [install with Docker](install-with-docker), or a [full local install](full-install).  
   
-Copy the environement variables file  
-> $ cd escriptorium && cp variables.env_example variables.env  
-  
-change some of those if you wish to  
-Build and run the docker containers  
-> $ docker-compose up -d --build  
-   
-You should be able to access the website at http://localhost:8080/  
-  
-To update:  
-> $ git pull  
-> $ docker-compose up -d --build  
-  
-#### Dev (without docker)  
-Install in your environment of choice:
-Examples below are given for a standard virtualenv/pip on ubuntu.
-* postgresql, setup a user and create a database (default name is escriptorium)  
-> $ sudo apt install postgresql postgresql-contrib  
-> $ sudo -i -u postgres  # switch to postgres user  
-> $ createuser --interactive  
-> Enter name of role to add: <myusername>  # use your system user name  
-> Shall the new role be a superuser? (y/n) y  
-> $ exit  # logout from postgres user  
-> $ createdb escriptorium
-  
-* redis  
-> $ sudo apt-get install redis-server  
-  
-* elasticsearch  
-set max_map_count permanently  
-> $ sudo sysctl -w vm.max_map_count=262144  
-  
-* third party tools
-> $ sudo apt-get install pngcrush
-  
-* env  
-> $ apt-get install build-essential python-dev python3-dev  
-> $ virtualenv env -p python3.7 (any version >= 3.7 should work)  
-> $ . env/bin/activate  
-> $ pip install -r app/requirements.txt    
-  
-* The default settings needs to be override for devs  
-> $ cp app/escriptorium/local_settings.py{.example,}  
-> $ edit app/escriptorium/local_settings.py
-  
-change for example the database role if need be, and then 
-  
-It is then recomanded to set $DJANGO_SETTINGS_MODULE
-  
-> $ export $DJANGO_SETTINGS_MODULE escriptorium.local_settings
-  
-And use something like (direnv)[https://direnv.net/] to automate it.
-  
-Another option is to point the --settings option of the commands to the module.
-  
-  
-* To run a basic celery worker listening on everything  
-> $ celery -A escriptorium worker -l INFO  
-To disable celery you can set `CELERY_TASK_ALWAYS_EAGER = True`  
-
-* Create the sql tables   
-> $ cd app && python manage.py migrate (--settings=escriptorium.local_settings)  
-  
-* Run the server  
-> $ cd app && python manage.py runserver (--settings=escriptorium.local_settings)  
-  
-The website should be accessible at http://localhost:8000/  
-
-
 ## Running tests
 
 Simply run  
