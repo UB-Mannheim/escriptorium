@@ -18,15 +18,18 @@ Options:
   toggleMasksBtn=null,
   splitBtn=null,
   mergeBtn=null,
-  upperLineHeight=15,
-  lowerLineHeight=5
 
 */
-var id = 0;
-function generateUniqueId() { return id++; };
+var lastId = 0;
+function generateUniqueId() { return lastId++; };
 
 function polyEq(poly1, poly2) {
-    return poly1 && poly2 && poly1.length === poly2.length && poly1.every((pt, index) => pt[0] === poly2[index][0] && pt[1] === poly2[index][1]);
+    // compares polygons point by point
+    let noPoly = (poly1 == null && poly2 == null);  // note: null is a singleton.. so we have to compare them separatly
+    let samePoly = (poly1 && poly2 &&
+                    poly1.length != undefined && poly1.length === poly2.length &&
+                    poly1.every((pt, index) => pt[0] === poly2[index][0] && pt[1] === poly2[index][1]));
+    return (noPoly || samePoly);
 }
 
 function isRightClick(event) {
@@ -127,18 +130,8 @@ class SegmenterLine {
         
         this.refresh();
     }
-
-    fixOrdering() {
-        // if (this.baselinePath) this.baselinePath.reorient(true, false);
-        // if (this.maskPath) this.maskPath.reorient(true, false);
-        if (this.baselinePath && this.baselinePath.firstSegment.point.x > this.baselinePath.lastSegment.point.x) {
-            this.baselinePath.reverse();
-        }
-    }
     
     refresh() {
-        this.fixOrdering();
-        this.setLineHeight();
         this.showOrdering();
         this.showDirection();
     }
@@ -155,40 +148,7 @@ class SegmenterLine {
         // too resource intensive :(
         // if (this.mask.length > this.segmenter.maxSegments) this.maskPath.simplify();
     }
-    
-    createPolygonEdgeForBaselineSegment(segment) {
-        let pt = segment.point;
-        let vector = segment.path.getNormalAt(segment.index);
-        if (Math.sin(vector.angle/180*Math.PI) > 0) vector = vector.rotate(180);  // right to left
         
-        vector.length = this.segmenter.upperLineHeight;
-        let up = this.maskPath.insert(segment.index, pt.add(vector));
-        
-        vector.length = this.segmenter.lowerLineHeight;
-        let low = this.maskPath.insert(this.maskPath.segments.length-segment.index, pt.subtract(vector));
-        return [up, low];
-    }
-    deletePolygonsEdgeForBaselineSegment(segment) {
-        this.maskPath.removeSegment(this.maskPath.segments.length-segment.index-1);
-        this.maskPath.removeSegment(segment.index);
-    }
-    
-    createMask() {
-        for (let i in this.baselinePath.segments) {
-            this.createPolygonEdgeForBaselineSegment(this.baselinePath.segments[i]);
-        }
-    }
-    
-    dragPolyEdges(j, delta) {
-        let poly = this.maskPath;
-        if (poly && poly.segments.length) {
-            let top = poly.segments[this.baselinePath.segments.length*2 - j - 1].point;
-            let bottom = poly.segments[j].point;
-            this.segmenter.movePointInView(top, delta);
-            this.segmenter.movePointInView(bottom, delta);
-        }
-    }
-    
     select() {
         if (this.selected) return;
         if (this.maskPath && this.maskPath.visible) {
@@ -248,7 +208,6 @@ class SegmenterLine {
             this.maskPath.addSegments(mask);
             this.segmenter.bindMaskEvents(this);
         }
-        this.setLineHeight();
     }
     
     updateDataFromCanvas() {
@@ -327,6 +286,7 @@ class SegmenterLine {
     }
 
     showDirection() {
+        // shows an orthogonal segment at the start of the line, length depends on line height
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
             if (this.directionHint === null) {
                 this.directionHint =  new Path({
@@ -336,32 +296,26 @@ class SegmenterLine {
                     strokeColor: this.segmenter.tertiaryColor
                 });
             }
-            let start;
-            if (this.textDirection == 'lr') {
-                start = this.baselinePath.firstSegment.point;
-            } else {
-                start = this.baselinePath.lastSegment.point;
-            }
+            let start = this.baselinePath.firstSegment.point;
             let vector = this.baselinePath.getNormalAt(0);
             if (vector) {
-                if (!this.lineHeight) this.setLineHeight();
-
-                vector.length = this.lineHeight / 3;
+                vector.length = this.getLineHeight()/2;
                 this.directionHint.sendToBack();
                 this.directionHint.segments = [start.subtract(vector), start.add(vector)];
             }
         }
     }
     
-    setLineHeight() {
-        if (this.baselinePath) {
-            if (this.maskPath) {
-                // area implementation
-                this.lineHeight = Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
-            } else if (this.segmenter.lines.length >= 2) {
-                // distance avg implementation
-                this.lineHeight = this.segmenter.getAverageLineHeight();
+    getLineHeight() {
+        if (this.maskPath) {
+            // area implementation
+            if (this.baselinePath) {
+                return Math.round(Math.abs(this.maskPath.area) / this.baselinePath.length);
+            } else {
+                return this.maskPath.bounds.height;  // weird results for skewed lines
             }
+        } else {
+            return this.segmenter.getAverageLineHeight();
         }
     }
 }
@@ -385,8 +339,6 @@ class Segmenter {
                         mainColor=null,
                         secondaryColor=null,
                         tertiaryColor=null,
-                        upperLineHeight=20,
-                        lowerLineHeight=10,
                         maxSegments=50,
                         // when creating a line, which direction should it take.
                         defaultTextDirection='lr',
@@ -423,8 +375,6 @@ class Segmenter {
         this.img.parentNode.insertBefore(this.canvas, this.img);
         this.mainColor = null;
         this.secondaryColor = null;
-        this.upperLineHeight = upperLineHeight;
-        this.lowerLineHeight = lowerLineHeight;
         this.maxSegments = maxSegments;
 
         // the minimal length in pixels below which the line will be removed automatically
@@ -456,8 +406,7 @@ class Segmenter {
         this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
 
-        // doesn't do anything anymore..
-        // if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+        if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
         
@@ -646,7 +595,6 @@ class Segmenter {
         
         if (!order) order = parseInt(this.getMaxOrder()) + 1;
         var line = new SegmenterLine(order, baseline, mask, this.defaultTextDirection, context, this);
-        line.fixOrdering();
         if (!postponeEvents) {
             this.bindLineEvents(line);
             this.bindMaskEvents(line);
@@ -656,16 +604,12 @@ class Segmenter {
     }
     
     finishLine(line) {
-        // the line direction of the baseline should always be from left to right
-        // the text direction can be opposite of that (rtl).
-        line.fixOrdering();
         if (line.baselinePath.length < this.lengthThreshold) {
             line.remove();
         } else {
             this.bindLineEvents(line);
             line.updateDataFromCanvas();
         }
-        line.setLineHeight();
         this.resetToolEvents();  // unregistering
     }
 
@@ -761,7 +705,6 @@ class Segmenter {
                         this.movePointInView(dragging.point, event.delta);
                         this.setCursor('move');
                         line.refresh();
-                        // line.dragPolyEdges(dragging.index, event.delta);
                     }
                 }.bind(this);
                 
@@ -777,7 +720,6 @@ class Segmenter {
                 let location = line.baselinePath.getNearestLocation(event.point);
                 let newSegment = line.baselinePath.insert(location.index+1, location);
                 // line.baselinePath.smooth({ type: 'catmull-rom', 'factor': 0.2 });
-                // line.createPolygonEdgeForBaselineSegment(newSegment);
             }.bind(this);
             
             line.baselinePath.onMouseMove = function(event) {
@@ -1115,19 +1057,20 @@ class Segmenter {
         for (let i in data.lines) {
             let line = data.lines[i];
             let context = {};
-            if (this.idField) context[this.idField] = line[this.idField];
-            if (!line.baseline) this.toggleMasks(true);
-            let newLine = this.createLine(i, line.baseline, line.mask, context);
+            if ((line.baseline !== null && line.baseline.length) ||
+                (line.mask !== null && line.mask.length)) {
+                if (this.idField) context[this.idField] = line[this.idField];
+                if (!line.baseline) this.toggleMasks(true);
+                this.createLine(i, line.baseline, line.mask, context);
+            } else {
+                console.log('EDITOR SKIPING invalid line: ', line);
+            }
         }
         for (let i in data.regions) {
             let region = data.regions[i];
             let context = {};
             if (this.idField) context[this.idField] = region[this.idField];
-            let newRegion = this.createRegion(region.order, region.box, context);
-        }
-        // once everything is loaded we can calculate line heights etc
-        for (let i in this.lines) {
-            this.lines[i].setLineHeight();
+            this.createRegion(region.order, region.box, context);
         }
     }
     
@@ -1531,6 +1474,7 @@ class Segmenter {
     }
 
     getAverageLineHeight() {
+        // somewhat computational intensive so we 'cache' it.
         if (this.averageLineHeight) return this.averageLineHeight;
         this.averageLineHeight = this.lines.map(l=>l.baseline[0][0]).reduce((a,b)=>b-a)/this.lines.length;
         return this.averageLineHeight;

@@ -490,7 +490,13 @@ class TranscriptionPanel extends Panel {
             document.querySelector('#trans-modal #modal-img-container img').setAttribute('src', this.part.image.uri);
         }
         for (var i=0; i < this.part.lines.length; i++) {
-            this.addLine(this.part.lines[i]);
+            let line = this.part.lines[i];
+            if ((line.baseline !== null && line.baseline.length) ||
+                (line.mask !== null && line.mask.length)) {
+                this.addLine(line);
+            } else {
+                console.log('TRANSCRIPTION SKIPING invalid line: ', line);
+            }
         }
         
         this.loadTranscriptions();
