@@ -296,12 +296,17 @@ class SegmenterLine {
                     strokeColor: this.segmenter.tertiaryColor
                 });
             }
-            let start = this.baselinePath.firstSegment.point;
+            let anchor;
+            if (this.text_direction == 'rl') {
+                anchor = this.baselinePath.firstSegment.point;
+            } else {
+                anchor = this.baselinePath.lastSegment.point;
+            }
             let vector = this.baselinePath.getNormalAt(0);
             if (vector) {
                 vector.length = this.getLineHeight()/2;
                 this.directionHint.sendToBack();
-                this.directionHint.segments = [start.subtract(vector), start.add(vector)];
+                this.directionHint.segments = [anchor.subtract(vector), anchor.add(vector)];
             }
         }
     }
