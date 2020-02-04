@@ -297,16 +297,17 @@ class SegmenterLine {
                 });
             }
             let anchor;
-            if (this.text_direction == 'rl') {
-                anchor = this.baselinePath.firstSegment.point;
+            if (this.textDirection == 'lr') {
+                anchor = this.baselinePath.firstSegment;
             } else {
-                anchor = this.baselinePath.lastSegment.point;
+                anchor = this.baselinePath.lastSegment;
             }
-            let vector = this.baselinePath.getNormalAt(0);
+            let vector = this.baselinePath.getNormalAt(this.baselinePath.getOffsetOf(anchor.point));
             if (vector) {
                 vector.length = this.getLineHeight()/2;
                 this.directionHint.sendToBack();
-                this.directionHint.segments = [anchor.subtract(vector), anchor.add(vector)];
+                this.directionHint.segments = [anchor.point.subtract(vector),
+                                               anchor.point.add(vector)];
             }
         }
     }
@@ -1481,7 +1482,8 @@ class Segmenter {
     getAverageLineHeight() {
         // somewhat computational intensive so we 'cache' it.
         if (this.averageLineHeight) return this.averageLineHeight;
-        this.averageLineHeight = this.lines.map(l=>l.baseline[0][0]).reduce((a,b)=>b-a)/this.lines.length;
+        if (!this.lines.length) return 0;
+        this.averageLineHeight = this.lines.map(l=>l.baseline && l.baseline[0][0] || 0).reduce((a,b)=>b-a)/this.lines.length;
         return this.averageLineHeight;
     }
     
