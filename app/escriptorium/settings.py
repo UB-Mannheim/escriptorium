@@ -206,13 +206,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        }
+    },
     'handlers': {
         'file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
-
         'kraken_logs': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -220,26 +234,36 @@ LOGGING = {
         },
         'console': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            # 'filters': ['require_debug_false'],  # make sure to set EMAIL_BACKEND in local_settings
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
     },
     'loggers': {
-        'requests':{
-            'handlers': ['file', 'console'],
-            'propagate': True,
-        },
         'kraken':{
-            'handlers': ['kraken_logs', 'console'],
-            'propagate': True
-        },
-        'django': {
-            'handlers': ['file', 'console'],
-            'propagate': True,
+            'handlers': ['kraken_logs', 'console', 'mail_admins'],
         },
         'core': {
-            'handlers': ['file', 'console'],
-            'propagate': True,
-        }
+            'handlers': ['file', 'console', 'mail_admins'],
+            'propagate': False,
+        },
+        'django': {
+	    'handlers': ['file', 'console', 'mail_admins']
+	},
+	'django.server': {
+	    'handlers': ['django.server'],
+	    'level': 'INFO',
+	    'propagate': False,
+	}
     },
 }
 
