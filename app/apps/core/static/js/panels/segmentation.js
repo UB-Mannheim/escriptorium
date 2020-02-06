@@ -77,49 +77,64 @@ class SegmentationPanel extends Panel {
     }
     
     bindEditorEvents() {
-        this.segmenter.events.addEventListener('baseline-editor:delete-line', function(event) {
-            let line = event.detail;
-            this.remoteDelete('lines', line);
+        this.segmenter.events.addEventListener('baseline-editor:delete', function(event) {
+            let obj = event.detail.obj, objType = event.detail.objType;
+            this.remoteDelete(objType, obj);
+            
             this.pushHistory(
                 function() {  // undo
-                    // FIXME: missing parameters to this
-                    line = this.segmenter.createLine(line.baseline, line.mask);
-                    this.remoteSave('lines', line);
+                    if (objType == 'line') {
+                        obj = this.segmenter.createLine(null, obj.baseline, obj.mask);
+                    } else if (objType == 'region'){
+                        obj = this.segmenter.createRegion(obj.polygon);
+                    }
+                    this.remoteSave(objType, obj);
                 }.bind(this),
                 function() {  // redo
-                    line.remove();
-                    this.remoteDelete('lines', line);
+                    obj.remove();
+                    this.remoteDelete(objType, obj);
                 }.bind(this));
         }.bind(this));
 
-        this.segmenter.events.addEventListener('baseline-editor:update-line', function(event) {
-            let line = event.detail.line;
-            let newdata = {baseline: line.baseline, mask: line.mask};
+        this.segmenter.events.addEventListener('baseline-editor:update', function(event) {
+            let obj = event.detail.obj, objType = event.detail.objType;
+            // let newdata = {baseline: line.baseline, mask: line.mask};
             let previousdata = event.detail.previous;
-            this.remoteSave('lines', line);
+            this.remoteSave(objType, obj);
             
-            if(!line.context.pk) {
-                // new line
+            if(!obj.context.pk) {
+                // new line or region
                 this.pushHistory(
                     function() {  // undo
-                        line.remove();
-                        this.remoteDelete('lines', line);
+                        obj.remove();
+                        this.remoteDelete(objType, obj);
                     }.bind(this),
                     function() {  // redo
-                        // FIXME: missing parameters to this
-                        line = this.segmenter.createLine(line.baseline, line.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj = this.segmenter.createLine(null, obj.baseline, obj.mask);
+                        } else if (objType == 'region') {
+                            obj = this.segmenter.createRegion(obj.polygon);
+                        }
+                        this.remoteSave(objType, obj);
                     }.bind(this)
                 );
             } else {
                 this.pushHistory(
                     function() {  //undo
-                        line.update(previousdata.baseline, previousdata.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj.update(previousdata.baseline, previousdata.mask);
+                        } else if (objType == 'region') {
+                            obj.update(previousdata.polygon);
+                        }
+                        this.remoteSave(objType, obj);
                     }.bind(this),
                     function() {  // redo
-                        line.update(newdata.baseline, newdata.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj.update(obj.baseline, obj.mask);
+                        } else if (objType == 'region') {
+                            obj.update(obj.polygon);
+                        }
+                        this.remoteSave(objType, obj);
                     }.bind(this)
                 );
             }
@@ -163,7 +178,7 @@ class SegmentationPanel extends Panel {
         
         this.segmenter.load({
             lines: this.part.lines,
-            regions: this.part.regions
+            regions: this.part.blocks
         });
         
         this.bindZoom();
@@ -214,22 +229,24 @@ class SegmentationPanel extends Panel {
     }
     
     remoteSave(type, obj) {
-        var post = {document_part: this.part.pk};
-        if (type=='lines') {
+        var uri, post = {document_part: this.part.pk};
+        if (type=='line') {
             post['baseline'] = JSON.stringify(obj.baseline);
             post['mask'] = JSON.stringify(obj.mask);
             post['block'] = this.block?this.block.pk:null; // todo
-        } else if (type == 'blocks') {
+            uri = this.api + 'lines' + '/';
+        } else if (type == 'region') {
             post['box'] = JSON.stringify(obj.polygon);
+            uri = this.api + 'blocks' + '/';
         }
-        let uri = this.api + type + '/';
+        
         let pk = obj.context.pk;
         if (pk) uri += pk+'/';
         var requestType = pk?'PUT':'POST';
         $.ajax({url: uri, type: requestType, data: post})
             .done($.proxy(function(data) {
                 obj.context.pk = data.pk;
-                if (type == 'lines') {
+                if (type == 'line') {
                     obj.update(data.baseline, data.mask);
                     /* create corresponding transcription line */
                     if (panels['trans']) {
@@ -252,7 +269,7 @@ class SegmentationPanel extends Panel {
     remoteDelete(type, obj) {
         let uri = this.api + type + '/' + obj.context.pk;
         $.ajax({url: uri, type:'DELETE'});
-        if (type == 'lines' && panels['trans']) {
+        if (type == 'line' && panels['trans']) {
             let tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
             if (tl) tl.delete();
             panels['trans'].lines.splice(index, 1);
