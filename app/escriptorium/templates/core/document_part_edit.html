@@ -26,13 +26,12 @@
         <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
       </div>
       <div class="col mr-1 mb-2">
-        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info ml-3 fas fa-adjust hide" autocomplete="off"></button>
-        
         <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
         <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
-        
-        <button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button>
-        <button id="toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info ml-3 fas fa-sort-numeric-down" autocomplete="off"></button>
+
+        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info fas ml-3 fa-adjust hide" autocomplete="off"></button>
+        <button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info fas fa-th-large"></button>
+        <button id="toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
         <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
         <button id="reset-masks" title="{% trans "Reset and Recalculate the mask of all lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
         <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>

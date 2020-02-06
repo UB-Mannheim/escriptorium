@@ -270,8 +270,8 @@ class SegmenterLine {
                       anchorPath.lastSegment.point);
         let offset = 10, circle, text;
         if (!this.orderDisplay) {
+            this.segmenter.orderingLayer.activate();
             circle = new Shape.Circle(anchor, offset);
-
             circle.fillColor = 'yellow';
             circle.strokeColor = 'black';
             text = new PointText(anchor);
@@ -291,13 +291,12 @@ class SegmenterLine {
             circle.position = anchor;
             text.position = anchor;
         }
-        this.orderDisplay.visible = this.segmenter.showLineNumbers;
-        this.orderDisplay.bringToFront();
     }
 
     showDirection() {
         // shows an orthogonal segment at the start of the line, length depends on line height
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
+            this.segmenter.linesLayer.activate();
             if (this.directionHint === null) {
                 this.directionHint =  new Path({
                     visible: true,
@@ -380,7 +379,7 @@ class Segmenter {
 
         // paper.js helpers
         this.inactiveLayerOpacity = inactiveLayerOpacity;
-        this.linesLayer = this.regionsLayer = null;
+        this.linesLayer = this.regionsLayer = this.orderingLayer = null;
         
         this.idField = idField;
         this.disableBindings = disableBindings;
@@ -424,7 +423,7 @@ class Segmenter {
         this.contextMenu.style.zIndex = 3;
         this.contextMenu.style.border = '1px solid grey';
         this.contextMenu.style.borderRadius = '5px';
-        // this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
+        this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
         if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
@@ -442,9 +441,13 @@ class Segmenter {
         this.empty();
     }
     
-    deleteSelectedLines() {
+    deleteSelection() {
+        // FIXME: use the bulk_delete endpoints when it's merged.
         for (let i=this.selection.lines.length-1; i >= 0; i--) {    
             this.selection.lines[i].delete();
+        }
+        for (let i=this.selection.regions.length-1; i>=0; i--) {
+            this.selection.regions[i].delete();
         }
         this.showContextMenu();
     }
@@ -468,7 +471,7 @@ class Segmenter {
     
     bindButtons() {
         this.deleteSelectionBtn.addEventListener('click', function(event) {
-            this.deleteSelectedLines();
+            this.deleteSelection();
         }.bind(this));
 
         this.deletePointBtn.addEventListener('click', function() {
@@ -510,7 +513,7 @@ class Segmenter {
                 if (event.ctrlKey) {
                     this.deleteSelectedSegments();
                 } else {
-                    this.deleteSelectedLines();
+                    this.deleteSelection();
                 }
             } else if (event.keyCode == 67) { // C
                 this.spliting = !this.spliting;
@@ -581,12 +584,17 @@ class Segmenter {
 
         this.linesLayer = paper.project.activeLayer;
         this.regionsLayer = new paper.Layer();
+        this.orderingLayer = new paper.Layer();
+        this.orderingLayer.visible = this.showLineNumbers;
         if (this.mode == 'lines') {
             this.linesLayer.bringToFront();
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
         } else if (this.mode == 'regions') {
             this.regionsLayer.bringToFront();
             this.linesLayer.opacity = this.inactiveLayerOpacity;
+        }
+        if (this.showLineNumbers) {
+            this.orderingLayer.bringToFront();
         }
         
         this.refresh();
@@ -1160,21 +1168,18 @@ class Segmenter {
             }
         }
     }
-
+    
     toggleOrdering() {
         this.showLineNumbers = !this.showLineNumbers;
-        for (let i in this.lines) {
-            let line = this.lines[i];
-            line.orderDisplay.visible = this.showLineNumbers;
-        }
+        this.orderingLayer.visible = this.showLineNumbers;
         if (this.showLineNumbers) {
             this.toggleOrderingBtn.classList.add('btn-success');
             this.toggleOrderingBtn.classList.remove('btn-info');
+            this.orderingLayer.bringToFront();
         } else {
             this.toggleOrderingBtn.classList.add('btn-info');
             this.toggleOrderingBtn.classList.remove('btn-success');
         }
-
     }
     
     toggleRegionMode() {
@@ -1199,26 +1204,28 @@ class Segmenter {
             this.contextMenu.style.display = 'none';
             return;
         }
-        if (this.deletePointBtn) {
-            if (this.selection.segments.length) {
-                this.deletePointBtn.style.display = 'block';
-            } else {
-                this.deletePointBtn.style.display = 'none';
-            }
-        }
+                
+        if (this.mergeBtn) this.mergeBtn.style.display = 'none';
+        if (this.reverseBtn) this.reverseBtn.style.display = 'none';
+        if (this.deletePointBtn) this.deletePointBtn.style.display = 'none';
+        
         if (this.selection.lines.length) {
             if (this.reverseBtn) this.reverseBtn.style.display = 'block';
             if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
-        }
-        if (this.selection.lines.length > 1) {
             // we can only merge if all lines contain a baseline
-            if (this.selection.lines.filter(sel => sel.baseline === null).length == 0) {
-                 this.mergeBtn.style.display = 'block';
+            if (this.selection.lines.filter(l => l.baseline !== null).length > 1) {
+                this.mergeBtn.style.display = 'block';
             }
-        } else {
-            this.mergeBtn.style.display = 'none';
         }
-        console.log('ermmmm hello?');
+        
+        if (this.selection.segments.length) {
+            if (this.deletePointBtn) this.deletePointBtn.style.display = 'block';
+        }
+        
+        if (this.selection.regions.length) {
+            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+        }
+        
         this.contextMenu.style.display = 'block';
     }
 
@@ -1279,7 +1286,6 @@ class Segmenter {
                 this.removeFromSelection(this.selection.segments[i]);
             }
         }
-        console.log('PURGE??');
         this.showContextMenu();
     }
     

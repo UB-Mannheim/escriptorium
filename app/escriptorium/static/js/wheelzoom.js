@@ -116,7 +116,7 @@ class WheelZoom {
         
         // create a dummy tag for event bindings
         this.events = document.createElement('div');
-        this.events.setAttribute('id', 'wheelzoom-events-js');
+        this.events.classList.add('wheelzoom-events-js');
         document.body.appendChild(this.events);
         
         this.targets = [];

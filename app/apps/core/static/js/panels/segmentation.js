@@ -39,6 +39,9 @@ class SegmentationPanel extends Panel {
         
         this.toggleBinaryBtn = document.querySelector('button#toggle-binary');
         this.toggleBinaryBtn.addEventListener('click', function(ev) {
+            this.toggleBinaryBtn.classList.toggle('btn-info');
+            this.toggleBinaryBtn.classList.toggle('btn-success');
+
             if (this.colorMode == 'color') this.colorMode = 'binary';
             else this.colorMode = 'color';
             if (this.loaded) {
@@ -267,7 +270,12 @@ class SegmentationPanel extends Panel {
     }
 
     remoteDelete(type, obj) {
-        let uri = this.api + type + '/' + obj.context.pk;
+        let uri;
+        if (type == 'line') {
+            uri = this.api + 'lines/' + obj.context.pk;
+        } else {
+            uri = this.api + 'blocks/' + obj.context.pk;
+        }
         $.ajax({url: uri, type:'DELETE'});
         if (type == 'line' && panels['trans']) {
             let tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
