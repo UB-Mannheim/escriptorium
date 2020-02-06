@@ -236,7 +236,7 @@ class SegmentationPanel extends Panel {
         if (type=='line') {
             post['baseline'] = JSON.stringify(obj.baseline);
             post['mask'] = JSON.stringify(obj.mask);
-            post['block'] = this.block?this.block.pk:null; // todo
+            post['block'] = JSON.stringify(obj.region.context.pk);
             uri = this.api + 'lines' + '/';
         } else if (type == 'region') {
             post['box'] = JSON.stringify(obj.polygon);

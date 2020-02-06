@@ -45,7 +45,7 @@ class SegmenterRegion {
         this.selected = false;
         this.polygonPath = new Path({
             closed: true,
-            opacity: 0.3,
+            opacity: 0.2,
             strokeColor: this.segmenter.mainColor,
             strokeWidth: 1,
             fillColor: this.segmenter.secondaryColor,
@@ -99,11 +99,12 @@ class SegmenterRegion {
 }
 
 class SegmenterLine {
-    constructor(order, baseline, mask, textDirection, context, segmenter_) {
+    constructor(order, baseline, mask, region, textDirection, context, segmenter_) {
         this.id = generateUniqueId();
         this.order = order;
         this.segmenter = segmenter_;
         this.mask = mask;
+        this.region = region;
         this.context = context;
         this.selected = false;
         this.textDirection = textDirection;
@@ -621,7 +622,7 @@ class Segmenter {
         return tool;
     }
     
-    createLine(order, baseline, mask, context, postponeEvents) {
+    createLine(order, baseline, mask, region, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -634,7 +635,8 @@ class Segmenter {
         
         if (!order) order = parseInt(this.getMaxOrder()) + 1;
         this.linesLayer.activate();
-        var line = new SegmenterLine(order, baseline, mask, this.defaultTextDirection, context, this);
+        var line = new SegmenterLine(order, baseline, mask, region,
+                                     this.defaultTextDirection, context, this);
         if (!postponeEvents) {
             this.bindLineEvents(line);
             this.bindMaskEvents(line);
@@ -917,9 +919,18 @@ class Segmenter {
         }
     }
 
+    getRegionsAt(pt) {
+        // returns all the regions that contains the given point pt
+        return this.regions.filter(r => r.polygonPath.contains(pt));
+    }
+    
     startNewLine(event) {
         this.purgeSelection();
-        let newLine = this.createLine(null, [[event.point.x, event.point.y]], null, null, true);
+
+        let clickLocation = [event.point.x, event.point.y];
+        // check if we start from a known region, if we do we bind the line to it.
+        let region = this.getRegionsAt(clickLocation).pop() || null;
+        let newLine = this.createLine(null, [clickLocation], null, region, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
 
         // adds all the events bindings 
@@ -1110,7 +1121,7 @@ class Segmenter {
                 (line.mask !== null && line.mask.length)) {
                 if (this.idField) context[this.idField] = line[this.idField];
                 if (!line.baseline) this.toggleMasks(true);
-                this.createLine(i, line.baseline, line.mask, context);
+                this.createLine(i, line.baseline, line.mask, line.block, context);
             } else {
                 console.log('EDITOR SKIPING invalid line: ', line);
             }
@@ -1467,8 +1478,8 @@ class Segmenter {
                                 }
                             }
                         }
-                        
-                        let newLine = this.createLine(null, split, newMask || null, null);
+
+                        let newLine = this.createLine(null, split, newMask || null, line.region, null);
                         newLine.updateDataFromCanvas();
                     }
 
