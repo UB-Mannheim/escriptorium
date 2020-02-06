@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'easy_thumbnails.optimize',
     'channels',
     'rest_framework',
+    'compressor',
     
     'bootstrap',
     'versioning',
@@ -85,6 +86,12 @@ TEMPLATES = [
         },
     },
 ]
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    # other finders..
+    'compressor.finders.CompressorFinder',
+)
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 

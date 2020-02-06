@@ -123,9 +123,12 @@ $(document).ready(function() {
   });
 });
 </script>
-<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'js/image_cards.js' %}"></script>
-<script src="{% static 'js/lazyload.js' %}"></script>
-<script src="{% static 'js/help.js' %}"></script>
+{% compress js file document_images %}
+
+    <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+    <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'js/image_cards.js' %}"></script>
+    <script src="{% static 'js/lazyload.js' %}"></script>
+    <script src="{% static 'js/help.js' %}"></script>
+{% endcompress %}
 {% endblock %}
