@@ -82,7 +82,8 @@ class SegmentationPanel extends Panel {
     bindEditorEvents() {
         this.segmenter.events.addEventListener('baseline-editor:delete', function(event) {
             let obj = event.detail.obj, objType = event.detail.objType;
-            this.remoteDelete(objType, obj);
+
+            if (obj.context.pk) this.remoteDelete(objType, obj);
             
             this.pushHistory(
                 function() {  // undo
@@ -95,7 +96,7 @@ class SegmentationPanel extends Panel {
                 }.bind(this),
                 function() {  // redo
                     obj.remove();
-                    this.remoteDelete(objType, obj);
+                    if (obj.context.pk) this.remoteDelete(objType, obj);
                 }.bind(this));
         }.bind(this));
 

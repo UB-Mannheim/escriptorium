@@ -334,16 +334,16 @@ class DocumentPart(OrderedModel):
         # fetch all lines and regroup them by block
         qs = self.lines.select_related('block').all()
         ls = list(qs)
-        ords = list(map(lambda l: origin_pt(l.baseline)[0], qs))
+        ords = list(map(lambda l: origin_pt(l.baseline or l.mask)[0], qs))
         averageLineHeight = (max(ords) - min(ords)) / len(ords)
         def cmp_lines(a, b):
             try:
                 if a.block != b.block:
-                    pt1 = origin_pt(a.block.box) if a.block else origin_pt(a.baseline)
-                    pt2 = origin_pt(b.block.box) if b.block else origin_pt(b.baseline)
+                    pt1 = origin_pt(a.block.box) if a.block else origin_pt(a.baseline or a.mask)
+                    pt2 = origin_pt(b.block.box) if b.block else origin_pt(b.baseline or a.mask)
                 else:
-                    pt1 = origin_pt(a.baseline)
-                    pt2 = origin_pt(b.baseline)
+                    pt1 = origin_pt(a.baseline or a.mask)
+                    pt2 = origin_pt(b.baseline or a.mask)
                     
                 # 2 lines more or less on the same level
                 if abs(pt1[1] - pt2[1]) < averageLineHeight:

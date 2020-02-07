@@ -1435,6 +1435,7 @@ class Segmenter {
         for (let j in segments) {
             let segment = segments[j];
             if (segment.point.isInside(clip.bounds)) {
+                selected++;
                 this.addToSelection(segment);
                 tmpSelected.push(segment);
             } else {
@@ -1465,12 +1466,15 @@ class Segmenter {
             let allSegments;
             let line = allLines[i];
             if (this.showMasks && line.maskPath) {
-                allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
+                if (line.baselinePath) allSegments = line.baselinePath.segments.concat(line.maskPath.segments);
+                else allSegments = line.maskPath.segments;
             } else {
                 allSegments = line.baselinePath.segments;
             }
             this.clipSelectPoly(clip, allSegments, tmpSelected);
-            if (line.baselinePath.intersects(clip) || line.baselinePath.isInside(clip.bounds)) line.select();
+            if ((line.baselinePath && line.baselinePath.intersects(clip)) ||
+                (line.baselinePath && line.baselinePath.isInside(clip.bounds)) ||
+                (line.maskPath && line.maskPath.intersects(clip))) line.select();
             else if (allLines.length == this.lines.length) line.unselect();
         }
     }
