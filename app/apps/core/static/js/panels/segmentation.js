@@ -114,7 +114,7 @@ class SegmentationPanel extends Panel {
                     }.bind(this),
                     function() {  // redo
                         if (objType == 'line') {
-                            obj = this.segmenter.createLine(null, obj.baseline, obj.mask);
+                            obj = this.segmenter.createLine(null, obj.baseline, obj.mask, obj.region);
                         } else if (objType == 'region') {
                             obj = this.segmenter.createRegion(obj.polygon);
                         }
@@ -236,7 +236,7 @@ class SegmentationPanel extends Panel {
         if (type=='line') {
             post['baseline'] = JSON.stringify(obj.baseline);
             post['mask'] = JSON.stringify(obj.mask);
-            post['block'] = JSON.stringify(obj.region.context.pk);
+            if (obj.region) post['block'] = JSON.stringify(obj.region.context.pk);
             uri = this.api + 'lines' + '/';
         } else if (type == 'region') {
             post['box'] = JSON.stringify(obj.polygon);

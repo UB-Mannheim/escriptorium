@@ -462,3 +462,7 @@ i.panel-icon {
   -o-transition: none !important;
   transition: none !important;
 }
+
+#be-settings-menu {
+    width: max-content;
+}
