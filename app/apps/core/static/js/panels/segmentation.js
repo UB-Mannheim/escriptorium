@@ -83,7 +83,7 @@ class SegmentationPanel extends Panel {
             this.pushHistory(
                 function() {  // undo
                     // FIXME: missing parameters to this
-                    line = this.segmenter.createLine(line.baseline, line.mask);
+                    line = this.segmenter.createLine(null, line.baseline, line.mask);
                     this.remoteSave('lines', line);
                 }.bind(this),
                 function() {  // redo
@@ -107,7 +107,7 @@ class SegmentationPanel extends Panel {
                     }.bind(this),
                     function() {  // redo
                         // FIXME: missing parameters to this
-                        line = this.segmenter.createLine(line.baseline, line.mask);
+                        line = this.segmenter.createLine(null, line.baseline, line.mask);
                         this.remoteSave('lines', line);
                     }.bind(this)
                 );
