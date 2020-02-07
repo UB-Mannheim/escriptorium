@@ -143,6 +143,18 @@ class LineViewSet(ModelViewSet):
         else:  # create
             return LineSerializer
 
+    @action(detail=True, methods=['post'])
+    def bulk_update(self, request, document_pk=None, part_pk=None):
+        pass
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request, document_pk=None, part_pk=None):
+
+        deleted_lines = request.data.get("deleted_lines")
+        qs = Line.objects.filter(pk__in=deleted_lines)
+        qs.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100

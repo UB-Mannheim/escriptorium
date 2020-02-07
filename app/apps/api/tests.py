@@ -211,6 +211,16 @@ class LineViewSetTestCase(CoreFactoryTestCase):
             }, content_type='application/json')
         self.assertEqual(resp.status_code, 200)
 
+    def test_bulk_delete(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-bulk-delete',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        with self.assertNumQueries(6):
+            resp = self.client.post(uri, {'deleted_lines': [self.line.pk,]},
+                                    content_type='application/json')
+            self.assertEqual(Line.objects.count(), 2)
+            self.assertEqual(resp.status_code, 204)
+
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
