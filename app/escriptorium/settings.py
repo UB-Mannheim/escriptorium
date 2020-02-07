@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os, sys
+from kombu import Queue, Exchange
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -134,7 +136,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-from django.utils.translation import gettext_lazy as _
 LANGUAGES = [
   ('en', _('English')),
   ('de', _('French')),
@@ -168,7 +169,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
-from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
     Queue('default', routing_key='default'),
