@@ -143,14 +143,18 @@ class SegmenterLine {
         this.showOrdering();
         this.showDirection();
     }
+
+    getMaskColor() {
+        return this.order % 2 ? this.segmenter.evenMasksColor: this.segmenter.oddMasksColor;
+    }
     
     makeMaskPath() {
         this.maskPath = new Path({
             closed: true,
-            opacity: 0.1,
+            opacity: 0.2,
             // Note: not a bug to use baseline color for even masks
-            fillColor: this.order % 2 ? this.segmenter.evenMasksColor: this.segmenter.oddMasksColor,
-            selectedColor: 'white',
+            fillColor: this.getMaskColor(),
+            selectedColor: 'black',
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
             segments: this.mask
         });
@@ -162,12 +166,12 @@ class SegmenterLine {
         if (this.selected) return;
         if (this.maskPath && this.maskPath.visible) {
             this.maskPath.selected = true;
+            this.maskPath.fillColor = this.segmenter.shadeColor(this.getMaskColor(), -50);
             this.maskPath.bringToFront();
         }
         if (this.baselinePath) {
             this.baselinePath.selected = true;
             this.baselinePath.bringToFront();
-            
             this.baselinePath.strokeColor = this.segmenter.shadeColor(this.segmenter.baselinesColor, -50);
         }
         this.segmenter.addToSelection(this);
@@ -180,6 +184,7 @@ class SegmenterLine {
         // also unselects any selected segments
         if (this.maskPath) {
             this.maskPath.selected = false;
+            this.maskPath.fillColor = this.getMaskColor();
             for (let i=0; i<this.maskPath.segments.length; i++) {
                 if (this.maskPath.segments[i].point.selected) {
                     this.segmenter.removeFromSelection(this.maskPath.segments[i]);
@@ -1188,27 +1193,40 @@ class Segmenter {
         }
     }
     
+    load_line(line, region) {
+        let context = {};
+        if ((line.baseline !== null && line.baseline.length) ||
+            (line.mask !== null && line.mask.length)) {
+            if (this.idField) context[this.idField] = line[this.idField];
+            if (!line.baseline) this.toggleMasks(true);
+            return this.createLine(line.order, line.baseline, line.mask,
+                                   region || line.region || null, context);
+        } else {
+            console.log('EDITOR SKIPING invalid line: ', line);
+            return null;
+        }
+    }
+    
+    load_region(region) {
+        let context = {};
+        if (this.idField) context[this.idField] = region[this.idField];
+        let r = this.createRegion(region.box, context);
+        for (let j in region.lines) {
+            this.load_line(region.lines[j], r);
+        }
+        return r;
+    }
+    
     load(data) {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
-        for (let i in data.lines) {
-            let line = data.lines[i];
-            let context = {};
-            if ((line.baseline !== null && line.baseline.length) ||
-                (line.mask !== null && line.mask.length)) {
-                if (this.idField) context[this.idField] = line[this.idField];
-                if (!line.baseline) this.toggleMasks(true);
-                this.createLine(i, line.baseline, line.mask, line.block, context);
-            } else {
-                console.log('EDITOR SKIPING invalid line: ', line);
-            }
+        for (let i in data.regions) {
+            this.load_region(data.regions[i]);
         }
         
-        for (let i in data.regions) {
-            let region = data.regions[i];
-            let context = {};
-            if (this.idField) context[this.idField] = region[this.idField];
-            this.createRegion(region.box, context);
+        // now load orphan lines
+        for (let i in data.lines) {
+            this.load_line(data.lines[i], null);
         }
     }
     
@@ -1322,9 +1340,11 @@ class Segmenter {
             }
             if (this.regions.length > 0) {
                 if (this.selection.lines.filter(l => l.region == null).length > 0) {
+                    // at least one line without region
                     this.linkRegionBtn.style.display = 'block';
                 }
                 if (this.selection.lines.filter(l => l.region !== null).length > 0) {
+                    // at least one line with a region
                     this.unlinkRegionBtn.style.display = 'block';
                 }
             }
@@ -1616,7 +1636,7 @@ class Segmenter {
                 if (region.polygonPath.intersects(line.baselinePath) ||
                     line.baselinePath.isInside(region.polygonPath.bounds)) {
                     line.region = region;
-                    //continue;
+                    continue;
                 }
             }
             if (line.region != prev) {
@@ -1774,6 +1794,5 @@ class Segmenter {
         this.oddMasksColorInput.value = this.oddMasksColor;
         this.dirHintColorInput.value = this.directionHintColor;
         this.regionColorInput.value = this.regionColor;
-        this.selectedColor = 'yellow';
     }
 }

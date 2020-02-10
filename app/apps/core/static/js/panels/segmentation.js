@@ -180,15 +180,19 @@ class SegmentationPanel extends Panel {
         this.segmenter.scale = ratio;
         this.segmenter.init();
         
-        this.segmenter.load({
-            lines: this.part.lines,
-            regions: this.part.blocks
-        });
-        
+        let regionMap = {};
+        for (let i in this.part.blocks) {
+            let region = this.part.blocks[i];
+            regionMap[region.pk] = this.segmenter.load_region(region);
+        }
+        for (let i in this.part.lines) {
+            let line = this.part.lines[i];
+            this.segmenter.load_line(line, regionMap[line.block]);
+        }
         this.bindZoom();
         this.loading = false;
     }
-
+    
     getImgSrcUri() {
         if (this.colorMode == 'binary' && this.part.bw_image) {
             return this.part.bw_image.uri;
@@ -217,7 +221,7 @@ class SegmentationPanel extends Panel {
         }
         this.loaded = true;
     }
-
+    
     onShow() {
         if (this.loaded && !this.loading) {
             this.loading = true;
@@ -225,7 +229,7 @@ class SegmentationPanel extends Panel {
             else { this.$img.one('load', this.init.bind(this)); }
         }
     }
-
+    
     convertPolygon(poly, ratio) {
         if (poly === null) return null;
         return poly.map(pt => [Math.round(pt[0]*ratio),
@@ -237,7 +241,7 @@ class SegmentationPanel extends Panel {
         if (type=='line') {
             post['baseline'] = JSON.stringify(obj.baseline);
             post['mask'] = JSON.stringify(obj.mask);
-            if (obj.region) post['block'] = JSON.stringify(obj.region.context.pk);
+            post['block'] = obj.region ? JSON.stringify(obj.region.context.pk) : null;
             uri = this.api + 'lines' + '/';
         } else if (type == 'region') {
             post['box'] = JSON.stringify(obj.polygon);
@@ -248,26 +252,26 @@ class SegmentationPanel extends Panel {
         if (pk) uri += pk+'/';
         var requestType = pk?'PUT':'POST';
         $.ajax({url: uri, type: requestType, data: post})
-            .done($.proxy(function(data) {
-                obj.context.pk = data.pk;
-                if (type == 'line') {
-                    obj.update(data.baseline, data.mask);
-                    /* create corresponding transcription line */
-                    if (panels['trans']) {
-                        if (!pk) {
-                            panels['trans'].addLine(data);
-                        } else {
-                            var tl = panels['trans'].lines.find(l => l.pk==pk);
-                            if (tl) { tl.update(data); }
-                        }
-                    }
-                } else if (type == 'regions') {
-                    obj.update(data.polygon);
-                }
-            }, this))
-            .fail(function(data){
-                alert("Couldn't save block:", data);
-            });
+         .done($.proxy(function(data) {
+             obj.context.pk = data.pk;
+             if (type == 'line') {
+                 obj.update(data.baseline, data.mask);
+                 /* create corresponding transcription line */
+                 if (panels['trans']) {
+                     if (!pk) {
+                         panels['trans'].addLine(data);
+                     } else {
+                         var tl = panels['trans'].lines.find(l => l.pk==pk);
+                         if (tl) { tl.update(data); }
+                     }
+                 }
+             } else if (type == 'regions') {
+                 obj.update(data.polygon);
+             }
+         }, this))
+         .fail(function(data){
+             alert("Couldn't save block:", data);
+         });
     }
 
     remoteDelete(type, obj) {
