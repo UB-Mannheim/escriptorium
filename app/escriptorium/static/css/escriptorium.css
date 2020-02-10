@@ -310,6 +310,12 @@ form.inline-form {
     font-size: 50px;
 }
 
+.nav-item #part-filename {
+    display: block;
+    font-size: x-small;
+    color: grey;
+}
+
 .col-sides {
     width: 30px;
     margin: 0 15px;

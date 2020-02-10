@@ -42,8 +42,8 @@ $(document).ready(function() {
             else $('a#prev-part').hide();
             if (data.next) $('a#next-part').data('target', data.next).show();
             else $('a#next-part').hide();
-            
-            $('#part-name').html(data.title).attr('title', '<'+data.filename+'>');
+            $('#part-name').html(data.title);
+            $('#part-filename').html(data.filename+' ('+ data.image.size[0]+'x'+data.image.size[1]+')');
             
             // set the 'image' tab btn to select the corresponding image
             var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
