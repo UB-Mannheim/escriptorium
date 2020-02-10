@@ -178,6 +178,11 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                 document_part=self.part,
                 block=self.block)
         self.line = l
+        self.line2 = Line.objects.create(
+                box=[90, 10, 70, 50],
+                document_part=self.part,
+                script= "script",
+                block=self.block)
         self.orphan = Line.objects.create(
             box=[0, 0, 10, 10],
             document_part=self.part,
@@ -216,10 +221,25 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
         with self.assertNumQueries(6):
-            resp = self.client.post(uri, {'deleted_lines': [self.line.pk,]},
+            resp = self.client.post(uri, {'lines': [self.line.pk,]},
                                     content_type='application/json')
             self.assertEqual(Line.objects.count(), 2)
             self.assertEqual(resp.status_code, 204)
+
+    def test_bulk_update(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-bulk-update',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        with self.assertNumQueries(8):
+            resp = self.client.post(uri, {'lines': [
+                {'pk':self.line.pk,'mask':'[[60, 40], [60, 50], [90, 50], [90, 40]]'},
+                {'pk':self.line2.pk,'script':'script 2'},
+            ]},content_type='application/json')
+            self.line.refresh_from_db()
+            self.line2.refresh_from_db()
+            self.assertEqual(self.line.mask,'[[60, 40], [60, 50], [90, 50], [90, 40]]')
+            self.assertEqual(self.line2.script,'script 2')
+            self.assertEqual(resp.status_code, 200)
 
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
