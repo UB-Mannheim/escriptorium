@@ -48,7 +48,7 @@ class SegmenterRegion {
             dashOffset: 5/this.segmenter.scale,
             strokeWidth: 2/this.segmenter.scale,
             // fillColor: this.segmenter.regionColor,
-            selectedColor: this.segmenter.selectedColor,
+            selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
             visible: true,
             segments: this.polygon
         });
@@ -113,10 +113,9 @@ class SegmenterLine {
             if(baseline.segments) {  // already a paperjs.Path
                 this.baselinePath = baseline;
             } else {
-                let color = this.order%2 ? this.segmenter.evenBaselinesColor : this.segmenter.oddBaselinesColor;
                 this.baseline = baseline.map(pt=>[Math.round(pt[0]), Math.round(pt[1])]);
                 this.baselinePath = new Path({
-                    strokeColor: color,
+                    strokeColor: this.segmenter.baselinesColor,
                     strokeWidth: Math.max(3, 7/this.segmenter.scale),
                     strokeCap: 'butt',
                     selectedColor: 'black',
@@ -150,8 +149,8 @@ class SegmenterLine {
             closed: true,
             opacity: 0.1,
             // Note: not a bug to use baseline color for even masks
-            fillColor: this.order % 2 ? this.segmenter.evenBaselinesColor: this.segmenter.oddMasksColor,
-            selectedColor: this.segmenter.selectedColor,
+            fillColor: this.order % 2 ? this.segmenter.evenMasksColor: this.segmenter.oddMasksColor,
+            selectedColor: 'white',
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
             segments: this.mask
         });
@@ -168,7 +167,8 @@ class SegmenterLine {
         if (this.baselinePath) {
             this.baselinePath.selected = true;
             this.baselinePath.bringToFront();
-            this.baselinePath.strokeColor = this.segmenter.selectedColor;
+            
+            this.baselinePath.strokeColor = this.segmenter.shadeColor(this.segmenter.baselinesColor, -50);
         }
         this.segmenter.addToSelection(this);
         this.selected = true;
@@ -188,7 +188,7 @@ class SegmenterLine {
         }
         if (this.baselinePath) {
             this.baselinePath.selected = false;
-            this.baselinePath.strokeColor = this.order%2 ? this.segmenter.evenBaselinesColor : this.segmenter.oddBaselinesColor;
+            this.baselinePath.strokeColor = this.segmenter.baselinesColor;
             for (let i=0; i<this.baselinePath.segments; i++) {
                 this.segmenter.removeFromSelection(this.baselinePath.segments[i]); 
             }
@@ -355,8 +355,8 @@ class Segmenter {
                         // reverseBtn=null,
                         disableBindings=false,
 
-                        evenBaselinesColor=null,
-                        oddBaselinesColor=null,
+                        baselinesColor=null,
+                        evenMasksColor=null,
                         oddMasksColor=null,
                         directionHintColor=null,
                         regionColor=null,
@@ -401,8 +401,8 @@ class Segmenter {
         // insert after..
         this.img.parentNode.insertBefore(this.canvas, this.img);
         
-        this.evenBaselinesColor=evenBaselinesColor;
-        this.oddBaselinesColor=oddBaselinesColor;
+        this.baselinesColor=baselinesColor;
+        this.evenMasksColor=evenMasksColor;
         this.oddMasksColor=oddMasksColor;
         this.directionHintColor=directionHintColor;
         this.regionColor=regionColor;
@@ -433,9 +433,9 @@ class Segmenter {
         this.unlinkRegionBtn = document.getElementById('be-unlink-region');
         
         // editor settings
-        this.evenBaselinesColorInput = document.getElementById('be-even-bl-color');
-        this.oddBaselinesColorInput = document.getElementById('be-odd-bl-color');
-        this.oddMaskColorInput = document.getElementById('be-odd-mask-color');
+        this.baselinesColorInput = document.getElementById('be-bl-color');
+        this.evenMasksColorInput = document.getElementById('be-even-mask-color');
+        this.oddMasksColorInput = document.getElementById('be-odd-mask-color');
         this.dirHintColorInput = document.getElementById('be-dir-color');
         this.regionColorInput = document.getElementById('be-reg-color');
         
@@ -538,26 +538,25 @@ class Segmenter {
         }.bind(this));
 
         // colors
-        this.evenBaselinesColorInput.addEventListener('change', function(ev) {
-            this.evenBaselinesColor = ev.target.value;
-            this.evenLinesGroup.strokeColor = ev.target.value;
+        if(this.baselinesColorInput) this.baselinesColorInput.addEventListener('change', function(ev) {
+            this.baselinesColor = ev.target.value;
+            this.linesGroup.strokeColor = ev.target.value;
+        }.bind(this));
+        if (this.evenMasksColorInput) this.evenMasksColorInput.addEventListener('change', function(ev) {
+            this.evenMasksColor = ev.target.value;
             this.evenMasksGroup.strokeColor = ev.target.value;
             this.evenMasksGroup.fillColor = ev.target.value;
         }.bind(this));
-        this.oddBaselinesColorInput.addEventListener('change', function(ev) {
-            this.oddBaselinesColor = ev.target.value;
-            this.oddLinesGroup.strokeColor = ev.target.value;
-        }.bind(this));
-        this.oddMaskColorInput.addEventListener('change', function(ev) {
+        if (this.oddMasksColorInput) this.oddMasksColorInput.addEventListener('change', function(ev) {
             this.oddMasksColor = ev.target.value;
             this.oddMasksGroup.strokeColor = ev.target.value;
             this.oddMasksGroup.fillColor = ev.target.value;
         }.bind(this));
-        this.dirHintColorInput.addEventListener('change', function(ev) {
+        if (this.dirHintColorInput) this.dirHintColorInput.addEventListener('change', function(ev) {
             this.directionHintColor = ev.target.value;
             this.dirHintsGroup.strokeColor = ev.target.value;
         }.bind(this));
-        this.regionColorInput.addEventListener('change', function(ev) {
+        if (this.regionColorInput) this.regionColorInput.addEventListener('change', function(ev) {
             this.regionColor = ev.target.value;
             this.regionsGroup.strokeColor = ev.target.value;
             if (this.mode == 'regions') this.regionsGroup.fillColor = ev.target.value;
@@ -641,8 +640,7 @@ class Segmenter {
         paper.setup(this.canvas);
         
         this.regionsGroup = new paper.Group();
-        this.evenLinesGroup = new paper.Group();
-        this.oddLinesGroup = new paper.Group();
+        this.linesGroup = new paper.Group();
         this.evenMasksGroup = new paper.Group();
         this.oddMasksGroup = new paper.Group();
         this.dirHintsGroup = new paper.Group();
@@ -652,8 +650,9 @@ class Segmenter {
         this.orderingLayer = new paper.Layer();
         this.orderingLayer.visible = this.showLineNumbers;
         if (this.mode == 'lines') {
-            this.evenLinesGroup.bringToFront();
-            this.oddLinesGroup.bringToFront();
+            this.evenMasksGroup.bringToFront();
+            this.oddMasksGroup.bringToFront();
+            this.linesGroup.bringToFront();
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
         } else if (this.mode == 'regions') {
             this.regionsGroup.bringToFront();
@@ -702,13 +701,10 @@ class Segmenter {
         this.linesLayer.activate();
         var line = new SegmenterLine(order, baseline, mask, region,
                                      this.defaultTextDirection, context, this);
-        
-        if (line.order%2) {
-            this.evenLinesGroup.addChild(line.baselinePath);
-            if (line.maskPath) this.evenMasksGroup.addChild(line.maskPath);
-        } else {
-            this.oddLinesGroup.addChild(line.baselinePath);
-            if (line.maskPath) this.oddMasksGroup.addChild(line.maskPath);
+        this.linesGroup.addChild(line.baselinePath);
+        if (line.maskPath) {
+            if (line.order%2)this.evenMasksGroup.addChild(line.maskPath);
+            else this.oddMasksGroup.addChild(line.maskPath);
         }
         
         if (!postponeEvents) {
@@ -1704,6 +1700,19 @@ class Segmenter {
             this.canvas.style.cursor = this.spliting?'crosshair':'copy';
         }
     }
+
+    shadeColor(color, percent) {
+        let R = parseInt(color.substring(1,3),16);
+        let G = parseInt(color.substring(3,5),16);
+        let B = parseInt(color.substring(5,7),16);
+        R = Math.min(255, parseInt(R * (100 + percent) / 100));
+        G = Math.min(255, parseInt(G * (100 + percent) / 100));
+        B = Math.min(255, parseInt(B * (100 + percent) / 100));
+        let RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+        let GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+        let BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+        return "#"+RR+GG+BB;
+    }
     
     setColors() {
         // Attempt to choose the best color for highlighting
@@ -1749,23 +1758,23 @@ class Segmenter {
         }
         
         // do we even need to load color thief?
-        if (!(this.evenBaselinesColor && this.oddBaselinesColor&& this.oddMasksColor&& this.directionHintColor&& this.regionColor)) {
+        if (!(this.baselinesColor && this.evenMasksColor&& this.oddMasksColor&& this.directionHintColor&& this.regionColor)) {
             var colorThief = new ColorThief();
             let palette = colorThief.getPalette(this.img, 5);
             let choices = chooseColors(palette);
-            if (!this.evenBaselinesColor) this.evenBaselinesColor = choices[0];
-            if (!this.oddBaselinesColor) this.oddBaselinesColor = choices[0];
+            if (!this.baselinesColor) this.baselinesColor = choices[0];
+            if (!this.evenMasksColor) this.evenMasksColor = choices[0];
             if (!this.oddMasksColor) this.oddMasksColor  = choices[1];
             if (!this.directionHintColor) this.directionHintColor = '#FF00AA';
             if (!this.regionColor) this.regionColor = choices[2];
         }
         
         // set the inputs
-        this.evenBaselinesColorInput.value = this.evenBaselinesColor;
-        this.oddBaselinesColorInput.value = this.evenBaselinesColor;
-        this.oddMaskColorInput.value = this.oddMasksColor;
+        this.baselinesColorInput.value = this.baselinesColor;
+        this.evenMasksColorInput.value = this.evenMasksColor;
+        this.oddMasksColorInput.value = this.oddMasksColor;
         this.dirHintColorInput.value = this.directionHintColor;
         this.regionColorInput.value = this.regionColor;
-        this.selectedColor = 'red';
+        this.selectedColor = 'yellow';
     }
 }
