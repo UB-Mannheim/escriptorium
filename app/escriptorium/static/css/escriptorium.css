@@ -353,7 +353,12 @@ i.panel-icon {
     height: 100%;
     transform-origin:top left;
 }
-
+#img-size{
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    background-color: blanchedalmond;
+}
 /* #part-trans svg { */
 /*     position: relative; */
 /*     width:100%; */
