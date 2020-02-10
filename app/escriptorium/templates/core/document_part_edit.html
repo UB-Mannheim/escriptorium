@@ -4,8 +4,11 @@
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_nav %}
-<div id="part-name" class="navbar-brand mx-3"></div>
-<div class="ml-auto">
+<div class="nav-item mr-auto ml-2">
+  <span id="part-name" class="nav-brand"></span>
+  <span id="part-filename"></span>
+</div>
+<div>
   <button id="source-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
   <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
   <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
