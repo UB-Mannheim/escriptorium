@@ -1431,7 +1431,6 @@ class Segmenter {
         for (let j in segments) {
             let segment = segments[j];
             if (segment.point.isInside(clip.bounds)) {
-                selected++;
                 this.addToSelection(segment);
                 tmpSelected.push(segment);
             } else {
