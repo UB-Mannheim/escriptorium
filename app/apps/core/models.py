@@ -803,7 +803,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s.%s' % (instance.pk, slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):    

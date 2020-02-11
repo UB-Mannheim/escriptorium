@@ -163,7 +163,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         self.fields['train_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['segtrain_model'].queryset &= OcrModel.objects.filter(document=self.document)
         self.fields['seg_model'].queryset &= OcrModel.objects.filter(document=self.document)
-        self.fields['ocr_model'].queryset = OcrModel.objects.filter(
+        self.fields['ocr_model'].queryset &= OcrModel.objects.filter(
             Q(document=None, script=document.main_script)
             | Q(document=self.document))
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
