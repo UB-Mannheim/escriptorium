@@ -332,9 +332,10 @@ class DocumentPart(OrderedModel):
             else:
                 return min(shape, key=lambda pt: pt[0])
         # fetch all lines and regroup them by block
-        qs = self.lines.select_related('block').all()
-        ls = [(l, origin_pt(l.block.box) if l.block else origin_pt(l.baseline))
-              for l in qs]
+        qs = self.lines.all()
+        ls = [(l, origin_pt(l.baseline)) for l in qs]
+        if len(ls) == 0:
+            return
         ords = list(map(lambda l:l[1][1], ls))
         averageLineHeight = (max(ords) - min(ords)) / len(ls)
         def cmp_pts(a, b):
