@@ -1,6 +1,6 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles thumbnail json %}
-
+{% load compress %}
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_nav %}
@@ -227,25 +227,28 @@
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
-  var READ_DIRECTION = '{{document.read_direction}}';
-  var TEXT_DIRECTION = '{{document.main_script.text_direction}}'
-  var DOCUMENT_ID = {{document.id}};
-  var PART_ID = {{part.id}};
+  const READ_DIRECTION = '{{document.read_direction}}';
+  const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
+  const DOCUMENT_ID = '{{document.id}}';
+  const PART_ID = '{{part.id}}';
 </script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.5/math.min.js"></script>
-<script type="text/javascript" src="{% static 'js/help.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
 
-<script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/panels/base.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/panels/source.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/panels/segmentation.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/panels/transcription.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/edit.js' %}"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.5/math.min.js"></script>
+{% compress js file part_edit %}
+    <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/base.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/source.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/segmentation.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/transcription.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit.js' %}"></script>
+{% endcompress %}
 {% endblock %}

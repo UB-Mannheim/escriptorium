@@ -13,6 +13,7 @@ function preloadImage(url, callback) {
     img.onload = callback;
 }
 
+
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
 	    var title = name + '-panel';
