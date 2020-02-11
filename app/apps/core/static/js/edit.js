@@ -70,7 +70,16 @@ $(document).ready(function() {
         var pk = $(this).data('target');
         loadPart(pk);
     });
-
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode == 33) {  // page up
+            $('a#prev-part').click();
+            event.preventDefault();
+        } else if (event.keyCode == 34) {  // page down
+            $('a#next-part').click();
+            event.preventDefault();
+        }
+    });
+    
     loadPart(PART_ID, function(data) {
         undoManager.clear();
         fullSizeImgLoaded = false;
