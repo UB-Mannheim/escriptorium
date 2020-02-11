@@ -69,9 +69,11 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def export(self, request, pk=None):
         document = self.get_object()
-        form = ExportForm(document, request.POST)
+        form = ExportForm(document, request.user, request.POST)
         if form.is_valid():
-            return form.stream()
+            # return form.stream()
+            form.process()
+            return Response({'status': 'ok'})
         else:
             return self.form_error(json.dumps(form.errors))
 

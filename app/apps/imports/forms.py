@@ -20,7 +20,7 @@ from bootstrap.forms import BootstrapFormMixin
 from core.models import Transcription, LineTranscription, DocumentPart
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
-from imports.tasks import document_import
+from imports.tasks import document_import, document_export
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
@@ -136,8 +136,9 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
     
-    def __init__(self, document, *args, **kwargs):
+    def __init__(self, document, user, *args, **kwargs):
         self.document = document
+        self.user = user
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
     
@@ -152,6 +153,12 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             raise forms.ValidationError(_("Invalid part primary key."))
         return parts
 
+    def process(self):
+        file_format = self.cleaned_data['file_format']
+        transcription = self.cleaned_data['transcription']
+        document_export.delay(file_format, self.user.pk, self.document.pk,
+                              self.data.get('parts'), transcription.pk)
+    
     def stream(self):
         file_format = self.cleaned_data['file_format']
         parts = self.cleaned_data['parts']
