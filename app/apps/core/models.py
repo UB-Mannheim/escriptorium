@@ -7,8 +7,9 @@ import subprocess
 from PIL import Image
 from datetime import datetime
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
+from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -20,7 +21,6 @@ from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from django.db.models.signals import pre_delete
 
 from celery.result import AsyncResult
 from celery.task.control import inspect, revoke
@@ -332,9 +332,10 @@ class DocumentPart(OrderedModel):
             else:
                 return min(shape, key=lambda pt: pt[0])
         # fetch all lines and regroup them by block
-        qs = self.lines.select_related('block').all()
-        ls = [(l, origin_pt(l.block.box) if l.block else origin_pt(l.baseline))
-              for l in qs]
+        qs = self.lines.all()
+        ls = [(l, origin_pt(l.baseline)) for l in qs]
+        if len(ls) == 0:
+            return
         ords = list(map(lambda l:l[1][1], ls))
         averageLineHeight = (max(ords) - min(ords)) / len(ls)
         def cmp_pts(a, b):
@@ -535,17 +536,10 @@ class DocumentPart(OrderedModel):
         self.save()
     
     def segment(self, steps=None, text_direction=None, read_direction=None, model=None, override=False):
-        # cleanup pre-existing
-        if steps in ['lines', 'both'] and override:
-            self.lines.all().delete()
-        if steps in ['regions', 'both'] and override:
-            self.blocks.all().delete()
-        
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
         
         with Image.open(self.image.file.name) as im:
-            # text_direction='horizontal-lr', scale=None, maxcolseps=2, black_colseps=False, no_hlines=True, pad=0
             options = {}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
@@ -569,13 +563,21 @@ class DocumentPart(OrderedModel):
             #                 box=(line[0]+block.box[0], line[1]+block.box[1],
             #                      line[2]+block.box[0], line[3]+block.box[1]))
             # else:
-            res = blla.segment(im, **options)
-            for line in res['lines']:
-                mask = line['boundary'] if line['boundary'] is not None else None
-                newline = Line.objects.create(
-                    document_part=self,
-                    baseline=line['baseline'],
-                    mask=mask)
+            with transaction.atomic():
+                # cleanup pre-existing
+                if steps in ['lines', 'both'] and override:
+                    self.lines.all().delete()
+                if steps in ['regions', 'both'] and override:
+                    self.blocks.all().delete()
+                
+                res = blla.segment(im, **options)
+                
+                for line in res['lines']:
+                    mask = line['boundary'] if line['boundary'] is not None else None
+                    newline = Line.objects.create(
+                        document_part=self,
+                        baseline=line['baseline'],
+                        mask=mask)
         
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
@@ -802,7 +804,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s.%s' % (instance.pk, slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):    

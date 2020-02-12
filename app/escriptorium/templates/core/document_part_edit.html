@@ -92,9 +92,9 @@
   {# <div class="row" style="position: relative;"> #}
     <div class="col-sides">
       {% if document.read_direction == 'rtl' %}
-      <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-left"></i></a>
+      <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
       {% else %}
-      <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-left"></i></a>
+      <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
       {% endif %}
       <div>
         <button id="zoom-reset" class="btn btn-sm btn-info" title="{% trans "Reset zoom." %}"><i class="fas fa-search-minus"></i></button>
@@ -137,7 +137,7 @@
         </div>        
       </div>
       <button id="delete-point" title="{% trans "Delete selected points. (ctrl+suppr)" %}" class="hide btn btn-warning m-1 fas fa-trash"></button>
-      <button id="merge-selection" title="{% trans "Merge selected lines." %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
+      <button id="merge-selection" title="{% trans "Join selected lines. (J)" %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
       <button id="reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
       <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
     </div>
@@ -162,9 +162,9 @@
   </div>
   <div class="col-sides">
     {% if document.read_direction == 'rtl' %}
-    <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous" %}"><i class="fas fa-angle-right"></i></a>
+    <a id="prev-part" href="#" data-target="{{previous.pk}}" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
     {% else %}
-    <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next" %}"><i class="fas fa-angle-right"></i></a>
+    <a id="next-part" href="#" data-target="{{next.pk}}" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
     {% endif %}
   </div>
 </div>

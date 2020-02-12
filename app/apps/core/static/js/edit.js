@@ -13,6 +13,7 @@ function preloadImage(url, callback) {
     img.onload = callback;
 }
 
+
 $(document).ready(function() {
     function makePanel(name, class_, visible) {
 	    var title = name + '-panel';
@@ -69,7 +70,18 @@ $(document).ready(function() {
         var pk = $(this).data('target');
         loadPart(pk);
     });
-
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode == 33 ||  // page up
+            (event.keyCode == (READ_DIRECTION == 'rtl'?39:37) && event.ctrlKey)) {  // arrow left
+            $('a#prev-part').click();
+            event.preventDefault();
+        } else if (event.keyCode == 34 ||   // page down
+                   (event.keyCode == (READ_DIRECTION == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
+            $('a#next-part').click();
+            event.preventDefault();
+        }
+    });
+    
     loadPart(PART_ID, function(data) {
         undoManager.clear();
         fullSizeImgLoaded = false;

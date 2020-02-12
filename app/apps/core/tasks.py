@@ -21,7 +21,7 @@ from celery.signals import *
 from easy_thumbnails.files import get_thumbnailer
 from kraken import binarization, pageseg, rpred
 from kraken.lib import vgsl, train as kraken_train, models as kraken_models
-from kraken.lib.dataset import PolygonGTDataset, BaselineSet, generate_input_transforms, compute_error  # GroundTruthDataset
+from kraken.lib.dataset import PolygonGTDataset, BaselineSet, generate_input_transforms, compute_error, InfiniteDataLoader  # GroundTruthDataset
 from kraken.lib.train import TrainScheduler, EarlyStopping, KrakenTrainer, baseline_label_evaluator_fn, baseline_label_loss_fn
 from kraken.lib.exceptions import KrakenStopTrainingException
 from torch.utils.data import DataLoader
@@ -115,6 +115,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Binarization done!"),
@@ -196,7 +197,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         for part in qs[:partition]:
             val_set.add(part.image.path, part.lines.values_list('baseline', flat=True))
             
-        train_loader = DataLoader(gt_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
+        train_loader = InfiniteDataLoader(gt_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
         test_loader = DataLoader(val_set, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
         
         # set mode to training
@@ -236,6 +237,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             user.notify(_("Something went wrong during the segmenter training process!"),
                         id="training-error", level='danger')
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Training finished!"),
@@ -290,6 +292,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         part.workflow_state = part.WORKFLOW_STATE_CONVERTED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Segmentation done!"),
@@ -361,8 +364,8 @@ def train_(qs, document, transcription, model=None, user=None):
     except KrakenEncodeException:
         pass  # TODO
 
-    train_loader = DataLoader(gt_set, batch_size=1, shuffle=True,
-                              num_workers=0, pin_memory=True)
+    train_loader = InfiniteDataLoader(gt_set, batch_size=1, shuffle=True,
+                                      num_workers=0, pin_memory=True)
     for i, data in add_data_to_training_set(ground_truth[:partition], val_set):
         if i%10 == 0:
             logger.debug('Gathering #{} {}/{}'.format(2, i, partition))
@@ -530,6 +533,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user and model:
             user.notify(_("Transcription done!"),

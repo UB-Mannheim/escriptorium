@@ -115,7 +115,7 @@
 {{ block.super }}
 <script type="text/javascript">
 'use strict';
-var DOCUMENT_ID = {{ document.pk }};
+const DOCUMENT_ID = {{ document.pk }};
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
