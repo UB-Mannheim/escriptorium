@@ -233,12 +233,12 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         with self.assertNumQueries(8):
             resp = self.client.post(uri, {'lines': [
                 {'pk':self.line.pk,'mask':'[[60, 40], [60, 50], [90, 50], [90, 40]]'},
-                {'pk':self.line2.pk,'script':'script 2'},
+                {'pk':self.line2.pk,'mask':'[[50, 40], [50, 30], [70, 30], [70, 40]]'},
             ]},content_type='application/json')
             self.line.refresh_from_db()
             self.line2.refresh_from_db()
             self.assertEqual(self.line.mask,'[[60, 40], [60, 50], [90, 50], [90, 40]]')
-            self.assertEqual(self.line2.script,'script 2')
+            self.assertEqual(self.line2.mask,'[[50, 40], [50, 30], [70, 30], [70, 40]]')
             self.assertEqual(resp.status_code, 200)
 
 
