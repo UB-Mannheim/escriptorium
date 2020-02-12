@@ -569,7 +569,9 @@ class DocumentPart(OrderedModel):
                     self.lines.all().delete()
                 if steps in ['regions', 'both'] and override:
                     self.blocks.all().delete()
+                
                 res = blla.segment(im, **options)
+                
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None
                     newline = Line.objects.create(

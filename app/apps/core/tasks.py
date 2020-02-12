@@ -115,6 +115,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
         part.workflow_state = part.WORKFLOW_STATE_CREATED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Binarization done!"),
@@ -236,6 +237,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             user.notify(_("Something went wrong during the segmenter training process!"),
                         id="training-error", level='danger')
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Training finished!"),
@@ -290,6 +292,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         part.workflow_state = part.WORKFLOW_STATE_CONVERTED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user:
             user.notify(_("Segmentation done!"),
@@ -530,6 +533,7 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
         part.workflow_state = part.WORKFLOW_STATE_SEGMENTED
         part.save()
         logger.exception(e)
+        raise e
     else:
         if user and model:
             user.notify(_("Transcription done!"),
