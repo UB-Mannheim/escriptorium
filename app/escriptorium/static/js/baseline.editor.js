@@ -448,11 +448,13 @@ class Segmenter {
         this.contextMenu = document.createElement('div');
         this.contextMenu.id = 'context-menu';
         this.contextMenu.style.position = 'fixed';
+        this.contextMenu.style.transform = 'translateZ(0)'; // css trick to fix to an element
         this.contextMenu.style.display = 'none';
         this.contextMenu.style.zIndex = 3;
         this.contextMenu.style.border = '1px solid grey';
         this.contextMenu.style.borderRadius = '5px';
-        this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
+        this.contextMenu.style.margin = '10px';
+        this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn.parentNode.firstChild);
         if (this.linkRegionBtn) this.contextMenu.appendChild(this.linkRegionBtn);
         if (this.unlinkRegionBtn) this.contextMenu.appendChild(this.unlinkRegionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
@@ -679,10 +681,6 @@ class Segmenter {
         // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
         // this.raster.position = view.center;
         // this.img.style.display = 'hidden';
-        
-        // context follows top right, width can only be calculated once shown
-        this.contextMenu.style.top = (this.img.getBoundingClientRect().top+10)+'px';
-        this.contextMenu.style.margin = '10px';
         
         tool.onMouseDown = this.onMouseDown.bind(this);
         
