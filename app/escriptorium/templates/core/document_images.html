@@ -1,6 +1,6 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles bootstrap thumbnail %}
-
+{% load compress %}
 {% block styles %}
 <link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
 <link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
@@ -115,7 +115,7 @@
 {{ block.super }}
 <script type="text/javascript">
 'use strict';
-var DOCUMENT_ID = {{ document.pk }};
+const DOCUMENT_ID = {{ document.pk }};
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
@@ -123,9 +123,12 @@ $(document).ready(function() {
   });
 });
 </script>
-<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'js/image_cards.js' %}"></script>
-<script src="{% static 'js/lazyload.js' %}"></script>
-<script src="{% static 'js/help.js' %}"></script>
+{% compress js file document_images %}
+
+    <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+    <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'js/image_cards.js' %}"></script>
+    <script src="{% static 'js/lazyload.js' %}"></script>
+    <script src="{% static 'js/help.js' %}"></script>
+{% endcompress %}
 {% endblock %}

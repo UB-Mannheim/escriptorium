@@ -1,3 +1,4 @@
+{% load compress %}
 {% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
@@ -20,11 +21,15 @@
     <![endif]-->
 
     {% block styles %}
+     {% compress css file base %}
+
     <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static '/vendor/bootstrap/bootstrap-reboot.min.css' %}" rel="stylesheet">
     <link href="{% static '/vendor/fontawesome/all.min.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static '/css/rtl.css' %}" rel="stylesheet" type="text/css">
+    {% endcompress %}
+
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -93,12 +98,14 @@
     </section></main>
     
     {% block scripts %}
+    {% compress js file base %}
     <script src="{% static '/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'vendor/popper/popper.min.js' %}"></script>
     <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
     <script src="{% static '/js/reconnecting-websocket.min.js' %}"></script>
     <script src="{% static '/js/js.cookie-2.2.0.min.js' %}"></script>
     <script src="{% static '/js/ajax.js' %}"></script>
+    {% endcompress %}
     <script type="text/javascript">
       var DEBUG = {% if debug %}true{% else %}false{% endif %};</script>
       {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
@@ -106,6 +113,6 @@
       {% include 'includes/messages.html' %}
       <script src="{% static 'js/profile.js' %}"></script>
       {% endif %}
-      {% endblock scripts %}
+   {% endblock scripts %}
   </body>
 </html>

@@ -589,6 +589,8 @@ class Segmenter {
                 this.splitBtn.classList.toggle('btn-warning');
                 this.splitBtn.classList.toggle('btn-success');
                 this.setCursor();
+            } else if (event.keyCode == 74) { // J (for join)
+                this.mergeSelection();
             } else if (event.keyCode == 77) { // M
                 this.toggleMasks();
             } else if (event.keyCode == 82) { // R

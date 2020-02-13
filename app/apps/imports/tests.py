@@ -224,7 +224,6 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
 
     def test_pagexml_single_no_match(self):
-
         self.part3.original_filename = 'temp'
         self.part3.save()
 
@@ -249,7 +248,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.part3.original_filename = 'test3.png'
         self.part3.save()
 
-    def test_parse_pagexml(self):
+    def test_parse_pagexml_single_file(self):
         trans = Transcription.objects.create(name="test import", document=self.document)
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[[0, 0],[100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
@@ -263,15 +262,34 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 'upload_file': SimpleUploadedFile(filename, fh.read())
             })
 
-            self.assertEqual(response.content, b'{"status":"ok"}')
-            self.assertEqual(response.status_code, 200)
-            # we created a new transcription
-            self.assertEqual(self.document.transcriptions.count(), 3)
-            # still the same number of lines
-            self.assertEqual(self.part3.lines.count(), 21)
-            self.assertEqual(self.part3.blocks.count(), 2)
-            line = self.part3.lines.first()
+        self.assertEqual(response.content, b'{"status":"ok"}', response.content)
+        self.assertEqual(response.status_code, 200)
+        # we created a new transcription
+        self.assertEqual(self.document.transcriptions.count(), 3)
+        self.assertEqual(self.part3.lines.count(), 21)
+        self.assertEqual(self.part3.blocks.count(), 2)
+    
+    def test_parse_pagexml_ziped_file(self):
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'test_pagexml.zip'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            with self.assertNumQueries(405):  # theres a lot of lines in there
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                self.assertEqual(response.content, b'{"status":"ok"}', response.content)
+                self.assertEqual(response.status_code, 200)
 
+        self.assertEqual(DocumentImport.objects.count(), 1)
+        self.assertEqual(DocumentImport.objects.first().workflow_state, DocumentImport.WORKFLOW_STATE_DONE)
+        self.assertEqual(self.part1.blocks.count(), 0)
+        self.assertEqual(self.part1.lines.count(), 18)
+        self.assertEqual(self.part2.blocks.count(), 0)
+        self.assertEqual(self.part2.lines.count(), 57)
+        self.assertEqual(self.part3.blocks.count(), 0)
+        self.assertEqual(self.part3.lines.count(), 19)
+        
     def test_iiif(self):
         filename = 'iiif.json'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)

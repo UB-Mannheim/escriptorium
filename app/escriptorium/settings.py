@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os, sys
+from kombu import Queue, Exchange
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
     'easy_thumbnails.optimize',
     'channels',
     'rest_framework',
+    'compressor',
     
     'bootstrap',
     'versioning',
@@ -85,6 +88,15 @@ TEMPLATES = [
         },
     },
 ]
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    # other finders..
+    'compressor.finders.CompressorFinder',
+)
+
+COMPRESS_ENABLED = not DEBUG
+COMPRESS_OFFLINE = not DEBUG
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 
@@ -127,7 +139,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-from django.utils.translation import gettext_lazy as _
 LANGUAGES = [
   ('en', _('English')),
   ('de', _('French')),
@@ -161,7 +172,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
-from kombu import Queue, Exchange
 
 CELERY_TASK_QUEUES = (
     Queue('default', routing_key='default'),
@@ -206,13 +216,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        }
+    },
     'handlers': {
         'file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
-
         'kraken_logs': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -220,26 +244,36 @@ LOGGING = {
         },
         'console': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            # 'filters': ['require_debug_false'],  # make sure to set EMAIL_BACKEND in local_settings
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
     },
     'loggers': {
-        'requests':{
-            'handlers': ['file', 'console'],
-            'propagate': True,
-        },
         'kraken':{
-            'handlers': ['kraken_logs', 'console'],
-            'propagate': True
-        },
-        'django': {
-            'handlers': ['file', 'console'],
-            'propagate': True,
+            'handlers': ['kraken_logs', 'console', 'mail_admins'],
         },
         'core': {
-            'handlers': ['file', 'console'],
-            'propagate': True,
-        }
+            'handlers': ['file', 'console', 'mail_admins'],
+            'propagate': False,
+        },
+        'django': {
+	    'handlers': ['file', 'console', 'mail_admins']
+	},
+	'django.server': {
+	    'handlers': ['django.server'],
+	    'level': 'INFO',
+	    'propagate': False,
+	}
     },
 }
 

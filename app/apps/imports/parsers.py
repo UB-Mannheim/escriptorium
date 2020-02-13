@@ -2,6 +2,7 @@ from lxml import etree
 import logging
 import os.path
 import requests
+import sys
 import time
 import uuid
 import zipfile
@@ -111,10 +112,19 @@ class XMLParser(ParserDocument):
         try:
             # response = requests.get(self.SCHEMA)
             # content = response.content
-            from django.contrib.staticfiles.storage import staticfiles_storage
-            content = staticfiles_storage.open(self.SCHEMA_FILE).read()
+            fh = None
+            if settings.DEBUG or 'test' in sys.argv:  # the file is not collected in development
+                from django.contrib.staticfiles import finders
+                path = finders.find(self.SCHEMA_FILE)
+                fh = open(path, 'rb')
+            else:
+                from django.contrib.staticfiles.storage import staticfiles_storage
+                fh = staticfiles_storage.open(self.SCHEMA_FILE)
+            
+            content = fh.read()
             schema_root = etree.XML(content)
-        except:
+        except FileNotFoundError as e:
+            logger.exception(e)
             raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
         else:
             try:
@@ -122,6 +132,9 @@ class XMLParser(ParserDocument):
                 xmlschema.assertValid(self.root)
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 raise ParseError("Document didn't validate. %s" % e.args[0])
+        finally:
+            if fh:
+                fh.close()
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -186,24 +199,24 @@ class XMLParser(ParserDocument):
                                                               external_id=block_id)
                             except Block.DoesNotExist:
                                 block = None
+                        
+                            if block is None:
+                                # not found, create it then
+                                block = Block(document_part=part, external_id=block_id)
+                            try:
+                                self.update_block(block, blockTag)
+                            except TypeError:
+                                block = None
+                            else:
+                                try:
+                                    block.full_clean()
+                                except ValidationError as e:
+                                    raise ParseError(e)
+                                else:
+                                    block.save()
                         else:
                             block = None
                         
-                        if block is None:
-                            # not found, create it then
-                            block = Block(document_part=part, external_id=block_id)
-                        try:
-                            self.update_block(block, blockTag)
-                        except TypeError:
-                            block = None
-                        else:
-                            try:
-                                block.full_clean()
-                            except ValidationError as e:
-                                raise ParseError(e)
-                            else:
-                                block.save()
-
                         for line_id, lineTag in self.get_lines(blockTag):
                             if line_id:
                                 try:
