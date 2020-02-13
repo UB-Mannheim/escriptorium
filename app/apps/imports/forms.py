@@ -146,18 +146,14 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         pks = json.loads(self.data.get('parts'))
         if len(pks) < 1:
             raise forms.ValidationError(_("Select at least one image to export."))
-        try:
-            parts = DocumentPart.objects.filter(
-                document=self.document, pk__in=pks)
-        except ValueError:
-            raise forms.ValidationError(_("Invalid part primary key."))
-        return parts
+        return pks
 
     def process(self):
+        parts = self.cleaned_data['parts']
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
         document_export.delay(file_format, self.user.pk, self.document.pk,
-                              self.data.get('parts'), transcription.pk)
+                              parts, transcription.pk)
     
     def stream(self):
         file_format = self.cleaned_data['file_format']

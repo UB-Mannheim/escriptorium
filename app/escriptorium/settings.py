@@ -28,6 +28,7 @@ sys.path.append(APPS_DIR)
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+SITE_ID = 1
 SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django.forms',
 
     'django_cleanup',

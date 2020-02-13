@@ -131,7 +131,7 @@ class DocumentImages(LoginRequiredMixin, DetailView):
         context['upload_form'] = UploadImageForm(document=self.object)
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
-        context['export_form'] = ExportForm(self.object)
+        context['export_form'] = ExportForm(self.object, self.request.user)
         return context
 
 
