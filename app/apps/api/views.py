@@ -15,6 +15,7 @@ from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
 from users.consumers import send_event
+from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +145,24 @@ class LineViewSet(ModelViewSet):
             return DetailedLineSerializer
         else:  # create
             return LineSerializer
+
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request, document_pk=None, part_pk=None):
+        lines = request.data.get("lines")
+        for line in lines:
+            l = get_object_or_404(Line, pk=line["pk"])
+            serializer = LineSerializer(l, data=line,partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        return Response({'response': 'ok'}, status=200)
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request, document_pk=None, part_pk=None):
+
+        deleted_lines = request.data.get("lines")
+        qs = Line.objects.filter(pk__in=deleted_lines)
+        qs.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LargeResultsSetPagination(PageNumberPagination):

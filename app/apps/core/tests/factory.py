@@ -73,7 +73,7 @@ class CoreFactory():
         file.seek(0)
         return file
 
-    def make_asset_file(self, name='test.png', asset_name='default.png'):
+    def make_asset_file(self, name='test.png', asset_name='segmentation/default.png'):
         fp = os.path.join(os.path.dirname(__file__), 'assets', asset_name)
         with Image.open(fp, 'r') as image:
             file = BytesIO()
