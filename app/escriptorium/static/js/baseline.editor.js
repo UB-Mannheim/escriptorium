@@ -548,25 +548,30 @@ class Segmenter {
         if(this.baselinesColorInput) this.baselinesColorInput.addEventListener('change', function(ev) {
             this.baselinesColor = ev.target.value;
             this.linesGroup.strokeColor = ev.target.value;
+            this.trigger('baseline-editor:settings', {name: 'color-baselines', value: ev.target.value});
         }.bind(this));
         if (this.evenMasksColorInput) this.evenMasksColorInput.addEventListener('change', function(ev) {
             this.evenMasksColor = ev.target.value;
             this.evenMasksGroup.strokeColor = ev.target.value;
             this.evenMasksGroup.fillColor = ev.target.value;
+            this.trigger('baseline-editor:settings', {name: 'color-even-masks', value: ev.target.value});
         }.bind(this));
         if (this.oddMasksColorInput) this.oddMasksColorInput.addEventListener('change', function(ev) {
             this.oddMasksColor = ev.target.value;
             this.oddMasksGroup.strokeColor = ev.target.value;
             this.oddMasksGroup.fillColor = ev.target.value;
+            this.trigger('baseline-editor:settings', {name: 'color-odd-masks', value: ev.target.value});
         }.bind(this));
         if (this.dirHintColorInput) this.dirHintColorInput.addEventListener('change', function(ev) {
             this.directionHintColor = ev.target.value;
             this.dirHintsGroup.strokeColor = ev.target.value;
+            this.trigger('baseline-editor:settings', {name: 'color-directions', value: ev.target.value});
         }.bind(this));
         if (this.regionColorInput) this.regionColorInput.addEventListener('change', function(ev) {
             this.regionColor = ev.target.value;
             this.regionsGroup.strokeColor = ev.target.value;
             if (this.mode == 'regions') this.regionsGroup.fillColor = ev.target.value;
+            this.trigger('baseline-editor:settings', {name: 'color-regions', value: ev.target.value});
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {

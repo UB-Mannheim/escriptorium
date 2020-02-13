@@ -13,10 +13,18 @@ class SegmentationPanel extends Panel {
         this.$img = $('img', this.$container);
         this.colorMode = 'color';
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
+
+        // load baseline editor settings from user profile
+        let beSettings = userProfile.get('baseline-editor') || {};
         this.segmenter = new Segmenter(this.$img.get(0), {
             delayInit:true,
             idField:'pk',
-            defaultTextDirection: TEXT_DIRECTION.slice(-2)
+            defaultTextDirection: TEXT_DIRECTION.slice(-2),
+            baselinesColor: beSettings['color-baselines'] || null,
+            evenMasksColor: beSettings['color-even-masks'] || null,
+            oddMasksColor: beSettings['color-odd-masks'] || null,
+            directionHintColor: beSettings['color-directions'] || null,
+            regionColor: beSettings['color-regions'] || null
         });
         // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
@@ -172,6 +180,13 @@ class SegmentationPanel extends Panel {
                 .fail(function(e) { alert(e); })
                 .always(function(e) { this.resetMasksBtn.disabled=false; }.bind(this));
         }.bind(this));
+
+        // save colors in the profile
+        this.segmenter.events.addEventListener('baseline-editor:settings', function(event) {
+            let settings = userProfile.get('baseline-editor') || {};
+            settings[event.detail.name] = event.detail.value;
+            userProfile.set('baseline-editor', settings);
+        });
     }
     
     init() {
@@ -283,7 +298,8 @@ class SegmentationPanel extends Panel {
         }
         $.ajax({url: uri, type:'DELETE'});
         if (type == 'line' && panels['trans']) {
-            let tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
+            let index = panels['trans'].lines.findIndex(l => l.pk==obj.context.pk);
+            let tl = panels['trans'].lines[index];
             if (tl) tl.delete();
             panels['trans'].lines.splice(index, 1);
         }
