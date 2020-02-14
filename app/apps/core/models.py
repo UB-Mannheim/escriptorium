@@ -849,16 +849,10 @@ class OcrModel(Versioned, models.Model):
                        list(parts_qs.values_list('pk', flat=True)))
     
     def train(self, parts_qs, transcription, user=None):
-        btasks = []
-        for part in parts_qs:
-            if not part.binarized:
-                for task in part.task('binarize', commit=False):
-                    btasks.append(task)
-        ttask = train.si(list(parts_qs.values_list('pk', flat=True)),
-                         transcription.pk,
-                         model_pk=self.pk,
-                         user_pk=user and user.pk or None)
-        chord(btasks, ttask).delay()
+        train.delay(list(parts_qs.values_list('pk', flat=True)),
+                    transcription.pk,
+                    model_pk=self.pk,
+                    user_pk=user and user.pk or None)
 
     def cancel_training(self):
         try:
