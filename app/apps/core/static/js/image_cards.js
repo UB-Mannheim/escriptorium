@@ -534,7 +534,7 @@ $(document).ready(function() {
     
     $('.process-part-form').submit(function(ev) {
         $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
-        if ($(this).is('[data-proc="export"]')) return true;  // resume normal form behavior
+        // if ($(this).is('[data-proc="export"]')) return true;  // resume normal form behavior
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');

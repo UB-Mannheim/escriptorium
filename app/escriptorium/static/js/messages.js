@@ -2,19 +2,18 @@ var msgSocket;
 
 var alerts = {};
 class Alert {
-    constructor(id, message, level, url) {
+    constructor(id, message, level, link) {
         this.id = id;
         this.count = 1;
         this.message = message;
         this.level = level || 'info';
-        this.url = url;
-
+        this.link = link;
         var $new = $('.alert', '#alert-tplt').clone();
         $new.addClass('alert-' + this.level);
         $('.message', $new).html(message);
-        if (this.url) {
-            $('.additional', $new).html('<a href="'+this.url+'" />').show();
-            $('.separator', $new).show();
+        if (this.link) {
+            $('.additional', $new).html('<a href="'+'/media/'+this.link.src+'" download>'+this.link.text+'</a>');
+            $('.additional', $new).css('display', 'block');
         }
         this.$element = $new;
         $('#alerts-container').append($new);
@@ -25,10 +24,10 @@ class Alert {
         }, this));
     }
 
-    static add(id, message, url) {
+    static add(id, message, level, link) {
         var id_ = id || new Date().getTime();
         if (alerts[id_] === undefined) {
-            alerts[id_] = new Alert(id_, message, url);
+            alerts[id_] = new Alert(id_, message, level, link);
         } else {
             alerts[id_].incrementCounter();
         }
@@ -58,7 +57,7 @@ $(document).ready(function() {
 
         if (data.type == 'message') {
             var message = data['text'];
-            Alert.add(data['id'], message, data['level']);
+            Alert.add(data['id'], message, data['level'], data['link']);
         } else if (data.type == 'event') {
             var $container = $('#alerts-container');
             $container.trigger(data["name"], data["data"]);

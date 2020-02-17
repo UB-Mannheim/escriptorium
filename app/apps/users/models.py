@@ -1,6 +1,8 @@
+import os
 import uuid
 from datetime import datetime
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 from django.utils.translation import gettext as _
@@ -24,11 +26,17 @@ class User(AbstractUser):
         else:
             return self.username
     
-    def notify(self, message, id=None, level='info'):
+    def notify(self, message, id=None, level='info', link=None):
         if id is None:
             id = hash(message)
-        return send_notification(self.pk, message, id=id, level=level)
-
+        return send_notification(self.pk, message, id=id, level=level, link=link)
+    
+    def get_document_store_path(self):
+        store_path = os.path.join(settings.MEDIA_ROOT, 'users', str(self.pk))
+        if not os.path.isdir(store_path):
+            os.makedirs(store_path)
+        return store_path
+    
 
 class ResearchField(models.Model):
     name = models.CharField(max_length=128)
@@ -95,8 +103,7 @@ class Invitation(models.Model):
             'users/email/invitation_html.html',
             self.recipient_email,
             context=context,
-            result_interface=('users', 'Invitation', self.id)
-        )
+            result_interface=('users', 'Invitation', self.id))
     
     def email_sent(self):
         if self.workflow_state < self.STATE_SENT:
