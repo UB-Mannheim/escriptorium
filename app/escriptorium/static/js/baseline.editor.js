@@ -350,14 +350,6 @@ class Segmenter {
                         // the scale would be 1/3, the container (DOM) width is irrelevant here.
                         scale=1,
                         delayInit=false,
-                        // deletePointBtn=null,
-                        // deleteSelectionBtn=null,
-                        // toggleMasksBtn=null,
-                        // toggleRegionModeBtn=null,
-                        // toggleOrderingBtn=null,
-                        // splitBtn=null,
-                        // mergeBtn=null,
-                        // reverseBtn=null,
                         disableBindings=false,
 
                         baselinesColor=null,
@@ -372,8 +364,7 @@ class Segmenter {
                         defaultTextDirection='lr',
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
-                        idField='id'
-                       } = {}) {
+                        idField='id'} = {}) {
         this.img = image;
         this.mode = 'lines'; // | 'regions'
         this.lines = [];

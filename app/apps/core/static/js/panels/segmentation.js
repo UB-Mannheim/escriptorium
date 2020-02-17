@@ -138,6 +138,7 @@ class SegmentationPanel extends Panel {
                         } else if (objType == 'region') {
                             obj.update(previousdata.polygon);
                         }
+                        obj.refresh();
                         this.remoteSave(objType, obj);
                     }.bind(this),
                     function() {  // redo
@@ -146,6 +147,7 @@ class SegmentationPanel extends Panel {
                         } else if (objType == 'region') {
                             obj.update(obj.polygon);
                         }
+                        obj.refresh();
                         this.remoteSave(objType, obj);
                     }.bind(this)
                 );
