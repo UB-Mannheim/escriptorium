@@ -593,16 +593,30 @@ class DocumentPart(OrderedModel):
             text_direction = (text_direction
                               or (self.document.main_script and self.document.main_script.text_direction)
                               or 'horizontal-lr')
+
             with Image.open(self.image.file.name) as im:
                 for line in lines:
+                    if not line.baseline:
+                        bounds =  {
+                            'boxes': [line.box],
+                            'text_direction': text_direction,
+                            'type': 'baselines',
+                            #'script_detection': True
+                        }
+                    else:
+                        bounds={
+                            'lines': [{'baseline': line.baseline,
+                                       'boundary': line.mask,
+                                       'text_direction': text_direction,
+                                       'script': 'default'}], # self.document.main_script.name
+                            'type': 'baselines',
+                            #'selfcript_detection': True
+                        }
                     it = rpred.rpred(
-                        model_, im,
-                        bounds={'boxes': [line.box],
-                                'text_direction': text_direction,
-                                'script_detection': False},
-                        pad=16,  # TODO: % of the image?
-                        bidi_reordering=True)
-                    
+                            model_, im,
+                            bounds=bounds,
+                            pad=16,  # TODO: % of the image?
+                            bidi_reordering=True)
                     lt, created = LineTranscription.objects.get_or_create(
                         line=line, transcription=trans)
                     for pred in it:

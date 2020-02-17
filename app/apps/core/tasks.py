@@ -313,10 +313,8 @@ def add_data_to_training_set(data, target_set):
         logger.debug('Loading {} {} {} {}'.format(i, lt['baseline'], lt['mask'], lt['content']))
         
         # def add(self, image: Union[str, Image.Image], text: str, baseline: List[Tuple[int, int]], boundary: List[Tuple[int, int]]):
-        target_set.add(os.path.join(settings.MEDIA_ROOT, lt['image']),
-                       lt['content'],
-                       lt['baseline'],
-                       lt['mask'])
+        target_set.add(os.path.join(settings.MEDIA_ROOT, lt['image']), lt['content'],
+                       lt['baseline'], lt['mask'])
         yield i, lt
     
     # im.close()
