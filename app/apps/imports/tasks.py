@@ -65,10 +65,14 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
     DocumentPart = apps.get_model('core', 'DocumentPart')
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
-    
+        
     user = User.objects.get(pk=user_pk)
     document = Document.objects.get(pk=document_pk)
-    #  
+
+    send_event('document', document.pk, "export:start", {
+        "id": document.pk
+    })
+    
     transcription = Transcription.objects.get(document=document, pk=transcription_pk)
     
     if file_format == TEXT_FORMAT:
@@ -114,7 +118,11 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
     # send websocket msg
     rel_path = os.path.relpath(filepath, settings.MEDIA_ROOT)
     user.notify('Export ready!', level='success', link={'text': 'Download', 'src':rel_path})
-        
+
+    send_event('document', document.pk, "export:done", {
+        "id": document.pk
+    })
+    
     # send email
     from django.contrib.sites.models import Site
     send_email('export/email/ready_subject.txt',

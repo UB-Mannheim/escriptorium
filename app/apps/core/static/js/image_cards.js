@@ -451,6 +451,19 @@ $(document).ready(function() {
             });
     });
     
+    // Exports
+    var $exportBtn = $('#document-export');
+    $alertsContainer.on('export:start', function(ev, data)  {
+        $exportBtn.addClass('blink');
+    });
+    $alertsContainer.on('export:fail', function(ev, data)  {
+        $exportBtn.removeClass('blink');
+        $exportBtn.addClass('error');
+    });
+    $alertsContainer.on('export:done', function(ev, data)  {
+        $exportBtn.removeClass('blink');
+    });
+    
     // training
     var max_accuracy = 0;
     $alertsContainer.on('training:start', function(ev, data) {
@@ -534,7 +547,6 @@ $(document).ready(function() {
     
     $('.process-part-form').submit(function(ev) {
         $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
-        // if ($(this).is('[data-proc="export"]')) return true;  // resume normal form behavior
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');
