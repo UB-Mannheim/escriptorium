@@ -13,10 +13,18 @@ class SegmentationPanel extends Panel {
         this.$img = $('img', this.$container);
         this.colorMode = 'color';
         this.zoomTarget = zoom.register($('.zoom-container', this.$container).get(0), {map: true});
+
+        // load baseline editor settings from user profile
+        let beSettings = userProfile.get('baseline-editor') || {};
         this.segmenter = new Segmenter(this.$img.get(0), {
             delayInit:true,
             idField:'pk',
-            defaultTextDirection: TEXT_DIRECTION.slice(-2)
+            defaultTextDirection: TEXT_DIRECTION.slice(-2),
+            baselinesColor: beSettings['color-baselines'] || null,
+            evenMasksColor: beSettings['color-even-masks'] || null,
+            oddMasksColor: beSettings['color-odd-masks'] || null,
+            directionHintColor: beSettings['color-directions'] || null,
+            regionColor: beSettings['color-regions'] || null
         });
         // we need to move the baseline editor canvas up one block so that it doesn't get caught by wheelzoom.
         let canvas = this.segmenter.canvas;
@@ -39,6 +47,9 @@ class SegmentationPanel extends Panel {
         
         this.toggleBinaryBtn = document.querySelector('button#toggle-binary');
         this.toggleBinaryBtn.addEventListener('click', function(ev) {
+            this.toggleBinaryBtn.classList.toggle('btn-info');
+            this.toggleBinaryBtn.classList.toggle('btn-success');
+
             if (this.colorMode == 'color') this.colorMode = 'binary';
             else this.colorMode = 'color';
             if (this.loaded) {
@@ -77,49 +88,67 @@ class SegmentationPanel extends Panel {
     }
     
     bindEditorEvents() {
-        this.segmenter.events.addEventListener('baseline-editor:delete-line', function(event) {
-            let line = event.detail;
-            this.remoteDelete('lines', line);
+        this.segmenter.events.addEventListener('baseline-editor:delete', function(event) {
+            let obj = event.detail.obj, objType = event.detail.objType;
+
+            if (obj.context.pk) this.remoteDelete(objType, obj);
+            
             this.pushHistory(
                 function() {  // undo
-                    // FIXME: missing parameters to this
-                    line = this.segmenter.createLine(null, line.baseline, line.mask);
-                    this.remoteSave('lines', line);
+                    if (objType == 'line') {
+                        obj = this.segmenter.createLine(null, obj.baseline, obj.mask);
+                    } else if (objType == 'region'){
+                        obj = this.segmenter.createRegion(obj.polygon);
+                    }
+                    this.remoteSave(objType, obj);
                 }.bind(this),
                 function() {  // redo
-                    line.remove();
-                    this.remoteDelete('lines', line);
+                    obj.remove();
+                    if (obj.context.pk) this.remoteDelete(objType, obj);
                 }.bind(this));
         }.bind(this));
 
-        this.segmenter.events.addEventListener('baseline-editor:update-line', function(event) {
-            let line = event.detail.line;
-            let newdata = {baseline: line.baseline, mask: line.mask};
+        this.segmenter.events.addEventListener('baseline-editor:update', function(event) {
+            let obj = event.detail.obj, objType = event.detail.objType;
+            // let newdata = {baseline: line.baseline, mask: line.mask};
             let previousdata = event.detail.previous;
-            this.remoteSave('lines', line);
+            this.remoteSave(objType, obj);
             
-            if(!line.context.pk) {
-                // new line
+            if(!obj.context.pk) {
+                // new line or region
                 this.pushHistory(
                     function() {  // undo
-                        line.remove();
-                        this.remoteDelete('lines', line);
+                        obj.remove();
+                        this.remoteDelete(objType, obj);
                     }.bind(this),
                     function() {  // redo
-                        // FIXME: missing parameters to this
-                        line = this.segmenter.createLine(null, line.baseline, line.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj = this.segmenter.createLine(null, obj.baseline, obj.mask, obj.region);
+                        } else if (objType == 'region') {
+                            obj = this.segmenter.createRegion(obj.polygon);
+                        }
+                        this.remoteSave(objType, obj);
                     }.bind(this)
                 );
             } else {
                 this.pushHistory(
                     function() {  //undo
-                        line.update(previousdata.baseline, previousdata.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj.update(previousdata.baseline, previousdata.mask);
+                        } else if (objType == 'region') {
+                            obj.update(previousdata.polygon);
+                        }
+                        obj.refresh();
+                        this.remoteSave(objType, obj);
                     }.bind(this),
                     function() {  // redo
-                        line.update(newdata.baseline, newdata.mask);
-                        this.remoteSave('lines', line);
+                        if (objType == 'line') {
+                            obj.update(obj.baseline, obj.mask);
+                        } else if (objType == 'region') {
+                            obj.update(obj.polygon);
+                        }
+                        obj.refresh();
+                        this.remoteSave(objType, obj);
                     }.bind(this)
                 );
             }
@@ -153,6 +182,13 @@ class SegmentationPanel extends Panel {
                 .fail(function(e) { alert(e); })
                 .always(function(e) { this.resetMasksBtn.disabled=false; }.bind(this));
         }.bind(this));
+
+        // save colors in the profile
+        this.segmenter.events.addEventListener('baseline-editor:settings', function(event) {
+            let settings = userProfile.get('baseline-editor') || {};
+            settings[event.detail.name] = event.detail.value;
+            userProfile.set('baseline-editor', settings);
+        });
     }
     
     init() {
@@ -161,15 +197,19 @@ class SegmentationPanel extends Panel {
         this.segmenter.scale = ratio;
         this.segmenter.init();
         
-        this.segmenter.load({
-            lines: this.part.lines,
-            regions: this.part.regions
-        });
-        
+        let regionMap = {};
+        for (let i in this.part.blocks) {
+            let region = this.part.blocks[i];
+            regionMap[region.pk] = this.segmenter.load_region(region);
+        }
+        for (let i in this.part.lines) {
+            let line = this.part.lines[i];
+            this.segmenter.load_line(line, regionMap[line.block]);
+        }
         this.bindZoom();
         this.loading = false;
     }
-
+    
     getImgSrcUri() {
         if (this.colorMode == 'binary' && this.part.bw_image) {
             return this.part.bw_image.uri;
@@ -198,7 +238,7 @@ class SegmentationPanel extends Panel {
         }
         this.loaded = true;
     }
-
+    
     onShow() {
         if (this.loaded && !this.loading) {
             this.loading = true;
@@ -206,7 +246,7 @@ class SegmentationPanel extends Panel {
             else { this.$img.one('load', this.init.bind(this)); }
         }
     }
-
+    
     convertPolygon(poly, ratio) {
         if (poly === null) return null;
         return poly.map(pt => [Math.round(pt[0]*ratio),
@@ -214,46 +254,54 @@ class SegmentationPanel extends Panel {
     }
     
     remoteSave(type, obj) {
-        var post = {document_part: this.part.pk};
-        if (type=='lines') {
+        var uri, post = {document_part: this.part.pk};
+        if (type=='line') {
             post['baseline'] = JSON.stringify(obj.baseline);
             post['mask'] = JSON.stringify(obj.mask);
-            post['block'] = this.block?this.block.pk:null; // todo
-        } else if (type == 'blocks') {
+            post['block'] = obj.region ? JSON.stringify(obj.region.context.pk) : null;
+            uri = this.api + 'lines' + '/';
+        } else if (type == 'region') {
             post['box'] = JSON.stringify(obj.polygon);
+            uri = this.api + 'blocks' + '/';
         }
-        let uri = this.api + type + '/';
+        
         let pk = obj.context.pk;
         if (pk) uri += pk+'/';
         var requestType = pk?'PUT':'POST';
         $.ajax({url: uri, type: requestType, data: post})
-            .done($.proxy(function(data) {
-                obj.context.pk = data.pk;
-                if (type == 'lines') {
-                    obj.update(data.baseline, data.mask);
-                    /* create corresponding transcription line */
-                    if (panels['trans']) {
-                        if (!pk) {
-                            panels['trans'].addLine(data);
-                        } else {
-                            var tl = panels['trans'].lines.find(l => l.pk==pk);
-                            if (tl) { tl.update(data); }
-                        }
-                    }
-                } else if (type == 'regions') {
-                    obj.update(data.polygon);
-                }
-            }, this))
-            .fail(function(data){
-                alert("Couldn't save block:", data);
-            });
+         .done($.proxy(function(data) {
+             obj.context.pk = data.pk;
+             if (type == 'line') {
+                 obj.update(data.baseline, data.mask);
+                 /* create corresponding transcription line */
+                 if (panels['trans']) {
+                     if (!pk) {
+                         panels['trans'].addLine(data);
+                     } else {
+                         var tl = panels['trans'].lines.find(l => l.pk==pk);
+                         if (tl) { tl.update(data); }
+                     }
+                 }
+             } else if (type == 'regions') {
+                 obj.update(data.polygon);
+             }
+         }, this))
+         .fail(function(data){
+             alert("Couldn't save block:", data);
+         });
     }
 
     remoteDelete(type, obj) {
-        let uri = this.api + type + '/' + obj.context.pk;
+        let uri;
+        if (type == 'line') {
+            uri = this.api + 'lines/' + obj.context.pk;
+        } else {
+            uri = this.api + 'blocks/' + obj.context.pk;
+        }
         $.ajax({url: uri, type:'DELETE'});
-        if (type == 'lines' && panels['trans']) {
-            let tl = panels['trans'].lines.find(l => l.pk==obj.context.pk);
+        if (type == 'line' && panels['trans']) {
+            let index = panels['trans'].lines.findIndex(l => l.pk==obj.context.pk);
+            let tl = panels['trans'].lines[index];
             if (tl) tl.delete();
             panels['trans'].lines.splice(index, 1);
         }

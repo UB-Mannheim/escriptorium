@@ -197,24 +197,27 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
                 'baseline': '[[10, 10], [50, 50]]'
             })
-        self.assertEqual(resp.status_code, 201)        
+            self.assertEqual(resp.status_code, 201)
+        self.assertEqual(self.part.lines.count(), 4)  # 3 + 1 new
         
     def test_update(self):
         self.client.force_login(self.user)
-        uri = reverse('api:block-detail',
+        uri = reverse('api:line-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
-                              'pk': self.block.pk})
-        with self.assertNumQueries(4):
+                              'pk': self.line.pk})
+        with self.assertNumQueries(5):
             resp = self.client.patch(uri, {
-                'box': '[[100,100], [150,150]]'
+                'baseline': '[[100,100], [150,150]]'
             }, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.status_code, 200)
+        self.line.refresh_from_db()
+        self.assertEqual(self.line.baseline, '[[100,100], [150,150]]')
 
     def test_bulk_delete(self):
         self.client.force_login(self.user)

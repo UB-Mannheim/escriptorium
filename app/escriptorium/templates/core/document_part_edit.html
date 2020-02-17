@@ -29,16 +29,27 @@
         <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
       </div>
       <div class="col mr-1 mb-2">
-        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info ml-3 fas fa-adjust hide" autocomplete="off"></button>
-        
         <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
         <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
-        
-        <!--button id="toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info ml-3 fas fa-th-large"></button-->
-        <button id="toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info ml-3 fas fa-sort-numeric-down" autocomplete="off"></button>
-        <button id="toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
+
+        <div class="btn-group">
+          <button id="toggle-settings" title="{% trans "Editor settings." %}" class="btn btn-info ml-3 fas fa-cogs dropdown-toggle" type="button" class="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+          <div id="be-settings-menu" class="dropdown-menu">
+            <div><input id="be-bl-color" type="color"/> <label for="be-even-bl-color">{% trans "Baselines" %}</label></div>
+            <div><input id="be-even-mask-color" type="color"/> <label for="be-odd-bl-color">{% trans "Even Masks" %}</label></div>
+            <div><input id="be-odd-mask-color" type="color"/> <label for="be-odd-mask-color">{% trans "Odd Masks" %}</label></div>
+            <div><input id="be-dir-color" type="color"/> <label for="be-dir-color">{% trans "Direction hints" %}</label></div>
+            <div><input id="be-reg-color" type="color"/> <label for="be-reg-color">{% trans "Regions" %}</label></div>
+            <!-- <div class="dropdown-divider"></div> -->
+            <!-- {% trans "Line thickness" %}<input type="slider"/> -->
+          </div>
+        </div>
+        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info fas fa-adjust hide" autocomplete="off"></button>
+        <button id="be-toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info fas fa-th-large" autocomplete="off"></button>
+        <button id="be-toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
+        <button id="be-toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
         <button id="reset-masks" title="{% trans "Reset and Recalculate the mask of all lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
-        <button id="split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
+        <button id="be-split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
 
         {# help #}
         <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help"></button>
@@ -136,10 +147,12 @@
           </svg>
         </div>        
       </div>
-      <button id="delete-point" title="{% trans "Delete selected points. (ctrl+suppr)" %}" class="hide btn btn-warning m-1 fas fa-trash"></button>
-      <button id="merge-selection" title="{% trans "Join selected lines. (J)" %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
-      <button id="reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
-      <button id="delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
+      <button id="be-link-region" title="{% trans "Link selected lines to (the first detected) background region." %}" class="hide btn btn-info m-1 fas fa-link"></button>
+      <button id="be-unlink-region" title="{% trans "Unlink selected lines from their region." %}" class="hide btn btn-info m-1 fas fa-unlink"></button>
+      <button id="be-delete-point" title="{% trans "Delete selected points. (ctrl+suppr)" %}" class="hide btn btn-warning m-1 fas fa-trash"></button>
+      <button id="be-merge-selection" title="{% trans "Join selected lines. (J)" %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
+      <button id="be-reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
+      <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
     </div>
   </div>
   

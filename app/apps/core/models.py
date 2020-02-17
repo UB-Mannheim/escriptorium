@@ -332,28 +332,35 @@ class DocumentPart(OrderedModel):
             else:
                 return min(shape, key=lambda pt: pt[0])
         # fetch all lines and regroup them by block
-        qs = self.lines.all()
-        ls = [(l, origin_pt(l.baseline)) for l in qs]
+        qs = self.lines.select_related('block').all()
+        ls = list(qs)
         if len(ls) == 0:
             return
-        ords = list(map(lambda l:l[1][1], ls))
-        averageLineHeight = (max(ords) - min(ords)) / len(ls)
-        def cmp_pts(a, b):
+        ords = list(map(lambda l: origin_pt(l.baseline or l.mask)[0], ls))
+        averageLineHeight = (max(ords) - min(ords)) / len(ords)
+        def cmp_lines(a, b):
             try:
+                if a.block != b.block:
+                    pt1 = origin_pt(a.block.box) if a.block else origin_pt(a.baseline or a.mask)
+                    pt2 = origin_pt(b.block.box) if b.block else origin_pt(b.baseline or a.mask)
+                else:
+                    pt1 = origin_pt(a.baseline or a.mask)
+                    pt2 = origin_pt(b.baseline or a.mask)
+                    
                 # 2 lines more or less on the same level
-                if abs(b[1] - a[1]) < averageLineHeight:
-                    return abs(a[0] - origin_pt(imgbox)[0]) - abs(b[0] - origin_pt(imgbox)[0])
-                return a[1] - b[1]
+                if abs(pt1[1] - pt2[1]) < averageLineHeight:
+                    return abs(pt1[0] - origin_pt(imgbox)[0]) - abs(pt2[0] - origin_pt(imgbox)[0])
+                return pt1[1] - pt2[1]
             except TypeError as e:  # invalid line
                 return 0
         
         # sort depending on the distance to the origin
-        ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_pts(a[1], b[1])))
+        ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_lines(a, b)))
         # one query / line, super gory
         for order, line in enumerate(ls):
-            if line[0].order != order:
-                line[0].order = order
-                line[0].save()
+            if line.order != order:
+                line.order = order
+                line.save()
     
     def save(self, *args, **kwargs):
         new = self.pk is None
