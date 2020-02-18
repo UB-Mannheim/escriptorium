@@ -1485,7 +1485,7 @@ class Segmenter {
             this.clipSelectPoly(clip, allSegments, tmpSelected);
             if ((line.baselinePath && line.baselinePath.intersects(clip)) ||
                 (line.baselinePath && line.baselinePath.isInside(clip.bounds)) ||
-                (line.maskPath && line.maskPath.intersects(clip))) line.select();
+                (this.showMasks && line.maskPath && line.maskPath.intersects(clip))) line.select();
             else if (allLines.length == this.lines.length) line.unselect();
         }
     }
