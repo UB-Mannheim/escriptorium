@@ -20,6 +20,9 @@ INTERNAL_IPS = ['127.0.0.1',]
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(APPS_DIR, 'core', 'static', 'offsplit.mlmodel')
+# KRAKEN_TRAINING_DEVICE = 'cuda:0'
+
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.versions.VersionsPanel',
     'debug_toolbar.panels.timer.TimerPanel',
