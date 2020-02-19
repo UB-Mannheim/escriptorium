@@ -17,7 +17,7 @@
         </TextEquiv>
       </TextLine>
       {% if forloop.last %}<TextEquiv>
-        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content|default_if_none:"\n" %}{% endfor %}</Unicode>
+        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content|default_if_none:"" %}{% endfor %}</Unicode>
       </TextEquiv>
     </TextRegion>{% endif %}
     {% endfor %}
