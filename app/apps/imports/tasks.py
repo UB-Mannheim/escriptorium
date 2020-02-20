@@ -82,7 +82,7 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
         filepath = os.path.join(user.get_document_store_path(), filename)
         # content_type = 'text/plain'
         lines = (LineTranscription.objects
-                 .filter(transcription=transcription, line__document_part__in=parts)
+                 .filter(transcription=transcription, line__document_part__pk__in=part_pks)
                  .exclude(content="")
                  .order_by('line__document_part', 'line__document_part__order', 'line__order'))
         # return StreamingHttpResponse(['%s\n' % line.content for line in lines],
