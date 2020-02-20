@@ -310,7 +310,7 @@ form.inline-form {
     font-size: 50px;
 }
 
-.nav-item #part-filename {
+.nav-item #part-title {
     display: block;
     font-size: x-small;
     color: grey;
@@ -360,28 +360,6 @@ i.panel-icon {
     transform-origin:top left;
 }
 
-/* #part-trans svg { */
-/*     position: relative; */
-/*     width:100%; */
-/*     height:100%; */
-/* } */
-
-/* #part-trans svg g { */
-/*     position: relative; */
-/*     /\* top: 0; *\/ */
-/*     /\* left: 0; *\/ */
-/*     width:100%; */
-/*     height:100%; */
-/* } */
-
-/* .part-edit-body { */
-/*     -webkit-user-select: none; */
-/*     -khtml-user-select: none; */
-/*     -moz-user-select: none; */
-/*     -o-user-select: none; */
-/*     user-select: none; */
-/* } */
-
 .zoom-container {
     position: relative;
     width: 100%;
@@ -395,6 +373,17 @@ i.panel-icon {
     position: absolute;
     background-color: transparent;
     outline: 9999px solid rgba(0, 0, 0, 0.1);
+}
+
+.panel {
+    overflow: hidden;
+    width: 100%;
+    /* height: 100%; */
+    transform-origin:top left;
+}
+
+.panel img {
+    max-width: 100%;
 }
 
 .panel .overlay {

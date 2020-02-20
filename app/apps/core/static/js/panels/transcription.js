@@ -33,7 +33,7 @@ class TranscriptionLine {
         newNode.setAttribute('id', 'trans-box-line-'+this.pk);
         let [polyElement, pathElement, textElement] = newNode.children;
         textElement.children[0].setAttribute('href', '#textPath'+this.pk);
-                
+        
         this.element = newNode;
         this.panel.content.appendChild(newNode);
         this.element.classList.add('trans-box');

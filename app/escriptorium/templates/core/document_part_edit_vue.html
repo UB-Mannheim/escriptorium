@@ -1,0 +1,178 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles %}
+{% load compress %}
+
+{% block nav-edit-active %}active{% endblock %}
+
+{% block extra_info %}
+  <span id="part-title" v-if="loaded">${part.title} - ${part.filename} - (${imageSize})</span>
+  <span class="loaded" v-if="!loaded">{% trans "Loading&#8230;" %}</span>
+</div>
+<div class="nav-item ml-auto mr-auto">
+  <select v-if="loaded" v-model="selectedTranscription" id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
+    {% for transcription in document.transcriptions.all %}
+    <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
+    {% endfor %}
+  </select>
+{% endblock %}
+
+{% block extra_nav %}
+<div class="nav-item ml-auto">
+  <button id="source-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
+  <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
+</div>
+{% endblock %}
+  
+{% block tab_content %}
+<div class="col-sides">
+  {% if document.read_direction == 'rtl' %}
+  <a id="next-part" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  {% else %}
+  <a id="prev-part" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  {% endif %}
+  <div>
+    <button id="zoom-reset" class="btn btn-sm btn-info" title="{% trans "Reset zoom." %}"><i class="fas fa-search-minus"></i></button>
+    <input id="zoom-range" type="range" name="zoom-range" class="form-control-range mt-1" orient="vertical" min="" max="" step="0.2">
+  </div>
+</div>
+
+<SourcePanel v-if="loaded" v-bind:part="part" class="col" inline-template>
+  <div class="panel">
+    <div>tools pano 1</div>
+    <div>
+      <img v-bind:src="imageSrc"/>
+      <div class="overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="source-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#source-overlay)" />
+          </svg>
+      </div>
+    </div>
+  </div>
+</SourcePanel>
+
+<VisuPanel v-if="loaded" v-bind:part="part" class="col" inline-template>
+  <div class="panel">
+    <div>tools pano 2</div>
+    <div class="h-100">
+      <svg class="w-100 h-100">
+        <visuline inline-template v-for="line in part.lines" v-bind:line="line" v-bind:key="line.id">
+          <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
+            <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
+            <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
+            <text lengthAdjust="spacingAndGlyphs">
+              <textPath v-if="line.transcription" v-bind:href="'#' + textPathId">${line.transcription.content}</textPath>
+            </text>
+          </g>
+        </visuline>
+      </svg>
+    </div>
+
+    <TranscriptionModal v-if="editLine" v-bind:line="editLine" inline-template>
+      <div id="trans-modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="transModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              {% comment %}<h5 class="modal-title mx-2" id="modal-label">{% trans "Line" %}</h5>{% endcomment %}
+              {% if document.read_direction == 'rtl' %}
+              <button type="button" id="next-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-left"></i></button>
+              <button type="button" id="prev-btn" class="btn btn-sm btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-right"></i></button>
+              {% else %}
+              <button type="button" id="prev-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-left"></i></button>
+              <button type="button" id="next-btn" class="btn btn-sm btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-right"></i></button>
+              {% endif %}
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body {{ document.default_text_direction }}">
+              <div id="modal-img-container" width="80%">
+                <img id="line-img" v-bind:src="$parent.imageSrc" draggable="false" selectable="false"/>
+                <div class="overlay">
+                  <svg width="100%" height="100%">
+                    <defs>
+                      <mask id="modal-overlay">
+                        <rect width="100%" height="100%" fill="white"/>
+                        <polygon v-bind:points="line.maskPoints"/>
+                      </mask>
+                    </defs>
+                    <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#modal-overlay)" />
+                  </svg>
+                </div>
+              </div>
+              
+              <input type="hidden" name="transcription"/>
+              <input type="hidden" name="line"/>
+              <input id="trans-input" name="content" class="form-control mb-2" v-bind:value="line.transcription.content"/>
+              <!--   <br> -->
+              <!--   <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a> -->
+              <!--   <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button> -->
+              <!--   <table id="history" class="table table-sm table-striped collapse"> -->
+              <!--     <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead> -->
+              <!--     <tbody></tbody> -->
+              <!--   </table> -->
+              <!-- </div> -->
+              <!-- <div class="modal-footer"> -->
+              <!--   <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button> -->
+              <!--   <button id="save-continue-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save & Continue' %}</button> -->
+              <!--   <button id="save-btn" type="button" class="btn btn-sm btn-success">{% trans 'Save' %}</button> -->
+              <!-- </div> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </TranscriptionModal>
+  </div>
+</VisuPanel>
+
+<div class="col-sides">
+  {% if document.read_direction == 'rtl' %}
+  <a id="prev-part" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  {% else %}
+  <a id="next-part" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+  const READ_DIRECTION = '{{document.read_direction}}';
+  const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
+  const DOCUMENT_ID = '{{document.id}}';
+  var PART_ID = {{part.id}};  // can be changed with next & previous pages
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.5/math.min.js"></script>
+{% compress js file part_edit %}
+    <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
+    <!-- <script type="text/javascript" src="{% static 'js/panels/base.js' %}"></script> -->
+    <!-- <script type="text/javascript" src="{% static 'js/panels/source.js' %}"></script> -->
+    <!-- <script type="text/javascript" src="{% static 'js/panels/segmentation.js' %}"></script> -->
+    <!-- <script type="text/javascript" src="{% static 'js/panels/transcription.js' %}"></script> -->
+    <!-- <script type="text/javascript" src="{% static 'js/edit.js' %}"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/http-vue-loader"></script>
+    <script type="text/javascript" src="{% static 'js/panels/base_vue.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/source_vue.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/visu_vue.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit_vue.js' %}"></script>
+
+    {% endcompress %}
+{% endblock %}
