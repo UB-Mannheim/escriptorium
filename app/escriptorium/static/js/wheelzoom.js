@@ -161,7 +161,6 @@ class WheelZoom {
     zoomTo(target, delta) {
         let oldScale = this.scale;
         this.scale += delta;
-
 	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 

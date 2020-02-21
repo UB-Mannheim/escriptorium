@@ -382,7 +382,7 @@ i.panel-icon {
     transform-origin:top left;
 }
 
-.panel img {
+.panel .panel-img {
     max-width: 100%;
 }
 
@@ -394,10 +394,6 @@ i.panel-icon {
     width: 80%;
     position: relative;
     overflow: hidden;
-}
-
-#modal-img-container #line-img {
-    position: absolute;
 }
 
 #trans-modal .modal-content {

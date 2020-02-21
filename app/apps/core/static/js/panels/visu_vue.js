@@ -1,23 +1,39 @@
 var TranscriptionModal = Vue.component('transcriptionmodal', {
     props: ['line'],
-    mounted: function() {
-        // this.zoom
-        this.computeStyle();
+    mounted() {
+        this.computeStyles();
     },
     watch: {
-        'line.transcription' : function (new_, old_) {
-            this.computeStyle();
-        }.bind(this)
+        'line' : function (new_, old_) {
+            this.computeStyles();
+        }
+    },
+    computed: {
+        localTranscription: {
+            get() {
+                return this.line.transcription.content;
+            },
+            set(newValue) {
+                this.line.transcription.content = newValue;
+                // is this ok ?
+                this.$parent.$parent.$emit('update:transcription', this.line.transcription);
+            }
+        }
     },
     methods: {
-        computeStyle: function() {
+        close() {
+            this.$parent.editLine = null;
+            $(this.$el).modal('hide');
+        },
+        computeStyles() {
+            if (!this.line) return;
             // this.zoom.reset();
-            // this.showOverlay();
+            // needs to be shown BEFORE doing calculations!
+            $(this.$el).modal('show');
+            
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
-            let hContext = 0.35; // in percentage
-
-            this.$el.style.display = 'block';
+            let hContext = 0.35; // vertical context added around the line, in percentage
             
             let poly = this.line.mask || this.line.baseline;
             let minx = Math.min.apply(null, poly.map(pt => pt[0]));
@@ -27,27 +43,27 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             let width = maxx - minx;
             let height = maxy - miny;
             
-            let panelToTransRatio = modalImgContainer.getBoundingClientRect().width /
-                (width+2*height*hContext);
-
+            // we use the same same vertical context horizontaly
+            let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
+            
             var MAX_HEIGHT = Math.max(25, (document.body.clientHeight-400) / 3);
-            let lineHeight = Math.max(10, Math.round(height*panelToTransRatio));
+            let lineHeight = Math.max(10, Math.round(height*ratio));
             if (lineHeight > MAX_HEIGHT) {
                 // change the ratio so that the image can not get too big
-                panelToTransRatio = (MAX_HEIGHT/lineHeight)*panelToTransRatio;
+                ratio = (MAX_HEIGHT/lineHeight)*ratio;
                 lineHeight = MAX_HEIGHT;
             }
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
             
             modalImgContainer.style.height = visuHeight+'px';
-            // img.style.width = this.panel.$panel.width()*panelToTransRatio +'px';            
+            img.style.width = this.$parent.part.image.size[0] +'px';
             
-            let left = Math.round(minx*panelToTransRatio)-context;
-            let top = Math.round(miny*panelToTransRatio)-context;
-            img.style.left = -left+'px';
-            img.style.top = -top+'px';
-
+            let left = Math.round(minx*ratio)-context;
+            let top = Math.round(miny*ratio)-context;
+            img.style.marginLeft = -left+'px';
+            img.style.marginTop = -top+'px';
+            
             // Content input
             let input = this.$el.querySelector('#trans-modal #trans-input');
             let content = input.value;
@@ -56,7 +72,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             ruler.style.visibility = 'hidden';
             ruler.textContent = content;
             document.body.appendChild(ruler);
-
+            
             let fontHeight = Math.min(lineHeight, 60);
             ruler.style.fontSize = fontHeight+'px';
             input.style.fontSize = fontHeight+'px';
@@ -67,7 +83,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
                 input.style.marginLeft = context+'px';
             }
             if (content) {
-                let lineWidth = width*panelToTransRatio;
+                let lineWidth = width*ratio;
                 var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
                 scaleX = Math.max(0.2, scaleX);
                 input.style.transform = 'scaleX('+ scaleX +')';
@@ -79,27 +95,20 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             document.body.removeChild(ruler);  // done its job
             
             input.focus();
-
-        },
-
-        showOverlay: function() {
+            
             // Overlay
-            let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let overlay = modalImgContainer.querySelector('.overlay');
-            let coordToTransRatio = this.panel.part.image.size[0] / img.width;
-            if (this.mask) {
-                let polygon = this.mask.map(pt => {
-                    return Math.round(pt[0]/coordToTransRatio-left)+ ' '+
-                        Math.round(pt[1]/coordToTransRatio-top);
-                }).join(',');
-                overlay.querySelector('polygon').setAttribute('points', polygon);
+            if (this.line.mask) {
+                let maskPoints = this.line.mask.map(pt => Math.round(pt[0]*ratio-left)+ ' '+
+                                                    Math.round(pt[1]*ratio-top)).join(',');
+                overlay.querySelector('polygon').setAttribute('points', maskPoints);
                 overlay.style.display = 'block';
             } else {
                 overlay.style.display = 'none';
             }
         },
         
-        showHistory: function() {
+        showHistory() {
             // History
             let container = document.querySelector('#trans-modal #history tbody');
             while (container.firstChild) {
@@ -122,26 +131,19 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
                 noVersionBtn.style.display = 'block';
                 document.querySelector('#new-version-btn').disabled = true;
             }
-
-            
         },        
     },
 });
 
 var visuLine = Vue.extend({
     props: ['line'],
-    // data: function() { return {
-    //     polyElement: null,
-    //     pathElement: null,
-    //     textElement: null
-    // };},
     updated: function() {
         this.$nextTick(function () { this.reset(); });
     },
     methods: {
-        getPolyElement: function() { return this.polyElement},
-        getPathElement: function() { return this.pathElement},
-        computeLineHeight: function() {
+        getPolyElement() { return this.polyElement},
+        getPathElement() { return this.pathElement},
+        computeLineHeight() {
             let lineHeight;
             if (this.line.mask) {
                 let poly = this.line.mask.flat(1).map(pt => Math.round(pt));
@@ -162,7 +164,7 @@ var visuLine = Vue.extend({
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
         },
 
-        computeTextLength: function() {
+        computeTextLength() {
             content = this.line.transcription && this.line.transcription.content;
             if (content) {
                 this.polyElement.setAttribute('stroke', 'none');
@@ -181,9 +183,9 @@ var visuLine = Vue.extend({
             }
         },
         
-        showOverlay: function() {
+        showOverlay() {
             if (this.line.mask) {
-                Array.from(document.querySelectorAll('.overlay')).map(
+                Array.from(document.querySelectorAll('.panel-overlay')).map(
                     function(e) {
                         // TODO: transition
                         e.style.display = 'block';
@@ -192,39 +194,33 @@ var visuLine = Vue.extend({
                 );
             }
         },
-        hideOverlay: function() {
-            Array.from(document.querySelectorAll('.overlay')).map(
+        hideOverlay() {
+            Array.from(document.querySelectorAll('.panel-overlay')).map(
                 function(e) {
                     e.style.display = 'none';
                 }
             );
         },
-        edit: function() {
+        edit() {
             this.$parent.editLine = this.line;
         },
-        editNext: function() {
-            //todo
-        },
-        editPrevious: function() {
-            //todo
-        },
-        reset: function() {
+        reset() {
             this.computeLineHeight();
             this.computeTextLength();
         },
     },
     computed: {
-        polyElement: function() { return this.$el.querySelector('polygon'); },
-        pathElement: function() { return this.$el.querySelector('path'); },
-        textElement : function() { return this.$el.querySelector('text'); },
-        textPathId: function() {
+        polyElement() { return this.$el.querySelector('polygon'); },
+        pathElement() { return this.$el.querySelector('path'); },
+        textElement() { return this.$el.querySelector('text'); },
+        textPathId() {
             return 'textPath'+this.line.pk;
         },
-        maskPoints: function() {
+        maskPoints() {
             let ratio = this.$parent.getRatio();
             return this.line.mask.map(pt => Math.round(pt[0]*ratio)+ ' '+Math.round(pt[1]*ratio)).join(',');
         },
-        baselinePoints: function() {
+        baselinePoints() {
             var ratio = this.$parent.getRatio();
             function ptToStr(pt) {    
                 return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
@@ -232,19 +228,32 @@ var visuLine = Vue.extend({
             return 'M '+this.line.baseline.map(pt => ptToStr(pt)).join(' L ');
         }
     }
-        
 });
 
 var VisuPanel = BasePanel.extend({
     data: function() { return {
-        editLine: null,
+        editLine: null
     };},
     components: {
         'visuline': visuLine,
     },
-    mounted: function() {
+    mounted() {
         let ratio = this.getRatio();
         this.$el.setAttribute('height', Math.round(this.part.image.size[1]*ratio));
-        // zoom.register(this.$el.querySelector('svg'), {map: true});
+        this.$parent.zoom.register(this.$el.querySelector('svg'), {map: true});
+    },
+    methods: {
+        editNext() {
+            index = this.part.lines.indexOf(this.editLine);
+            if(index < this.part.lines.length - 1) {
+                this.editLine = this.part.lines[index + 1];
+            }
+        },
+        editPrevious() {
+            index = this.part.lines.indexOf(this.editLine);
+            if(index >= 1) {
+                this.editLine = this.part.lines[index - 1];
+            }
+        }
     }
 });
