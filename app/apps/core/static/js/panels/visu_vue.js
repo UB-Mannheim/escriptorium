@@ -26,7 +26,6 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             $(this.$el).modal('hide');
         },
         computeStyles() {
-            if (!this.line) return;
             // this.zoom.reset();
             // needs to be shown BEFORE doing calculations!
             $(this.$el).modal('show');
@@ -45,8 +44,8 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             
             // we use the same same vertical context horizontaly
             let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
-            
-            var MAX_HEIGHT = Math.max(25, (document.body.clientHeight-400) / 3);
+
+            var MAX_HEIGHT = Math.round(Math.max(25, (document.body.clientHeight-200) / 3));
             let lineHeight = Math.max(10, Math.round(height*ratio));
             if (lineHeight > MAX_HEIGHT) {
                 // change the ratio so that the image can not get too big
@@ -57,7 +56,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             let visuHeight = lineHeight + 2*context;
             
             modalImgContainer.style.height = visuHeight+'px';
-            img.style.width = this.$parent.part.image.size[0] +'px';
+            img.style.width = this.$parent.part.image.size[0]*ratio +'px';
             
             let left = Math.round(minx*ratio)-context;
             let top = Math.round(miny*ratio)-context;
@@ -86,6 +85,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
                 let lineWidth = width*ratio;
                 var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
                 scaleX = Math.max(0.2, scaleX);
+                scaleX = Math.min(2, scaleX);
                 input.style.transform = 'scaleX('+ scaleX +')';
                 input.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)'; // fit in the container
             } else {
@@ -99,8 +99,9 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             // Overlay
             let overlay = modalImgContainer.querySelector('.overlay');
             if (this.line.mask) {
-                let maskPoints = this.line.mask.map(pt => Math.round(pt[0]*ratio-left)+ ' '+
-                                                    Math.round(pt[1]*ratio-top)).join(',');
+                let maskPoints = this.line.mask.map(
+                    pt => Math.round(pt[0]*ratio-left)+ ' '+
+                          Math.round(pt[1]*ratio-top)).join(',');
                 overlay.querySelector('polygon').setAttribute('points', maskPoints);
                 overlay.style.display = 'block';
             } else {
@@ -137,12 +138,10 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
 
 var visuLine = Vue.extend({
     props: ['line'],
-    updated: function() {
-        this.$nextTick(function () { this.reset(); });
+    updated() {
+        this.$nextTick(this.reset);
     },
     methods: {
-        getPolyElement() { return this.polyElement},
-        getPathElement() { return this.pathElement},
         computeLineHeight() {
             let lineHeight;
             if (this.line.mask) {
@@ -169,7 +168,7 @@ var visuLine = Vue.extend({
             if (content) {
                 this.polyElement.setAttribute('stroke', 'none');
                 this.pathElement.setAttribute('stroke', 'none');
-
+                
                 // adjust the text length to fit in the box
                 let textLength = this.textElement.getComputedTextLength();
                 let pathLength = this.pathElement.getTotalLength();
@@ -238,9 +237,10 @@ var VisuPanel = BasePanel.extend({
         'visuline': visuLine,
     },
     mounted() {
-        let ratio = this.getRatio();
-        this.$el.setAttribute('height', Math.round(this.part.image.size[1]*ratio));
-        this.$parent.zoom.register(this.$el.querySelector('svg'), {map: true});
+        // wait for the element to be rendered
+        Vue.nextTick(function() {
+            this.$parent.zoom.register(this.$el.querySelector('#visu-zoom-container'), {map: true});
+        }.bind(this));
     },
     methods: {
         editNext() {

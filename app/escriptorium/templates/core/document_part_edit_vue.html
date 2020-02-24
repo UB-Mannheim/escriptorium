@@ -5,11 +5,11 @@
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_info %}
-  <span id="part-title" v-if="loaded">${part.title} - ${part.filename} - (${imageSize})</span>
-  <span class="loaded" v-if="!loaded">{% trans "Loading&#8230;" %}</span>
+  <span id="part-title" v-if="part">${part.title} - ${part.filename} - (${imageSize})</span>
+  <span class="loading" v-if="!part">{% trans "Loading&#8230;" %}</span>
 </div>
 <div class="nav-item ml-auto mr-auto">
-  <select v-if="loaded" v-model="selectedTranscription" id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
+  <select v-model="selectedTranscription" id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
     {% for transcription in document.transcriptions.all %}
     <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
     {% endfor %}
@@ -27,9 +27,9 @@
 {% block tab_content %}
 <div class="col-sides">
   {% if document.read_direction == 'rtl' %}
-  <a id="next-part" v-if="part.next" href="#" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  <a id="next-part" v-if="hasNext()" href="#" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
   {% else %}
-  <a id="prev-part" v-if="part.previous" href="#" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  <a id="prev-part" v-if="hasPrevious()" href="#" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
   {% endif %}
   <div>
     <button id="zoom-reset" v-on:click="resetZoom" class="btn btn-sm btn-info" title="{% trans "Reset zoom." %}"><i class="fas fa-search-minus"></i></button>
@@ -37,11 +37,11 @@
   </div>
 </div>
 
-<SourcePanel v-if="loaded" v-bind:part="part" inline-template>
+<SourcePanel v-bind:part="part" inline-template>
   <div class="col panel">
-    <div>tools pano 1</div>
-    <div>
-      <img class="panel-img" v-bind:src="imageSrc"/>
+    <div class="tools"><i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i></div>
+    <div id="source-zoom-container" class="panel-content">
+      <img v-if="part" class="panel-img" v-bind:src="imageSrc"/>
       <div class="overlay panel-overlay">
         <svg width="100%" height="100%">
           <defs>
@@ -57,11 +57,11 @@
   </div>
 </SourcePanel>
 
-<VisuPanel v-if="loaded"  v-bind:part="part" inline-template>
+<VisuPanel v-bind:part="part" inline-template>
   <div class="col panel" >
-    <div>tools pano 2</div>
-    <div class="h-100">
-      <svg class="w-100 h-100">
+    <div class="tools"><i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i></div>
+    <div id="visu-zoom-container" class="panel-content h-100">
+      <svg v-if="part" class="w-100 h-100">
         <visuline inline-template v-for="line in part.lines" v-bind:line="line" v-bind:key="line.id">
           <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
             <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
@@ -99,7 +99,7 @@
                     <defs>
                       <mask id="modal-overlay">
                         <rect width="100%" height="100%" fill="white"/>
-                        <polygon v-bind:points="line.maskPoints"/>
+                        <polygon points=""/>
                       </mask>
                     </defs>
                     <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#modal-overlay)" />
@@ -127,9 +127,9 @@
 
 <div class="col-sides">
   {% if document.read_direction == 'rtl' %}
-  <a id="prev-part" v-if="part.previous" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  <a id="prev-part" v-if="hasPrevious()" v-on:click="getPrevious" href="#" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
   {% else %}
-  <a id="next-part" v-if="part.next" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  <a id="next-part" v-if="hasNext()" v-on:click="getNext" href="#" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
   {% endif %}
 </div>
 {% endblock %}

@@ -5,13 +5,7 @@ var partVM = new Vue({
     el: "#part-edit",
     delimiters: ["${","}"],
     data: {
-        part: {
-            name: "",
-            filename: "",
-            image: null,
-            lines: []
-        },
-        loaded: false,
+        part: null,
         selectedTranscription: document.getElementById('document-transcriptions').value,
         zoom: new WheelZoom()
     },
@@ -19,7 +13,7 @@ var partVM = new Vue({
         'sourcepanel': SourcePanel,
         'visupanel': VisuPanel
     },
-    mounted() {
+    created() {
         this.fetch();
         this.$on('update:transcription', function(lineTranscription) {
             this.pushTranscription(lineTranscription);
@@ -73,12 +67,17 @@ var partVM = new Vue({
                 },
                 body: JSON.stringify(lineTranscription)
             })
-            .then( (response) => { 
-                console.log(response);
-            });
+            .then((response)=>response.json())
+            .then((data) => {
+                lineTranscription.pk = data.pk;
+                lineTranscription.content = data.content;
+                lineTranscription.versions = data.versions;
+            }).catch(function(error) {
+                console.log('couldnt update transcription!', error);
+            }.bind(this));
         },
         
-        loadTranscriptions(transId) {
+        loadTranscriptions() {
             let getNext = function(page) {
                 let uri = this.getApiRoot() + 'transcriptions/?transcription='+this.selectedTranscription+'&page=' + page;
                 fetch(uri)
@@ -91,6 +90,7 @@ var partVM = new Vue({
                             // use Vue.set or the transcription won't be watched.
                             Vue.set(line, 'transcription', lt);
                         } else {
+                            // create an empty transcription
                             Vue.set(line, 'transcription', {
                                 line: line.pk,
                                 transcription: this.selectedTranscription,
@@ -109,22 +109,22 @@ var partVM = new Vue({
              .then((response)=>response.json())
              .then(function(data) {
                  this.part = data;
-                 this.loaded = true;
                  this.loadTranscriptions();
              }.bind(this))
-             .catch(function(response, data) {
-                console.log('damn');
+                .catch(function(response, data) {
+                    console.log('couldnt fetch data!');
              }.bind(this));
         },
-        
+        hasPrevious() { return this.part && this.part.previous !== null; },
+        hasNext() { return this.part && this.part.next !== null; },
         getPrevious() {
-            if (this.loaded && this.part.previous) {
+            if (this.part && this.part.previous) {
                 PART_ID = this.part.previous;
                 this.fetch();
             }
         },
         getNext() {
-            if (this.loaded && this.part.next) {
+            if (this.part && this.part.next) {
                 PART_ID = this.part.next;
                 this.fetch();
             }
