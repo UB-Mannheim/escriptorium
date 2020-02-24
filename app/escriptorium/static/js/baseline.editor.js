@@ -377,8 +377,7 @@ class Segmenter {
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = 0;
         this.canvas.style.left = 0;
-        this.canvas.style.width = this.img.width;
-        this.canvas.style.height = this.img.height;
+
 
         // paper.js helpers
         this.inactiveLayerOpacity = inactiveLayerOpacity;
@@ -577,8 +576,10 @@ class Segmenter {
                 }
             } else if (event.keyCode == 67) { // C
                 this.spliting = !this.spliting;
-                this.splitBtn.classList.toggle('btn-warning');
-                this.splitBtn.classList.toggle('btn-success');
+                if (this.splitBtn) {
+                    this.splitBtn.classList.toggle('btn-warning');
+                    this.splitBtn.classList.toggle('btn-success');
+                }
                 this.setCursor();
             } else if (event.keyCode == 74) { // J (for join)
                 this.mergeSelection();
@@ -671,6 +672,9 @@ class Segmenter {
         
         // make sure we capture clicks before the img
         this.canvas.style.zIndex = this.img.style.zIndex + 1;
+
+        this.canvas.style.width = this.img.width;
+        this.canvas.style.height = this.img.height;
         
         var tool = new Tool();
         this.setColors(this.img);
@@ -1311,8 +1315,10 @@ class Segmenter {
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
             this.linesLayer.opacity = 1;
         }
-        this.toggleRegionModeBtn.classList.toggle('btn-info');
-        this.toggleRegionModeBtn.classList.toggle('btn-success');
+        if (this.toggleRegionModeBtn) {
+            this.toggleRegionModeBtn.classList.toggle('btn-info');
+            this.toggleRegionModeBtn.classList.toggle('btn-success');
+        }
     }
     
     showContextMenu() {
@@ -1785,10 +1791,10 @@ class Segmenter {
         }
         
         // set the inputs
-        this.baselinesColorInput.value = this.baselinesColor;
-        this.evenMasksColorInput.value = this.evenMasksColor;
-        this.oddMasksColorInput.value = this.oddMasksColor;
-        this.dirHintColorInput.value = this.directionHintColor;
-        this.regionColorInput.value = this.regionColor;
+        if(this.baselinesColorInput) this.baselinesColorInput.value = this.baselinesColor;
+        if(this.evenMasksColorInput) this.evenMasksColorInput.value = this.evenMasksColor;
+        if(this.oddMasksColorInput) this.oddMasksColorInput.value = this.oddMasksColor;
+        if(this.dirHintColorInput) this.dirHintColorInput.value = this.directionHintColor;
+        if(this.regionColorInput) this.regionColorInput.value = this.regionColor;
     }
 }

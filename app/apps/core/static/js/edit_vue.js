@@ -11,12 +11,34 @@ var partVM = new Vue({
     },
     components: {
         'sourcepanel': SourcePanel,
+        'segmentationpanel': SegPanel,
         'visupanel': VisuPanel
     },
     created() {
         this.fetch();
+        // bind all events emited from panels and such
         this.$on('update:transcription', function(lineTranscription) {
             this.pushTranscription(lineTranscription);
+        }.bind(this));
+        
+        this.$on('create:line', function(line, cb) {
+            this.createLine(line, cb);
+        }.bind(this));
+        this.$on('update:line', function(line, cb) {
+            this.updateLine(line, cb);
+        }.bind(this));
+        this.$on('delete:line', function(linePk, cb) {
+            this.deleteLine(linePk, cb);
+        }.bind(this));
+
+        this.$on('create:region', function(region, cb) {
+            this.createRegion(region, cb);
+        }.bind(this));
+        this.$on('update:region', function(region, cb) {
+            this.updateRegion(region, cb);
+        }.bind(this));
+        this.$on('delete:region', function(regionPk, cb) {
+            this.deleteLine(regionPk, cb);
         }.bind(this));
     },
     computed: {
@@ -57,16 +79,7 @@ var partVM = new Vue({
                 uri = this.getApiRoot() + 'transcriptions/';
                 method = "post";
             }
-            fetch(uri, {
-                method: method,
-                credentials: "same-origin",
-                headers: {
-                    "X-CSRFToken": Cookies.get("csrftoken"),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(lineTranscription)
-            })
+            this.push(uri, lineTranscription, method=method)
             .then((response)=>response.json())
             .then((data) => {
                 lineTranscription.pk = data.pk;
@@ -103,7 +116,113 @@ var partVM = new Vue({
             }.bind(this);
             getNext(1);
         },
-        
+
+        createLine(line, callback) {
+            let uri = this.getApiRoot() + 'lines/';
+            data = {
+                document_part: this.part.pk,
+                baseline: line.baseline,
+                mask: line.mask,
+                block: line.region
+            };
+            this.push(uri, data, method="post")
+                .then((response) => response.json())
+                .then(function(data) {
+                    this.part.lines.push(data);
+                    callback(data);
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt create line', error)
+                });
+        },
+        updateLine(line, callback) {
+            let uri = this.getApiRoot() + 'lines/' + line.pk + '/';
+            data = {
+                document_part: this.part.pk,
+                baseline: line.baseline,
+                mask: line.mask,
+                block: line.region
+            };
+            this.push(uri, data, method="put")
+                .then((response) => response.json())
+                .then(function(data) {
+                    let index = this.part.lines.findIndex(l=>l.pk==line.pk);
+                    this.part.lines[index].baseline = data.baseline;
+                    this.part.lines[index].mask = data.mask;
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt update line', error)
+                });
+        },
+        deleteLine(linePk, callback) {
+            let uri = this.getApiRoot() + 'lines/' + linePk;
+            this.push(uri, {}, method="delete")
+                .then(function(data) {
+                    let index = this.part.lines.findIndex(l=>l.pk==linePk);
+                    Vue.delete(this.part.lines, index);
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt delete line #', linePk)
+                });
+        },
+
+        createRegion(region, callback) {
+            let uri = this.getApiRoot() + 'blocks/';
+            data = {
+                document_part: this.part.pk,
+                box: region.polygon
+            };
+            this.push(uri, data, method="post")
+                .then((response) => response.json())
+                .then(function(data) {
+                    this.part.blocks.push(data);
+                    callback(data);
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt create region', error)
+                });
+        },
+        updateRegion(region, callback) {
+            let uri = this.getApiRoot() + 'blocks/' + region.pk + '/';
+            data = {
+                document_part: this.part.pk,
+                box: region.polygon
+            };
+            this.push(uri, data, method="put")
+                .then((response) => response.json())
+                .then(function(data) {
+                    let index = this.part.blocks.findIndex(l=>l.pk==region.pk);
+                    this.part.blocks[index].box = data.polygon;
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt update region', error)
+                });
+        },
+        deleteRegion(regionPk, callback) {
+            let uri = this.getApiRoot() + 'regions/' + regionPk;
+            this.push(uri, {}, method="delete")
+                .then(function(data) {
+                    let index = this.part.blocks.findIndex(b=>b.pk==regionPk);
+                    Vue.delete(this.part.blocks, index);
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt delete region #', regionPk)
+                });
+        },
+
+        push(uri, data, method="post") {
+            return fetch(uri, {
+                method: method,
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": Cookies.get("csrftoken"),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });    
+        },
+            
         fetch() {
             fetch(this.getApiRoot())
              .then((response)=>response.json())

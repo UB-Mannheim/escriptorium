@@ -174,7 +174,7 @@ var visuLine = Vue.extend({
                 let pathLength = this.pathElement.getTotalLength();
                 if (textLength && pathLength) {
                     this.textElement.setAttribute('textLength', pathLength+'px');
-                }                
+                }
             } else {
                 // TODO: not dry
                 this.polyElement.setAttribute('stroke', 'lightgrey');
@@ -216,6 +216,7 @@ var visuLine = Vue.extend({
             return 'textPath'+this.line.pk;
         },
         maskPoints() {
+            if (this.line.mask === null) return '';
             let ratio = this.$parent.getRatio();
             return this.line.mask.map(pt => Math.round(pt[0]*ratio)+ ' '+Math.round(pt[1]*ratio)).join(',');
         },
@@ -239,7 +240,8 @@ var VisuPanel = BasePanel.extend({
     mounted() {
         // wait for the element to be rendered
         Vue.nextTick(function() {
-            this.$parent.zoom.register(this.$el.querySelector('#visu-zoom-container'), {map: true});
+            this.$parent.zoom.register(this.$el.querySelector('#visu-zoom-container'),
+                                       {map: true});
         }.bind(this));
     },
     methods: {

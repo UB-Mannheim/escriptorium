@@ -39,9 +39,11 @@
 
 <SourcePanel v-bind:part="part" inline-template>
   <div class="col panel">
-    <div class="tools"><i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i></div>
+    <div class="tools">
+      <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
+    </div>
     <div id="source-zoom-container" class="panel-content">
-      <img v-if="part" class="panel-img" v-bind:src="imageSrc"/>
+      <img class="panel-img" v-bind:src="imageSrc"/>
       <div class="overlay panel-overlay">
         <svg width="100%" height="100%">
           <defs>
@@ -56,6 +58,34 @@
     </div>
   </div>
 </SourcePanel>
+
+<SegmentationPanel v-bind:part="part" inline-template>
+  <div class="col panel">
+    <div class="tools">
+      <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+    </div>
+    <div id="seg-zoom-container">
+      <img class="panel-img" v-bind:src="imageSrc"/>
+      <div id="segmentation-overlay" class="overlay panel-overlay">
+        <svg width="100%" height="100%">
+          <defs>
+            <mask id="seg-overlay">
+              <rect width="100%" height="100%" fill="white"/>
+              <polygon points=""/>
+            </mask>
+          </defs>
+          <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#seg-overlay)" />
+        </svg>
+      </div>
+    </div>
+    <button id="be-link-region" title="{% trans "Link selected lines to (the first detected) background region." %}" class="hide btn btn-info m-1 fas fa-link"></button>
+    <button id="be-unlink-region" title="{% trans "Unlink selected lines from their region." %}" class="hide btn btn-info m-1 fas fa-unlink"></button>
+    <button id="be-delete-point" title="{% trans "Delete selected points. (ctrl+suppr)" %}" class="hide btn btn-warning m-1 fas fa-trash"></button>
+    <button id="be-merge-selection" title="{% trans "Join selected lines. (J)" %}" class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
+    <button id="be-reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
+    <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
+  </div>
+</SegmentationPanel>
 
 <VisuPanel v-bind:part="part" inline-template>
   <div class="col panel" >
@@ -165,6 +195,7 @@
     <script src="https://unpkg.com/http-vue-loader"></script>
     <script type="text/javascript" src="{% static 'js/panels/base_vue.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/panels/source_vue.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/panels/seg_vue.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/panels/visu_vue.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit_vue.js' %}"></script>
 
