@@ -4,23 +4,26 @@ var SegPanel = BasePanel.extend({
         Vue.nextTick(function() {
             this.$parent.zoom.register(this.$el.querySelector('#seg-zoom-container'),
                                        {map: true});
-            // let beSettings = userProfile.get('baseline-editor') || {};
+            let beSettings = userProfile.get('baseline-editor') || {};
             this.$img = this.$el.querySelector('img');
             this.segmenter = new Segmenter(this.$img, {
                 delayInit:true,
                 idField:'pk',
                 defaultTextDirection: TEXT_DIRECTION.slice(-2),
-                // scale: this.getRatio(),
-                // baselinesColor: beSettings['color-baselines'] || null,
-                // evenMasksColor: beSettings['color-even-masks'] || null,
-                // oddMasksColor: beSettings['color-odd-masks'] || null,
-                // directionHintColor: beSettings['color-directions'] || null,
-                // regionColor: beSettings['color-regions'] || null
-
+                baselinesColor: beSettings['color-baselines'] || null,
+                evenMasksColor: beSettings['color-even-masks'] || null,
+                oddMasksColor: beSettings['color-odd-masks'] || null,
+                directionHintColor: beSettings['color-directions'] || null,
+                regionColor: beSettings['color-regions'] || null
             });
             // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
             let canvas = this.segmenter.canvas;
             canvas.parentNode.parentNode.appendChild(canvas);
+
+            // already mounted = opening the panel after page load
+            if (this.part) {
+                this.onShow();
+            }
             
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
@@ -61,22 +64,25 @@ var SegPanel = BasePanel.extend({
                             data.obj.context.pk = resp.pk;
                         });
                     }                    
-                }
+                }                
             }.bind(this));
         }.bind(this));
     },
     updated() {
         if (this.part) {
+            this.onShow();
+        }
+    },
+    methods: {
+        onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded
                 if (this.$img.complete) { this.init(); }
                 else { this.$img.addEventListener('load', this.init.bind(this), {once: true}); }
             }.bind(this));
-        }
-    },
-    methods: {
+        },
         init() {
-            // this.segmenter.empty();
+            this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
             let ratio = this.$img.naturalWidth / this.part.image.size[0];
             this.segmenter.scale = ratio;
@@ -102,6 +108,10 @@ var SegPanel = BasePanel.extend({
                     this.segmenter.refresh();
                 }
             }.bind(this));
+        },
+        updateView() {
+            // might not be mounted yet
+            if (this.segmenter) this.segmenter.refresh();
         }
     }
 });

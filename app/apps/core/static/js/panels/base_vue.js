@@ -1,5 +1,11 @@
 var BasePanel = Vue.extend({
     props: ['part'],
+    data() {
+        return {ratio: 1};
+    },
+    updated() {
+        this.refresh();
+    },
     computed: {
         imageSrc() {
             return (this.part !== null
@@ -9,7 +15,15 @@ var BasePanel = Vue.extend({
     },
     methods: {
         getRatio() {
-            return this.$el.scrollWidth / this.part.image.size[0];
-        }
+            return this.ratio;
+        },
+        setRatio() {
+            this.ratio = this.$el.scrollWidth / this.part.image.size[0];
+        },
+        refresh() {
+            this.setRatio();
+            this.updateView();
+        },
+        updateView() {}
     }
 });

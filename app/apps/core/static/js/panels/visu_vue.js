@@ -137,7 +137,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
 });
 
 var visuLine = Vue.extend({
-    props: ['line'],
+    props: ['line', 'ratio'],
     updated() {
         this.$nextTick(this.reset);
     },
@@ -152,8 +152,7 @@ var visuLine = Vue.extend({
                     let j = (i+1) % poly.length; // loop back to 1
                     area += poly[i][0]*poly[j][1] - poly[j][0]*poly[i][1];
                 }
-                let ratio = this.$parent.getRatio();
-                area = Math.abs(area*ratio);
+                area = Math.abs(area*this.ratio);
                 lineHeight = area / this.pathElement.getTotalLength();
             } else {
                 lineHeight = 30;
@@ -162,7 +161,7 @@ var visuLine = Vue.extend({
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
         },
-
+        
         computeTextLength() {
             content = this.line.transcription && this.line.transcription.content;
             if (content) {
@@ -217,12 +216,11 @@ var visuLine = Vue.extend({
         },
         maskPoints() {
             if (this.line.mask === null) return '';
-            let ratio = this.$parent.getRatio();
-            return this.line.mask.map(pt => Math.round(pt[0]*ratio)+ ' '+Math.round(pt[1]*ratio)).join(',');
+            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+ ' '+Math.round(pt[1]*this.ratio)).join(',');
         },
         baselinePoints() {
-            var ratio = this.$parent.getRatio();
-            function ptToStr(pt) {    
+            var ratio = this.ratio;
+            function ptToStr(pt) {
                 return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
             }
             return 'M '+this.line.baseline.map(pt => ptToStr(pt)).join(' L ');
@@ -231,7 +229,7 @@ var visuLine = Vue.extend({
 });
 
 var VisuPanel = BasePanel.extend({
-    data: function() { return {
+    data() { return  {
         editLine: null
     };},
     components: {
@@ -256,6 +254,9 @@ var VisuPanel = BasePanel.extend({
             if(index >= 1) {
                 this.editLine = this.part.lines[index - 1];
             }
+        },
+        updateView() {
+            this.$el.querySelector('svg').style.height = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         }
     }
 });

@@ -7,7 +7,12 @@ var partVM = new Vue({
     data: {
         part: null,
         selectedTranscription: document.getElementById('document-transcriptions').value,
-        zoom: new WheelZoom()
+        zoom: new WheelZoom(),
+        show: {
+            source: userProfile.get('source-panel'),
+            segmentation: userProfile.get('segmentation-panel'),
+            visualisation: userProfile.get('visualisation-panel')
+        }
     },
     components: {
         'sourcepanel': SourcePanel,
@@ -45,14 +50,18 @@ var partVM = new Vue({
         imageSize() {
             return this.part.image.size[0]+'x'+this.part.image.size[1];
         },
+        openedPanels() {
+            return [this.show.source,
+                    this.show.segmentation,
+                    this.show.visualisation].filter(p=>p===true);
+        },
         zoomScale: {
             get() {
                 return this.zoom.scale || 1;
             },
             set(newValue) {
-                // TODO: divide by number of openent panels
-                let target = {x: this.$el.clientWidth/2/2-this.zoom.pos.x,
-                              y: this.$el.clientHeight/2/2-this.zoom.pos.y};
+                let target = {x: this.$el.clientWidth/this.openedPanels.length/2-this.zoom.pos.x,
+                              y: this.$el.clientHeight/this.openedPanels.length/2-this.zoom.pos.y};
                 this.zoom.zoomTo(target, parseFloat(newValue)-this.zoom.scale);
             }
         }
@@ -60,6 +69,13 @@ var partVM = new Vue({
     watch: {
         selectedTranscription(newTrans, oldTrans) {
             this.loadTranscriptions();
+        },
+        openedPanels(n, o) {
+            // wait for css
+            Vue.nextTick(function() {
+                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+            }.bind(this));
         }
     },
     methods: {
@@ -69,7 +85,19 @@ var partVM = new Vue({
         getApiRoot() {
             return '/api/documents/' + DOCUMENT_ID + '/parts/' + PART_ID + '/';
         },
-
+        toggleSource() {
+            this.show.source =! this.show.source;
+            userProfile.set('source-panel', this.show.source);
+        },
+        toggleSegmentation() {
+            this.show.segmentation =! this.show.segmentation;
+            userProfile.set('segmentation-panel', this.show.segmentation);
+        },
+        toggleVisualisation() {
+            this.show.visualisation =! this.show.visualisation;
+            userProfile.set('visualisation-panel', this.show.visualisation);
+        },
+        
         pushTranscription(lineTranscription) {
             let uri, method;
             if (lineTranscription.pk) {

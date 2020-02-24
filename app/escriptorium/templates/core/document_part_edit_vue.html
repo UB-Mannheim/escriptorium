@@ -18,9 +18,9 @@
 
 {% block extra_nav %}
 <div class="nav-item ml-auto">
-  <button id="source-panel-btn" type="button" data-target="source" class="open-panel nav-item btn btn-secondary" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
-  <button id="seg-panel-btn" type="button" data-target="seg" class="open-panel nav-item btn btn-secondary" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
-  <button id="trans-panel-btn" type="button" data-target="trans" class="open-panel nav-item btn btn-secondary" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
+  <button @click="toggleSource" type="button" data-target="source" class="open-panel nav-item btn" v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button @click="toggleSegmentation" type="button" data-target="seg" class="open-panel nav-item btn" v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
+  <button @click="toggleVisualisation" type="button" data-target="trans" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
 </div>
 {% endblock %}
   
@@ -37,7 +37,7 @@
   </div>
 </div>
 
-<SourcePanel v-bind:part="part" inline-template>
+<SourcePanel v-if="show.source" v-bind:part="part" ref="sourcePanel" inline-template>
   <div class="col panel">
     <div class="tools">
       <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
@@ -59,10 +59,63 @@
   </div>
 </SourcePanel>
 
-<SegmentationPanel v-bind:part="part" inline-template>
+<keep-alive>
+<SegmentationPanel v-if="show.segmentation" v-bind:part="part" ref="segPanel" inline-template>
   <div class="col panel">
     <div class="tools">
       <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+
+      <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
+      <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
+
+      <div class="btn-group">
+        <button id="toggle-settings" title="{% trans "Editor settings." %}" class="btn btn-info ml-3 fas fa-cogs dropdown-toggle" type="button" class="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+        <div id="be-settings-menu" class="dropdown-menu">
+          <div><input id="be-bl-color" type="color"/> <label for="be-even-bl-color">{% trans "Baselines" %}</label></div>
+          <div><input id="be-even-mask-color" type="color"/> <label for="be-odd-bl-color">{% trans "Even Masks" %}</label></div>
+          <div><input id="be-odd-mask-color" type="color"/> <label for="be-odd-mask-color">{% trans "Odd Masks" %}</label></div>
+          <div><input id="be-dir-color" type="color"/> <label for="be-dir-color">{% trans "Direction hints" %}</label></div>
+          <div><input id="be-reg-color" type="color"/> <label for="be-reg-color">{% trans "Regions" %}</label></div>
+          <!-- <div class="dropdown-divider"></div> -->
+          <!-- {% trans "Line thickness" %}<input type="slider"/> -->
+        </div>
+      </div>
+      <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info fas fa-adjust hide" autocomplete="off"></button>
+      <button id="be-toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info fas fa-th-large" autocomplete="off"></button>
+      <button id="be-toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
+      <button id="be-toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
+      <button id="reset-masks" title="{% trans "Reset and Recalculate the mask of all lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
+      <button id="be-split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
+
+      {# help #}
+      <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help"></button>
+      <div class="alert alert-primary help-text hide">
+        <button type="button" class="close" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div>
+          {% blocktrans %}
+          <p>
+            <b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to <u>finish</u> it.
+            <br/>You can keep the mouse button pressed for free drawing.
+            <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.
+          </p>
+          <p>
+            <b>Left click</b> on a line to selects it, then you can drag it's closest control point.
+            <br/><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.
+            <br/>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons.
+          </p>
+          <p>
+            <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,
+            <b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).
+            <br/><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).
+
+            <br/>The red trash <i class="text-danger fas fa-trash"></i> button allows to <b>delete</b> selected <b>lines/regions</b>,
+            <br/>The yellow trash button <i class="text-warning fas fa-trash"></i> only <b>deletes</b> selected control <b>points</b>.
+          </p>
+          {% endblocktrans %}
+        </div>
+      </div>
     </div>
     <div id="seg-zoom-container">
       <img class="panel-img" v-bind:src="imageSrc"/>
@@ -86,13 +139,14 @@
     <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
   </div>
 </SegmentationPanel>
+</keep-alive>
 
-<VisuPanel v-bind:part="part" inline-template>
-  <div class="col panel" >
+<VisuPanel v-if="show.visualisation" v-bind:part="part" ref="visuPanel" inline-template>
+  <div class="col panel">
     <div class="tools"><i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i></div>
     <div id="visu-zoom-container" class="panel-content h-100">
-      <svg v-if="part" class="w-100 h-100">
-        <visuline inline-template v-for="line in part.lines" v-bind:line="line" v-bind:key="line.id">
+      <svg v-if="part" class="w-100">
+        <visuline inline-template v-for="line in part.lines" v-bind:ratio="ratio" v-bind:line="line" v-bind:key="line.id">
           <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
             <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
             <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>

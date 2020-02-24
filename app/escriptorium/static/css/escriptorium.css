@@ -321,10 +321,10 @@ form.inline-form {
     margin: 0 15px;
 }
 
-#source-panel, #source-tools, #binar-panel, #seg-panel,
-#binar-tools, #seg-tools, #trans-panel, #trans-tools {
-    display: none;
+.tools {
+    height: 35px;
 }
+
 #trans-panel .zoom-container {
     /* height: 100%; */
 }
@@ -383,7 +383,7 @@ i.panel-icon {
 }
 
 .panel .panel-img {
-    max-width: 100%;
+    width: 100%;
 }
 
 .panel .overlay {
