@@ -100,8 +100,8 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             let overlay = modalImgContainer.querySelector('.overlay');
             if (this.line.mask) {
                 let maskPoints = this.line.mask.map(
-                    pt => Math.round(pt[0]*ratio-left)+ ' '+
-                          Math.round(pt[1]*ratio-top)).join(',');
+                    pt => Math.round(pt[0]*ratio-left)+ ','+
+                          Math.round(pt[1]*ratio-top)).join(' ');
                 overlay.querySelector('polygon').setAttribute('points', maskPoints);
                 overlay.style.display = 'block';
             } else {
@@ -216,7 +216,7 @@ var visuLine = Vue.extend({
         },
         maskPoints() {
             if (this.line.mask === null) return '';
-            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(',');
+            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         baselinePoints() {
             var ratio = this.ratio;

@@ -53,6 +53,7 @@
               <polygon points=""/>
             </mask>
           </defs>
+          
           <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#source-overlay)" />
         </svg>
       </div>
@@ -158,7 +159,7 @@
     <div id="visu-zoom-container" class="panel-content h-100">
       <svg v-if="part" class="w-100">
         <visuline inline-template v-for="line in part.lines" v-bind:ratio="ratio" v-bind:line="line" v-bind:key="line.id">
-          <g v-on:mouseover="showOverlay" v-on2:mouseleave="hideOverlay" v-on:click="edit">
+          <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
             <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
             <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
             <text lengthAdjust="spacingAndGlyphs">

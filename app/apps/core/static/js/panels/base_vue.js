@@ -18,7 +18,7 @@ var BasePanel = Vue.extend({
             return this.ratio;
         },
         setRatio() {
-            this.ratio = this.$el.scrollWidth / this.part.image.size[0];
+            this.ratio = this.$el.firstChild.clientWidth / this.part.image.size[0];
         },
         refresh() {
             this.setRatio();
