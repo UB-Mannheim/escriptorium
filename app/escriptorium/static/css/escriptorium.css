@@ -1,9 +1,9 @@
 body {
-    mind-height: 2000px;
-    padding: 10px;
-    padding-top: 70px;
-    max-width: 1800px;
     margin: auto;
+}
+
+section {
+    margin: 15px;
 }
 
 .hide {
@@ -21,11 +21,11 @@ body {
     margin: 0;
 }
 
-.container {
-  margin-right: auto;
-  margin-left: auto;
-  max-width: 1600px;
-}
+/* .container { */
+/*   margin-right: auto; */
+/*   margin-left: auto; */
+/*   max-width: 90%; */
+/* } */
 
 /* alerts */
 #alerts-container {
@@ -178,7 +178,7 @@ form.inline-form {
     color: var(--primary);
     text-shadow: 0 1px 0 #fff;
     background-color: transparent;
-    float: right;
+    /* float: right; */
     opacity: .5;
 }
 .help.open:hover {
@@ -323,6 +323,7 @@ form.inline-form {
 
 .tools {
     height: 35px;
+    margin-bottom: 5px;
 }
 
 #trans-panel .zoom-container {
@@ -387,7 +388,7 @@ i.panel-icon {
 }
 
 .panel .overlay {
-    display: none;
+    /* display: none; */
 }
 
 #modal-img-container {

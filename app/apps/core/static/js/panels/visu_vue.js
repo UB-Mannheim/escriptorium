@@ -216,7 +216,7 @@ var visuLine = Vue.extend({
         },
         maskPoints() {
             if (this.line.mask === null) return '';
-            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+ ' '+Math.round(pt[1]*this.ratio)).join(',');
+            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(',');
         },
         baselinePoints() {
             var ratio = this.ratio;

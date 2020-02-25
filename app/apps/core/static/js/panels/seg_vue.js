@@ -84,8 +84,7 @@ var SegPanel = BasePanel.extend({
         init() {
             this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
-            let ratio = this.$img.naturalWidth / this.part.image.size[0];
-            this.segmenter.scale = ratio;
+            this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
             this.segmenter.init();
             
             let regionMap = {};
