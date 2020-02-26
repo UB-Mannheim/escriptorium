@@ -11,7 +11,7 @@ var BasePanel = Vue.extend({
             return (this.part !== null
                     && (this.part.image.thumbnails.large
                         || this.part.image.uri));
-        }
+        },
     },
     methods: {
         getRatio() {

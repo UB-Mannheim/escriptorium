@@ -27,7 +27,7 @@ var SegPanel = BasePanel.extend({
             let canvas = this.segmenter.canvas;
             canvas.parentNode.parentNode.appendChild(canvas);
 
-            // already mounted = opening the panel after page load
+            // already mounted with a part = opening the panel after page load
             if (this.part) {
                 this.onShow();
             }
@@ -111,11 +111,11 @@ var SegPanel = BasePanel.extend({
         onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded
-                if (this.$img.complete) { this.init(); }
-                else { this.$img.addEventListener('load', this.init.bind(this), {once: true}); }
+                if (this.$img.complete) { this.initSegmenter(); }
+                else { this.$img.addEventListener('load', this.initSegmenter.bind(this), {once: true}); }
             }.bind(this));
         },
-        init() {
+        initSegmenter() {
             this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
             this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
