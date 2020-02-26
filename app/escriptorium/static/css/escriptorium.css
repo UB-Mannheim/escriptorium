@@ -375,7 +375,7 @@ i.panel-icon {
 .panel {
     overflow: hidden;
     width: 100%;
-    height: 100%;
+    /* height: 100%; */
 }
 
 .panel .content {
