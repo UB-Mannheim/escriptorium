@@ -131,6 +131,7 @@ class WheelZoom {
         this.events.addEventListener('wheelzoom.refresh', this.refresh.bind(this));
         
         let target = new zoomTarget(domElement, {map: map});
+        target.update(this.pos, this.scale);
         this.targets.push(target);
         if (!mirror) {
             // domElement.style.cursor = 'zoom-in';
