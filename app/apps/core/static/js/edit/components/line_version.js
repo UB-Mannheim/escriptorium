@@ -6,6 +6,9 @@ var LineVersion = Vue.extend({
     computed: {
         momentDate() {
             return moment.tz(this.version.created_at, this.timeZone);
+        },
+        versionContent() {
+            return this.version.data && this.version.data.content;
         }
     },
     methods: {

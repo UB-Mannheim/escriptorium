@@ -181,12 +181,12 @@ class LineTranscriptionViewSet(ModelViewSet):
         if transcription:
              qs = qs.filter(transcription=transcription)
         return qs
-
+    
     def create(self, request, document_pk=None, part_pk=None):
         response = super().create(request, document_pk=document_pk, part_pk=part_pk)
-        instance = self.get_object()
-        instance.line.document_part.calculate_progress()
-        instance.line.document_part.save()
+        document_part = DocumentPart.objects.get(pk=part_pk)
+        document_part.calculate_progress()
+        document_part.save()
         return response
 
     def update(self, request, document_pk=None, part_pk=None, pk=None):
