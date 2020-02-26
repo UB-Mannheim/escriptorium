@@ -473,6 +473,7 @@ class Segmenter {
         }
         this.showContextMenu();
     }
+    
     deleteSelectedSegments() {
         for (let i=this.selection.segments.length-1; i >= 0; i--) {
             let segment = this.selection.segments[i];

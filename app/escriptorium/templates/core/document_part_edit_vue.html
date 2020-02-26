@@ -43,19 +43,21 @@
     <div class="tools">
       <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
     </div>
-    <div id="source-zoom-container" class="panel-content">
-      <img class="panel-img" v-bind:src="imageSrc"/>
-      <div class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="source-overlay">
-              <rect width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          
-          <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
-        </svg>
+    <div class="content">
+      <div id="source-zoom-container" class="panel-content">
+        <img class="panel-img" v-bind:src="imageSrc"/>
+        <div class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="source-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            
+            <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -133,19 +135,21 @@
       <button id="be-reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
       <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
     </div>
-    
-    <div id="seg-zoom-container">
-      <img class="panel-img" v-bind:src="imageSrc"/>
-      <div id="segmentation-overlay" class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="seg-overlay">
-              <rect x="0" y="0" width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
-        </svg>
+
+    <div class="content">
+      <div id="seg-zoom-container">
+        <img class="panel-img" v-bind:src="imageSrc"/>
+        <div id="segmentation-overlay" class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="seg-overlay">
+                <rect x="0" y="0" width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -203,11 +207,9 @@
                 </div>
               </div>
               
-              <!-- <input type="hidden" name="transcription"/> -->
-              <!-- <input type="hidden" name="line"/> -->
               <div id="trans-input-container">
                 <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
-                <small v-if="line.transcription.version" class="form-text text-muted">
+                <small v-if="line.transcription.pk" class="form-text text-muted">
                   <span>by ${line.transcription.version_author} (${line.transcription.version_source})</span>
                   <span>on ${momentDate}</span>
                 </small>
@@ -220,7 +222,6 @@
               <div id="history" class="collapse">
                 <div class="d-flex flex-column">
                   <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
-                  <!-- use 'is' attribute to bypass a table bug -->
                   <LineVersion v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
                     <div class="d-flex flex-row justify-content-between">
                       <div class="">${ versionContent }</div>

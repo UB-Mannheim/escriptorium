@@ -20,7 +20,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
     },
     computed: {
         momentDate() {
-            return moment.tz(this.line.transcription.version_created_at, this.timeZone);
+            return moment.tz(this.line.transcription.version_updated_at, this.timeZone);
         },
         localTranscription: {
             get() {
