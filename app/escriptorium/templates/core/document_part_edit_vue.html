@@ -43,19 +43,21 @@
     <div class="tools">
       <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
     </div>
-    <div id="source-zoom-container" class="panel-content">
-      <img class="panel-img" v-bind:src="imageSrc"/>
-      <div class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="source-overlay">
-              <rect width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          
-          <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
-        </svg>
+    <div class="content">
+      <div id="source-zoom-container" class="panel-content">
+        <img class="panel-img" v-bind:src="imageSrc"/>
+        <div class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="source-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            
+            <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -133,19 +135,21 @@
       <button id="be-reverse-selection" title="{% trans "Reverse selected lines." %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
       <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
     </div>
-    
-    <div id="seg-zoom-container">
-      <img class="panel-img" v-bind:src="imageSrc"/>
-      <div id="segmentation-overlay" class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="seg-overlay">
-              <rect x="0" y="0" width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
-        </svg>
+
+    <div class="content">
+      <div id="seg-zoom-container">
+        <img class="panel-img" v-bind:src="imageSrc"/>
+        <div id="segmentation-overlay" class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="seg-overlay">
+                <rect x="0" y="0" width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
