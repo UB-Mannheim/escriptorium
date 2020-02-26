@@ -101,7 +101,8 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LineTranscription
-        fields = ('pk', 'line', 'transcription', 'content', 'versions')
+        fields = ('pk', 'line', 'transcription', 'content',
+                  'versions', 'version_author', 'version_source', 'version_updated_at')
         
     def cleanup(self, data):
         return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)

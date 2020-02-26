@@ -203,29 +203,37 @@
                 </div>
               </div>
               
-              <input type="hidden" name="transcription"/>
-              <input type="hidden" name="line"/>
-              <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
-
+              <!-- <input type="hidden" name="transcription"/> -->
+              <!-- <input type="hidden" name="line"/> -->
+              <div id="trans-input-container">
+                <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
+                <small v-if="line.transcription" class="form-text text-muted">
+                  <span>by ${line.transcription.version_author} (${line.transcription.version_source})</span>
+                  <span>on ${momentDate}</span>
+                </small>
+              </div>
+              
               <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
               <button v-if="line.transcription.pk" v-on:click="saveState" type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}">
                 <i class="fas fa-save"></i>
               </button>
-              <div id="history" class="collapse d-flex flex-column">
-                <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
-                <!-- use 'is' attribute to bypass a table bug -->
-                <VersionLine v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
-                  <div class="d-flex flex-row justify-content-between">
-                    <div class="">${ version.data.content }</div>
-                    <div class="">${ version.author } ( ${ version.source } )</div>
-                    <div class="">${ momentDate }</div>
-                    <div class="">
-                      <button v-on:click="loadState" class="btn btn-sm btn-info js-pull-state" title="{% trans "Load this state" %}">
-                        <i class="fas fa-file-upload"></i>
-                      </button>
+              <div id="history" class="collapse">
+                <div class="d-flex flex-column">
+                  <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
+                  <!-- use 'is' attribute to bypass a table bug -->
+                  <LineVersion v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
+                    <div class="d-flex flex-row justify-content-between">
+                      <div class="">${ version.data.content }</div>
+                      <div class="">${ version.author } ( ${ version.source } )</div>
+                      <div class="">${ momentDate }</div>
+                      <div class="">
+                        <button v-on:click="loadState" class="btn btn-sm btn-info js-pull-state" title="{% trans "Load this state" %}">
+                          <i class="fas fa-file-upload"></i>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </VersionLine>
+                  </LineVersion>
+                </div>
               </div>
             </div>
           </div>
@@ -274,12 +282,13 @@
     <!-- <script type="text/javascript" src="{% static 'js/edit.js' %}"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://unpkg.com/http-vue-loader"></script>
-    <script type="text/javascript" src="{% static 'js/panels/base_vue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/panels/source_vue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/panels/seg_vue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/panels/visu_vue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/edit_vue.js' %}"></script>
-
-    {% endcompress %}
+    <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/source_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/seg_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/line_version.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/visu_line.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/visu_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/part.js' %}"></script>
+{% endcompress %}
 {% endblock %}

@@ -1,4 +1,4 @@
-
+// TODO: use vuex for undo/redo?
 // var undoManager = new UndoManager();
 
 var partVM = new Vue({
