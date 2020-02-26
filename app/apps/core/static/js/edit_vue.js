@@ -25,6 +25,9 @@ var partVM = new Vue({
         this.$on('update:transcription', function(lineTranscription) {
             this.pushTranscription(lineTranscription);
         }.bind(this));
+        this.$on('update:transcription:new-version', function(line) {
+            this.pushVersion(line);
+        }.bind(this));
         
         this.$on('create:line', function(line, cb) {
             this.createLine(line, cb);
@@ -98,6 +101,19 @@ var partVM = new Vue({
             userProfile.set('visualisation-panel', this.show.visualisation);
         },
         
+        pushVersion(line) {
+            if(!line.transcription.pk) return;
+            uri = this.getApiRoot() + 'transcriptions/' + line.transcription.pk + '/new_version/';
+            this.push(uri, {}, method='post')
+                .then((response)=>response.json())
+                .then((data) => {
+                    line.transcription.versions.splice(0, 0, data);
+                })
+                .catch(function(error) {
+                    console.log('couldnt save transcription state!', error);
+                }.bind(this));
+        },
+        
         pushTranscription(lineTranscription) {
             let uri, method;
             if (lineTranscription.pk) {
@@ -113,7 +129,8 @@ var partVM = new Vue({
                 lineTranscription.pk = data.pk;
                 lineTranscription.content = data.content;
                 lineTranscription.versions = data.versions;
-            }).catch(function(error) {
+            })
+            .catch(function(error) {
                 console.log('couldnt update transcription!', error);
             }.bind(this));
         },
@@ -135,7 +152,8 @@ var partVM = new Vue({
                             Vue.set(line, 'transcription', {
                                 line: line.pk,
                                 transcription: this.selectedTranscription,
-                                content: ''
+                                content: '',
+                                versions: []
                             });
                         }
                     }

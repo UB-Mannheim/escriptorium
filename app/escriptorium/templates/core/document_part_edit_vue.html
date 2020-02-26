@@ -154,12 +154,12 @@
     <div class="tools"><i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i></div>
     <div id="visu-zoom-container" class="panel-content">
       <svg v-if="part" class="w-100">
-        <visuline inline-template v-for="line in part.lines" v-bind:ratio="ratio" v-bind:line="line" v-bind:key="line.id">
+        <visuline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk" inline-template>
           <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
             <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
             <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
             <text lengthAdjust="spacingAndGlyphs">
-              <textPath v-if="line.transcription" v-bind:href="'#' + textPathId">${line.transcription.content}</textPath>
+              <textPath v-bind:href="'#' + textPathId">${transcriptionContent}</textPath>
             </text>
           </g>
         </visuline>
@@ -202,13 +202,27 @@
               <input type="hidden" name="transcription"/>
               <input type="hidden" name="line"/>
               <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
-              <!-- <br> -->
-              <!-- <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a> -->
-              <!-- <button type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}"><i class="fas fa-save"></i></button> -->
-              <!-- <table id="history" class="table table-sm table-striped collapse"> -->
-              <!--   <thead><tr id="no-versions"><th>{% trans "History is empty." %}</th></tr></thead> -->
-              <!--   <tbody></tbody> -->
-              <!-- </table> -->
+
+              <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
+              <button v-if="line.transcription.pk" v-on:click="saveState" type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}">
+                <i class="fas fa-save"></i>
+              </button>
+              <div id="history" class="collapse d-flex flex-column">
+                <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
+                <!-- use 'is' attribute to bypass a table bug -->
+                <VersionLine v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
+                  <div class="d-flex flex-row justify-content-between">
+                    <div class="">${ version.data.content }</div>
+                    <div class="">${ version.author } ( ${ version.source } )</div>
+                    <div class="">${ momentDate }</div>
+                    <div class="">
+                      <button v-on:click="loadState" class="btn btn-sm btn-info js-pull-state" title="{% trans "Load this state" %}">
+                        <i class="fas fa-file-upload"></i>
+                      </button>
+                    </div>
+                  </div>
+                </VersionLine>
+              </div>
             </div>
           </div>
         </div>

@@ -181,7 +181,28 @@ class LineTranscriptionViewSet(ModelViewSet):
         if transcription:
              qs = qs.filter(transcription=transcription)
         return qs
-    
+
+    def create(self, request, document_pk=None, part_pk=None):
+        response = super().create(request, document_pk=document_pk, part_pk=part_pk)
+        instance = self.get_object()
+        instance.line.document_part.calculate_progress()
+        instance.line.document_part.save()
+        return response
+
+    def update(self, request, document_pk=None, part_pk=None, pk=None):
+        instance = self.get_object()
+        if (instance.version_author != request.user.username or
+            instance.version_source != settings.VERSIONING_DEFAULT_SOURCE):
+            try:
+                instance.new_version(author=request.user.username,
+                                     source=settings.VERSIONING_DEFAULT_SOURCE)
+            except NoChangeException:
+                # Note we can safely pass here
+                pass
+            else:
+                instance.save()
+        return super().update(request, document_pk=document_pk, part_pk=part_pk, pk=pk)
+        
     def get_serializer_class(self):
         lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
         class RuntimeSerializer(self.serializer_class):
@@ -192,7 +213,8 @@ class LineTranscriptionViewSet(ModelViewSet):
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
         try:
-            lt.new_version(author=request.user.username)
+            lt.new_version(author=request.user.username,
+                           source=settings.VERSIONING_DEFAULT_SOURCE)
             lt.save()
         except NoChangeException:
             return Response({'warning': 'No changes detected.'}, status=400)

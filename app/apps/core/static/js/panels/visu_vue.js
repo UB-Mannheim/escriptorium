@@ -1,5 +1,35 @@
+/* 
+Visual transcription panel (or visualisation panel)
+*/
+
+var VersionLine = Vue.extend({
+    props: ['version'],
+    created() {
+        this.timeZone = moment.tz.guess();
+    },
+    computed: {
+        momentDate() {
+            return moment.tz(this.version.created_at, this.timeZone);
+        }
+    },
+    methods: {
+        loadState() {
+            this.$parent.$emit('update:transcription:version', this.version);
+        }
+    }
+});
+
 var TranscriptionModal = Vue.component('transcriptionmodal', {
     props: ['line'],
+    components: {
+        'versionline': VersionLine
+    },
+    created() {
+        this.$on('update:transcription:version', function(version) {
+            this.line.transcription.content = version.data.content;
+            this.$parent.$parent.$emit('update:transcription', this.line.transcription);
+        }.bind(this));
+    },
     mounted() {
         this.computeStyles();
     },
@@ -24,6 +54,9 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
         close() {
             this.$parent.editLine = null;
             $(this.$el).modal('hide');
+        },
+        saveState() {
+            this.$parent.$parent.$emit('update:transcription:new-version', this.line);
         },
         computeStyles() {
             // this.zoom.reset();
@@ -108,31 +141,6 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
                 overlay.style.display = 'none';
             }
         },
-        
-        showHistory() {
-            // History
-            let container = document.querySelector('#trans-modal #history tbody');
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
-            var lt = this.getLineTranscription();
-            var noVersionBtn = document.querySelector('#no-versions');
-            if (lt !== undefined) {
-                document.querySelector('#new-version-btn').disabled = false;
-                var versions = lt.versions;
-                if (versions && versions.length > 0) {
-                    noVersionBtn.style.display = 'none';
-                    for (var i=versions.length-1; i>=0; i--) {
-                        this.addVersionLine(versions[i]);
-                    }
-                } else {
-                    noVersionBtn.style.display = 'block';
-                }
-            } else {
-                noVersionBtn.style.display = 'block';
-                document.querySelector('#new-version-btn').disabled = true;
-            }
-        },        
     },
 });
 
@@ -182,7 +190,7 @@ var visuLine = Vue.extend({
         },
         
         showOverlay() {
-            if (this.line.mask) {
+            if (this.line && this.line.mask) {
                 Array.from(document.querySelectorAll('.panel-overlay')).map(
                     function(e) {
                         // TODO: transition
@@ -212,13 +220,18 @@ var visuLine = Vue.extend({
         pathElement() { return this.$el.querySelector('path'); },
         textElement() { return this.$el.querySelector('text'); },
         textPathId() {
-            return 'textPath'+this.line.pk;
+            return this.line ? 'textPath'+this.line.pk : '';
+        },
+        transcriptionContent() {
+            if (!this.line || !this.line.transcription) return '';
+            return this.line.transcription.content;
         },
         maskPoints() {
-            if (this.line.mask === null) return '';
+            if (this.line == null || this.line.mask === null) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         baselinePoints() {
+            if (this.line == null || this.line.baseline === null) return '';
             var ratio = this.ratio;
             function ptToStr(pt) {
                 return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);

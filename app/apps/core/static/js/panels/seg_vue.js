@@ -1,3 +1,7 @@
+/* 
+Baseline editor panel (or segmentation panel)
+*/
+
 var SegPanel = BasePanel.extend({
     data() { return {
         colorMode: 'color'  //  color - binary - grayscale
