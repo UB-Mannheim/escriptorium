@@ -434,16 +434,16 @@ class Segmenter {
         this.regionColorInput = document.getElementById('be-reg-color');
         
         // create a menu for the context buttons
-        this.contextMenu = document.createElement('div');
-        this.contextMenu.id = 'context-menu';
+        this.contextMenu = document.getElementById('context-menu')
+        if (!this.contextMenu) {
+            document.createElement('div');
+            this.contextMenu.id = 'context-menu';
+            this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
+        }
         this.contextMenu.style.position = 'fixed';
         this.contextMenu.style.transform = 'translateZ(0)'; // css trick to fix to an element
         this.contextMenu.style.display = 'none';
         this.contextMenu.style.zIndex = 3;
-        this.contextMenu.style.border = '1px solid grey';
-        this.contextMenu.style.borderRadius = '5px';
-        this.contextMenu.style.margin = '10px';
-        this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn.parentNode.firstChild);
         if (this.linkRegionBtn) this.contextMenu.appendChild(this.linkRegionBtn);
         if (this.unlinkRegionBtn) this.contextMenu.appendChild(this.unlinkRegionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);

@@ -397,6 +397,12 @@ i.panel-icon {
     overflow: hidden;
 }
 
+.panel #context-menu {
+    border: 1px solid grey;
+    border-radius: 5px;
+    margin: 10px;
+}
+
 #trans-modal .modal-content {
     display: block;
 }
