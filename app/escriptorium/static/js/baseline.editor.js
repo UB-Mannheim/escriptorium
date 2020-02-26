@@ -357,6 +357,8 @@ class Segmenter {
                         oddMasksColor=null,
                         directionHintColor=null,
                         regionColor=null,
+
+                        // todo: choose keyboard shortcuts
                         
                         inactiveLayerOpacity=0.5,
                         maxSegments=50,
@@ -377,8 +379,7 @@ class Segmenter {
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = 0;
         this.canvas.style.left = 0;
-
-
+        
         // paper.js helpers
         this.inactiveLayerOpacity = inactiveLayerOpacity;
         this.linesLayer = this.regionsLayer = this.orderingLayer = null;
@@ -419,15 +420,13 @@ class Segmenter {
         
         // contextual btns
         this.deletePointBtn = document.getElementById('be-delete-point');
-        // this.deletePointBtn.style.zIndex = 3;
-        this.splitBtn = document.getElementById('be-split-lines');
         this.deleteSelectionBtn = document.getElementById('be-delete-selection');
         this.mergeBtn = document.getElementById('be-merge-selection');
         this.reverseBtn = document.getElementById('be-reverse-selection');
         this.linkRegionBtn = document.getElementById('be-link-region');
         this.unlinkRegionBtn = document.getElementById('be-unlink-region');
         
-        // editor settings
+        // editor settings;
         this.baselinesColorInput = document.getElementById('be-bl-color');
         this.evenMasksColorInput = document.getElementById('be-even-mask-color');
         this.oddMasksColorInput = document.getElementById('be-odd-mask-color');
@@ -585,6 +584,8 @@ class Segmenter {
                 this.mergeSelection();
             } else if (event.keyCode == 77) { // M
                 this.toggleMasks();
+            } else if (event.keyCode == 76) { // L
+                this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
             } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
@@ -1674,7 +1675,6 @@ class Segmenter {
              the starting and ending points of both lines.
           3) Delete the left over
         */
-
         if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
             return;
         }

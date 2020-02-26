@@ -1,4 +1,7 @@
 var SegPanel = BasePanel.extend({
+    data() { return {
+        colorMode: 'color'  //  color - binary - grayscale
+    };},
     mounted() {
         // wait for the element to be rendered
         Vue.nextTick(function() {
@@ -24,7 +27,12 @@ var SegPanel = BasePanel.extend({
             if (this.part) {
                 this.onShow();
             }
-            
+
+            this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
+                let settings = userProfile.get('baseline-editor') || {};
+                settings[event.detail.name] = event.detail.value;
+                userProfile.set('baseline-editor', settings);
+            });
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
                 if (data.objType == 'line') this.$parent.$emit('delete:line', data.obj.context.pk);
@@ -68,12 +76,34 @@ var SegPanel = BasePanel.extend({
             }.bind(this));
         }.bind(this));
     },
+    computed: {
+        hasBinaryColor() {
+            return this.part && this.part.bw_image !== null;
+        },
+
+        // override to deal with color modes
+        imageSrc() {
+            return (
+                this.part !== null && (
+                   (this.colorMode === 'binary' && this.part.bw_image && this.part.bw_image.uri)
+                   || (this.part.image.thumbnails.large || this.part.image.uri)
+                )
+            );
+        }
+    },
     updated() {
         if (this.part) {
+            if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
+                this.colorMode = 'color';
+            }
             this.onShow();
         }
     },
     methods: {
+        toggleBinary(ev) {
+            if (this.colorMode == 'color') this.colorMode = 'binary';
+            else this.colorMode = 'color';
+        },
         onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded

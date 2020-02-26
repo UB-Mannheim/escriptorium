@@ -54,7 +54,7 @@
             </mask>
           </defs>
           
-          <rect fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#source-overlay)" />
+          <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
         </svg>
       </div>
     </div>
@@ -64,16 +64,14 @@
 <keep-alive>
 <SegmentationPanel v-if="show.segmentation" v-bind:part="part" ref="segPanel" inline-template>
   <div class="col panel">
-    <div class="tools d-flex">
-      <div class="p-1">
-        <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
-      </div>
-      <div class="p-1 btn-group">
-        <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
-        <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
-      </div>
+    <div class="tools">
+      <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
+      <!-- <div class="btn-group"> -->
+      <!--   <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button> -->
+      <!--   <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button> -->
+      <!-- </div> -->
       
-      <div class="p-1 btn-group">
+      <div class="btn-group">
         <button id="toggle-settings" title="{% trans "Editor settings." %}" class="btn btn-info ml-3 fas fa-cogs dropdown-toggle" type="button" class="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
         <div id="be-settings-menu" class="dropdown-menu">
           <div><input id="be-bl-color" type="color"/> <label for="be-even-bl-color">{% trans "Baselines" %}</label></div>
@@ -85,46 +83,44 @@
           <!-- {% trans "Line thickness" %}<input type="slider"/> -->
         </div>
       </div>
-      <div class="p-1 btn-group">
-        <button id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn btn-info fas fa-adjust hide" autocomplete="off"></button>
+      <button v-if="hasBinaryColor" @click="toggleBinary" v-bind:class="[colorMode == 'binary' ? 'btn-success' : 'btn-info']"  id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn fas fa-adjust" autocomplete="off"></button>
+      <div class="btn-group">
         <button id="be-toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info fas fa-th-large" autocomplete="off"></button>
-        <button id="be-toggle-order" title="{% trans "Toggle ordering display." %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
+        <button id="be-toggle-order" title="{% trans "Toggle ordering display. (L)" %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
         <button id="be-toggle-masks" title="{% trans "Show line masks. (M)" %}" class="btn btn-info  fas fa-mask"></button>
       </div>
-      <div class="p-1 btn-group">
+      <div class="btn-group">
         <button id="reset-masks" title="{% trans "Reset and Recalculate the mask of all lines." %}" class="btn btn-warning ml-3 fas fa-theater-masks"></button>
         <button id="be-split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
       </div>
       
       {# help #}
-      <div class="p-1">
-        <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help nav-item ml-auto"></button>
-        <div class="alert alert-primary help-text hide">
-          <button type="button" class="close" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <div>
-            {% blocktrans %}
-            <p>
-              <b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to <u>finish</u> it.
-              <br/>You can keep the mouse button pressed for free drawing.
-              <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.
-            </p>
-            <p>
-              <b>Left click</b> on a line to selects it, then you can drag it's closest control point.
-              <br/><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.
-              <br/>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons.
-            </p>
-            <p>
-              <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,
-              <b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).
-              <br/><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).
+      <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help nav-item ml-auto"></button>
+      <div class="alert alert-primary help-text hide">
+        <button type="button" class="close" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div>
+          {% blocktrans %}
+          <p>
+            <b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> to <u>finish</u> it.
+            <br/>You can keep the mouse button pressed for free drawing.
+            <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.
+          </p>
+          <p>
+            <b>Left click</b> on a line to selects it, then you can drag it's closest control point.
+            <br/><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.
+            <br/>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons.
+          </p>
+          <p>
+            <b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,
+            <b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).
+            <br/><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).
 
-              <br/>The red trash <i class="text-danger fas fa-trash"></i> button allows to <b>delete</b> selected <b>lines/regions</b>,
-              <br/>The yellow trash button <i class="text-warning fas fa-trash"></i> only <b>deletes</b> selected control <b>points</b>.
-            </p>
-            {% endblocktrans %}
-          </div>
+            <br/>The red trash <i class="text-danger fas fa-trash"></i> button allows to <b>delete</b> selected <b>lines/regions</b>,
+            <br/>The yellow trash button <i class="text-warning fas fa-trash"></i> only <b>deletes</b> selected control <b>points</b>.
+          </p>
+          {% endblocktrans %}
         </div>
       </div>
     </div>
@@ -138,7 +134,7 @@
               <polygon points=""/>
             </mask>
           </defs>
-          <rect x="0" y="0" fill="grey" opacity="0.3" width="100%" height="100%" mask="url(#seg-overlay)" />
+          <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
         </svg>
       </div>
     </div>
@@ -156,7 +152,7 @@
 <VisuPanel v-if="show.visualisation" v-bind:part="part" ref="visuPanel" inline-template>
   <div class="col panel">
     <div class="tools"><i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i></div>
-    <div id="visu-zoom-container" class="panel-content h-100">
+    <div id="visu-zoom-container" class="panel-content">
       <svg v-if="part" class="w-100">
         <visuline inline-template v-for="line in part.lines" v-bind:ratio="ratio" v-bind:line="line" v-bind:key="line.id">
           <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
