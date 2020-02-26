@@ -207,11 +207,9 @@
                 </div>
               </div>
               
-              <!-- <input type="hidden" name="transcription"/> -->
-              <!-- <input type="hidden" name="line"/> -->
               <div id="trans-input-container">
                 <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
-                <small v-if="line.transcription.version" class="form-text text-muted">
+                <small v-if="line.transcription.pk" class="form-text text-muted">
                   <span>by ${line.transcription.version_author} (${line.transcription.version_source})</span>
                   <span>on ${momentDate}</span>
                 </small>
@@ -224,7 +222,6 @@
               <div id="history" class="collapse">
                 <div class="d-flex flex-column">
                   <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
-                  <!-- use 'is' attribute to bypass a table bug -->
                   <LineVersion v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
                     <div class="d-flex flex-row justify-content-between">
                       <div class="">${ versionContent }</div>
