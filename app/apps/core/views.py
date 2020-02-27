@@ -210,7 +210,7 @@ class DocumentDetail(DetailView):
 class EditPart(LoginRequiredMixin, DetailView):
     model = DocumentPart
     pk_url_kwarg = 'part_pk'
-    template_name = "core/document_part_edit_vue.html"
+    template_name = "core/document_part_edit.html"
     http_method_names = ('get',)
     
     def get_queryset(self):

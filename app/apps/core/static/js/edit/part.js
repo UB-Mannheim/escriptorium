@@ -12,7 +12,8 @@ var partVM = new Vue({
             source: userProfile.get('source-panel'),
             segmentation: userProfile.get('segmentation-panel'),
             visualisation: userProfile.get('visualisation-panel')
-        }
+        },
+        blockShortcuts: false
     },
     components: {
         'sourcepanel': SourcePanel,
@@ -46,7 +47,20 @@ var partVM = new Vue({
             this.updateRegion(region, cb);
         }.bind(this));
         this.$on('delete:region', function(regionPk, cb) {
-            this.deleteLine(regionPk, cb);
+            this.deleteRegion(regionPk, cb);
+        }.bind(this));
+        
+        document.addEventListener('keydown', function(event) {
+            if (this.blockShortcuts) return;
+            if (event.keyCode == 33 ||  // page up
+                (event.keyCode == (READ_DIRECTION == 'rtl'?39:37) && event.ctrlKey)) {  // arrow left
+                this.getPrevious();
+                event.preventDefault();
+            } else if (event.keyCode == 34 ||   // page down
+                       (event.keyCode == (READ_DIRECTION == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
+                this.getNext();
+                event.preventDefault();
+            }
         }.bind(this));
     },
     computed: {

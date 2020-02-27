@@ -63,6 +63,7 @@ var visuLine = Vue.extend({
         },
         edit() {
             this.$parent.editLine = this.line;
+            this.$parent.$parent.blockShortcuts = true;  // meh!?
         },
         reset() {
             this.computeLineHeight();

@@ -36,6 +36,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
     methods: {
         close() {
             this.$parent.editLine = null;
+            this.$parent.blockShortcuts = false;
             $(this.$el).modal('hide');
         },
         saveState() {
