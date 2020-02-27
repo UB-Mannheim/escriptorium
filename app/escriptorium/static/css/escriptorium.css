@@ -379,7 +379,7 @@ i.panel-icon {
 }
 
 .panel .content {
-    height: calc(100vh - 180px);
+    min-height: calc(100vh - 180px);
 }
 
 .panel .panel-img {
