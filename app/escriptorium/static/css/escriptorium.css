@@ -375,10 +375,16 @@ i.panel-icon {
 .panel {
     overflow: hidden;
     width: 100%;
+
     /* height: 100%; */
 }
 
-.panel .content {
+.panel .content-container {
+    border: 1px solid lightgrey;
+    border-radius: 3px;
+}
+
+.panel .content-container .content {
     min-height: calc(100vh - 180px);
 }
 

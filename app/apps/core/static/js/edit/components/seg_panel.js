@@ -39,8 +39,8 @@ var SegPanel = BasePanel.extend({
             });
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
-                if (data.objType == 'line') this.$parent.$emit('delete:line', data.obj.context.pk);
-                else if (data.objType == 'region') this.$parent.$emit('delete:region', data.obj.context.pk);
+                this.$parent.$emit('bulk_delete:regions', data.regions);
+                this.$parent.$emit('bulk_delete:lines', data.lines);
             }.bind(this));
             this.segmenter.events.addEventListener('baseline-editor:update', function(ev) {
                 let data = ev.detail;

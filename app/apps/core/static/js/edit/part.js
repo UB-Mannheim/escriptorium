@@ -40,15 +40,18 @@ var partVM = new Vue({
         this.$on('delete:line', function(linePk, cb) {
             this.deleteLine(linePk, cb);
         }.bind(this));
-
+        this.$on('bulk_delete:lines', function(pks, cb) {
+            this.bulkDeleteLines(pks);
+        }.bind(this));
+        
         this.$on('create:region', function(region, cb) {
             this.createRegion(region, cb);
         }.bind(this));
         this.$on('update:region', function(region, cb) {
             this.updateRegion(region, cb);
         }.bind(this));
-        this.$on('delete:region', function(regionPk, cb) {
-            this.deleteRegion(regionPk, cb);
+        this.$on('bulk_delete:region', function(pks) {
+            this.deleteRegion(pks);
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {
@@ -102,6 +105,12 @@ var partVM = new Vue({
                 if(this.$refs.segPanel) this.$refs.segPanel.refresh();
                 if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
             }.bind(this));
+        },
+        part() {
+            // set the 'image' tab btn to select the corresponding image
+            var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
+            tabUrl.searchParams.set('select', this.part.pk);
+            $('#images-tab-link').attr('href', tabUrl);
         }
     },
     methods: {
@@ -224,7 +233,7 @@ var partVM = new Vue({
                 });
         },
         deleteLine(linePk, callback) {
-            let uri = this.getApiRoot() + 'lines/' + linePk;
+            let uri = this.getApiRoot() + 'lines/' + linePk + '/';
             this.push(uri, {}, method="delete")
                 .then(function(data) {
                     let index = this.part.lines.findIndex(l=>l.pk==linePk);
@@ -234,7 +243,20 @@ var partVM = new Vue({
                     console.log('couldnt delete line #', linePk)
                 });
         },
-
+        bulkDeleteLines(pks) {
+            let uri = this.getApiRoot() + 'lines/bulk_delete/';
+            this.push(uri, {lines: pks}, method="post")
+                .then(function(data) {
+                    for (let i=0; i<pks.length; i++) {
+                        let index = this.part.lines.findIndex(l=>l.pk==pks[i]);
+                        Vue.delete(this.part.lines, index);
+                    }
+                }.bind(this))
+                .catch(function(error) {
+                    console.log('couldnt bulk delete lines')
+                });
+        },
+        
         createRegion(region, callback) {
             let uri = this.getApiRoot() + 'blocks/';
             data = {

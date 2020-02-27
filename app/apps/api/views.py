@@ -158,7 +158,6 @@ class LineViewSet(ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
-
         deleted_lines = request.data.get("lines")
         qs = Line.objects.filter(pk__in=deleted_lines)
         qs.delete()

@@ -93,7 +93,6 @@ class SegmenterRegion {
     delete() {
         this.unselect();
         this.remove();
-        this.segmenter.trigger('baseline-editor:delete', {objType: 'region', obj: this});
     }
 }
 
@@ -258,7 +257,6 @@ class SegmenterLine {
     delete() {
         this.unselect();
         this.remove();
-        this.segmenter.trigger('baseline-editor:delete', {objType: 'line', obj: this});
     }
 
     reverse() {
@@ -464,7 +462,12 @@ class Segmenter {
     }
     
     deleteSelection() {
-        // FIXME: use the bulk_delete endpoints when it's merged.
+        this.trigger('baseline-editor:delete', {
+            lines: this.selection.lines.map(l=>l.context.pk),
+            regions: this.selection.regions.map(l=>l.context.pk)
+        });
+
+        // optimisticaly removes everything
         for (let i=this.selection.lines.length-1; i >= 0; i--) {    
             this.selection.lines[i].delete();
         }
@@ -1687,6 +1690,10 @@ class Segmenter {
             // if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
             // else 
             return first.baselinePath.position.x - second.baselinePath.position.x;
+        });
+
+        this.trigger('baseline-editor:delete', {
+            lines: this.selection.lines.slice(1).map(l=>l.context.pk)
         });
         
         while (this.selection.lines.length > 1) {
