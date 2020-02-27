@@ -86,11 +86,13 @@ var SegPanel = BasePanel.extend({
         },
 
         // override to deal with color modes
-        imageSrc() {
+        imageSrcBin() {
             return (
                 this.part !== null && (
-                   (this.colorMode === 'binary' && this.part.bw_image && this.part.bw_image.uri)
-                   || (this.part.image.thumbnails.large || this.part.image.uri)
+                    (this.colorMode == 'binary'
+                     && this.part.bw_image
+                     && this.part.bw_image.uri)
+                        || this.imageSrc
                 )
             );
         }

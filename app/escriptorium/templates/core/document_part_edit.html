@@ -38,7 +38,7 @@
   </div>
 </div>
 
-<SourcePanel v-if="show.source" v-bind:part="part" ref="sourcePanel" inline-template>
+<SourcePanel v-if="show.source" v-bind:part="part" v-bind:full-size-image="fullSizeImage" ref="sourcePanel" inline-template>
   <div class="col panel">
     <div class="tools">
       <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
@@ -55,7 +55,6 @@
               <polygon points=""/>
             </mask>
           </defs>
-          
           <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
         </svg>
       </div>
@@ -64,7 +63,7 @@
 </SourcePanel>
 
 <keep-alive>
-<SegmentationPanel v-if="show.segmentation" v-bind:part="part" ref="segPanel" inline-template>
+<SegmentationPanel v-if="show.segmentation" v-bind:part="part" v-bind:full-size-image="fullSizeImage" ref="segPanel" inline-template>
   <div class="col panel">
     <div class="tools">
       <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
@@ -136,7 +135,7 @@
     </div>
 
     <div id="seg-zoom-container" class="content">
-      <img class="panel-img" v-bind:src="imageSrc"/>
+      <img class="panel-img" v-bind:src="imageSrcBin"/>
       <div id="segmentation-overlay" class="overlay panel-overlay">
         <svg width="100%" height="100%">
           <defs>

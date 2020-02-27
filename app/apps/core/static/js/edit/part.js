@@ -13,7 +13,8 @@ var partVM = new Vue({
             segmentation: userProfile.get('segmentation-panel'),
             visualisation: userProfile.get('visualisation-panel')
         },
-        blockShortcuts: false
+        blockShortcuts: false,
+        fullSizeImage: false
     },
     components: {
         'sourcepanel': SourcePanel,
@@ -60,6 +61,14 @@ var partVM = new Vue({
                        (event.keyCode == (READ_DIRECTION == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
                 this.getNext();
                 event.preventDefault();
+            }
+        }.bind(this));
+
+        // load the full size image when we reach a scale > 1
+        this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
+            let ratio = ev.target.clientWidth / this.part.image.size[0];
+            if (this.zoom.scale  * ratio > 1) {
+                this.fullSizeImage = true;
             }
         }.bind(this));
     },
