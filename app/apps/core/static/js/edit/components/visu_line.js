@@ -85,13 +85,23 @@ var visuLine = Vue.extend({
             if (this.line == null || this.line.mask === null) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
+        fakeBaseline() {
+            // create a fake path based on the mask,
+            var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);
+            var max = this.line.mask.reduce((maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt);
+            return [min, max];
+        },
         baselinePoints() {
-            if (this.line == null || this.line.baseline === null) return '';
-            var ratio = this.ratio;
+            var baseline, ratio = this.ratio;
             function ptToStr(pt) {
                 return Math.round(pt[0]*ratio)+' '+Math.round(pt[1]*ratio);
             }
-            return 'M '+this.line.baseline.map(pt => ptToStr(pt)).join(' L ');
+            if (this.line == null || this.line.baseline === null) {
+                baseline = this.fakeBaseline;
+            } else {
+                baseline = this.line.baseline
+            }
+            return 'M '+baseline.map(pt => ptToStr(pt)).join(' L ');
         }
     }
 });

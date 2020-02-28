@@ -211,7 +211,14 @@ var partVM = new Vue({
             this.push(uri, data, method="post")
                 .then((response) => response.json())
                 .then(function(data) {
-                    this.part.lines.push(data);
+                    let newLine = data;
+                    newLine.transcription = {
+                        line: newLine.pk,
+                        transcription: this.selectedTranscription,
+                        content: '',
+                        versions: []
+                    };
+                    this.part.lines.push(newLine);
                     callback(data);
                 }.bind(this))
                 .catch(function(error) {

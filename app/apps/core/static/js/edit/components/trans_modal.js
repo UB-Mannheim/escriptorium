@@ -63,7 +63,7 @@ var TranscriptionModal = Vue.component('transcriptionmodal', {
             let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
 
             var MAX_HEIGHT = Math.round(Math.max(25, (document.body.clientHeight-200) / 3));
-            let lineHeight = Math.max(10, Math.round(height*ratio));
+            let lineHeight = Math.max(30, Math.round(height*ratio));
             if (lineHeight > MAX_HEIGHT) {
                 // change the ratio so that the image can not get too big
                 ratio = (MAX_HEIGHT/lineHeight)*ratio;
