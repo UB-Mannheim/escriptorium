@@ -139,7 +139,15 @@ class BlockViewSet(ModelViewSet):
 class LineViewSet(ModelViewSet):
     queryset = Line.objects.all().select_related('block').prefetch_related('transcriptions__transcription')
     serializer_class = DetailedLineSerializer
-    
+
+    def create(self, *args, **kwargs):
+        response = super().create(*args, **kwargs)
+        
+        document_part = DocumentPart.objects.get(pk=kwargs.get('part_pk'))
+        document_part.recalculate_ordering()
+        document_part.save()
+        return response
+        
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:
             return DetailedLineSerializer

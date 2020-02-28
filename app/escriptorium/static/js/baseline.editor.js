@@ -45,8 +45,8 @@ class SegmenterRegion {
             closed: true,
             opacity: 0.4,
             strokeColor: this.segmenter.regionColor,
-            dashOffset: 5/this.segmenter.scale,
-            strokeWidth: 2/this.segmenter.scale,
+            dashOffset: 5/this.segmenter.getRatio(),
+            strokeWidth: 2/this.segmenter.getRatio(),
             // fillColor: this.segmenter.regionColor,
             selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
             visible: true,
@@ -105,7 +105,7 @@ class SegmenterLine {
         this.region = region;
         this.context = context;
         this.selected = false;
-        this.textDirection = textDirection;
+        this.textDirection = textDirection || 'lr';
         this.directionHint = null;
 
         if (baseline) {
@@ -115,7 +115,7 @@ class SegmenterLine {
                 this.baseline = baseline.map(pt=>[Math.round(pt[0]), Math.round(pt[1])]);
                 this.baselinePath = new Path({
                     strokeColor: this.segmenter.baselinesColor,
-                    strokeWidth: Math.max(3, 7/this.segmenter.scale),
+                    strokeWidth: 5/this.segmenter.getRatio(),
                     strokeCap: 'butt',
                     selectedColor: 'black',
                     opacity: 0.5,
@@ -288,7 +288,7 @@ class SegmenterLine {
             this.orderDisplay = new Group({
                 children: [circle, text]
             });
-            this.orderDisplay.scale(1/this.segmenter.scale);
+            this.orderDisplay.scale(1/this.segmenter.getRatio());
             // for some reason we need to reposition it after scaling
             text.position = anchor;
         } else {
@@ -305,7 +305,7 @@ class SegmenterLine {
             if (this.directionHint === null) {
                 this.directionHint = new Path({
                     visible: true,
-                    strokeWidth: Math.max(2, 4 / this.segmenter.scale),
+                    strokeWidth: Math.max(2, 4 / this.segmenter.getRatio()),
                     opacity: 0.5,
                     strokeColor: this.segmenter.directionHintColor
                 });
@@ -466,7 +466,7 @@ class Segmenter {
             lines: this.selection.lines.map(l=>l.context.pk),
             regions: this.selection.regions.map(l=>l.context.pk)
         });
-
+        
         // optimisticaly removes everything
         for (let i=this.selection.lines.length-1; i >= 0; i--) {    
             this.selection.lines[i].delete();
@@ -693,7 +693,7 @@ class Segmenter {
         
         this.tool = tool;
         this.tool.activate();
-        return tool;
+        this.loaded = true;
     }
     
     createLine(order, baseline, mask, region, context, postponeEvents) {
@@ -1179,6 +1179,12 @@ class Segmenter {
         for (let i=this.regions.length-1; i>=0; i--) { this.regions[i].remove(); }
         this.regions = [];
     }
+
+    getRatio() {
+        let bounds = this.img.getBoundingClientRect();
+        let imgRatio = (bounds.width / this.img.naturalWidth);
+        return imgRatio*this.scale;
+    }
     
     refresh() {
         /*
@@ -1188,8 +1194,6 @@ class Segmenter {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);
             let ratio = imgRatio/paper.view.zoom*this.scale;
-            this.canvas.style.width = bounds.width + 'px';
-            this.canvas.style.height = bounds.height + 'px';
             if (paper.view.viewSize[0] != bounds.width &&
                 paper.view.viewSize[1] != bounds.height) {
                 paper.view.viewSize = [bounds.width, bounds.height];
@@ -1432,7 +1436,7 @@ class Segmenter {
         let shape = new Rectangle([event.point.x, event.point.y], [1, 1]);
         var clip = new Path.Rectangle(shape, 0);
         clip.opacity = 1;
-        clip.strokeWidth = Math.max(2, 2/this.scale);
+        clip.strokeWidth = Math.max(2, 2/this.getRatio());
         clip.strokeColor = 'grey';
         clip.dashArray = [10, 4];
         clip.originalPoint = event.point;
@@ -1716,12 +1720,30 @@ class Segmenter {
 
     getAverageLineHeight() {
         // somewhat computational intensive so we 'cache' it.
-        if (this.averageLineHeight) return this.averageLineHeight;
-        if (!this.lines.length) return 0;
-        this.averageLineHeight = this.lines.map(l=>l.baseline && l.baseline[0][0] || 0).reduce((a,b)=>b-a)/this.lines.length;
+        if (!this.averageLineHeight) this.computeAverageLineHeight();
         return this.averageLineHeight;
     }
-    
+
+    computeAverageLineHeight() {
+        if (this.lines.length == 0) {
+            this.averageLineHeight = 0;
+        } else if (this.lines.length == 1) {
+            this.averageLineHeight = 20 / this.scale;
+        } else {
+            this.averageLineHeight = Math.abs(
+                this.lines
+                .map(l=>l.baseline && l.baseline[0][0] || 0)
+                .reduce((a,b)=>b-a) / this.lines.length / 2);
+        }
+    }
+
+    resetLineHeights() {
+        this.computeAverageLineHeight();
+        this.lines.forEach(function(line) {
+            line.showDirection();
+        }.bind(this));
+    }
+        
     setCursor(style) {
         if (style) {
             this.canvas.style.cursor = style;

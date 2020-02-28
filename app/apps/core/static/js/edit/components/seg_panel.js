@@ -31,7 +31,6 @@ var SegPanel = BasePanel.extend({
             if (this.part) {
                 this.onShow();
             }
-
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
                 let settings = userProfile.get('baseline-editor') || {};
                 settings[event.detail.name] = event.detail.value;
@@ -85,7 +84,7 @@ var SegPanel = BasePanel.extend({
             return this.part && this.part.bw_image !== null;
         },
 
-        // override to deal with color modes
+        // overrides imageSrc to deal with color modes
         imageSrcBin() {
             return (
                 this.part !== null && (
@@ -113,15 +112,33 @@ var SegPanel = BasePanel.extend({
         onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded
-                if (this.$img.complete) { this.initSegmenter(); }
-                else { this.$img.addEventListener('load', this.initSegmenter.bind(this), {once: true}); }
+                if (this.$img.complete) {
+                    this.initSegmenter();
+                } else {
+                    this.$img.addEventListener('load', this.initSegmenter.bind(this), {once: true});
+                }
             }.bind(this));
         },
         initSegmenter() {
             this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
             this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
-            this.segmenter.init();
+            if (!this.segmenter.loaded) {
+                this.segmenter.init();
+
+                // simulates wheelzoom for canvas
+                var zoom = this.$parent.zoom;
+                zoom.events.addEventListener('wheelzoom.updated', function(e) {
+                    // if (!this.opened) return;
+                    this.segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    this.segmenter.canvas.style.left = zoom.pos.x + 'px';
+                    if (e.detail && e.detail.scale) {
+                        this.segmenter.refresh();
+                    }
+                }.bind(this));
+            } else {
+                this.segmenter.refresh();
+            }
             
             let regionMap = {};
             for (let i in this.part.blocks) {
@@ -132,17 +149,9 @@ var SegPanel = BasePanel.extend({
                 let line = this.part.lines[i];
                 this.segmenter.load_line(line, regionMap[line.block]);
             }
-            
-            // simulates wheelzoom for canvas
-            var zoom = this.$parent.zoom;
-            zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                // if (!this.opened) return;
-                this.segmenter.canvas.style.top = zoom.pos.y + 'px';
-                this.segmenter.canvas.style.left = zoom.pos.x + 'px';
-                if (e.detail && e.detail.scale) {
-                    this.segmenter.refresh();
-                }
-            }.bind(this));
+
+            // recalculate average line heights for lines without masks
+            this.segmenter.resetLineHeights();
         },
         updateView() {
             // might not be mounted yet

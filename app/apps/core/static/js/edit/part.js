@@ -107,6 +107,11 @@ var partVM = new Vue({
             }.bind(this));
         },
         part() {
+            // set the new url
+            window.history.pushState({},"",
+                document.location.href.replace(/(part\/)\d+(\/edit)/,
+                                               '$1'+this.part.pk+'$2'));
+            
             // set the 'image' tab btn to select the corresponding image
             var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
             tabUrl.searchParams.set('select', this.part.pk);
