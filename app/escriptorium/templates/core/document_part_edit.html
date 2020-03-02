@@ -18,9 +18,10 @@
 
 {% block extra_nav %}
 <div class="nav-item ml-auto">
-  <button @click="toggleSource" type="button" data-target="source" class="open-panel nav-item btn" v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
-  <button @click="toggleSegmentation" type="button" data-target="seg" class="open-panel nav-item btn" v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
-  <button @click="toggleVisualisation" type="button" data-target="trans" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
+  <button @click="togglePanel" type="button" data-target="source" class="open-panel nav-item btn" v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
+  <button @click="togglePanel" type="button" data-target="segmentation" class="open-panel nav-item btn" v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
+  <button @click="togglePanel" type="button" data-target="visualisation" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
+  <button @click="togglePanel" type="button" data-target="diplomatic" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
 </div>
 {% endblock %}
   
@@ -249,6 +250,29 @@
 </VisuPanel>
 </keep-alive>
 
+<keep-alive>
+  <DiploPanel v-if="show.diplomatic" v-bind:part="part" ref="diploPanel" inline-template>
+    <div class="col panel">
+      <div class="tools">
+        <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
+      </div>
+      <div v-if="part" class="content-container">
+        <diploline v-for="line in part.lines" v-bind:line="line" bind:ratio="ratio" v-bind:key="line.pk" inline-template>
+          <div class="d-flex flex-column">
+            <div  class="d-flex flex-row">
+              <div style="user-select: none;">${line.order}</div>
+              <div v-on:mouseup="editableContent"
+                   v-on:mousedown="setEdit"
+                   v-on:keydown.enter="editNext"
+                   class="w-100">${transcriptionContent}</div>
+            </div>
+          </div>
+        </diploline>
+      </div>
+    </div>
+  </DiploPanel>
+</keep-alive>
+
 <div class="col-sides">
   {% if document.read_direction == 'rtl' %}
   <a id="prev-part" v-if="hasPrevious()" v-on:click="getPrevious" href="#" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
@@ -284,12 +308,16 @@
     <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/base_line.js' %}"></script>
+    
     <script type="text/javascript" src="{% static 'js/edit/components/source_panel.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/seg_panel.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/line_version.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/visu_line.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/visu_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/diplo_line.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/diplo_panel.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/part.js' %}"></script>
 {% endcompress %}
 {% endblock %}

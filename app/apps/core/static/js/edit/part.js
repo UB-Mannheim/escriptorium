@@ -11,7 +11,8 @@ var partVM = new Vue({
         show: {
             source: userProfile.get('source-panel'),
             segmentation: userProfile.get('segmentation-panel'),
-            visualisation: userProfile.get('visualisation-panel')
+            visualisation: userProfile.get('visualisation-panel'),
+            diplomatic: userProfile.get('diplomatic-panel')
         },
         blockShortcuts: false,
         fullSizeImage: false
@@ -19,7 +20,8 @@ var partVM = new Vue({
     components: {
         'sourcepanel': SourcePanel,
         'segmentationpanel': SegPanel,
-        'visupanel': VisuPanel
+        'visupanel': VisuPanel,
+        'diplopanel': DiploPanel
     },
     created() {
         this.fetch();
@@ -125,17 +127,12 @@ var partVM = new Vue({
         getApiRoot() {
             return '/api/documents/' + DOCUMENT_ID + '/parts/' + PART_ID + '/';
         },
-        toggleSource() {
-            this.show.source =! this.show.source;
-            userProfile.set('source-panel', this.show.source);
-        },
-        toggleSegmentation() {
-            this.show.segmentation =! this.show.segmentation;
-            userProfile.set('segmentation-panel', this.show.segmentation);
-        },
-        toggleVisualisation() {
-            this.show.visualisation =! this.show.visualisation;
-            userProfile.set('visualisation-panel', this.show.visualisation);
+
+        togglePanel(ev) {
+            let panelName = ev.target.dataset['target'];
+            let val = this.show[panelName];
+            this.show[panelName] = !val;
+            userProfile.set(panelName+'-panel', this.show.source);
         },
         
         pushVersion(line) {
