@@ -329,14 +329,26 @@ class AltoParser(XMLParser):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
-    # SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
+    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
 
     def validate(self):
-        if b'/pagecontent/2013' in etree.tostring(self.root):
-            self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
-        super().validate()
-        
+        try:
+            response = requests.get(self.SCHEMA)
+            content = response.content
+
+            schema_root = etree.XML(content)
+        except requests.exceptions.RequestException as e:
+            logger.exception(e)
+            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+        else:
+            try:
+                xmlschema = etree.XMLSchema(schema_root)
+                xmlschema.assertValid(self.root)
+            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                raise ParseError("Document didn't validate. %s" % e.args[0])
+
+
     @property
     def total(self):
         # pagexml file can contain multiple parts
