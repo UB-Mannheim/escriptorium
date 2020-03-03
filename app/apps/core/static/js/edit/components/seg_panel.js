@@ -117,6 +117,7 @@ var SegPanel = BasePanel.extend({
                 } else {
                     this.$img.addEventListener('load', this.initSegmenter.bind(this), {once: true});
                 }
+                this.updateView();
             }.bind(this));
         },
         initSegmenter() {
@@ -129,12 +130,8 @@ var SegPanel = BasePanel.extend({
                 // simulates wheelzoom for canvas
                 var zoom = this.$parent.zoom;
                 zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                    // if (!this.opened) return;
-                    this.segmenter.canvas.style.top = zoom.pos.y + 'px';
-                    this.segmenter.canvas.style.left = zoom.pos.x + 'px';
-                    if (e.detail && e.detail.scale) {
-                        this.segmenter.refresh();
-                    }
+                    
+                    this.updateView();
                 }.bind(this));
             } else {
                 this.segmenter.refresh();
@@ -155,7 +152,12 @@ var SegPanel = BasePanel.extend({
         },
         updateView() {
             // might not be mounted yet
-            if (this.segmenter) this.segmenter.refresh();
+            if (this.segmenter && this.$el.clientWidth) {
+                var zoom = this.$parent.zoom;
+                this.segmenter.canvas.style.top = zoom.pos.y + 'px';
+                this.segmenter.canvas.style.left = zoom.pos.x + 'px';
+                this.segmenter.refresh();
+            }
         }
     }
 });

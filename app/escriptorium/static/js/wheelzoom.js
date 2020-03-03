@@ -25,8 +25,8 @@ class zoomTarget {
         // rotationContainer.style.transformOrigin = 'center';
         container.style.position = 'relative';
         container.style.overflow = 'hidden';
-        container.style.width = '100%';
-        container.style.height = '100%';
+        // container.style.width = '100%';
+        // container.style.height = '100%';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'scale 0.3s';
         domElement.classList.add('js-zoom-target');

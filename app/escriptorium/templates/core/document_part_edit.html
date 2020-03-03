@@ -44,21 +44,19 @@
       <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
     </div>
     <div class="content-container">
-    <div id="source-zoom-container" class="content">
-      <div class="h-100">
+      <div id="source-zoom-container" class="content">
         <img class="panel-img" v-bind:src="imageSrc"/>
-      </div>
-      <div class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="source-overlay">
-              <rect width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
-        </svg>
-      </div>
+        <div class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="source-overlay">
+                <rect width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#source-overlay)" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -270,7 +268,6 @@
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.5/math.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-
 {% compress js file part_edit %}
     <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
     <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
