@@ -1,4 +1,4 @@
-var LineVersion = Vue.extend({
+const LineVersion = Vue.extend({
     props: ['version'],
     created() {
         this.timeZone = moment.tz.guess();

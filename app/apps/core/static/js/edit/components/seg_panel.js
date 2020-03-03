@@ -2,7 +2,7 @@
 Baseline editor panel (or segmentation panel)
 */
 
-var SegPanel = BasePanel.extend({
+const SegPanel = BasePanel.extend({
     data() { return {
         colorMode: 'color'  //  color - binary - grayscale
     };},
@@ -28,7 +28,7 @@ var SegPanel = BasePanel.extend({
             canvas.parentNode.parentNode.appendChild(canvas);
 
             // already mounted with a part = opening the panel after page load
-            if (this.part) {
+            if (this.part.loaded) {
                 this.onShow();
             }
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
@@ -81,13 +81,13 @@ var SegPanel = BasePanel.extend({
     },
     computed: {
         hasBinaryColor() {
-            return this.part && this.part.bw_image !== null;
+            return this.part.loaded && this.part.bw_image !== null;
         },
 
         // overrides imageSrc to deal with color modes
         imageSrcBin() {
             return (
-                this.part !== null && (
+                this.part.loaded && (
                     (this.colorMode == 'binary'
                      && this.part.bw_image
                      && this.part.bw_image.uri)
@@ -97,7 +97,7 @@ var SegPanel = BasePanel.extend({
         }
     },
     updated() {
-        if (this.part) {
+        if (this.part.loaded) {
             if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
                 this.colorMode = 'color';
             }

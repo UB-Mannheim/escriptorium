@@ -5,8 +5,8 @@
 {% block nav-edit-active %}active{% endblock %}
 
 {% block extra_info %}
-  <span id="part-title" v-if="part">${part.title} - ${part.filename} - (${imageSize})</span>
-  <span class="loading" v-if="!part">{% trans "Loading&#8230;" %}</span>
+  <span id="part-title" v-if="part.loaded">${part.title} - ${part.filename} - (${imageSize})</span>
+  <span class="loading" v-if="!part.loaded">{% trans "Loading&#8230;" %}</span>
 </div>
 <div class="nav-item ml-auto mr-auto">
   <select v-model="selectedTranscription" id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
@@ -23,14 +23,14 @@
   <button @click="toggleVisualisation" type="button" data-target="trans" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
 </div>
 {% endblock %}
-  
+
 {% block tab_content %}
 <div class="row">
 <div class="col-sides">
   {% if document.read_direction == 'rtl' %}
-  <a id="next-part" v-if="hasNext()" href="#" v-on:click="getNext" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  <a id="next-part" v-if="part.next" href="#" v-on:click="getNext()" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-left"></i></a>
   {% else %}
-  <a id="prev-part" v-if="hasPrevious()" href="#" v-on:click="getPrevious" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
+  <a id="prev-part" v-if="part.previous" href="#" v-on:click="getPrevious()" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-left"></i></a>
   {% endif %}
   <div>
     <button id="zoom-reset" v-on:click="resetZoom" class="btn btn-sm btn-info" title="{% trans "Reset zoom." %}"><i class="fas fa-search-minus"></i></button>
@@ -162,13 +162,13 @@
     </div>
     <div class="content-container">
       <div id="visu-zoom-container" class="content">
-        <svg v-if="part" class="w-100">
+        <svg v-if="part.loaded" class="w-100">
           <visuline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk" inline-template>
             <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
               <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
               <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
               <text lengthAdjust="spacingAndGlyphs">
-                <textPath v-bind:href="'#' + textPathId">${transcriptionContent}</textPath>
+                <textPath v-bind:href="'#' + textPathId">${line.transcription.content}</textPath>
               </text>
             </g>
           </visuline>
@@ -249,9 +249,9 @@
 
 <div class="col-sides">
   {% if document.read_direction == 'rtl' %}
-  <a id="prev-part" v-if="hasPrevious()" v-on:click="getPrevious" href="#" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  <a id="prev-part" v-if="part.previous" v-on:click="getPrevious()" href="#" class="nav-btn nav-prev" title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}"><i class="fas fa-angle-right"></i></a>
   {% else %}
-  <a id="next-part" v-if="hasNext()" v-on:click="getNext" href="#" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
+  <a id="next-part" v-if="part.next" v-on:click="getNext()" href="#" class="nav-btn nav-next" title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}"><i class="fas fa-angle-right"></i></a>
   {% endif %}
 </div>
 </div>
@@ -287,6 +287,7 @@
     <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/visu_line.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/visu_panel.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/edit/part.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/store/part.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/main.js' %}"></script>
 {% endcompress %}
 {% endblock %}

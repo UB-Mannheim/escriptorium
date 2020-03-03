@@ -1,4 +1,4 @@
-var BasePanel = Vue.extend({
+const BasePanel = Vue.extend({
     props: ['part', 'full-size-image'],
     data() {
         return {ratio: 1};
@@ -8,7 +8,7 @@ var BasePanel = Vue.extend({
     },
     computed: {
         imageSrc() {
-            let src = (this.part !== null
+            let src = (this.part.loaded
                        && (!this.fullSizeImage
                            && this.part.image.thumbnails.large
                            || this.part.image.uri));

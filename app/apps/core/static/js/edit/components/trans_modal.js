@@ -1,4 +1,4 @@
-var TranscriptionModal = Vue.component('transcriptionmodal', {
+const TranscriptionModal = Vue.component('transcriptionmodal', {
     props: ['line'],
     components: {
         'lineversion': LineVersion

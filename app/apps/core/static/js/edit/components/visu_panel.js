@@ -2,7 +2,7 @@
 Visual transcription panel (or visualisation panel)
 */
 
-var VisuPanel = BasePanel.extend({
+const VisuPanel = BasePanel.extend({
     data() { return  {
         editLine: null
     };},

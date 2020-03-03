@@ -1,4 +1,4 @@
-var visuLine = Vue.extend({
+const visuLine = Vue.extend({
     props: ['line', 'ratio'],
     updated() {
         this.$nextTick(this.reset);
@@ -76,10 +76,6 @@ var visuLine = Vue.extend({
         textElement() { return this.$el.querySelector('text'); },
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
-        },
-        transcriptionContent() {
-            if (!this.line || !this.line.transcription) return '';
-            return this.line.transcription.content;
         },
         maskPoints() {
             if (this.line == null || this.line.mask === null) return '';
