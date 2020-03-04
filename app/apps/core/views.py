@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Max
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, Http404
@@ -23,6 +24,12 @@ from imports.forms import ImportForm, ExportForm
 class Home(TemplateView):
     template_name = 'core/home.html'
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['VERSION_DATE'] = settings.VERSION_DATE
+        context['KRAKEN_VERSION'] = settings.KRAKEN_VERSION
+        return context
+    
 
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
