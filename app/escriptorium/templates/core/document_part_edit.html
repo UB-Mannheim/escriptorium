@@ -210,7 +210,7 @@
               </div>
               
               <div id="trans-input-container">
-                <input id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription"/>
+                <input v-on:keyup.down="$parent.editNext" v-on:keyup.up="$parent.editPrevious" id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription" autocomplete="off" autofocus/>
                 <small v-if="line.transcription.pk" class="form-text text-muted">
                   <span>by ${line.transcription.version_author} (${line.transcription.version_source})</span>
                   <span>on ${momentDate}</span>
