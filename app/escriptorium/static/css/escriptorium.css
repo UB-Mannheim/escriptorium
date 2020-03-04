@@ -435,6 +435,10 @@ i.panel-icon {
     max-width: 80%;
 }
 
+#trans-modal #line-img {
+    position: absolute;
+}
+
 .trans-box {
     position: absolute !important;
     background-color: transparent;

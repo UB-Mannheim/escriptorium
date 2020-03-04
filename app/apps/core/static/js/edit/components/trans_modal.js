@@ -77,8 +77,8 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             
             let left = Math.round(minx*ratio)-context;
             let top = Math.round(miny*ratio)-context;
-            img.style.marginLeft = -left+'px';
-            img.style.marginTop = -top+'px';
+            img.style.left = -left+'px';
+            img.style.top = -top+'px';
             
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
