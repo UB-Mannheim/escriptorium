@@ -16,8 +16,6 @@ var partVM = new Vue({
         // bridges
         // hasPrevious: () => this.part && this.part.hasPrevious(),
         // hasNext: () => this.part && this.part.hasNext(),
-        getPrevious() { return this.part.getPrevious(); },
-        getNext() { return this.part.getNext(); },
         
         selectedTranscription: {
             get() { return this.part.selectedTranscription; },
@@ -50,7 +48,7 @@ var partVM = new Vue({
                 if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
             }.bind(this));
         },
-        part() {
+        'part.pk': function(a) {
             // set the new url
             window.history.pushState({},"",
                 document.location.href.replace(/(part\/)\d+(\/edit)/,
@@ -108,11 +106,12 @@ var partVM = new Vue({
             if (this.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
                 (event.keyCode == (READ_DIRECTION == 'rtl'?39:37) && event.ctrlKey)) {  // arrow left
-                this.part.getPrevious();
+                
+                this.getPrevious();
                 event.preventDefault();
             } else if (event.keyCode == 34 ||   // page down
                        (event.keyCode == (READ_DIRECTION == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
-                this.part.getNext();
+                this.getNext();
                 event.preventDefault();
             }
         }.bind(this));
@@ -130,6 +129,9 @@ var partVM = new Vue({
             this.zoom.reset();
         },
 
+        getPrevious(ev) { return this.part.getPrevious(); },
+        getNext(ev) { return this.part.getNext(); },
+        
         toggleSource() {
             this.show.source =! this.show.source;
             userProfile.set('source-panel', this.show.source);
