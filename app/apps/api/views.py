@@ -139,7 +139,15 @@ class BlockViewSet(ModelViewSet):
 class LineViewSet(ModelViewSet):
     queryset = Line.objects.all().select_related('block').prefetch_related('transcriptions__transcription')
     serializer_class = DetailedLineSerializer
-    
+
+    def create(self, *args, **kwargs):
+        response = super().create(*args, **kwargs)
+        
+        document_part = DocumentPart.objects.get(pk=kwargs.get('part_pk'))
+        document_part.recalculate_ordering()
+        document_part.save()
+        return response
+        
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:
             return DetailedLineSerializer
@@ -158,7 +166,6 @@ class LineViewSet(ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
-
         deleted_lines = request.data.get("lines")
         qs = Line.objects.filter(pk__in=deleted_lines)
         qs.delete()
@@ -182,6 +189,27 @@ class LineTranscriptionViewSet(ModelViewSet):
              qs = qs.filter(transcription=transcription)
         return qs
     
+    def create(self, request, document_pk=None, part_pk=None):
+        response = super().create(request, document_pk=document_pk, part_pk=part_pk)
+        document_part = DocumentPart.objects.get(pk=part_pk)
+        document_part.calculate_progress()
+        document_part.save()
+        return response
+
+    def update(self, request, document_pk=None, part_pk=None, pk=None):
+        instance = self.get_object()
+        if (instance.version_author != request.user.username or
+            instance.version_source != settings.VERSIONING_DEFAULT_SOURCE):
+            try:
+                instance.new_version(author=request.user.username,
+                                     source=settings.VERSIONING_DEFAULT_SOURCE)
+            except NoChangeException:
+                # Note we can safely pass here
+                pass
+            else:
+                instance.save()
+        return super().update(request, document_pk=document_pk, part_pk=part_pk, pk=pk)
+        
     def get_serializer_class(self):
         lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
         class RuntimeSerializer(self.serializer_class):
@@ -192,7 +220,8 @@ class LineTranscriptionViewSet(ModelViewSet):
     def new_version(self, request, document_pk=None, part_pk=None, pk=None):
         lt = self.get_object()
         try:
-            lt.new_version(author=request.user.username)
+            lt.new_version(author=request.user.username,
+                           source=settings.VERSIONING_DEFAULT_SOURCE)
             lt.save()
         except NoChangeException:
             return Response({'warning': 'No changes detected.'}, status=400)

@@ -542,7 +542,11 @@ class DocumentPart(OrderedModel):
         self.bw_image = document_images_path(self, bw_file_name)
         self.save()
     
-    def segment(self, steps=None, text_direction=None, read_direction=None, model=None, override=False):
+    def segment(self, steps=None, text_direction=None, read_direction=None,
+                model=None, override=False):
+        """
+        steps: lines regions masks 
+        """
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
         
@@ -576,7 +580,7 @@ class DocumentPart(OrderedModel):
                     self.lines.all().delete()
                 if steps in ['regions', 'both'] and override:
                     self.blocks.all().delete()
-                
+
                 res = blla.segment(im, **options)
                 
                 for line in res['lines']:
@@ -804,7 +808,7 @@ class LineTranscription(Versioned, models.Model):
     Represents a transcribded line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-    content = models.CharField(null=True, max_length=2048)
+    content = models.CharField(blank=True, max_length=2048)
     # graphs = [  # WIP
     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
     # ]

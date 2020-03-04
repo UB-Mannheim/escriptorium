@@ -25,8 +25,8 @@ class zoomTarget {
         // rotationContainer.style.transformOrigin = 'center';
         container.style.position = 'relative';
         container.style.overflow = 'hidden';
-        container.style.width = '100%';
-        container.style.height = '100%';
+        // container.style.width = '100%';
+        // container.style.height = '100%';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'scale 0.3s';
         domElement.classList.add('js-zoom-target');
@@ -131,6 +131,7 @@ class WheelZoom {
         this.events.addEventListener('wheelzoom.refresh', this.refresh.bind(this));
         
         let target = new zoomTarget(domElement, {map: map});
+        target.update(this.pos, this.scale);
         this.targets.push(target);
         if (!mirror) {
             // domElement.style.cursor = 'zoom-in';
@@ -161,7 +162,6 @@ class WheelZoom {
     zoomTo(target, delta) {
         let oldScale = this.scale;
         this.scale += delta;
-
 	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 
@@ -212,23 +212,23 @@ class WheelZoom {
 	    // Make sure the slide stays in its container area when zooming in/out
         if (this.scale > 1) {
             if (this.pos.x > 0) { this.pos.x = 0; }
-            if (this.pos.x < ts.width - ts.width * this.scale) {
-                this.pos.x = ts.width - ts.width * this.scale;
+            if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
+                this.pos.x = ts.width - target.element.clientWidth * this.scale;
             }
             
             if (this.pos.y > 0) { this.pos.y = 0; }
-	        if (this.pos.y < ts.height - ts.height * this.scale) {
-                this.pos.y = ts.height - ts.height * this.scale;
-            }
+	        // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
+            //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
+            // }
         } else {
             if (this.pos.x < 0) { this.pos.x = 0; }
-	        if (this.pos.x > ts.width - ts.width * this.scale) {
-                this.pos.x = ts.width - ts.width * this.scale;
+	        if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
+                this.pos.x = ts.width - target.element.clientWidth *  this.scale;
             }
             
             if (this.pos.y < 0) { this.pos.y = 0; }
-            if (this.pos.y > ts.height - ts.height * this.scale) {
-                this.pos.y = ts.height - ts.height * this.scale;
+            if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
+                this.pos.y = ts.height - target.element.clientHeight *  this.scale;
             }
         }
         

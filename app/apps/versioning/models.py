@@ -95,7 +95,7 @@ class Versioned(models.Model):
         instance.delete = _dummy_db
         return instance
     
-    def new_version(self, author=None, **kwargs):
+    def new_version(self, author=None, source=None, **kwargs):
         packed = self.pack(**kwargs)
         if self.versions:
             last = self.versions[0]
@@ -108,6 +108,8 @@ class Versioned(models.Model):
         self.revision = uuid.uuid4()  # new revision number
         if author is not None:
             self.version_author = author
+        if source is not None:
+            self.version_source = source
         self.version_created_at = datetime.utcnow()
         self.version_updated_at = datetime.utcnow()
     

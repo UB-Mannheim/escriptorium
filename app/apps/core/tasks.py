@@ -281,10 +281,13 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         user = None
     
     try:
-        part.segment(steps=steps,
-                     override=override,
-                     text_direction=text_direction,
-                     model=model)
+        if steps == 'masks':
+            part.make_masks()
+        else:
+            part.segment(steps=steps,
+                         override=override,
+                         text_direction=text_direction,
+                         model=model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
