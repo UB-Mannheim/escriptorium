@@ -329,10 +329,12 @@ class AltoParser(XMLParser):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
-    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
+    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
 
     def validate(self):
+        if self.root.nsmap[None] is not None:
+            self.SCHEMA = "{}/pagecontent.xsd".format(self.root.nsmap[None])
         try:
             response = requests.get(self.SCHEMA)
             content = response.content
@@ -346,7 +348,11 @@ class PagexmlParser(XMLParser):
                 xmlschema = etree.XMLSchema(schema_root)
                 xmlschema.assertValid(self.root)
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                raise ParseError("Document didn't validate. %s" % e.args[0])
+                if 'Coords' in e.args[0]:
+                    self.update_coords()
+                    xmlschema.assertValid(self.root)
+                else:
+                    raise ParseError("Document didn't validate. %s" % e.args[0])
 
 
     @property
@@ -404,6 +410,28 @@ class PagexmlParser(XMLParser):
         else:
             return ' '.join([e.text if e.text is not None else ''
                              for e in lineTag.findall('TextEquiv/Unicode', self.root.nsmap)])
+
+    def update_coords(self):
+        for pageTag in self.get_pages():
+
+            for block in pageTag.findall('TextRegion', self.root.nsmap):
+                try:
+                    self.clean_coords(block)
+                except (ValueError,AttributeError) as e:
+                    raise "Cannot Parse Coordinates: {}".format(e.message)
+                else:
+                    for line in block.findall('TextLine', self.root.nsmap):
+                        try:
+                            self.clean_coords(line)
+                        except (ValueError,AttributeError) as e:
+                            raise "Cannot Parse Coordinates: {}".format(e.message)
+
+    def clean_coords(self, tag):
+        coords = tag.find('Coords', self.root.nsmap)
+        points = coords.get('points')
+        spl = [list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(','))) for pt in points.split(' ')]
+        new_points = ' '.join(','.join(map(str, pt)) for pt in spl)
+        coords.set('points', new_points)
 
 
 class IIIFManifestParser(ParserDocument):
