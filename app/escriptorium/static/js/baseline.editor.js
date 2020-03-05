@@ -415,6 +415,7 @@ class Segmenter {
         this.toggleMasksBtn = document.getElementById('be-toggle-masks');
         this.toggleOrderingBtn = document.getElementById('be-toggle-order');
         this.toggleRegionModeBtn = document.getElementById('be-toggle-regions');
+        this.splitBtn = document.getElementById('be-split-lines');
         
         // contextual btns
         this.deletePointBtn = document.getElementById('be-delete-point');
@@ -513,7 +514,7 @@ class Segmenter {
                 this.toggleMasks();
             }.bind(this));
         }
-
+        
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
             this.splitBtn.classList.toggle('btn-warning');

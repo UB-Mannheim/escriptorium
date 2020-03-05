@@ -22,6 +22,8 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         momentDate() {
             return moment.tz(this.line.transcription.version_updated_at, this.timeZone);
         },
+        modalImgSrc() { return this.$parent.part.image.uri; },
+        
         localTranscription: {
             get() {
                 return this.line.transcription.content;

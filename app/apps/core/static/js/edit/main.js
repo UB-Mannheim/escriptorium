@@ -13,10 +13,6 @@ var partVM = new Vue({
         fullSizeImage: false
     },
     computed: {
-        // bridges
-        // hasPrevious: () => this.part && this.part.hasPrevious(),
-        // hasNext: () => this.part && this.part.hasNext(),
-        
         selectedTranscription: {
             get() { return this.part.selectedTranscription; },
             set(newValue) { this.part.changeTranscription(newValue); }
