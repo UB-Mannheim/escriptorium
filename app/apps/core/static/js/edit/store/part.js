@@ -139,7 +139,7 @@ const partStore = {
             document_part: this.pk,
             baseline: line.baseline,
             mask: line.mask,
-            block: line.region
+            block: line.region && line.region.pk
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())

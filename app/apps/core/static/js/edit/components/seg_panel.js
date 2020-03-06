@@ -63,13 +63,13 @@ const SegPanel = BasePanel.extend({
                             pk: data.obj.context.pk,
                             baseline: data.obj.baseline,
                             mask: data.obj.mask,
-                            region: data.obj.region.pk
+                            region: data.obj.region
                         });
                     } else {
                         this.$parent.$emit('create:line', {
                             baseline: data.obj.baseline,
                             mask: data.obj.mask,
-                            region: data.obj.region.pk
+                            region: data.obj.region
                         }, function(resp) {
                             // callback from http request, update the pk
                             data.obj.context.pk = resp.pk;
