@@ -297,7 +297,7 @@ THUMBNAIL_OPTIMIZE_COMMAND = {
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
-VERSION_DATE = os.getenv('ESC_VERSION_DATE', '<development>')
+VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
 import subprocess
 KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 
