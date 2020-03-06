@@ -63,16 +63,17 @@ services:
   #   #  - 9200:9200
   #   # networks:  # use this if adding nodes
   #   #   - esnet
-  
+
+  # make sure to leave a core up for the rest
   celery-main:
     <<: *app
-    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default,img-processing -c ${CELERY_MAIN_CORES:-3} --max-tasks-per-child=10"
     depends_on:
       - web
 
   celery-low-priority:
     <<: *app
-    command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c 2 --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
     depends_on:
       - web
   
