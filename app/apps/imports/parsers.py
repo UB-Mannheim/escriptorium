@@ -20,6 +20,8 @@ from versioning.models import NoChangeException
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ['xml', 'alto']  # , 'abbyy'
 
+PAGEXML_SCHEMAS = 'schema.primaresearch.org/PAGE/gts/pagecontent'
+
 class ParseError(Exception):
     pass
 
@@ -331,9 +333,12 @@ class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
+    xmlschema = None
 
     def validate(self):
-        if self.root.nsmap[None] is not None:
+        schema = self.root.nsmap[None]
+
+        if schema is not None and PAGEXML_SCHEMAS in schema:
             self.SCHEMA = "{}/pagecontent.xsd".format(self.root.nsmap[None])
         try:
             response = requests.get(self.SCHEMA)
@@ -345,12 +350,11 @@ class PagexmlParser(XMLParser):
             raise ParseError("Can't reach validation document %s." % self.SCHEMA)
         else:
             try:
-                xmlschema = etree.XMLSchema(schema_root)
-                xmlschema.assertValid(self.root)
+                self.xmlschema = etree.XMLSchema(schema_root)
+                self.xmlschema.assertValid(self.root)
             except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                 if 'Coords' in e.args[0]:
                     self.update_coords()
-                    xmlschema.assertValid(self.root)
                 else:
                     raise ParseError("Document didn't validate. %s" % e.args[0])
 
@@ -412,19 +416,7 @@ class PagexmlParser(XMLParser):
                              for e in lineTag.findall('TextEquiv/Unicode', self.root.nsmap)])
 
     def update_coords(self):
-        for pageTag in self.get_pages():
-
-            for block in pageTag.findall('TextRegion', self.root.nsmap):
-                try:
-                    self.clean_coords(block)
-                except (ValueError,AttributeError) as e:
-                    raise "Cannot Parse Coordinates: {}".format(e.message)
-                else:
-                    for line in block.findall('TextLine', self.root.nsmap):
-                        try:
-                            self.clean_coords(line)
-                        except (ValueError,AttributeError) as e:
-                            raise "Cannot Parse Coordinates: {}".format(e.message)
+        pass
 
     def clean_coords(self, tag):
         coords = tag.find('Coords', self.root.nsmap)
@@ -501,6 +493,27 @@ class IIIFManifestParser(ParserDocument):
         except (KeyError, IndexError) as e:
             raise ParseError(e)
 
+class TranskribusPageXmlParser(PagexmlParser):
+    """
+    A Pagexml Parser for documents exported from Transkribus to handle data
+    """
+
+    def update_coords(self):
+        for pageTag in self.get_pages():
+
+            for block in pageTag.findall('TextRegion', self.root.nsmap):
+                try:
+                    self.clean_coords(block)
+                except (ValueError,AttributeError) as e:
+                    raise "Cannot Parse Coordinates: {}".format(e.message)
+                else:
+                    for line in block.findall('TextLine', self.root.nsmap):
+                        try:
+                            self.clean_coords(line)
+                        except (ValueError,AttributeError) as e:
+                            raise "Cannot Parse Coordinates: {}".format(e.message)
+        self.xmlschema.assertValid(self.root)
+
 
 def make_parser(document, file_handler, name=None):
     # TODO: not great to rely on file name extension
@@ -519,7 +532,12 @@ def make_parser(document, file_handler, name=None):
         if 'alto' in schema:
             return AltoParser(document, file_handler, transcription_name=name, xml_root=root)
         elif 'PAGE' in schema:
-            return PagexmlParser(document, file_handler, transcription_name=name, xml_root=root)
+            file_handler.seek(0)
+            if b'Transkribus' in file_handler.read():
+                return TranskribusPageXmlParser(document, file_handler, transcription_name=name, xml_root=root)
+            else:
+                return PagexmlParser(document, file_handler, transcription_name=name, xml_root=root)
+
         else:
             raise ParseError("Couldn't determine xml schema, check the content of the root tag.")
     elif ext == 'json':
