@@ -9,6 +9,15 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             this.$parent.$parent.$emit('update:transcription', this.line.transcription);
         }.bind(this));
 
+        $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
+            this.$parent.editLine = null;
+            this.$parent.$parent.blockShortcuts = false;
+        }.bind(this));
+
+        $(document).on('show.bs.modal', '#trans-modal', function(ev) {
+            this.$parent.$parent.blockShortcuts = true;
+        }.bind(this));
+        
         this.timeZone = moment.tz.guess();
     },
     mounted() {
@@ -39,8 +48,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
     },
     methods: {
         close() {
-            this.$parent.editLine = null;
-            this.$parent.blockShortcuts = false;
             $(this.$el).modal('hide');
         },
         saveState() {
@@ -94,7 +101,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             let fontHeight = lineHeight;
             ruler.style.fontSize = fontHeight+'px';
             input.style.fontSize = fontHeight+'px';
-            input.style.lineHeight = fontHeight+'px';
+            input.style.lineHeight = 1.2;
             input.style.height = 'auto';
             
             if (READ_DIRECTION == 'rtl') {
