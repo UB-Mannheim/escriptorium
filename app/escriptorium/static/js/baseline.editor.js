@@ -1307,17 +1307,14 @@ class Segmenter {
             this.toggleOrderingBtn.classList.remove('btn-success');
         }
     }
-    
-    toggleRegionMode() {
-        this.purgeSelection();
-        if (this.mode == 'lines') {
-            this.mode = 'regions';
+
+    applyRegionMode() {
+        if (this.mode == 'regions') {
             this.regionsGroup.fillColor = this.regionColor;
             this.regionsGroup.bringToFront();
             this.regionsLayer.opacity = 1;
             this.linesLayer.opacity = this.inactiveLayerOpacity;
         } else {
-            this.mode = 'lines';
             this.regionsGroup.fillColor = null;
             this.regionsGroup.sendToBack();
             // this.evenLinesGroup.bringToFront();
@@ -1325,6 +1322,16 @@ class Segmenter {
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
             this.linesLayer.opacity = 1;
         }
+    }
+    
+    toggleRegionMode() {
+        this.purgeSelection();
+        if (this.mode == 'lines') {
+            this.mode = 'regions';
+        } else {
+            this.mode = 'lines';
+        }
+        this.applyRegionMode();
         if (this.toggleRegionModeBtn) {
             this.toggleRegionModeBtn.classList.toggle('btn-info');
             this.toggleRegionModeBtn.classList.toggle('btn-success');

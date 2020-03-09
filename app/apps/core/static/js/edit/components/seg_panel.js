@@ -13,6 +13,7 @@ const SegPanel = BasePanel.extend({
                                        {map: true});
             let beSettings = userProfile.get('baseline-editor') || {};
             this.$img = this.$el.querySelector('img');
+            
             this.segmenter = new Segmenter(this.$img, {
                 delayInit:true,
                 idField:'pk',
@@ -130,7 +131,6 @@ const SegPanel = BasePanel.extend({
                 // simulates wheelzoom for canvas
                 var zoom = this.$parent.zoom;
                 zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                    
                     this.updateView();
                 }.bind(this));
             } else {
@@ -146,9 +146,10 @@ const SegPanel = BasePanel.extend({
                 let line = this.part.lines[i];
                 this.segmenter.load_line(line, regionMap[line.block]);
             }
-
+            
             // recalculate average line heights for lines without masks
             this.segmenter.resetLineHeights();
+            this.segmenter.applyRegionMode();
         },
         updateView() {
             // might not be mounted yet
