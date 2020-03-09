@@ -183,7 +183,6 @@
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              {% comment %}<h5 class="modal-title mx-2" id="modal-label">{% trans "Line" %}</h5>{% endcomment %}
               {% if document.read_direction == 'rtl' %}
               <button v-on:click="$parent.editNext()" type="button" id="next-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-left"></i></button>
               <button v-on:click="$parent.editPrevious()" type="button" id="prev-btn" class="btn btn-sm btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-right"></i></button>
@@ -191,6 +190,9 @@
               <button v-on:click="$parent.editPrevious()" type="button" id="prev-btn" class="btn btn-sm mr-1 btn-secondary" title="{% trans "Previous" %}"><i class="fas fa-arrow-circle-left"></i></button>
               <button v-on:click="$parent.editNext()" type="button" id="next-btn" class="btn btn-sm btn-secondary" title="{% trans "Next" %}"><i class="fas fa-arrow-circle-right"></i></button>
               {% endif %}
+
+              <h5 class="modal-title ml-3" id="modal-label">{% trans "Line" %} #${line.order + 1}</h5>
+              
               <button type="button" class="close" v-on:click="close" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>

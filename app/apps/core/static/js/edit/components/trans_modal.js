@@ -8,13 +8,15 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             this.line.transcription.content = version.data.content;
             this.$parent.$parent.$emit('update:transcription', this.line.transcription);
         }.bind(this));
+
         this.timeZone = moment.tz.guess();
     },
     mounted() {
+        $(this.$el).modal('show');
         this.computeStyles();
     },
     watch: {
-        'line' : function (new_, old_) {
+        line(new_, old_) {
             this.computeStyles();
         }
     },
@@ -46,9 +48,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         },
         computeStyles() {
             // this.zoom.reset();
-            // needs to be shown BEFORE doing calculations!
-            $(this.$el).modal('show');
-            
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
             let hContext = 0.35; // vertical context added around the line, in percentage
@@ -63,8 +62,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             
             // we use the same same vertical context horizontaly
             let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
-
-            var MAX_HEIGHT = Math.round(Math.max(25, (document.body.clientHeight-200) / 3));
+            var MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-200) / 3));
             let lineHeight = Math.max(30, Math.round(height*ratio));
             if (lineHeight > MAX_HEIGHT) {
                 // change the ratio so that the image can not get too big
@@ -77,25 +75,28 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             modalImgContainer.style.height = visuHeight+'px';
             img.style.width = this.$parent.part.image.size[0]*ratio +'px';
             
-            let left = Math.round(minx*ratio)-context;
             let top = Math.round(miny*ratio)-context;
-            img.style.left = -left+'px';
+            let left = Math.round(minx*ratio)-context;
+            let right = Math.round(maxx*ratio)-context;
             img.style.top = -top+'px';
-            
+            img.style.left = -left+'px';
+
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
             let input = container.querySelector('#trans-input');
-            let content = input.value;
+            let content = this.line.transcription.content;
             let ruler = document.createElement('span');
             ruler.style.position = 'absolute';
             ruler.style.visibility = 'hidden';
             ruler.textContent = content;
             document.body.appendChild(ruler);
-            
-            let fontHeight = Math.min(lineHeight, 60);
+
+            let fontHeight = lineHeight;
             ruler.style.fontSize = fontHeight+'px';
             input.style.fontSize = fontHeight+'px';
-            input.style.height = fontHeight+10+'px';
+            input.style.lineHeight = fontHeight+'px';
+            input.style.height = 'auto';
+            
             if (READ_DIRECTION == 'rtl') {
                 container.style.marginRight = context+'px';
             } else {
@@ -105,7 +106,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 let lineWidth = width*ratio;
                 var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
                 scaleX = Math.max(0.2, scaleX);
-                scaleX = Math.min(2, scaleX);
                 input.style.transform = 'scaleX('+ scaleX +')';
                 input.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)'; // fit in the container
             } else {
