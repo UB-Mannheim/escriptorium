@@ -20,7 +20,15 @@ from versioning.models import NoChangeException
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ['xml', 'alto']  # , 'abbyy'
 
-PAGEXML_SCHEMAS = 'schema.primaresearch.org/PAGE/gts/pagecontent'
+VALID_SCHEMAS = ('http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15',
+                    'http://www.loc.gov/standards/alto/v4/alto.xsd',
+                    'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd',
+                    'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd',
+                    'http://www.loc.gov/standards/alto/ns-v4#')
 
 class ParseError(Exception):
     pass
@@ -111,32 +119,33 @@ class XMLParser(ParserDocument):
         super().__init__(document, file_handler, transcription_name=transcription_name)
     
     def validate(self):
-        try:
-            # response = requests.get(self.SCHEMA)
-            # content = response.content
-            fh = None
-            if settings.DEBUG or 'test' in sys.argv:  # the file is not collected in development
-                from django.contrib.staticfiles import finders
-                path = finders.find(self.SCHEMA_FILE)
-                fh = open(path, 'rb')
-            else:
-                from django.contrib.staticfiles.storage import staticfiles_storage
-                fh = staticfiles_storage.open(self.SCHEMA_FILE)
-            
-            content = fh.read()
-            schema_root = etree.XML(content)
-        except FileNotFoundError as e:
-            logger.exception(e)
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
-        else:
+        if self.root.nsmap[None] in VALID_SCHEMAS:
             try:
-                xmlschema = etree.XMLSchema(schema_root)
-                xmlschema.assertValid(self.root)
-            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                raise ParseError("Document didn't validate. %s" % e.args[0])
-        finally:
-            if fh:
-                fh.close()
+                # response = requests.get(self.SCHEMA)
+                # content = response.content
+                fh = None
+                if settings.DEBUG or 'test' in sys.argv:  # the file is not collected in development
+                    from django.contrib.staticfiles import finders
+                    path = finders.find(self.SCHEMA_FILE)
+                    fh = open(path, 'rb')
+                else:
+                    from django.contrib.staticfiles.storage import staticfiles_storage
+                    fh = staticfiles_storage.open(self.SCHEMA_FILE)
+
+                content = fh.read()
+                schema_root = etree.XML(content)
+            except FileNotFoundError as e:
+                logger.exception(e)
+                raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
+            else:
+                try:
+                    xmlschema = etree.XMLSchema(schema_root)
+                    xmlschema.assertValid(self.root)
+                except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
+                    raise ParseError("Document didn't validate. %s" % e.args[0])
+            finally:
+                if fh:
+                    fh.close()
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -331,33 +340,12 @@ class AltoParser(XMLParser):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
-    SCHEMA = 'https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd'
     SCHEMA_FILE = 'pagexml-schema.xsd'
-    xmlschema = None
 
     def validate(self):
-        schema = self.root.nsmap[None]
-
-        if schema is not None and PAGEXML_SCHEMAS in schema:
-            self.SCHEMA = "{}/pagecontent.xsd".format(self.root.nsmap[None])
-        try:
-            response = requests.get(self.SCHEMA)
-            content = response.content
-
-            schema_root = etree.XML(content)
-        except requests.exceptions.RequestException as e:
-            logger.exception(e)
-            raise ParseError("Can't reach validation document %s." % self.SCHEMA)
-        else:
-            try:
-                self.xmlschema = etree.XMLSchema(schema_root)
-                self.xmlschema.assertValid(self.root)
-            except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
-                if 'Coords' in e.args[0]:
-                    self.update_coords()
-                else:
-                    raise ParseError("Document didn't validate. %s" % e.args[0])
-
+        if b'/pagecontent/2013' in etree.tostring(self.root):
+            self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
+        super().validate()
 
     @property
     def total(self):
@@ -415,15 +403,6 @@ class PagexmlParser(XMLParser):
             return ' '.join([e.text if e.text is not None else ''
                              for e in lineTag.findall('TextEquiv/Unicode', self.root.nsmap)])
 
-    def update_coords(self):
-        pass
-
-    def clean_coords(self, tag):
-        coords = tag.find('Coords', self.root.nsmap)
-        points = coords.get('points')
-        spl = [list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(','))) for pt in points.split(' ')]
-        new_points = ' '.join(','.join(map(str, pt)) for pt in spl)
-        coords.set('points', new_points)
 
 
 class IIIFManifestParser(ParserDocument):
@@ -514,6 +493,26 @@ class TranskribusPageXmlParser(PagexmlParser):
                             raise "Cannot Parse Coordinates: {}".format(e.message)
         self.xmlschema.assertValid(self.root)
 
+    def update_line(self, line, lineTag):
+        try :
+            baseline = lineTag.find('Baseline', self.root.nsmap)
+            line.baseline = self.clean_coords(baseline)
+        except AttributeError:
+            #  to check if the baseline is good
+            line.baseline = None
+
+        polygon = lineTag.find('Coords', self.root.nsmap)
+        if polygon is not None:
+            line.mask = self.clean_coords(polygon)
+
+    def clean_coords(self, tag):
+        points = tag.get('points')
+        coords = [list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(','))) for pt in points.split(' ')]
+        new_points = ' '.join(','.join(map(str, pt)) for pt in coords)
+        tag.set('points', new_points)
+        return coords
+
+
 
 def make_parser(document, file_handler, name=None):
     # TODO: not great to rely on file name extension
@@ -532,8 +531,7 @@ def make_parser(document, file_handler, name=None):
         if 'alto' in schema:
             return AltoParser(document, file_handler, transcription_name=name, xml_root=root)
         elif 'PAGE' in schema:
-            file_handler.seek(0)
-            if b'Transkribus' in file_handler.read():
+            if b'Transkribus' in etree.tostring(root):
                 return TranskribusPageXmlParser(document, file_handler, transcription_name=name, xml_root=root)
             else:
                 return PagexmlParser(document, file_handler, transcription_name=name, xml_root=root)
