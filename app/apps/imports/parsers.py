@@ -6,6 +6,7 @@ import sys
 import time
 import uuid
 import zipfile
+import warnings
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -476,22 +477,10 @@ class TranskribusPageXmlParser(PagexmlParser):
     """
     A Pagexml Parser for documents exported from Transkribus to handle data
     """
+    def validate(self):
 
-    def update_coords(self):
-        for pageTag in self.get_pages():
-
-            for block in pageTag.findall('TextRegion', self.root.nsmap):
-                try:
-                    self.clean_coords(block)
-                except (ValueError,AttributeError) as e:
-                    raise "Cannot Parse Coordinates: {}".format(e.message)
-                else:
-                    for line in block.findall('TextLine', self.root.nsmap):
-                        try:
-                            self.clean_coords(line)
-                        except (ValueError,AttributeError) as e:
-                            raise "Cannot Parse Coordinates: {}".format(e.message)
-        self.xmlschema.assertValid(self.root)
+        warnings.warn("Validation is skipped for Transkribus Files but coordinates will be corrected",
+                      SyntaxWarning, 2)
 
     def update_line(self, line, lineTag):
         try :
@@ -504,6 +493,12 @@ class TranskribusPageXmlParser(PagexmlParser):
         polygon = lineTag.find('Coords', self.root.nsmap)
         if polygon is not None:
             line.mask = self.clean_coords(polygon)
+
+    def update_block(self, block, blockTag):
+        polygon = blockTag.find('Coords', self.root.nsmap)
+        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
+        block.box = self.clean_coords(polygon)
+
 
     def clean_coords(self, tag):
         points = tag.get('points')
