@@ -21,15 +21,15 @@ from versioning.models import NoChangeException
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ['xml', 'alto']  # , 'abbyy'
 
-VALID_SCHEMAS = ('http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15',
-                    'http://www.loc.gov/standards/alto/v4/alto.xsd',
+PAGEXML_SCHEMAS = ('http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15/pagecontent.xsd',
+                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd',)
+
+ALTO_SCHEMAS = ('http://www.loc.gov/standards/alto/v4/alto.xsd',
                     'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd',
-                    'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd',
-                    'http://www.loc.gov/standards/alto/ns-v4#')
+                    'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd')
 
 class ParseError(Exception):
     pass
@@ -120,33 +120,29 @@ class XMLParser(ParserDocument):
         super().__init__(document, file_handler, transcription_name=transcription_name)
     
     def validate(self):
-        if self.root.nsmap[None] in VALID_SCHEMAS:
-            try:
-                # response = requests.get(self.SCHEMA)
-                # content = response.content
-                fh = None
-                if settings.DEBUG or 'test' in sys.argv:  # the file is not collected in development
-                    from django.contrib.staticfiles import finders
-                    path = finders.find(self.SCHEMA_FILE)
-                    fh = open(path, 'rb')
-                else:
-                    from django.contrib.staticfiles.storage import staticfiles_storage
-                    fh = staticfiles_storage.open(self.SCHEMA_FILE)
+        schema_location = self.root.xpath("//*/@xsi:schemaLocation", namespaces={'xsi': "http://www.w3.org/2001/XMLSchema-instance"})[0]
 
-                content = fh.read()
+        self.SCHEMA = schema_location.split(' ')[-1]
+
+        if self.SCHEMA in PAGEXML_SCHEMAS +ALTO_SCHEMAS:
+            try:
+                if self.SCHEMA in ALTO_SCHEMAS:
+                    self.SCHEMA = 'https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd'
+
+                response = requests.get(self.SCHEMA)
+                content = response.content
                 schema_root = etree.XML(content)
-            except FileNotFoundError as e:
+            except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % self.SCHEMA_FILE)
+                raise ParseError("Can't reach validation document %s." % self.SCHEMA)
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
                     xmlschema.assertValid(self.root)
                 except (AttributeError, etree.DocumentInvalid, etree.XMLSyntaxError) as e:
                     raise ParseError("Document didn't validate. %s" % e.args[0])
-            finally:
-                if fh:
-                    fh.close()
+        else:
+            raise ParseError("Document Schema is not founded %s.")
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -342,11 +338,6 @@ class AltoParser(XMLParser):
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
     SCHEMA_FILE = 'pagexml-schema.xsd'
-
-    def validate(self):
-        if b'/pagecontent/2013' in etree.tostring(self.root):
-            self.SCHEMA_FILE = 'pagexml-schema-2013.xsd'
-        super().validate()
 
     @property
     def total(self):
