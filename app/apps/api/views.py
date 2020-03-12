@@ -155,6 +155,17 @@ class LineViewSet(ModelViewSet):
             return LineSerializer
 
     @action(detail=False, methods=['post'])
+    def bulk_create(self, request, document_pk=None, part_pk=None):
+        lines = request.data.get("lines")
+        result = []
+        #for line in lines:
+        serializer = LineSerializer(data=lines, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        #result.append(serializer.data)
+        return Response({'status': 'ok', 'lines': serializer.data})
+    
+    @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
         for line in lines:

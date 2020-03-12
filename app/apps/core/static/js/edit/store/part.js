@@ -127,11 +127,45 @@ const partStore = {
                     versions: []
                 };
                 this.lines.push(newLine);
-                callback(data);
+                callback(newLine);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt create line', error)
             });
+    },
+    bulkCreateLines(lines, callback) {
+        let uri = this.getApiRoot() + 'lines/bulk_create/';
+        
+        let data = {lines: lines.map(l => {
+            return {
+                document_part: this.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                block: l.region
+            };
+        })};
+        this.push(uri, data, method="post")
+            .then((response) => response.json())
+            .then(function(data) {
+                let createdLines = [];
+                for (let i=0; i<data.lines.length; i++) {
+                    let l = data.lines[i];
+                    let newLine = l;
+                    newLine.transcription = {
+                        line: newLine.pk,
+                        transcription: this.selectedTranscription,
+                        content: '',
+                        versions: []
+                    }
+                    createdLines.push(newLine)
+                    this.lines.push(newLine);
+                }
+                callback(createdLines);
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt create lines', error)
+            });
+
     },
     updateLine(line, callback) {
         let uri = this.getApiRoot() + 'lines/' + line.pk + '/';
@@ -163,17 +197,22 @@ const partStore = {
                 console.log('couldnt delete line #', linePk)
             });
     },
-    bulkDeleteLines(pks) {
+    bulkDeleteLines(pks, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_delete/';
         this.push(uri, {lines: pks}, method="post")
             .then(function(data) {
+                let deletedLines = [];
                 for (let i=0; i<pks.length; i++) {
                     let index = this.lines.findIndex(l=>l.pk==pks[i]);
-                    Vue.delete(this.lines, index);
+                    if(index) {
+                        deletedLines.push(pks[i]);
+                        Vue.delete(this.lines, index);
+                    }
                 }
+                callback(deletedLines)
             }.bind(this))
             .catch(function(error) {
-                console.log('couldnt bulk delete lines')
+                console.log('couldnt bulk delete lines', error);
             });
     },
     
@@ -244,5 +283,4 @@ const partStore = {
             this.fetch(this.next);
         }
     }
-
 };

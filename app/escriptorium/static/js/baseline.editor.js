@@ -94,6 +94,13 @@ class SegmenterRegion {
         this.unselect();
         this.remove();
     }
+
+    get() {
+        return {
+            context: this.context,
+            polygon: this.polygon,
+        };
+    }
 }
 
 class SegmenterLine {
@@ -339,6 +346,15 @@ class SegmenterLine {
             return this.segmenter.getAverageLineHeight();
         }
     }
+
+    get() {
+        return {
+            context: this.context,
+            baseline: this.baseline,
+            mask: this.mask,
+            region: this.region && this.region.context
+        };
+    }
 }
 
 class Segmenter {
@@ -464,8 +480,8 @@ class Segmenter {
     
     deleteSelection() {
         this.trigger('baseline-editor:delete', {
-            lines: this.selection.lines.map(l=>l.context.pk),
-            regions: this.selection.regions.map(l=>l.context.pk)
+            lines: this.selection.lines.map(l=>l.get()),
+            regions: this.selection.regions.map(r=>r.get())
         });
         
         // optimisticaly removes everything
@@ -1705,7 +1721,7 @@ class Segmenter {
         });
 
         this.trigger('baseline-editor:delete', {
-            lines: this.selection.lines.slice(1).map(l=>l.context.pk)
+            lines: this.selection.lines.slice(1)
         });
         
         while (this.selection.lines.length > 1) {

@@ -78,6 +78,9 @@ var partVM = new Vue({
         this.$on('create:line', function(line, cb) {
             this.part.createLine(line, cb);
         }.bind(this));
+        this.$on('bulk_create:lines', function(line, cb) {
+            this.part.bulkCreateLines(line, cb);
+        }.bind(this));
         this.$on('update:line', function(line, cb) {
             this.part.updateLine(line, cb);
         }.bind(this));
@@ -85,7 +88,7 @@ var partVM = new Vue({
             this.part.deleteLine(linePk, cb);
         }.bind(this));
         this.$on('bulk_delete:lines', function(pks, cb) {
-            this.part.bulkDeleteLines(pks);
+            this.part.bulkDeleteLines(pks, cb);
         }.bind(this));
         
         this.$on('create:region', function(region, cb) {
@@ -94,8 +97,8 @@ var partVM = new Vue({
         this.$on('update:region', function(region, cb) {
             this.part.updateRegion(region, cb);
         }.bind(this));
-        this.$on('bulk_delete:region', function(pks) {
-            this.part.deleteRegion(pks);
+        this.$on('bulk_delete:regions', function(pks, cb) {
+            this.part.deleteRegion(pks, cb);
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {

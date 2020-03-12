@@ -4,7 +4,8 @@ Baseline editor panel (or segmentation panel)
 
 const SegPanel = BasePanel.extend({
     data() { return {
-        colorMode: 'color'  //  color - binary - grayscale
+        colorMode: 'color',  //  color - binary - grayscale
+        undoManager: new UndoManager()
     };},
     mounted() {
         // wait for the element to be rendered
@@ -27,20 +28,25 @@ const SegPanel = BasePanel.extend({
             // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
             let canvas = this.segmenter.canvas;
             canvas.parentNode.parentNode.appendChild(canvas);
-
+            
             // already mounted with a part = opening the panel after page load
             if (this.part.loaded) {
                 this.onShow();
             }
+            
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
                 let settings = userProfile.get('baseline-editor') || {};
                 settings[event.detail.name] = event.detail.value;
                 userProfile.set('baseline-editor', settings);
             });
+            
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
-                this.$parent.$emit('bulk_delete:regions', data.regions);
-                this.$parent.$emit('bulk_delete:lines', data.lines);
+                this.bulkDelete(data);
+                this.pushHistory(
+                    function() { this.bulkCreate(data); }.bind(this),
+                    function() { this.bulkDelete(data); }.bind(this)
+                );
             }.bind(this));
             this.segmenter.events.addEventListener('baseline-editor:update', function(ev) {
                 let data = ev.detail;
@@ -53,9 +59,9 @@ const SegPanel = BasePanel.extend({
                     } else {
                         this.$parent.$emit('create:region', {
                             polygon: data.obj.polygon
-                        }, function(resp) {
+                        }, function(newRegion) {
                             // callback, update the pk
-                            data.obj.context.pk = resp.pk;
+                            data.obj.context.pk = newRegion.pk;
                         });
                     }
                 } else {
@@ -71,20 +77,30 @@ const SegPanel = BasePanel.extend({
                             baseline: data.obj.baseline,
                             mask: data.obj.mask,
                             region: data.obj.region
-                        }, function(resp) {
+                        }, function(newLine) {
                             // callback from http request, update the pk
-                            data.obj.context.pk = resp.pk;
+                            data.obj.context.pk = newLine.pk;
                         });
                     }                    
                 }                
             }.bind(this));
         }.bind(this));
+
+        // history
+        this.$el.querySelector('#undo').addEventListener('click', function(ev) {
+            this.undoManager.undo();
+            this.refreshHistoryBtns();
+        }.bind(this));
+        this.$el.querySelector('#redo').addEventListener('click', function(ev) {
+            this.undoManager.redo();
+            this.refreshHistoryBtns();
+        }.bind(this));
     },
-    computed: {
+    computed: {        
         hasBinaryColor() {
             return this.part.loaded && this.part.bw_image !== null;
         },
-
+        
         // overrides imageSrc to deal with color modes
         imageSrcBin() {
             return (
@@ -98,6 +114,8 @@ const SegPanel = BasePanel.extend({
         }
     },
     updated() {
+        this.undoManager.clear();
+        this.refreshHistoryBtns();
         if (this.part.loaded) {
             if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
                 this.colorMode = 'color';
@@ -110,6 +128,15 @@ const SegPanel = BasePanel.extend({
             if (this.colorMode == 'color') this.colorMode = 'binary';
             else this.colorMode = 'color';
         },
+        
+        pushHistory(undo, redo) {
+            this.undoManager.add({
+                undo: undo,
+                redo: redo
+            });
+            this.refreshHistoryBtns();
+        },
+        
         onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded
@@ -151,6 +178,7 @@ const SegPanel = BasePanel.extend({
             this.segmenter.resetLineHeights();
             this.segmenter.applyRegionMode();
         },
+        
         updateView() {
             // might not be mounted yet
             if (this.segmenter && this.$el.clientWidth) {
@@ -159,6 +187,77 @@ const SegPanel = BasePanel.extend({
                 this.segmenter.canvas.style.left = zoom.pos.x + 'px';
                 this.segmenter.refresh();
             }
+        },
+
+        // undo manager helpers
+        bulkCreate(data) {
+            if (data.regions.length) {
+                this.$parent.$emit(
+                    'bulk_create:regions',
+                    data.regions.map(r=> {
+                        return {
+                            pk: r.pk,
+                            polygon: r.polygon
+                        };
+                    }), function(newRegions) {
+                        for (let i=0; i<newRegions; i++) {
+                            this.segmenter.load_region(newRegions[i]);
+                            // also update pk in the original data for undo/redo
+                            data.regions[i].context.pk = newRegions[i].pk;
+                        }
+                    }.bind(this));
+            }
+            if (data.lines.length) {
+                this.$parent.$emit(
+                    'bulk_create:lines',
+                    data.lines.map(l => {
+                        return {
+                            pk: l.pk,
+                            baseline: l.baseline,
+                            mask: l.mask,
+                            region: l.region
+                        };
+                    }),
+                    function(newLines) {
+                        for (let i=0; i<newLines.length; i++) {
+                            this.segmenter.load_line(newLines[i]);
+                            // also update pk in the original data for undo/redo
+                            data.lines[i].context.pk = newLines[i].pk;
+                        }
+                    }.bind(this));
+            }
+        },
+        bulkUpdate(data) {
+
+        },
+        bulkDelete(data) {
+            if (data.regions.length) {
+                this.$parent.$emit(
+                    'bulk_delete:regions',
+                    data.regions.map(r=>r.context.pk),
+                    function(deletedRegions) {
+                        this.segmenter.regions
+                            .filter(r=>r.context.pk in deletedRegions)
+                            .forEach(r=>r.remove());
+                    }.bind(this));
+            }
+            if (data.lines.length) {
+                this.$parent.$emit(
+                    'bulk_delete:lines',
+                    data.lines.map(l=>l.context.pk),
+                    function(deletedLines) {
+                        this.segmenter.lines
+                            .filter(l=> { return deletedLines.indexOf(l.context.pk) >= 0; })
+                            .forEach(l=>{ l.remove(); });
+                    }.bind(this)
+                );
+            }
+        },
+        refreshHistoryBtns() {
+            if (this.undoManager.hasUndo()) this.$el.querySelector('#undo').disabled = false;
+            else this.$el.querySelector('#undo').disabled = true;
+            if (this.undoManager.hasRedo()) this.$el.querySelector('#redo').disabled = false;
+            else this.$el.querySelector('#redo').disabled = true;
         }
     }
 });
