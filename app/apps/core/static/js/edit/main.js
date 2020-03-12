@@ -84,6 +84,9 @@ var partVM = new Vue({
         this.$on('update:line', function(line, cb) {
             this.part.updateLine(line, cb);
         }.bind(this));
+        this.$on('bulk_update:lines', function(lines, cb) {
+            this.part.bulkUpdateLines(lines, cb);
+        }.bind(this));
         this.$on('delete:line', function(linePk, cb) {
             this.part.deleteLine(linePk, cb);
         }.bind(this));

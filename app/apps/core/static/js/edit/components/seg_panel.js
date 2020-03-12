@@ -44,45 +44,38 @@ const SegPanel = BasePanel.extend({
                 let data = ev.detail;
                 this.bulkDelete(data);
                 this.pushHistory(
-                    function() { this.bulkCreate(data); }.bind(this),
+                    function() { this.bulkCreate(data, createInEditor=true); }.bind(this),
                     function() { this.bulkDelete(data); }.bind(this)
                 );
             }.bind(this));
             this.segmenter.events.addEventListener('baseline-editor:update', function(ev) {
+                // same event for creation and modification of a line/region
                 let data = ev.detail;
-                if (data.objType == 'region') {
-                    if (data.obj.context.pk) {
-                        this.$parent.$emit('update:region', {
-                            pk: data.obj.context.pk,
-                            polygon: data.obj.polygon
+                this.extractPrevious(data);
+                
+                let toCreate = {
+                    lines: data.lines && data.lines.filter(l=>l.context.pk===null) || [],
+                    regions: data.regions && data.regions.filter(l=>l.context.pk===null) || []
+                };
+                let toUpdate = {
+                    lines: data.lines && data.lines.filter(l=>l.context.pk!==null) || [],
+                    regions: data.regions && data.region.filter(l=>l.context.pk!==null) || []
+                };
+                this.bulkCreate(toCreate);
+                this.bulkUpdate(toUpdate);
+                this.pushHistory(
+                    function() {    // undo
+                        this.bulkDelete(toCreate);
+                        this.bulkUpdate({
+                            lines: toUpdate.lines.map(l=>l.previous),
+                            regions: toUpdate.regions.map(r=>r.previous)
                         });
-                    } else {
-                        this.$parent.$emit('create:region', {
-                            polygon: data.obj.polygon
-                        }, function(newRegion) {
-                            // callback, update the pk
-                            data.obj.context.pk = newRegion.pk;
-                        });
-                    }
-                } else {
-                    if (data.obj.context.pk) {
-                        this.$parent.$emit('update:line', {
-                            pk: data.obj.context.pk,
-                            baseline: data.obj.baseline,
-                            mask: data.obj.mask,
-                            region: data.obj.region
-                        });
-                    } else {
-                        this.$parent.$emit('create:line', {
-                            baseline: data.obj.baseline,
-                            mask: data.obj.mask,
-                            region: data.obj.region
-                        }, function(newLine) {
-                            // callback from http request, update the pk
-                            data.obj.context.pk = newLine.pk;
-                        });
-                    }                    
-                }                
+                    }.bind(this),
+                    function() {   // redo
+                        this.bulkCreate(toCreate, createInEditor=true)
+                        this.bulkUpdate(toUpdate);
+                    }.bind(this)
+                );                
             }.bind(this));
         }.bind(this));
 
@@ -190,8 +183,8 @@ const SegPanel = BasePanel.extend({
         },
 
         // undo manager helpers
-        bulkCreate(data) {
-            if (data.regions.length) {
+        bulkCreate(data, createInEditor=false) {
+            if (data.regions && data.regions.length) {
                 this.$parent.$emit(
                     'bulk_create:regions',
                     data.regions.map(r=> {
@@ -207,7 +200,7 @@ const SegPanel = BasePanel.extend({
                         }
                     }.bind(this));
             }
-            if (data.lines.length) {
+            if (data.lines && data.lines.length) {
                 this.$parent.$emit(
                     'bulk_create:lines',
                     data.lines.map(l => {
@@ -220,18 +213,45 @@ const SegPanel = BasePanel.extend({
                     }),
                     function(newLines) {
                         for (let i=0; i<newLines.length; i++) {
-                            this.segmenter.load_line(newLines[i]);
-                            // also update pk in the original data for undo/redo
-                            data.lines[i].context.pk = newLines[i].pk;
+                            let line = newLines[i];
+                            // create a new line in case the event didn't come from the editor
+                            if (createInEditor) {
+                                this.segmenter.load_line(line);
+                            }
+                            // update the segmenter pk
+                            data.lines[i].context.pk = line.pk;
                         }
                     }.bind(this));
             }
         },
         bulkUpdate(data) {
+            if (data.regions && data.regions.length) {
 
+            }
+            if (data.lines && data.lines.length) {
+                this.$parent.$emit(
+                    'bulk_update:lines',
+                    data.lines.map(l => {
+                        return {
+                            pk: l.context.pk,
+                            baseline: l.baseline,
+                            mask: l.mask,
+                            region: l.region
+                        };
+                    }),
+                    function(updatedLines) {
+                        for (let i=0; i<updatedLines.length; i++) {
+                            let line = updatedLines[i];
+                            let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk)
+                            segmenterLine.update(line.baseline, line.mask);
+                        }
+                    }.bind(this)
+                );
+                //}
+            }
         },
         bulkDelete(data) {
-            if (data.regions.length) {
+            if (data.regions && data.regions.length) {
                 this.$parent.$emit(
                     'bulk_delete:regions',
                     data.regions.map(r=>r.context.pk),
@@ -241,7 +261,7 @@ const SegPanel = BasePanel.extend({
                             .forEach(r=>r.remove());
                     }.bind(this));
             }
-            if (data.lines.length) {
+            if (data.lines && data.lines.length) {
                 this.$parent.$emit(
                     'bulk_delete:lines',
                     data.lines.map(l=>l.context.pk),
@@ -253,6 +273,35 @@ const SegPanel = BasePanel.extend({
                 );
             }
         },
+
+        extractPrevious(data) {
+            // given modifications on lines/regions,
+            // update data with a previous attribute containing the current state
+            if (data.regions && data.regions.length) {
+                data.regions.forEach(r => {
+                    let region = this.part.regions.find(e=>e.pk==r.context.pk);
+                    if (region) {
+                        r.previous = {
+                            polygon: region && region.polygon.slice()  // copy the array
+                        };
+                    }
+                });
+            }
+            if (data.lines && data.lines.length) {
+                data.lines.forEach(function(l) {
+                    let line = this.part.lines.find(e=>e.pk==l.context.pk);
+                    if (line) {
+                        l.previous = {
+                            context: l.context,
+                            baseline: line && line.baseline && line.baseline.slice(),
+                            mask: line && line.mask && line.mask.slice(),
+                            region: line && line.region
+                        };
+                    }
+                }.bind(this));
+            }
+        },
+        
         refreshHistoryBtns() {
             if (this.undoManager.hasUndo()) this.$el.querySelector('#undo').disabled = false;
             else this.$el.querySelector('#undo').disabled = true;

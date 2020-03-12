@@ -168,12 +168,14 @@ class LineViewSet(ModelViewSet):
     @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
+        updated_lines = []
         for line in lines:
-            l = get_object_or_404(Line, pk=line["pk"])
-            serializer = LineSerializer(l, data=line,partial=True)
+            inst = get_object_or_404(Line, pk=line["pk"])
+            serializer = LineSerializer(inst, data=line, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        return Response({'response': 'ok'}, status=200)
+            updated_lines.append(serializer.data)
+        return Response({'response': 'ok', 'lines': updated_lines}, status=200)
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):

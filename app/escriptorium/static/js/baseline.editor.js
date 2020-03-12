@@ -75,15 +75,11 @@ class SegmenterRegion {
     }
     
     updateDataFromCanvas() {
-        let previous = {polygon: this.polygon};
+        // let previous = {polygon: this.polygon};
         this.polygonPath.reduce();  // removes unecessary segments
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x),
                                                            Math.round(s.point.y)]);
-        if (!polyEq(previous.polygon, this.polygon)) {
-            this.segmenter.trigger('baseline-editor:update', {objType: 'region',
-                                                              obj: this,
-                                                              previous:previous});
-        }
+        this.segmenter.trigger('baseline-editor:update', {regions: [this.get()]});
     }
     
     remove() {
@@ -97,8 +93,9 @@ class SegmenterRegion {
 
     get() {
         return {
-            context: this.context,
-            polygon: this.polygon,
+            id: this.id,
+            context: this.context,  // copy
+            polygon: this.polygon.slice(),  // copy
         };
     }
 }
@@ -232,7 +229,6 @@ class SegmenterLine {
     }
     
     updateDataFromCanvas() {
-        let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) {
             this.baselinePath.reduce();  // removes unecessary segments
             this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
@@ -241,11 +237,8 @@ class SegmenterLine {
             this.maskPath.reduce();
             this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         }
-        if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
-            this.segmenter.trigger('baseline-editor:update', {objType: 'line',
-                                                              obj: this,
-                                                              previous:previous});
-        }
+        
+        this.segmenter.trigger('baseline-editor:update', {lines: [this.get()]});
     }
     
     extend(point) {
@@ -349,10 +342,11 @@ class SegmenterLine {
 
     get() {
         return {
+            id: this.id,
             context: this.context,
-            baseline: this.baseline,
-            mask: this.mask,
-            region: this.region && this.region.context
+            baseline: this.baseline && this.baseline.slice() || null,
+            mask: this.mask && this.mask.slice() || null,
+            region: this.region && Object.assign({}, this.region.context) || null
         };
     }
 }

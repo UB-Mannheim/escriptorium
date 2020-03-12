@@ -135,13 +135,12 @@ const partStore = {
     },
     bulkCreateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_create/';
-        
         let data = {lines: lines.map(l => {
             return {
                 document_part: this.pk,
                 baseline: l.baseline,
                 mask: l.mask,
-                block: l.region
+                block: l.region && l.region.pk
             };
         })};
         this.push(uri, data, method="post")
@@ -165,7 +164,6 @@ const partStore = {
             .catch(function(error) {
                 console.log('couldnt create lines', error)
             });
-
     },
     updateLine(line, callback) {
         let uri = this.getApiRoot() + 'lines/' + line.pk + '/';
@@ -181,6 +179,36 @@ const partStore = {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
                 this.lines[index].baseline = data.baseline;
                 this.lines[index].mask = data.mask;
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt update line', error)
+            });
+    },
+    bulkUpdateLines(lines, callback) {
+        let uri = this.getApiRoot() + 'lines/bulk_update/';
+        let data = lines.map(l => { return {
+            document_part: this.pk,
+            pk: l.pk,
+            baseline: l.baseline,
+            mask: l.mask,
+            block: l.region && l.region.pk
+        }; });
+        this.push(uri, {lines: data}, method="put")
+            .then((response) => response.json())
+            .then(function(data) {
+                let updatedLines = [];
+                for (let i=0; i<data.lines.length; i++) {
+                    let lineData = data.lines[i];
+                    let line = this.lines.find(function(l) {
+                        return l.pk==lineData.pk;
+                    });
+                    if (line) {
+                        line.baseline = lineData.baseline;
+                        line.mask = lineData.mask;
+                        updatedLines.push(line);
+                    }
+                }
+                callback(updatedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
