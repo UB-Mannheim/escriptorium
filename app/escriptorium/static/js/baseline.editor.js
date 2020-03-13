@@ -244,7 +244,7 @@ class SegmenterLine {
         
         if (!polyEq(previous.baseline, this.baseline) ||
             !polyEq(previous.mask, this.mask)) {
-            this.segmenter.addToUpdateQueue({lines: [this.get()]});
+            this.segmenter.addToUpdateQueue({lines: [this]});
         }
     }
     
@@ -1233,7 +1233,7 @@ class Segmenter {
             (line.mask !== null && line.mask.length)) {
             if (this.idField) context[this.idField] = line[this.idField];
             if (!line.baseline) this.toggleMasks(true);
-            return this.createLine(line.order, line.baseline, line.mask,
+            return this.createLine(null, line.baseline, line.mask,
                                    region || line.region || null, context);
         } else {
             console.log('EDITOR SKIPING invalid line: ', line);
@@ -1743,7 +1743,7 @@ class Segmenter {
             this.selection.lines[0].updateDataFromCanvas();
         }
     }
-
+    
     addToUpdateQueue(items) {  // {lines:[], regions:[]}
         this.updateQueue.lines = this.updateQueue.lines.concat(items.lines || []);
         this.updateQueue.regions = this.updateQueue.regions.concat(items.regions || []);
@@ -1751,8 +1751,8 @@ class Segmenter {
 
     consumeUpdateQueue() {
         // make copys to void race conditions
-        let lines = this.updateQueue.lines.slice();
-        let regions = this.updateQueue.regions.slice();
+        let lines = this.updateQueue.lines.map(l=>l.get());
+        let regions = this.updateQueue.regions.map(r=>r.get());
         // empty the queue asap
         this.updateQueue = {lines: [], regions: []};
         
