@@ -122,19 +122,19 @@ class XMLParser(ParserDocument):
     def validate(self):
         schema_location = self.root.xpath("//*/@xsi:schemaLocation", namespaces={'xsi': "http://www.w3.org/2001/XMLSchema-instance"})[0]
 
-        self.SCHEMA = schema_location.split(' ')[-1]
+        schema = schema_location.split(' ')[-1]
 
-        if self.SCHEMA in PAGEXML_SCHEMAS +ALTO_SCHEMAS:
+        if schema in PAGEXML_SCHEMAS +ALTO_SCHEMAS:
             try:
-                if self.SCHEMA in ALTO_SCHEMAS:
-                    self.SCHEMA = 'https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd'
+                if schema in ALTO_SCHEMAS:
+                    schema = 'https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd'
 
-                response = requests.get(self.SCHEMA)
+                response = requests.get(schema)
                 content = response.content
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % self.SCHEMA)
+                raise ParseError("Can't reach validation document %s." % schema)
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
@@ -265,9 +265,6 @@ class XMLParser(ParserDocument):
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
 
-    SCHEMA = 'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd'
-    SCHEMA_FILE = 'alto-4-1-baselines.xsd'
-
     @property
     def total(self):
         # An alto file always describes 1 'document part'
@@ -337,7 +334,6 @@ class AltoParser(XMLParser):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
-    SCHEMA_FILE = 'pagexml-schema.xsd'
 
     @property
     def total(self):
@@ -490,12 +486,11 @@ class TranskribusPageXmlParser(PagexmlParser):
         #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
         block.box = self.clean_coords(polygon)
 
-
     def clean_coords(self, tag):
         points = tag.get('points')
         coords = [list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(','))) for pt in points.split(' ')]
         new_points = ' '.join(','.join(map(str, pt)) for pt in coords)
-        tag.set('points', new_points)
+        # tag.set('points', new_points)
         return coords
 
 
