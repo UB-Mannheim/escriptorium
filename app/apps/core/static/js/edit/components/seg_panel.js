@@ -59,7 +59,7 @@ const SegPanel = BasePanel.extend({
                 };
                 let toUpdate = {
                     lines: data.lines && data.lines.filter(l=>l.context.pk!==null) || [],
-                    regions: data.regions && data.region.filter(l=>l.context.pk!==null) || []
+                    regions: data.regions && data.regions.filter(l=>l.context.pk!==null) || []
                 };
                 this.bulkCreate(toCreate);
                 this.bulkUpdate(toUpdate);
@@ -278,14 +278,15 @@ const SegPanel = BasePanel.extend({
             // given modifications on lines/regions,
             // update data with a previous attribute containing the current state
             if (data.regions && data.regions.length) {
-                data.regions.forEach(r => {
-                    let region = this.part.regions.find(e=>e.pk==r.context.pk);
+                data.regions.forEach(function(r) {
+
+                    let region = this.part.blocks.find(e=>e.pk==r.context.pk);
                     if (region) {
                         r.previous = {
                             polygon: region && region.polygon.slice()  // copy the array
                         };
                     }
-                });
+                }.bind(this));
             }
             if (data.lines && data.lines.length) {
                 data.lines.forEach(function(l) {

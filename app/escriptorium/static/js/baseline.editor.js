@@ -75,11 +75,14 @@ class SegmenterRegion {
     }
     
     updateDataFromCanvas() {
-        // let previous = {polygon: this.polygon};
+        
+        let previous = {polygon: this.polygon};
         this.polygonPath.reduce();  // removes unecessary segments
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x),
                                                            Math.round(s.point.y)]);
-        this.segmenter.trigger('baseline-editor:update', {regions: [this.get()]});
+        if (!polyEq(previous.polygon, this.polygon)) {
+            this.segmenter.addToUpdateQueue({regions: [this]});
+        }
     }
     
     remove() {
@@ -229,6 +232,7 @@ class SegmenterLine {
     }
     
     updateDataFromCanvas() {
+        let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) {
             this.baselinePath.reduce();  // removes unecessary segments
             this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
@@ -238,7 +242,10 @@ class SegmenterLine {
             this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         }
         
-        this.segmenter.trigger('baseline-editor:update', {lines: [this.get()]});
+        if (!polyEq(previous.baseline, this.baseline) ||
+            !polyEq(previous.mask, this.mask)) {
+            this.segmenter.addToUpdateQueue({lines: [this.get()]});
+        }
     }
     
     extend(point) {
@@ -660,6 +667,13 @@ class Segmenter {
         paper.settings.hitTolerance = 0;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
+
+        // setup outbound events
+        this.updateQueue = {lines: [], regions:[]};
+        paper.view.onFrame = function(ev) {
+            // console.log('CONSUME NOW');
+            this.consumeUpdateQueue();
+        }.bind(this);
         
         this.regionsGroup = new paper.Group();
         this.linesGroup = new paper.Group();
@@ -1669,10 +1683,7 @@ class Segmenter {
                 }
             }
             if (line.region != prev) {
-                this.trigger('baseline-editor:update', {
-                    objType: 'line',
-                    obj: line,
-                    previous: {region: prev}});
+                this.addToUpdateQueue({lines: [line]});
             }
         }
         this.showContextMenu();
@@ -1684,10 +1695,7 @@ class Segmenter {
             let prev = line.region;
             line.region = null;
             if (line.region != prev) {
-                this.trigger('baseline-editor:update', {
-                    objType: 'line',
-                    obj: line,
-                    previous: {region: prev}});
+                this.addToUpdateQueue({lines: [line]});
             }
         }
         this.showContextMenu();
@@ -1736,6 +1744,26 @@ class Segmenter {
         }
     }
 
+    addToUpdateQueue(items) {  // {lines:[], regions:[]}
+        this.updateQueue.lines = this.updateQueue.lines.concat(items.lines || []);
+        this.updateQueue.regions = this.updateQueue.regions.concat(items.regions || []);
+    }
+
+    consumeUpdateQueue() {
+        // make copys to void race conditions
+        let lines = this.updateQueue.lines.slice();
+        let regions = this.updateQueue.regions.slice();
+        // empty the queue asap
+        this.updateQueue = {lines: [], regions: []};
+        
+        if (lines.length || regions.length) {
+            this.trigger('baseline-editor:update', {
+                lines: lines,
+                regions: regions
+            });
+        }
+    }
+    
     getAverageLineHeight() {
         // somewhat computational intensive so we 'cache' it.
         if (!this.averageLineHeight) this.computeAverageLineHeight();
