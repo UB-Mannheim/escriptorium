@@ -21,16 +21,6 @@ from versioning.models import NoChangeException
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ['xml', 'alto']  # , 'abbyy'
 
-PAGEXML_SCHEMAS = ('http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15/pagecontent.xsd',
-                    'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd',)
-
-ALTO_SCHEMAS = ('http://www.loc.gov/standards/alto/v4/alto.xsd',
-                    'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd',
-                    'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd')
-
 class ParseError(Exception):
     pass
 
@@ -112,6 +102,8 @@ class XMLParser(ParserDocument):
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
         if xml_root is not None:
             self.root = xml_root
+            self.schema_location = \
+            self.root.xpath("//*/@xsi:schemaLocation", namespaces={'xsi': "http://www.w3.org/2001/XMLSchema-instance"})[0]
         else:
             try:
                 self.root = etree.parse(self.file).getroot()
@@ -120,21 +112,18 @@ class XMLParser(ParserDocument):
         super().__init__(document, file_handler, transcription_name=transcription_name)
     
     def validate(self):
-        schema_location = self.root.xpath("//*/@xsi:schemaLocation", namespaces={'xsi': "http://www.w3.org/2001/XMLSchema-instance"})[0]
 
-        schema = schema_location.split(' ')[-1]
+        file_schema = self.schema_location.split(' ')[-1]
 
-        if schema in PAGEXML_SCHEMAS +ALTO_SCHEMAS:
+        if file_schema in self.ACCEPTED_SCHEMAS:
             try:
-                if schema in ALTO_SCHEMAS:
-                    schema = 'https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd'
 
-                response = requests.get(schema)
+                response = requests.get(self.schema)
                 content = response.content
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % schema)
+                raise ParseError("Can't reach validation document %s." % self.schema)
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
@@ -264,6 +253,13 @@ class XMLParser(ParserDocument):
 
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
+    ACCEPTED_SCHEMAS = ALTO_SCHEMAS = ('http://www.loc.gov/standards/alto/v4/alto.xsd',
+                    'http://www.loc.gov/standards/alto/v4/alto-4-0.xsd',
+                    'http://www.loc.gov/standards/alto/v4/alto-4-1.xsd')
+
+    def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
+        super().__init__(document, file_handler, transcription_name, xml_root)
+        self.schema = 'https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd'
 
     @property
     def total(self):
@@ -334,6 +330,15 @@ class AltoParser(XMLParser):
 
 class PagexmlParser(XMLParser):
     DEFAULT_NAME = _("Default PageXML Import")
+    ACCEPTED_SCHEMAS = ('http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd',
+                        'http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd',
+                        'http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd',
+                        'http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15/pagecontent.xsd',
+                        'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd',)
+
+    def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
+        super().__init__(document, file_handler, transcription_name, xml_root)
+        self.schema = self.schema_location.split(' ')[-1]
 
     @property
     def total(self):
@@ -470,21 +475,14 @@ class TranskribusPageXmlParser(PagexmlParser):
                       SyntaxWarning, 2)
 
     def update_line(self, line, lineTag):
-        try :
-            baseline = lineTag.find('Baseline', self.root.nsmap)
-            line.baseline = self.clean_coords(baseline)
-        except AttributeError:
-            #  to check if the baseline is good
-            line.baseline = None
 
-        polygon = lineTag.find('Coords', self.root.nsmap)
-        if polygon is not None:
-            line.mask = self.clean_coords(polygon)
+        super().update_line(line, lineTag)
+        line.baseline =  self.clean_coords(line.baseline)
+        line.mask = self.clean_coords(line.mask)
 
     def update_block(self, block, blockTag):
-        polygon = blockTag.find('Coords', self.root.nsmap)
-        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-        block.box = self.clean_coords(polygon)
+        super().update_line(block, blockTag)
+        block.box = self.clean_coords(block.box)
 
     def clean_coords(self, tag):
         points = tag.get('points')
