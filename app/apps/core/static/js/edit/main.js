@@ -100,8 +100,8 @@ var partVM = new Vue({
         this.$on('update:region', function(region, cb) {
             this.part.updateRegion(region, cb);
         }.bind(this));
-        this.$on('bulk_delete:regions', function(pks, cb) {
-            this.part.deleteRegion(pks, cb);
+        this.$on('delete:region', function(regionPk, cb) {
+            this.part.deleteRegion(regionPk, cb);
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {

@@ -47,7 +47,7 @@ class SegmenterRegion {
             strokeColor: this.segmenter.regionColor,
             dashOffset: 5/this.segmenter.getRatio(),
             strokeWidth: 2/this.segmenter.getRatio(),
-            // fillColor: this.segmenter.regionColor,
+            fillColor: this.segmenter.mode == 'regions' ? this.segmenter.regionColor : null,
             selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
             visible: true,
             segments: this.polygon
@@ -75,7 +75,6 @@ class SegmenterRegion {
     }
     
     updateDataFromCanvas() {
-        
         let previous = {polygon: this.polygon};
         this.polygonPath.reduce();  // removes unecessary segments
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x),
@@ -84,13 +83,25 @@ class SegmenterRegion {
             this.segmenter.addToUpdateQueue({regions: [this]});
         }
     }
+
+    update(polygon) {
+        if (polygon && polygon.length) {
+            this.polygon = polygon;
+            this.polygonPath.removeSegments();
+            this.polygonPath.addSegments(polygon);
+            this.segmenter.bindRegionEvents(this);
+        }
+    }
     
     remove() {
+        this.unselect();
         this.polygonPath.remove();
+        this.segmenter.regions.splice(this.segmenter.regions.findIndex(e => e.id == this.id), 1);
     }
     
     delete() {
         this.unselect();
+        
         this.remove();
     }
 
@@ -98,7 +109,7 @@ class SegmenterRegion {
         return {
             id: this.id,
             context: this.context,  // copy
-            polygon: this.polygon.slice(),  // copy
+            box: this.polygon.slice(),  // copy
         };
     }
 }
@@ -671,7 +682,6 @@ class Segmenter {
         // setup outbound events
         this.updateQueue = {lines: [], regions:[]};
         paper.view.onFrame = function(ev) {
-            // console.log('CONSUME NOW');
             this.consumeUpdateQueue();
         }.bind(this);
         

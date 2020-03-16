@@ -179,6 +179,7 @@ const partStore = {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
                 this.lines[index].baseline = data.baseline;
                 this.lines[index].mask = data.mask;
+                callback(this.lines[index]);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
@@ -237,7 +238,7 @@ const partStore = {
                         Vue.delete(this.lines, index);
                     }
                 }
-                callback(deletedLines)
+                callback(deletedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt bulk delete lines', error);
@@ -248,7 +249,7 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/';
         data = {
             document_part: this.pk,
-            box: region.polygon
+            box: region.box
         };
         this.push(uri, data, method="post")
             .then((response) => response.json())
@@ -264,23 +265,25 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/' + region.pk + '/';
         data = {
             document_part: this.pk,
-            box: region.polygon
+            box: region.box
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.blocks.findIndex(l=>l.pk==region.pk);
-                this.blocks[index].box = data.polygon;
+                this.blocks[index].box = data.box;
+                callback(data);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update region', error)
             });
     },
     deleteRegion(regionPk, callback) {
-        let uri = this.getApiRoot() + 'regions/' + regionPk;
+        let uri = this.getApiRoot() + 'blocks/' + regionPk + '/';
         this.push(uri, {}, method="delete")
             .then(function(data) {
                 let index = this.blocks.findIndex(b=>b.pk==regionPk);
+                callback(this.blocks[index].pk);
                 Vue.delete(this.blocks, index);
             }.bind(this))
             .catch(function(error) {

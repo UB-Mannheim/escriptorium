@@ -81,12 +81,16 @@ const SegPanel = BasePanel.extend({
 
         // history
         this.$el.querySelector('#undo').addEventListener('click', function(ev) {
-            this.undoManager.undo();
-            this.refreshHistoryBtns();
+            this.undo();
         }.bind(this));
         this.$el.querySelector('#redo').addEventListener('click', function(ev) {
-            this.undoManager.redo();
-            this.refreshHistoryBtns();
+            this.redo();
+        }.bind(this));
+        document.addEventListener('keyup', function(ev) {
+            if (ev.ctrlKey) {
+                if (ev.key == 'z') this.undo();
+                if (ev.key == 'y') this.redo();
+            }
         }.bind(this));
     },
     computed: {        
@@ -106,15 +110,26 @@ const SegPanel = BasePanel.extend({
             );
         }
     },
-    updated() {
-        this.undoManager.clear();
-        this.refreshHistoryBtns();
-        if (this.part.loaded) {
-            if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
-                this.colorMode = 'color';
+    watch: {
+        'part.pk': function(n, o) {
+            this.undoManager.clear();
+            this.refreshHistoryBtns();
+            
+            if (this.part.loaded) {
+                if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
+                    this.colorMode = 'color';
+                }
+                this.onShow();
             }
-            this.onShow();
+        },
+        'fullSizeImage': function(n,o) {
+            this.$img.addEventListener('load', function(ev) {
+                this.refreshSegmenter();
+            }.bind(this));
         }
+    },
+    updated() {
+
     },
     methods: {
         toggleBinary(ev) {
@@ -129,7 +144,6 @@ const SegPanel = BasePanel.extend({
             });
             this.refreshHistoryBtns();
         },
-        
         onShow() {
             Vue.nextTick(function() {
                 // the baseline editor needs to wait for the image to be fully loaded
@@ -145,18 +159,14 @@ const SegPanel = BasePanel.extend({
             this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
             this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
-            if (!this.segmenter.loaded) {
-                this.segmenter.init();
+            this.segmenter.init();
 
-                // simulates wheelzoom for canvas
-                var zoom = this.$parent.zoom;
-                zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                    this.updateView();
-                }.bind(this));
-            } else {
-                this.segmenter.refresh();
-            }
-            
+            // simulates wheelzoom for canvas
+            var zoom = this.$parent.zoom;
+            zoom.events.addEventListener('wheelzoom.updated', function(e) {
+                this.updateView();
+            }.bind(this));
+
             let regionMap = {};
             for (let i in this.part.blocks) {
                 let region = this.part.blocks[i];
@@ -171,7 +181,10 @@ const SegPanel = BasePanel.extend({
             this.segmenter.resetLineHeights();
             this.segmenter.applyRegionMode();
         },
-        
+        refreshSegmenter() {
+            this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
+            this.segmenter.refresh();
+        },
         updateView() {
             // might not be mounted yet
             if (this.segmenter && this.$el.clientWidth) {
@@ -185,20 +198,20 @@ const SegPanel = BasePanel.extend({
         // undo manager helpers
         bulkCreate(data, createInEditor=false) {
             if (data.regions && data.regions.length) {
-                this.$parent.$emit(
-                    'bulk_create:regions',
-                    data.regions.map(r=> {
-                        return {
-                            pk: r.pk,
-                            polygon: r.polygon
-                        };
-                    }), function(newRegions) {
-                        for (let i=0; i<newRegions; i++) {
-                            this.segmenter.load_region(newRegions[i]);
+                // note: regions dont get a bulk_create
+                for (let i=0; i<data.regions.length; i++)  {
+                    this.$parent.$emit(
+                        'create:region', {
+                            pk: data.regions[i].pk,
+                            box: data.regions[i].box
+                        }, function(region) {
+                            if (createInEditor) {
+                                this.segmenter.load_region(region);
+                            }
                             // also update pk in the original data for undo/redo
-                            data.regions[i].context.pk = newRegions[i].pk;
-                        }
-                    }.bind(this));
+                            data.regions[i].context.pk = region.pk;
+                        }.bind(this));
+                    }
             }
             if (data.lines && data.lines.length) {
                 this.$parent.$emit(
@@ -226,7 +239,19 @@ const SegPanel = BasePanel.extend({
         },
         bulkUpdate(data) {
             if (data.regions && data.regions.length) {
-
+                for(let i=0; i<data.regions.length; i++) {
+                    let region = data.regions[i];
+                    this.$parent.$emit(
+                        'update:region', {
+                            pk: region.context.pk,
+                            box: region.box
+                        },
+                        function(region) {
+                            let segmenterRegion = this.segmenter.regions.find(r=>r.context.pk==region.pk);
+                            segmenterRegion.update(region.box);
+                        }.bind(this)
+                    );
+                }
             }
             if (data.lines && data.lines.length) {
                 this.$parent.$emit(
@@ -242,24 +267,26 @@ const SegPanel = BasePanel.extend({
                     function(updatedLines) {
                         for (let i=0; i<updatedLines.length; i++) {
                             let line = updatedLines[i];
-                            let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk)
+                            let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk);
                             segmenterLine.update(line.baseline, line.mask);
                         }
                     }.bind(this)
                 );
-                //}
             }
         },
         bulkDelete(data) {
             if (data.regions && data.regions.length) {
-                this.$parent.$emit(
-                    'bulk_delete:regions',
-                    data.regions.map(r=>r.context.pk),
-                    function(deletedRegions) {
-                        this.segmenter.regions
-                            .filter(r=>r.context.pk in deletedRegions)
-                            .forEach(r=>r.remove());
-                    }.bind(this));
+                // regions have a bulk delete
+                for(let i=0; i<data.regions.length; i++) {
+                    this.$parent.$emit(
+                        'delete:region',
+                        data.regions[i].context.pk,
+                        function(deletedRegionPk) {
+                            let region = this.segmenter.regions.find(r=>r.context.pk==deletedRegionPk)
+                            region.remove();
+                        }.bind(this)
+                    );
+                }
             }
             if (data.lines && data.lines.length) {
                 this.$parent.$emit(
@@ -279,11 +306,11 @@ const SegPanel = BasePanel.extend({
             // update data with a previous attribute containing the current state
             if (data.regions && data.regions.length) {
                 data.regions.forEach(function(r) {
-
                     let region = this.part.blocks.find(e=>e.pk==r.context.pk);
                     if (region) {
                         r.previous = {
-                            polygon: region && region.polygon.slice()  // copy the array
+                            context: r.context,
+                            box: region && region.box.slice()  // copy the array
                         };
                     }
                 }.bind(this));
@@ -302,7 +329,16 @@ const SegPanel = BasePanel.extend({
                 }.bind(this));
             }
         },
-        
+
+        /* History */
+        undo() {
+            this.undoManager.undo();
+            this.refreshHistoryBtns();
+        },
+        redo() {
+            this.undoManager.redo();
+            this.refreshHistoryBtns();
+        },
         refreshHistoryBtns() {
             if (this.undoManager.hasUndo()) this.$el.querySelector('#undo').disabled = false;
             else this.$el.querySelector('#undo').disabled = true;
