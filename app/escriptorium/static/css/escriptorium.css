@@ -385,7 +385,7 @@ i.panel-icon {
 }
 
 .panel .content-container .js-wheelzoom-container {
-    min-height: calc(100vh - 180px);
+    min-height: calc(100vh - 190px);
 }
 
 .panel .panel-img {

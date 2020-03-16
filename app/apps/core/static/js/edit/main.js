@@ -118,6 +118,13 @@ var partVM = new Vue({
             }
         }.bind(this));
 
+        window.addEventListener('resize', function(ev) {
+            Vue.nextTick(function() {
+                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+            }.bind(this));
+        }.bind(this));
+        
         // load the full size image when we reach a scale > 1
         this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
             let ratio = ev.target.clientWidth / this.part.image.size[0];
