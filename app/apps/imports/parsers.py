@@ -412,14 +412,14 @@ class PagexmlParser(XMLParser):
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
         #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-        block.box = [list(map(int, pt.split(","))) for pt in coords.split(" ")]
+        block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
 
     def update_line(self, line, lineTag):
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
             line.baseline = [
-                list(map(int, pt.split(",")))
-                for pt in baseline.get("points").split(" ")
+                list(map(lambda x: int(float(x)), pt.split(',')))
+                for pt in baseline.get('points').split(' ')
             ]
         except AttributeError:
             #  to check if the baseline is good
@@ -428,7 +428,8 @@ class PagexmlParser(XMLParser):
         polygon = lineTag.find("Coords", self.root.nsmap)
         if polygon is not None:
             line.mask = [
-                list(map(int, pt.split(","))) for pt in polygon.get("points").split(" ")
+                list(map(lambda x: int(float(x)), pt.split(",")))
+                for pt in polygon.get("points").split(" ")
             ]
 
     def get_transcription_content(self, lineTag):
@@ -530,28 +531,18 @@ class TranskribusPageXmlParser(PagexmlParser):
         )
 
     def update_line(self, line, lineTag):
-        try :
-            baseline = lineTag.find('Baseline', self.root.nsmap)
-            line.baseline = self.clean_coords(baseline)
-        except AttributeError:
-            #  to check if the baseline is good
-            line.baseline = None
-
-        polygon = lineTag.find('Coords', self.root.nsmap)
-        if polygon is not None:
-            line.mask = self.clean_coords(polygon)
-
+        super().update_line(line, lineTag)
+        line.baseline = self.clean_coords(line.baseline)
+        line.mask = self.clean_coords(line.mask)
 
     def update_block(self, block, blockTag):
-        polygon = blockTag.find('Coords', self.root.nsmap)
-        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-        block.box = self.clean_coords(polygon)
+        super().update_line(block, blockTag)
+        block.box = self.clean_coords(block.box)
 
-    def clean_coords(self, tag):
-        points = tag.get('points')
+    def clean_coords(self, points):
         coords = [
-            list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(',')))
-            for pt in points.split(' ')
+            list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt))
+            for pt in points
         ]
 
         return coords
