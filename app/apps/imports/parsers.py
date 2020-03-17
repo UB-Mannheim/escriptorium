@@ -285,7 +285,7 @@ class XMLParser(ParserDocument):
 
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
-    ACCEPTED_SCHEMAS = ALTO_SCHEMAS = (
+    ACCEPTED_SCHEMAS  = (
         "http://www.loc.gov/standards/alto/v4/alto.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-0.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-1.xsd",
@@ -530,23 +530,30 @@ class TranskribusPageXmlParser(PagexmlParser):
         )
 
     def update_line(self, line, lineTag):
+        try :
+            baseline = lineTag.find('Baseline', self.root.nsmap)
+            line.baseline = self.clean_coords(baseline)
+        except AttributeError:
+            #  to check if the baseline is good
+            line.baseline = None
 
-        super().update_line(line, lineTag)
-        line.baseline = self.clean_coords(line.baseline)
-        line.mask = self.clean_coords(line.mask)
+        polygon = lineTag.find('Coords', self.root.nsmap)
+        if polygon is not None:
+            line.mask = self.clean_coords(polygon)
+
 
     def update_block(self, block, blockTag):
-        super().update_line(block, blockTag)
-        block.box = self.clean_coords(block.box)
+        polygon = blockTag.find('Coords', self.root.nsmap)
+        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
+        block.box = self.clean_coords(polygon)
 
     def clean_coords(self, tag):
-        points = tag.get("points")
+        points = tag.get('points')
         coords = [
-            list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(",")))
-            for pt in points.split(" ")
+            list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt.split(',')))
+            for pt in points.split(' ')
         ]
-        new_points = " ".join(",".join(map(str, pt)) for pt in coords)
-        # tag.set('points', new_points)
+
         return coords
 
 
