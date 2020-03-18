@@ -250,8 +250,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
     def test_parse_pagexml_single_file(self):
         trans = Transcription.objects.create(name="test import", document=self.document)
-        b = Block.objects.create(document_part=self.part1, external_id="textblock_0", box=[[0, 0],[100, 100]])
-        l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0", box=[10,10,50,20])
+        block = Block.objects.create(document_part=self.part3, external_id="r2", box=[[0, 0],[100, 100]])
+        l = Line.objects.create(document_part=self.part3, block=block, external_id="r2l1", box=[10,10,50,20])
         lt = LineTranscription.objects.create(transcription=trans, line=l)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -261,14 +261,38 @@ class XmlImportTestCase(CoreFactoryTestCase):
             response = self.client.post(uri, {
                 'upload_file': SimpleUploadedFile(filename, fh.read())
             })
-
         self.assertEqual(response.content, b'{"status":"ok"}', response.content)
         self.assertEqual(response.status_code, 200)
         # we created a new transcription
         self.assertEqual(self.document.transcriptions.count(), 3)
         self.assertEqual(self.part3.lines.count(), 21)
         self.assertEqual(self.part3.blocks.count(), 2)
-    
+
+    def test_parse_transkribus_pagexml(self):
+
+        trans = Transcription.objects.create(name="test import", document=self.document)
+        block = Block.objects.create(document_part=self.part3, external_id="r2", box=[[0, 0], [100, 100]])
+        line = Line.objects.create(document_part=self.part3, block=block, external_id="r2l1", box=[10, 10, 50, 20])
+        lt = LineTranscription.objects.create(transcription=trans, line=line)
+
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'transkribus_test.xml'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            response = self.client.post(uri, {
+                'upload_file': SimpleUploadedFile(filename, fh.read())
+            })
+        self.assertEqual(response.content, b'{"status":"ok"}')
+        self.assertEqual(response.status_code, 200)
+        # we created a new transcription
+
+        block.refresh_from_db()
+        line.refresh_from_db()
+        self.assertEqual(block.box,[[113, 0], [113, 1021], [697, 1021], [697, 29]])
+        self.assertEqual(line.mask, [[150,64], [0,60],[425,81], [460,60], [616,64],[621,5]])
+        self.assertEqual(line.baseline, [[155,55], [180,55],[0,55], [231,55]])
+
+
     def test_parse_pagexml_ziped_file(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_pagexml.zip'
@@ -359,7 +383,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
     
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(10):
             response = self.client.post(reverse('api:document-export',
                                             kwargs={'pk': self.trans.document.pk}),
                                     {'transcription': self.trans.pk,

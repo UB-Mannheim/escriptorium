@@ -15,8 +15,13 @@ def line_break(lines):
 
 # coordinates in pagexml template <TextRegion coords ="x1,x2..xn,yn>
 @register.simple_tag
-def box_coordinates(box):
-    return ' '.join(','.join(map(str, pt)) for pt in box)
+def box_coordinates(block, part):
+    w, h = part.image.width, part.image.height
+     # not dummy block
+    if block is not None:
+        return ' '.join(','.join(map(str, pt)) for pt in block.box)
+    else:
+        return '0,0 %d,0 %d,%d 0,%d' % (w, w, h, h)
 
 
 
