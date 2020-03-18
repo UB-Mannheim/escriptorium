@@ -172,6 +172,8 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+CELERYD_ACKS_LATE=True
+
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 
@@ -296,6 +298,10 @@ THUMBNAIL_OPTIMIZE_COMMAND = {
 }
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
+
+VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
+import subprocess
+KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 
 IIIF_IMPORT_QUALITY = 'full'
 

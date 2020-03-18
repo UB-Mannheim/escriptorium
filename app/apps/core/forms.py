@@ -115,7 +115,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     # segment
     SEGMENTATION_STEPS_CHOICES = (
         # ('regions', _('Regions')),
-        ('lines', _('Lines')),
+        ('lines', _('Baselines and Masks')),
+        ('masks', _('Only Masks')),
         # ('both', _('Lines and regions'))
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,

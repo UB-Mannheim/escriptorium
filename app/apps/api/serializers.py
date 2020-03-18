@@ -101,7 +101,8 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LineTranscription
-        fields = ('pk', 'line', 'transcription', 'content', 'versions')
+        fields = ('pk', 'line', 'transcription', 'content',
+                  'versions', 'version_author', 'version_source', 'version_updated_at')
         
     def cleanup(self, data):
         return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
@@ -109,32 +110,11 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     def validate_content(self, mode):
         return self.cleanup(self.initial_data.get('content'))
 
-    def create(self, validated_data):
-        instance = super().create(validated_data)
-        instance.line.document_part.calculate_progress()
-        instance.line.document_part.save()
-        return instance
-
 
 class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
         fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
-    
-    def create(self, validated_data):
-        instance = super().create(validated_data)
-        instance.document_part.recalculate_ordering()
-        return instance
-    
-    # def update(self, instance, validated_data):
-    #     instance.document_part.recalculate_ordering()
-    #     # instance.box = validated_data.pop('box', ())  # make use of the property setter
-    #     return super().update(instance, validated_data)
-    
-    def to_internal_value(self, data):
-        value = super().to_internal_value(data)
-        # value['box'] = json.loads(data['box'])
-        return value
     
     
 class DetailedLineSerializer(LineSerializer):

@@ -3,7 +3,9 @@
 *#
 .#*
 env/
+.envrc
 __pycache__
-./app/static/
-./app/media/
+app/escriptorium/local_settings.py
+app/static/
+app/media/
 *.log

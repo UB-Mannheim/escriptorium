@@ -12,7 +12,7 @@
 
 {% block nav-images-active %}active{% endblock %}
 
-{% block nav_content %}
+{% block tab_content %}
 <div id="dropzone">
   <form action="{% url 'api:part-list' document_pk=document.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}

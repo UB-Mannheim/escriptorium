@@ -225,7 +225,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         
         if not os.path.exists(os.path.split(modelpath)[0]):
 
-            os.mkdir(os.path.split(modelpath)[0])
+            os.makedirs(os.path.split(modelpath)[0])
         trainer.run(_print_eval, _draw_progressbar)
         nn.save_model(path=modelpath)
         
@@ -281,10 +281,13 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         user = None
     
     try:
-        part.segment(steps=steps,
-                     override=override,
-                     text_direction=text_direction,
-                     model=model)
+        if steps == 'masks':
+            part.make_masks()
+        else:
+            part.segment(steps=steps,
+                         override=override,
+                         text_direction=text_direction,
+                         model=model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the segmentation!"),
