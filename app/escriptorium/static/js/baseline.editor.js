@@ -619,6 +619,7 @@ class Segmenter {
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {
+            console.log(this.disableBindings);
             if (this.disableBindings) return;
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
@@ -635,6 +636,8 @@ class Segmenter {
                     this.splitBtn.classList.toggle('btn-success');
                 }
                 this.setCursor();
+            } else if (event.keyCode == 73) { // K
+                this.reverseSelection();
             } else if (event.keyCode == 74) { // J (for join)
                 this.mergeSelection();
             } else if (event.keyCode == 77) { // M
