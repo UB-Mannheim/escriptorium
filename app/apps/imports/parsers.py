@@ -290,6 +290,7 @@ class AltoParser(XMLParser):
         "http://www.loc.gov/standards/alto/v4/alto.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-0.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-1.xsd",
+        "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
     )
 
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
