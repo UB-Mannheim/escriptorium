@@ -9,6 +9,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             this.$parent.$parent.$emit('update:transcription', this.line.transcription);
         }.bind(this));
 
+        // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             this.$parent.editLine = null;
             this.$parent.$parent.blockShortcuts = false;

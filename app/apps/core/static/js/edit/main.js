@@ -44,7 +44,7 @@ var partVM = new Vue({
                 if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
             }.bind(this));
         },
-        'part.pk': function(a) {
+        'part.pk': function(n, o) {
             // set the new url
             window.history.pushState({},"",
                 document.location.href.replace(/(part\/)\d+(\/edit)/,
@@ -54,6 +54,10 @@ var partVM = new Vue({
             var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
             tabUrl.searchParams.set('select', this.part.pk);
             $('#images-tab-link').attr('href', tabUrl);
+        },
+        blockShortcuts(n, o) {
+            // make sure the segmenter doesnt trigger keyboard shortcuts either
+            if (this.$refs.segPanel) this.$refs.segPanel.segmenter.disableShortcuts = n;
         }
     },
     

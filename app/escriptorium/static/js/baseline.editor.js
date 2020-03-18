@@ -398,7 +398,7 @@ class Segmenter {
                         // the scale would be 1/3, the container (DOM) width is irrelevant here.
                         scale=1,
                         delayInit=false,
-                        disableBindings=false,
+                        disableShortcuts=false,
 
                         baselinesColor=null,
                         evenMasksColor=null,
@@ -434,7 +434,7 @@ class Segmenter {
         this.regionsGroup = null;
         
         this.idField = idField;
-        this.disableBindings = disableBindings;
+        this.disableShortcuts = disableShortcuts;
         
         // create a dummy tag for event bindings
         this.events = document.createElement('div');
@@ -619,8 +619,7 @@ class Segmenter {
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {
-            console.log(this.disableBindings);
-            if (this.disableBindings) return;
+            if (this.disableShortcuts) return;
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
             } else if (event.keyCode == 46) { // supr
