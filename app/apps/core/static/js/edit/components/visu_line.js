@@ -77,7 +77,7 @@ const visuLine = Vue.extend({
             return this.line ? 'textPath'+this.line.pk : '';
         },
         maskPoints() {
-            if (this.line == null || this.line.mask === null) return '';
+            if (this.line == null || !this.line.mask) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         fakeBaseline() {

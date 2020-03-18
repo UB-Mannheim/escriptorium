@@ -78,14 +78,20 @@ var partVM = new Vue({
         this.$on('create:line', function(line, cb) {
             this.part.createLine(line, cb);
         }.bind(this));
+        this.$on('bulk_create:lines', function(line, cb) {
+            this.part.bulkCreateLines(line, cb);
+        }.bind(this));
         this.$on('update:line', function(line, cb) {
             this.part.updateLine(line, cb);
+        }.bind(this));
+        this.$on('bulk_update:lines', function(lines, cb) {
+            this.part.bulkUpdateLines(lines, cb);
         }.bind(this));
         this.$on('delete:line', function(linePk, cb) {
             this.part.deleteLine(linePk, cb);
         }.bind(this));
         this.$on('bulk_delete:lines', function(pks, cb) {
-            this.part.bulkDeleteLines(pks);
+            this.part.bulkDeleteLines(pks, cb);
         }.bind(this));
         
         this.$on('create:region', function(region, cb) {
@@ -94,8 +100,8 @@ var partVM = new Vue({
         this.$on('update:region', function(region, cb) {
             this.part.updateRegion(region, cb);
         }.bind(this));
-        this.$on('bulk_delete:region', function(pks) {
-            this.part.deleteRegion(pks);
+        this.$on('delete:region', function(regionPk, cb) {
+            this.part.deleteRegion(regionPk, cb);
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {
@@ -112,6 +118,12 @@ var partVM = new Vue({
             }
         }.bind(this));
 
+        let debounced = _.debounce(function() {  // avoid calling this too often
+            if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+            if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+        }.bind(this), 200);
+        window.addEventListener('resize', debounced);
+        
         // load the full size image when we reach a scale > 1
         this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
             let ratio = ev.target.clientWidth / this.part.image.size[0];

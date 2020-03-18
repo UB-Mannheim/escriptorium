@@ -127,10 +127,42 @@ const partStore = {
                     versions: []
                 };
                 this.lines.push(newLine);
-                callback(data);
+                callback(newLine);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt create line', error)
+            });
+    },
+    bulkCreateLines(lines, callback) {
+        let uri = this.getApiRoot() + 'lines/bulk_create/';
+        let data = {lines: lines.map(l => {
+            return {
+                document_part: this.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                block: l.region && l.region.pk
+            };
+        })};
+        this.push(uri, data, method="post")
+            .then((response) => response.json())
+            .then(function(data) {
+                let createdLines = [];
+                for (let i=0; i<data.lines.length; i++) {
+                    let l = data.lines[i];
+                    let newLine = l;
+                    newLine.transcription = {
+                        line: newLine.pk,
+                        transcription: this.selectedTranscription,
+                        content: '',
+                        versions: []
+                    }
+                    createdLines.push(newLine)
+                    this.lines.push(newLine);
+                }
+                callback(createdLines);
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt create lines', error)
             });
     },
     updateLine(line, callback) {
@@ -147,6 +179,41 @@ const partStore = {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
                 this.lines[index].baseline = data.baseline;
                 this.lines[index].mask = data.mask;
+                callback(this.lines[index]);
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt update line', error)
+            });
+    },
+    bulkUpdateLines(lines, callback) {
+        let uri = this.getApiRoot() + 'lines/bulk_update/';
+        let data = lines.map(l => {
+            return {    
+                document_part: this.pk,
+                pk: l.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                block: l.region
+            };
+        });
+        
+        this.push(uri, {lines: data}, method="put")
+            .then((response) => response.json())
+            .then(function(data) {
+                let updatedLines = [];
+                for (let i=0; i<data.lines.length; i++) {
+                    let lineData = data.lines[i];
+                    let line = this.lines.find(function(l) {
+                        return l.pk==lineData.pk;
+                    });
+                    if (line) {
+                        line.baseline = lineData.baseline;
+                        line.mask = lineData.mask;
+                        line.region = lineData.block;
+                        updatedLines.push(line);
+                    }
+                }
+                callback(updatedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
@@ -163,17 +230,22 @@ const partStore = {
                 console.log('couldnt delete line #', linePk)
             });
     },
-    bulkDeleteLines(pks) {
+    bulkDeleteLines(pks, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_delete/';
         this.push(uri, {lines: pks}, method="post")
             .then(function(data) {
+                let deletedLines = [];
                 for (let i=0; i<pks.length; i++) {
                     let index = this.lines.findIndex(l=>l.pk==pks[i]);
-                    Vue.delete(this.lines, index);
+                    if(index) {
+                        deletedLines.push(pks[i]);
+                        Vue.delete(this.lines, index);
+                    }
                 }
+                callback(deletedLines);
             }.bind(this))
             .catch(function(error) {
-                console.log('couldnt bulk delete lines')
+                console.log('couldnt bulk delete lines', error);
             });
     },
     
@@ -181,7 +253,7 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/';
         data = {
             document_part: this.pk,
-            box: region.polygon
+            box: region.box
         };
         this.push(uri, data, method="post")
             .then((response) => response.json())
@@ -197,23 +269,25 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/' + region.pk + '/';
         data = {
             document_part: this.pk,
-            box: region.polygon
+            box: region.box
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.blocks.findIndex(l=>l.pk==region.pk);
-                this.blocks[index].box = data.polygon;
+                this.blocks[index].box = data.box;
+                callback(data);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update region', error)
             });
     },
     deleteRegion(regionPk, callback) {
-        let uri = this.getApiRoot() + 'regions/' + regionPk;
+        let uri = this.getApiRoot() + 'blocks/' + regionPk + '/';
         this.push(uri, {}, method="delete")
             .then(function(data) {
                 let index = this.blocks.findIndex(b=>b.pk==regionPk);
+                callback(this.blocks[index].pk);
                 Vue.delete(this.blocks, index);
             }.bind(this))
             .catch(function(error) {
@@ -244,5 +318,4 @@ const partStore = {
             this.fetch(this.next);
         }
     }
-
 };
