@@ -221,7 +221,7 @@ const SegPanel = BasePanel.extend({
                             pk: l.pk,
                             baseline: l.baseline,
                             mask: l.mask,
-                            region: l.region
+                            region: l.region && l.region.context.pk
                         };
                     }),
                     function(newLines) {
@@ -261,14 +261,15 @@ const SegPanel = BasePanel.extend({
                             pk: l.context.pk,
                             baseline: l.baseline,
                             mask: l.mask,
-                            region: l.region
+                            region: l.region && l.region.context.pk
                         };
                     }),
                     function(updatedLines) {
                         for (let i=0; i<updatedLines.length; i++) {
                             let line = updatedLines[i];
+                            region = this.segmenter.regions.find(r=>r.context.pk==line.region) || null;
                             let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk);
-                            segmenterLine.update(line.baseline, line.mask);
+                            segmenterLine.update(line.baseline, line.mask, region);
                         }
                     }.bind(this)
                 );
@@ -321,9 +322,9 @@ const SegPanel = BasePanel.extend({
                     if (line) {
                         l.previous = {
                             context: l.context,
-                            baseline: line && line.baseline && line.baseline.slice(),
-                            mask: line && line.mask && line.mask.slice(),
-                            region: line && line.region
+                            baseline: line.baseline && line.baseline.slice(),
+                            mask: line.mask && line.mask.slice(),
+                            region: line.block && this.segmenter.regions.find(r=>r.context.pk==line.block) || null
                         };
                     }
                 }.bind(this));

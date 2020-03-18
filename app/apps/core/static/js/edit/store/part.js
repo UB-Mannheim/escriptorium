@@ -187,13 +187,16 @@ const partStore = {
     },
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_update/';
-        let data = lines.map(l => { return {
-            document_part: this.pk,
-            pk: l.pk,
-            baseline: l.baseline,
-            mask: l.mask,
-            block: l.region && l.region.pk
-        }; });
+        let data = lines.map(l => {
+            return {    
+                document_part: this.pk,
+                pk: l.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                block: l.region
+            };
+        });
+        
         this.push(uri, {lines: data}, method="put")
             .then((response) => response.json())
             .then(function(data) {
@@ -206,6 +209,7 @@ const partStore = {
                     if (line) {
                         line.baseline = lineData.baseline;
                         line.mask = lineData.mask;
+                        line.region = lineData.block;
                         updatedLines.push(line);
                     }
                 }

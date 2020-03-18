@@ -224,7 +224,7 @@ class SegmenterLine {
         else this.select();
     }
     
-    update(baseline, mask) {
+    update(baseline, mask, region) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
             this.baselinePath.removeSegments();
@@ -240,6 +240,10 @@ class SegmenterLine {
             this.maskPath.addSegments(mask);
             this.segmenter.bindMaskEvents(this);
         }
+        if (region !== undefined) {
+            this.region = region;
+        }
+        this.refresh();
     }
     
     updateDataFromCanvas() {
@@ -291,8 +295,9 @@ class SegmenterLine {
         let anchor = (this.textDirection == 'lr' ?
                       anchorPath.firstSegment.point :
                       anchorPath.lastSegment.point);
-        let offset = 10, circle, text;
+        let offset = 10, circle, text, region;
         if (!this.orderDisplay) {
+            // create it if it doesnt already exists
             this.segmenter.orderingLayer.activate();
             circle = new Shape.Circle(anchor, offset);
             circle.fillColor = 'yellow';
@@ -303,16 +308,33 @@ class SegmenterLine {
             text.fontWeight = 'bold';
             text.justification = 'center';
             text.content = parseInt(this.order)+1;
+
+            // adds the region hint
+            region = new Shape.Circle({
+                x: anchor.x+5,
+                y: anchor.y}, offset);
+            if (this.region) region.fillColor = this.segmenter.regionColor;
+            else region.fillColor = 'transparent';
+            region.strokeColor = 'black';
+            region.strokeWidth = 1;
+            
             this.orderDisplay = new Group({
-                children: [circle, text]
+                children: [region, circle, text]
             });
             this.orderDisplay.scale(1/this.segmenter.getRatio());
-            // for some reason we need to reposition it after scaling
+            // Note: for some reason we need to reposition it after scaling
+            // todo: investigate why
             text.position = anchor;
         } else {
-            let circle = this.orderDisplay.children[0], text = this.orderDisplay.children[1];
+            // update
+            let region = this.orderDisplay.children[0],
+                circle = this.orderDisplay.children[1],
+                text = this.orderDisplay.children[2];
             circle.position = anchor;
             text.position = anchor;
+            region.position = {x: anchor.x+5/this.segmenter.getRatio(), y: anchor.y};
+            if (this.region) region.fillColor = this.segmenter.regionColor;
+            else region.fillColor = 'transparent';
         }
     }
 
@@ -357,14 +379,14 @@ class SegmenterLine {
             return this.segmenter.getAverageLineHeight();
         }
     }
-
+    
     get() {
         return {
             id: this.id,
             context: this.context,
             baseline: this.baseline && this.baseline.slice() || null,
             mask: this.mask && this.mask.slice() || null,
-            region: this.region && Object.assign({}, this.region.context) || null
+            region: this.region && this.region.get() || null
         };
     }
 }

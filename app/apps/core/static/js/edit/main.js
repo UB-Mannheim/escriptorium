@@ -118,12 +118,11 @@ var partVM = new Vue({
             }
         }.bind(this));
 
-        window.addEventListener('resize', function(ev) {
-            Vue.nextTick(function() {
-                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
-                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
-            }.bind(this));
-        }.bind(this));
+        let debounced = _.debounce(function() {  // avoid calling this too often
+            if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+            if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+        }.bind(this), 200);
+        window.addEventListener('resize', debounced);
         
         // load the full size image when we reach a scale > 1
         this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
