@@ -112,8 +112,9 @@ class XMLParser(ParserDocument):
                     "//*/@xsi:schemaLocation",
                     namespaces={"xsi": "http://www.w3.org/2001/XMLSchema-instance"},
                 )[0]
-            except (Exception,IndexError) as e:
-                raise ParseError("Cannot Find Schema location %s", e.message)
+
+            except (etree.XPathEvalError,IndexError) as e:
+                raise ParseError("Cannot Find Schema location %s" % e.args[0])
 
         else:
             try:
