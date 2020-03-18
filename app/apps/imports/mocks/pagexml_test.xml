@@ -7,8 +7,6 @@ prov=University of Rostock/Institute of Mathematics/CITlab/Tobias Gruening/tobia
 TRP</Creator>
         <Created>2019-09-27T23:23:02.181+02:00</Created>
         <LastChange>2019-09-30T19:47:30.802+02:00</LastChange>
-        <TranskribusMetadata docId="218635" pageId="9377652" pageNr="1" tsid="16181013"
-                             status="IN_PROGRESS" userId="198" imgUrl="https://files.transkribus.eu/Get?id=IGCWFROGSHEQTNTPACSBRMTW" xmlUrl="https://files.transkribus.eu/Get?id=ZDOBVJAWMVGPUHOZVTSSWCSG" imageId="6101684"/>
     </Metadata>
     <Page imageFilename="test3.png" imageWidth="738" imageHeight="1139">
         <ReadingOrder>
@@ -31,7 +29,7 @@ TRP</Creator>
         <TextRegion orientation="0.0" id="r2" custom="readingOrder {index:1;}">
             <Coords points="113,29 113,1021 697,1021 697,29"/>
             <TextLine id="r2l1" custom="readingOrder {index:0;}">
-                <Coords points="150,64 346,60 425,81 460,60 616,64 621,5 396,2 328,3 304,21 271,4 232,23 150,17"/>
+                <Coords points="50,64 346,60 425,81 460,60"/>
                 <Baseline points="155,55 180,55 206,55 231,55 257,55 283,55 308,55 334,56 359,56 385,56 411,56 436,56 462,56 487,56 513,55 539,55 564,55 590,54 616,53"/>
                 <TextEquiv>
                     <Unicode>ܡ ܗܘܡ ܐܘ ܥܒ</Unicode>
@@ -59,14 +57,14 @@ TRP</Creator>
                 </TextEquiv>
             </TextLine>
             <TextLine id="r2l5" custom="readingOrder {index:4;}">
-                <Coords points="127,279 387,274 423,292 450,273 478,292 494,277 681,273 658,237 588,262 533,226 484,248 434,223 404,247 -314,235 262,260 222,239 128,239"/>
+                <Coords points="127,279 387,274 423,292 450,273 478,292 494,277 681,273 658,237 588,262 533,226 484,248 434,223 404,247 314,235 262,260 222,239 128,239"/>
                 <Baseline points="132,264 159,265 186,266 213,266 240,267 268,267 295,268 322,268 349,269 376,269 404,270 431,270 458,270 485,271 512,271 540,271 567,271 594,272 621,272 648,272 676,272"/>
                 <TextEquiv>
                     <Unicode>ܗܝ ܕܠܩܘܒܠܢ. ܒܗ̇ܝ ܕܟܕ</Unicode>
                 </TextEquiv>
             </TextLine>
             <TextLine id="r2l6" custom="readingOrder {index:5;}">
-                <Coords points="121,328 311,347 505,328 555,346 660,331 660,288 562,281 494,303 443,280 398,306 343,277 231,313 157,-274 121,295"/>
+                <Coords points="121,328 311,347 505,328 555,346 660,331 660,288 562,281 494,303 443,280 398,306 343,277 231,313 157,274 121,295"/>
                 <Baseline points="126,320 152,321 178,322 205,323 231,323 258,324 284,324 311,325 337,325 364,325 390,325 416,325 443,325 469,325 496,325 522,324 549,324 575,324 602,323 628,323 655,322"/>
                 <TextEquiv>
                     <Unicode>ܥܐܠܝܢ ܐܢܬܘܢ. ܬܫܒܚܘܢ ܥܝܠܐ</Unicode>

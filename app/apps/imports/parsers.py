@@ -112,8 +112,8 @@ class XMLParser(ParserDocument):
                     "//*/@xsi:schemaLocation",
                     namespaces={"xsi": "http://www.w3.org/2001/XMLSchema-instance"},
                 )[0]
-            except Exception as e:
-                raise ("Cannot Find Schema location %s", e.message)
+            except (Exception,IndexError) as e:
+                raise ParseError("Cannot Find Schema location %s", e.message)
 
         else:
             try:
@@ -536,7 +536,7 @@ class TranskribusPageXmlParser(PagexmlParser):
         line.mask = self.clean_coords(line.mask)
 
     def update_block(self, block, blockTag):
-        super().update_line(block, blockTag)
+        super().update_block(block, blockTag)
         block.box = self.clean_coords(block.box)
 
     def clean_coords(self, points):
