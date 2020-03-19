@@ -13,11 +13,11 @@
         {% if line.mask %}<Coords points="{% for pt in line.mask %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>{% endif %}
         {% if line.baseline %}<Baseline points="{% for pt in line.baseline %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>{% endif %}
         <TextEquiv>
-          <Unicode>{{ line.transcription.0.content }}</Unicode>
+          <Unicode>{{ line.transcription.0.content|default_if_none:"" }}</Unicode>
         </TextEquiv>
       </TextLine>
       {% if forloop.last %}<TextEquiv>
-        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content %}{% endfor %}</Unicode>
+        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content|default_if_none:"" %}{% endfor %}</Unicode>
       </TextEquiv>
     </TextRegion>{% endif %}
     {% endfor %}

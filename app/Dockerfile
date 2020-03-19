@@ -11,6 +11,9 @@ ENV PYTHONUNBUFFERED 1
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto
 
+ARG VERSION_DATE="passthistobuildcmd"
+ENV VERSION_DATE=$VERSION_DATE
+
 # set work directory
 WORKDIR /usr/src/app
 

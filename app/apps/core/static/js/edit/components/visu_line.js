@@ -1,4 +1,6 @@
-var visuLine = LineBase.extend({
+
+const visuLine = Vue.extend({
+    props: ['line', 'ratio'],
     updated() {
         this.$nextTick(this.reset);
     },
@@ -43,7 +45,6 @@ var visuLine = LineBase.extend({
         },
         edit() {
             this.$parent.editLine = this.line;
-            this.$parent.$parent.blockShortcuts = true;  // meh!?
         },
         reset() {
             this.computeLineHeight();
@@ -56,6 +57,11 @@ var visuLine = LineBase.extend({
         textElement() { return this.$el.querySelector('text'); },
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
+        },
+
+        maskPoints() {
+            if (this.line == null || !this.line.mask) return '';
+            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         fakeBaseline() {
             // create a fake path based on the mask,

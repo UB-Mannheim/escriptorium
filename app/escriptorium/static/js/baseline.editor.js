@@ -47,7 +47,7 @@ class SegmenterRegion {
             strokeColor: this.segmenter.regionColor,
             dashOffset: 5/this.segmenter.getRatio(),
             strokeWidth: 2/this.segmenter.getRatio(),
-            // fillColor: this.segmenter.regionColor,
+            fillColor: this.segmenter.mode == 'regions' ? this.segmenter.regionColor : null,
             selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
             visible: true,
             segments: this.polygon
@@ -80,19 +80,37 @@ class SegmenterRegion {
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x),
                                                            Math.round(s.point.y)]);
         if (!polyEq(previous.polygon, this.polygon)) {
-            this.segmenter.trigger('baseline-editor:update', {objType: 'region',
-                                                              obj: this,
-                                                              previous:previous});
+            this.segmenter.addToUpdateQueue({regions: [this]});
+        }
+    }
+
+    update(polygon) {
+        if (polygon && polygon.length) {
+            this.polygon = polygon;
+            this.polygonPath.removeSegments();
+            this.polygonPath.addSegments(polygon);
+            this.segmenter.bindRegionEvents(this);
         }
     }
     
     remove() {
+        this.unselect();
         this.polygonPath.remove();
+        this.segmenter.regions.splice(this.segmenter.regions.findIndex(e => e.id == this.id), 1);
     }
     
     delete() {
         this.unselect();
+        
         this.remove();
+    }
+
+    get() {
+        return {
+            id: this.id,
+            context: this.context,  // copy
+            box: this.polygon.slice(),  // copy
+        };
     }
 }
 
@@ -206,7 +224,7 @@ class SegmenterLine {
         else this.select();
     }
     
-    update(baseline, mask) {
+    update(baseline, mask, region) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
             this.baselinePath.removeSegments();
@@ -222,6 +240,10 @@ class SegmenterLine {
             this.maskPath.addSegments(mask);
             this.segmenter.bindMaskEvents(this);
         }
+        if (region !== undefined) {
+            this.region = region;
+        }
+        this.refresh();
     }
     
     updateDataFromCanvas() {
@@ -234,10 +256,10 @@ class SegmenterLine {
             this.maskPath.reduce();
             this.mask = this.maskPath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         }
-        if (!polyEq(previous.baseline, this.baseline) || !polyEq(previous.mask, this.mask)) {
-            this.segmenter.trigger('baseline-editor:update', {objType: 'line',
-                                                              obj: this,
-                                                              previous:previous});
+        
+        if (!polyEq(previous.baseline, this.baseline) ||
+            !polyEq(previous.mask, this.mask)) {
+            this.segmenter.addToUpdateQueue({lines: [this]});
         }
     }
     
@@ -273,8 +295,9 @@ class SegmenterLine {
         let anchor = (this.textDirection == 'lr' ?
                       anchorPath.firstSegment.point :
                       anchorPath.lastSegment.point);
-        let offset = 10, circle, text;
+        let offset = 10, circle, text, region;
         if (!this.orderDisplay) {
+            // create it if it doesnt already exists
             this.segmenter.orderingLayer.activate();
             circle = new Shape.Circle(anchor, offset);
             circle.fillColor = 'yellow';
@@ -285,16 +308,33 @@ class SegmenterLine {
             text.fontWeight = 'bold';
             text.justification = 'center';
             text.content = parseInt(this.order)+1;
+
+            // adds the region hint
+            region = new Shape.Circle({
+                x: anchor.x+5,
+                y: anchor.y}, offset);
+            if (this.region) region.fillColor = this.segmenter.regionColor;
+            else region.fillColor = 'transparent';
+            region.strokeColor = 'black';
+            region.strokeWidth = 1;
+            
             this.orderDisplay = new Group({
-                children: [circle, text]
+                children: [region, circle, text]
             });
             this.orderDisplay.scale(1/this.segmenter.getRatio());
-            // for some reason we need to reposition it after scaling
+            // Note: for some reason we need to reposition it after scaling
+            // todo: investigate why
             text.position = anchor;
         } else {
-            let circle = this.orderDisplay.children[0], text = this.orderDisplay.children[1];
+            // update
+            let region = this.orderDisplay.children[0],
+                circle = this.orderDisplay.children[1],
+                text = this.orderDisplay.children[2];
             circle.position = anchor;
             text.position = anchor;
+            region.position = {x: anchor.x+5/this.segmenter.getRatio(), y: anchor.y};
+            if (this.region) region.fillColor = this.segmenter.regionColor;
+            else region.fillColor = 'transparent';
         }
     }
 
@@ -338,6 +378,16 @@ class SegmenterLine {
         } else {
             return this.segmenter.getAverageLineHeight();
         }
+    }
+    
+    get() {
+        return {
+            id: this.id,
+            context: this.context,
+            baseline: this.baseline && this.baseline.slice() || null,
+            mask: this.mask && this.mask.slice() || null,
+            region: this.region && this.region.get() || null
+        };
     }
 }
 
@@ -415,6 +465,7 @@ class Segmenter {
         this.toggleMasksBtn = document.getElementById('be-toggle-masks');
         this.toggleOrderingBtn = document.getElementById('be-toggle-order');
         this.toggleRegionModeBtn = document.getElementById('be-toggle-regions');
+        this.splitBtn = document.getElementById('be-split-lines');
         
         // contextual btns
         this.deletePointBtn = document.getElementById('be-delete-point');
@@ -463,8 +514,8 @@ class Segmenter {
     
     deleteSelection() {
         this.trigger('baseline-editor:delete', {
-            lines: this.selection.lines.map(l=>l.context.pk),
-            regions: this.selection.regions.map(l=>l.context.pk)
+            lines: this.selection.lines.map(l=>l.get()),
+            regions: this.selection.regions.map(r=>r.get())
         });
         
         // optimisticaly removes everything
@@ -513,7 +564,7 @@ class Segmenter {
                 this.toggleMasks();
             }.bind(this));
         }
-
+        
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
             this.splitBtn.classList.toggle('btn-warning');
@@ -649,6 +700,12 @@ class Segmenter {
         paper.settings.hitTolerance = 0;  // Note: doesn't work?
         paper.install(window);
         paper.setup(this.canvas);
+
+        // setup outbound events
+        this.updateQueue = {lines: [], regions:[]};
+        paper.view.onFrame = function(ev) {
+            this.consumeUpdateQueue();
+        }.bind(this);
         
         this.regionsGroup = new paper.Group();
         this.linesGroup = new paper.Group();
@@ -1208,7 +1265,7 @@ class Segmenter {
             (line.mask !== null && line.mask.length)) {
             if (this.idField) context[this.idField] = line[this.idField];
             if (!line.baseline) this.toggleMasks(true);
-            return this.createLine(line.order, line.baseline, line.mask,
+            return this.createLine(null, line.baseline, line.mask,
                                    region || line.region || null, context);
         } else {
             console.log('EDITOR SKIPING invalid line: ', line);
@@ -1306,17 +1363,14 @@ class Segmenter {
             this.toggleOrderingBtn.classList.remove('btn-success');
         }
     }
-    
-    toggleRegionMode() {
-        this.purgeSelection();
-        if (this.mode == 'lines') {
-            this.mode = 'regions';
+
+    applyRegionMode() {
+        if (this.mode == 'regions') {
             this.regionsGroup.fillColor = this.regionColor;
             this.regionsGroup.bringToFront();
             this.regionsLayer.opacity = 1;
             this.linesLayer.opacity = this.inactiveLayerOpacity;
         } else {
-            this.mode = 'lines';
             this.regionsGroup.fillColor = null;
             this.regionsGroup.sendToBack();
             // this.evenLinesGroup.bringToFront();
@@ -1324,6 +1378,16 @@ class Segmenter {
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
             this.linesLayer.opacity = 1;
         }
+    }
+    
+    toggleRegionMode() {
+        this.purgeSelection();
+        if (this.mode == 'lines') {
+            this.mode = 'regions';
+        } else {
+            this.mode = 'lines';
+        }
+        this.applyRegionMode();
         if (this.toggleRegionModeBtn) {
             this.toggleRegionModeBtn.classList.toggle('btn-info');
             this.toggleRegionModeBtn.classList.toggle('btn-success');
@@ -1651,10 +1715,7 @@ class Segmenter {
                 }
             }
             if (line.region != prev) {
-                this.trigger('baseline-editor:update', {
-                    objType: 'line',
-                    obj: line,
-                    previous: {region: prev}});
+                this.addToUpdateQueue({lines: [line]});
             }
         }
         this.showContextMenu();
@@ -1666,10 +1727,7 @@ class Segmenter {
             let prev = line.region;
             line.region = null;
             if (line.region != prev) {
-                this.trigger('baseline-editor:update', {
-                    objType: 'line',
-                    obj: line,
-                    previous: {region: prev}});
+                this.addToUpdateQueue({lines: [line]});
             }
         }
         this.showContextMenu();
@@ -1697,7 +1755,7 @@ class Segmenter {
         });
 
         this.trigger('baseline-editor:delete', {
-            lines: this.selection.lines.slice(1).map(l=>l.context.pk)
+            lines: this.selection.lines.slice(1)
         });
         
         while (this.selection.lines.length > 1) {
@@ -1717,7 +1775,27 @@ class Segmenter {
             this.selection.lines[0].updateDataFromCanvas();
         }
     }
+    
+    addToUpdateQueue(items) {  // {lines:[], regions:[]}
+        this.updateQueue.lines = this.updateQueue.lines.concat(items.lines || []);
+        this.updateQueue.regions = this.updateQueue.regions.concat(items.regions || []);
+    }
 
+    consumeUpdateQueue() {
+        // make copys to void race conditions
+        let lines = this.updateQueue.lines.map(l=>l.get());
+        let regions = this.updateQueue.regions.map(r=>r.get());
+        // empty the queue asap
+        this.updateQueue = {lines: [], regions: []};
+        
+        if (lines.length || regions.length) {
+            this.trigger('baseline-editor:update', {
+                lines: lines,
+                regions: regions
+            });
+        }
+    }
+    
     getAverageLineHeight() {
         // somewhat computational intensive so we 'cache' it.
         if (!this.averageLineHeight) this.computeAverageLineHeight();

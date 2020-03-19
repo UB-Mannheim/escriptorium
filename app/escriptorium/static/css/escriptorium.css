@@ -384,8 +384,8 @@ i.panel-icon {
     border-radius: 3px;
 }
 
-.panel .content-container .content {
-    min-height: calc(100vh - 180px);
+.panel .content-container .js-wheelzoom-container {
+    min-height: calc(100vh - 190px);
 }
 
 .panel .panel-img {
@@ -433,6 +433,10 @@ i.panel-icon {
 }
 #trans-modal .modal-lg {
     max-width: 80%;
+}
+
+#trans-modal #line-img {
+    position: absolute;
 }
 
 .trans-box {
