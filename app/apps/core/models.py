@@ -679,7 +679,7 @@ class DocumentPart(OrderedModel):
         im = Image.open(self.image).convert('L')
         lines = self.lines.all()  # needs to store the qs result
         baselines = [l.baseline for l in lines]
-        masks = calculate_polygonal_environment(im, baselines)
+        masks = calculate_polygonal_environment(im, baselines, scale=(1200,0))
         for line, mask in zip(lines, masks):
             line.mask = mask
             line.save()
