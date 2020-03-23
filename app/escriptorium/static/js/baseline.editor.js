@@ -224,7 +224,7 @@ class SegmenterLine {
         else this.select();
     }
     
-    update(baseline, mask, region) {
+    update(baseline, mask, region, order) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
             this.baselinePath.removeSegments();
@@ -242,6 +242,13 @@ class SegmenterLine {
         }
         if (region !== undefined) {
             this.region = region;
+        }
+        if (order != undefined) {
+            this.order = order;
+            if (this.orderDisplay) {
+                let text = this.orderDisplay.children[2];
+                text.content = this.order + 1;
+            }
         }
         this.refresh();
     }
@@ -332,6 +339,7 @@ class SegmenterLine {
                 text = this.orderDisplay.children[2];
             circle.position = anchor;
             text.position = anchor;
+            text.content = parseInt(this.order)+1;
             region.position = {x: anchor.x+5/this.segmenter.getRatio(), y: anchor.y};
             if (this.region) region.fillColor = this.segmenter.regionColor;
             else region.fillColor = 'transparent';

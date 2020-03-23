@@ -19,8 +19,12 @@ const partStore = {
     // helpers
     hasPrevious() { return this.loaded && this.previous !== null },
     hasNext() { return this.loaded && this.next !== null; },
+    // properties
     get loaded() {
         return this.pk;
+    },
+    get hasMasks() {
+        return this.lines.find(l=>l.mask!=null) != -1;
     },
     
     // api
@@ -127,6 +131,10 @@ const partStore = {
                     versions: []
                 };
                 this.lines.push(newLine);
+                this.recalculateOrdering();
+                if (this.hasMasks) {
+                    this.recalculateMasks();
+                }
                 callback(newLine);
             }.bind(this))
             .catch(function(error) {
@@ -158,6 +166,10 @@ const partStore = {
                     }
                     createdLines.push(newLine)
                     this.lines.push(newLine);
+                }
+                this.recalculateOrdering();
+                if (this.hasMasks) {
+                    this.recalculateMasks(createdLines.map(l=>l.pk));
                 }
                 callback(createdLines);
             }.bind(this))
@@ -202,6 +214,7 @@ const partStore = {
             .then(function(data) {
                 let updatedLines = [];
                 for (let i=0; i<data.lines.length; i++) {
+                    
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
                         return l.pk==lineData.pk;
@@ -213,7 +226,10 @@ const partStore = {
                         updatedLines.push(line);
                     }
                 }
-                callback(updatedLines);
+                if (this.hasMasks) {
+                    this.recalculateMasks(updatedLines.map(l=>l.pk));
+                }
+                if (callback) callback(updatedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
@@ -225,6 +241,7 @@ const partStore = {
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==linePk);
                 Vue.delete(this.part.lines, index);
+                this.recalculateOrdering();
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt delete line #', linePk)
@@ -242,11 +259,63 @@ const partStore = {
                         Vue.delete(this.lines, index);
                     }
                 }
-                callback(deletedLines);
+                this.recalculateOrdering();
+                if(callback) callback(deletedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt bulk delete lines', error);
             });
+    },
+    recalculateMasks(only=[]) {
+        if (!this.debouncedRecalculateMasks) {
+            // avoid calling this too often
+            this.debouncedRecalculateMasks = _.debounce(function(only) {
+                let uri = this.getApiRoot() + 'reset_masks/';
+                if (only.length >0) uri += '?only=' + only.toString();
+                this.push(uri, {}, method="post")
+                    .then((response) => response.json())
+                    .then(function(data) {
+                        for (let i=0; i<data.lines.length; i++) {
+                            let lineData = data.lines[i];
+                            let line = this.lines.find(function(l) {
+                                return l.pk==lineData.pk;
+                            });
+                            if (line) {
+                                line.mask = lineData.mask;
+                            }
+                        }
+                    }.bind(this))
+                    .catch(function(error) {
+                        console.log('couldnt recalculate masks!', error);
+                    });
+            }.bind(this), 1500);
+        }
+        this.debouncedRecalculateMasks(only);
+    },
+    recalculateOrdering() {
+        if (!this.debouncedRecalculateOrdering) {
+            // avoid calling this too often
+            this.debouncedRecalculateOrdering = _.debounce(function() {
+                let uri = this.getApiRoot() + 'recalculate_ordering/';
+                this.push(uri, {}, method="post")
+                    .then((response) => response.json())
+                    .then(function(data) {
+                        for (let i=0; i<data.lines.length; i++) {
+                            let lineData = data.lines[i];
+                            let line = this.lines.find(function(l) {
+                                return l.pk==lineData.pk;
+                            });
+                            if (line) {
+                                line.order = i;
+                            }
+                        }
+                    }.bind(this))
+                    .catch(function(error) {
+                        console.log('couldnt recalculate ordering!', error);
+                    });
+            }.bind(this), 3000);
+        }
+        this.debouncedRecalculateOrdering();
     },
     
     createRegion(region, callback) {

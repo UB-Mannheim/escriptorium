@@ -304,6 +304,15 @@ class DocumentPart(OrderedModel):
     @property
     def segmented(self):
         return self.lines.count() > 0
+
+    @property
+    def has_masks(self):
+        try:
+            # Note: imposing a limit and catching IndexError is faster than counting
+            self.lines.exclude(mask=None)[0]
+            return True
+        except IndexError:
+            return False
     
     def make_external_id(self):
         return 'eSc_page_%d' % self.pk
@@ -674,13 +683,17 @@ class DocumentPart(OrderedModel):
             self.chain_tasks(*tasks)
         
         return tasks
-
-    def make_masks(self):
+    
+    def make_masks(self, only=None):
         im = Image.open(self.image).convert('L')
-        lines = self.lines.all()  # needs to store the qs result
-        baselines = [l.baseline for l in lines]
-        masks = calculate_polygonal_environment(im, baselines, scale=(1200,0))
-        for line, mask in zip(lines, masks):
+        lines = list(self.lines.all())  # needs to store the qs result
+        to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
+        context = [l for l in lines if only and l.pk not in only]
+        masks = calculate_polygonal_environment(im,
+                                                [l.baseline for l in to_calc],
+                                                suppl_obj=[l.baseline for l in context],
+                                                scale=(1200,0))
+        for line, mask in zip(to_calc, masks):
             line.mask = mask
             line.save()
 

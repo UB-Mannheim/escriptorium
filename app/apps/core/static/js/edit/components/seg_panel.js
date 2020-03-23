@@ -128,9 +128,6 @@ const SegPanel = BasePanel.extend({
             }.bind(this));
         }
     },
-    updated() {
-
-    },
     methods: {
         toggleBinary(ev) {
             if (this.colorMode == 'color') this.colorMode = 'binary';
@@ -269,7 +266,7 @@ const SegPanel = BasePanel.extend({
                             let line = updatedLines[i];
                             region = this.segmenter.regions.find(r=>r.context.pk==line.region) || null;
                             let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk);
-                            segmenterLine.update(line.baseline, line.mask, region);
+                            segmenterLine.update(line.baseline, line.mask, region, line.order);
                         }
                     }.bind(this)
                 );
