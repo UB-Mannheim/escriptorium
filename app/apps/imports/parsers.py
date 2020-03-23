@@ -107,13 +107,11 @@ class XMLParser(ParserDocument):
         if xml_root is not None:
             self.root = xml_root
             try:
-
                 self.schema_location = self.root.xpath(
                     "//*/@xsi:schemaLocation",
                     namespaces={"xsi": "http://www.w3.org/2001/XMLSchema-instance"},
-                )[0]
-
-            except (etree.XPathEvalError,IndexError) as e:
+                )[0].split(" ")[-1]
+            except (etree.XPathEvalError, IndexError) as e:
                 raise ParseError("Cannot Find Schema location %s" % e.args[0])
 
         else:
@@ -124,18 +122,14 @@ class XMLParser(ParserDocument):
         super().__init__(document, file_handler, transcription_name=transcription_name)
 
     def validate(self):
-
-        file_schema = self.schema_location.split(" ")[-1]
-
-        if file_schema in self.ACCEPTED_SCHEMAS:
+        if self.schema_location in self.ACCEPTED_SCHEMAS:
             try:
-
-                response = requests.get(self.schema)
+                response = requests.get(self.schema_location)
                 content = response.content
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % self.schema)
+                raise ParseError("Can't reach validation document %s." % self.schema_location)
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
@@ -295,7 +289,6 @@ class AltoParser(XMLParser):
 
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
         super().__init__(document, file_handler, transcription_name, xml_root)
-        self.schema = "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
 
     @property
     def total(self):
@@ -381,8 +374,7 @@ class PagexmlParser(XMLParser):
 
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
         super().__init__(document, file_handler, transcription_name, xml_root)
-        self.schema = self.schema_location.split(" ")[-1]
-
+    
     @property
     def total(self):
         # pagexml file can contain multiple parts

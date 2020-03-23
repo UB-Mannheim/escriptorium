@@ -100,7 +100,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, 200, response.content)
                 self.assertEqual(response.content, b'{"status":"ok"}')
                 
         self.assertEqual(DocumentImport.objects.count(), 1)
