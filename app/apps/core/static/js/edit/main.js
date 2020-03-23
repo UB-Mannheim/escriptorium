@@ -7,7 +7,8 @@ var partVM = new Vue({
         show: {
             source: userProfile.get('source-panel'),
             segmentation: userProfile.get('segmentation-panel'),
-            visualisation: userProfile.get('visualisation-panel')
+            visualisation: userProfile.get('visualisation-panel'),
+            diplomatic: userProfile.get('diplomatic-panel')
         },
         blockShortcuts: false,
         fullSizeImage: false
@@ -60,7 +61,8 @@ var partVM = new Vue({
     components: {
         'sourcepanel': SourcePanel,
         'segmentationpanel': SegPanel,
-        'visupanel': VisuPanel
+        'visupanel': VisuPanel,
+        'diplopanel': DiploPanel,
     },
     
     created() {
@@ -151,6 +153,10 @@ var partVM = new Vue({
         toggleVisualisation() {
             this.show.visualisation =! this.show.visualisation;
             userProfile.set('visualisation-panel', this.show.visualisation);
+        },
+        toggleDiplomatic() {
+            this.show.diplomatic =! this.show.diplomatic;
+            userProfile.set('diplomatic-panel', this.show.diplomatic);
         }
     }
 });
