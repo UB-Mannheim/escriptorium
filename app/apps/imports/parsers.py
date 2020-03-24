@@ -103,6 +103,8 @@ class ZipParser(ParserDocument):
 
 
 class XMLParser(ParserDocument):
+    ACCEPTED_SCHEMAS = ()
+    
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
         if xml_root is not None:
             self.root = xml_root
@@ -141,7 +143,8 @@ class XMLParser(ParserDocument):
                 ) as e:
                     raise ParseError("Document didn't validate. %s" % e.args[0])
         else:
-            raise ParseError("Document Schema not founded %s.")
+            raise ParseError("Document Schema not valid %s. Valid schemas are: %s" %
+                             (self.schema_location, self.ACCEPTED_SCHEMAS))
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -176,7 +179,8 @@ class XMLParser(ParserDocument):
             )
         else:
             try:
-                lt.new_version()  # save current content in history
+                lt.new_version(author=user and user.username,
+                               source='import')  # save current content in history
             except NoChangeException:
                 pass
         finally:

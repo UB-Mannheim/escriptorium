@@ -212,16 +212,14 @@ class LineTranscriptionViewSet(ModelViewSet):
 
     def update(self, request, document_pk=None, part_pk=None, pk=None):
         instance = self.get_object()
-        if (instance.version_author != request.user.username or
-            instance.version_source != settings.VERSIONING_DEFAULT_SOURCE):
-            try:
-                instance.new_version(author=request.user.username,
-                                     source=settings.VERSIONING_DEFAULT_SOURCE)
-            except NoChangeException:
-                # Note we can safely pass here
-                pass
-            else:
-                instance.save()
+        try:
+            instance.new_version(author=request.user.username,
+                                 source=settings.VERSIONING_DEFAULT_SOURCE)
+        except NoChangeException:
+            # Note we can safely pass here
+            pass
+        else:
+            instance.save()
         return super().update(request, document_pk=document_pk, part_pk=part_pk, pk=pk)
         
     def get_serializer_class(self):
