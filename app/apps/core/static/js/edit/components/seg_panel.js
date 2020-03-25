@@ -328,6 +328,11 @@ const SegPanel = BasePanel.extend({
             }
         },
 
+        processLines(ev) {
+            ev.target.disabled = true;
+            this.part.recalculateMasks();
+        },
+        
         /* History */
         undo() {
             this.undoManager.undo();

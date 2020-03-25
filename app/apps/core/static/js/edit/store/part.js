@@ -24,7 +24,7 @@ const partStore = {
         return this.pk;
     },
     get hasMasks() {
-        return this.lines.find(l=>l.mask!=null) != -1;
+        return this.lines.findIndex(l=>l.mask!=null) != -1;
     },
     
     // api
