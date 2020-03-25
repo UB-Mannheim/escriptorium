@@ -474,3 +474,36 @@ i.panel-icon {
     width: max-content;
     padding: 10px;
 }
+
+
+.lined{
+    position: relative;
+    width: 100%;
+    transform-origin: 0 0;
+    overflow-y: auto;
+    border: 1px solid lightgrey;
+
+}
+
+.table-row {
+    /*border-right: 1px solid lightgrey;*/
+    padding-left: 2%;
+    padding-right: 2%;
+
+}
+.line-order{
+    user-select: none;
+    flex-basis: 15%;
+}
+.line-order-rtl{
+    border-left: 1px solid lightgrey;
+}
+.line-order-ltr{
+    border-right: 1px solid lightgrey;
+}
+.line-content {
+    margin-bottom: 0px;
+    width: 100%;
+    flex-basis: 85%;
+
+}
