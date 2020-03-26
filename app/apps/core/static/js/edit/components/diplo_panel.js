@@ -22,11 +22,20 @@ var DiploPanel = BasePanel.extend({
             this.save = !this.save;
         }.bind(this), 1000);
         },
-        editNext() {
+        editNext(ev) {
             ev.preventDefault();
-            // TODO
-            console.log("call editableContent",this.$parent);
+            index = this.part.lines.indexOf(this.editLine);
+            if(index < this.part.lines.length - 1) {
+                this.editLine = this.part.lines[index + 1];
+                let next = this.$children[index +1].$el.firstElementChild.lastChild;
+                let elt = $("#"+this.editLine.pk);
+                console.log("elt",elt);
+                elt.focus();
+            }
         },
+        setEditLine(l) {
+            this.editLine = l;
+        }
     },
 
 });

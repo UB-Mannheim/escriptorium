@@ -260,11 +260,12 @@
         <button v-if="save" @click="toggleSave" class="btn btn-success" id="save-diplomatic" title="{% trans "Save Line content" %}">Save</button>
       </div>
       <div v-if="part" class="content-container">
-        <diploline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk" inline-template>
+        <diploline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk"   inline-template>
           <div class="d-flex flex-column">
             <div  class="d-flex flex-row">
               <div class ="table-row line-order line-order-{{ document.read_direction }}" class="w-10">${line.order}</div>
-              <div v-on:mouseup="editableContent"
+              <div v-bind:id="line.pk"
+                   v-on:mouseup="editableContent"
                    v-on:mousedown="setEdit"
                    v-on:mouseover="showOverlay"
                    v-on:mouseleave="hideOverlay"
