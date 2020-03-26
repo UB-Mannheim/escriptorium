@@ -1,4 +1,4 @@
-const visuLine = Vue.extend({
+const visuLine = LineBase.extend({
     props: ['line', 'ratio'],
     updated() {
         this.$nextTick(this.reset);
@@ -43,24 +43,6 @@ const visuLine = Vue.extend({
             }
         },
 
-        showOverlay() {
-            if (this.line && this.line.mask) {
-                Array.from(document.querySelectorAll('.panel-overlay')).map(
-                    function(e) {
-                        // TODO: transition
-                        e.style.display = 'block';
-                        e.querySelector('polygon').setAttribute('points', this.maskPoints);
-                    }.bind(this)
-                );
-            }
-        },
-        hideOverlay() {
-            Array.from(document.querySelectorAll('.panel-overlay')).map(
-                function(e) {
-                    e.style.display = 'none';
-                }
-            );
-        },
         edit() {
             this.$parent.editLine = this.line;
         },

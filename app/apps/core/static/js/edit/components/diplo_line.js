@@ -1,4 +1,5 @@
 var diploLine = LineBase.extend({
+    props: ['line', 'ratio'],
     methods: {
         setEdit(ev) {
             this.editing = ev.target;
