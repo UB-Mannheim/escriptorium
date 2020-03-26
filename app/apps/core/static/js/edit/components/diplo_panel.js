@@ -24,13 +24,15 @@ var DiploPanel = BasePanel.extend({
         },
         editNext(ev) {
             ev.preventDefault();
-            index = this.part.lines.indexOf(this.editLine);
+            $(ev.currentTarget).css('backgroundColor','white');
+
+            let index = this.part.lines.indexOf(this.editLine);
             if(index < this.part.lines.length - 1) {
-                this.editLine = this.part.lines[index + 1];
-                let next = this.$children[index +1].$el.firstElementChild.lastChild;
-                let elt = $("#"+this.editLine.pk);
-                console.log("elt",elt);
-                elt.focus();
+                this.setEditLine(this.part.lines[index + 1]);
+                let st = $(".line-content").eq( $(".line-content").index( $(ev.currentTarget) ) + 1 );
+                st.attr("contentEditable","true");
+                st.css('backgroundColor','#F8F8F8');
+                st.focus();
             }
         },
         setEditLine(l) {
