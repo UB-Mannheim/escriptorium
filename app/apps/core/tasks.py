@@ -137,10 +137,11 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
-
+    
     try:
         model = OcrModel.objects.get(pk=model_pk)
         modelpath = model.file.path
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         nn = vgsl.TorchVGSLModel.load_model(modelpath)
     except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
@@ -148,6 +149,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
         model.file = modelpath
+    
     try:
         model.training = True
         model.save()
