@@ -2,10 +2,11 @@ const partStore = {
     // need to set empty value for vue to watch them
     pk: null,
     lines: [],
-    blocks: [],
+    regions: [],
     image: {},
     
     selectedTranscription: document.getElementById('document-transcriptions').value,
+    masksToRecalc: [],
     
     // mutators
     load (part) {
@@ -118,7 +119,7 @@ const partStore = {
             document_part: this.pk,
             baseline: line.baseline,
             mask: line.mask,
-            block: line.region
+            region: line.region
         };
         this.push(uri, data, method="post")
             .then((response) => response.json())
@@ -143,15 +144,8 @@ const partStore = {
     },
     bulkCreateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_create/';
-        let data = {lines: lines.map(l => {
-            return {
-                document_part: this.pk,
-                baseline: l.baseline,
-                mask: l.mask,
-                block: l.region && l.region.pk
-            };
-        })};
-        this.push(uri, data, method="post")
+        lines.forEach(l=>l.document_part = this.pk);
+        this.push(uri, {lines: lines}, method="post")
             .then((response) => response.json())
             .then(function(data) {
                 let createdLines = [];
@@ -179,13 +173,8 @@ const partStore = {
     },
     updateLine(line, callback) {
         let uri = this.getApiRoot() + 'lines/' + line.pk + '/';
-        data = {
-            document_part: this.pk,
-            baseline: line.baseline,
-            mask: line.mask,
-            block: line.region && line.region.pk
-        };
-        this.push(uri, data, method="put")
+        line.document_part = this.pk;
+        this.push(uri, line, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
@@ -199,17 +188,8 @@ const partStore = {
     },
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_update/';
-        let data = lines.map(l => {
-            return {    
-                document_part: this.pk,
-                pk: l.pk,
-                baseline: l.baseline,
-                mask: l.mask,
-                block: l.region
-            };
-        });
-        
-        this.push(uri, {lines: data}, method="put")
+        lines.forEach(l=>l.document_part = this.pk);
+        this.push(uri, {lines: lines}, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
@@ -222,7 +202,7 @@ const partStore = {
                     if (line) {
                         line.baseline = lineData.baseline;
                         line.mask = lineData.mask;
-                        line.region = lineData.block;
+                        line.region = lineData.region;
                         updatedLines.push(line);
                     }
                 }
@@ -267,11 +247,13 @@ const partStore = {
             });
     },
     recalculateMasks(only=[]) {
+        this.masksToRecalc = _.uniq(this.masksToRecalc.concat(only));
         if (!this.debouncedRecalculateMasks) {
             // avoid calling this too often
             this.debouncedRecalculateMasks = _.debounce(function(only) {
                 let uri = this.getApiRoot() + 'reset_masks/';
-                if (only.length >0) uri += '?only=' + only.toString();
+                if (this.masksToRecalc.length >0) uri += '?only=' + this.masksToRecalc.toString();
+                this.masksToRecalc = [];
                 this.push(uri, {}, method="post")
                     .then((response) => response.json())
                     .then(function(data) {
@@ -288,7 +270,7 @@ const partStore = {
                     .catch(function(error) {
                         console.log('couldnt recalculate masks!', error);
                     });
-            }.bind(this), 1500);
+            }.bind(this), 2000);
         }
         this.debouncedRecalculateMasks(only);
     },
@@ -313,7 +295,7 @@ const partStore = {
                     .catch(function(error) {
                         console.log('couldnt recalculate ordering!', error);
                     });
-            }.bind(this), 3000);
+            }.bind(this), 1000);
         }
         this.debouncedRecalculateOrdering();
     },
@@ -327,7 +309,7 @@ const partStore = {
         this.push(uri, data, method="post")
             .then((response) => response.json())
             .then(function(data) {
-                this.blocks.push(data);
+                this.regions.push(data);
                 callback(data);
             }.bind(this))
             .catch(function(error) {
@@ -343,8 +325,8 @@ const partStore = {
         this.push(uri, data, method="put")
             .then((response) => response.json())
             .then(function(data) {
-                let index = this.blocks.findIndex(l=>l.pk==region.pk);
-                this.blocks[index].box = data.box;
+                let index = this.regions.findIndex(l=>l.pk==region.pk);
+                this.regions[index].box = data.box;
                 callback(data);
             }.bind(this))
             .catch(function(error) {
@@ -355,12 +337,12 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/' + regionPk + '/';
         this.push(uri, {}, method="delete")
             .then(function(data) {
-                let index = this.blocks.findIndex(b=>b.pk==regionPk);
-                callback(this.blocks[index].pk);
-                Vue.delete(this.blocks, index);
+                let index = this.regions.findIndex(r=>r.pk==regionPk);
+                callback(this.regions[index].pk);
+                Vue.delete(this.regions, index);
             }.bind(this))
             .catch(function(error) {
-                console.log('couldnt delete region #', regionPk)
+                console.log('couldnt delete region #', regionPk, error);
             });
     },
 

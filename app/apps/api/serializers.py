@@ -127,10 +127,13 @@ class LineListSerializer(serializers.ListSerializer):
 
 class LineSerializer(serializers.ModelSerializer):
     pk = serializers.IntegerField(required=False)
+    region = serializers.PrimaryKeyRelatedField(
+        queryset=Block.objects.all(),
+        source='block', allow_null=True)
     
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
+        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
         list_serializer_class = LineListSerializer
 
 
@@ -141,7 +144,7 @@ class LineOrderSerializer(serializers.ModelSerializer):
 
 
 class DetailedLineSerializer(LineSerializer):
-    block = BlockSerializer(required=False)
+    region = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
     
     class Meta(LineSerializer.Meta):
@@ -149,14 +152,14 @@ class DetailedLineSerializer(LineSerializer):
     
 
 class PartDetailSerializer(PartSerializer):
-    blocks = BlockSerializer(many=True)
+    regions = BlockSerializer(many=True, source='blocks')
     lines = LineSerializer(many=True)
     previous = serializers.SerializerMethodField(source='get_previous')
     next = serializers.SerializerMethodField(source='get_next')
     
     class Meta(PartSerializer.Meta):
         fields = PartSerializer.Meta.fields + (
-            'blocks',
+            'regions',
             'lines',
             'previous',
             'next')

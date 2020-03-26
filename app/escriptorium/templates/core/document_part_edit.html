@@ -151,20 +151,43 @@
     </div>
 
     <div class="content-container">
-    <div id="seg-zoom-container" class="content">
-      <img class="panel-img" v-bind:src="imageSrcBin"/>
-      <div id="segmentation-overlay" class="overlay panel-overlay">
-        <svg width="100%" height="100%">
-          <defs>
-            <mask id="seg-overlay">
-              <rect x="0" y="0" width="100%" height="100%" fill="white"/>
-              <polygon points=""/>
-            </mask>
-          </defs>
-          <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
-        </svg>
+      <div id="seg-zoom-container" class="content">
+       <segregion v-if="segmenter.loaded"
+                  v-for="region in part.regions"
+                  v-bind:region="region"
+                  v-bind:key="region.pk"
+                  inline-template>
+          <div class="hide">
+            <input name="box" v-bind:value="region.box"/>
+          </div>
+        </segregion>
+        
+        <segline v-if="segmenter.loaded"
+                 v-for="line in part.lines"
+                 v-bind:line="line"
+                 v-bind:key="line.pk"
+                 inline-template>
+          <div class="hide">
+            <input name="order" v-bind:value="line.order"/>
+            <input name="baseline" v-bind:value="line.baseline"/>
+            <input name="mask" v-bind:value="line.mask"/>
+            <input name="region" v-bind:value="line.region"/>
+          </div>
+        </segline>
+        
+        <img class="panel-img" v-bind:src="imageSrcBin"/>
+        <div id="segmentation-overlay" class="overlay panel-overlay">
+          <svg width="100%" height="100%">
+            <defs>
+              <mask id="seg-overlay">
+                <rect x="0" y="0" width="100%" height="100%" fill="white"/>
+                <polygon points=""/>
+              </mask>
+            </defs>
+            <rect x="0" y="0" fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#seg-overlay)" />
+          </svg>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 </SegmentationPanel>
@@ -180,7 +203,11 @@
       <div id="visu-zoom-container" class="content">
         {% with text_direction=document.default_text_direction %}
         <svg v-if="part.loaded" class="w-100 {{ text_direction }}">
-          <visuline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk" inline-template>
+          <visuline v-for="line in part.lines"
+                    v-bind:line="line"
+                    v-bind:ratio="ratio"
+                    v-bind:key="line.pk"
+                    inline-template>
             <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
               <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
               <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
@@ -303,6 +330,7 @@
 
     <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/source_panel.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/edit/components/seg_line.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/seg_panel.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/line_version.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>

@@ -423,6 +423,7 @@ class Segmenter {
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
                         idField='id'} = {}) {
+        this.loaded = false;
         this.img = image;
         this.mode = 'lines'; // | 'regions'
         this.lines = [];
@@ -518,6 +519,7 @@ class Segmenter {
 
     reset() {
         this.empty();
+        this.refresh();
     }
     
     deleteSelection() {
@@ -1269,7 +1271,7 @@ class Segmenter {
         }
     }
     
-    load_line(line, region) {
+    loadLine(line, region) {
         let context = {};
         if ((line.baseline !== null && line.baseline.length) ||
             (line.mask !== null && line.mask.length)) {
@@ -1283,12 +1285,12 @@ class Segmenter {
         }
     }
     
-    load_region(region) {
+    loadRegion(region) {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
         let r = this.createRegion(region.box, context);
         for (let j in region.lines) {
-            this.load_line(region.lines[j], r);
+            this.loadLine(region.lines[j], r);
         }
         return r;
     }
@@ -1297,12 +1299,12 @@ class Segmenter {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
         for (let i in data.regions) {
-            this.load_region(data.regions[i]);
+            this.loadRegion(data.regions[i]);
         }
         
         // now load orphan lines
         for (let i in data.lines) {
-            this.load_line(data.lines[i], null);
+            this.loadLine(data.lines[i], null);
         }
     }
     

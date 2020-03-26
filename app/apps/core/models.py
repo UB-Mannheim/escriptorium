@@ -764,7 +764,7 @@ class Line(OrderedModel):  # Versioned,
     # text direction
     order_with_respect_to = 'document_part'
     version_ignore_fields = ('document_part', 'order')
-
+    
     external_id = models.CharField(max_length=128, blank=True, null=True)
     
     class Meta(OrderedModel.Meta):
