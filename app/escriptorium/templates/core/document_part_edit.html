@@ -95,7 +95,7 @@
       </div>
       
       {# help #}
-      <button v-if="!part.hasMasks && part.lines.length > 0" v-on:click="processLines" class="btn btn-success fas fa-thumbs-up ml-auto"></button>
+      <button v-if="!part.hasMasks && part.lines.length > 0" v-on:click="processLines" class="btn btn-success fas fa-thumbs-up ml-auto" title="{% trans "Segmentation is ready for mask calculation!" %}"></button>
       <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help nav-item ml-2"></button>
       <div class="alert alert-primary help-text hide">
         <button type="button" class="close" aria-label="Close">
