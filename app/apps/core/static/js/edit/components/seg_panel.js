@@ -4,9 +4,14 @@ Baseline editor panel (or segmentation panel)
 
 const SegPanel = BasePanel.extend({
     data() { return {
+        segmenter: {loaded: false},
         colorMode: 'color',  //  color - binary - grayscale
         undoManager: new UndoManager()
     };},
+    components: {
+        'segline': segLine,
+        'segregion': segRegion
+    },
     mounted() {
         // wait for the element to be rendered
         Vue.nextTick(function() {
@@ -34,12 +39,17 @@ const SegPanel = BasePanel.extend({
                 this.onShow();
             }
             
+            // simulates wheelzoom for canvas
+            var zoom = this.$parent.zoom;
+            zoom.events.addEventListener('wheelzoom.updated', function(e) {
+                this.updateView();
+            }.bind(this));
+            
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
                 let settings = userProfile.get('baseline-editor') || {};
                 settings[event.detail.name] = event.detail.value;
                 userProfile.set('baseline-editor', settings);
             });
-            
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
                 this.bulkDelete(data);
@@ -112,6 +122,7 @@ const SegPanel = BasePanel.extend({
     },
     watch: {
         'part.pk': function(n, o) {
+            this.segmenter.empty();
             this.undoManager.clear();
             this.refreshHistoryBtns();
             
@@ -127,9 +138,6 @@ const SegPanel = BasePanel.extend({
                 this.refreshSegmenter();
             }.bind(this));
         }
-    },
-    updated() {
-
     },
     methods: {
         toggleBinary(ev) {
@@ -156,26 +164,10 @@ const SegPanel = BasePanel.extend({
             }.bind(this));
         },
         initSegmenter() {
-            this.segmenter.empty();
             // we use a thumbnail so its size might not be the same as advertised in the api
             this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
-            this.segmenter.init();
-
-            // simulates wheelzoom for canvas
-            var zoom = this.$parent.zoom;
-            zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                this.updateView();
-            }.bind(this));
-
-            let regionMap = {};
-            for (let i in this.part.blocks) {
-                let region = this.part.blocks[i];
-                regionMap[region.pk] = this.segmenter.load_region(region);
-            }
-            for (let i in this.part.lines) {
-                let line = this.part.lines[i];
-                this.segmenter.load_line(line, regionMap[line.block]);
-            }
+            if (this.segmenter.loaded) this.segmenter.refresh();
+            else this.segmenter.init();
             
             // recalculate average line heights for lines without masks
             this.segmenter.resetLineHeights();
@@ -206,7 +198,7 @@ const SegPanel = BasePanel.extend({
                             box: data.regions[i].box
                         }, function(region) {
                             if (createInEditor) {
-                                this.segmenter.load_region(region);
+                                this.segmenter.loadRegion(region);
                             }
                             // also update pk in the original data for undo/redo
                             data.regions[i].context.pk = region.pk;
@@ -221,7 +213,7 @@ const SegPanel = BasePanel.extend({
                             pk: l.pk,
                             baseline: l.baseline,
                             mask: l.mask,
-                            region: l.region && l.region.context.pk
+                            region: l.region && l.region.context.pk || null
                         };
                     }),
                     function(newLines) {
@@ -229,7 +221,8 @@ const SegPanel = BasePanel.extend({
                             let line = newLines[i];
                             // create a new line in case the event didn't come from the editor
                             if (createInEditor) {
-                                this.segmenter.load_line(line);
+                                let region = this.segmenter.regions.find(r=>r.context.pk==line.region);
+                                this.segmenter.loadLine(line, region);
                             }
                             // update the segmenter pk
                             data.lines[i].context.pk = line.pk;
@@ -269,7 +262,7 @@ const SegPanel = BasePanel.extend({
                             let line = updatedLines[i];
                             region = this.segmenter.regions.find(r=>r.context.pk==line.region) || null;
                             let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk);
-                            segmenterLine.update(line.baseline, line.mask, region);
+                            segmenterLine.update(line.baseline, line.mask, region, line.order);
                         }
                     }.bind(this)
                 );
@@ -284,7 +277,7 @@ const SegPanel = BasePanel.extend({
                         data.regions[i].context.pk,
                         function(deletedRegionPk) {
                             let region = this.segmenter.regions.find(r=>r.context.pk==deletedRegionPk)
-                            region.remove();
+                            if (region) region.remove();
                         }.bind(this)
                     );
                 }
@@ -307,7 +300,7 @@ const SegPanel = BasePanel.extend({
             // update data with a previous attribute containing the current state
             if (data.regions && data.regions.length) {
                 data.regions.forEach(function(r) {
-                    let region = this.part.blocks.find(e=>e.pk==r.context.pk);
+                    let region = this.part.regions.find(e=>e.pk==r.context.pk);
                     if (region) {
                         r.previous = {
                             context: r.context,
@@ -324,13 +317,18 @@ const SegPanel = BasePanel.extend({
                             context: l.context,
                             baseline: line.baseline && line.baseline.slice(),
                             mask: line.mask && line.mask.slice(),
-                            region: line.block && this.segmenter.regions.find(r=>r.context.pk==line.block) || null
+                            region: line.region && this.segmenter.regions.find(r=>r.context.pk==line.region) || null
                         };
                     }
                 }.bind(this));
             }
         },
 
+        processLines(ev) {
+            ev.target.disabled = true;
+            this.part.recalculateMasks();
+        },
+        
         /* History */
         undo() {
             this.undoManager.undo();

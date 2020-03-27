@@ -2,10 +2,11 @@ const partStore = {
     // need to set empty value for vue to watch them
     pk: null,
     lines: [],
-    blocks: [],
+    regions: [],
     image: {},
     
     selectedTranscription: document.getElementById('document-transcriptions').value,
+    masksToRecalc: [],
     
     // mutators
     load (part) {
@@ -19,8 +20,12 @@ const partStore = {
     // helpers
     hasPrevious() { return this.loaded && this.previous !== null },
     hasNext() { return this.loaded && this.next !== null; },
+    // properties
     get loaded() {
         return this.pk;
+    },
+    get hasMasks() {
+        return this.lines.findIndex(l=>l.mask!=null) != -1;
     },
     
     // api
@@ -114,7 +119,7 @@ const partStore = {
             document_part: this.pk,
             baseline: line.baseline,
             mask: line.mask,
-            block: line.region
+            region: line.region
         };
         this.push(uri, data, method="post")
             .then((response) => response.json())
@@ -127,6 +132,10 @@ const partStore = {
                     versions: []
                 };
                 this.lines.push(newLine);
+                this.recalculateOrdering();
+                if (this.hasMasks) {
+                    this.recalculateMasks();
+                }
                 callback(newLine);
             }.bind(this))
             .catch(function(error) {
@@ -135,15 +144,8 @@ const partStore = {
     },
     bulkCreateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_create/';
-        let data = {lines: lines.map(l => {
-            return {
-                document_part: this.pk,
-                baseline: l.baseline,
-                mask: l.mask,
-                block: l.region && l.region.pk
-            };
-        })};
-        this.push(uri, data, method="post")
+        lines.forEach(l=>l.document_part = this.pk);
+        this.push(uri, {lines: lines}, method="post")
             .then((response) => response.json())
             .then(function(data) {
                 let createdLines = [];
@@ -159,6 +161,10 @@ const partStore = {
                     createdLines.push(newLine)
                     this.lines.push(newLine);
                 }
+                this.recalculateOrdering();
+                if (this.hasMasks) {
+                    this.recalculateMasks(createdLines.map(l=>l.pk));
+                }
                 callback(createdLines);
             }.bind(this))
             .catch(function(error) {
@@ -167,13 +173,8 @@ const partStore = {
     },
     updateLine(line, callback) {
         let uri = this.getApiRoot() + 'lines/' + line.pk + '/';
-        data = {
-            document_part: this.pk,
-            baseline: line.baseline,
-            mask: line.mask,
-            block: line.region && line.region.pk
-        };
-        this.push(uri, data, method="put")
+        line.document_part = this.pk;
+        this.push(uri, line, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
@@ -187,21 +188,13 @@ const partStore = {
     },
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiRoot() + 'lines/bulk_update/';
-        let data = lines.map(l => {
-            return {    
-                document_part: this.pk,
-                pk: l.pk,
-                baseline: l.baseline,
-                mask: l.mask,
-                block: l.region
-            };
-        });
-        
-        this.push(uri, {lines: data}, method="put")
+        lines.forEach(l=>l.document_part = this.pk);
+        this.push(uri, {lines: lines}, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
                 for (let i=0; i<data.lines.length; i++) {
+                    
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
                         return l.pk==lineData.pk;
@@ -209,11 +202,14 @@ const partStore = {
                     if (line) {
                         line.baseline = lineData.baseline;
                         line.mask = lineData.mask;
-                        line.region = lineData.block;
+                        line.region = lineData.region;
                         updatedLines.push(line);
                     }
                 }
-                callback(updatedLines);
+                if (this.hasMasks) {
+                    this.recalculateMasks(updatedLines.map(l=>l.pk));
+                }
+                if (callback) callback(updatedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
@@ -225,6 +221,7 @@ const partStore = {
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==linePk);
                 Vue.delete(this.part.lines, index);
+                this.recalculateOrdering();
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt delete line #', linePk)
@@ -242,11 +239,65 @@ const partStore = {
                         Vue.delete(this.lines, index);
                     }
                 }
-                callback(deletedLines);
+                this.recalculateOrdering();
+                if(callback) callback(deletedLines);
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt bulk delete lines', error);
             });
+    },
+    recalculateMasks(only=[]) {
+        this.masksToRecalc = _.uniq(this.masksToRecalc.concat(only));
+        if (!this.debouncedRecalculateMasks) {
+            // avoid calling this too often
+            this.debouncedRecalculateMasks = _.debounce(function(only) {
+                let uri = this.getApiRoot() + 'reset_masks/';
+                if (this.masksToRecalc.length >0) uri += '?only=' + this.masksToRecalc.toString();
+                this.masksToRecalc = [];
+                this.push(uri, {}, method="post")
+                    .then((response) => response.json())
+                    .then(function(data) {
+                        for (let i=0; i<data.lines.length; i++) {
+                            let lineData = data.lines[i];
+                            let line = this.lines.find(function(l) {
+                                return l.pk==lineData.pk;
+                            });
+                            if (line) {
+                                line.mask = lineData.mask;
+                            }
+                        }
+                    }.bind(this))
+                    .catch(function(error) {
+                        console.log('couldnt recalculate masks!', error);
+                    });
+            }.bind(this), 2000);
+        }
+        this.debouncedRecalculateMasks(only);
+    },
+    recalculateOrdering() {
+        if (!this.debouncedRecalculateOrdering) {
+            // avoid calling this too often
+            this.debouncedRecalculateOrdering = _.debounce(function() {
+                let uri = this.getApiRoot() + 'recalculate_ordering/';
+                this.push(uri, {}, method="post")
+                    .then((response) => response.json())
+                    .then(function(data) {
+                        for (let i=0; i<data.lines.length; i++) {
+                            let lineData = data.lines[i];
+                            let line = this.lines.find(function(l) {
+                                return l.pk==lineData.pk;
+                            });
+                            if (line) {
+                                line.order = i;
+                            }
+                        }
+                    }.bind(this))
+                    .catch(function(error) {
+                        console.log('couldnt recalculate ordering!', error);
+                    });
+            }.bind(this), 1000);
+        }
+        this.debouncedRecalculateOrdering();
     },
     
     createRegion(region, callback) {
@@ -258,7 +309,7 @@ const partStore = {
         this.push(uri, data, method="post")
             .then((response) => response.json())
             .then(function(data) {
-                this.blocks.push(data);
+                this.regions.push(data);
                 callback(data);
             }.bind(this))
             .catch(function(error) {
@@ -274,8 +325,8 @@ const partStore = {
         this.push(uri, data, method="put")
             .then((response) => response.json())
             .then(function(data) {
-                let index = this.blocks.findIndex(l=>l.pk==region.pk);
-                this.blocks[index].box = data.box;
+                let index = this.regions.findIndex(l=>l.pk==region.pk);
+                this.regions[index].box = data.box;
                 callback(data);
             }.bind(this))
             .catch(function(error) {
@@ -286,12 +337,12 @@ const partStore = {
         let uri = this.getApiRoot() + 'blocks/' + regionPk + '/';
         this.push(uri, {}, method="delete")
             .then(function(data) {
-                let index = this.blocks.findIndex(b=>b.pk==regionPk);
-                callback(this.blocks[index].pk);
-                Vue.delete(this.blocks, index);
+                let index = this.regions.findIndex(r=>r.pk==regionPk);
+                callback(this.regions[index].pk);
+                Vue.delete(this.regions, index);
             }.bind(this))
             .catch(function(error) {
-                console.log('couldnt delete region #', regionPk)
+                console.log('couldnt delete region #', regionPk, error);
             });
     },
 

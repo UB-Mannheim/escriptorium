@@ -113,19 +113,32 @@ class PartViewSet(ModelViewSet):
         part.refresh_from_db()
         del part.tasks  # reset cache
         return Response({'status': 'canceled', 'workflow': part.workflow})
-
+    
     @action(detail=True, methods=['post'])
     def reset_masks(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        onlyParam = request.query_params.get("only")
+        only = onlyParam and list(map(int, onlyParam.split(',')))
+        
         try:
-            part.make_masks()
+            part.make_masks(only=only)
         except Exception as e:
             logger.exception(e)
             return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({
-            'status': 'done',
-            'lines': [{'id':line.pk, 'mask': line.mask}
-                      for line in part.lines.all()]})
+
+        if only is None:
+            qs = part.lines.all()
+        else:
+            qs = part.lines.filter(pk__in=only)
+        serializer = LineSerializer(qs, many=True)
+        return Response({'status': 'done', 'lines': serializer.data}, status=200)
+    
+    @action(detail=True, methods=['post'])
+    def recalculate_ordering(self, request, document_pk=None, pk=None):
+        document_part = DocumentPart.objects.get(pk=pk)
+        document_part.recalculate_ordering()
+        serializer = LineOrderSerializer(document_part.lines.all(), many=True)
+        return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
 
 class BlockViewSet(ModelViewSet):
@@ -139,22 +152,13 @@ class BlockViewSet(ModelViewSet):
 class LineViewSet(ModelViewSet):
     queryset = Line.objects.all().select_related('block').prefetch_related('transcriptions__transcription')
     serializer_class = DetailedLineSerializer
-
-    def create(self, *args, **kwargs):
-        response = super().create(*args, **kwargs)
-        self.recalculate_ordering()
-        return response
-
-    def recalculate_ordering(self):
-        document_part = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
-        document_part.recalculate_ordering()
     
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:
             return DetailedLineSerializer
         else:  # create
             return LineSerializer
-
+    
     @action(detail=False, methods=['post'])
     def bulk_create(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
@@ -162,27 +166,22 @@ class LineViewSet(ModelViewSet):
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        self.recalculate_ordering()
         return Response({'status': 'ok', 'lines': serializer.data})
     
     @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
-        updated_lines = []
-        for line in lines:
-            inst = get_object_or_404(Line, pk=line["pk"])
-            serializer = LineSerializer(inst, data=line, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            updated_lines.append(serializer.data)
-        return Response({'response': 'ok', 'lines': updated_lines}, status=200)
-
+        qs = self.get_queryset().filter(pk__in=[line['pk'] for line in lines])
+        serializer = LineSerializer(qs, data=lines, partial=True, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'response': 'ok', 'lines': serializer.data}, status=200)
+    
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
         deleted_lines = request.data.get("lines")
         qs = Line.objects.filter(pk__in=deleted_lines)
         qs.delete()
-        self.recalculate_ordering()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
