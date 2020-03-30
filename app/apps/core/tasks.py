@@ -224,12 +224,14 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                 # 'chars': chars,
                 # 'error': error
             })
-
+        
         def _draw_progressbar(*args, **kwargs):
             pass
         
         trainer.run(_print_eval, _draw_progressbar)
-        nn.save_model(path=modelpath)
+        best_version = os.path.join(os.path.split(modelpath)[0],
+                                    'version_{}.mlmodel'.format(trainer.stopper.best_epoch))
+        shutil.copy(best_version, modelpath)
         
     except Exception as e:
         send_event('document', document.pk, "training:error", {
