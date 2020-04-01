@@ -4,10 +4,10 @@ const partStore = {
     lines: [],
     regions: [],
     image: {},
-    
+
     selectedTranscription: document.getElementById('document-transcriptions').value,
     masksToRecalc: [],
-    
+
     // mutators
     load (part) {
         Object.assign(this, part);
@@ -27,12 +27,12 @@ const partStore = {
     get hasMasks() {
         return this.lines.findIndex(l=>l.mask!=null) != -1;
     },
-    
+
     // api
     getApiRoot(pk) {
         return '/api/documents/' + DOCUMENT_ID + '/parts/' + (pk?pk:this.pk) + '/';
     },
-    
+
     loadTranscription (transcription) {
         // use Vue.set or the transcription won't be watched.
         let line = this.lines.find(l=>l.pk == transcription.line);
@@ -52,7 +52,7 @@ const partStore = {
                 console.log('couldnt fetch data!', error);
             });
     },
-    
+
     fetchTranscriptions() {
         // first create a default transcription for every line
         this.lines.forEach(function(line) {
@@ -78,20 +78,6 @@ const partStore = {
         }.bind(this);
         fetchPage(1);
     },
-
-    pushVersion(line) {
-        if(!line.transcription.pk) return;
-        uri = this.getApiRoot() + 'transcriptions/' + line.transcription.pk + '/new_version/';
-        this.push(uri, {}, method='post')
-            .then((response)=>response.json())
-            .then((data) => {
-                line.transcription.versions.splice(0, 0, data);
-            })
-            .catch(function(error) {
-                console.log('couldnt save transcription state!', error);
-            }.bind(this));
-    },
-        
     pushTranscription(lineTranscription) {
         let uri, method;
         if (lineTranscription.pk) {
@@ -194,7 +180,7 @@ const partStore = {
             .then(function(data) {
                 let updatedLines = [];
                 for (let i=0; i<data.lines.length; i++) {
-                    
+
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
                         return l.pk==lineData.pk;
@@ -299,7 +285,7 @@ const partStore = {
         }
         this.debouncedRecalculateOrdering();
     },
-    
+
     createRegion(region, callback) {
         let uri = this.getApiRoot() + 'blocks/';
         data = {
@@ -356,9 +342,9 @@ const partStore = {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
-        });    
+        });
     },
-    
+
     getPrevious() {
         if (this.loaded && this.previous) {
             this.fetch(this.previous);

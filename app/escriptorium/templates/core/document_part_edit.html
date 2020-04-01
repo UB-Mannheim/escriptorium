@@ -71,7 +71,7 @@
         <button id="undo" title="{% trans "Undo. (Ctrl+Z)" %}" class="btn btn-outline-dark ml-3 fas fa-undo" autocomplete="off" disabled></button>
         <button id="redo" title="{% trans "Redo. (Ctrl+Y)" %}" class="btn btn-outline-dark fas fa-redo" autocomplete="off" disabled></button>
       </div>
-      
+
       <div class="btn-group">
         <button id="toggle-settings" title="{% trans "Editor settings." %}" class="btn btn-info ml-3 fas fa-cogs dropdown-toggle" type="button" class="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
         <div id="be-settings-menu" class="dropdown-menu">
@@ -93,7 +93,7 @@
       <div class="btn-group">
         <button id="be-split-lines" title="{% trans "Cut through lines. (C)" %}" class="btn btn-warning fas fa-cut"></button>
       </div>
-      
+
       {# help #}
       <button v-if="!part.hasMasks && part.lines.length > 0" v-on:click="processLines" class="btn btn-success fas fa-thumbs-up ml-auto" title="{% trans "Segmentation is ready for mask calculation!" %}"></button>
       <button id="segmentation-help" title="{% trans "Help." %}" class="btn btn-info fas fa-question help nav-item ml-2"></button>
@@ -161,7 +161,7 @@
             <input name="box" v-bind:value="region.box"/>
           </div>
         </segregion>
-        
+
         <segline v-if="segmenter.loaded"
                  v-for="line in part.lines"
                  v-bind:line="line"
@@ -174,7 +174,7 @@
             <input name="region" v-bind:value="line.region"/>
           </div>
         </segline>
-        
+
         <img class="panel-img" v-bind:src="imageSrcBin"/>
         <div id="segmentation-overlay" class="overlay panel-overlay">
           <svg width="100%" height="100%">
@@ -235,7 +235,7 @@
               {% endif %}
 
               <h5 class="modal-title ml-3" id="modal-label">{% trans "Line" %} #${line.order + 1}</h5>
-              
+
               <button type="button" class="close" v-on:click="close" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -255,7 +255,7 @@
                   </svg>
                 </div>
               </div>
-              
+
               <div id="trans-input-container">
                 <input v-on:keyup.down="$parent.editNext" v-on:keyup.up="$parent.editPrevious" id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription" autocomplete="off" autofocus/>
                 <small v-if="line.transcription.pk" class="form-text text-muted">
@@ -263,11 +263,8 @@
                   <span>on ${momentDate}</span>
                 </small>
               </div>
-              
+
               <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
-              <button v-if="line.transcription.pk" v-on:click="saveState" type="button" id="new-version-btn" class="btn btn-sm btn-primary float-right js-push-state" title="{% trans "Save current state" %}">
-                <i class="fas fa-save"></i>
-              </button>
               <div id="history" class="collapse">
                 <div class="d-flex flex-column">
                   <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
