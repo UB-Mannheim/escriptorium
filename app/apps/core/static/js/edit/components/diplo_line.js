@@ -1,5 +1,9 @@
+let timer = 0;
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
+    created() {
+        this.timeZone = moment.tz.guess();
+    },
     methods: {
         setEdit(ev) {
             this.editing = ev.target;
@@ -11,8 +15,23 @@ var diploLine = LineBase.extend({
             ev.target.focus();
             this.$parent.setEditLine(this.line);
         },
-        transcriptionContent(){
-            return ""
+        pushUpdate(){
+
+            clearTimeout(timer);
+            timer = setTimeout(function (){
+                this.setContent(this.$refs.content[0].innerHTML);
+                 this.$parent.$emit('update:transcription:content', this.line.transcription);
+                 this.$parent.toggleSave();
+            }.bind(this), 1000);
+
         },
+        pushNewVersion(){
+
+        },
+        setContent(content){
+                this.line.transcription.content = content;
+                moment.tz(this.line.transcription.version_updated_at, this.timeZone);
+
+        }
     }
 });
