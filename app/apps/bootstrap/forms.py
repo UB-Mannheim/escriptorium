@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class BootstrapFormMixin():
     default_renderer = TemplatesSetting
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
@@ -30,9 +30,9 @@ class BootstrapFormMixin():
                     field.widget.need_label = True
 
                 field.widget.attrs['class'] = class_
-    
+
     def full_clean(self):
-        super().full_clean()
+        clean_data = super().full_clean()
         if self._errors:
             for name, error in self._errors.items():
                 if name == '__all__':
@@ -42,3 +42,4 @@ class BootstrapFormMixin():
                         self.fields[name].widget.attrs['class'] += ' is-invalid'
                     except KeyError:
                         logger.warning("Couldn't set error class on widget.")
+        return clean_data
