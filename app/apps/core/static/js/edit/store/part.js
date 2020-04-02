@@ -307,6 +307,26 @@ const partStore = {
             body: JSON.stringify(data)
         });    
     },
+    bulkUpdateLineTranscriptions(transcriptions, callback) {
+        let uri = this.getApiRoot() + 'transcriptions/bulk_update/';
+        let data = transcriptions.map(l => {
+            return {
+                pk: l.pk,
+                content: l.content,
+                line : l.line
+            };
+        });
+
+        this.push(uri, {lines: data}, method="put")
+            .then((response) => response.json())
+            .then(function(data) {
+                console.log("daata",data);
+                callback(updatedLines);
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt update line', error)
+            });
+    },
     
     getPrevious() {
         if (this.loaded && this.previous) {

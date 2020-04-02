@@ -105,6 +105,10 @@ var partVM = new Vue({
         this.$on('delete:region', function(regionPk, cb) {
             this.part.deleteRegion(regionPk, cb);
         }.bind(this));
+
+        this.$on('bulk_update:transcriptions', function(lines, cb) {
+            this.part.bulkUpdateLineTranscriptions(lines, cb);
+        }.bind(this));
         
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;

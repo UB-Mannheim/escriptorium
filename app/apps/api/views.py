@@ -241,3 +241,29 @@ class LineTranscriptionViewSet(ModelViewSet):
             return Response({'warning': 'No changes detected.'}, status=400)
         else:
             return Response(lt.versions[0], status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['POST'])
+    def bulk_create(self, request, document_pk=None, part_pk=None, pk=None):
+        lines = request.data.get("lines")
+        serializer = LineTranscriptionSerializer(data=lines, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({'response': serializer.data}, status=200)
+
+    @action(detail=False, methods=['PUT'])
+    def bulk_update(self, request, document_pk=None, part_pk=None, pk=None):
+        lines = request.data.get("lines")
+        for line in lines:
+            lt = get_object_or_404(LineTranscription, pk=line["pk"])
+            serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        return Response({'response': 'ok'}, status=200)
+
+    @action(detail=False, methods=['POST'])
+    def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
+        lines = request.data.get("lines")
+        qs = LineTranscription.objects.filter(pk__in=lines)
+        qs.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
