@@ -3,24 +3,25 @@ var DiploPanel = BasePanel.extend({
     data() { return {
         editLine: null,
         save: false, //show save button
+        updatedLines : [],
     };},
     components: {
         'diploline': diploLine,
     },
+    created() {
+        this.$on('update:transcription:content', function(linetranscription) {
+            this.addtoUpdatedLines(linetranscription);
+
+        });
+     },
     methods:{
-        togglePanel(){},
-        saveContent(){
-            console.log("call saveContent");
-        },
         toggleSave(){
-            let timer = 0;
-            clearTimeout(timer);
-            timer = setTimeout(function (){
+
             if(this.save){
-               this.saveContent();
+                this.bulkUpdate();
+
             }
             this.save = !this.save;
-        }.bind(this), 1000);
         },
         editNext(ev) {
             ev.preventDefault();
@@ -37,6 +38,24 @@ var DiploPanel = BasePanel.extend({
         },
         setEditLine(l) {
             this.editLine = l;
+        },
+        bulkUpdate(){
+            console.log("call bulkUpdate");
+            this.$parent.$emit('bulk_update:transcriptions',this.updatedLines,function () {
+                this.updatedLines = [];
+
+            });
+
+        },
+        addtoUpdatedLines(lt){
+            let elt = this.updatedLines.find(l => l.pk === lt.pk);
+            if(elt == undefined){
+            this.updatedLines.push(lt);
+            }
+            else {
+                elt.content = lt.content;
+                elt.version_updated_at = lt.version_updated_at;
+            }
         }
     },
 
