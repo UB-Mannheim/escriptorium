@@ -270,8 +270,8 @@
                    v-on:mouseover="showOverlay"
                    v-on:mouseleave="hideOverlay"
                    v-on:keydown.enter="$parent.editNext"
-                   v-on:keyup="$parent.toggleSave"
-                   class="w-95 table-row line-content">${line.transcription.content}</div>
+                   v-on:keyup="pushUpdate"
+                   class="w-95 table-row line-content" ref="content" >${line.transcription.content}</div>
             </div>
           </div>
         </diploline>
