@@ -321,7 +321,7 @@ const partStore = {
             .then((response) => response.json())
             .then(function(data) {
                 console.log("daata",data);
-                callback(updatedLines);
+                callback();
             }.bind(this))
             .catch(function(error) {
                 console.log('couldnt update line', error)
