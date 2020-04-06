@@ -106,6 +106,10 @@ var partVM = new Vue({
             this.part.deleteRegion(regionPk, cb);
         }.bind(this));
 
+        this.$on('bulk_create:transcriptions', function(lines, cb) {
+            this.part.bulkCreateLineTranscriptions(lines, cb);
+        }.bind(this));
+
         this.$on('bulk_update:transcriptions', function(lines, cb) {
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));

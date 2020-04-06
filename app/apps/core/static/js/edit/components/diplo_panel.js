@@ -4,6 +4,7 @@ var DiploPanel = BasePanel.extend({
         editLine: null,
         save: false, //show save button
         updatedLines : [],
+        createdLines : [],
     };},
     components: {
         'diploline': diploLine,
@@ -13,12 +14,16 @@ var DiploPanel = BasePanel.extend({
             this.addtoUpdatedLines(linetranscription);
 
         });
+        this.$on('create:transcription', function(linetranscription) {
+            this.createdLines.push(linetranscription);
+        });
      },
     methods:{
         toggleSave(){
 
             if(this.save){
                 this.bulkUpdate();
+                this.bulkCreate();
 
             }
             this.save = !this.save;
@@ -40,10 +45,14 @@ var DiploPanel = BasePanel.extend({
             this.editLine = l;
         },
         bulkUpdate(){
-            console.log("call bulkUpdate");
             this.$parent.$emit('bulk_update:transcriptions',this.updatedLines,function () {
                 this.updatedLines = [];
+            });
 
+        },
+        bulkCreate(){
+            this.$parent.$emit('bulk_create:transcriptions',this.createdLines,function () {
+                this.createdLines = [];
             });
 
         },

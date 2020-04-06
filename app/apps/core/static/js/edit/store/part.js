@@ -307,6 +307,28 @@ const partStore = {
             body: JSON.stringify(data)
         });    
     },
+    bulkCreateLineTranscriptions(transcriptions,callback){
+        let uri = this.getApiRoot() + 'transcriptions/bulk_create/';
+        let data = transcriptions.map(l=>{
+            return {
+                line : l.line,
+                transcription : l.transcription,
+                content : l.content
+            }
+        });
+
+        this.push(uri, {lines: data}, method="post").
+            then((response) => response.json())
+            .then((function (data) {
+                callback();
+                console.log('linetranscriptions created with success')
+
+            })).catch(function(error) {
+                console.log('couldnt create transcription lines', error)
+            });
+
+
+    },
     bulkUpdateLineTranscriptions(transcriptions, callback) {
         let uri = this.getApiRoot() + 'transcriptions/bulk_update/';
         let data = transcriptions.map(l => {
@@ -320,9 +342,8 @@ const partStore = {
         this.push(uri, {lines: data}, method="put")
             .then((response) => response.json())
             .then(function(data) {
-                console.log("daata",data);
                 callback();
-            }.bind(this))
+            })
             .catch(function(error) {
                 console.log('couldnt update line', error)
             });

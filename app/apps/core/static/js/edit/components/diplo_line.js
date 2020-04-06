@@ -20,7 +20,13 @@ var diploLine = LineBase.extend({
             clearTimeout(timer);
             timer = setTimeout(function (){
                 this.setContent(this.$refs.content[0].innerHTML);
-                 this.$parent.$emit('update:transcription:content', this.line.transcription);
+                if(this.line.transcription.pk){
+                    this.$parent.$emit('update:transcription:content', this.line.transcription);
+
+                }
+                else {
+                 this.$parent.$emit('create:transcription', this.line.transcription);
+                }
                  this.$parent.toggleSave();
             }.bind(this), 1000);
 
