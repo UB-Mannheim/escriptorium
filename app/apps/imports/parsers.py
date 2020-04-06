@@ -524,8 +524,10 @@ class TranskribusPageXmlParser(PagexmlParser):
 
     def update_line(self, line, lineTag):
         super().update_line(line, lineTag)
-        line.baseline = self.clean_coords(line.baseline)
-        line.mask = self.clean_coords(line.mask)
+        if line.baseline is not None:
+            line.baseline = self.clean_coords(line.baseline)
+        if line.mask is not None:
+            line.mask = self.clean_coords(line.mask)
 
     def update_block(self, block, blockTag):
         super().update_block(block, blockTag)
