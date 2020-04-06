@@ -107,14 +107,8 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     def cleanup(self, data):
         return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
 
-    def validate_content(self, mode):
-        if isinstance(self.initial_data, list):
-            for d in self.initial_data:
-                d.update({
-                    'content':self.cleanup(d.get('content'))
-                })
-            return self.initial_data
-        return self.cleanup(self.initial_data.get('content'))
+    def validate_content(self, content):
+        return self.cleanup(content)
 
 
 class LineSerializer(serializers.ModelSerializer):
