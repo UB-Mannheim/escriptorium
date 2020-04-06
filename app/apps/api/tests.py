@@ -315,7 +315,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         ll = Line.objects.create(
             box=[10, 10, 50, 50],
             document_part=self.part)
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(10):
             resp = self.client.post(uri,
                                     {'lines':[
                                         {'line':ll.pk,'transcription': self.transcription.pk, 'content':'new transcription'},
