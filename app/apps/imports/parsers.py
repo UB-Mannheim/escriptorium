@@ -284,13 +284,20 @@ class XMLParser(ParserDocument):
 
 class AltoParser(XMLParser):
     DEFAULT_NAME = _("Default Alto Import")
-    ACCEPTED_SCHEMAS  = (
+    escriptorium_alto = "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
+
+    ACCEPTED_SCHEMAS = (
         "http://www.loc.gov/standards/alto/v4/alto.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-0.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-1.xsd",
-        "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
+        escriptorium_alto
     )
-    
+
+    def validate(self):
+        if self.schema_location in self.ACCEPTED_SCHEMAS:
+            self.schema_location = self.escriptorium_alto
+            super().validate()
+
     @property
     def total(self):
         # An alto file always describes 1 'document part'
@@ -337,7 +344,7 @@ class AltoParser(XMLParser):
             except ValueError:
                 # it's an expected polygon
                 try:
-                    coords = tuple(map(float, baseline.split(" ")))
+                    coords = tuple(map(lambda x: int(float(x)), baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
                     logger.warning("Invalid baseline %s" % baseline)
@@ -345,7 +352,7 @@ class AltoParser(XMLParser):
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
             try:
-                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                coords = tuple(map(lambda x: int(float(x)), polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
                 logger.warning("Invalid polygon %s" % polygon)
