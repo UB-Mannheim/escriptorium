@@ -1,7 +1,7 @@
 const BasePanel = Vue.extend({
-    props: ['part', 'full-size-image'],
+    props: ['part', 'selectedtranscription', 'full-size-image'],
     data() {
-        return {ratio: 1};
+      return {ratio: 1};
     },
     updated() {
         this.refresh();

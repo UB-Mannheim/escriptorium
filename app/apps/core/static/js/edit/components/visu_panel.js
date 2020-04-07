@@ -1,10 +1,10 @@
-/* 
+/*
 Visual transcription panel (or visualisation panel)
 */
 
 const VisuPanel = BasePanel.extend({
     data() { return  {
-        editLine: null
+      editLine: null
     };},
     components: {
         'visuline': visuLine,

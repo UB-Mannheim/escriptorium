@@ -209,6 +209,9 @@ class LineTranscriptionViewSet(ModelViewSet):
         document_part.save()
         return response
 
+    def perform_create(self, serializer):
+        serializer.save(version_author=self.request.user.username)
+
     def update(self, request, document_pk=None, part_pk=None, pk=None):
         instance = self.get_object()
         try:

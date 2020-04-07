@@ -560,7 +560,7 @@ class DocumentPart(OrderedModel):
         self.save()
 
         with Image.open(self.image.file.name) as im:
-            options = {}  # {'maxcolseps': 1}
+            options = {'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
@@ -689,10 +689,13 @@ class DocumentPart(OrderedModel):
         lines = list(self.lines.all())  # needs to store the qs result
         to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
         context = [l for l in lines if only and l.pk not in only]
-        masks = calculate_polygonal_environment(im,
-                                                [l.baseline for l in to_calc],
-                                                suppl_obj=[l.baseline for l in context],
-                                                scale=(1200,0))
+        print('-calc', to_calc)
+        print('-supl', context)
+        masks = calculate_polygonal_environment(
+            im,
+            [l.baseline for l in to_calc],
+            suppl_obj=[l.baseline for l in context],
+            scale=(1200,0))
         for line, mask in zip(to_calc, masks):
             line.mask = mask
             line.save()

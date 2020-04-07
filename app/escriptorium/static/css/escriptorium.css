@@ -412,10 +412,10 @@ i.panel-icon {
     display: block;
 }
 
-#trans-modal #trans-input, #trans-rule {
+#trans-modal #trans-input, #trans-rule, .compared-line {
     overflow: visible;
     margin-top: 1rem;
-    white-space: pre;
+    white-space: nowrap;
     padding: 0 2px;
     transform-origin: top left;
     box-shadow: none;
@@ -431,8 +431,8 @@ i.panel-icon {
 #trans-modal .modal-body{
     overflow: visible;
 }
-#trans-modal .modal-lg {
-    max-width: 80%;
+#trans-modal .modal-header{
+    cursor: move;
 }
 
 #trans-modal #line-img {

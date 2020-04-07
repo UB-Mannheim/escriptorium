@@ -8,12 +8,50 @@
   <span id="part-title" v-if="part.loaded">${part.title} - ${part.filename} - (${imageSize})</span>
   <span class="loading" v-if="!part.loaded">{% trans "Loading&#8230;" %}</span>
 </div>
-<div class="nav-item ml-auto mr-auto">
-  <select v-model="selectedTranscription" id="document-transcriptions" title="{% trans 'Transcription' %}" class="form-control custom-select mb-2">
-    {% for transcription in document.transcriptions.all %}
-    <option value="{{ transcription.pk }}">{{ transcription.name }}</option>
-    {% endfor %}
+<div class="nav-item form-inline ml-auto mr-auto">
+  <select v-if="part.loaded"
+          v-model="selectedTranscription"
+          id="document-transcriptions"
+          title="{% trans 'Transcription' %}"
+          class="form-control custom-select">
+    <option v-for="transcription in part.transcriptions"
+            v-bind:key="transcription.pk"
+            v-bind:value="transcription.pk">${transcription.name}</option>
   </select>
+  <button v-if="part.loaded"
+          type="button"
+          class="btn btn-primary fas fa-list ml-1"
+          data-toggle="modal"
+          data-target="#transcriptionsManagement"></button>
+  <div v-if="part.loaded"
+       id="transcriptionsManagement"
+       class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{% trans "Transcriptions management" %}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <ul>
+            <li v-for="trans in part.transcriptions"
+                v-bind="trans"
+                v-bind:key="trans.pk"
+                class="form-inline">
+              <label v-bind:for="'opt' + trans.pk">${trans.name}</label>
+              <input type="checkbox"
+                     id="'opt' + trans.pk"
+                     v-model="comparedTranscriptions"
+                     v-bind:value="trans.pk" />
+              <span class="btn btn-danger fas fa-trash"></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_nav %}
@@ -155,7 +193,7 @@
        <segregion v-if="segmenter.loaded"
                   v-for="region in part.regions"
                   v-bind:region="region"
-                  v-bind:key="region.pk"
+                  v-bind:key="'R' + region.pk"
                   inline-template>
           <div class="hide">
             <input name="box" v-bind:value="region.box"/>
@@ -165,7 +203,7 @@
         <segline v-if="segmenter.loaded"
                  v-for="line in part.lines"
                  v-bind:line="line"
-                 v-bind:key="line.pk"
+                 v-bind:key="'L' + line.pk"
                  inline-template>
           <div class="hide">
             <input name="order" v-bind:value="line.order"/>
@@ -194,7 +232,9 @@
 </keep-alive>
 
 <keep-alive>
-<VisuPanel v-if="show.visualisation" v-bind:part="part" ref="visuPanel" inline-template>
+  <VisuPanel v-if="show.visualisation"
+             v-bind:part="part"
+             ref="visuPanel" inline-template>
   <div class="col panel">
     <div class="tools">
       <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
@@ -202,17 +242,20 @@
     <div class="content-container">
       <div id="visu-zoom-container" class="content">
         {% with text_direction=document.default_text_direction %}
-        <svg v-if="part.loaded" class="w-100 {{ text_direction }}">
-          <visuline v-for="line in part.lines"
+        <svg class="w-100 {{ text_direction }}">
+          <visuline v-if="part.loaded"
+                    v-for="line in part.lines"
                     v-bind:line="line"
                     v-bind:ratio="ratio"
-                    v-bind:key="line.pk"
+                    v-bind:key="'VL' + line.pk"
                     inline-template>
             <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
               <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
               <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
               <text {% if text_direction == 'rtl' %}text-anchor="end"{% endif %} lengthAdjust="spacingAndGlyphs">
-                <textPath v-bind:href="'#' + textPathId">${line.transcription.content}</textPath>
+                <textPath v-bind:href="'#' + textPathId"
+                          v-if="line.currentTrans">
+                  ${line.currentTrans.content}</textPath>
               </text>
             </g>
           </visuline>
@@ -223,7 +266,7 @@
 
     <TranscriptionModal v-if="editLine" v-bind:line="editLine" inline-template>
       <div id="trans-modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="transModalLabel">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-xl" role="document">
           <div class="modal-content">
             <div class="modal-header">
               {% if document.read_direction == 'rtl' %}
@@ -257,27 +300,69 @@
               </div>
 
               <div id="trans-input-container">
-                <input v-on:keyup.down="$parent.editNext" v-on:keyup.up="$parent.editPrevious" id="trans-input" name="content" class="form-control mb-2" v-on:keyup.enter="$parent.editNext" v-model.lazy="localTranscription" autocomplete="off" autofocus/>
-                <small v-if="line.transcription.pk" class="form-text text-muted">
-                  <span>by ${line.transcription.version_author} (${line.transcription.version_source})</span>
+                <input v-on:keyup.down="$parent.editNext"
+                       v-on:keyup.up="$parent.editPrevious"
+                       id="trans-input" name="content"
+                       class="form-control mb-2"
+                       v-on:keyup.enter="$parent.editNext"
+                       v-model.lazy="localTranscription"
+                       autocomplete="off"
+                       autofocus/>
+                <small v-if="line.currentTrans" class="form-text text-muted">
+                  <span>by ${line.currentTrans.version_author} (${line.currentTrans.version_source})</span>
                   <span>on ${momentDate}</span>
                 </small>
               </div>
 
-              <a href="#" data-toggle="collapse" data-target="#history">{% trans "Show history" %}</a>
-              <div id="history" class="collapse">
-                <div class="d-flex flex-column">
-                  <div v-if="!line.transcription.versions.length">{% trans "History is empty." %}</div>
-                  <LineVersion v-for="version in line.transcription.versions" v-bind:version="version" v-bind:key="version.revision" inline-template>
-                    <div class="d-flex flex-row justify-content-between">
-                      <div class="">${ versionContent }</div>
-                      <div class="">${ version.author } ( ${ version.source } )</div>
-                      <div class="">${ momentDate }</div>
-                      <div class="">
-                        <button v-on:click="loadState" class="btn btn-sm btn-info js-pull-state" title="{% trans "Load this state" %}">
+              <!-- transcription comparison -->
+              <div v-if="$parent.$parent.comparedTranscriptions.length"
+                   class="card history-block mt-2">
+                <div class="card-header">
+                  <a href="#" data-toggle="collapse" data-target=".compare-show">
+                    {% trans "Toggle transcription comparison" %}
+                  </a>
+                </div>
+                <div class="card-body compare-show collapse show">
+                  <div v-for="trans in otherTranscriptions"
+                       v-bind:key="'TrC' + trans.pk"
+                       readonly>
+                    <span class="text-muted col-3">${ trans.name }</span>
+                    <span v-html="comparedContent(trans.content)"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- versioning/history -->
+              <div v-if="line.currentTrans.versions" class="card history-block mt-2">
+                <div class="card-header">
+                  <a href="#" data-toggle="collapse" data-target=".history-show">
+                    {% trans "Toggle history" %}
+                  </a>
+                  <a v-if="line.currentTrans.versions.length"
+                     class="history-show collapse float-right"
+                     href="#" data-toggle="collapse" data-target=".history-deletion">
+                    {% trans "Toggle deletions" %}
+                  </a>
+                </div>
+                <div id="history" class="history-show card-body collapse">
+                  <LineVersion
+                    v-for="(version, index) in line.currentTrans.versions"
+                    v-bind:previous="line.currentTrans.versions[index+1]"
+                    v-bind:version="version"
+                    v-bind:key="version.revision"
+                    inline-template>
+                    <div class="row mt-1">
+                      <div class="col text-nowrap" v-html="versionCompare"></div>
+                      <div class="col-auto" class="">${ version.author } ( ${ version.source } )</div>
+                      <div class="col-auto" class="">${ momentDate }</div>
+                      <div class="col-auto" class="">
+                        <button v-on:click="loadState"
+                                class="btn btn-sm btn-info js-pull-state"
+                                title="{% trans "Load this state" %}">
                           <i class="fas fa-file-upload"></i>
                         </button>
                       </div>
+                      <div class="w-100"></div>
                     </div>
                   </LineVersion>
                 </div>
@@ -304,12 +389,13 @@
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
-  const READ_DIRECTION = '{{document.read_direction}}';
-  const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
-  const DOCUMENT_ID = '{{document.id}}';
-  var PART_ID = {{part.id}};  // can be changed with next & previous pages
+ const READ_DIRECTION = '{{document.read_direction}}';
+ const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
+ const DOCUMENT_ID = '{{document.id}}';
+ var PART_ID = {{part.id}};  // can be changed with next & previous pages
 </script>
 
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/4.0.2/diff.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.5/math.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 {% compress js file part_edit %}

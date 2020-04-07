@@ -21,14 +21,14 @@ class Versioned(models.Model):
     Allows the flat versioning of a model instance, every revisions is stored in the versions field
     this technique allows to not have to deal with changing references to this 'object'.
     cons: get clobbered somewhat fast depending on the quantity of versioned data
-    
+
     API:
     instance.history : is a property returning a list of instances corresponding to the versions.
     instance.new_version() : store the current data in versions. Does not call save().
     instance.revert(revision) : store the current data in versions and revert to the given revision
                                 does not call save(), it needs to be done manually.
     instance.delete_revision(revision)
-    
+
     Model class attributes:
     version_ignore_fields = () : model fields that won't be added to the versions
     version_history_max_length = 10 : maximum number of revisions to store in the history
@@ -50,13 +50,13 @@ class Versioned(models.Model):
     version_author = models.CharField(editable=False, max_length=128)
     version_created_at = models.DateTimeField(editable=False, auto_now_add=True)
     version_updated_at = models.DateTimeField(editable=False, auto_now=True)
-    
+
     # this is a stack, more recents to the top
     # on postgres it's stored as jsonb, super fast and indexable!
     versions = JSONField(editable=False, default=list)
     version_ignore_fields = ()
     version_history_max_length = 20
-    
+
     def pack(self, **kwargs):
         """
         Create a dict from the current instance to be added to the history
@@ -76,7 +76,7 @@ class Versioned(models.Model):
             'updated_at': self.version_updated_at.isoformat(),
             'data': data
         }
-    
+
     def unpack(self, version):
         """
         Create an instance (not saved in db) from a dict (usually coming from the history)
@@ -94,12 +94,14 @@ class Versioned(models.Model):
         instance.save = _dummy_db
         instance.delete = _dummy_db
         return instance
-    
+
     def new_version(self, author=None, source=None, **kwargs):
         packed = self.pack(**kwargs)
         if self.versions:
             last = self.versions[0]
-            if packed['data'] == last['data']:
+            if (packed['data'] == last['data']
+                and author==self.version_author
+                and source==self.version_source):
                 raise NoChangeException
         self.versions.insert(0, packed)
         # if we passed version_history_max_length we delete the last one
@@ -112,7 +114,7 @@ class Versioned(models.Model):
             self.version_source = source
         self.version_created_at = datetime.now(timezone.utc)
         self.version_updated_at = datetime.now(timezone.utc)
-    
+
     def revert(self, revision):
         """
         revision is a hex of the uuid field as stored in the history
@@ -124,7 +126,7 @@ class Versioned(models.Model):
                 self.versions.insert(0, self.pack())
                 # pop revision
                 self.versions.pop(self.versions.index(version))
-                
+
                 # load its data
                 self.revision = uuid.UUID(revision)
                 for field_name, value in version['data'].items():
@@ -147,14 +149,14 @@ class Versioned(models.Model):
                 break
         else:
             raise ValueError("Revision %s not found for %s" % (revision, self))
-    
+
     def flush_history(self):
         self.versions = []
-        
+
     @property
     def history(self):
         return [self.unpack(version) for version in self.versions]
-    
+
     class Meta:
         abstract = True
 
@@ -165,6 +167,6 @@ if 'test' in sys.argv:
         ignored = models.SmallIntegerField(default=5)
         version_ignore_fields = ('ignored',)
         version_history_max_length = 5
-        
+
         def __str__(self):
             return self.content
