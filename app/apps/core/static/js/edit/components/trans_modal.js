@@ -49,8 +49,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             name: this.$parent.$parent.part.transcriptions.find(e=>e.pk==pk).name,
             content: this.line.transcriptions[pk].content
           }; });
-
-      console.log(a);
       return a;
     },
     localTranscription: {
@@ -76,7 +74,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         let color = part.added ? 'green' :
                     part.removed ? 'red' : '';
         if (part.removed) {
-          return '<small><font color="'+color+'" class="collapse show history-deletion">-'+part.value+'</font></small>';
+          return '<small><font color="'+color+'" class="collapse show history-deletion">'+part.value+'</font></small>';
         } else if (part.added) {
           return '<font color="'+color+'">'+part.value+'</font>';
         } else {
@@ -130,9 +128,9 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
       ruler.style.whiteSpace="nowrap"
       container.appendChild(ruler);
 
-      ruler.style.fontSize = lineHeight+'px';
-      input.style.fontSize = lineHeight+'px';
-      input.style.lineHeight = 1.2;
+      let fontSize = Math.round(lineHeight*0.7);  // Note could depend on the script
+      ruler.style.fontSize = fontSize+'px';
+      input.style.fontSize = fontSize+'px';
       input.style.height = 'auto';
 
       if (READ_DIRECTION == 'rtl') {
@@ -145,40 +143,12 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
         scaleX = Math.max(0.2, scaleX);
         input.style.transform = 'scaleX('+ scaleX +')';
-        input.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)'; // fit in the container
-
-        function switchLetters(val) {
-          let r1 = Math.floor(Math.random() * val.length),
-              r2 = Math.floor(Math.random() * val.length);
-          if (r1 > r2) {
-            let rt = r2;
-            r2 = r1, r1 = rt;
-          }
-          return val.substr(0, r1) +
-                 '<span style="color: red">' +
-                 val.substr(r2,1)  +
-                 '</span>' +
-                 val.substr(r1+1, r2-r1-1) +
-                 '<span style="color: red">' +
-                 val.substr(r1,1) +
-                 '</span>' +
-                 val.substr(r2+1);
-        }
-
-        let compare = document.querySelectorAll('.compared-line').forEach(function(e, i) {
-          // Note: YOLO
-          /* e.style.transformOrigin = 'top left';
-           * e.style.fontSize = lineHeight+'px';
-           * e.style.transform = 'scaleX('+ scaleX +')';
-           * e.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)';
-           * e.style.display = 'block'; */
-          e.innerHTML = switchLetters(e.innerHTML);
-        });
+        input.style.width = 100/scaleX + '%';
       } else {
         input.style.transform = 'none';
-        input.style.width = 'calc(100% - '+context+'px)';
+        input.style.width = '100%'; //'calc(100% - '+context+'px)';
       }
-      // container.removeChild(ruler);  // done its job
+      container.removeChild(ruler);  // done its job
 
       input.focus();
 

@@ -425,9 +425,28 @@ i.panel-icon {
     position: absolute;
 }
 
-#trans-modal  thead tr#no-versions th {
-    border: none;
+#trans-modal #history .d-table {
+    border-spacing: 0 10px;
 }
+#trans-modal #history .d-table-cell {
+    white-space: nowrap;
+    padding-right: 10px;
+}
+#trans-modal #history .d-table-cell:last-child {
+    padding-right: 0;
+}
+
+#trans-modal .card-toggle.collapsed span:before
+{
+    content:'+';
+    width:15px;
+}
+#trans-modal .card-toggle span:before
+{
+    content:'-';
+    width:15px;
+}
+
 #trans-modal .modal-body{
     overflow: visible;
 }

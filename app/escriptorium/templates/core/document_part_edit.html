@@ -35,19 +35,25 @@
           </button>
         </div>
         <div class="modal-body">
-          <ul>
-            <li v-for="trans in part.transcriptions"
-                v-bind="trans"
-                v-bind:key="trans.pk"
-                class="form-inline">
-              <label v-bind:for="'opt' + trans.pk">${trans.name}</label>
-              <input type="checkbox"
-                     id="'opt' + trans.pk"
-                     v-model="comparedTranscriptions"
-                     v-bind:value="trans.pk" />
-              <span class="btn btn-danger fas fa-trash"></span>
-            </li>
-          </ul>
+          <div>
+            <span>{% trans "Compare" %}</span>
+            <span class="float-right">{% trans "Delete" %}</span>
+          </div>
+          <div v-for="trans in part.transcriptions"
+               v-if="trans.pk != selectedTranscription"
+               v-bind="trans"
+               v-bind:key="trans.pk"
+               class="inline-form form-check mt-1">
+            <input type="checkbox" class="form-check-input"
+                   v-bind:id="'opt' + trans.pk"
+                   v-model="comparedTranscriptions"
+                   v-bind:value="trans.pk" />
+            <label v-bind:for="'opt'+trans.pk"
+                   class="form-check-label col">${trans.name}</label>
+            <span v-if="trans.name != 'manual'"
+                  class="btn btn-danger fas fa-trash"
+                  title="{% trans "Completely remove the transcription and all of it's content!"  %}"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -318,8 +324,8 @@
               <div v-if="$parent.$parent.comparedTranscriptions.length"
                    class="card history-block mt-2">
                 <div class="card-header">
-                  <a href="#" data-toggle="collapse" data-target=".compare-show">
-                    {% trans "Toggle transcription comparison" %}
+                  <a href="#" class="card-toggle" data-toggle="collapse" data-target=".compare-show">
+                    <span>{% trans "Toggle transcription comparison" %}</span>
                   </a>
                 </div>
                 <div class="card-body compare-show collapse show">
@@ -333,10 +339,11 @@
               </div>
 
               <!-- versioning/history -->
-              <div v-if="line.currentTrans.versions" class="card history-block mt-2">
+              <div v-if="line.currentTrans.versions.length"
+                   class="card history-block mt-2">
                 <div class="card-header">
-                  <a href="#" data-toggle="collapse" data-target=".history-show">
-                    {% trans "Toggle history" %}
+                  <a href="#" class="card-toggle collapsed" data-toggle="collapse" data-target=".history-show">
+                    <span>{% trans "Toggle history" %}</span>
                   </a>
                   <a v-if="line.currentTrans.versions.length"
                      class="history-show collapse float-right"
@@ -345,26 +352,27 @@
                   </a>
                 </div>
                 <div id="history" class="history-show card-body collapse">
+                  <div class="d-table">
                   <LineVersion
                     v-for="(version, index) in line.currentTrans.versions"
                     v-bind:previous="line.currentTrans.versions[index+1]"
                     v-bind:version="version"
                     v-bind:key="version.revision"
                     inline-template>
-                    <div class="row mt-1">
-                      <div class="col text-nowrap" v-html="versionCompare"></div>
-                      <div class="col-auto" class="">${ version.author } ( ${ version.source } )</div>
-                      <div class="col-auto" class="">${ momentDate }</div>
-                      <div class="col-auto" class="">
+                    <div class="d-table-row pt-1">
+                      <div class="d-table-cell w-100" v-html="versionCompare"></div>
+                      <div class="d-table-cell">${ version.author } ( ${ version.source } )</div>
+                      <div class="d-table-cell">${ momentDate }</div>
+                      <div class="d-table-cell">
                         <button v-on:click="loadState"
                                 class="btn btn-sm btn-info js-pull-state"
                                 title="{% trans "Load this state" %}">
                           <i class="fas fa-file-upload"></i>
                         </button>
                       </div>
-                      <div class="w-100"></div>
                     </div>
                   </LineVersion>
+                  </div>
                 </div>
               </div>
             </div>

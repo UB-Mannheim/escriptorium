@@ -57,6 +57,7 @@ const partStore = {
       });
   },
   fetchTranscriptions() {
+    if (this.transcriptions.length) return;
     let uri = this.getApiRoot();
     fetch(uri)
       .then((response)=>response.json())
