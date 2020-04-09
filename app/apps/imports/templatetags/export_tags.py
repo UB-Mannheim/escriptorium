@@ -24,12 +24,19 @@ def box_coordinates(block, part):
         return '0,0 %d,0 %d,%d 0,%d' % (w, w, h, h)
 
 
-@register.filter
-def to_int(value):
-    return int(value)
 
 # for pagexml export only
 @register.simple_tag
 def pagexml_points(points):
     return ' '.join(','.join(map(lambda x: str(int(x)), pt)) for pt in points)
+
+
+def pretty_float(n):
+    return '%g' % n
+
+# for alto export only
+@register.simple_tag
+def alto_points(points):
+    return ' '.join(' '.join(map(lambda x: str(pretty_float(x)), pt)) for pt in points)
+
 
