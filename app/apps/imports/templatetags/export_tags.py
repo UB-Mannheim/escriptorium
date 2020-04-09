@@ -28,7 +28,8 @@ def box_coordinates(block, part):
 def to_int(value):
     return int(value)
 
+# for pagexml export only
 @register.simple_tag
-def coords_to_points(points):
+def pagexml_points(points):
     return ' '.join(','.join(map(lambda x: str(int(x)), pt)) for pt in points)
 
