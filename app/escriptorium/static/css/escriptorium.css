@@ -420,6 +420,12 @@ i.panel-icon {
     transform-origin: top left;
     box-shadow: none;
 }
+
+#trans-modal #versions-help, #compare-help {
+    position: absolute;
+    right: 0;
+}
+
 #trans-rule {
     visibility: hidden;
     position: absolute;
@@ -430,10 +436,13 @@ i.panel-icon {
 }
 #trans-modal #history .d-table-cell {
     white-space: nowrap;
-    padding-right: 10px;
+    padding: 0 10px;
+}
+#trans-modal #history .d-table-cell:first-child {
+     padding-left: 0;
 }
 #trans-modal #history .d-table-cell:last-child {
-    padding-right: 0;
+     padding-right: 0;
 }
 
 #trans-modal .card-toggle.collapsed span:before
