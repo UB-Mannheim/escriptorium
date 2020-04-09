@@ -264,13 +264,15 @@
           <div class="d-flex flex-column">
             <div  class="d-flex flex-row">
               <div class ="table-row line-order line-order-{{ document.read_direction }}" class="w-10">${line.order}</div>
-              <div v-bind:id="line.pk"
+              <div dir="{{ document.read_direction }}"
+                   v-bind:id="line.pk"
                    v-on:mouseup="editableContent"
                    v-on:mousedown="setEdit"
                    v-on:mouseover="showOverlay"
                    v-on:mouseleave="hideOverlay"
                    v-on:keydown.enter="$parent.editNext"
                    v-on:keyup="pushUpdate"
+                   v-on:paste="onPast"
                    class="w-95 table-row line-content" ref="content" >${line.transcription.content}</div>
             </div>
           </div>
