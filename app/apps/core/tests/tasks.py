@@ -64,14 +64,14 @@ class TasksTestCase(CoreFactoryTestCase):
                 'parts': json.dumps([part.pk for part in self.part.document.parts.all()]),
                 'task': 'train',
                 'new_model': 'new_test_model'})
-            self.assertEqual(response.selftatus_code, 200, response.content)
+            self.assertEqual(response.status_code, 200, response.content)
     
     def test_train_existing_transcription_model(self):
         self.makeTranscriptionContent()
         model = self.factory.make_model(document=self.part.document)
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(17):
             response = self.client.post(uri, {
                 'document': self.part.document.pk,
                 'transcription': self.transcription.pk,
