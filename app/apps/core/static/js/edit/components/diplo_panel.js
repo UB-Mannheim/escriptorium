@@ -20,13 +20,8 @@ var DiploPanel = BasePanel.extend({
      },
     methods:{
         toggleSave(){
-
-            if(this.save){
-                this.bulkUpdate();
-                this.bulkCreate();
-
-            }
-            this.save = !this.save;
+            this.bulkUpdate();
+            this.bulkCreate();
         },
         editNext(ev) {
             ev.preventDefault();
