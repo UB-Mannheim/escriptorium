@@ -416,19 +416,19 @@ class PagexmlParser(XMLParser):
     def update_line(self, line, lineTag):
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
-            line.baseline = [
-                list(map(lambda x: int(float(x)), pt.split(',')))
-                for pt in baseline.get('points').split(' ')
-            ]
+            line.baseline = self.clean_coords(baseline)
         except AttributeError:
             #  to check if the baseline is good
             line.baseline = None
 
         polygon = lineTag.find("Coords", self.root.nsmap)
         if polygon is not None:
-            line.mask = [
-                list(map(lambda x: int(float(x)), pt.split(",")))
-                for pt in polygon.get("points").split(" ")
+            line.mask = self.clean_coords(polygon)
+
+    def clean_coords(self, coordTag):
+        return [
+                list(map(int, pt.split(",")))
+                for pt in coordTag.get("points").split(" ")
             ]
 
     def get_transcription_content(self, lineTag):
@@ -529,24 +529,11 @@ class TranskribusPageXmlParser(PagexmlParser):
             2,
         )
 
-    def update_line(self, line, lineTag):
-        super().update_line(line, lineTag)
-        if line.baseline is not None:
-            line.baseline = self.clean_coords(line.baseline)
-        if line.mask is not None:
-            line.mask = self.clean_coords(line.mask)
-
-    def update_block(self, block, blockTag):
-        super().update_block(block, blockTag)
-        block.box = self.clean_coords(block.box)
-
-    def clean_coords(self, points):
-        coords = [
-            list(map(lambda x: 0 if float(x) < 0 else int(float(x)), pt))
-            for pt in points
-        ]
-
-        return coords
+    def clean_coords(self, coordTag):
+        return [
+                list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
+                for pt in coordTag.get("points").split(" ")
+            ]
 
 
 def make_parser(document, file_handler, name=None):
