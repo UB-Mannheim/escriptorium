@@ -57,7 +57,7 @@ class TasksTestCase(CoreFactoryTestCase):
         self.makeTranscriptionContent()
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
-        with self.assertNumQueries(18):
+        with self.assertNumQueries(19):
             response = self.client.post(uri, {
                 'document': self.part.document.pk,
                 'transcription': self.transcription.pk,
