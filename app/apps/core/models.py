@@ -808,6 +808,7 @@ class Transcription(models.Model):
                                  related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    archived = models.BooleanField(default=False)
 
     DEFAULT_NAME = 'manual'
 
@@ -818,13 +819,17 @@ class Transcription(models.Model):
     def __str__(self):
         return self.name
 
+    def archive(self):
+        self.archived = True
+        self.save()
+
 
 class LineTranscription(Versioned, models.Model):
     """
     Represents a transcribded line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-    content = models.CharField(blank=True, max_length=2048)
+    content = models.CharField(null=True, max_length=2048)
     # graphs = [  # WIP
     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
     # ]

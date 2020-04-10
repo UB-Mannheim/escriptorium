@@ -28,8 +28,10 @@ var partVM = new Vue({
                 return this.zoom.scale || 1;
             },
             set(newValue) {
-                let target = {x: this.$el.clientWidth/this.openedPanels.length/2-this.zoom.pos.x,
-                              y: this.$el.clientHeight/this.openedPanels.length/2-this.zoom.pos.y};
+                let target = {
+                    x: this.$el.clientWidth/this.openedPanels.length/2-this.zoom.pos.x,
+                    y: this.$el.clientHeight/this.openedPanels.length/2-this.zoom.pos.y
+                };
                 this.zoom.zoomTo(target, parseFloat(newValue)-this.zoom.scale);
             }
         }
@@ -54,19 +56,11 @@ var partVM = new Vue({
             $('#images-tab-link').attr('href', tabUrl);
         },
         'part.transcriptions': function(n, o) {
-            let tr = userProfile.get('default-transcription-' + DOCUMENT_ID) || this.transcriptions[0].pk;
-            this.selectedTranscription = tr;
+
         },
         selectedTranscription: function(n, o) {
             userProfile.set('default-transcription-' + DOCUMENT_ID, n);
-            this.part.fetchContent(n, function() {
-                this.part.lines.forEach(function(line, i) {
-                    if (line.transcriptions[this.selectedTranscription]) {
-                        Vue.set(line, 'currentTrans',
-                                line.transcriptions[this.selectedTranscription]);
-                    }
-                }.bind(this));
-            }.bind(this));
+            this.getCurrentContent(n);
         },
         comparedTranscriptions: function(n, o) {
             n.forEach(function(tr, i) {
@@ -90,7 +84,10 @@ var partVM = new Vue({
 
     created() {
         // this.fetch();
-        this.part.fetchPart(PART_ID);
+        this.part.fetchPart(PART_ID, function() {
+            let tr = userProfile.get('default-transcription-' + DOCUMENT_ID) || this.transcriptions[0].pk;
+            this.selectedTranscription = tr;
+        }.bind(this));
 
         // bind all events emited from panels and such
         this.$on('update:transcription', function(lineTranscription) {
@@ -158,9 +155,36 @@ var partVM = new Vue({
         resetZoom() {
             this.zoom.reset();
         },
-
-        getPrevious(ev) { return this.part.getPrevious(); },
-        getNext(ev) { return this.part.getNext(); },
+        deleteTranscription(ev) {
+            let transcription = ev.target.dataset.trpk;
+            // I lied, it's only archived
+            if(confirm("Are you sure you want to delete the transcription?")) {
+                this.part.archiveTranscription(transcription);
+                ev.target.parentNode.remove();  // meh
+                let compInd = this.comparedTranscriptions.findIndex(e=>e.pk == transcription);
+                if (compInd != -1) Vue.delete(this.comparedTranscriptions, compInd)
+            }
+        },
+        getCurrentContent(transcription) {
+            this.part.fetchContent(transcription, function() {
+                this.part.lines.forEach(function(line, i) {
+                    if (line.transcriptions[this.selectedTranscription]) {
+                        Vue.set(line, 'currentTrans',
+                                line.transcriptions[this.selectedTranscription]);
+                    }
+                }.bind(this));
+            }.bind(this));
+        },
+        getPrevious(ev) {
+            return this.part.getPrevious(function() {
+                this.getCurrentContent(this.selectedTranscription);
+            }.bind(this));
+        },
+        getNext(ev) {
+            return this.part.getNext(function() {
+                this.getCurrentContent(this.selectedTranscription);
+            }.bind(this));
+        },
 
         toggleSource() {
             this.show.source =! this.show.source;

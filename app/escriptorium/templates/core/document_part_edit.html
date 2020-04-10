@@ -50,6 +50,8 @@
                         <label v-bind:for="'opt'+trans.pk"
                                class="form-check-label col">${trans.name}</label>
                         <button v-bind:disabled="trans.name == 'manual' || trans.pk == selectedTranscription"
+                                v-bind:data-trPk="trans.pk"
+                                @click="deleteTranscription"
                                 class="btn btn-danger fas fa-trash"
                                 title="{% trans "Completely remove the transcription and all of it's content!"  %}"></button>
                     </div>
@@ -106,7 +108,10 @@
     </SourcePanel>
 
     <keep-alive>
-        <SegmentationPanel v-if="show.segmentation" v-bind:part="part" v-bind:full-size-image="fullSizeImage" ref="segPanel" inline-template>
+        <SegmentationPanel v-if="show.segmentation"
+                           v-bind:part="part"
+                           v-bind:full-size-image="fullSizeImage"
+                           ref="segPanel" inline-template>
             <div class="col panel">
                 <div class="tools">
                     <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
@@ -127,7 +132,13 @@
                             <!-- {% trans "Line thickness" %}<input type="slider"/> -->
                         </div>
                     </div>
-                    <button v-if="hasBinaryColor" @click="toggleBinary" v-bind:class="[colorMode == 'binary' ? 'btn-success' : 'btn-info']"  id="toggle-binary" title="{% trans "Toggle binary image." %}" class="btn fas fa-adjust" autocomplete="off"></button>
+                    <button v-if="hasBinaryColor"
+                            @click="toggleBinary"
+                            v-bind:class="[colorMode == 'binary' ? 'btn-success' : 'btn-info']"
+                            id="toggle-binary"
+                            title="{% trans "Toggle binary image." %}"
+                            class="btn fas fa-adjust"
+                            autocomplete="off"></button>
                     <div class="btn-group">
                         <button id="be-toggle-regions" title="{% trans "Switch to region mode. (R)" %}" class="btn btn-info fas fa-th-large" autocomplete="off"></button>
                         <button id="be-toggle-order" title="{% trans "Toggle ordering display. (L)" %}" class="btn btn-info fas fa-sort-numeric-down" autocomplete="off"></button>
@@ -157,7 +168,6 @@
                     <button id="be-reverse-selection" title="{% trans "Reverse selected lines. (I)" %}" class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
                     <button id="be-delete-selection" title="{% trans "Delete all selected lines/regions. (suppr)" %}" class="hide btn m-1 btn-danger fas fa-trash"></button>
                 </div>
-
                 <div class="content-container">
                     <div id="seg-zoom-container" class="content">
                         <segregion v-if="segmenter.loaded"

@@ -844,8 +844,8 @@ class Segmenter {
             }.bind(this);
 
             var hit = region.polygonPath.hitTest(event.point, {
-	            segments: true,
-	            tolerance: 20
+	        segments: true,
+	        tolerance: 20
             });
             if (hit && hit.type=='segment') {
                 if (this.selection.segments.findIndex(
@@ -878,8 +878,8 @@ class Segmenter {
                     this.selecting) return;
                 this.selecting = line;
                 var hit = line.baselinePath.hitTest(event.point, {
-	                segments: true,
-	                tolerance: 20
+	            segments: true,
+	            tolerance: 20
                 });
 
                 if (hit && hit.type=='segment') {
@@ -917,8 +917,8 @@ class Segmenter {
                 if (line.selected) this.setCursor('grab');
                 else this.setCursor('pointer');
                 var hit = line.baselinePath.hitTest(event.point, {
-	                segments: true,
-	                tolerance: 5
+	            segments: true,
+	            tolerance: 5
                 });
                 if (hit && hit.type=='segment') {
                     this.setCursor('pointer');
@@ -947,8 +947,8 @@ class Segmenter {
                 this.selecting = line;
 
                 var hit = line.maskPath.hitTest(event.point, {
-	                segments: true,
-	                tolerance: 20
+	            segments: true,
+	            tolerance: 20
                 });
                 if (hit && hit.type=='segment') {
                     if (this.selection.segments.findIndex(
@@ -1249,9 +1249,9 @@ class Segmenter {
     }
 
     getRatio() {
-        let bounds = this.img.getBoundingClientRect();
-        let imgRatio = (bounds.width / this.img.naturalWidth);
-        return imgRatio*this.scale;
+        // let bounds = this.img.getBoundingClientRect();
+        // let imgRatio = (bounds.width / this.img.naturalWidth);
+        return (this.img.width / this.img.naturalWidth)*this.scale;
     }
 
     refresh() {
