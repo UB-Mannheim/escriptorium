@@ -43,7 +43,6 @@ var diploLine = LineBase.extend({
         onPast(e){
           let pastedData = e.clipboardData.getData('text/plain');
           let pasted_data_split = pastedData.split('\n');
-          console.log("on past",pasted_data_split);
 
           if(pasted_data_split.length < 2){
                 return
@@ -54,13 +53,25 @@ var diploLine = LineBase.extend({
 
             if(pasted_data_split[pasted_data_split.length -1] =="")
                 pasted_data_split.pop();
-            let index = $(this).parent().index();
-            let lines = $(".line-content");
-            for (let i=index+1; i<index + pasted_data_split.length; i++){
-                let value = pasted_data_split[i- index];
-                $(lines[i]).text(value);
-                // self.editAndSave(lines[i]);
+
+            let index = this.$parent.$children.indexOf(this);
+            for (let i=1; i<pasted_data_split.length; i++){
+
+                 if(this.$parent.$children[index+i]) {
+                     let content = pasted_data_split[i];
+                     let child = this.$parent.$children[index+i];
+                     let id = child.line.pk;
+                     $("#"+id).text(content);
                 }
+                else {
+                     let content = pasted_data_split.slice(i-1).join('\n');
+                     let child = this.$parent.$children[index+1];
+                     let id = child.line.pk;
+                     $("#"+id).text(content);
+                }
+
+            }
+
             }
         }
     }
