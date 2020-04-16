@@ -17,7 +17,32 @@ var DiploPanel = BasePanel.extend({
         this.$on('create:transcription', function(linetranscription) {
             this.createdLines.push(linetranscription);
         });
+
+        $('#diplomatic-lines').on('dragover', '.js-drop', function(ev) {
+        console.log("dragover");
+        });
+
+        $('#diplomatic-lines').on('dragleave','.js-drop', function(ev) {
+            console.log("dragleave");
+
+        });
+
+        $('#diplomatic-lines').on('drop', '.js-drop', function(ev) {
+            console.log("drop");
+
+        });
+
+
      },
+    mounted() {
+        Vue.nextTick(function(){
+        $('#3096').on('dragstart',function(ev) {
+            console.log("dragstart");
+
+        });
+        });
+
+    },
     methods:{
         toggleSave(){
             this.bulkUpdate();
