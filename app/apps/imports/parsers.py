@@ -293,11 +293,6 @@ class AltoParser(XMLParser):
         escriptorium_alto
     )
 
-    def validate(self):
-        if self.schema_location in self.ACCEPTED_SCHEMAS:
-            self.schema_location = self.escriptorium_alto
-            super().validate()
-
     @property
     def total(self):
         # An alto file always describes 1 'document part'
