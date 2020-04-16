@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+{% load export_tags %}<?xml version="1.0" encoding="UTF-8"?>
 <alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
 	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd">
@@ -13,9 +13,9 @@
       <PrintSpace HPOS="0" VPOS="0" WIDTH="{{ part.image.width }}" HEIGHT="{{ part.image.height }}">
         {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextBlock>{% endif %}
         <TextBlock {% if line.block %}HPOS="{{ line.block.coordinates_box.0 }}" VPOS="{{ line.block.coordinates_box.1 }}" WIDTH="{{ line.block.width }}" HEIGHT="{{ line.block.height }}" ID="{{ line.block.make_external_id }}"{% else %}ID="eSc_dummyblock_"{% endif%}>{% endifchanged %}
-	      <TextLine ID="{{ line.make_external_id }}" {% if line.baseline %}BASELINE="{% for pt in line.baseline %}{{ pt|join:' ' }}{% if not forloop.last %} {% endif %}{% endfor %}" {% endif %}HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}">
+	      <TextLine ID="{{ line.make_external_id }}" {% if line.baseline %}BASELINE="{% alto_points line.baseline %}" {% endif %}HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}">
             {% if line.mask %}<Shape>
-              <Polygon POINTS="{% for pt in line.mask %}{{ pt|join:' ' }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
+              <Polygon POINTS="{% alto_points line.mask %}"/>
             </Shape>{% endif %}
 	        <String CONTENT="{{ line.transcription.0.content }}" HPOS="{{ line.box.0 }}" VPOS="{{ line.box.1 }}" WIDTH="{{ line.width }}" HEIGHT="{{ line.height }}"></String>
           </TextLine>
