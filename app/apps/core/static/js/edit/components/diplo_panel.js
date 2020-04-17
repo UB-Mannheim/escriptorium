@@ -5,6 +5,8 @@ var DiploPanel = BasePanel.extend({
         save: false, //show save button
         updatedLines : [],
         createdLines : [],
+        dragging: -1
+
     };},
     components: {
         'diploline': diploLine,
@@ -18,31 +20,9 @@ var DiploPanel = BasePanel.extend({
             this.createdLines.push(linetranscription);
         });
 
-        $('#diplomatic-lines').on('dragover', '.js-drop', function(ev) {
-        console.log("dragover");
-        });
-
-        $('#diplomatic-lines').on('dragleave','.js-drop', function(ev) {
-            console.log("dragleave");
-
-        });
-
-        $('#diplomatic-lines').on('drop', '.js-drop', function(ev) {
-            console.log("drop");
-
-        });
 
 
      },
-    mounted() {
-        Vue.nextTick(function(){
-        $('#3096').on('dragstart',function(ev) {
-            console.log("dragstart");
-
-        });
-        });
-
-    },
     methods:{
         toggleSave(){
             this.bulkUpdate();
@@ -85,7 +65,34 @@ var DiploPanel = BasePanel.extend({
                 elt.content = lt.content;
                 elt.version_updated_at = lt.version_updated_at;
             }
+        },
+        dragStart(index,ev){
+          ev.dataTransfer.setData('Text', "#diplomatic-lines");
+          ev.target.style.border = 'solid #33A2FF';
+          ev.dataTransfer.dropEffect = 'move';
+           this.dragging = index;
+            console.log("draaag start",ev);
+        },
+        dragEnd(){
+            this.dragging = -1;
+
+        },
+        dragLeave(){
+
+        },
+        dragFinish(to, ev){
+            ev.target.style = '';
+            this.moveLine(this.dragging, to);
+
+        },
+        moveLine(from, to) {
+          if (to === -1) {
+            return 0;
+          } else {
+            this.part.lines.splice(to, 0,this.part.lines.splice(from, 1)[0]);
+          }
         }
+
     },
 
 });
