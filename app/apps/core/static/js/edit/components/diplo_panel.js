@@ -85,7 +85,10 @@ var DiploPanel = BasePanel.extend({
             let to = this.part.lines.indexOf(line);
             ev.target.style = '';
             this.moveLine(this.dragging, to);
-
+            // this.part.recalculateOrdering();
+            this.part.move(line.pk,to,function () {
+                line.order = to;
+            }.bind(this));
         },
         moveLine(from, to) {
           if (to === -1) {
