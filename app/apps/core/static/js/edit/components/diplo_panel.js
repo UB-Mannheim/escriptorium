@@ -66,12 +66,13 @@ var DiploPanel = BasePanel.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
-        dragStart(index,ev){
+        dragStart(line,ev){
           ev.dataTransfer.setData('Text', "#diplomatic-lines");
           ev.target.style.border = 'solid #33A2FF';
           ev.dataTransfer.dropEffect = 'move';
-           this.dragging = index;
-            console.log("draaag start",ev);
+          let index = this.part.lines.indexOf(line);
+          this.dragging = index;
+          // console.log("draaag start",index);
         },
         dragEnd(){
             this.dragging = -1;
@@ -80,7 +81,8 @@ var DiploPanel = BasePanel.extend({
         dragLeave(){
 
         },
-        dragFinish(to, ev){
+        dragFinish(line, ev){
+            let to = this.part.lines.indexOf(line);
             ev.target.style = '';
             this.moveLine(this.dragging, to);
 

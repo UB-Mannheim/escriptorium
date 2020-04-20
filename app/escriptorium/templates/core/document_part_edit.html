@@ -274,11 +274,11 @@
                    v-on:keyup="pushUpdate"
                    v-on:paste="onPast"
                    v-bind:draggable="true"
-                   v-on:dragstart="$parent.dragStart(line.order,$event)"
+                   v-on:dragstart="$parent.dragStart(line,$event)"
                    @dragover.prevent
                    v-on:dragleave="$parent.dragLeave"
                    v-on:dragend="$parent.dragEnd"
-                   v-on:drop="$parent.dragFinish(line.order,$event)"
+                   v-on:drop="$parent.dragFinish(line,$event)"
                    class="w-95 table-row line-content" ref="content" >${line.transcription.content}</div>
             </div>
           </div>
