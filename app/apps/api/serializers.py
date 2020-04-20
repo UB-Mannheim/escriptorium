@@ -47,7 +47,7 @@ class PartMoveSerializer(serializers.ModelSerializer):
     def __init__(self, *args, part=None, **kwargs):
         self.part = part
         super().__init__(*args, **kwargs)
-    
+
     def move(self):
         self.part.to(self.validated_data['index'])
 
@@ -115,8 +115,23 @@ class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
         fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
-    
-    
+
+
+class LineMoveSerializer(serializers.ModelSerializer):
+    index = serializers.IntegerField()
+
+    class Meta:
+        model = Line
+        fields = ('index',)
+
+    def __init__(self, *args, line=None, **kwargs):
+        self.line = line
+        super().__init__(*args, **kwargs)
+
+    def move(self):
+        self.line.to(self.validated_data['index'])
+
+
 class DetailedLineSerializer(LineSerializer):
     block = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)

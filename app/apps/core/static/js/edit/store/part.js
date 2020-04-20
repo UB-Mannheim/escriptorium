@@ -348,7 +348,16 @@ const partStore = {
                 console.log('couldnt update line', error)
             });
     },
-    
+    move(linePk,index){
+        let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
+        this.push(uri,{index : index},method="post")
+            .then(function (data) {
+                console.log("data")
+            }).catch(function(error) {
+                console.log('couldnt recalculate order of line', error)
+            });
+
+    },
     getPrevious() {
         if (this.loaded && this.previous) {
             this.fetch(this.previous);

@@ -185,6 +185,17 @@ class LineViewSet(ModelViewSet):
         self.recalculate_ordering()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['post'])
+    def move(self, request, document_pk=None, part_pk=None, pk=None):
+
+        line = get_object_or_404(Line, pk=pk)
+        serializer = LineMoveSerializer(line=line, data=request.data)
+        if serializer.is_valid():
+            serializer.move()
+            return Response({'status': 'moved'})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100
