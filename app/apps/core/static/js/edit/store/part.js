@@ -348,11 +348,12 @@ const partStore = {
                 console.log('couldnt update line', error)
             });
     },
-    move(linePk,index){
+    move(linePk,index,callback){
         let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
         this.push(uri,{index : index},method="post")
+            .then((response) =>response.json())
             .then(function (data) {
-                console.log("data")
+                callback();
             }).catch(function(error) {
                 console.log('couldnt recalculate order of line', error)
             });

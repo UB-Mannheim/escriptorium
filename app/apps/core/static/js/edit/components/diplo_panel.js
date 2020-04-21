@@ -86,9 +86,11 @@ var DiploPanel = BasePanel.extend({
             ev.target.style = '';
             this.moveLine(this.dragging, to);
             // this.part.recalculateOrdering();
-            this.part.move(line.pk,to,function () {
-                line.order = to;
+            this.$parent.$emit('line:move_to',line.pk,to, function () {
+                // this.$children[to].line.order = to ;
+                this.$set(this.$children[to].line.order,to);
             }.bind(this));
+
         },
         moveLine(from, to) {
           if (to === -1) {

@@ -113,6 +113,10 @@ var partVM = new Vue({
         this.$on('bulk_update:transcriptions', function(lines, cb) {
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));
+
+        this.$on('line:move_to', function(linePK,to, cb) {
+            this.part.move(linePK,to, cb);
+        }.bind(this));
         
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
