@@ -1,7 +1,7 @@
 import json
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
@@ -110,8 +110,8 @@ class Versioned(models.Model):
             self.version_author = author
         if source is not None:
             self.version_source = source
-        self.version_created_at = datetime.now(timezone.utc)
-        self.version_updated_at = datetime.now(timezone.utc)
+        self.version_created_at = datetime.utcnow()
+        self.version_updated_at = datetime.utcnow()
     
     def revert(self, revision):
         """
