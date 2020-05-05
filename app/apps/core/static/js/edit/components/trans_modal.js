@@ -53,7 +53,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         },
         localTranscription: {
             get() {
-                return this.line.currentTrans.content;
+                return this.line.currentTrans && this.line.currentTrans.content || '';
             },
             set(newValue) {
                 this.line.currentTrans.content = newValue;
@@ -69,6 +69,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         },
 
         comparedContent(content) {
+            if (!this.line.currentTrans) return;
             let diff = Diff.diffChars(this.line.currentTrans.content, content);
             return diff.map(function(part){
                 let color = part.added ? 'green' :
@@ -120,7 +121,8 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
             let input = container.querySelector('#trans-input');
-            let content = this.line.currentTrans.content;  // note: input is not up to date yet
+            // note: input is not up to date yet
+            let content = this.line.currentTrans && this.line.currentTrans.content || '';
             let ruler = document.createElement('span');
             ruler.style.position = 'absolute';
             ruler.style.visibility = 'hidden';

@@ -10,7 +10,7 @@ var partVM = new Vue({
             visualisation: userProfile.get('visualisation-panel')
         },
         blockShortcuts: false,
-        fullSizeImage: false,
+        fullsizeimage: false,
         selectedTranscription: null,
         comparedTranscriptions: []
     },
@@ -23,6 +23,7 @@ var partVM = new Vue({
                     this.show.segmentation,
                     this.show.visualisation].filter(p=>p===true);
         },
+
         zoomScale: {
             get() {
                 return this.zoom.scale || 1;
@@ -45,18 +46,19 @@ var partVM = new Vue({
             }.bind(this));
         },
         'part.pk': function(n, o) {
-            // set the new url
-            window.history.pushState({},"",
-                                     document.location.href.replace(/(part\/)\d+(\/edit)/,
-                                                                    '$1'+this.part.pk+'$2'));
+            if (n) {
+                // set the new url
+                window.history.pushState(
+                    {}, "",
+                    document.location.href.replace(/(part\/)\d+(\/edit)/,
+                                                   '$1'+this.part.pk+'$2'));
 
-            // set the 'image' tab btn to select the corresponding image
-            var tabUrl = new URL($('#images-tab-link').attr('href'), window.location.origin);
-            tabUrl.searchParams.set('select', this.part.pk);
-            $('#images-tab-link').attr('href', tabUrl);
-        },
-        'part.transcriptions': function(n, o) {
-
+                // set the 'image' tab btn to select the corresponding image
+                var tabUrl = new URL($('#images-tab-link').attr('href'),
+                                     window.location.origin);
+                tabUrl.searchParams.set('select', this.part.pk);
+                $('#images-tab-link').attr('href', tabUrl);
+            }
         },
         selectedTranscription: function(n, o) {
             userProfile.set('default-transcription-' + DOCUMENT_ID, n);
@@ -85,20 +87,21 @@ var partVM = new Vue({
     created() {
         // this.fetch();
         this.part.fetchPart(PART_ID, function() {
-            let tr = userProfile.get('default-transcription-' + DOCUMENT_ID) || this.transcriptions[0].pk;
+            let tr = userProfile.get('default-transcription-' + DOCUMENT_ID)
+                  || this.part.transcriptions[0].pk;
             this.selectedTranscription = tr;
         }.bind(this));
 
         // bind all events emited from panels and such
         this.$on('update:transcription', function(lineTranscription) {
-            this.part.pushTranscription(lineTranscription);
+            this.part.pushContent(lineTranscription);
         }.bind(this));
 
         this.$on('create:line', function(line, cb) {
-            this.part.createLine(line, cb);
+            this.part.createLine(line, this.selectedTranscription, cb);
         }.bind(this));
         this.$on('bulk_create:lines', function(line, cb) {
-            this.part.bulkCreateLines(line, cb);
+            this.part.bulkCreateLines(line, this.selectedTranscription, cb);
         }.bind(this));
         this.$on('update:line', function(line, cb) {
             this.part.updateLine(line, cb);
@@ -145,15 +148,27 @@ var partVM = new Vue({
 
         // load the full size image when we reach a scale > 1
         this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
-            let ratio = ev.target.clientWidth / this.part.image.size[0];
-            if (this.zoom.scale  * ratio > 1) {
-                this.fullSizeImage = true;
+            if (this.part.loaded && !this.fullsizeimage) {
+                let ratio = ev.target.clientWidth / this.part.image.size[0];
+                if (this.zoom.scale  * ratio > 1) {
+                    this.prefetchImage(this.part.image.uri, function() {
+                        this.fullsizeimage = true;
+                    }.bind(this));
+                }
             }
         }.bind(this));
     },
     methods: {
         resetZoom() {
             this.zoom.reset();
+        },
+        prefetchImage(src, callback) {
+            // this is the panel's responsability to call this!
+            let img = new Image();
+            img.addEventListener('load', function() {
+                if (callback) callback(src);
+            }.bind(this));
+            img.src = src;
         },
         deleteTranscription(ev) {
             let transcription = ev.target.dataset.trpk;

@@ -1,7 +1,10 @@
 const visuLine = Vue.extend({
     props: ['line', 'ratio'],
     watch: {
-        'line.currentTrans': function(n, o) {
+        'line.currentTrans.content': function(n, o) {
+            this.$nextTick(this.reset);
+        },
+        'line.baseline': function(n, o) {
             this.$nextTick(this.reset);
         }
     },
@@ -25,26 +28,18 @@ const visuLine = Vue.extend({
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
         },
-
         computeTextLength() {
+            if (!this.line.currentTrans) return;
             content = this.line.currentTrans.content;
             if (content) {
-                this.polyElement.setAttribute('stroke', 'none');
-                this.pathElement.setAttribute('stroke', 'none');
-
                 // adjust the text length to fit in the box
                 let textLength = this.textElement.getComputedTextLength();
                 let pathLength = this.pathElement.getTotalLength();
                 if (textLength && pathLength) {
                     this.textElement.setAttribute('textLength', pathLength+'px');
                 }
-            } else {
-                // TODO: not dry
-                this.polyElement.setAttribute('stroke', 'lightgrey');
-                this.pathElement.setAttribute('stroke', 'blue');
             }
         },
-
         showOverlay() {
             if (this.line && this.line.mask) {
                 Array.from(document.querySelectorAll('.panel-overlay')).map(
@@ -78,6 +73,13 @@ const visuLine = Vue.extend({
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
         },
+        maskStrokeColor() {
+            if (this.line.currentTrans && this.line.currentTrans.content) {
+                return 'none';
+            } else {
+                return 'lightgrey';
+            }
+        },
         maskPoints() {
             if (this.line == null || !this.line.mask) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
@@ -87,6 +89,13 @@ const visuLine = Vue.extend({
             var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);
             var max = this.line.mask.reduce((maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt);
             return [min, max];
+        },
+        pathStrokeColor() {
+            if (this.line.currentTrans && this.line.currentTrans.content) {
+                return 'none';
+            } else {
+                return 'blue';
+            }
         },
         baselinePoints() {
             var baseline, ratio = this.ratio;
@@ -99,6 +108,6 @@ const visuLine = Vue.extend({
                 baseline = this.line.baseline
             }
             return 'M '+baseline.map(pt => ptToStr(pt)).join(' L ');
-        }
+        },
     }
 });

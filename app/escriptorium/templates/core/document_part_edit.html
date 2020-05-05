@@ -83,7 +83,11 @@
         </div>
     </div>
 
-    <SourcePanel v-if="show.source" v-bind:part="part" v-bind:full-size-image="fullSizeImage" ref="sourcePanel" inline-template>
+    <SourcePanel v-if="show.source && part.loaded"
+                 v-bind:part="part"
+                 v-bind:fullsizeimage="fullsizeimage"
+                 ref="sourcePanel"
+                 inline-template>
         <div class="col panel">
             <div class="tools">
                 <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
@@ -106,12 +110,12 @@
             </div>
         </div>
     </SourcePanel>
-
     <keep-alive>
-        <SegmentationPanel v-if="show.segmentation"
+        <SegmentationPanel v-if="show.segmentation && part.loaded"
+                           v-bind:fullsizeimage="fullsizeimage"
                            v-bind:part="part"
-                           v-bind:full-size-image="fullSizeImage"
                            ref="segPanel" inline-template>
+
             <div class="col panel">
                 <div class="tools">
                     <i title="{% trans 'Segmentation Panel' %}" class="panel-icon fas fa-align-left"></i>
@@ -170,30 +174,31 @@
                 </div>
                 <div class="content-container">
                     <div id="seg-zoom-container" class="content">
-                        <segregion v-if="segmenter.loaded"
-                                   v-for="region in part.regions"
-                                   v-bind:region="region"
-                                   v-bind:key="'R' + region.pk"
-                                   inline-template>
-                            <div class="hide">
-                                <input name="box" v-bind:value="region.box"/>
-                            </div>
-                        </segregion>
+                        <div id="seg-data-binding" v-if="loaded">
+                            <segregion v-for="region in part.regions"
+                                       v-bind:region="region"
+                                       v-bind:key="'R' + region.pk"
+                                       inline-template>
+                                <div class="hide">
+                                    <input name="box" v-bind:value="region.box"/>
+                                </div>
+                            </segregion>
 
-                        <segline v-if="segmenter.loaded"
-                                 v-for="line in part.lines"
-                                 v-bind:line="line"
-                                 v-bind:key="'L' + line.pk"
-                                 inline-template>
-                            <div class="hide">
-                                <input name="order" v-bind:value="line.order"/>
-                                <input name="baseline" v-bind:value="line.baseline"/>
-                                <input name="mask" v-bind:value="line.mask"/>
-                                <input name="region" v-bind:value="line.region"/>
-                            </div>
-                        </segline>
+                            <segline
+                                v-for="line in part.lines"
+                                v-bind:line="line"
+                                v-bind:key="'L' + line.pk"
+                                inline-template>
+                                <div class="hide">
+                                    <input name="order" v-bind:value="line.order"/>
+                                    <input name="baseline" v-bind:value="line.baseline"/>
+                                    <input name="mask" v-bind:value="line.mask"/>
+                                    <input name="region" v-bind:value="line.region"/>
+                                </div>
+                            </segline>
+                        </div>
 
-                        <img class="panel-img" v-bind:src="imageSrcBin"/>
+                        <img class="panel-img"/>
                         <div id="segmentation-overlay" class="overlay panel-overlay">
                             <svg width="100%" height="100%">
                                 <defs>
@@ -225,17 +230,25 @@
                         <svg class="w-100 {{ text_direction }}">
                             <visuline v-if="part.loaded"
                                       v-for="line in part.lines"
+                                      ref="visulines"
                                       v-bind:line="line"
                                       v-bind:ratio="ratio"
                                       v-bind:key="'VL' + line.pk"
                                       inline-template>
                                 <g v-on:mouseover="showOverlay" v-on:mouseleave="hideOverlay" v-on:click="edit">
-                                    <polygon fill="transparent" stroke="lightgrey" v-bind:points="maskPoints"/>
-                                    <path v-bind:id="textPathId" fill="none" stroke="blue" v-bind:d="baselinePoints"></path>
-                                    <text {% if text_direction == 'rtl' %}text-anchor="end"{% endif %} lengthAdjust="spacingAndGlyphs">
+                                    <polygon fill="transparent"
+                                             v-bind:stroke="maskStrokeColor"
+                                             v-bind:points="maskPoints"/>
+                                    <path v-bind:id="textPathId"
+                                          fill="none"
+                                          v-bind:stroke="pathStrokeColor"
+                                          v-bind:d="baselinePoints"></path>
+                                    <text {% if text_direction == 'rtl' %}text-anchor="end"{% endif %}
+                                          lengthAdjust="spacingAndGlyphs">
                                         <textPath v-bind:href="'#' + textPathId"
                                                   v-if="line.currentTrans">
-                                            ${line.currentTrans.content}</textPath>
+                                            ${line.currentTrans.content}
+                                        </textPath>
                                     </text>
                                 </g>
                             </visuline>
@@ -288,7 +301,7 @@
                                                v-model.lazy="localTranscription"
                                                autocomplete="off"
                                                autofocus/>
-                                        <small v-if="line.currentTrans" class="form-text text-muted">
+                                        <small v-if="line.currentTrans && line.currentTrans.version_updated_at" class="form-text text-muted">
                                             <span>by ${line.currentTrans.version_author} (${line.currentTrans.version_source})</span>
                                             <span>on ${momentDate}</span>
                                         </small>
@@ -313,7 +326,7 @@
                                         <div class="card-body compare-show collapse show d-table">
                                             <div v-for="trans in otherTranscriptions"
                                                  v-bind:key="'TrC' + trans.pk"
-                                            class="d-table-row">
+                                                 class="d-table-row">
                                                 <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
                                                 <div class="d-table-cell text-muted col-auto">
                                                     ${ trans.name }
@@ -324,7 +337,7 @@
                                     </div>
 
                                     <!-- versioning/history -->
-                                    <div v-if="line.currentTrans.versions && line.currentTrans.versions.length"
+                                    <div v-if="line.currentTrans && line.currentTrans.versions && line.currentTrans.versions.length"
                                          class="card history-block mt-2">
                                         <div class="card-header">
                                             <a href="#" class="card-toggle collapsed" data-toggle="collapse" data-target=".history-show">
@@ -342,6 +355,7 @@
                                         <div id="history" class="history-show card-body collapse">
                                             <div class="d-table">
                                                 <LineVersion
+                                                    v-if="line.currentTrans && line.currentTrans.versions"
                                                     v-for="(version, index) in line.currentTrans.versions"
                                                     v-bind:previous="line.currentTrans.versions[index+1]"
                                                     v-bind:version="version"

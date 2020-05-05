@@ -7,14 +7,13 @@ const partStore = {
     regions: [],
     image: {},
     transcriptions: [],
-    /* selectedTranscription: null,
-     * comparedTranscriptions: [], */
 
     // internal
     masksToRecalc: [],
 
     // mutators
     load (part) {
+        // will trigger all bindings
         Object.assign(this, part);
         this.loaded = true;
     },
@@ -45,14 +44,14 @@ const partStore = {
 
     // actions
     fetchPart(pk, callback) {
-        this.loaded = false;
+        this.reset();
         this.pk = pk;
         this.fetchTranscriptions(function() {
             let uri = this.getApiPart(pk);
             fetch(uri)
                 .then((response)=>response.json())
                 .then(function(data) {
-                    this.load(data);
+                    this.load(data, callback);
                     if (callback) callback(data);
                 }.bind(this))
                 .catch(function(error) {
@@ -98,6 +97,11 @@ const partStore = {
     },
     pushContent(lineTranscription) {
         let uri, method;
+        let data = {
+            content: lineTranscription.content,
+            line: lineTranscription.line,
+            transcription: lineTranscription.transcription
+        }
         if (lineTranscription.pk) {
             uri = this.getApiPart() + 'transcriptions/' + lineTranscription.pk + '/';
             method = "put";
@@ -105,7 +109,7 @@ const partStore = {
             uri = this.getApiPart() + 'transcriptions/';
             method = "post";
         }
-        this.push(uri, lineTranscription, method=method)
+        this.push(uri, data, method=method)
             .then((response)=>response.json())
             .then((data) => {
                 lineTranscription.pk = data.pk;
@@ -118,8 +122,7 @@ const partStore = {
                 console.log('couldnt update transcription!', error);
             }.bind(this));
     },
-
-    createLine(line, callback) {
+    createLine(line, transcription, callback) {
         let uri = this.getApiPart() + 'lines/';
         data = {
             document_part: this.pk,
@@ -131,9 +134,9 @@ const partStore = {
             .then((response) => response.json())
             .then(function(data) {
                 let newLine = data;
-                newLine.transcription = {
+                newLine.currentTrans = {
                     line: newLine.pk,
-                    transcription: this.selectedTranscription,
+                    transcription: transcription,
                     content: '',
                     versions: []
                 };
@@ -148,7 +151,7 @@ const partStore = {
                 console.log('couldnt create line', error)
             });
     },
-    bulkCreateLines(lines, callback) {
+    bulkCreateLines(lines, transcription, callback) {
         let uri = this.getApiPart() + 'lines/bulk_create/';
         lines.forEach(l=>l.document_part = this.pk);
         this.push(uri, {lines: lines}, method="post")
@@ -158,9 +161,9 @@ const partStore = {
                 for (let i=0; i<data.lines.length; i++) {
                     let l = data.lines[i];
                     let newLine = l;
-                    newLine.transcription = {
+                    newLine.currentTrans = {
                         line: newLine.pk,
-                        transcription: this.selectedTranscription,
+                        transcription: transcription,
                         content: '',
                         versions: []
                     }
@@ -378,6 +381,15 @@ const partStore = {
             },
             body: JSON.stringify(data)
         });
+    },
+
+    reset() {
+        // note: keep the transcriptions
+        this.loaded = false;
+        this.pk = null;
+        this.lines = [];
+        this.regions = [];
+        this.image = {};
     },
 
     getPrevious(cb) {

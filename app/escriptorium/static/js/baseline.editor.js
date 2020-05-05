@@ -159,6 +159,9 @@ class SegmenterLine {
     refresh() {
         this.showOrdering();
         this.showDirection();
+        if (this.baselinePath) {
+            this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
+        }
     }
 
     getMaskColor() {
@@ -229,6 +232,7 @@ class SegmenterLine {
             this.baseline = baseline;
             this.baselinePath.removeSegments();
             this.baselinePath.addSegments(baseline);
+            this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
             this.segmenter.bindLineEvents(this);
         }
         if (mask && mask.length) {
@@ -518,7 +522,6 @@ class Segmenter {
 
     reset() {
         this.empty();
-        this.refresh();
     }
 
     deleteSelection() {
@@ -1249,15 +1252,15 @@ class Segmenter {
     }
 
     getRatio() {
-        // let bounds = this.img.getBoundingClientRect();
-        // let imgRatio = (bounds.width / this.img.naturalWidth);
-        return (this.img.width / this.img.naturalWidth)*this.scale;
+        let bounds = this.img.getBoundingClientRect();
+        let imgRatio = (bounds.width / this.img.naturalWidth);
+        return imgRatio * this.scale;
     }
 
     refresh() {
         /*
-          Call when either the available space or the source image size changed.
-        */
+           Call when either the available space or the source image size changed.
+         */
         if (paper.view) {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);
@@ -1267,6 +1270,9 @@ class Segmenter {
                 paper.view.viewSize = [bounds.width, bounds.height];
                 paper.view.scale(ratio, [0, 0]);
             }
+            // recalculate average line heights for lines without masks
+            this.resetLineHeights();
+            this.applyRegionMode();
         }
     }
 
@@ -1829,7 +1835,7 @@ class Segmenter {
     resetLineHeights() {
         this.computeAverageLineHeight();
         this.lines.forEach(function(line) {
-            line.showDirection();
+            line.refresh();
         }.bind(this));
     }
 
