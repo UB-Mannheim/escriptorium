@@ -14,6 +14,9 @@ ENV PYTHONUNBUFFERED 1
 ARG VERSION_DATE="passthistobuildcmd"
 ENV VERSION_DATE=$VERSION_DATE
 
+RUN mkdir -p /usr/src/app/media
+RUN mkdir -p /usr/src/app/static
+
 # set work directory
 WORKDIR /usr/src/app
 
