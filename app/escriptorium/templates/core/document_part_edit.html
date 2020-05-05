@@ -263,7 +263,7 @@
         <diploline v-for="line in part.lines" v-bind:line="line" v-bind:ratio="ratio" v-bind:key="line.pk"   inline-template>
           <div class="d-flex flex-column diplomatic-line">
             <div  class="d-flex flex-row">
-              <div class ="table-row line-order line-order-{{ document.read_direction }}" class="w-10">${line.order}</div>
+              <div class ="table-row line-order line-order-{{ document.read_direction }}" class="w-10">${line.order + 1}</div>
               <div dir="{{ document.read_direction }}"
                    v-bind:id="line.pk"
                    v-on:mouseup="editableContent"
