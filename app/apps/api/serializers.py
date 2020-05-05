@@ -52,6 +52,20 @@ class PartMoveSerializer(serializers.ModelSerializer):
         self.part.to(self.validated_data['index'])
 
 
+class UserOnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('onboarding',)
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def complete(self):
+        self.user.onboarding = self.validated_data['onboarding']
+        self.user.save()
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document

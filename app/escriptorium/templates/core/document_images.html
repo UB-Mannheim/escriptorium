@@ -4,6 +4,7 @@
 {% block styles %}
 <link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
 <link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
+<link href="{% static 'vendor/introjs/introjs.css' %}" rel="stylesheet" type="text/css">
 
 {# custom jquery ui build with draggable and resizable only #}
 <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
@@ -83,7 +84,7 @@
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
       <div class="card-btns">
         <button class="btn card-btn btn-warning js-cancel" title="{% trans 'Cancel tasks' %}"><i class="fas fa-ban"></i></button>
-        <button class="btn card-btn btn-info js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
+        <button class="btn card-btn btn-info js-edit" id="js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
       </div>
     </div>
     <div class="card-body">
@@ -116,6 +117,7 @@
 <script type="text/javascript">
 'use strict';
 const DOCUMENT_ID = {{ document.pk }};
+const onboarding  = "{{ onboarding }}";
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
@@ -127,8 +129,26 @@ $(document).ready(function() {
 
     <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
     <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'vendor/introjs/intro.js' %}"></script>
     <script src="{% static 'js/image_cards.js' %}"></script>
     <script src="{% static 'js/lazyload.js' %}"></script>
     <script src="{% static 'js/help.js' %}"></script>
+    <script src="{% static 'js/onboarding.js' %}"></script>
 {% endcompress %}
+
+<script type="text/javascript">
+if (onboarding == "True")
+{
+    document_images_intro.start();
+    document_images_intro.onexit(function() {
+        exitonboarding();
+    });
+
+    document_images_intro.oncomplete(function() {
+        exitonboarding();
+    });
+
+}
+</script>
+
 {% endblock %}
