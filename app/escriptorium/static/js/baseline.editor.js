@@ -224,7 +224,7 @@ class SegmenterLine {
         else this.select();
     }
     
-    update(baseline, mask, region) {
+    update(baseline, mask, region, order) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
             this.baselinePath.removeSegments();
@@ -242,6 +242,13 @@ class SegmenterLine {
         }
         if (region !== undefined) {
             this.region = region;
+        }
+        if (order != undefined) {
+            this.order = order;
+            if (this.orderDisplay) {
+                let text = this.orderDisplay.children[2];
+                text.content = this.order + 1;
+            }
         }
         this.refresh();
     }
@@ -332,6 +339,7 @@ class SegmenterLine {
                 text = this.orderDisplay.children[2];
             circle.position = anchor;
             text.position = anchor;
+            text.content = parseInt(this.order)+1;
             region.position = {x: anchor.x+5/this.segmenter.getRatio(), y: anchor.y};
             if (this.region) region.fillColor = this.segmenter.regionColor;
             else region.fillColor = 'transparent';
@@ -398,7 +406,7 @@ class Segmenter {
                         // the scale would be 1/3, the container (DOM) width is irrelevant here.
                         scale=1,
                         delayInit=false,
-                        disableBindings=false,
+                        disableShortcuts=false,
 
                         baselinesColor=null,
                         evenMasksColor=null,
@@ -415,6 +423,7 @@ class Segmenter {
                         // field to store and reuse in output from loaded data
                         // can be set to null to disable behavior
                         idField='id'} = {}) {
+        this.loaded = false;
         this.img = image;
         this.mode = 'lines'; // | 'regions'
         this.lines = [];
@@ -434,7 +443,7 @@ class Segmenter {
         this.regionsGroup = null;
         
         this.idField = idField;
-        this.disableBindings = disableBindings;
+        this.disableShortcuts = disableShortcuts;
         
         // create a dummy tag for event bindings
         this.events = document.createElement('div');
@@ -510,6 +519,7 @@ class Segmenter {
 
     reset() {
         this.empty();
+        this.refresh();
     }
     
     deleteSelection() {
@@ -619,7 +629,7 @@ class Segmenter {
         }.bind(this));
         
         document.addEventListener('keydown', function(event) {
-            if (this.disableBindings) return;
+            if (this.disableShortcuts) return;
             if (event.keyCode == 27) { // escape
                 this.purgeSelection();
             } else if (event.keyCode == 46) { // supr
@@ -635,6 +645,8 @@ class Segmenter {
                     this.splitBtn.classList.toggle('btn-success');
                 }
                 this.setCursor();
+            } else if (event.keyCode == 73) { // K
+                this.reverseSelection();
             } else if (event.keyCode == 74) { // J (for join)
                 this.mergeSelection();
             } else if (event.keyCode == 77) { // M
@@ -1259,7 +1271,7 @@ class Segmenter {
         }
     }
     
-    load_line(line, region) {
+    loadLine(line, region) {
         let context = {};
         if ((line.baseline !== null && line.baseline.length) ||
             (line.mask !== null && line.mask.length)) {
@@ -1273,12 +1285,12 @@ class Segmenter {
         }
     }
     
-    load_region(region) {
+    loadRegion(region) {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
         let r = this.createRegion(region.box, context);
         for (let j in region.lines) {
-            this.load_line(region.lines[j], r);
+            this.loadLine(region.lines[j], r);
         }
         return r;
     }
@@ -1287,12 +1299,12 @@ class Segmenter {
         /* Loads a list of lines containing each a baseline polygon and a mask polygon
          * [{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}] */
         for (let i in data.regions) {
-            this.load_region(data.regions[i]);
+            this.loadRegion(data.regions[i]);
         }
         
         // now load orphan lines
         for (let i in data.lines) {
-            this.load_line(data.lines[i], null);
+            this.loadLine(data.lines[i], null);
         }
     }
     

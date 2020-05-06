@@ -9,6 +9,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             this.$parent.$parent.$emit('update:transcription', this.line.transcription);
         }.bind(this));
 
+        // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             this.$parent.editLine = null;
             this.$parent.$parent.blockShortcuts = false;
@@ -17,7 +18,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         $(document).on('show.bs.modal', '#trans-modal', function(ev) {
             this.$parent.$parent.blockShortcuts = true;
         }.bind(this));
-        
+
         this.timeZone = moment.tz.guess();
     },
     mounted() {
@@ -34,7 +35,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             return moment.tz(this.line.transcription.version_updated_at, this.timeZone);
         },
         modalImgSrc() { return this.$parent.part.image.uri; },
-        
+
         localTranscription: {
             get() {
                 return this.line.transcription.content;
@@ -50,15 +51,12 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         close() {
             $(this.$el).modal('hide');
         },
-        saveState() {
-            this.$parent.$parent.$emit('update:transcription:new-version', this.line);
-        },
         computeStyles() {
             // this.zoom.reset();
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
             let hContext = 0.35; // vertical context added around the line, in percentage
-            
+
             let poly = this.line.mask || this.line.baseline;
             let minx = Math.min.apply(null, poly.map(pt => pt[0]));
             let miny = Math.min.apply(null, poly.map(pt => pt[1]));
@@ -66,7 +64,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             let maxy = Math.max.apply(null, poly.map(pt => pt[1]));
             let width = maxx - minx;
             let height = maxy - miny;
-            
+
             // we use the same same vertical context horizontaly
             let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
             var MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-200) / 3));
@@ -78,10 +76,10 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             }
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
-            
+
             modalImgContainer.style.height = visuHeight+'px';
             img.style.width = this.$parent.part.image.size[0]*ratio +'px';
-            
+
             let top = Math.round(miny*ratio)-context;
             let left = Math.round(minx*ratio)-context;
             let right = Math.round(maxx*ratio)-context;
@@ -103,7 +101,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             input.style.fontSize = fontHeight+'px';
             input.style.lineHeight = 1.2;
             input.style.height = 'auto';
-            
+
             if (READ_DIRECTION == 'rtl') {
                 container.style.marginRight = context+'px';
             } else {
@@ -120,9 +118,9 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 input.style.width = 'calc(100% - '+context+'px)';
             }
             document.body.removeChild(ruler);  // done its job
-            
+
             input.focus();
-            
+
             // Overlay
             let overlay = modalImgContainer.querySelector('.overlay');
             if (this.line.mask) {

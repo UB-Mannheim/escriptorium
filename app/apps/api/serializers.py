@@ -52,6 +52,20 @@ class PartMoveSerializer(serializers.ModelSerializer):
         self.part.to(self.validated_data['index'])
 
 
+class UserOnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('onboarding',)
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def complete(self):
+        self.user.onboarding = self.validated_data['onboarding']
+        self.user.save()
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
@@ -111,10 +125,30 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
         return self.cleanup(content)
 
 
+class LineListSerializer(serializers.ListSerializer):
+    def update(self, qs, validated_data):
+        # Maps for id->instance and id->data item.
+        line_mapping = {line.pk: line for line in qs}
+        data_mapping = {item['pk']: item for item in validated_data}
+
+        # Perform updates.
+        ret = []
+        for line_id, data in data_mapping.items():
+            line = line_mapping.get(line_id, None)
+            ret.append(self.child.update(line, data))
+        return ret
+
+
 class LineSerializer(serializers.ModelSerializer):
+    pk = serializers.IntegerField(required=False)
+    region = serializers.PrimaryKeyRelatedField(
+        queryset=Block.objects.all(),
+        source='block', allow_null=True)
+    
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'block', 'baseline', 'mask')
+        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
+        list_serializer_class = LineListSerializer
 
 
 class LineMoveSerializer(serializers.ModelSerializer):
@@ -131,24 +165,33 @@ class LineMoveSerializer(serializers.ModelSerializer):
     def move(self):
         self.line.to(self.validated_data['index'])
 
+        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
+        list_serializer_class = LineListSerializer
+
+
+class LineOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Line
+        fields = ('pk', 'order')
+
 
 class DetailedLineSerializer(LineSerializer):
-    block = BlockSerializer(required=False)
+    region = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
     
     class Meta(LineSerializer.Meta):
         fields = LineSerializer.Meta.fields + ('transcriptions',)
-
+    
 
 class PartDetailSerializer(PartSerializer):
-    blocks = BlockSerializer(many=True)
+    regions = BlockSerializer(many=True, source='blocks')
     lines = LineSerializer(many=True)
     previous = serializers.SerializerMethodField(source='get_previous')
     next = serializers.SerializerMethodField(source='get_next')
     
     class Meta(PartSerializer.Meta):
         fields = PartSerializer.Meta.fields + (
-            'blocks',
+            'regions',
             'lines',
             'previous',
             'next')

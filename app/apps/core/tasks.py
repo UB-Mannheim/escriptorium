@@ -137,33 +137,11 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
-
-    def _print_eval(epoch=0, precision=0, recall=0, f1=0,
-                    mcc=0, val_metric=0):
-        model.refresh_from_db()
-        model.training_epoch = epoch
-        model.training_accuracy = float(precision)
-        # model.training_total = chars
-        # model.training_errors = error
-        new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
-        model.new_version(file=new_version_filename)
-        model.save()
-        
-        send_event('document', document.pk, "training:eval", {
-            "id": model.pk,
-            'versions': model.versions,
-            'epoch': epoch,
-            'accuracy': float(precision)
-            # 'chars': chars,
-            # 'error': error
-        })
-
-    def _draw_progressbar(*args, **kwargs):
-        print('progress', args, kwargs)
-
+    
     try:
         model = OcrModel.objects.get(pk=model_pk)
         modelpath = model.file.path
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         nn = vgsl.TorchVGSLModel.load_model(modelpath)
     except ValueError:  # model is empty
         nn = vgsl.TorchVGSLModel('[1,1200,0,3 Cr3,3,64,2,2 Gn32 Cr3,3,128,2,2 Gn32 Cr3,3,64 Gn32 Lbx32 Lby32 Cr1,1,32 Gn32 Lby32 Lbx32 O2l3]')
@@ -171,6 +149,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
         model.file = modelpath
+    
     try:
         model.training = True
         model.save()
@@ -224,10 +203,35 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                                 evaluator=baseline_label_evaluator_fn)
         
         if not os.path.exists(os.path.split(modelpath)[0]):
-
             os.makedirs(os.path.split(modelpath)[0])
+
+        def _print_eval(epoch=0, precision=0, recall=0, f1=0,
+                        mcc=0, val_metric=0):
+            model.refresh_from_db()
+            model.training_epoch = epoch
+            model.training_accuracy = float(precision)
+            # model.training_total = chars
+            # model.training_errors = error
+            new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
+            model.new_version(file=new_version_filename)
+            model.save()
+        
+            send_event('document', document.pk, "training:eval", {
+                "id": model.pk,
+                'versions': model.versions,
+                'epoch': epoch,
+                'accuracy': float(precision)
+                # 'chars': chars,
+                # 'error': error
+            })
+        
+        def _draw_progressbar(*args, **kwargs):
+            pass
+        
         trainer.run(_print_eval, _draw_progressbar)
-        nn.save_model(path=modelpath)
+        best_version = os.path.join(os.path.split(modelpath)[0],
+                                    'version_{}.mlmodel'.format(trainer.stopper.best_epoch))
+        shutil.copy(best_version, modelpath)
         
     except Exception as e:
         send_event('document', document.pk, "training:error", {

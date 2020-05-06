@@ -61,10 +61,6 @@ class DocumentImport(models.Model):
     @property
     def ongoing(self):
         return self.workflow_state == self.WORKFLOW_STATE_STARTED
-        
-    @cached_property
-    def parser(self):
-        return make_parser(self.document, self.import_file, name=self.name)
     
     def is_cancelable(self):
         return self.workflow_state < self.WORKFLOW_STATE_DONE
@@ -82,7 +78,8 @@ class DocumentImport(models.Model):
             self.save()
                         
             start_at = resume and self.processed or 0
-            for obj in self.parser.parse(start_at=start_at,
+            parser = make_parser(self.document, self.import_file, name=self.name)
+            for obj in parser.parse(start_at=start_at,
                                          override=self.override,
                                          user=self.started_by):
                 self.processed += 1
