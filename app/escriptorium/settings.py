@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'compressor',
-    
+
     'bootstrap',
     'versioning',
     'users',
@@ -306,7 +306,7 @@ KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
-KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'offsplit.mlmodel')
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
