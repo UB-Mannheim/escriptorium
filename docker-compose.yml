@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  app: &app 
+  app: &app
     build:
       context: ./app
     env_file: variables.env
@@ -76,7 +76,7 @@ services:
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
     depends_on:
       - web
-  
+
   flower:
     image: mher/flower
     command: ["flower", "--broker=redis://redis:6379/0", "--port=5555"]
@@ -103,11 +103,11 @@ services:
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=ip-5-196-76.eu
+      - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
       - ALLOWED_HOSTS=web ; celery-main ; docker0
 
 volumes:
    static:
    media:
-   postgres:   
+   postgres:
    esdata:
