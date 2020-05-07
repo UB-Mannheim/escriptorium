@@ -19,6 +19,11 @@ class User(AbstractUser):
         unique=True,
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
+
+    onboarding = models.BooleanField(
+        _('first connection'),
+        default=True
+        )
     
     def get_full_name(self):
         if self.first_name and self.last_name:

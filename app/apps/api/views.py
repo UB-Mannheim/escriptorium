@@ -11,6 +11,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from api.serializers import *
 from core.models import *
+from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
@@ -18,6 +19,18 @@ from users.consumers import send_event
 from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
+
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserOnboardingSerializer
+
+    @action(detail=False, methods=['put'])
+    def onboarding(self, request):
+        serializer = UserOnboardingSerializer(data=request.data, user=self.request.user)
+        if serializer.is_valid(raise_exception=True):
+            serializer.complete()
+            return Response(status=status.HTTP_200_OK)
 
 
 class DocumentViewSet(ModelViewSet):
