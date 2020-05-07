@@ -305,7 +305,7 @@ KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 
 IIIF_IMPORT_QUALITY = 'full'
 
-KRAKEN_TRAINING_DEVICE = 'cpu'  # or cuda
+KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
 KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
 
 REST_FRAMEWORK = {
