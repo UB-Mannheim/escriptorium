@@ -162,19 +162,26 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         training_data = []
         evaluation_data = []
         for part in qs[partition:]:
-            training_data.append({'image': part.image.path, 'baselines': [{'script': 'default', 'baseline': bl} for bl in part.lines.values_list('baseline', flat=True)]})
+            training_data.append({
+                'image': part.image.path,
+                'baselines': [{'script': 'default', 'baseline': bl}
+                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
         for part in qs[:partition]:
-            evaluation_data.append({'image': part.image.path, 'baselines': [{'script': 'default', 'baseline': bl} for bl in part.lines.values_list('baseline', flat=True)]})
+            evaluation_data.append({
+                'image': part.image.path,
+                'baselines': [{'script': 'default', 'baseline': bl}
+                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-        trainer = kraken_train.KrakenTrainer.segmentation_train_gen(output=os.path.join(os.path.split(modelpath)[0], 'version'),
-                                                                    format_type=None,
-                                                                    device=DEVICE,
-                                                                    load=load,
-                                                                    training_data=training_data,
-                                                                    evaluation_data=evaluation_data,
-                                                                    augment=True,
-                                                                    threads=0)
+        trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
+            output=os.path.join(os.path.split(modelpath)[0], 'version'),
+            format_type=None,
+            device=DEVICE,
+            load=load,
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            augment=True,
+            threads=0)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.makedirs(os.path.split(modelpath)[0])
