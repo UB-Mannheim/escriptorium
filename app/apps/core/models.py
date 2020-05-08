@@ -28,6 +28,7 @@ from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 from kraken import pageseg, blla
+from kraken.lib import models as kraken_models
 from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
 from skimage.measure import approximate_polygon
