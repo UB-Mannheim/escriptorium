@@ -20,15 +20,11 @@ services:
 
     celery-main:
       restart: always
-      depends_on:
-        - web
 
-celery-low-priority:
+    celery-low-priority:
       restart: always
-      depends_on:
-        - web
-     # celerybeat:
-     #   env_file: production.env
+
+  # celerybeat:
      #   restart: always
 
 
