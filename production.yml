@@ -2,15 +2,12 @@ version: "3.7"
 
 services:
     web: &web
-      env_file: production.env
       restart: always
 
     channelserver:
-      env_file: production.env
       restart: always
 
     db:
-      env_file: production.env
       restart: always
 
     nginx:
@@ -20,14 +17,13 @@ services:
 
     flower:
       restart: always
-    
+
     celery-main:
-      env_file: production.env
       restart: always
       depends_on:
         - web
-    celery-low-priority:
-      env_file: production.env
+
+celery-low-priority:
       restart: always
       depends_on:
         - web
