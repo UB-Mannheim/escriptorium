@@ -36,7 +36,7 @@ var diploLine = LineBase.extend({
             $("#" + id).text(content);
             this.line.transcription.content = content;
         },
-        onPast(e) {
+        onPaste(e) {
             let pastedData = e.clipboardData.getData('text/plain');
             let pasted_data_split = pastedData.split('\n');
 
