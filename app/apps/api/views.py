@@ -274,5 +274,5 @@ class LineTranscriptionViewSet(ModelViewSet):
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
         qs = LineTranscription.objects.filter(pk__in=lines)
-        qs.delete()
+        qs.update(content='')
         return Response(status=status.HTTP_204_NO_CONTENT)

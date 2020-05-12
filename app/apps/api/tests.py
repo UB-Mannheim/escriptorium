@@ -344,8 +344,10 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:linetranscription-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             resp = self.client.post(uri, {'lines': [ self.lt.pk, self.lt2.pk,]}, content_type='application/json')
-            self.assertEqual(LineTranscription.objects.count(),0)
+            lines = LineTranscription.objects.all()
+            self.assertEqual(lines[0].content,"")
+            self.assertEqual(lines[1].content,"")
             self.assertEqual(resp.status_code, 204)
 
