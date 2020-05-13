@@ -181,6 +181,7 @@ CELERY_TASK_QUEUES = (
     Queue('default', routing_key='default'),
     Queue('img-processing', routing_key='img-processing'),
     Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
+    Queue('gpu', routing_key='gpu'),
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
@@ -188,7 +189,6 @@ CELERY_TASK_ROUTES = {
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     #'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
-
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
     #'users.tasks.async_email': '',
