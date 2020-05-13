@@ -121,6 +121,10 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 @shared_task(bind=True)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -180,8 +184,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             load=load,
             training_data=training_data,
             evaluation_data=evaluation_data,
-            augment=True,
-            threads=0)
+            augment=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.makedirs(os.path.split(modelpath)[0])
@@ -284,6 +287,10 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 def train_(qs, document, transcription, model=None, user=None):
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
 
     # try to minimize what is loaded in memory for large datasets
@@ -331,8 +338,7 @@ def train_(qs, document, transcription, model=None, user=None):
                                                                training_data=training_data,
                                                                evaluation_data=evaluation_data,
                                                                resize='both',
-                                                               augment=True,
-                                                               threads=0)
+                                                               augment=True)
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
