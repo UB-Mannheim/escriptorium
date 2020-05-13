@@ -1,4 +1,4 @@
-version: "3.7"
+version: "2.4"
 
 services:
   app: &app
@@ -74,6 +74,16 @@ services:
   celery-low-priority:
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
+    depends_on:
+      - web
+
+  celery-gpu:
+    <<: *app
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu --max-tasks-per-child=1"
+    runtime: nvidia
+    environment:
+        - NVIDIA_VISIBLE_DEVICES=all
+        - NVIDIA_DRIVER_CAPABILITIES=all
     depends_on:
       - web
 

@@ -822,7 +822,7 @@ class LineTranscription(Versioned, models.Model):
     Represents a transcribded line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-    content = models.CharField(blank=True, max_length=2048)
+    content = models.CharField(blank=True, default="", max_length=2048)
     # graphs = [  # WIP
     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
     # ]
