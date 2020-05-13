@@ -77,7 +77,7 @@ services:
     depends_on:
       - web
 
-  celery-gpu:
+  celery-gpu: &celery-gpu
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu --max-tasks-per-child=1"
     runtime: nvidia

@@ -1,4 +1,4 @@
-version: "3.7"
+version: "2.4"
 
 services:
     web: &web
@@ -24,9 +24,19 @@ services:
     celery-low-priority:
       restart: always
 
+    celery-gpu:
+      restart: always
+      # environment:
+      #     - KRAKEN_TRAINING_DEVICE=cuda:0
+
+    # add more workers for every physical gpu
+    # celery-gpu2:
+    #    <<: *celery-gpu
+    #    environment:
+    #       - KRAKEN_TRAINING_DEVICE=cuda:1
+
   # celerybeat:
      #   restart: always
-
 
 #volumes:
 #   static:
