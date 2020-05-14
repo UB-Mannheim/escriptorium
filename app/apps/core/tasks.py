@@ -46,7 +46,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
     })
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
@@ -64,7 +64,7 @@ def generate_part_thumbnails(instance_pk):
     return aliases
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=3 * 60)
 def convert(instance_pk, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -75,7 +75,7 @@ def convert(instance_pk, **kwargs):
     part.convert()
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
 def lossless_compression(instance_pk, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -86,7 +86,7 @@ def lossless_compression(instance_pk, **kwargs):
     part.compress()
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -119,7 +119,7 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-success", level='success')
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     if user_pk:
         try:
@@ -233,7 +233,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         })
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
 def segment(instance_pk, user_pk=None, model_pk=None,
             steps=None, text_direction=None, override=None,
             **kwargs):
@@ -357,7 +357,7 @@ def train_(qs, document, transcription, model=None, user=None):
     shutil.copy(best_version, modelpath)
 
 
-@shared_task(bind=True)
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
     if user_pk:
         try:
@@ -411,7 +411,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
         })
 
 
-@shared_task
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
