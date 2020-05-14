@@ -80,10 +80,6 @@ services:
   celery-gpu: &celery-gpu
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu --max-tasks-per-child=1"
-    runtime: nvidia
-    environment:
-        - NVIDIA_VISIBLE_DEVICES=all
-        - NVIDIA_DRIVER_CAPABILITIES=all
     depends_on:
       - web
 

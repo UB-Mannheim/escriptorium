@@ -26,8 +26,11 @@ services:
 
     celery-gpu:
       restart: always
+      # runtime: nvidia
       # environment:
-      #     - KRAKEN_TRAINING_DEVICE=cuda:0
+      #   - KRAKEN_TRAINING_DEVICE=cuda:0
+      #   - NVIDIA_VISIBLE_DEVICES=all
+      #   - NVIDIA_DRIVER_CAPABILITIES=all
 
     # add more workers for every physical gpu
     # celery-gpu2:
