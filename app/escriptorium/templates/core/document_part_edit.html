@@ -311,7 +311,7 @@
                    v-on:mouseover="showOverlay"
                    v-on:mouseleave="hideOverlay"
                    v-on:keydown.enter="$parent.editNext"
-                   v-on:keyup="pushUpdate"
+                   v-on:focusout="pushUpdate"
                    v-on:paste="onPaste"
 {#                   v-bind:draggable="true"#}
                    v-on:dragstart="$parent.dragStart(line,$event)"
