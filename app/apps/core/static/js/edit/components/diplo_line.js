@@ -28,9 +28,6 @@ var diploLine = LineBase.extend({
             }.bind(this), 1000);
 
         },
-        pushNewVersion(){
-
-        },
         setContent(content){
             let id = this.line.pk;
             $("#" + id).text(content);

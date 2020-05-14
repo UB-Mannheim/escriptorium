@@ -84,9 +84,6 @@ var DiploPanel = BasePanel.extend({
             this.dragging = -1;
 
         },
-        dragLeave(){
-
-        },
         dragFinish(line, ev){
             let to = this.part.lines.indexOf(line);
             ev.target.style = '';
