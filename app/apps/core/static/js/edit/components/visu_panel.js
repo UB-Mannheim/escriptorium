@@ -1,4 +1,4 @@
-/* 
+/*
 Visual transcription panel (or visualisation panel)
 */
 

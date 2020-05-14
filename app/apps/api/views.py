@@ -188,7 +188,7 @@ class LineViewSet(ModelViewSet):
         serializer = LineSerializer(qs, data=lines, partial=True, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'response': 'ok', 'lines': serializer.data}, status=200)
+        return Response({'status': 'ok', 'lines': serializer.data}, status=200)
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
@@ -258,7 +258,7 @@ class LineTranscriptionViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response({'response': serializer.data}, status=200)
+        return Response({'status': 'ok', 'lines': serializer.data}, status=200)
 
     @action(detail=False, methods=['PUT'])
     def bulk_update(self, request, document_pk=None, part_pk=None, pk=None):
@@ -268,7 +268,7 @@ class LineTranscriptionViewSet(ModelViewSet):
             serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        return Response({'response': 'ok'}, status=200)
+        return Response({'status': 'ok'}, status=200)
 
     @action(detail=False, methods=['POST'])
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):

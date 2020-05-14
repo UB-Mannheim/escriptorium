@@ -344,7 +344,7 @@ const partStore = {
             body: JSON.stringify(data)
         });
     },
-    bulkCreateLineTranscriptions(transcriptions,callback){
+    bulkCreateLineTranscriptions(transcriptions, callback){
         let uri = this.getApiRoot() + 'transcriptions/bulk_create/';
         let data = transcriptions.map(l=>{
             return {
@@ -354,17 +354,20 @@ const partStore = {
             }
         });
 
-        this.push(uri, {lines: data}, method="post").
-            then((response) => response.json())
-            .then((function (data) {
+        this.push(uri, {lines: data}, method="post")
+            .then((response) => response.json())
+            .then(function (data) {
+                // update line.transcriptions pks
+                for (let i=0; i<data.lines.length; i++) {
+                    let lineTrans = data.lines[i];
+                    let line = this.lines.find(l=>l.pk == lineTrans.line);
+                    line.transcription.pk = lineTrans.pk;
+                }
                 callback();
-                console.log('linetranscriptions created with success')
-
-            })).catch(function(error) {
+            }.bind(this))
+            .catch(function(error) {
                 console.log('couldnt create transcription lines', error)
             });
-
-
     },
     bulkUpdateLineTranscriptions(transcriptions, callback) {
         let uri = this.getApiRoot() + 'transcriptions/bulk_update/';
