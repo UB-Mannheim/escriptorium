@@ -344,7 +344,61 @@ const partStore = {
             body: JSON.stringify(data)
         });
     },
+    bulkCreateLineTranscriptions(transcriptions, callback){
+        let uri = this.getApiRoot() + 'transcriptions/bulk_create/';
+        let data = transcriptions.map(l=>{
+            return {
+                line : l.line,
+                transcription : l.transcription,
+                content : l.content
+            }
+        });
 
+        this.push(uri, {lines: data}, method="post")
+            .then((response) => response.json())
+            .then(function (data) {
+                // update line.transcriptions pks
+                for (let i=0; i<data.lines.length; i++) {
+                    let lineTrans = data.lines[i];
+                    let line = this.lines.find(l=>l.pk == lineTrans.line);
+                    line.transcription.pk = lineTrans.pk;
+                }
+                callback();
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt create transcription lines', error)
+            });
+    },
+    bulkUpdateLineTranscriptions(transcriptions, callback) {
+        let uri = this.getApiRoot() + 'transcriptions/bulk_update/';
+        let data = transcriptions.map(l => {
+            return {
+                pk: l.pk,
+                content: l.content,
+                line : l.line
+            };
+        });
+
+        this.push(uri, {lines: data}, method="put")
+            .then((response) => response.json())
+            .then(function(data) {
+                callback();
+            })
+            .catch(function(error) {
+                console.log('couldnt update line', error)
+            });
+    },
+    move(linePk,index,callback){
+        let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
+        this.push(uri,{index : index},method="post")
+            .then((response) =>response.json())
+            .then(function (data) {
+                callback();
+            }).catch(function(error) {
+                console.log('couldnt recalculate order of line', error)
+            });
+
+    },
     getPrevious() {
         if (this.loaded && this.previous) {
             this.fetch(this.previous);

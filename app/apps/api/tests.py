@@ -259,11 +259,18 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.transcription = Transcription.objects.create(
             document=self.part.document,
             name='test')
+        self.transcription2 = Transcription.objects.create(
+            document=self.part.document,
+            name='tr2')
         self.lt = LineTranscription.objects.create(
             transcription=self.transcription,
             line=self.line,
             content='test')
-    
+        self.lt2 = LineTranscription.objects.create(
+            transcription=self.transcription2,
+            line=self.line2,
+            content='test2')
+
     def test_update(self):
         self.client.force_login(self.user)
         uri = reverse('api:linetranscription-detail',
@@ -300,3 +307,47 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         with self.assertNumQueries(4):
             resp = self.client.post(uri, {}, content_type='application/json')
             self.assertEqual(resp.status_code, 201)
+
+    def test_bulk_create(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:linetranscription-bulk-create',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        ll = Line.objects.create(
+            box=[10, 10, 50, 50],
+            document_part=self.part)
+        with self.assertNumQueries(10):
+            resp = self.client.post(uri,
+                                    {'lines':[
+                                        {'line':ll.pk,'transcription': self.transcription.pk, 'content':'new transcription'},
+                                        {'line':ll.pk,'transcription': self.transcription2.pk, 'content':'new transcription 2'},
+                                    ]}, content_type='application/json')
+            self.assertEqual(resp.status_code, 200)
+
+    def test_bulk_update(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:linetranscription-bulk-update',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+
+        with self.assertNumQueries(15):
+            resp = self.client.put(uri, {'lines': [
+                {'pk': self.lt.pk, 'content': 'test1 new','transcription' :self.transcription.pk,'line':self.line.pk},
+                {'pk': self.lt2.pk,'content':'test2 new','transcription' :self.transcription.pk,'line':self.line2.pk},
+            ]}, content_type='application/json')
+            self.lt.refresh_from_db()
+            self.lt2.refresh_from_db()
+            self.assertEqual(self.lt.content, "test1 new")
+            self.assertEqual(self.lt2.content, "test2 new")
+            self.assertEqual(self.lt2.transcription, self.transcription)
+            self.assertEqual(resp.status_code, 200)
+
+    def test_bulk_delete(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:linetranscription-bulk-delete',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        with self.assertNumQueries(5):
+            resp = self.client.post(uri, {'lines': [ self.lt.pk, self.lt2.pk,]}, content_type='application/json')
+            lines = LineTranscription.objects.all()
+            self.assertEqual(lines[0].content,"")
+            self.assertEqual(lines[1].content,"")
+            self.assertEqual(resp.status_code, 204)
+
