@@ -64,26 +64,21 @@ services:
   #   # networks:  # use this if adding nodes
   #   #   - esnet
 
-  # make sure to leave a core up for the rest
   celery-main:
     <<: *app
-    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default,img-processing -c ${CELERY_MAIN_CORES:-3} --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
     depends_on:
       - web
 
   celery-low-priority:
     <<: *app
-    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CONC:-10} --max-tasks-per-child=10"
     depends_on:
       - web
 
-  celery-gpu:
+  celery-gpu: &celery-gpu
     <<: *app
-    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu --max-tasks-per-child=1"
-    runtime: nvidia
-    environment:
-        - NVIDIA_VISIBLE_DEVICES=all
-        - NVIDIA_DRIVER_CAPABILITIES=all
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
     depends_on:
       - web
 

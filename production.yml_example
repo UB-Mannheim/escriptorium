@@ -1,0 +1,78 @@
+version: "2.4"
+
+services:
+    web: &web
+      restart: always
+
+    channelserver:
+      restart: always
+
+    db:
+      restart: always
+
+    nginx:
+      restart: always
+      ports:
+        - 80:80
+
+    flower:
+      restart: always
+
+
+    # cpus and mem_limit imposes a hard limit on cpus usage,
+    # needed to keep some for http/db when working with a single machine
+    #
+    # example values here are given for 16 cores and 16g of memory keeping 2 cores and 1g of memory at all time
+    # for http & db assuming a low amount of concurent users <50
+    #
+    # according to the docker documentation:
+    # Memory reservation is a kind of memory soft limit that allows for greater sharing of memory.
+    # Under normal circumstances, containers can use as much of the memory as needed and are constrained only by the hard limits set with the -m/--memory option (mem_limit in docker-compose).
+    # When memory reservation is set, Docker detects memory contention or low memory and forces containers to restrict their consumption to a reservation limit.
+
+    celery-main:
+      restart: always
+      # cpus: 6
+      # mem_limit: 15g
+      # mem_reservation: 4g
+
+    celery-low-priority:
+      restart: always
+      #cpus: 2
+      #mem_limit: 15g
+      #mem_reservation: 1g
+
+    celery-gpu:
+      restart: always
+      #cpus: 6
+      #mem_limit: 15g
+      #mem_reservation: 10g
+      # runtime: nvidia
+      # environment:
+      #   - KRAKEN_TRAINING_DEVICE=cuda:0
+      #   - NVIDIA_VISIBLE_DEVICES=all
+      #   - NVIDIA_DRIVER_CAPABILITIES=all
+
+    # add more workers for every physical gpu
+    # celery-gpu2:
+    #    <<: *celery-gpu
+    #    environment:
+    #       - KRAKEN_TRAINING_DEVICE=cuda:1
+
+  # celerybeat:
+     #   restart: always
+
+#volumes:
+#   static:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      o: 'bind'
+#      device: $PWD/static/
+#
+#   media:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      o: 'bind'
+#      device: $PWD/media/

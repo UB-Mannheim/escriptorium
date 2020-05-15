@@ -490,6 +490,9 @@ class DocumentPart(OrderedModel):
         self.save()
 
     def convert(self):
+        if not getattr(settings, 'ALWAYS_CONVERT', False):
+            return
+
         if self.workflow_state < self.WORKFLOW_STATE_CONVERTING:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTING
             self.save()
@@ -518,6 +521,8 @@ class DocumentPart(OrderedModel):
         if not getattr(settings, 'COMPRESS_ENABLE', True):
             return
         filename, extension = os.path.splitext(self.image.file.name)
+        if extension !=  'png':
+            return
         opti_name = filename + '_opti.png'
         try:
             subprocess.check_call(["pngcrush", "-q", self.image.file.name, opti_name])
@@ -682,6 +687,7 @@ class DocumentPart(OrderedModel):
 
         if commit:
             self.chain_tasks(*tasks)
+
 
         return tasks
 
