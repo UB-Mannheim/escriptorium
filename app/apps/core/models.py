@@ -489,7 +489,7 @@ class DocumentPart(OrderedModel):
         redis_.set('process-%d' % self.pk, json.dumps(data))
         self.save()
 
-    def convert(self, force=False):
+    def convert(self):
         if not getattr(settings, 'ALWAYS_CONVERT', False):
             return
 
