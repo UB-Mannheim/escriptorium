@@ -17,12 +17,32 @@
 {% endblock %}
 
 {% block extra_nav %}
-<div class="nav-item ml-auto">
-  <button @click="toggleSource" type="button" data-target="source" class="open-panel nav-item btn" v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Source Image" %}"><i class="fas fa-eye"></i></button>
-  <button @click="toggleSegmentation" type="button" data-target="seg" class="open-panel nav-item btn" v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Segmentation" %}"><i class="fas fa-align-left"></i></button>
-  <button @click="toggleVisualisation" type="button" data-target="trans" class="open-panel nav-item btn" v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Transcription" %}"><i class="fas fa-language"></i></button>
-  <button @click="toggleDiplomatic" type="button" data-target="diplomatic" class="open-panel nav-item btn" v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]" title="{% trans "Diplomatic" %}"><i class="fas fa-language"></i></button>
-</div>
+  <div class="nav-item ml-auto">
+      <button type="button"
+              @click="togglePanel"
+              data-target="source"
+              class="open-panel nav-item btn"
+              v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]"
+              title="{% trans "Source Image" %}"><i class="click-through fas fa-eye"></i></button>
+      <button type="button"
+              @click="togglePanel"
+              data-target="segmentation"
+              class="open-panel nav-item btn"
+              v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]"
+              title="{% trans "Segmentation" %}"><i class="click-through fas fa-align-left"></i></button>
+      <button type="button"
+              @click="togglePanel"
+              data-target="trans"
+              class="open-panel nav-item btn"
+              v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]"
+              title="{% trans "Transcription" %}"><i class="click-through fas fa-language"></i></button>
+      <button type="button"
+              @click="togglePanel"
+              data-target="diplomatic"
+              class="open-panel nav-item btn"
+              v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
+              title="{% trans "Diplomatic" %}"><i class="click-through fas fa-language"></i></button>
+  </div>
 {% endblock %}
 
 {% block tab_content %}

@@ -14,6 +14,10 @@ section {
     visibility: hidden;
 }
 
+.click-through {
+    pointer-events: none;
+}
+
 #seg-panel canvas {
     min-width: 10px;
     min-height: 10px;

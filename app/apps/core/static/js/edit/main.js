@@ -38,13 +38,6 @@ var partVM = new Vue({
         }
     },
     watch: {
-        openedPanels(n, o) {
-            // wait for css
-            Vue.nextTick(function() {
-                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
-                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
-            }.bind(this));
-        },
         'part.pk': function(n, o) {
             // set the new url
             window.history.pushState({},"",
@@ -155,21 +148,18 @@ var partVM = new Vue({
         getPrevious(ev) { return this.part.getPrevious(); },
         getNext(ev) { return this.part.getNext(); },
 
-        toggleSource() {
-            this.show.source =! this.show.source;
-            userProfile.set('source-panel', this.show.source);
+        togglePanel(ev)  {
+            let btn = ev.target;
+            let target = btn.getAttribute('data-target');
+            this.show[target] = !this.show[target];
+            userProfile.set(target + '-panel', this.show[target]);
+
+            // wait for css
+            Vue.nextTick(function() {
+                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+            }.bind(this));
+
         },
-        toggleSegmentation() {
-            this.show.segmentation =! this.show.segmentation;
-            userProfile.set('segmentation-panel', this.show.segmentation);
-        },
-        toggleVisualisation() {
-            this.show.visualisation =! this.show.visualisation;
-            userProfile.set('visualisation-panel', this.show.visualisation);
-        },
-        toggleDiplomatic() {
-            this.show.diplomatic =! this.show.diplomatic;
-            userProfile.set('diplomatic-panel', this.show.diplomatic);
-        }
     }
 });
