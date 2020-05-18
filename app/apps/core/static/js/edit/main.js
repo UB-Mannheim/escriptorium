@@ -158,8 +158,8 @@ var partVM = new Vue({
             Vue.nextTick(function() {
                 if(this.$refs.segPanel) this.$refs.segPanel.refresh();
                 if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+                if(this.$refs.diploPanel) this.$refs.diploPanel.refresh();
             }.bind(this));
-
         },
     }
 });

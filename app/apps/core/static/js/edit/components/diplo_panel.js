@@ -1,5 +1,4 @@
 var DiploPanel = BasePanel.extend({
-
     data() { return {
         editLine: null,
         save: false, //show save button
@@ -13,7 +12,7 @@ var DiploPanel = BasePanel.extend({
     },
     created() {
         this.$on('update:transcription:content', function(linetranscription) {
-            this.addtoUpdatedLines(linetranscription);
+            this.addToUpdatedLines(linetranscription);
         });
 
         this.$on('create:transcription', function(linetranscription) {
@@ -58,7 +57,7 @@ var DiploPanel = BasePanel.extend({
                     }.bind(this));
             }
         },
-        addtoUpdatedLines(lt){
+        addToUpdatedLines(lt){
             let elt = this.updatedLines.find(l => l.pk === lt.pk);
             if(elt == undefined) {
                 this.updatedLines.push(lt);
