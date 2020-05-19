@@ -188,6 +188,9 @@ const SegPanel = BasePanel.extend({
                 this.segmenter.refresh();
             }
         },
+        updateView() {
+            this.segmenter.refresh();
+        },
 
         // undo manager helpers
         bulkCreate(data, createInEditor=false) {

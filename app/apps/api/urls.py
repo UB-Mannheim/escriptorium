@@ -5,6 +5,7 @@ from api.views import *
 
 router = routers.DefaultRouter()
 router.register(r'documents', DocumentViewSet)
+router.register(r'users', UserViewSet)
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')

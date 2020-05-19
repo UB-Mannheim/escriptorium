@@ -11,6 +11,7 @@ from imports.models import DocumentImport
 from imports.parsers import AltoParser, ParseError
 from core.models import *
 from core.tests.factory import CoreFactoryTestCase 
+from imports.parsers import make_parser, XML_EXTENSIONS, ParseError
 
 
 class XmlImportTestCase(CoreFactoryTestCase):
@@ -288,10 +289,9 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
         block.refresh_from_db()
         line.refresh_from_db()
-        self.assertEqual(block.box,[[113, 0], [113, 1021], [697, 1021], [697, 29]])
-        self.assertEqual(line.mask, [[150,64], [0,60],[425,81], [460,60], [616,64],[621,5]])
-        self.assertEqual(line.baseline, [[155,55], [180,55],[0,55], [231,55]])
-
+        self.assertEqual(block.box,[[113, -29], [113, 1021], [697, 1021], [697, 29]])
+        self.assertEqual(line.mask, [[150.3,64], [0,60],[425,81], [460,60], [616,64],[621,5]])
+        self.assertEqual(line.baseline, [[155.0,55.0], [180.0,55.0],[0,55.0], [231.3,55.0]])
 
     def test_parse_pagexml_ziped_file(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -383,7 +383,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
     
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(9):
             response = self.client.post(reverse('api:document-export',
                                             kwargs={'pk': self.trans.document.pk}),
                                     {'transcription': self.trans.pk,

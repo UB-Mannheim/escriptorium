@@ -10,8 +10,8 @@
     <TextRegion id="{{ line.block.make_external_id|default:'eSc_dummyblock_' }}">
       <Coords points="{% box_coordinates line.block part %}"/>{% endifchanged %}
       <TextLine id="{{ line.make_external_id }}">
-          <Coords points="{% for pt in line.mask %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>
-        {% if line.baseline %}<Baseline points="{% for pt in line.baseline %}{{ pt|join:"," }}{% if not forloop.last %} {% endif %}{% endfor %}"/>{% endif %}
+          <Coords points="{% pagexml_points line.mask %}"/>
+        {% if line.baseline %}<Baseline points="{% pagexml_points line.baseline %}"/>{% endif %}
         <TextEquiv>
           <Unicode>{{ line.transcription.0.content|default_if_none:"" }}</Unicode>
         </TextEquiv>

@@ -58,6 +58,20 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
+class UserOnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('onboarding',)
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def complete(self):
+        self.user.onboarding = self.validated_data['onboarding']
+        self.user.save()
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
 
@@ -115,8 +129,8 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
     def cleanup(self, data):
         return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
 
-    def validate_content(self, mode):
-        return self.cleanup(self.initial_data.get('content'))
+    def validate_content(self, content):
+        return self.cleanup(content)
 
 
 class LineListSerializer(serializers.ListSerializer):
@@ -141,6 +155,24 @@ class LineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Line
+        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
+        list_serializer_class = LineListSerializer
+
+
+class LineMoveSerializer(serializers.ModelSerializer):
+    index = serializers.IntegerField()
+
+    class Meta:
+        model = Line
+        fields = ('index',)
+
+    def __init__(self, *args, line=None, **kwargs):
+        self.line = line
+        super().__init__(*args, **kwargs)
+
+    def move(self):
+        self.line.to(self.validated_data['index'])
+
         fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
         list_serializer_class = LineListSerializer
 

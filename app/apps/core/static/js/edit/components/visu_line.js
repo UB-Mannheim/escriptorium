@@ -1,4 +1,4 @@
-const visuLine = Vue.extend({
+const visuLine = LineBase.extend({
     props: ['line', 'ratio'],
     watch: {
         'line.currentTrans.content': function(n, o) {
@@ -28,10 +28,15 @@ const visuLine = Vue.extend({
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
         },
+
         computeTextLength() {
             if (!this.line.currentTrans) return;
             content = this.line.currentTrans.content;
             if (content) {
+
+                /* this.polyElement.setAttribute('stroke', 'none');
+                 * this.pathElement.setAttribute('stroke', 'none');
+                 */
                 // adjust the text length to fit in the box
                 let textLength = this.textElement.getComputedTextLength();
                 let pathLength = this.pathElement.getTotalLength();
@@ -40,24 +45,7 @@ const visuLine = Vue.extend({
                 }
             }
         },
-        showOverlay() {
-            if (this.line && this.line.mask) {
-                Array.from(document.querySelectorAll('.panel-overlay')).map(
-                    function(e) {
-                        // TODO: transition
-                        e.style.display = 'block';
-                        e.querySelector('polygon').setAttribute('points', this.maskPoints);
-                    }.bind(this)
-                );
-            }
-        },
-        hideOverlay() {
-            Array.from(document.querySelectorAll('.panel-overlay')).map(
-                function(e) {
-                    e.style.display = 'none';
-                }
-            );
-        },
+
         edit() {
             this.$parent.editLine = this.line;
         },
@@ -73,6 +61,7 @@ const visuLine = Vue.extend({
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
         },
+
         maskStrokeColor() {
             if (this.line.currentTrans && this.line.currentTrans.content) {
                 return 'none';
@@ -84,6 +73,7 @@ const visuLine = Vue.extend({
             if (this.line == null || !this.line.mask) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
+
         fakeBaseline() {
             // create a fake path based on the mask,
             var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);

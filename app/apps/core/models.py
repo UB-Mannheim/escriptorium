@@ -28,6 +28,7 @@ from celery import chain, group, chord
 from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
 from ordered_model.models import OrderedModel
 from kraken import pageseg, blla
+from kraken.lib import models as kraken_models
 from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
 from skimage.measure import approximate_polygon
@@ -489,6 +490,9 @@ class DocumentPart(OrderedModel):
         self.save()
 
     def convert(self):
+        if not getattr(settings, 'ALWAYS_CONVERT', False):
+            return
+
         if self.workflow_state < self.WORKFLOW_STATE_CONVERTING:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTING
             self.save()
@@ -517,6 +521,8 @@ class DocumentPart(OrderedModel):
         if not getattr(settings, 'COMPRESS_ENABLE', True):
             return
         filename, extension = os.path.splitext(self.image.file.name)
+        if extension !=  'png':
+            return
         opti_name = filename + '_opti.png'
         try:
             subprocess.check_call(["pngcrush", "-q", self.image.file.name, opti_name])
@@ -682,6 +688,7 @@ class DocumentPart(OrderedModel):
         if commit:
             self.chain_tasks(*tasks)
 
+
         return tasks
 
     def make_masks(self, only=None):
@@ -829,7 +836,7 @@ class LineTranscription(Versioned, models.Model):
     Represents a transcribded line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
-    content = models.CharField(null=True, max_length=2048)
+    content = models.CharField(blank=True, default="", max_length=2048)
     # graphs = [  # WIP
     # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
     # ]

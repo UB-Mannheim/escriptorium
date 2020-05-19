@@ -1,7 +1,7 @@
 # pull official base image
 FROM python:3.7.5-stretch
 
-ARG KRAKEN_VERSION=3.0.0.0b4.dev4
+ARG KRAKEN_VERSION=3.0.0.0b3
 # EXPOSE 8000
 
 # set environment variables

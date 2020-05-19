@@ -112,6 +112,7 @@ class Versioned(models.Model):
             self.version_author = author
         if source is not None:
             self.version_source = source
+
         self.version_created_at = datetime.now(timezone.utc)
         self.version_updated_at = datetime.now(timezone.utc)
 
@@ -136,7 +137,7 @@ class Versioned(models.Model):
                 # self.version_created_at = datetime.fromisoformat(version['created_at'])  # 3.7 only
                 self.version_created_at = datetime.strptime(
                     version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
-                self.version_updated_at = datetime.utcnow()
+                self.version_updated_at = datetime.now(timezone.utc)
                 break
         else:
             # get here if we don't break
