@@ -41,7 +41,7 @@
               data-target="diplomatic"
               class="open-panel nav-item btn"
               v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
-              title="{% trans "Diplomatic" %}"><i class="click-through fas fa-language"></i></button>
+              title="{% trans "Diplomatic" %}"><i class="click-through fas fa-file-alt"></i></button>
   </div>
 {% endblock %}
 
@@ -316,7 +316,7 @@
   <DiploPanel v-if="show.diplomatic" v-bind:part="part" ref="diploPanel" inline-template>
     <div class="col panel">
       <div class="tools">
-        <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
+        <i title="{% trans 'Transcription Panel' %}" class="panel-icon far fa-file-alt"></i>
         <button v-if="save" @click="toggleSave" class="btn btn-success" id="save-diplomatic" title="{% trans "Save Line content" %}">Save</button>
       </div>
       <div v-if="part" id="diplomatic-lines" class="content-container {{ document.read_direction }}">
