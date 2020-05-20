@@ -881,6 +881,7 @@ class OcrModel(Versioned, models.Model):
 
     class Meta:
         ordering = ('-version_updated_at',)
+        permissions = (('can_train', 'Can train models'),)
 
     def __str__(self):
         return self.name
