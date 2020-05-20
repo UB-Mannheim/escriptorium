@@ -18,8 +18,8 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-ADMINS = [(os.getenv('DJANGO_ADMIN_NAME', 'admin'),
-           os.getenv('DJANGO_ADMIN_EMAIL', 'admin@example.com'))]
+ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
+           os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]
 
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
