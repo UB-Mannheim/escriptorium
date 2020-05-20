@@ -25,13 +25,33 @@ var DiploPanel = BasePanel.extend({
             this.bulkUpdate();
             this.bulkCreate();
         },
-        editNext(ev) {
-            ev.preventDefault();
+        editNext() {
+            console.log("this",this.$el);
             let index = this.part.lines.indexOf(this.editLine);
             if(index < this.part.lines.length - 1) {
                 this.setEditLine(this.part.lines[index + 1]);
                 let nextLine = this.$children[index + 1];
                 nextLine.startEdit();
+            }
+        },
+        editPrevious() {
+            let index = this.part.lines.indexOf(this.editLine);
+            if(index > 0) {
+                this.setEditLine(this.part.lines[index - 1]);
+                let previousLine = this.$children[index - 1];
+                previousLine.startEdit();
+            }
+        },
+        editNextPrevious(ev){
+            //disable shortcuts
+            this.$parent.blockShortcuts = true;
+            if (ev.keyCode == 38) {
+                ev.preventDefault();
+                this.editPrevious();
+            }
+            else if (ev.keyCode == 40 || ev.keyCode == 13) {
+                ev.preventDefault();
+                this.editNext();
             }
         },
         setEditLine(l) {
