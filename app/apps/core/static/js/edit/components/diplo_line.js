@@ -6,6 +6,21 @@ var diploLine = LineBase.extend({
             this.$content = this.$refs.content[0];
         }.bind(this));
     },
+    computed: {
+            region() {
+                let idx = this.$parent.part.lines.indexOf(this.line);
+                if (idx) {
+                    let pr = this.$parent.part.lines[idx - 1].region;
+                    if (this.line.region == pr)
+                        return "";
+                    else
+                        return this.line.region
+                }
+                else {
+                    return this.line.region
+                }
+            }
+    },
     methods: {
         startEdit(ev) {
             this.$content.setAttribute('contenteditable', true);
