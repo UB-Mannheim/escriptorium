@@ -18,7 +18,8 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-ADMINS = [('Robin Tissot','tissotrobin@gmail.com'),]
+ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
+           os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]
 
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
@@ -179,19 +180,18 @@ TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 
 CELERY_TASK_QUEUES = (
     Queue('default', routing_key='default'),
-    Queue('img-processing', routing_key='img-processing'),
-    Queue('low-priority', Exchange('low-priority'), routing_key='low-priority'),
+    Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
-    'core.tasks.*': {'queue': 'img-processing'},
+    # 'core.tasks.*': {'queue': 'default'},
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
-    #'escriptorium.celery.debug_task': '',
-    'imports.tasks.*': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
-    #'users.tasks.async_email': '',
+    #'escriptorium.celery.debug_task': '',
+    'imports.tasks.*': {'queue': 'low-priority'},
+    'users.tasks.async_email': {'queue': 'low-priority'},
 }
 
 CHANNEL_LAYERS = {
@@ -283,6 +283,7 @@ LOGGING = {
 }
 
 COMPRESS_ENABLE = True
+ALWAYS_CONVERT = False
 
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {

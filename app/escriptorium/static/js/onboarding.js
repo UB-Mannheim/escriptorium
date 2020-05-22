@@ -1,5 +1,4 @@
 var document_images_intro = introJs();
-console.log("hihi");
 document_images_intro.setOptions({
 steps: [
 {
@@ -12,7 +11,7 @@ steps: [
   intro: 'Edit Document Part. Panels to update transcriptions, baselines and masks',
   position: 'bottom'
 },
-    {
+{
   element: '#nav-models-tab',
   intro: 'Handle Transcription and Segmentation models related to this document.',
   position: 'bottom'
@@ -21,12 +20,12 @@ steps: [
   intro: 'Upload a new document part image.',
   position: 'bottom'
 },
-  {
+{
   element: '#import-selected',
   intro: 'Import document part. <br> accepted formats : IIIF, Pagexml, Alto.',
   position: 'bottom'
 },
-  {
+{
   element: '#document-export',
   intro: 'Import document part. <br> accepted formats : Text, Pagexml, Alto.',
   position: 'bottom'

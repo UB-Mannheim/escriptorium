@@ -1,4 +1,4 @@
-const visuLine = Vue.extend({
+const visuLine = LineBase.extend({
     props: ['line', 'ratio'],
     updated() {
         this.$nextTick(this.reset);
@@ -9,7 +9,7 @@ const visuLine = Vue.extend({
             if (this.line.mask) {
                 let poly = this.line.mask.flat(1).map(pt => Math.round(pt));
                 var area = 0;
-                // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n), 
+                // A = 1/2(x_1y_2-x_2y_1+x_2y_3-x_3y_2+...+x_(n-1)y_n-x_ny_(n-1)+x_ny_1-x_1y_n),
                 for (let i=0; i<poly.length; i++) {
                     let j = (i+1) % poly.length; // loop back to 1
                     area += poly[i][0]*poly[j][1] - poly[j][0]*poly[i][1];
@@ -19,17 +19,17 @@ const visuLine = Vue.extend({
             } else {
                 lineHeight = 30;
             }
-            
+
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
         },
-        
+
         computeTextLength() {
             content = this.line.transcription && this.line.transcription.content;
             if (content) {
                 this.polyElement.setAttribute('stroke', 'none');
                 this.pathElement.setAttribute('stroke', 'none');
-                
+
                 // adjust the text length to fit in the box
                 let textLength = this.textElement.getComputedTextLength();
                 let pathLength = this.pathElement.getTotalLength();
@@ -42,25 +42,7 @@ const visuLine = Vue.extend({
                 this.pathElement.setAttribute('stroke', 'blue');
             }
         },
-        
-        showOverlay() {
-            if (this.line && this.line.mask) {
-                Array.from(document.querySelectorAll('.panel-overlay')).map(
-                    function(e) {
-                        // TODO: transition
-                        e.style.display = 'block';
-                        e.querySelector('polygon').setAttribute('points', this.maskPoints);
-                    }.bind(this)
-                );
-            }
-        },
-        hideOverlay() {
-            Array.from(document.querySelectorAll('.panel-overlay')).map(
-                function(e) {
-                    e.style.display = 'none';
-                }
-            );
-        },
+
         edit() {
             this.$parent.editLine = this.line;
         },
@@ -75,10 +57,6 @@ const visuLine = Vue.extend({
         textElement() { return this.$el.querySelector('text'); },
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
-        },
-        maskPoints() {
-            if (this.line == null || !this.line.mask) return '';
-            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         fakeBaseline() {
             // create a fake path based on the mask,

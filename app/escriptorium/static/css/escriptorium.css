@@ -14,6 +14,10 @@ section {
     visibility: hidden;
 }
 
+.click-through {
+    pointer-events: none;
+}
+
 #seg-panel canvas {
     min-width: 10px;
     min-height: 10px;
@@ -322,8 +326,9 @@ form.inline-form {
 }
 
 .tools {
-    height: 35px;
+    height: 45px;
     margin-bottom: 5px;
+    /* overflow: hidden; */
 }
 
 #trans-panel .zoom-container {
@@ -385,6 +390,11 @@ i.panel-icon {
 }
 
 .panel .content-container .js-wheelzoom-container {
+    min-height: calc(100vh - 190px);
+}
+
+.panel #diplomatic-lines {
+    overflow-y: scroll;
     min-height: calc(100vh - 190px);
 }
 
@@ -473,4 +483,33 @@ i.panel-icon {
 #be-settings-menu {
     width: max-content;
     padding: 10px;
+}
+
+
+/* .lined{ */
+/*     position: relative; */
+/*     width: 100%; */
+/*     transform-origin: 0 0; */
+/*     overflow-y: auto; */
+/*     border: 1px solid lightgrey; */
+
+/* } */
+
+.table-row {
+    /*border-right: 1px solid lightgrey;*/
+    padding-left: 2%;
+    padding-right: 2%;
+
+}
+.line-order{
+    user-select: none;
+    flex-basis: 10%;
+    text-align: center;
+    border-right: 1px solid lightgrey;
+}
+
+.line-content {
+    margin-bottom: 0px;
+    width: 100%;
+    /* flex-basis: 85%; */
 }

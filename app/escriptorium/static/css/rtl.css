@@ -10,3 +10,13 @@
 .rtl .trans-box span {
     transform-origin: top right;
 }
+
+.rtl .line-order {
+    border-right: 0;
+    border-left: 1px solid lightgrey;
+}
+
+.rtl .line-content {
+    /* fixes table like alignment */
+    text-align: right;
+}

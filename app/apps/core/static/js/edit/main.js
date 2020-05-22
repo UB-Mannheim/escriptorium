@@ -7,7 +7,8 @@ var partVM = new Vue({
         show: {
             source: userProfile.get('source-panel'),
             segmentation: userProfile.get('segmentation-panel'),
-            visualisation: userProfile.get('visualisation-panel')
+            visualisation: userProfile.get('visualisation-panel'),
+            diplomatic: userProfile.get('diplomatic-panel')
         },
         blockShortcuts: false,
         fullSizeImage: false
@@ -37,13 +38,6 @@ var partVM = new Vue({
         }
     },
     watch: {
-        openedPanels(n, o) {
-            // wait for css
-            Vue.nextTick(function() {
-                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
-                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
-            }.bind(this));
-        },
         'part.pk': function(n, o) {
             // set the new url
             window.history.pushState({},"",
@@ -64,7 +58,8 @@ var partVM = new Vue({
     components: {
         'sourcepanel': SourcePanel,
         'segmentationpanel': SegPanel,
-        'visupanel': VisuPanel
+        'visupanel': VisuPanel,
+        'diplopanel': DiploPanel,
     },
 
     created() {
@@ -105,6 +100,18 @@ var partVM = new Vue({
             this.part.deleteRegion(regionPk, cb);
         }.bind(this));
 
+        this.$on('bulk_create:transcriptions', function(lines, cb) {
+            this.part.bulkCreateLineTranscriptions(lines, cb);
+        }.bind(this));
+
+        this.$on('bulk_update:transcriptions', function(lines, cb) {
+            this.part.bulkUpdateLineTranscriptions(lines, cb);
+        }.bind(this));
+
+        this.$on('line:move_to', function(linePK,to, cb) {
+            this.part.move(linePK,to, cb);
+        }.bind(this));
+
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
@@ -141,17 +148,18 @@ var partVM = new Vue({
         getPrevious(ev) { return this.part.getPrevious(); },
         getNext(ev) { return this.part.getNext(); },
 
-        toggleSource() {
-            this.show.source =! this.show.source;
-            userProfile.set('source-panel', this.show.source);
+        togglePanel(ev)  {
+            let btn = ev.target;
+            let target = btn.getAttribute('data-target');
+            this.show[target] = !this.show[target];
+            userProfile.set(target + '-panel', this.show[target]);
+
+            // wait for css
+            Vue.nextTick(function() {
+                if(this.$refs.segPanel) this.$refs.segPanel.refresh();
+                if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
+                if(this.$refs.diploPanel) this.$refs.diploPanel.refresh();
+            }.bind(this));
         },
-        toggleSegmentation() {
-            this.show.segmentation =! this.show.segmentation;
-            userProfile.set('segmentation-panel', this.show.segmentation);
-        },
-        toggleVisualisation() {
-            this.show.visualisation =! this.show.visualisation;
-            userProfile.set('visualisation-panel', this.show.visualisation);
-        }
     }
 });
