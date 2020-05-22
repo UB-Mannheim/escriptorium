@@ -177,6 +177,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                               for bl in part.lines.values_list('baseline', flat=True) if bl]})
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 4)  # should match cpu_limit of the container
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
             output=os.path.join(os.path.split(modelpath)[0], 'version'),
             format_type=None,
@@ -184,6 +185,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             load=load,
             training_data=training_data,
             evaluation_data=evaluation_data,
+            threads=LOAD_THREADS,
             augment=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
@@ -291,7 +293,7 @@ def train_(qs, document, transcription, model=None, user=None):
     from multiprocessing import current_process
     current_process().daemon = False
 
-    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+
 
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
@@ -331,6 +333,8 @@ def train_(qs, document, transcription, model=None, user=None):
 
     temp_file_prefix = os.path.join(fulldir, 'version')
 
+    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 4)  # should match cpu_limit of the container
     trainer = kraken_train.KrakenTrainer.recognition_train_gen(device=DEVICE,
                                                                load=load,
                                                                output=temp_file_prefix,
@@ -338,6 +342,7 @@ def train_(qs, document, transcription, model=None, user=None):
                                                                training_data=training_data,
                                                                evaluation_data=evaluation_data,
                                                                resize='both',
+                                                               threads=LOAD_THREADS,
                                                                augment=True)
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
