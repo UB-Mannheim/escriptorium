@@ -36,19 +36,19 @@
       </div>
     </div>
     {% with import=import_form.current_import %}
-    <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
+    <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %}
       <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
       <button id="cancel-import" class="btn btn-sm btn-warning mr-1"><i class="fas fa-ban"></i></button>
     </span>
     {% endwith %}
-    
+
     {% if document.transcriptions.count %}
     <button id="document-export" type="button" class="btn btn-sm btn-primary js-proc-selected ml-1" title="{% trans "Export" %}" data-proc="export">
       <i class="fas fa-file-export mr-1"></i>{% trans "Export" %}
     </button>
     {% endif %}
-    
-    {% if user.is_staff %}
+
+    {% if perms.core.can_train %}
     {% with training_model=document.training_model %}
     <div class="btn-group ml-auto mr-1" role="group">
     <button id="train-selected" type="button" class="btn btn-sm btn-primary dropdown-toggle {% if training_model %}blink{% endif %}" title="{% trans 'Train a segmenter/recognizer model.' %}" data-toggle="dropdown">
