@@ -139,9 +139,10 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     try:
         model = OcrModel.objects.get(pk=model_pk)
         modelpath = model.file.path
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        upload_to = model.file.field.upload_to(model, 'new_' + model.name + '.mlmodel')
         load = model.file.path
     except ValueError:  # model is empty
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
         model.file = modelpath
