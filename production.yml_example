@@ -50,7 +50,7 @@ services:
       # cpus: 6
       # mem_limit: 15g
       # mem_reservation: 10g
-      # shm_size: '4gb'
+      # shm_size: '3gb'
       # runtime: nvidia
       # environment:
       #   - KRAKEN_TRAINING_DEVICE=cuda:0
