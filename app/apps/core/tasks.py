@@ -181,7 +181,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             training_data=training_data,
             evaluation_data=evaluation_data,
             augment=True,
-            threads=0)
+            threads=0,
+            load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.makedirs(os.path.split(modelpath)[0])
@@ -332,7 +333,9 @@ def train_(qs, document, transcription, model=None, user=None):
                                                                evaluation_data=evaluation_data,
                                                                resize='both',
                                                                augment=True,
-                                                               threads=0)
+                                                               threads=0,
+                                                               load_hyper_parameters=True)
+
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
