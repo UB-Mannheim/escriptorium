@@ -293,8 +293,6 @@ def train_(qs, document, transcription, model=None, user=None):
     from multiprocessing import current_process
     current_process().daemon = False
 
-
-
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
                                   baseline=F('line__baseline'),
@@ -334,7 +332,7 @@ def train_(qs, document, transcription, model=None, user=None):
     temp_file_prefix = os.path.join(fulldir, 'version')
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)  # should match cpu_limit of the container
+    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
     trainer = kraken_train.KrakenTrainer.recognition_train_gen(device=DEVICE,
                                                                load=load,
                                                                output=temp_file_prefix,
