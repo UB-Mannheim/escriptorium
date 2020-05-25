@@ -149,7 +149,7 @@ LANGUAGES = [
 
 EMAIL_HOST = 'mail'
 EMAIL_PORT = 25
-DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.fr'
+DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@escriptorium.fr')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
