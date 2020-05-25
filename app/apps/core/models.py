@@ -877,7 +877,7 @@ class OcrModel(Versioned, models.Model):
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
     version_ignore_fields = ('name', 'owner', 'document', 'script', 'training')
-    version_history_max_length = 15
+    version_history_max_length = None  # keep em all
 
     class Meta:
         ordering = ('-version_updated_at',)

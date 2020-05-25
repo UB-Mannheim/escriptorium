@@ -149,7 +149,7 @@ LANGUAGES = [
 
 EMAIL_HOST = 'mail'
 EMAIL_PORT = 25
-DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.fr'
+DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@escriptorium.fr')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
@@ -308,6 +308,7 @@ KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
+KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
 KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
 
 REST_FRAMEWORK = {

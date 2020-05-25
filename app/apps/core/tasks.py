@@ -121,6 +121,10 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -135,16 +139,16 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
-    load = None
+    model = OcrModel.objects.get(pk=model_pk)
     try:
-        model = OcrModel.objects.get(pk=model_pk)
-        modelpath = model.file.path
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         load = model.file.path
-    except ValueError:  # model is empty
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
-        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
-        model.file = modelpath
+    except ValueError:  # model is empty
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        model.file = upload_to
+
+    modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
 
     try:
         model.training = True
@@ -173,6 +177,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                               for bl in part.lines.values_list('baseline', flat=True) if bl]})
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
             output=os.path.join(os.path.split(modelpath)[0], 'version'),
             format_type=None,
@@ -180,8 +185,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             load=load,
             training_data=training_data,
             evaluation_data=evaluation_data,
+            threads=LOAD_THREADS,
             augment=True,
-            threads=0,
             load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
@@ -208,7 +213,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             })
 
         trainer.run(_print_eval)
-        best_version = os.path.join(os.path.dirname(modelpath), f'version_{trainer.stopper.best_epoch}.mlmodel')
+        best_version = os.path.join(os.path.dirname(modelpath),
+                                    f'version_{trainer.stopper.best_epoch}.mlmodel')
         shutil.copy(best_version, modelpath)
 
     except Exception as e:
@@ -285,7 +291,9 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 def train_(qs, document, transcription, model=None, user=None):
-    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
 
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
@@ -325,17 +333,19 @@ def train_(qs, document, transcription, model=None, user=None):
 
     temp_file_prefix = os.path.join(fulldir, 'version')
 
-    trainer = kraken_train.KrakenTrainer.recognition_train_gen(device=DEVICE,
-                                                               load=load,
-                                                               output=temp_file_prefix,
-                                                               format_type=None,
-                                                               training_data=training_data,
-                                                               evaluation_data=evaluation_data,
-                                                               resize='both',
-                                                               augment=True,
-                                                               threads=0,
-                                                               load_hyper_parameters=True)
-
+    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    trainer = (kraken_train.KrakenTrainer
+               .recognition_train_gen(device=DEVICE,
+                                      load=load,
+                                      output=temp_file_prefix,
+                                      format_type=None,
+                                      training_data=training_data,
+                                      evaluation_data=evaluation_data,
+                                      resize='both',
+                                      threads=LOAD_THREADS,
+                                      augment=True,
+                                      load_hyper_parameters=True))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
