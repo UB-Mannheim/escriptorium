@@ -285,6 +285,7 @@ LOGGING = {
 COMPRESS_ENABLE = True
 ALWAYS_CONVERT = False
 
+FILE_UPLOAD_PERMISSIONS = 0o644
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
@@ -293,11 +294,11 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1000, 1000), 'crop': False, 'upscale': False}
     }
 }
-THUMBNAIL_OPTIMIZE_COMMAND = {
-    # 'png': '/usr/bin/optipng {filename}',
-    # 'gif': '/usr/bin/optipng {filename}',
-    'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
-}
+# THUMBNAIL_OPTIMIZE_COMMAND = {
+#     'png': '/usr/bin/optipng {filename}',
+#     # 'gif': '/usr/bin/optipng {filename}',
+#     'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
+# }
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
