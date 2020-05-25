@@ -139,16 +139,16 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
-    load = None
+    model = OcrModel.objects.get(pk=model_pk)
     try:
-        model = OcrModel.objects.get(pk=model_pk)
-        modelpath = model.file.path
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         load = model.file.path
-    except ValueError:  # model is empty
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
-        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
-        model.file = modelpath
+    except ValueError:  # model is empty
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        model.file = upload_to
+
+    modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
 
     try:
         model.training = True
@@ -212,7 +212,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             })
 
         trainer.run(_print_eval)
-        best_version = os.path.join(os.path.dirname(modelpath), f'version_{trainer.stopper.best_epoch}.mlmodel')
+        best_version = os.path.join(os.path.dirname(modelpath),
+                                    f'version_{trainer.stopper.best_epoch}.mlmodel')
         shutil.copy(best_version, modelpath)
 
     except Exception as e:
@@ -333,15 +334,16 @@ def train_(qs, document, transcription, model=None, user=None):
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
-    trainer = kraken_train.KrakenTrainer.recognition_train_gen(device=DEVICE,
-                                                               load=load,
-                                                               output=temp_file_prefix,
-                                                               format_type=None,
-                                                               training_data=training_data,
-                                                               evaluation_data=evaluation_data,
-                                                               resize='both',
-                                                               threads=LOAD_THREADS,
-                                                               augment=True)
+    trainer = (kraken_train.KrakenTrainer
+               .recognition_train_gen(device=DEVICE,
+                                      load=load,
+                                      output=temp_file_prefix,
+                                      format_type=None,
+                                      training_data=training_data,
+                                      evaluation_data=evaluation_data,
+                                      resize='both',
+                                      threads=LOAD_THREADS,
+                                      augment=True))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
