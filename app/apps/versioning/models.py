@@ -105,16 +105,16 @@ class Versioned(models.Model):
                 raise NoChangeException
         self.versions.insert(0, packed)
         # if we passed version_history_max_length we delete the last one
-        if len(self.versions) > self.version_history_max_length:
+        if (self.version_history_max_length
+            and len(self.versions) > self.version_history_max_length):
             self.delete_revision(self.versions[self.version_history_max_length]['revision'])
         self.revision = uuid.uuid4()  # new revision number
         if author is not None:
             self.version_author = author
         if source is not None:
-            self.version_source = source
-
-        self.version_created_at = datetime.now(timezone.utc)
+            self.version_source = source        self.version_created_at = datetime.now(timezone.utc)
         self.version_updated_at = datetime.now(timezone.utc)
+
 
     def revert(self, revision):
         """

@@ -2,10 +2,11 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.contrib import messages
+from django.utils.translation import ngettext
 
 
 from users.models import User, ResearchField, Invitation
-
 
 
 class MyUserChangeForm(UserChangeForm):
@@ -16,7 +17,7 @@ class MyUserChangeForm(UserChangeForm):
 class MyUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-    
+
     def clean_username(self):
         username = self.cleaned_data['username']
         try:
@@ -40,11 +41,22 @@ class InvitationAdmin(admin.ModelAdmin):
     list_filter = ('workflow_state', 'group')
     list_display = ('recipient_email', 'recipient_last_name', 'recipient_first_name', 'sender', 'workflow_state')
     readonly_fields = ('sender', 'recipient', 'token', 'created_at', 'sent_at', 'workflow_state')
-    
+    actions = ['resend']
+
     def save_model(self, request, obj, form, change):
         obj.sender = request.user
         super().save_model(request, obj, form, change)
         obj.send(request)  # send the email
+
+    def resend(self, request, queryset):
+        for invit in queryset:
+            invit.send(request)
+        count = queryset.count()
+        self.message_user(request, ngettext(
+            '%d invitation was resent.',
+            '%d invitations were resent.',
+            count,
+        ) % count, messages.SUCCESS)
 
 
 admin.site.register(User, MyUserAdmin)
