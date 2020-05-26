@@ -150,7 +150,7 @@ var partVM = new Vue({
         let debounced = _.debounce(function() {  // avoid calling this too often
             if(this.$refs.segPanel) this.$refs.segPanel.refresh();
             if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
-            if(this.$refs.visuPanel) this.$refs.diploPanel.refresh();
+            if(this.$refs.diploPanel) this.$refs.diploPanel.refresh();
         }.bind(this), 200);
         window.addEventListener('resize', debounced);
 

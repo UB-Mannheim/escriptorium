@@ -112,7 +112,8 @@ class Versioned(models.Model):
         if author is not None:
             self.version_author = author
         if source is not None:
-            self.version_source = source        self.version_created_at = datetime.now(timezone.utc)
+            self.version_source = source
+        self.version_created_at = datetime.now(timezone.utc)
         self.version_updated_at = datetime.now(timezone.utc)
 
 

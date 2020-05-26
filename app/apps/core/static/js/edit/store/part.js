@@ -446,7 +446,7 @@ const partStore = {
         this.image = {};
     },
 
-    getPrevious() {
+    getPrevious(cb) {
         if (this.loaded && this.previous) {
             this.fetchPart(this.previous, cb);
         }
