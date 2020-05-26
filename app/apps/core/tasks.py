@@ -4,25 +4,19 @@ import logging
 import numpy as np
 import os.path
 import redis
-import subprocess
-import torch
 import shutil
-from PIL import Image
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files import File
 from django.db.models import F
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
 from celery import shared_task
-from celery.signals import *
+from celery.signals import before_task_publish, task_prerun, task_success, task_failure
 from easy_thumbnails.files import get_thumbnailer
-from kraken import binarization, pageseg, rpred
-from kraken.lib import vgsl, train as kraken_train, default_specs as kraken_default_specs
-from torch.utils.data import DataLoader
+from kraken.lib import train as kraken_train
 
 from users.consumers import send_event
 
@@ -135,7 +129,6 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
-    Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
@@ -257,7 +250,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
     try:
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
-    except:
+    except OcrModel.DoesNotExist:
         model = None
 
     if user_pk:
@@ -382,8 +375,6 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
 
     redis_.set('training-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
-    Line = apps.get_model('core', 'Line')
-    DocumentPart = apps.get_model('core', 'DocumentPart')
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
     OcrModel = apps.get_model('core', 'OcrModel')
@@ -398,9 +389,9 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
             "id": model.pk,
         })
         qs = (LineTranscription.objects
-          .filter(transcription=transcription,
-                  line__document_part__pk__in=part_pks)
-          .exclude(content__isnull=True))
+              .filter(transcription=transcription,
+                      line__document_part__pk__in=part_pks)
+              .exclude(content__isnull=True))
         train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
         send_event('document', document.pk, "training:error", {
@@ -480,6 +471,8 @@ def before_publish_state(sender=None, body=None, **kwargs):
     instance_id = body[0][0]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
 
+    signal_name = kwargs['signal'].name
+
     try:
         # protects against signal race condition
         if (data[sender]['task_id'] == sender.request.id and
@@ -497,6 +490,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
         update_client_state(instance_id, sender, 'pending')
     except NameError:
         pass
+
 
 @task_prerun.connect
 @task_success.connect
@@ -533,7 +527,7 @@ def done_state(sender=None, body=None, **kwargs):
     }[signal_name]
     if status == 'error':
         # remove any pending task down the chain
-        data = {k:v for k,v in data.items() if v['status'] != 'pending'}
+        data = {k: v for k, v in data.items() if v['status'] != 'pending'}
     redis_.set('process-%d' % instance_id, json.dumps(data))
 
     if status == 'done':

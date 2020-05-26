@@ -1,16 +1,19 @@
 import json
 import logging
+from PIL import Image
 
 from django import forms
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
-from django.db import transaction
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import *
+from core.models import (Document, Metadata, DocumentMetadata,
+                         DocumentPart, OcrModel, Transcription,
+                         AlreadyProcessingException)
+from users.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     TASK_SEGMENT = 'segment'
     TASK_TRAIN = 'train'
     TASK_SEGTRAIN = 'segtrain'
-    TASK_TRANSCRIBE  = 'transcribe'
+    TASK_TRANSCRIBE = 'transcribe'
     task = forms.ChoiceField(choices=(
         (TASK_BINARIZE, 1),
         (TASK_SEGMENT, 2),
@@ -110,8 +113,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         validators=[MinValueValidator(0.1), MaxValueValidator(1)],
         help_text=_('Increase it for low contrast documents, if the letters are not visible enough.'),
         widget=forms.NumberInput(
-            attrs={'type':'range', 'step': '0.05',
-                   'min': '0.1', 'max':'1'}))
+            attrs={'type': 'range', 'step': '0.05',
+                   'min': '0.1', 'max': '1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
         # ('regions', _('Regions')),
@@ -121,7 +124,8 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
                                            initial='lines', required=False)
-    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                       .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                        label=_("Model"), required=False)
     override = forms.BooleanField(required=False, initial=True,
                                   help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
@@ -135,17 +139,20 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     upload_model = forms.FileField(required=False,
                                    validators=[FileExtensionValidator(
                                        allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
-    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                       .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                        label=_("Model"), required=False)
 
     # train
     new_model = forms.CharField(required=False, label=_('Model name'))
-    train_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+    train_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                         .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                          label=_("Model"), required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
 
     # segtrain
-    segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+    segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                            .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                             label=_("Model"), required=False)
 
     # typology = forms.ModelChoiceField(Typology, required=False,
@@ -221,7 +228,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                 name=data['upload_model'].name.rsplit('.', 1)[0],
                 job=model_job)
             # Note: needs to save the file in a second step because the path needs the db PK
-            model.file=data['upload_model']
+            model.file = data['upload_model']
             model.save()
 
         elif data.get('new_model'):

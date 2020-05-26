@@ -1,22 +1,25 @@
 import json
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Max
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render
-from django.utils.text import slugify
+from django.db.models import Max, Q
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import CreateView, UpdateView, DeleteView
 
-from versioning.models import NoChangeException
-from core.models import Document, DocumentPart, ProcessFailureException
-from core.forms import *
+from core.models import (Document, DocumentPart, Metadata,
+                         OcrModel, AlreadyProcessingException)
+from core.forms import (DocumentForm, MetadataFormSet, DocumentShareForm,
+                        UploadImageForm, DocumentProcessForm)
 from imports.forms import ImportForm, ExportForm
+
+
+logger = logging.getLogger(__name__)
 
 
 class Home(TemplateView):
@@ -51,7 +54,9 @@ class DocumentMixin():
 
     def get_metadata_formset(self, *args, instance=None):
         if instance:
-            qs = Metadata.objects.filter(Q(public=True) | Q(documentmetadata__document=instance)).distinct()
+            qs = (Metadata.objects.filter(Q(public=True)
+                                          | Q(documentmetadata__document=instance))
+                  .distinct())
         else:
             qs = Metadata.objects.filter(public=True)
         return MetadataFormSet(*args, instance=instance, form_kwargs={'choices': qs})
@@ -162,7 +167,7 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
-    fields = ['workflow_state',]
+    fields = ['workflow_state']
     http_method_names = ('post',)
 
     def get_queryset(self):

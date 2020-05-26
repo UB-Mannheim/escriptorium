@@ -1,7 +1,7 @@
 import re
-import math
 import logging
 import os
+import json
 import functools
 import subprocess
 from PIL import Image
@@ -13,8 +13,7 @@ from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import ArrayField, JSONField
-from django.core.files.storage import FileSystemStorage
+from django.contrib.postgres.fields import JSONField
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -22,19 +21,20 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from celery.result import AsyncResult
 from celery.task.control import inspect, revoke
-from celery import chain, group, chord
-from easy_thumbnails.files import get_thumbnailer, generate_all_aliases
+from celery import chain
+from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
-from kraken import pageseg, blla
-from kraken.lib import models as kraken_models
+from kraken import blla, rpred
+from kraken.binarization import nlbin
+from kraken.lib import vgsl, models as kraken_models
 from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
-from skimage.measure import approximate_polygon
 
 from versioning.models import Versioned
-from core.tasks import *
+from core.tasks import (segtrain, train, binarize, redis_,
+                        lossless_compression, convert, segment, transcribe,
+                        generate_part_thumbnails)
 from users.consumers import send_event
 
 User = get_user_model()
@@ -128,9 +128,8 @@ class DocumentManager(models.Manager):
         return (Document.objects
                 .filter(Q(owner=user)
                         | (Q(workflow_state__gt=Document.WORKFLOW_STATE_DRAFT)
-                          & (Q(shared_with_users=user)
-                             | Q(shared_with_groups__in=user.groups.all())
-                          )))
+                           & (Q(shared_with_users=user)
+                              | Q(shared_with_groups__in=user.groups.all()))))
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
                 .prefetch_related('shared_with_groups')
                 .select_related('typology')
@@ -198,6 +197,7 @@ class Document(models.Model):
     def is_shared(self):
         return self.workflow_state in [self.WORKFLOW_STATE_PUBLISHED,
                                        self.WORKFLOW_STATE_SHARED]
+
     @property
     def is_published(self):
         return self.workflow_state == self.WORKFLOW_STATE_PUBLISHED
@@ -208,7 +208,8 @@ class Document(models.Model):
 
     @cached_property
     def is_transcribing(self):
-        return self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING).first() is not None
+        return (self.parts.filter(workflow_state__gte=DocumentPart.WORKFLOW_STATE_TRANSCRIBING)
+                .first() is not None)
 
     @cached_property
     def default_text_direction(self):
@@ -348,6 +349,7 @@ class DocumentPart(OrderedModel):
             return
         ords = list(map(lambda l: origin_pt(l.baseline or l.mask)[0], ls))
         averageLineHeight = (max(ords) - min(ords)) / len(ords)
+
         def cmp_lines(a, b):
             try:
                 if a.block != b.block:
@@ -365,7 +367,7 @@ class DocumentPart(OrderedModel):
                 return 0
 
         # sort depending on the distance to the origin
-        ls.sort(key=functools.cmp_to_key(lambda a,b: cmp_lines(a, b)))
+        ls.sort(key=functools.cmp_to_key(lambda a, b: cmp_lines(a, b)))
         # one query / line, super gory
         for order, line in enumerate(ls):
             if line.order != order:
@@ -477,9 +479,12 @@ class DocumentPart(OrderedModel):
             del data[task_name]
 
         tasks_map = {  # map a task to a workflow state it should go back to if failed
-            'core.tasks.convert': (self.WORKFLOW_STATE_CONVERTING, self.WORKFLOW_STATE_CREATED),
-            'core.tasks.segment': (self.WORKFLOW_STATE_SEGMENTING, self.WORKFLOW_STATE_CONVERTED),
-            'core.tasks.transcribe': (self.WORKFLOW_STATE_TRANSCRIBING, self.WORKFLOW_STATE_SEGMENTED),
+            'core.tasks.convert': (self.WORKFLOW_STATE_CONVERTING,
+                                   self.WORKFLOW_STATE_CREATED),
+            'core.tasks.segment': (self.WORKFLOW_STATE_SEGMENTING,
+                                   self.WORKFLOW_STATE_CONVERTED),
+            'core.tasks.transcribe': (self.WORKFLOW_STATE_TRANSCRIBING,
+                                      self.WORKFLOW_STATE_SEGMENTED),
         }
         for task_name in tasks_map:
             if self.workflow_state == tasks_map[task_name][0] and task_name not in data:
@@ -521,7 +526,7 @@ class DocumentPart(OrderedModel):
         if not getattr(settings, 'COMPRESS_ENABLE', True):
             return
         filename, extension = os.path.splitext(self.image.file.name)
-        if extension !=  'png':
+        if extension != 'png':
             return
         opti_name = filename + '_opti.png'
         try:
@@ -529,7 +534,7 @@ class DocumentPart(OrderedModel):
         except Exception as e:
             # Note: let it fail it's fine
             logger.exception("png optimization failed for %s." % filename)
-            if DEBUG:
+            if settings.DEBUG:
                 raise e
         else:
             os.rename(opti_name, self.image.file.name)
@@ -549,9 +554,9 @@ class DocumentPart(OrderedModel):
         with Image.open(self.image.path) as im:
             # threshold, zoom, escale, border, perc, range, low, high
             if threshold is not None:
-                res = binarization.nlbin(im, threshold)
+                res = nlbin(im, threshold)
             else:
-                res = binarization.nlbin(im)
+                res = nlbin(im)
             res.save(bw_file, format=form)
 
         self.bw_image = document_images_path(self, bw_file_name)
@@ -600,7 +605,7 @@ class DocumentPart(OrderedModel):
 
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None
-                    newline = Line.objects.create(
+                    Line.objects.create(
                         document_part=self,
                         baseline=line['baseline'],
                         mask=mask)
@@ -617,26 +622,27 @@ class DocumentPart(OrderedModel):
             model_ = kraken_models.load_any(model.file.path)
             lines = self.lines.all()
             text_direction = (text_direction
-                              or (self.document.main_script and self.document.main_script.text_direction)
+                              or (self.document.main_script
+                                  and self.document.main_script.text_direction)
                               or 'horizontal-lr')
 
             with Image.open(self.image.file.name) as im:
                 for line in lines:
                     if not line.baseline:
-                        bounds =  {
+                        bounds = {
                             'boxes': [line.box],
                             'text_direction': text_direction,
                             'type': 'baselines',
-                            #'script_detection': True
+                            # 'script_detection': True
                         }
                     else:
-                        bounds={
+                        bounds = {
                             'lines': [{'baseline': line.baseline,
                                        'boundary': line.mask,
                                        'text_direction': text_direction,
-                                       'script': 'default'}], # self.document.main_script.name
+                                       'script': 'default'}],  # self.document.main_script.name
                             'type': 'baselines',
-                            #'selfcript_detection': True
+                            # 'selfcript_detection': True
                         }
                     it = rpred.rpred(
                             model_, im,
@@ -678,7 +684,7 @@ class DocumentPart(OrderedModel):
         if task_name == 'binarize':
             tasks.append(binarize.si(self.pk, **kwargs))
 
-        if (task_name == 'segment' or (task_name=='transcribe'
+        if (task_name == 'segment' or (task_name == 'transcribe'
                                        and not self.segmented)):
             tasks.append(segment.si(self.pk, **kwargs))
 
@@ -687,7 +693,6 @@ class DocumentPart(OrderedModel):
 
         if commit:
             self.chain_tasks(*tasks)
-
 
         return tasks
 
@@ -699,7 +704,7 @@ class DocumentPart(OrderedModel):
         masks = calculate_polygonal_environment(im,
                                                 [l.baseline for l in to_calc],
                                                 suppl_obj=[l.baseline for l in context],
-                                                scale=(1200,0))
+                                                scale=(1200, 0))
         for line, mask in zip(to_calc, masks):
             line.mask = mask
             line.save()
@@ -735,13 +740,12 @@ class Block(OrderedModel, models.Model):
     class Meta(OrderedModel.Meta):
         pass
 
-    class Meta(OrderedModel.Meta):
-        pass
-
     @property
     def coordinates_box(self):
-        """Cast the box field to the format [xmin,ymin,xmax,ymax] to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto"""
-
+        """
+        Cast the box field to the format [xmin,ymin,xmax,ymax]
+        to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto
+        """
         return [*map(min, *self.box), *map(max, *self.box)]
 
     @property
@@ -761,8 +765,10 @@ class Line(OrderedModel):  # Versioned,
     Represents a segmented line from a DocumentPart
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
-    mask = JSONField(null=True, blank=True, validators=[validate_polygon])  # Closed Polygon: [[x1, y1], [x2, y2], ..]
-    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])  # Polygon: [[x1, y1], [x2, y2], ..]
+    # Closed Polygon: [[x1, y1], [x2, y2], ..]
+    mask = JSONField(null=True, blank=True, validators=[validate_polygon])
+    # Polygon: [[x1, y1], [x2, y2], ..]
+    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
