@@ -109,7 +109,7 @@ services:
       - 25
     environment:
       - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
-      - ALLOWED_HOSTS=web ; celery-main ; docker0
+      - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
 
 volumes:
    static:
