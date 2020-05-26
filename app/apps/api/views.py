@@ -204,7 +204,7 @@ class LineViewSet(ModelViewSet):
         serializer = LineMoveSerializer(line=line, data=request.data)
         if serializer.is_valid():
             serializer.move()
-            return Response({'status': 'moved'})
+            return Response(status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

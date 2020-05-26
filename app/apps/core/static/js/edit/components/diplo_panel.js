@@ -5,7 +5,8 @@ var DiploPanel = BasePanel.extend({
         save: false, //show save button
         updatedLines : [],
         createdLines : [],
-        dragging: -1
+        dragging: -1,
+        lineDragged: null
 
     };},
     components: {
@@ -93,6 +94,7 @@ var DiploPanel = BasePanel.extend({
             ev.dataTransfer.dropEffect = 'move';
             let index = this.part.lines.indexOf(line);
             this.dragging = index;
+            this.lineDragged = line.pk ;
             // console.log("draaag start",index);
         },
         dragEnd(){
@@ -103,9 +105,9 @@ var DiploPanel = BasePanel.extend({
             ev.target.style = '';
             this.moveLine(this.dragging, to);
             // this.part.recalculateOrdering();
-            this.$parent.$emit('line:move_to',line.pk,to, function () {
-                // this.$children[to].line.order = to ;
-                this.$set(this.$children[to].line.order,to);
+            this.$parent.$emit('line:move_to',this.lineDragged,to, function () {
+                this.dragging = -1;
+                this.lineDragged = null;
             }.bind(this));
         },
         moveLine(from, to) {

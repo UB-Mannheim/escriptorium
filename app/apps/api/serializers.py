@@ -165,9 +165,6 @@ class LineMoveSerializer(serializers.ModelSerializer):
     def move(self):
         self.line.to(self.validated_data['index'])
 
-        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
-        list_serializer_class = LineListSerializer
-
 
 class LineOrderSerializer(serializers.ModelSerializer):
     class Meta:
