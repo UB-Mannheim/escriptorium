@@ -27,7 +27,6 @@ var DiploPanel = BasePanel.extend({
             this.bulkCreate();
         },
         editNext() {
-            console.log("this",this.$el);
             let index = this.part.lines.indexOf(this.editLine);
             if(index < this.part.lines.length - 1) {
                 this.setEditLine(this.part.lines[index + 1]);
@@ -95,7 +94,6 @@ var DiploPanel = BasePanel.extend({
             let index = this.part.lines.indexOf(line);
             this.dragging = index;
             this.lineDragged = line.pk ;
-            // console.log("draaag start",index);
         },
         dragEnd(){
             this.dragging = -1;
