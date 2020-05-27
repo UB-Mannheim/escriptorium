@@ -571,7 +571,7 @@ class DocumentPart(OrderedModel):
         self.save()
 
         with Image.open(self.image.file.name) as im:
-            options = {}  # {'maxcolseps': 1}
+            options = {'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
@@ -701,6 +701,7 @@ class DocumentPart(OrderedModel):
         lines = list(self.lines.all())  # needs to store the qs result
         to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
         context = [l for l in lines if only and l.pk not in only]
+
         masks = calculate_polygonal_environment(im,
                                                 [l.baseline for l in to_calc],
                                                 suppl_obj=[l.baseline for l in context],
@@ -818,6 +819,7 @@ class Transcription(models.Model):
                                  related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    archived = models.BooleanField(default=False)
 
     DEFAULT_NAME = 'manual'
 
@@ -827,6 +829,10 @@ class Transcription(models.Model):
 
     def __str__(self):
         return self.name
+
+    def archive(self):
+        self.archived = True
+        self.save()
 
 
 class LineTranscription(Versioned, models.Model):

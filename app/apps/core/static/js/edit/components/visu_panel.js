@@ -4,7 +4,7 @@ Visual transcription panel (or visualisation panel)
 
 const VisuPanel = BasePanel.extend({
     data() { return  {
-        editLine: null
+      editLine: null
     };},
     components: {
         'visuline': visuLine,
@@ -31,6 +31,11 @@ const VisuPanel = BasePanel.extend({
         },
         updateView() {
             this.$el.querySelector('svg').style.height = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            Vue.nextTick(function() {
+                this.$refs.visulines.forEach(function(line) {
+                    line.reset();
+                });
+            }.bind(this));
         }
     }
 });

@@ -14,7 +14,6 @@ var DiploPanel = BasePanel.extend({
         this.$on('update:transcription:content', function(linetranscription) {
             this.addToUpdatedLines(linetranscription);
         });
-
         this.$on('create:transcription', function(linetranscription) {
             this.createdLines.push(linetranscription);
         });
@@ -23,6 +22,9 @@ var DiploPanel = BasePanel.extend({
         toggleSave(){
             this.bulkUpdate();
             this.bulkCreate();
+        },
+        setHeight() {
+            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
         editNext(ev) {
             ev.preventDefault();
@@ -95,8 +97,7 @@ var DiploPanel = BasePanel.extend({
             }
         },
         updateView() {
-            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
-        }
+            this.setHeight();
+        },
     },
-
 });

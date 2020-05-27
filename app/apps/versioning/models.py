@@ -1,7 +1,7 @@
 import json
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
@@ -99,7 +99,9 @@ class Versioned(models.Model):
         packed = self.pack(**kwargs)
         if self.versions:
             last = self.versions[0]
-            if packed['data'] == last['data']:
+            if (packed['data'] == last['data']
+                and author==self.version_author
+                and source==self.version_source):
                 raise NoChangeException
         self.versions.insert(0, packed)
         # if we passed version_history_max_length we delete the last one
@@ -111,8 +113,9 @@ class Versioned(models.Model):
             self.version_author = author
         if source is not None:
             self.version_source = source
-        self.version_created_at = datetime.utcnow()
-        self.version_updated_at = datetime.utcnow()
+        self.version_created_at = datetime.now(timezone.utc)
+        self.version_updated_at = datetime.now(timezone.utc)
+
 
     def revert(self, revision):
         """
@@ -135,7 +138,7 @@ class Versioned(models.Model):
                 # self.version_created_at = datetime.fromisoformat(version['created_at'])  # 3.7 only
                 self.version_created_at = datetime.strptime(
                     version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
-                self.version_updated_at = datetime.utcnow()
+                self.version_updated_at = datetime.now(timezone.utc)
                 break
         else:
             # get here if we don't break

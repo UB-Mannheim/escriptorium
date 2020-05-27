@@ -154,6 +154,21 @@ class PartViewSet(ModelViewSet):
         return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
 
+class DocumentTranscriptionViewSet(ModelViewSet):
+    # Note: there is no dedicated Transcription viewset, it's always in the context of a Document
+    queryset = Transcription.objects.all()
+    serializer_class = TranscriptionSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return Transcription.objects.filter(
+            archived=False,
+            document=self.kwargs['document_pk'])
+
+    def perform_delete(self, serializer):
+        serializer.instance.archive()
+
+
 class BlockViewSet(ModelViewSet):
     queryset = Block.objects.all()
     serializer_class = BlockSerializer
@@ -232,6 +247,9 @@ class LineTranscriptionViewSet(ModelViewSet):
         document_part.calculate_progress()
         document_part.save()
         return response
+
+    def perform_create(self, serializer):
+        serializer.save(version_author=self.request.user.username)
 
     def update(self, request, document_pk=None, part_pk=None, pk=None):
         instance = self.get_object()

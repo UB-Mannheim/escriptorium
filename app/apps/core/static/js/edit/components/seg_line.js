@@ -51,4 +51,3 @@ const segLine = Vue.extend({
         },
     }
 });
-

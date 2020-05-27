@@ -5,8 +5,8 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
     },
     created() {
         this.$on('update:transcription:version', function(version) {
-            this.line.transcription.content = version.data.content;
-            this.$parent.$parent.$emit('update:transcription', this.line.transcription);
+            this.line.currentTrans.content = version.data.content;
+            this.$parent.$parent.$emit('update:transcription', this.line.currentTrans);
         }.bind(this));
 
         // make sure that typing in the input doesnt trigger keyboard shortcuts
@@ -23,6 +23,8 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
     },
     mounted() {
         $(this.$el).modal('show');
+        $(this.$el).draggable({handle: '.modal-header'});
+        $(this.$el).resizable();
         this.computeStyles();
     },
     watch: {
@@ -32,18 +34,32 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
     },
     computed: {
         momentDate() {
-            return moment.tz(this.line.transcription.version_updated_at, this.timeZone);
+            return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
-        modalImgSrc() { return this.$parent.part.image.uri; },
-
+        modalImgSrc() {
+            return this.$parent.part.image.uri;
+        },
+        otherTranscriptions() {
+            let a = Object
+                .keys(this.line.transcriptions)
+                .filter(pk=>this.$parent.$parent.comparedTranscriptions
+                                .includes(parseInt(pk)))
+                .map(pk=>{ return {
+                    pk: pk,
+                    name: this.$parent.$parent.part.transcriptions.find(e=>e.pk==pk).name,
+                    content: this.line.transcriptions[pk].content
+                }; });
+            return a;
+        },
         localTranscription: {
             get() {
-                return this.line.transcription.content;
+                return this.line.currentTrans && this.line.currentTrans.content || '';
             },
             set(newValue) {
-                this.line.transcription.content = newValue;
+                this.line.currentTrans.content = newValue;
                 // is this ok ?
-                this.$parent.$parent.$emit('update:transcription', this.line.transcription);
+                this.$parent.$parent.$emit('update:transcription',
+                                           this.line.currentTrans);
             }
         }
     },
@@ -51,11 +67,28 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         close() {
             $(this.$el).modal('hide');
         },
+
+        comparedContent(content) {
+            if (!this.line.currentTrans) return;
+            let diff = Diff.diffChars(this.line.currentTrans.content, content);
+            return diff.map(function(part){
+                let color = part.added ? 'green' :
+                            part.removed ? 'red' : '';
+                if (part.removed) {
+                    return '<small><font color="'+color+'" class="collapse show history-deletion">'+part.value+'</font></small>';
+                } else if (part.added) {
+                    return '<font color="'+color+'">'+part.value+'</font>';
+                } else {
+                    return part.value;
+                }
+            }.bind(this)).join('');
+        },
+
         computeStyles() {
             // this.zoom.reset();
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
-            let hContext = 0.35; // vertical context added around the line, in percentage
+            let hContext = 0.6; // vertical context added around the line, in percentage
 
             let poly = this.line.mask || this.line.baseline;
             let minx = Math.min.apply(null, poly.map(pt => pt[0]));
@@ -76,7 +109,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             }
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
-
             modalImgContainer.style.height = visuHeight+'px';
             img.style.width = this.$parent.part.image.size[0]*ratio +'px';
 
@@ -89,17 +121,18 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
             let input = container.querySelector('#trans-input');
-            let content = this.line.transcription.content;
+            // note: input is not up to date yet
+            let content = this.line.currentTrans && this.line.currentTrans.content || '';
             let ruler = document.createElement('span');
             ruler.style.position = 'absolute';
             ruler.style.visibility = 'hidden';
             ruler.textContent = content;
-            document.body.appendChild(ruler);
+            ruler.style.whiteSpace="nowrap"
+            container.appendChild(ruler);
 
-            let fontHeight = lineHeight;
-            ruler.style.fontSize = fontHeight+'px';
-            input.style.fontSize = fontHeight+'px';
-            input.style.lineHeight = 1.2;
+            let fontSize = Math.round(lineHeight*0.7);  // Note could depend on the script
+            ruler.style.fontSize = fontSize+'px';
+            input.style.fontSize = fontSize+'px';
             input.style.height = 'auto';
 
             if (READ_DIRECTION == 'rtl') {
@@ -112,12 +145,12 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
                 scaleX = Math.max(0.2, scaleX);
                 input.style.transform = 'scaleX('+ scaleX +')';
-                input.style.width = 'calc('+100/scaleX + '% - '+context/scaleX+'px)'; // fit in the container
+                input.style.width = 100/scaleX + '%';
             } else {
                 input.style.transform = 'none';
-                input.style.width = 'calc(100% - '+context+'px)';
+                input.style.width = '100%'; //'calc(100% - '+context+'px)';
             }
-            document.body.removeChild(ruler);  // done its job
+            container.removeChild(ruler);  // done its job
 
             input.focus();
 
@@ -126,7 +159,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             if (this.line.mask) {
                 let maskPoints = this.line.mask.map(
                     pt => Math.round(pt[0]*ratio-left)+ ','+
-                          Math.round(pt[1]*ratio-top)).join(' ');
+                        Math.round(pt[1]*ratio-top)).join(' ');
                 overlay.querySelector('polygon').setAttribute('points', maskPoints);
                 overlay.style.display = 'block';
             } else {

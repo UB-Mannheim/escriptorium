@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     var closed = userProfile.get('closedHelps') || [];
-    
+
     let clBtns = document.querySelectorAll('.help-text .close');
     clBtns.forEach(e => e.addEventListener('click', function(ev) {
         let btn = ev.target.closest('button');
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         userProfile.set('closedHelps', closed);
     }));
-    
+
     if (closed) {
         closed.forEach(function(e, i) {
             let container = document.querySelector('.js-help-container#'+e);

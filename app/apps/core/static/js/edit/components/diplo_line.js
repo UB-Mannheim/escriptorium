@@ -1,9 +1,7 @@
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
-    created() {
-        Vue.nextTick(function() {
-            this.$content = this.$refs.content[0];
-        }.bind(this));
+    mounted() {
+        this.$content = this.$refs.content[0];
     },
     watch: {
         'line.order': function(o, n) {
@@ -38,8 +36,8 @@ var diploLine = LineBase.extend({
         },
         pushUpdate(){
             // set content of input to line content
-            if (this.line.transcription.content != this.$content.textContent) {
-                this.line.transcription.content = this.$content.textContent;
+            if (this.line.currentTrans.content != this.$content.textContent) {
+                this.line.currentTrans.content = this.$content.textContent;
                 this.addToList();
                 // call save of parent method
                 this.$parent.toggleSave();
@@ -48,7 +46,7 @@ var diploLine = LineBase.extend({
         setContent(content){
             let id = this.line.pk;
             $("#" + id).text(content);
-            this.line.transcription.content = content;
+            this.line.currentTrans.content = content;
         },
         onPaste(e) {
             let pastedData = e.clipboardData.getData('text/plain');
@@ -80,10 +78,10 @@ var diploLine = LineBase.extend({
             }
         },
         addToList(){
-            if(this.line.transcription.pk)
-                this.$parent.$emit('update:transcription:content', this.line.transcription);
+            if(this.line.currentTrans.pk)
+                this.$parent.$emit('update:transcription:content', this.line.currentTrans);
             else
-                this.$parent.$emit('create:transcription', this.line.transcription);
+                this.$parent.$emit('create:transcription', this.line.currentTrans);
         }
     }
 });

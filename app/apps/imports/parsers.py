@@ -88,7 +88,8 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    parser = make_parser(self.document, zipedfh, name=self.name)
+                    parser = make_parser(self.document, zipedfh,
+                                         name=self.name)
                     try:
                         for part in parser.parse(override=override):
                             yield part
@@ -104,7 +105,7 @@ class ZipParser(ParserDocument):
 
 class XMLParser(ParserDocument):
     ACCEPTED_SCHEMAS = ()
-    
+
     def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
         if xml_root is not None:
             self.root = xml_root
@@ -374,7 +375,7 @@ class PagexmlParser(XMLParser):
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15/pagecontent.xsd",
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd",
     )
-    
+
     @property
     def total(self):
         # pagexml file can contain multiple parts
