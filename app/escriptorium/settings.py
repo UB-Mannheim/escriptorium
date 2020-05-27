@@ -18,8 +18,8 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-ADMINS = [(os.getenv('DJANGO_ADMIN_NAME', 'admin'),
-           os.getenv('DJANGO_ADMIN_EMAIL', 'admin@example.com'))]
+ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
+           os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]
 
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
@@ -149,7 +149,7 @@ LANGUAGES = [
 
 EMAIL_HOST = 'mail'
 EMAIL_PORT = 25
-DEFAULT_FROM_EMAIL = 'no-reply@escriptorium.fr'
+DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@escriptorium.fr')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
@@ -285,6 +285,7 @@ LOGGING = {
 COMPRESS_ENABLE = True
 ALWAYS_CONVERT = False
 
+FILE_UPLOAD_PERMISSIONS = 0o644
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
@@ -293,11 +294,11 @@ THUMBNAIL_ALIASES = {
         'large': {'size': (1000, 1000), 'crop': False, 'upscale': False}
     }
 }
-THUMBNAIL_OPTIMIZE_COMMAND = {
-    # 'png': '/usr/bin/optipng {filename}',
-    # 'gif': '/usr/bin/optipng {filename}',
-    'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
-}
+# THUMBNAIL_OPTIMIZE_COMMAND = {
+#     'png': '/usr/bin/optipng {filename}',
+#     # 'gif': '/usr/bin/optipng {filename}',
+#     'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
+# }
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
@@ -308,6 +309,7 @@ KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
+KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
 KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
 
 REST_FRAMEWORK = {

@@ -4,25 +4,19 @@ import logging
 import numpy as np
 import os.path
 import redis
-import subprocess
-import torch
 import shutil
-from PIL import Image
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files import File
 from django.db.models import F
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
 from celery import shared_task
-from celery.signals import *
+from celery.signals import before_task_publish, task_prerun, task_success, task_failure
 from easy_thumbnails.files import get_thumbnailer
-from kraken import binarization, pageseg, rpred
-from kraken.lib import vgsl, train as kraken_train, default_specs as kraken_default_specs
-from torch.utils.data import DataLoader
+from kraken.lib import train as kraken_train
 
 from users.consumers import send_event
 
@@ -121,6 +115,10 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -131,20 +129,19 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
-    Line = apps.get_model('core', 'Line')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
-    load = None
+    model = OcrModel.objects.get(pk=model_pk)
     try:
-        model = OcrModel.objects.get(pk=model_pk)
-        modelpath = model.file.path
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         load = model.file.path
-    except ValueError:  # model is empty
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
-        modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
-        model.file = modelpath
+    except ValueError:  # model is empty
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
+        model.file = upload_to
+
+    modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
 
     try:
         model.training = True
@@ -173,6 +170,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                               for bl in part.lines.values_list('baseline', flat=True) if bl]})
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
             output=os.path.join(os.path.split(modelpath)[0], 'version'),
             format_type=None,
@@ -180,8 +178,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             load=load,
             training_data=training_data,
             evaluation_data=evaluation_data,
+            threads=LOAD_THREADS,
             augment=True,
-            threads=0)
+            load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.makedirs(os.path.split(modelpath)[0])
@@ -207,7 +206,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             })
 
         trainer.run(_print_eval)
-        best_version = os.path.join(os.path.dirname(modelpath), f'version_{trainer.stopper.best_epoch}.mlmodel')
+        best_version = os.path.join(os.path.dirname(modelpath),
+                                    f'version_{trainer.stopper.best_epoch}.mlmodel')
         shutil.copy(best_version, modelpath)
 
     except Exception as e:
@@ -250,7 +250,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
     try:
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
-    except:
+    except OcrModel.DoesNotExist:
         model = None
 
     if user_pk:
@@ -284,7 +284,9 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 def train_(qs, document, transcription, model=None, user=None):
-    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
 
     # try to minimize what is loaded in memory for large datasets
     ground_truth = list(qs.values('content',
@@ -324,15 +326,19 @@ def train_(qs, document, transcription, model=None, user=None):
 
     temp_file_prefix = os.path.join(fulldir, 'version')
 
-    trainer = kraken_train.KrakenTrainer.recognition_train_gen(device=DEVICE,
-                                                               load=load,
-                                                               output=temp_file_prefix,
-                                                               format_type=None,
-                                                               training_data=training_data,
-                                                               evaluation_data=evaluation_data,
-                                                               resize='both',
-                                                               augment=True,
-                                                               threads=0)
+    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    trainer = (kraken_train.KrakenTrainer
+               .recognition_train_gen(device=DEVICE,
+                                      load=load,
+                                      output=temp_file_prefix,
+                                      format_type=None,
+                                      training_data=training_data,
+                                      evaluation_data=evaluation_data,
+                                      resize='both',
+                                      threads=LOAD_THREADS,
+                                      augment=True,
+                                      load_hyper_parameters=True))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
@@ -369,8 +375,6 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
 
     redis_.set('training-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
-    Line = apps.get_model('core', 'Line')
-    DocumentPart = apps.get_model('core', 'DocumentPart')
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
     OcrModel = apps.get_model('core', 'OcrModel')
@@ -385,9 +389,9 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
             "id": model.pk,
         })
         qs = (LineTranscription.objects
-          .filter(transcription=transcription,
-                  line__document_part__pk__in=part_pks)
-          .exclude(content__isnull=True))
+              .filter(transcription=transcription,
+                      line__document_part__pk__in=part_pks)
+              .exclude(content__isnull=True))
         train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
         send_event('document', document.pk, "training:error", {
@@ -467,6 +471,8 @@ def before_publish_state(sender=None, body=None, **kwargs):
     instance_id = body[0][0]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
 
+    signal_name = kwargs['signal'].name
+
     try:
         # protects against signal race condition
         if (data[sender]['task_id'] == sender.request.id and
@@ -484,6 +490,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
         update_client_state(instance_id, sender, 'pending')
     except NameError:
         pass
+
 
 @task_prerun.connect
 @task_success.connect
@@ -520,7 +527,7 @@ def done_state(sender=None, body=None, **kwargs):
     }[signal_name]
     if status == 'error':
         # remove any pending task down the chain
-        data = {k:v for k,v in data.items() if v['status'] != 'pending'}
+        data = {k: v for k, v in data.items() if v['status'] != 'pending'}
     redis_.set('process-%d' % instance_id, json.dumps(data))
 
     if status == 'done':

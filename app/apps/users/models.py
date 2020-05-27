@@ -24,28 +24,32 @@ class User(AbstractUser):
         _('first connection'),
         default=True
         )
-    
+
+
+    class Meta:
+        permissions = (('can_invite', 'Can invite users'),)
+
     def get_full_name(self):
         if self.first_name and self.last_name:
             return super().get_full_name()
         else:
             return self.username
-    
+
     def notify(self, message, id=None, level='info', link=None):
         if id is None:
             id = hash(message)
         return send_notification(self.pk, message, id=id, level=level, link=link)
-    
+
     def get_document_store_path(self):
         store_path = os.path.join(settings.MEDIA_ROOT, 'users', str(self.pk))
         if not os.path.isdir(store_path):
             os.makedirs(store_path)
         return store_path
-    
+
 
 class ResearchField(models.Model):
     name = models.CharField(max_length=128)
-    
+
     def __str__(self):
         return self.name
 
@@ -66,7 +70,7 @@ class Invitation(models.Model):
         (STATE_RECEIVED, _("Received")),
         (STATE_ACCEPTED, _("Accepted")),
     )
-    
+
     sender = models.ForeignKey(User, on_delete=models.PROTECT,
                                related_name='invitations_sent', editable=False)
     recipient_first_name = models.CharField(max_length=256, null=True, blank=True)
@@ -84,13 +88,13 @@ class Invitation(models.Model):
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     workflow_state = models.SmallIntegerField(choices=STATE_CHOICES, default=STATE_CREATED,
                                               editable=False)
-    
+
     class Meta:
         ordering = ('-created_at',)
-    
+
     def __str__(self):
         return '%s -> %s' % (self.sender, self.recipient_email)
-    
+
     def send(self, request):
         accept_url = request.build_absolute_uri(
             reverse("accept-invitation", kwargs={"token": self.token.hex}))
@@ -109,17 +113,17 @@ class Invitation(models.Model):
             self.recipient_email,
             context=context,
             result_interface=('users', 'Invitation', self.id))
-    
+
     def email_sent(self):
         if self.workflow_state < self.STATE_SENT:
             self.workflow_state = self.STATE_SENT
             self.sent_at = datetime.now()
             self.save()
-    
+
     def email_error(self):
         self.workflow_state = self.STATE_ERROR
         self.save()
-    
+
     def accept(self, user):
         self.recipient = user
         self.workflow_state = self.STATE_ACCEPTED

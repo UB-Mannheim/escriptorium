@@ -1,7 +1,6 @@
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
     created() {
-        // this.timeZone = moment.tz.guess();
         Vue.nextTick(function() {
             this.$content = this.$refs.content[0];
         }.bind(this));
@@ -19,17 +18,36 @@ var diploLine = LineBase.extend({
                 else {
                     return this.line.region
                 }
+            },
+    watch: {
+        'line.order': function(o, n) {
+            // make sure it's at the right place,
+            // in case it was just created or the ordering got recalculated
+            let index = Array.from(this.$el.parentNode.children).indexOf(this.$el);
+            if (index != this.line.order) {
+                this.$el.parentNode.insertBefore(
+                    this.$el,
+                    this.$el.parentNode.children[this.line.order]);
             }
+        }
     },
     methods: {
         startEdit(ev) {
+            // if we are selecting text we don't want to start editing
+            // to be able to do multiline selection
+            if (document.getSelection().toString()) {
+                return true;
+            }
             this.$content.setAttribute('contenteditable', true);
-            this.$content.focus();
+            this.$content.focus();  // needed in case we edit from the panel
             this.$parent.setEditLine(this.line);
             this.$content.style.backgroundColor =  '#F8F8F8';
+            this.$parent.$parent.blockShortcuts = true;
         },
         stopEdit(ev) {
+            this.$content.setAttribute('contenteditable', false);
             this.$content.style.backgroundColor = 'white';
+            this.$parent.$parent.blockShortcuts = false;
             this.pushUpdate();
         },
         pushUpdate(){
@@ -54,7 +72,6 @@ var diploLine = LineBase.extend({
                 return
             } else {
                 e.preventDefault();
-                document.execCommand('inserttext', false, pasted_data_split[0]);
 
                 if (pasted_data_split[pasted_data_split.length - 1] == "")
                     pasted_data_split.pop();
