@@ -76,7 +76,12 @@ const partStore = {
         // first create a default transcription for every line
         this.lines.forEach(function(line) {
             this.loadTranscription(line, {
-                line: line.pk, transcription: transcription, content: ''
+                line: line.pk,
+                transcription: transcription,
+                content: '',
+                version_author: null,
+                version_source: null,
+                version_updated_at: null
             });
         }.bind(this));
         //  then fetch all content page by page
@@ -112,11 +117,9 @@ const partStore = {
         this.push(uri, data, method=method)
             .then((response)=>response.json())
             .then((data) => {
-                lineTranscription.pk = data.pk;
-                lineTranscription.content = data.content;
-                lineTranscription.versions = data.versions;
-                lineTranscription.version_author = data.version_author;
-                lineTranscription.version_source = data.version_source;
+                let line = this.lines.find(l=>l.pk == lineTranscription.line);
+                this.loadTranscription(line, data);
+                line.currentTrans = data;
             })
             .catch(function(error) {
                 console.log('couldnt update transcription!', error);
@@ -138,7 +141,10 @@ const partStore = {
                     line: newLine.pk,
                     transcription: transcription,
                     content: '',
-                    versions: []
+                    versions: [],
+                    version_author: '',
+                    version_source: '',
+                    version_updated_at: null
                 };
                 this.lines.push(newLine);
                 this.recalculateOrdering();
@@ -165,7 +171,10 @@ const partStore = {
                         line: newLine.pk,
                         transcription: transcription,
                         content: '',
-                        versions: []
+                        versions: [],
+                        version_author: '',
+                        version_source: '',
+                        version_updated_at: null
                     }
                     createdLines.push(newLine)
                     this.lines.push(newLine);

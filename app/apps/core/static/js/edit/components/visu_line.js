@@ -27,13 +27,13 @@ const visuLine = LineBase.extend({
 
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
+            return 10+'px';
         },
 
         computeTextLength() {
             if (!this.line.currentTrans) return;
             content = this.line.currentTrans.content;
             if (content) {
-
                 /* this.polyElement.setAttribute('stroke', 'none');
                  * this.pathElement.setAttribute('stroke', 'none');
                  */

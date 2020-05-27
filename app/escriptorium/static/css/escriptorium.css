@@ -530,5 +530,5 @@ i.panel-icon {
 .line-content {
     margin-bottom: 0px;
     overflow-wrap: break-word;
-    /* flex-basis: 85%; */
+    flex-basis: 85%;
 }

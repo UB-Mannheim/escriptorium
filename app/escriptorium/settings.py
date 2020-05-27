@@ -10,8 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
-import os, sys
-from kombu import Queue, Exchange
+import os
+import sys
+import subprocess
+from kombu import Queue
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -79,7 +81,7 @@ ROOT_URLCONF = 'escriptorium.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(PROJECT_ROOT, 'templates'),],
+        'DIRS': [os.path.join(PROJECT_ROOT, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -173,7 +175,7 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERYD_ACKS_LATE=True
+CELERYD_ACKS_LATE = True
 
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
@@ -189,7 +191,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
-    #'escriptorium.celery.debug_task': '',
+    # 'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     'users.tasks.async_email': {'queue': 'low-priority'},
 }
@@ -203,7 +205,7 @@ CHANNEL_LAYERS = {
     },
 }
 # fixes https://github.com/django/channels/issues/1240:
-DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024 # value in bytes (so 150Mb)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024  # value in bytes (so 150Mb)
 
 
 # Static files (CSS, JavaScript, Images)
@@ -259,12 +261,12 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
-            # 'filters': ['require_debug_false'],  # make sure to set EMAIL_BACKEND in local_settings
+            # 'filters': ['require_debug_false'],  # make sure to set EMAIL_BACKEND
             'class': 'django.utils.log.AdminEmailHandler'
         }
     },
     'loggers': {
-        'kraken':{
+        'kraken': {
             'handlers': ['kraken_logs', 'console', 'mail_admins'],
         },
         'core': {
@@ -272,13 +274,13 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-	    'handlers': ['file', 'console', 'mail_admins']
-	},
-	'django.server': {
-	    'handlers': ['django.server'],
-	    'level': 'INFO',
-	    'propagate': False,
-	}
+            'handlers': ['file', 'console', 'mail_admins']
+        },
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': 'INFO',
+            'propagate': False,
+        }
     },
 }
 
@@ -303,7 +305,6 @@ THUMBNAIL_ALIASES = {
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
-import subprocess
 KRAKEN_VERSION = subprocess.getoutput('kraken --version')
 
 IIIF_IMPORT_QUALITY = 'full'
@@ -314,7 +315,7 @@ KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        #'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
         'rest_framework.permissions.IsAuthenticated'
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',

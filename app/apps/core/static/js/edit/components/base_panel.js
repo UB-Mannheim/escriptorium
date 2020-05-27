@@ -6,17 +6,15 @@ const BasePanel = Vue.extend({
         };
     },
     updated() {
-        this.refresh();
+        if (this.part.loaded) this.refresh();
     },
     methods: {
         setRatio() {
             this.ratio = this.$el.firstChild.clientWidth / this.part.image.size[0];
         },
         refresh() {
-            Vue.nextTick(function() {
-                this.setRatio();
-                this.updateView();
-            }.bind(this));
+            this.setRatio();
+            this.updateView();
         },
         updateView() {}
     }
