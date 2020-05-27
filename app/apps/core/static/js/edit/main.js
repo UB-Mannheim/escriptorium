@@ -108,8 +108,8 @@ var partVM = new Vue({
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));
 
-        this.$on('line:move_to', function(linePK,to, cb) {
-            this.part.move(linePK,to, cb);
+        this.$on('line:move_to', function(linePK,to,region, cb) {
+            this.part.move(linePK,to, region, cb);
         }.bind(this));
 
         document.addEventListener('keydown', function(event) {
