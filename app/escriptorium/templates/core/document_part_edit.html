@@ -20,7 +20,8 @@
     </select>
     <button v-if="part.loaded"
             type="button"
-            class="btn btn-primary fas fa-list ml-1"
+            class="btn btn-primary fas fa-cog ml-1"
+            title="{% trans "Transcription management" %}"
             data-toggle="modal"
             data-target="#transcriptionsManagement"></button>
     <div v-if="part.loaded"
@@ -55,7 +56,7 @@
                                 v-bind:data-trPk="trans.pk"
                                 @click="deleteTranscription"
                                 class="btn btn-danger fas fa-trash"
-                                title="{% trans "Completely remove the transcription and all of it's content!"  %}"></button>
+                                title="{% trans "Completely remove the transcription and all of it's content!&#10;You can not remove the manual or the current transcription."  %}"></button>
                     </div>
                 </div>
             </div>
@@ -90,13 +91,9 @@
               v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
               title="{% trans "Diplomatic" %}"><i class="click-through fas fa-list-ol"></i></button>
   </div>
-  {% endblock %}
+{% endblock %}
 
-
-
-
-
-  {% block tab_content %}
+{% block tab_content %}
   <div class="row">
       <div class="col-sides">
           {% if document.read_direction == 'rtl' %}
@@ -461,18 +458,18 @@
                                                      data-toggle="collapse"
                                                      data-target="#compare-help"
                                                      class="btn btn-info fas fa-question help nav-item ml-2"></button>
-                                            <div id="compare-help" class="alert alert-primary help-text hide">
+                                            <div id="compare-help" class="alert alert-primary help-text collapse">
                                                 <div>{% include 'includes/help/compare_transcriptions.html' %}</div>
                                             </div>
                                         </div>
-                                        <div class="card-body compare-show collapse show d-table">
+                                        <div class="card-body compare-show collapse show">
                                             <div v-for="trans in otherTranscriptions"
                                                  v-bind:key="'TrC' + trans.pk"
                                                  class="d-table-row">
                                                 <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
-                                                <div class="d-table-cell text-muted col-auto">
+                                                <div class="d-table-cell text-muted text-nowrap col" title="{% trans "Transcription name" %}"><small>
                                                     ${ trans.name }
-                                                    <span v-if="trans.pk == $parent.$parent.selectedTranscription">{% trans "(current)" %}</span>
+                                                    <span v-if="trans.pk == $parent.$parent.selectedTranscription">{% trans "(current)" %}</span></small>
                                                 </div>
                                             </div>
                                         </div>

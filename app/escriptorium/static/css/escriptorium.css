@@ -434,6 +434,7 @@ i.panel-icon {
 #trans-modal #versions-help, #compare-help {
     position: absolute;
     right: 0;
+    z-index: 1;
 }
 
 #trans-rule {
