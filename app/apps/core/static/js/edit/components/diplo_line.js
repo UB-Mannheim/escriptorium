@@ -6,19 +6,20 @@ var diploLine = LineBase.extend({
         }.bind(this));
     },
     computed: {
-            region() {
-                let idx = this.$parent.part.lines.indexOf(this.line);
-                if (idx) {
-                    let pr = this.$parent.part.lines[idx - 1].region;
-                    if (this.line.region == pr)
-                        return "";
-                    else
-                        return this.line.region
-                }
-                else {
+        region()
+        {
+            let idx = this.$parent.part.lines.indexOf(this.line);
+            if (idx) {
+                let pr = this.$parent.part.lines[idx - 1].region;
+                if (this.line.region == pr)
+                    return "";
+                else
                     return this.line.region
-                }
-            },
+            } else {
+                return this.line.region
+            }
+        }
+    },
     watch: {
         'line.order': function(o, n) {
             // make sure it's at the right place,
