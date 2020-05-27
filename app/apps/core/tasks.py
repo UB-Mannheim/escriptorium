@@ -153,7 +153,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         qs = DocumentPart.objects.filter(pk__in=part_pks)
 
         ground_truth = list(qs.prefetch_related('lines'))
-        np.random.shuffle(ground_truth)
+        np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
         training_data = []
@@ -293,8 +293,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                   baseline=F('line__baseline'),
                                   mask=F('line__mask'),
                                   image=F('line__document_part__image')))
-    # is it a good idea with a very large number of lines?
-    np.random.shuffle(ground_truth)
+
+    np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
 
     partition = int(len(ground_truth) / 10)
 
