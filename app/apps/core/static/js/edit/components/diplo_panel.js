@@ -116,14 +116,9 @@ var DiploPanel = BasePanel.extend({
         updateView() {
             this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
-        yourFn(){
-            var range = document.createRange();
-            var selection = window.getSelection();
-            range.selectNodeContents(this.$el);
-
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
+        disableShortcuts(e){
+          this.$parent.blockShortcuts = true;
+        },
     },
 
 });

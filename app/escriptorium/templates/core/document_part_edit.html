@@ -318,7 +318,7 @@
       </keep-alive>
       <keep-alive>
           <DiploPanel v-if="show.diplomatic" v-bind:part="part" ref="diploPanel" inline-template>
-              <div class="col panel">
+              <div class="col panel" @mouseover="disableShortcuts" >
                   <div class="tools">
                       <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
                       <button v-if="save" @click="toggleSave" class="btn btn-success" id="save-diplomatic" title="{% trans "Save Line content" %}">Save</button>
