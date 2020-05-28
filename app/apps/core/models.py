@@ -23,6 +23,7 @@ from django.utils.translation import gettext_lazy as _
 
 from celery.task.control import inspect, revoke
 from celery import chain
+from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
 from kraken import blla, rpred
@@ -32,11 +33,12 @@ from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
 
 from versioning.models import Versioned
-from core.tasks import (segtrain, train, binarize, redis_,
+from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
 from users.consumers import send_event
 
+redis_ = get_redis_connection()
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -131,7 +133,7 @@ class DocumentManager(models.Manager):
                            & (Q(shared_with_users=user)
                               | Q(shared_with_groups__in=user.groups.all()))))
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
-                .prefetch_related('shared_with_groups')
+                .prefetch_related('shared_with_groups', 'transcriptions')
                 .select_related('typology')
                 .distinct())
 

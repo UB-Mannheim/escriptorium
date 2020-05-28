@@ -1,12 +1,13 @@
 import bleach
 import logging
-import json
 
 from django.conf import settings
+
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
 
-from core.models import *
+from users.models import User
+from core.models import Document, DocumentPart, Block, Line, Transcription, LineTranscription
 
 logger = logging.getLogger(__name__)
 
@@ -119,8 +120,6 @@ class BlockSerializer(serializers.ModelSerializer):
 
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):
-    # transcription = TranscriptionSerializer()
-
     class Meta:
         model = LineTranscription
         fields = ('pk', 'line', 'transcription', 'content',
@@ -151,7 +150,8 @@ class LineSerializer(serializers.ModelSerializer):
     pk = serializers.IntegerField(required=False)
     region = serializers.PrimaryKeyRelatedField(
         queryset=Block.objects.all(),
-        source='block', allow_null=True)
+        required=False,
+        source='block')
 
     class Meta:
         model = Line
@@ -172,9 +172,6 @@ class LineMoveSerializer(serializers.ModelSerializer):
 
     def move(self):
         self.line.to(self.validated_data['index'])
-
-        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
-        list_serializer_class = LineListSerializer
 
 
 class LineOrderSerializer(serializers.ModelSerializer):

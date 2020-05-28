@@ -1,7 +1,13 @@
 from django.urls import include, path
 from rest_framework_nested import routers
 
-from api.views import *
+from api.views import (DocumentViewSet,
+                       UserViewSet,
+                       PartViewSet,
+                       DocumentTranscriptionViewSet,
+                       BlockViewSet,
+                       LineViewSet,
+                       LineTranscriptionViewSet)
 
 router = routers.DefaultRouter()
 router.register(r'documents', DocumentViewSet)
