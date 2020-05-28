@@ -16,7 +16,7 @@ INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
 MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
 INTERNAL_IPS = ['127.0.0.1',]
 
-# only needed in developement
+# only needed in development
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
@@ -30,7 +30,7 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.headers.HeadersPanel',
     'debug_toolbar.panels.request.RequestPanel',
     'debug_toolbar.panels.sql.SQLPanel',
-#    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+#   'debug_toolbar.panels.staticfiles.StaticFilesPanel',
     'debug_toolbar.panels.templates.TemplatesPanel',
     'debug_toolbar.panels.cache.CachePanel',
     'debug_toolbar.panels.signals.SignalsPanel',
