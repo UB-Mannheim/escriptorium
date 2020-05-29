@@ -1,6 +1,6 @@
 from django.core import mail
 from django.contrib.auth import get_user_model, get_user
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -16,7 +16,7 @@ class AuthTestCase(TestCase):
         self.user = User.objects.create_user(username="test",
                                              password="test",
                                              email="test@test.com")
-    
+
     def test_user_model(self):
         self.assertEqual(self.user.__class__, CustomUser)
 
@@ -30,21 +30,21 @@ class AuthTestCase(TestCase):
         field = ResearchField.objects.create(name='test field')
         user.fields.add(field)
         self.assertEqual(str(field), 'test field')
-    
+
     def test_login(self):
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(1):
             response = self.client.get(reverse('login'))
         self.assertEqual(response.status_code, 200)
-        
+
         with self.assertNumQueries(9):
             response = self.client.post(reverse('login'),
-                                        {'username':"test",
+                                        {'username': "test",
                                          'password': "test"})
         # TODO eventually: test errors
         self.assertNotContains(response, "error", status_code=302)
         user = get_user(self.client)
         self.assertTrue(user.is_authenticated)
-    
+
     def test_logout(self):
         self.client.login(username="test", password="test")
         with self.assertNumQueries(4):
@@ -56,37 +56,58 @@ class AuthTestCase(TestCase):
 
 class InvitationTestCase(TestCase):
     def setUp(self):
-        self.sender = User.objects.create_user(username='sender',
-                                               password='test',
-                                               email='sender@test.com')
+        self.sender = User.objects.create_user(
+            username='sender',
+            password='test',
+            email='sender@test.com')
+        perm = Permission.objects.get(codename='can_invite')
+        self.sender.user_permissions.add(perm)
         self.group = Group.objects.create(name='testgroup')
         self.sender.groups.add(self.group)
 
+    def test_can_invite_perm(self):
+        self.restricted = User.objects.create_user(
+            username='restrict',
+            password='test',
+            email='restrict@test.com')
+
+        self.client.force_login(self.restricted)
+
+        response = self.client.get(reverse('send-invitation'))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.post(reverse('send-invitation'),
+                                    {"recipient_email": "recipient@test.com",
+                                     "recipient_first_name": "john",
+                                     "recipient_last_name": "doe",
+                                     "group": self.group.pk})
+        self.assertEqual(response.status_code, 403)
+
     def test_send(self):
         self.client.login(username='sender', password='test')
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(5):
             response = self.client.get(reverse('send-invitation'))
         self.assertEqual(response.status_code, 200)
-        
-        with self.assertNumQueries(7):
+
+        with self.assertNumQueries(9):
             response = self.client.post(reverse('send-invitation'),
                                         {"recipient_email": "recipient@test.com",
                                          "recipient_first_name": "john",
                                          "recipient_last_name": "doe",
                                          "group": self.group.pk})
-        
+
         # TODO eventually: test errors
         self.assertNotContains(response, "error", status_code=302)
-        
+
         self.assertEqual(Invitation.objects.count(), 1)
         invitation = Invitation.objects.first()
-        
+
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue("invites" in mail.outbox[0].subject)
         self.assertTrue("recipient@test.com" in mail.outbox[0].recipients())
         url = reverse("accept-invitation", kwargs={"token": invitation.token.hex})
         self.assertTrue(url in mail.outbox[0].body)
-        
+
         self.assertEqual(invitation.sender, self.sender)
         self.assertEqual(invitation.recipient_email, "recipient@test.com")
         self.assertEqual(invitation.group, self.group)
@@ -117,7 +138,7 @@ class InvitationTestCase(TestCase):
                 'password1': 'test',
                 'password2': 'test',
             })
-        
+
         # TODO eventually: test errors
         self.assertNotContains(response, "error", status_code=302)
 
