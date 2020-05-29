@@ -226,10 +226,14 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-update',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             resp = self.client.put(uri, {'lines': [
-                {'pk': self.line.pk, 'mask': '[[60, 40], [60, 50], [90, 50], [90, 40]]'},
-                {'pk': self.line2.pk, 'mask': '[[50, 40], [50, 30], [70, 30], [70, 40]]'},
+                {'pk': self.line.pk,
+                 'mask': '[[60, 40], [60, 50], [90, 50], [90, 40]]',
+                 'region': None},
+                {'pk': self.line2.pk,
+                 'mask': '[[50, 40], [50, 30], [70, 30], [70, 40]]',
+                 'region': self.block.pk}
             ]}, content_type='application/json')
         self.assertEqual(resp.status_code, 200, resp.content)
         self.line.refresh_from_db()
