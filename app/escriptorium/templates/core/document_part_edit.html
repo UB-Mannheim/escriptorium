@@ -330,8 +330,8 @@
                                  v-bind:key="line.pk"   inline-template>
                           <div class="d-flex flex-column diplomatic-line">
                               <div  class="d-flex flex-row">
-                                  <div class ="table-row line-number " class="w-10">${region}</div>
-                                  <div class ="table-row line-order line-number" class="w-10" v-bind:draggable="true"
+                                  <div class ="table-row line-region " class="w-10">${region}</div>
+                                  <div class ="table-row line-order" class="w-10" v-bind:draggable="true"
                                     @dragstart="$parent.dragStart(line,$event)"
                                     @dragover.prevent
                                     @dragend="$parent.dragEnd"
