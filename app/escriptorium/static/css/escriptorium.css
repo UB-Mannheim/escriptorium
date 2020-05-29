@@ -501,7 +501,7 @@ i.panel-icon {
     padding-right: 2%;
 
 }
-.line-order{
+.line-number{
     user-select: none;
     flex-basis: 10%;
     text-align: center;
