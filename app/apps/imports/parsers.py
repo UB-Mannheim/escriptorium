@@ -1,12 +1,12 @@
-from lxml import etree
+import json
 import logging
 import os.path
 import requests
-import sys
 import time
 import uuid
-import zipfile
 import warnings
+import zipfile
+from lxml import etree
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -15,7 +15,13 @@ from django.forms import ValidationError
 from django.utils.translation import gettext as _
 from django.utils.functional import cached_property
 
-from core.models import *
+from core.models import (Block,
+                         Line,
+                         Transcription,
+                         LineTranscription,
+                         DocumentPart,
+                         Metadata,
+                         DocumentMetadata)
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -213,7 +219,7 @@ class XMLParser(ParserDocument):
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
                                 if block_id.startswith("eSc_textblock_"):
-                                    internal_id = int(block_id[len("eSc_textblock_") :])
+                                    internal_id = int(block_id[len("eSc_textblock_"):])
                                     block = Block.objects.get(
                                         document_part=part, pk=internal_id
                                     )
@@ -247,7 +253,7 @@ class XMLParser(ParserDocument):
                                     if line_id.startswith("eSc_line_"):
                                         line = Line.objects.get(
                                             document_part=part,
-                                            pk=int(line_id[len("eSc_line_") :]),
+                                            pk=int(line_id[len("eSc_line_"):]),
                                         )
                                     else:
                                         line = Line.objects.get(
@@ -305,9 +311,9 @@ class AltoParser(XMLParser):
                 "Description/sourceImageInformation/fileName", self.root.nsmap
             ).text
         except (IndexError, AttributeError) as e:
-            raise ParseError(
-                "The alto file should contain a Description/sourceImageInformation/fileName tag for matching."
-            )
+            raise ParseError("""
+The alto file should contain a Description/sourceImageInformation/fileName tag for matching.
+            """)
         else:
             return filename
 
@@ -387,9 +393,9 @@ class PagexmlParser(XMLParser):
         try:
             filename = pageTag.get("imageFilename")
         except (IndexError, AttributeError) as e:
-            raise ParseError(
-                "The PageXml file should contain an attribute imageFilename in Page tag for matching."
-            )
+            raise ParseError("""
+The PageXml file should contain an attribute imageFilename in Page tag for matching.
+            """)
         else:
             return filename
 
