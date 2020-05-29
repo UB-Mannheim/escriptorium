@@ -105,6 +105,7 @@ var DiploPanel = BasePanel.extend({
                 this.dragging = -1;
                 this.lineDragged = null;
             }.bind(this));
+            this.$children[this.dragging].$el.querySelector('.line-order').removeAttribute('style');
         },
         moveLine(from, to) {
             if (to === -1) {

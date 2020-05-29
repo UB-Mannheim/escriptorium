@@ -318,7 +318,7 @@
       </keep-alive>
       <keep-alive>
           <DiploPanel v-if="show.diplomatic" v-bind:part="part" ref="diploPanel" inline-template>
-              <div class="col panel" @mouseover="disableShortcuts" >
+              <div class="col panel" @mouseover="disableShortcuts">
                   <div class="tools">
                       <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
                       <button v-if="save" @click="toggleSave" class="btn btn-success" id="save-diplomatic" title="{% trans "Save Line content" %}">Save</button>
@@ -330,8 +330,13 @@
                                  v-bind:key="line.pk"   inline-template>
                           <div class="d-flex flex-column diplomatic-line">
                               <div  class="d-flex flex-row">
-                                  <div class ="table-row line-order" class="w-10">${region}</div>
-                                  <div class ="table-row line-order" class="w-10">${line.order + 1}</div>
+                                  <div class ="table-row line-number " class="w-10">${region}</div>
+                                  <div class ="table-row line-order line-number" class="w-10" v-bind:draggable="true"
+                                    @dragstart="$parent.dragStart(line,$event)"
+                                    @dragover.prevent
+                                    @dragend="$parent.dragEnd"
+                                    @drop="$parent.dragFinish(line,$event)"
+                                  >${line.order + 1}</div>
                                   <div v-bind:id="line.pk"
                                        @mouseup="startEdit"
                                        @focusout="stopEdit"
@@ -341,11 +346,6 @@
                                        @keydown="$parent.editNextPrevious"
                                        @select="stopEdit"
                                        @paste="onPaste"
-                                       v-bind:draggable="true"
-                                       @dragstart="$parent.dragStart(line,$event)"
-                                       @dragover.prevent
-                                       @dragend="$parent.dragEnd"
-                                       @drop="$parent.dragFinish(line,$event)"
                                        class="table-row line-content {{ document.default_text_direction }}"
                                        ref="content">${line.transcription.content}</div>
                               </div>
