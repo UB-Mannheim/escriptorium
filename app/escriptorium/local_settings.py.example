@@ -9,8 +9,10 @@ DATABASES = {
     'default': {
         'ENGINE': os.getenv('SQL_ENGINE', 'django.db.backends.postgresql'),
         'NAME': os.getenv('SQL_DATABASE', 'escriptorium'),
-        'USER': os.getenv('POSTGRES_USER', 'provideyourusernamehere'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'provideyourpasswordhere'),        
+
+        # Needed for some configuration
+        # 'USER': os.getenv('POSTGRES_USER', 'provideyourusernamehere'),
+        # 'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'provideyourpasswordhere'),
     }
 }
 
