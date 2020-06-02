@@ -68,14 +68,14 @@ var DiploPanel = BasePanel.extend({
                 }
                 this.toggleSave();
             }
-            // ctrl and arrow up or left go to the end char of last line
-            if ((ev.ctrlKey || ev.metaKey) && (ev.keyCode == 39 || ev.keyCode == 40)) {
+            // ctrl and home to go to the first line
+            if (ev.ctrlKey && ev.keyCode == 36){
+                this.updateEditLine(0);
             }
-            // first line
-            if ((ev.ctrlKey || ev.metaKey) && (ev.keyCode == 38 || ev.keyCode == 37)) {
-
+            // ctrl and end to go to the last line
+            if (ev.ctrlKey && ev.keyCode == 35){
+                this.updateEditLine(this.part.lines.length -1);
             }
-
 
         },
 
