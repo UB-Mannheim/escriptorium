@@ -1,9 +1,10 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles bootstrap thumbnail %}
-
+{% load compress %}
 {% block styles %}
 <link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
 <link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
+<link href="{% static 'vendor/introjs/introjs.css' %}" rel="stylesheet" type="text/css">
 
 {# custom jquery ui build with draggable and resizable only #}
 <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
@@ -12,7 +13,7 @@
 
 {% block nav-images-active %}active{% endblock %}
 
-{% block nav_content %}
+{% block tab_content %}
 <div id="dropzone">
   <form action="{% url 'api:part-list' document_pk=document.pk %}" class="dropzone dz-clickable mb-2" id="document-image-dropzone">
     {% csrf_token %}
@@ -30,19 +31,34 @@
         <i class="fas fa-file-import mr-1"></i>{% trans "Import" %}
       </button>
       <div class="dropdown-menu">
-        <a data-proc="import-iiif" class="js-proc-selected dropdown-item" href="#">IIIF</a>
-        <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">XML</a>
+        <a data-proc="import-iiif" class="js-proc-selected dropdown-item" href="#">Images (IIIF)</a>
+        <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">Transcriptions (XML)</a>
       </div>
     </div>
     {% with import=import_form.current_import %}
-    <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %} 
+    <span class="import-counter-container {% if import and import.ongoing %}ongoing{% endif %}">{% trans "Importing" %}
       <span id="import-counter">{% if import %}{% if import.total %}{{import.processed}}/{{import.total}}{% else %}pending{% endif %}{% endif %}</span>...
-      <button id="cancel-import" class="btn btn-sm btn-warning"><i class="fas fa-ban"></i></button>
+      <button id="cancel-import" class="btn btn-sm btn-warning mr-1"><i class="fas fa-ban"></i></button>
     </span>
     {% endwith %}
-    {% if user.is_staff %}
+
+    {% if document.transcriptions.count %}
+    <button id="document-export" type="button" class="btn btn-sm btn-primary js-proc-selected ml-1" title="{% trans "Export" %}" data-proc="export">
+      <i class="fas fa-file-export mr-1"></i>{% trans "Export" %}
+    </button>
+    {% endif %}
+
+    {% if perms.core.can_train %}
     {% with training_model=document.training_model %}
-    <button id="train-selected" class="btn btn-sm btn-primary js-proc-selected ml-auto {% if training_model %}blink{% endif %}" data-proc="train" title="{% trans 'Train a model from selected images.' %}"><i class="fas fa-subway mr-1"></i>{% trans "Train" %}</button>
+    <div class="btn-group ml-auto mr-1" role="group">
+    <button id="train-selected" type="button" class="btn btn-sm btn-primary dropdown-toggle {% if training_model %}blink{% endif %}" title="{% trans 'Train a segmenter/recognizer model.' %}" data-toggle="dropdown">
+      <i class="fas fa-subway mr-1"></i>{% trans "Train" %}
+    </button>
+    <div class="dropdown-menu">
+      <a data-proc="segtrain" class="js-proc-selected dropdown-item" href="#">Segmenter</a>
+      <a data-proc="train" class="js-proc-selected dropdown-item" href="#">Recognizer</a>
+    </div>
+    </div>
     <button id="cancel-training" class="btn btn-sm btn-warning {% if not training_model %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
     {% endwith %}
     {% endif %}
@@ -68,7 +84,7 @@
       <img style="object-fit: cover;" width="180" height="180" class="card-img-top lazy">
       <div class="card-btns">
         <button class="btn card-btn btn-warning js-cancel" title="{% trans 'Cancel tasks' %}"><i class="fas fa-ban"></i></button>
-        <button class="btn card-btn btn-info js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
+        <button class="btn card-btn btn-info js-edit" id="js-edit" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></button>
       </div>
     </div>
     <div class="card-body">
@@ -87,9 +103,11 @@
 
 {# Process wizards #}
 {% include 'core/wizards/import_iiif.html' with proc='import-iiif' %}
-{% include 'core/wizards/import_xml.html' with proc='import-xml' %}
+{% include 'core/wizards/import_file.html' with proc='import-xml' %}
+{% include 'core/wizards/export.html' with proc='export' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
+{% include 'core/wizards/segtrain.html' with proc='segtrain' %}
 {% include 'core/wizards/train.html' with proc='train' %}
 {% include 'core/wizards/transcribe.html' with proc='transcribe' %}
 {% endblock %}
@@ -98,7 +116,8 @@
 {{ block.super }}
 <script type="text/javascript">
 'use strict';
-var DOCUMENT_ID = {{ document.pk }};
+const DOCUMENT_ID = {{ document.pk }};
+const onboarding  = "{{ onboarding }}";
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
@@ -106,9 +125,30 @@ $(document).ready(function() {
   });
 });
 </script>
-<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-<script src="{% static 'js/image_cards.js' %}"></script>
-<script src="{% static 'js/lazyload.js' %}"></script>
-<script src="{% static 'js/help.js' %}"></script>
+{% compress js file document_images %}
+
+    <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+    <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'vendor/introjs/intro.js' %}"></script>
+    <script src="{% static 'js/image_cards.js' %}"></script>
+    <script src="{% static 'js/lazyload.js' %}"></script>
+    <script src="{% static 'js/help.js' %}"></script>
+    <script src="{% static 'js/onboarding.js' %}"></script>
+{% endcompress %}
+
+<script type="text/javascript">
+if (onboarding == "True")
+{
+    document_images_intro.start();
+    document_images_intro.onexit(function() {
+        exitonboarding();
+    });
+
+    document_images_intro.oncomplete(function() {
+        exitonboarding();
+    });
+
+}
+</script>
+
 {% endblock %}

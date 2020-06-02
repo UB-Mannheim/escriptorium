@@ -1,33 +1,41 @@
 import json
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.conf import settings
 from django.db import transaction
-from django.db.models import Max
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render
-from django.utils.text import slugify
+from django.db.models import Max, Q
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import CreateView, UpdateView, DeleteView
 
-from easy_thumbnails.files import get_thumbnailer
+from core.models import (Document, DocumentPart, Metadata,
+                         OcrModel, AlreadyProcessingException)
+from core.forms import (DocumentForm, MetadataFormSet, DocumentShareForm,
+                        UploadImageForm, DocumentProcessForm)
+from imports.forms import ImportForm, ExportForm
 
-from versioning.models import NoChangeException
-from core.models import Document, DocumentPart
-from core.forms import *
-from imports.forms import ImportForm
+
+logger = logging.getLogger(__name__)
 
 
 class Home(TemplateView):
     template_name = 'core/home.html'
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['VERSION_DATE'] = settings.VERSION_DATE
+        context['KRAKEN_VERSION'] = settings.KRAKEN_VERSION
+        return context
+
 
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
     paginate_by = 10
-    
+
     def get_queryset(self):
         return (Document.objects
                 .for_user(self.request.user)
@@ -38,7 +46,7 @@ class DocumentsList(LoginRequiredMixin, ListView):
 class DocumentMixin():
     def get_success_url(self):
         return reverse('document-update', kwargs={'pk': self.object.pk})
-    
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request
@@ -46,7 +54,9 @@ class DocumentMixin():
 
     def get_metadata_formset(self, *args, instance=None):
         if instance:
-            qs = Metadata.objects.filter(Q(public=True) | Q(documentmetadata__document=instance)).distinct()
+            qs = (Metadata.objects.filter(Q(public=True)
+                                          | Q(documentmetadata__document=instance))
+                  .distinct())
         else:
             qs = Metadata.objects.filter(public=True)
         return MetadataFormSet(*args, instance=instance, form_kwargs={'choices': qs})
@@ -62,7 +72,7 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
         context = super().get_context_data(**kwargs)
         context['metadata_form'] = self.get_metadata_formset()
         return context
-    
+
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         metadata_form = self.get_metadata_formset(self.request.POST)
@@ -70,7 +80,7 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
             return self.form_valid(form, metadata_form)
         else:
             return self.form_invalid(form)
-    
+
     def form_valid(self, form, metadata_form):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
@@ -84,11 +94,11 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     model = Document
     form_class = DocumentForm
     success_message = _("Document saved successfully!")
-    
+
     def get_queryset(self):
         # will raise a 404 instead of a 403 if user can't edit, but avoids a query
         return Document.objects.for_user(self.request.user)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
@@ -96,7 +106,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             context['metadata_form'] = self.get_metadata_formset(instance=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
-    
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
@@ -105,11 +115,11 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             return self.form_valid(form, metadata_form)
         else:
             return self.form_invalid(form, metadata_form)
-    
+
     def form_invalid(self, form, metadata_form):
         return self.render_to_response(self.get_context_data(
             form=form, metadata_form=metadata_form))
-    
+
     def form_valid(self, form, metadata_form):
         with transaction.atomic():
             response = super().form_valid(form)
@@ -121,16 +131,19 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
 class DocumentImages(LoginRequiredMixin, DetailView):
     model = Document
     template_name = "core/document_images.html"
-    
+
     def get_queryset(self):
         # will raise a 404 instead of a 403 if user can't edit, but avoids a query
         return Document.objects.for_user(self.request.user)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
+        context['export_form'] = ExportForm(self.object, self.request.user)
+        context['onboarding'] = self.request.user.onboarding
+
         return context
 
 
@@ -139,13 +152,13 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
     form_class = DocumentShareForm
     success_message = _("Document shared successfully!")
     http_method_names = ('post',)
-    
+
     def get_redirect_url(self):
         return reverse('document-update', kwargs={'pk': self.object.pk})
-    
+
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).select_related('owner')
-    
+
     def form_valid(self, form):
         if form.instance.workflow_state == Document.WORKFLOW_STATE_DRAFT:
             form.instance.workflow_state = Document.WORKFLOW_STATE_SHARED
@@ -154,19 +167,19 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upda
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
-    fields = ['workflow_state',]
+    fields = ['workflow_state']
     http_method_names = ('post',)
-    
+
     def get_queryset(self):
         # will raise a 404 instead of a 403 if user can't edit, but avoids a query
         return Document.objects.for_user(self.request.user)
-    
+
     def get_success_message(self, form_data):
         if self.object.is_archived:
             return _("Document archived successfully!")
         else:
             return _("Document published successfully!")
-    
+
     def get_success_url(self):
         if self.object.is_archived:
             return reverse('documents-list')
@@ -177,7 +190,7 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 class DocumentPartsProcessAjax(LoginRequiredMixin, View):
     # TODO: move to api
     http_method_names = ('post',)
-    
+
     def get_document(self):
         return Document.objects.for_user(self.request.user).get(pk=self.kwargs['pk'])
 
@@ -187,8 +200,8 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
         except (Document.DoesNotExist, DocumentPart.DoesNotExist):
             return HttpResponse(json.dumps({'status': 'Not Found'}),
                                 status=404, content_type="application/json")
-        
-        form = DocumentProcessForm(document, self.request.user, 
+
+        form = DocumentProcessForm(document, self.request.user,
                                    self.request.POST, self.request.FILES)
         if form.is_valid():
             try:
@@ -211,11 +224,11 @@ class EditPart(LoginRequiredMixin, DetailView):
     pk_url_kwarg = 'part_pk'
     template_name = "core/document_part_edit.html"
     http_method_names = ('get',)
-    
+
     def get_queryset(self):
         return DocumentPart.objects.filter(
             document=self.kwargs.get('pk')).select_related('document')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         # Note: a bit confusing but this view uses the same base template than UpdateDocument
@@ -224,7 +237,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         context['document'] = self.object.document
         context['part'] = self.object
         return context
-    
+
     def dispatch(self, *args, **kwargs):
         if not 'part_pk' in self.kwargs:
             try:
@@ -242,7 +255,7 @@ class ModelsList(LoginRequiredMixin, ListView):
     model = OcrModel
     template_name = "core/models_list.html"
     http_method_names = ('get',)
-    
+
     def get_queryset(self):
         if 'document_pk' in self.kwargs:
             self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
@@ -250,7 +263,7 @@ class ModelsList(LoginRequiredMixin, ListView):
         else:
             self.document = None
             return OcrModel.objects.filter(owner=self.request.user)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.document:
@@ -262,10 +275,10 @@ class ModelsList(LoginRequiredMixin, ListView):
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = OcrModel
     success_message = _("Model deleted successfully!")
-    
+
     def get_queryset(self):
         return OcrModel.objects.filter(owner=self.request.user)
-    
+
     def get_success_url(self):
         if 'next' in self.request.GET:
             return self.request.GET.get('next')
@@ -282,7 +295,7 @@ class ModelCancelTraining(LoginRequiredMixin, SuccessMessageMixin, DetailView):
             return self.request.GET.get('next')
         else:
             return reverse('user-models')
-    
+
     def post(self, request, *args, **kwargs):
         model = self.get_object()
         try:

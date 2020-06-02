@@ -1,3 +1,4 @@
+{% load compress %}
 {% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
@@ -20,15 +21,19 @@
     <![endif]-->
 
     {% block styles %}
+     {% compress css file base %}
+
     <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static '/vendor/bootstrap/bootstrap-reboot.min.css' %}" rel="stylesheet">
     <link href="{% static '/vendor/fontawesome/all.min.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static '/css/rtl.css' %}" rel="stylesheet" type="text/css">
+    {% endcompress %}
+
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'home' %}">eScriptorium</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -72,7 +77,7 @@
               <a class="dropdown-item" href="{% url 'password_change' %}">{% trans "Change password" %}</a>
               <a class="dropdown-item" href="#">{% trans "Profile" %}</a>
               <div class="dropdown-divider"></div>
-              {% if user.is_staff %}<a class="dropdown-item" href="{% url 'send-invitation' %}">Invite</a>{% endif %}
+              {% if perms.users.can_invite %}<a class="dropdown-item" href="{% url 'send-invitation' %}">Invite</a>{% endif %}
               <a class="dropdown-item" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
             </div>
           </li>
@@ -84,27 +89,31 @@
         </ul>
       </div>
     </nav>
-    
+
     <main><section>
-    <div class="container">
+    <div class="container-fluid">
     {% block body %}
     {% endblock body %}
     </div>
     </section></main>
-    
+
     {% block scripts %}
+    {% compress js file base %}
     <script src="{% static '/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'vendor/popper/popper.min.js' %}"></script>
     <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
     <script src="{% static '/js/reconnecting-websocket.min.js' %}"></script>
     <script src="{% static '/js/js.cookie-2.2.0.min.js' %}"></script>
     <script src="{% static '/js/ajax.js' %}"></script>
-    <script type="text/javascript">var DEBUG = {% if debug %}true{% else %}false{% endif %};</script>
+    {% endcompress %}
+    <script type="text/javascript">
+      const DEBUG = {% if debug %}true{% else %}false{% endif %};
+    </script>
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
-    <script src="{% static 'js/messages.js' %}"></script>
-    {% include 'includes/messages.html' %}
-    <script src="{% static 'js/profile.js' %}"></script>
-    {% endif %}
-    {% endblock scripts %}
+      <script src="{% static 'js/messages.js' %}"></script>
+      {% include 'includes/messages.html' %}
+      <script src="{% static 'js/profile.js' %}"></script>
+      {% endif %}
+   {% endblock scripts %}
   </body>
 </html>

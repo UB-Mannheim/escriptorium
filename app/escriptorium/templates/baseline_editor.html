@@ -76,9 +76,10 @@ Todo:
 {% endblock %}
 
 {% block scripts %}
+
 <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/wheelzoom2.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}" canvas="segmentation-canvas"></script>
 
 <script>
@@ -92,58 +93,19 @@ Todo:
             segmenter.canvas.style.position = 'absolute';
             
             img.addEventListener('load', function(ev) {
-                zoom.register(img, {mirror: true, map: true});
+                zoom.register(img, {map: true});
                 segmenter.init();
                 zoom.targets[0].container.appendChild(segmenter.canvas);
 
                 // segmenter zoom implementation
-                function onScroll(event) {
-                    event.target = img;
-                    img.classList.add('notransition');  // can't match the animation in the canvas
-                    var delta = zoom.scrolled(event);
-
+                zoom.events.addEventListener('wheelzoom.updated', function(e) {
+                    segmenter.deletePointBtn.style.display = 'none';
+                    segmenter.canvas.style.top = zoom.pos.y + 'px';
+                    segmenter.canvas.style.left = zoom.pos.x + 'px';
                     segmenter.canvas.style.width = img.width*zoom.scale + 'px';
                     segmenter.canvas.style.height = img.height*zoom.scale + 'px';
-                    segmenter.canvas.style.top = zoom.pos.y + 'px';
-                    segmenter.canvas.style.left = zoom.pos.x + 'px';
-                    
-                    let t = {x: zoom.pos.x, y: zoom.pos.y};
-                    segmenter.deletePointBtn.style.display = 'none';
-                    segmenter.deletePointBtn.style.transform = 'translate('+t.x+'px,'+t.y+'px)';
-                    
-                    paper.view.viewSize = [img.width*zoom.scale, img.height*zoom.scale];
-                    paper.view.scale(delta, [0, 0]);
-                }
-                segmenter.canvas.addEventListener('DOMMouseScroll', onScroll);
-                segmenter.canvas.addEventListener('mousewheel', onScroll);
-
-                function dragView(e) {
-                    img.classList.add('notransition');
-                    var delta = zoom.drag(e);
-                    segmenter.canvas.style.top = zoom.pos.y + 'px';
-                    segmenter.canvas.style.left = zoom.pos.x + 'px';
-                    let pt = view.viewToProject({x: Math.min(zoom.pos.x*zoom.scale,img.width), y: Math.min(zoom.pos.y*zoom.scale, img.height)});
-                    segmenter.deletePointBtn.style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
-                    if (delta.angle) {
-                        for (let i in segmenter.lines) {
-                            segmenter.lines[i].baselinePath.rotate(delta.angle, view.viewToProject(zoom.rotationOrigin));
-                            segmenter.lines[i].maskPath.rotate(delta.angle, view.viewToProject(zoom.rotationOrigin));
-                        }
-                    }
-                }
-                function draggableView(e) {
-                    zoom.rotationOrigin = e.point;
-                    document.addEventListener('mousemove', dragView);
-                    document.addEventListener('mouseup', function(e) {
-                        document.removeEventListener('mousemove', dragView);
-                        img.classList.remove('notransition');
-                        zoom.previousEvent = null;
-                    });
-                }
-                view.on('mousedown', function(e) {
-                    // right click
-                    if (e.event.which === 3 || e.event.button === 2) { draggableView(e); }
-                });
+                    segmenter.refresh();
+                }.bind(this));
             });
         };
         reader.readAsDataURL(file);
@@ -152,13 +114,7 @@ Todo:
     var img = document.getElementById('seg');
     img.ondragstart = function(e) { return false; };
     segmenter = new Segmenter(img, {
-        delayInit: true,
-        stateUpdateCallback: function(stateIndex, stateLength) {
-            if (stateIndex > 0) document.getElementById('undo-btn').disabled = false;
-            else document.getElementById('undo-btn').disabled = true;
-            if (stateIndex < stateLength-1) document.getElementById('redo-btn').disabled = false;
-            else document.getElementById('redo-btn').disabled = true;
-        }
+        delayInit: true
     });
     
     var container = document.getElementById('container');
@@ -179,7 +135,7 @@ Todo:
 
     function imgTransfer(e) {
         e.preventDefault();
-        segmenter.reset();
+        segmenter.empty();
         var imageTypes = ['image/png', 'image/gif', 'image/bmp', 'image/jpg', 'image/jpeg'];
         if (e.target.files || (e.dataTransfer && e.dataTransfer.files)) {
             var files = e.target.files || e.dataTransfer.files;
@@ -248,8 +204,9 @@ Todo:
         segmenter.canvas.style.height = img.height + 'px';
         segmenter.deletePointBtn.style.display = 'none';
         segmenter.deletePointBtn.style.transform = 'none';
-        paper.view.viewSize = [img.width, img.height];
-        paper.view.scale(1/zoomScale, [0, 0]);
+        segmenter.refresh();
+        // paper.view.viewSize = [img.naturalWidth, img.naturalHeight];
+        // paper.view.scale(1/zoomScale, [0, 0]);
     });
 })();
 </script>

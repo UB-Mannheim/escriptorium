@@ -1,5 +1,3 @@
-var userProfile;
-
 class Profile {
     constructor() {
         let profile = window.localStorage.getItem('escriptorium.userProfile');
@@ -26,6 +24,4 @@ class Profile {
     }
 }
 
-$(document).ready(function() {
-    userProfile = new Profile();
-});
+var userProfile = new Profile();

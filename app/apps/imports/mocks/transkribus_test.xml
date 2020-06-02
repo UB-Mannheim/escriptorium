@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+    <Metadata>
+        <Creator>prov=University of Rostock/Institute of Mathematics/CITlab/Gundram Leifert/gundram.leifert@uni-rostock.de:name=Beth Mardutho Qoruyo Syriac-Estrangelo 1.0(htr_id=16190)::::v=2.4.2
+prov=University of Rostock/Institute of Mathematics/CITlab/Tobias Gruening/tobias.gruening@uni-rostock.de:name=de.uros.citlab.module.baseline2polygon.B2PSeamMultiOriented:v=2.4.2
+prov=University of Rostock/Institute of Mathematics/CITlab/Tobias Gruening/tobias.gruening@uni-rostock.de:name=/net_tf/LA73_249_0mod360.pb:de.uros.citlab.segmentation.CITlab_LA_ML:v=2.4.2
+TRP</Creator>
+        <Created>2019-09-27T23:23:02.181+02:00</Created>
+        <LastChange>2019-09-30T19:47:30.802+02:00</LastChange>
+        <TranskribusMetadata docId="218635" pageId="9377652" pageNr="1" tsid="16181013"
+                             status="IN_PROGRESS" userId="198" imgUrl="https://files.transkribus.eu/Get?id=IGCWFROGSHEQTNTPACSBRMTW" xmlUrl="https://files.transkribus.eu/Get?id=ZDOBVJAWMVGPUHOZVTSSWCSG" imageId="6101684"/>
+    </Metadata>
+    <Page imageFilename="test3.png" imageWidth="738" imageHeight="1139">
+        <ReadingOrder>
+            <OrderedGroup id="ro_1569865711215" caption="Regions reading order">
+                <RegionRefIndexed index="0" regionRef="r1"/>
+                <RegionRefIndexed index="1" regionRef="r2"/>
+            </OrderedGroup>
+        </ReadingOrder>
+
+        <TextRegion orientation="0.0" id="r2" custom="readingOrder {index:1;}">
+            <Coords points="113,-29 113.7,1021 697,1021 697,29"/>
+            <TextLine id="r2l1" custom="readingOrder {index:0;}">
+                <Coords points="150.3,64 -346,60 425,81 460,60 616,64 621,5"/>
+                <Baseline points="155,55 180,55 -206,55 231.3,55"/>
+                <TextEquiv>
+                    <Unicode>ܡ ܗܘܡ ܐܘ ܥܒ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l2" custom="readingOrder {index:1;}">
+                <Coords points="120,121 644,119 670,113 669,68 563,80 492,60 436,87 306,70 257,84 180,62 119,83"/>
+                <Baseline points="125,109 152,109 179,109 206,108 233,108 260,107 287,107 314,107 341,106 368,106 395,106 422,105 449,105 476,105 503,105 530,105 557,106 584,106 611,107 638,107 665,108"/>
+                <TextEquiv>
+                    <Unicode>ܠܘܬ ܛܘܪܐ ܗ̇ܘ ܕܡܬܩܪܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l3" custom="readingOrder {index:2;}">
+                <Coords points="114,175 679,167 678,126 613,141 585,118 529,146 389,120 322,138 113,129"/>
+                <Baseline points="119,165 146,165 174,165 202,164 230,164 257,163 285,163 313,163 341,163 368,162 396,162 424,162 452,162 479,162 507,162 535,162 563,162 590,163 618,163 646,163 674,164"/>
+                <TextEquiv>
+                    <Unicode>ܕܙܝܬܐ. ܫܕܪ ܬܪ̈ܝܢ ܡܢ ܬܠܡ̈ܝܕܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l4" custom="readingOrder {index:3;}">
+                <Coords points="125,225 678,220 678,194 612,166 571,196 460,170 376,187 321,166 125,190"/>
+                <Baseline points="130,214 157,215 184,215 211,216 238,216 265,216 292,215 320,215 347,215 374,215 401,215 428,215 455,215 482,215 510,215 537,215 564,216 591,216 618,217 645,218 673,219"/>
+                <TextEquiv>
+                    <Unicode>ܕܝܠܗ ܟܕ ܐܡ̇ܪ. ܙܠܘ ܠܩܪܝܬܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l5" custom="readingOrder {index:4;}">
+                <Coords points="127,279 387,274 423,292 450,273 478,292 494,277 681,273 658,237 588,262 533,226 484,248 434,223 404,247 -314,235 262,260 222,239 128,239"/>
+                <Baseline points="132,264 159,265 186,266 213,266 240,267 268,267 295,268 322,268 349,269 376,269 404,270 431,270 458,270 485,271 512,271 540,271 567,271 594,272 621,272 648,272 676,272"/>
+                <TextEquiv>
+                    <Unicode>ܗܝ ܕܠܩܘܒܠܢ. ܒܗ̇ܝ ܕܟܕ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l6" custom="readingOrder {index:5;}">
+                <Coords points="121,328 311,347 505,328 555,346 660,331 660,288 562,281 494,303 443,280 398,306 343,277 231,313 157,-274 121,295"/>
+                <Baseline points="126,320 152,321 178,322 205,323 231,323 258,324 284,324 311,325 337,325 364,325 390,325 416,325 443,325 469,325 496,325 522,324 549,324 575,324 602,323 628,323 655,322"/>
+                <TextEquiv>
+                    <Unicode>ܥܐܠܝܢ ܐܢܬܘܢ. ܬܫܒܚܘܢ ܥܝܠܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l7" custom="readingOrder {index:6;}">
+                <Coords points="125,382 441,391 538,375 571,397 676,391 677,344 655,339 572,359 538,341 514,360 445,336 336,353 237,348 222,332 193,354 152,332 126,348"/>
+                <Baseline points="130,372 157,373 184,374 211,375 238,376 265,377 292,377 319,378 346,378 373,378 400,379 427,379 454,379 481,379 508,379 535,380 562,380 589,380 616,381 643,382 671,382"/>
+                <TextEquiv>
+                    <Unicode>ܕܐܣܝܪ. ܥܠ ܗ̇ܘ ܕܠܐ ܐܢܫ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l8" custom="readingOrder {index:7;}">
+                <Coords points="108,438 171,453 213,436 363,453 389,437 428,453 564,438 616,453 683,437 684,405 610,417 506,391 477,410 353,411 313,389 226,400 163,385 109,411"/>
+                <Baseline points="113,430 141,430 169,429 197,429 226,429 254,429 282,429 310,430 339,430 367,430 395,431 423,431 452,432 480,433 508,433 536,434 565,434 593,435 621,435 649,435 678,435"/>
+                <TextEquiv>
+                    <Unicode>ܡܢ ܡܬܘܡ ܡܢ ܒܢܝ̈ܢܫܐ ܢܬܒܝ.</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l9" custom="readingOrder {index:8;}">
+                <Coords points="114,484 272,503 335,484 528,498 567,478 594,497 668,493 668,467 610,448 580,464 541,445 507,462 473,440 332,465 288,444 247,461 207,445 114,455"/>
+                <Baseline points="119,479 146,481 173,482 200,482 227,483 255,483 282,483 309,483 336,483 363,483 391,483 418,483 445,483 472,483 499,483 527,483 554,484 581,485 608,485 635,487 663,488"/>
+                <TextEquiv>
+                    <Unicode>ܫܪܘ ܐܝܬܐܘܗܝ. ܘܐܢ ܐܢܫ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l10" custom="readingOrder {index:9;}">
+                <Coords points="130,548 140,548 145,553 152,547 158,550 160,547 172,545 168,502 159,503 147,514 136,509 127,511"/>
+                <Baseline points="135,540 166,537"/>
+                <TextEquiv>
+                    <Unicode>ܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l11" custom="readingOrder {index:10;}">
+                <Coords points="262,540 297,537 349,566 379,544 442,556 555,542 584,558 597,545 685,540 685,515 589,502 569,518 543,495 514,512 484,494 412,529 336,494 262,527"/>
+                <Baseline points="267,538 292,539 318,540 344,540 370,540 396,540 421,540 447,539 473,539 499,538 525,538 550,537 576,537 602,537 628,538 654,538 680,540"/>
+                <TextEquiv>
+                    <Unicode>ܡܫܐܠ ܠܟܘܢ ܡܛܠ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l12" custom="readingOrder {index:11;}">
+                <Coords points="132,595 262,600 315,581 349,606 566,596 591,616 679,596 679,556 629,543 583,572 553,551 461,549 422,573 391,546 288,574 232,548 132,567"/>
+                <Baseline points="137,586 163,586 190,587 217,588 244,588 271,589 298,589 324,589 351,589 378,590 405,590 432,590 459,590 486,590 512,590 539,590 566,590 593,590 620,590 647,590 674,590"/>
+                <TextEquiv>
+                    <Unicode>ܫܪܝܢ ܐܢܬܘܢ ܠܗ̇. ܗܟܢܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l13" custom="readingOrder {index:12;}">
+                <Coords points="114,649 680,654 681,599 618,619 539,599 496,630 463,601 402,621 309,597 255,616 115,608"/>
+                <Baseline points="119,640 146,640 174,640 202,639 230,639 258,639 285,639 313,639 341,639 369,639 397,639 424,639 452,639 480,640 508,640 536,641 563,641 591,642 619,643 647,644 675,645"/>
+                <TextEquiv>
+                    <Unicode>ܬܐܡܪܘܢ ܠܗ. ܕܡܪܝܐ ܣܢܝܩ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l14" custom="readingOrder {index:13;}">
+                <Coords points="129,702 680,698 680,677 620,646 535,678 426,651 395,667 352,642 318,668 251,672 206,653 129,671"/>
+                <Baseline points="134,691 161,691 188,690 215,690 242,690 269,690 296,690 323,690 350,690 377,690 404,690 431,691 458,691 485,691 512,692 539,692 566,692 593,693 620,693 647,693 675,693"/>
+                <TextEquiv>
+                    <Unicode>ܥܠܘܗܝ. ܟܕ ܐܙܠܘ ܕܝܢ ܗ̇ܢܘܢ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l15" custom="readingOrder {index:14;}">
+                <Coords points="142,753 597,754 641,772 684,756 684,713 657,704 620,727 551,696 474,725 448,702 417,724 293,707 233,723 181,702 142,714"/>
+                <Baseline points="147,742 173,743 200,743 226,744 253,744 280,745 306,745 333,745 359,745 386,745 413,746 439,746 466,746 492,746 519,746 546,747 572,747 599,748 625,748 652,749 679,750"/>
+                <TextEquiv>
+                    <Unicode>ܕܐܫܬܠܚܘ. ܐܫܟܚܘ. ܐܝܟܢܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l16" custom="readingOrder {index:15;}">
+                <Coords points="136,815 548,796 588,820 606,805 664,818 690,810 690,759 627,780 554,756 536,772 511,756 440,775 403,751 381,766 343,750 284,776 225,757 194,775 136,766"/>
+                <Baseline points="141,798 168,798 195,798 222,798 249,798 277,797 304,797 331,796 358,796 385,796 413,796 440,795 467,796 494,796 521,796 549,797 576,798 603,799 630,801 657,802 685,805"/>
+                <TextEquiv>
+                    <Unicode>ܕܐܡܪ ܠܗܘܢ ܠܥܝܠܐ ܕܩܐܡ.</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l17" custom="readingOrder {index:16;}">
+                <Coords points="131,860 311,851 359,874 413,851 661,872 690,867 691,827 622,840 566,814 531,837 455,813 340,828 308,799 270,825 246,803 188,802 131,834"/>
+                <Baseline points="136,849 163,848 191,847 218,846 246,846 273,845 301,845 328,845 356,846 383,846 411,847 438,848 466,848 493,849 521,850 548,852 576,853 603,854 631,855 658,856 686,858"/>
+                <TextEquiv>
+                    <Unicode>ܟܕ ܫܪܝܢ ܗܘܘ ܕܝܢ ܠܗ ܠܥܝ̈ܠܐ.</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l18" custom="readingOrder {index:17;}">
+                <Coords points="137,909 177,926 217,904 340,900 683,921 696,872 615,885 582,865 534,884 512,861 458,854 428,878 340,890 310,859 278,877 240,857 138,885"/>
+                <Baseline points="142,899 169,899 196,900 224,901 251,901 279,902 306,902 333,902 361,903 388,903 416,904 443,904 470,904 498,905 525,906 553,907 580,908 607,908 635,910 662,911 690,913"/>
+                <TextEquiv>
+                    <Unicode>ܐܡܪܘ ܡܪ̈ܘܗܝ ܠܘܬܗܘܢ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l19" custom="readingOrder {index:18;}">
+                <Coords points="177,954 269,948 363,970 460,952 538,966 577,950 599,968 672,972 699,964 700,935 660,919 587,938 548,910 408,929 350,905 320,926 269,904 177,923"/>
+                <Baseline points="182,944 207,944 233,945 258,946 284,946 310,947 335,947 361,948 387,948 412,949 438,950 464,951 489,951 515,952 541,953 566,954 592,955 618,956 643,957 669,959 695,960"/>
+                <TextEquiv>
+                    <Unicode>ܡܢܐ ܫܪܝܢ ܐܢܬܘܢ ܠܟܝܠ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextLine id="r2l20" custom="readingOrder {index:19;}">
+                <Coords points="129,1006 181,997 236,1017 261,998 338,997 499,1025 567,1010 659,1026 702,1010 703,985 576,971 531,984 500,959 469,980 399,958 324,987 297,964 246,972 211,954 193,968 175,952 130,975"/>
+                <Baseline points="134,992 162,992 190,993 218,994 246,995 274,996 302,997 331,998 359,999 387,1000 415,1001 443,1002 471,1003 499,1003 528,1004 556,1005 584,1006 612,1007 640,1008 668,1008 697,1009"/>
+                <TextEquiv>
+                    <Unicode>ܗ̣ܢܘܢ ܕܝܢ ܐܡܪܘ. ܕܡܪܝܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+            <TextEquiv>
+                <Unicode>ܡ ܗܘܡ ܐܘ ܥܒ
+ܠܘܬ ܛܘܪܐ ܗ̇ܘ ܕܡܬܩܪܐ
+ܕܙܝܬܐ. ܫܕܪ ܬܪ̈ܝܢ ܡܢ ܬܠܡ̈ܝܕܐ
+ܕܝܠܗ ܟܕ ܐܡ̇ܪ. ܙܠܘ ܠܩܪܝܬܐ
+ܗܝ ܕܠܩܘܒܠܢ. ܒܗ̇ܝ ܕܟܕ
+ܥܐܠܝܢ ܐܢܬܘܢ. ܬܫܒܚܘܢ ܥܝܠܐ
+ܕܐܣܝܪ. ܥܠ ܗ̇ܘ ܕܠܐ ܐܢܫ
+ܡܢ ܡܬܘܡ ܡܢ ܒܢܝ̈ܢܫܐ ܢܬܒܝ.
+ܫܪܘ ܐܝܬܐܘܗܝ. ܘܐܢ ܐܢܫ
+ܐ
+ܡܫܐܠ ܠܟܘܢ ܡܛܠ
+ܫܪܝܢ ܐܢܬܘܢ ܠܗ̇. ܗܟܢܐ
+ܬܐܡܪܘܢ ܠܗ. ܕܡܪܝܐ ܣܢܝܩ
+ܥܠܘܗܝ. ܟܕ ܐܙܠܘ ܕܝܢ ܗ̇ܢܘܢ
+ܕܐܫܬܠܚܘ. ܐܫܟܚܘ. ܐܝܟܢܐ
+ܕܐܡܪ ܠܗܘܢ ܠܥܝܠܐ ܕܩܐܡ.
+ܟܕ ܫܪܝܢ ܗܘܘ ܕܝܢ ܠܗ ܠܥܝ̈ܠܐ.
+ܐܡܪܘ ܡܪ̈ܘܗܝ ܠܘܬܗܘܢ
+ܡܢܐ ܫܪܝܢ ܐܢܬܘܢ ܠܟܝܠ
+ܗ̣ܢܘܢ ܕܝܢ ܐܡܪܘ. ܕܡܪܝܐ</Unicode>
+            </TextEquiv>
+        </TextRegion>
+    </Page>
+</PcGts>

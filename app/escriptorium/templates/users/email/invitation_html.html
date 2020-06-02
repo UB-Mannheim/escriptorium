@@ -1,5 +1,5 @@
 <p>Hello {% if recipient_first_name %}{{recipient_first_name}} {{recipient_last_name}}{% else %}{{ recipient_email }}{% endif %},</p>
 <p>{{sender|title}} is inviting you to join {% if team %}his/her team {{team}} on {% endif %}eScriptorium!</br>
-All you need to do is click click on the link below:</p>
+All you need to do is click on the link below:</p>
 <a href="{{accept_link}}">{{accept_link}}</a>
 <p>Sincerely, the eScriptorium team.</p>
