@@ -53,12 +53,11 @@ var diploLine = LineBase.extend({
         },
         pushUpdate(){
             // set content of input to line content
-            if (this.line.transcription.content != this.$content.textContent) {
-                this.line.transcription.content = this.$content.textContent;
-                this.addToList();
-                // call save of parent method
-                this.$parent.toggleSave();
-            }
+            this.line.transcription.content = this.$content.textContent;
+            this.addToList();
+            // call save of parent method
+            this.$parent.toggleSave();
+
         },
         setContent(content){
             let id = this.line.pk;
