@@ -342,7 +342,7 @@
                                        @focusout="stopEdit"
                                        @mouseover="showOverlay"
                                        @mouseleave="hideOverlay"
-                                       @keydown="$parent.editNextPrevious"
+                                       @keydown="$parent.onKeyDown"
                                        @select="stopEdit"
                                        @paste="onPaste"
                                        class="table-row line-content {{ document.default_text_direction }}"

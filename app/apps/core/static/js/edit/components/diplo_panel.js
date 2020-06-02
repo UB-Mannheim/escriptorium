@@ -75,6 +75,15 @@ var DiploPanel = BasePanel.extend({
                 }
                 this.toggleSave();
             }
+            // ctrl and arrow up or left go to the end char of last line
+            if ((ev.ctrlKey || ev.metaKey) && (ev.keyCode == 39 || ev.keyCode == 40)) {
+            }
+            // first line
+            if ((ev.ctrlKey || ev.metaKey) && (ev.keyCode == 38 || ev.keyCode == 37)) {
+
+            }
+
+
         },
 
         setEditLine(l) {
@@ -150,7 +159,6 @@ var DiploPanel = BasePanel.extend({
         setpositionCursor(id) {
             const elt =  document.querySelector(id);
             const textNode = elt.childNodes[0];
-            console.log("textnode",textNode);
             let  sel = window.getSelection();
             const range = document.createRange();
             range.setStart(textNode,textNode.length );  // Start at first character
