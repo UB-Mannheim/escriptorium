@@ -54,7 +54,6 @@ var DiploPanel = BasePanel.extend({
             }
             if(ev.keyCode==8 && this.getpositionCursor()==0){
                 this.editPrevious();
-                this.setpositionCursor("[id='"+ this.editLine.pk+ "']");
                 let idx = this.part.lines.indexOf(this.editLine);
                 for(let i=idx; i< this.$children.length; i++)
                 {
@@ -71,6 +70,7 @@ var DiploPanel = BasePanel.extend({
                     else {
                         child.setContent("");
                     }
+                    this.setpositionCursor("[id='"+ this.editLine.pk+ "']");
                     child.addToList();
                 }
                 this.toggleSave();
@@ -150,8 +150,8 @@ var DiploPanel = BasePanel.extend({
         setpositionCursor(id) {
             const elt =  document.querySelector(id);
             const textNode = elt.childNodes[0];
+            console.log("textnode",textNode);
             let  sel = window.getSelection();
-
             const range = document.createRange();
             range.setStart(textNode,textNode.length );  // Start at first character
             range.setEnd(textNode, textNode.length);
