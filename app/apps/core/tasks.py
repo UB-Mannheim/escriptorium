@@ -15,6 +15,7 @@ from django.utils.translation import gettext as _
 
 from celery import shared_task
 from celery.signals import before_task_publish, task_prerun, task_success, task_failure
+from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken.lib import train as kraken_train
 
@@ -22,9 +23,7 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-redis_ = redis.Redis(host=settings.REDIS_HOST,
-                     port=settings.REDIS_PORT,
-                     db=getattr(settings, 'REDIS_DB', 0))
+redis_ = get_redis_connection()
 
 
 def update_client_state(part_id, task, status, task_id=None, data=None):

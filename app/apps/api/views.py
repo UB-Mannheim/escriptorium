@@ -1,22 +1,39 @@
-import itertools
+import json
 import logging
 
-from django.db.models import Prefetch, Count
+from django.conf import settings
+from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import PrimaryKeyRelatedField
 
-from api.serializers import *
-from core.models import *
+from api.serializers import (UserOnboardingSerializer,
+                             DocumentSerializer,
+                             PartDetailSerializer,
+                             PartSerializer,
+                             PartMoveSerializer,
+                             LineSerializer,
+                             DetailedLineSerializer,
+                             LineMoveSerializer,
+                             LineOrderSerializer,
+                             BlockSerializer,
+                             TranscriptionSerializer,
+                             LineTranscriptionSerializer)
+from core.models import (Document,
+                         DocumentPart,
+                         Block,
+                         Line,
+                         Transcription,
+                         LineTranscription)
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
-from users.consumers import send_event
-from django.shortcuts import get_object_or_404
+
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +195,9 @@ class BlockViewSet(ModelViewSet):
 
 
 class LineViewSet(ModelViewSet):
-    queryset = Line.objects.all().select_related('block').prefetch_related('transcriptions__transcription')
+    queryset = (Line.objects.all()
+                .select_related('block')
+                .prefetch_related('transcriptions__transcription'))
     serializer_class = DetailedLineSerializer
 
     def get_serializer_class(self):
@@ -190,7 +209,6 @@ class LineViewSet(ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_create(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
-        result = []
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -234,11 +252,13 @@ class LineTranscriptionViewSet(ModelViewSet):
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
-        qs = (self.queryset.filter(line__document_part=self.kwargs['part_pk'])
-                .select_related('line', 'transcription').order_by('line__order'))
+        qs = (self.queryset
+              .filter(line__document_part=self.kwargs['part_pk'])
+              .select_related('line', 'transcription')
+              .order_by('line__order'))
         transcription = self.request.GET.get('transcription')
         if transcription:
-             qs = qs.filter(transcription=transcription)
+            qs = qs.filter(transcription=transcription)
         return qs
 
     def create(self, request, document_pk=None, part_pk=None):
@@ -251,7 +271,7 @@ class LineTranscriptionViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(version_author=self.request.user.username)
 
-    def update(self, request, document_pk=None, part_pk=None, pk=None):
+    def update(self, request, document_pk=None, part_pk=None, pk=None, partial=False):
         instance = self.get_object()
         try:
             instance.new_version(author=request.user.username,
@@ -259,14 +279,17 @@ class LineTranscriptionViewSet(ModelViewSet):
         except NoChangeException:
             # Note we can safely pass here
             pass
-        else:
-            instance.save()
-        return super().update(request, document_pk=document_pk, part_pk=part_pk, pk=pk)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def get_serializer_class(self):
         lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
+
         class RuntimeSerializer(self.serializer_class):
-            line = serializers.PrimaryKeyRelatedField(queryset=lines)
+            line = PrimaryKeyRelatedField(queryset=lines)
         return RuntimeSerializer
 
     @action(detail=False, methods=['POST'])
@@ -283,6 +306,8 @@ class LineTranscriptionViewSet(ModelViewSet):
         lines = request.data.get("lines")
         for line in lines:
             lt = get_object_or_404(LineTranscription, pk=line["pk"])
+            lt.new_version(author=request.user.username,
+                           source=settings.VERSIONING_DEFAULT_SOURCE)
             serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()

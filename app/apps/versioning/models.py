@@ -1,4 +1,3 @@
-import json
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -42,7 +41,7 @@ class Versioned(models.Model):
       data: {}  # no need to pickle since jsonb is compiled anyway
     ]}
     """
-    ### these fields store the 'current' revision
+    # these fields store the 'current' revision
     revision = models.UUIDField(default=uuid.uuid4, editable=False)
     version_source = models.CharField(editable=False, max_length=128,
                                       default=getattr(settings, 'VERSIONING_DEFAULT_SOURCE'))
@@ -64,7 +63,7 @@ class Versioned(models.Model):
         data = {}
         for field in self._meta.fields:
             if (field.name not in ('id', 'revision', 'versions')
-                and not field.name in self._meta.model.version_ignore_fields
+                and field.name not in self._meta.model.version_ignore_fields
                 and not field.name.startswith('version_')):
                 data[field.name] = getattr(self, field.name)
         data.update(kwargs)
@@ -87,8 +86,8 @@ class Versioned(models.Model):
         # version_source, version_author, version_created_at, version_updated_at
         fields.update(**{'version_%s' % key: value for key, value in v.items()})
         # update the instance with the left over fields
-        fields.update(**{field:getattr(self, field) for field in self.version_ignore_fields})
-        data = {f:fields[f] for f in fields if f in [mf.name for mf in self._meta.fields]}
+        fields.update(**{field: getattr(self, field) for field in self.version_ignore_fields})
+        data = {f: fields[f] for f in fields if f in [mf.name for mf in self._meta.fields]}
         instance = self._meta.model(**data)
         # disable database operations
         instance.save = _dummy_db
@@ -97,25 +96,26 @@ class Versioned(models.Model):
 
     def new_version(self, author=None, source=None, **kwargs):
         packed = self.pack(**kwargs)
+        author_ = author or self.version_author
+        source_ = source or self.version_author
+
         if self.versions:
             last = self.versions[0]
             if (packed['data'] == last['data']
-                and author==self.version_author
-                and source==self.version_source):
+                and author_ == self.version_author
+                and source_ == self.version_source):
                 raise NoChangeException
         self.versions.insert(0, packed)
         # if we passed version_history_max_length we delete the last one
         if (self.version_history_max_length
             and len(self.versions) > self.version_history_max_length):
             self.delete_revision(self.versions[self.version_history_max_length]['revision'])
+
         self.revision = uuid.uuid4()  # new revision number
-        if author is not None:
-            self.version_author = author
-        if source is not None:
-            self.version_source = source
+        self.version_author = author_
+        self.version_source = source_
         self.version_created_at = datetime.now(timezone.utc)
         self.version_updated_at = datetime.now(timezone.utc)
-
 
     def revert(self, revision):
         """
@@ -135,7 +135,8 @@ class Versioned(models.Model):
                     setattr(self, field_name, value)
                 self.version_source = version['source']
                 self.version_author = version['author']
-                # self.version_created_at = datetime.fromisoformat(version['created_at'])  # 3.7 only
+                # 3.7 only
+                # self.version_created_at = datetime.fromisoformat(version['created_at'])
                 self.version_created_at = datetime.strptime(
                     version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
                 self.version_updated_at = datetime.now(timezone.utc)
