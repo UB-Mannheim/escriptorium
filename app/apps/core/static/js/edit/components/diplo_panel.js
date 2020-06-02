@@ -25,35 +25,28 @@ var DiploPanel = BasePanel.extend({
             this.bulkUpdate();
             this.bulkCreate();
         },
-        editNext() {
-            let index = this.part.lines.indexOf(this.editLine);
-            if(index < this.part.lines.length - 1) {
-                this.setEditLine(this.part.lines[index + 1]);
-                let nextLine = this.$children[index + 1];
+        updateEditLine(position){
+            if(position < this.part.lines.length && position >= 0) {
+                this.setEditLine(this.part.lines[position]);
+                let nextLine = this.$children[position];
                 nextLine.startEdit();
             }
         },
-        editPrevious() {
+        onKeyDown(ev){
             let index = this.part.lines.indexOf(this.editLine);
-            if(index > 0) {
-                this.setEditLine(this.part.lines[index - 1]);
-                let previousLine = this.$children[index - 1];
-                previousLine.startEdit();
-            }
-        },
-        editNextPrevious(ev){
+
             //disable shortcuts
             this.$parent.blockShortcuts = true;
             if (ev.keyCode == 38) {
                 ev.preventDefault();
-                this.editPrevious();
+                this.updateEditLine(index -1);
             }
             else if (ev.keyCode == 40 || ev.keyCode == 13) {
                 ev.preventDefault();
-                this.editNext();
+                this.updateEditLine(index +1);
             }
             if(ev.keyCode==8 && this.getpositionCursor()==0){
-                this.editPrevious();
+                this.updateEditLine(index -1);
                 let idx = this.part.lines.indexOf(this.editLine);
                 for(let i=idx; i< this.$children.length; i++)
                 {
