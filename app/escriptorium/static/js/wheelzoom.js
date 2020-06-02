@@ -1,160 +1,295 @@
+/*
+* Usage:
+* var zoom = new WheelZoom(domElement)
+* zoom.register(container);
+*/
+
 'use strict';
 
+class zoomTarget {
+    constructor(domElement, {map=false,
+                             mapScale=0.2,
+                             mapColors=['grey', 'white'],
+                             mapMargin=10,
+                             mapDuration=2}) {
+        // wrap the element in a container:
+        var container = document.createElement('div');
+        container.classList.add('js-wheelzoom-container');
+        // disables right click menu
+        container.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        // var rotationContainer = document.createElement('div');
+        domElement.parentNode.insertBefore(container, domElement);
+        container.appendChild(domElement);
+        // rotationContainer.appendChild(domElement);
+        // container.appendChild(rotationContainer);
+        // rotationContainer.style.transformOrigin = 'center';
+        container.style.position = 'relative';
+        container.style.overflow = 'hidden';
+        // container.style.width = '100%';
+        // container.style.height = '100%';
+        domElement.style.transformOrigin = '0 0';
+        domElement.style.transition = 'scale 0.3s';
+        domElement.classList.add('js-zoom-target');
+        this.container = container;
+        //this.rotationContainer = rotationContainer;
+        this.element = domElement;
+
+        this.map = map;
+        if (this.map) {
+            this.mapScale = mapScale;
+            this.mapDuration = mapDuration;
+            this.mapTimer = null;
+            this.mapMargin = mapMargin;
+            this.makeMap(mapMargin, mapColors);
+            this.refreshMap();
+        }
+    }
+
+    update(pos, scale) {
+        this.element.style.transform = 'translate('+(pos.x)+'px,'+(pos.y)+'px) '+'scale('+scale+')';
+    }
+
+    showMap(pos, scale) {
+        if (this.map && scale > 1) {
+            this.refreshMap();
+            this.mapWhole.style.opacity = 0.7;
+            this.mapCurrent.textContent = Math.round(scale*100)+'%';
+            this.mapCurrent.style.transform = ''+
+                'translate('+(-pos.x*this.mapScale/scale)+'px,'+(-pos.y*this.mapScale/scale)+'px) '+
+                'scale('+1/scale+')';
+
+            // fadeOut
+            if (this.mapTimer) clearInterval(this.mapTimer);
+            let nTicks = this.mapDuration * 1000 / 100;
+            let factor = this.mapWhole.style.opacity / nTicks;
+            this.mapTimer = setInterval(function () {
+                if (this.mapWhole.style.opacity <= 0){
+                    clearInterval(this.mapTimer);
+                }
+                this.mapWhole.style.opacity = this.mapWhole.style.opacity - factor;
+            }.bind(this), 100);
+        }
+    }
+
+    refreshMap() {
+        if (this.map) {
+            let bounds = this.container.getBoundingClientRect();
+            this.mapWhole.style.top = (bounds.y + this.mapMargin) + 'px';
+            this.mapWhole.style.left = (bounds.x + this.mapMargin) + 'px';
+            this.mapWhole.style.width = (bounds.width * this.mapScale) + 'px';
+            this.mapWhole.style.height = (bounds.height * this.mapScale) + 'px';
+        }
+    }
+
+    makeMap(mapMargin, mapColors) {
+        this.mapWhole = document.createElement('div');
+        this.mapWhole.classList.add('wheelzoom-outter-map');
+        this.mapWhole.style.position = 'fixed';
+        this.mapWhole.style.opacity = 0;
+        this.mapWhole.style.backgroundColor = mapColors[0];
+        this.mapWhole.style.pointerEvents = 'none';
+        this.container.appendChild(this.mapWhole);
+
+        this.mapCurrent = document.createElement('div');
+        this.mapCurrent.classList.add('wheelzoom-inner-map');
+        this.mapCurrent.style.position = 'absolute';
+        this.mapCurrent.style.opacity = 0.5;
+        this.mapCurrent.style.width = '100%';
+        this.mapCurrent.style.height = '100%';
+        this.mapCurrent.style.backgroundColor = mapColors[1];
+        this.mapCurrent.style.transformOrigin = '0 0';
+        this.mapWhole.appendChild(this.mapCurrent);
+    }
+}
+
 class WheelZoom {
-    constructor(options) {
-        this.options = options || {};
-        var defaults = {
-            factor: 0.1,
-            min_scale: 1,
-            max_scale: null,
-            initial_scale: 1,
-            disabled: false
-        };
-        
-        this.factor = options.factor || defaults.factor;
-        this.min_scale = options.min_scale || defaults.min_scale;
-        this.max_scale = options.max_scale || defaults.max_scale;
-        this.initial_scale = options.initial_scale || defaults.initial_scale;
-        this.disabled = options.disabled || defaults.disabled;
-        
+    constructor({factor=0.1,
+                 minScale=0.2,
+                 maxScale=10,
+                 initialScale=1,
+                 disabled=false
+                } = {}) {
+        this.factor = factor;
+        this.minScale = minScale;
+        this.maxScale = maxScale;
+        this.initialScale = initialScale;
+        this.disabled = disabled;
+
         // create a dummy tag for event bindings
-        this.events = $('<div id="wheelzoom-events-js">');
-        this.events.appendTo($('body'));
-        
-        this.targets = []; this.containers = [];
+        this.events = document.createElement('div');
+        this.events.classList.add('wheelzoom-events-js');
+        document.body.appendChild(this.events);
+
+        this.targets = [];
         this.previousEvent = null;
-        this.scale = this.initial_scale;
+        this.scale = this.initialScale;
+        this.angle = 0;
         this.pos = {x:0, y:0};
     }
-    
-    register(container, mirror) {
-        var target = container.children().first();
-        this.size = {w:target.width() * this.scale, h:target.height() * this.scale};
-        this.min_scale = this.options.min_scale || Math.min(
-            $(window).width() / (this.size.w * this.initial_scale) * 0.9,
-            $(window).height() / (this.size.h * this.initial_scale) * 0.9);
-        target.css({transformOrigin: '0 0', transition: 'transform 0.3s'});
-        
-        if (mirror !== true) {
-            target.css({cursor: 'zoom-in'});
-            container.on("mousewheel DOMMouseScroll", $.proxy(this.scrolled, this));
-            container.on('mousedown', $.proxy(this.draggable, this));
-        } else {
-            container.addClass('mirror');
-        }
-        this.events.on('wheelzoom.reset', $.proxy(this.reset, this));
-        this.events.on('wheelzoom.refresh', $.proxy(this.refresh, this));
-        
+
+    register(domElement, {mirror=false, map=false} = {}) {
+        this.events.addEventListener('wheelzoom.reset', this.reset.bind(this));
+        this.events.addEventListener('wheelzoom.refresh', this.refresh.bind(this));
+
+        let target = new zoomTarget(domElement, {map: map});
+        target.update(this.pos, this.scale);
         this.targets.push(target);
-        this.containers.push(container);
+        if (!mirror) {
+            // domElement.style.cursor = 'zoom-in';
+
+            function scroll(event) {
+                // looks like it breaks on some configurations?
+                // if (event.altKey) return;  // suposed to move in history
+                // if (event.ctrlKey) return;  // browser zoom
+                this.scrolling = target;
+                this.scrolled.bind(this)(event);
+            }
+            function drag(event) {
+                // in case of mask over the element, bc we bind to document so event.target can be whatever
+                if (!(event.which === 3 || event.button === 2)) return;  // right click only
+                this.dragging = target;
+                this.draggable.bind(this)(event);
+            }
+
+            target.container.addEventListener('mousewheel', scroll.bind(this));
+            target.container.addEventListener('DOMMouseScroll', scroll.bind(this)); // firefox
+            target.container.addEventListener('mousedown', drag.bind(this));
+        } else {
+            target.container.classList.add('mirror');
+        }
+        return target;
     }
-    
+
+    zoomTo(target, delta) {
+        let oldScale = this.scale;
+        this.scale += delta;
+	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
+        if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
+
+        var diff = {scale: this.scale / oldScale};
+        this.pos.x -= Math.round((target.x - target.x / diff.scale)*diff.scale);
+        this.pos.y -= Math.round((target.y - target.y / diff.scale)*diff.scale);
+
+        this.updateStyle(diff);
+        this.targets[0].showMap(this.pos, this.scale);
+        return diff;
+    }
+
 	scrolled(e) {
-        if (this.disabled) return;
+        if (this.disabled) return null;
         e.preventDefault();
-		var offset = $(e.delegateTarget).closest('.img-container').offset();
-		var zoom_point = {x: e.originalEvent.pageX - offset.left,
-		                  y: e.originalEvent.pageY - offset.top};
-		var delta = e.delta || e.originalEvent.wheelDelta;
+
+		var delta = e.delta || e.wheelDelta;
 		if (delta === undefined) {
 	      //we are on firefox
-	      delta = -e.originalEvent.detail;
+	      delta = -e.detail;
 	    }
         // cap the delta to [-1,1] for cross browser consistency
 	    delta = Math.max(-1, Math.min(1, delta));
 	    // determine the point on where the slide is zoomed in
- 	    var zoom_target = {x: (zoom_point.x - this.pos.x) / this.scale,
-	                       y: (zoom_point.y - this.pos.y) / this.scale};
+        let bounds = e.target.getBoundingClientRect();
+		var zoom_point = {x: (e.pageX - bounds.x - document.documentElement.scrollLeft),
+		                  y: (e.pageY - bounds.y - document.documentElement.scrollTop)};
 
-	    // apply zoom
-	    this.scale += delta * this.factor * this.scale;
-        
-	    if(this.min_scale !== null) this.scale = Math.max(this.min_scale, this.scale);
-        if(this.max_scale !== null) this.scale = Math.min(this.max_scale, this.scale);
-
-        this.pos.x = Math.round(-zoom_target.x * this.scale + zoom_point.x);
-		this.pos.y = Math.round(-zoom_target.y * this.scale + zoom_point.y);
-
-        this.updateStyle();
+        return this.zoomTo(zoom_point, delta * this.factor);
 	}
-    
+
 	drag(e) {
-        if (this.disabled) return;
+        if (this.disabled) return null;
 		e.preventDefault();
-		this.pos.x += (e.pageX - this.previousEvent.pageX);
-		this.pos.y += (e.pageY - this.previousEvent.pageY);
+        let target = this.dragging;
+        if (!target) return null;
+        let ts = target.container.getBoundingClientRect();
+        let delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
+
+        if (this.previousEvent) {
+            if (e.altKey) {
+                this.angle = (this.angle + (e.pageX - this.previousEvent.pageX)) % 360;
+            } else {
+                this.pos.x += (e.pageX - this.previousEvent.pageX);
+		        this.pos.y += (e.pageY - this.previousEvent.pageY);
+            }
+        }
+	    // Make sure the slide stays in its container area when zooming in/out
+        if (this.scale > 1) {
+            if (this.pos.x > 0) { this.pos.x = 0; }
+            if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
+                this.pos.x = ts.width - target.element.clientWidth * this.scale;
+            }
+
+            if (this.pos.y > 0) { this.pos.y = 0; }
+	        // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
+            //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
+            // }
+        } else {
+            if (this.pos.x < 0) { this.pos.x = 0; }
+	        if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
+                this.pos.x = ts.width - target.element.clientWidth *  this.scale;
+            }
+
+            if (this.pos.y < 0) { this.pos.y = 0; }
+            if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
+                this.pos.y = ts.height - target.element.clientHeight *  this.scale;
+            }
+        }
+
 		this.previousEvent = e;
-		this.updateStyle();
+        let diff = {
+            x: (this.pos.x - oldPos.x) / this.scale,
+            y: (this.pos.y - oldPos.y) / this.scale,
+            angle: this.angle - oldAngle
+        };
+		this.updateStyle(diff);
+        this.dragging.showMap(this.pos, this.scale);
+        return diff;
 	}
 
 	removeDrag() {
-        this.targets.forEach(function(e,i) {e.removeClass('notransition');});
-		$(document).off('mouseup', this.removeDrag);
-		$(document).off('mousemove', this.drag);
+        // this.targets.forEach(function(target,i) {
+        //     target.element.classList.remove('notransition');
+        // });
+
+		document.removeEventListener('mouseup', this.bRemDrag);
+		document.removeEventListener('mousemove', this.bDrag);
+        this.previousEvent = null;
 	}
 
-	draggable(e) {
+	draggable(event) {
         if (this.disabled) return;
-		e.preventDefault();
-		this.previousEvent = e;
-        // disable transition while dragging
-        this.targets.forEach(function(e,i) {e.addClass('notransition');});
-		$(document).on('mousemove', $.proxy(this.drag, this));
-		$(document).on('mouseup', $.proxy(this.removeDrag, this));
-	}
-    
-	updateStyle() {
-	    // Make sure the slide stays in its container area when zooming in/out
-        let container = this.getVisibleContainer();
-        if (this.size.w*this.scale > container.width()) {
-	        if(this.pos.x > 0) { this.pos.x = 0; }
-	        if(this.pos.x+this.size.w*this.scale < container.width()) { this.pos.x = container.width() - this.size.w*this.scale; }
-        } else {
-	        if(this.pos.x < 0) { this.pos.x = 0; }
-	        if(this.pos.x+this.size.w*this.scale > container.width()) { this.pos.x = container.width() - this.size.w*this.scale; }
-        }
+		event.preventDefault();
+		this.previousEvent = event;
+        // this.rotationOrigin = e.point;
 
-        if (this.size.h*this.scale > container.height()) {
-            if(this.pos.y > 0) { this.pos.y = 0; }
-	        if(this.pos.y+this.size.h*this.scale < container.height()) { this.pos.y = container.height() - this.size.h*this.scale; }
-        } else {
-            if(this.pos.y < 0) { this.pos.y = 0; }
-            if(this.pos.y+this.size.h*this.scale > container.height()) { this.pos.y = container.height() - this.size.h*this.scale; }
-        }
-
-        
-        // apply scale first for transition effect
-        this.targets.forEach($.proxy(function(e, i) {
-            e.css('transform', 'scale('+this.scale+')')
-             .css('transform', 'translate('+(this.pos.x)+'px,'+
-                  (this.pos.y)+'px) scale('+this.scale+')'); }, this));
-        
-        this.events.trigger('wheelzoom.updated');
+        // set bound event handlers
+        this.bDrag = this.drag.bind(this);
+        this.bRemDrag = this.removeDrag.bind(this);
+		document.addEventListener('mousemove', this.bDrag);
+		document.addEventListener('mouseup', this.bRemDrag);
 	}
-    
-    getVisibleContainer() {
-        return this.containers.find(function(e) { return e.is(':visible:not(.mirror)') && e.height() != 0;});
-    }
-    
+
+	updateStyle(delta) {
+        this.targets.forEach(function(target, i) {
+            target.update(this.pos, this.scale);
+            // if (this.rotationOrigin) {
+            //     target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
+            //     target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
+            // }
+        }.bind(this));
+        var event = new CustomEvent('wheelzoom.updated', {detail:delta});
+        if (this.events) this.events.dispatchEvent(event);
+	}
+
     refresh() {
-        let container = this.getVisibleContainer();
-        if (!container) return;
-        var target = container.children().first();
-        this.size = {w:target.width(), h:target.height()};
-        this.min_scale = this.options.min_scale || Math.min(
-            $(window).width() / (this.size.w * this.initial_scale) * 0.9,
-            $(window).height() / (this.size.h * this.initial_scale) * 0.9);
         this.updateStyle();
     }
-    
+
     reset() {
-        let container = this.getVisibleContainer();
+        let oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
         this.pos = {x:0, y:0};
-	    this.scale = this.initial_scale || 1;
-        this.size = {w: container.width(), h: container.height()};
-        this.updateStyle();
+	    this.scale = this.initialScale || 1;
+        this.updateStyle({x: -oldPos.x, y:-oldPos.y, scale: 1/oldAngle});
     }
-    
+
     disable() {
         this.disabled = true;
     }
@@ -162,8 +297,8 @@ class WheelZoom {
     enable() {
         this.disabled = false;
     }
-    
+
     destroy() {
-        $(this.containers).off("mousewheel DOMMouseScroll");
+        // TODO
     }
 }

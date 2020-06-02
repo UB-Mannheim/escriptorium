@@ -5,6 +5,8 @@
 
 {% block wizard_fields %}
 {{ block.super }}
+{% if not import_form.current_import.ongoing %}
 <h5>{% trans "Import images from IIIF." %}</h5>
 <div class="form-group">{% render_field import_form.iiif_uri %}</div>
+{% endif %}
 {% endblock %}

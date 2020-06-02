@@ -5,7 +5,7 @@
   <Description>
 	<MeasurementUnit>pixel</MeasurementUnit>
 	<sourceImageInformation>
-	  <fileName>/fake/path/doesnt/matter/test.png</fileName>
+	  <fileName>test1.png</fileName>
 	</sourceImageInformation>
 	<OCRProcessing ID="OCR_0">
 	  <ocrProcessingStep>

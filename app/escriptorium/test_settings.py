@@ -16,3 +16,5 @@ class DisableMigrations(object):
 
 MIGRATION_MODULES = DisableMigrations()
 
+# Disables easy-thumbnail spamming
+THUMBNAIL_OPTIMIZE_COMMAND = {}

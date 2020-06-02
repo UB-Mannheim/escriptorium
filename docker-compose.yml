@@ -1,11 +1,10 @@
-version: "3.7"
+version: "2.4"
 
 services:
-  web: &web
+  app: &app
     build:
       context: ./app
     env_file: variables.env
-    command: uwsgi --ini /usr/src/app/uwsgi.ini
     volumes:
       # - ./app/:/usr/src/app/
       - static:/usr/src/app/static
@@ -13,12 +12,19 @@ services:
     depends_on:
       - db
       - redis
+    command: /bin/true
+
+  web:
+    <<: *app
+    command: uwsgi --ini /usr/src/app/uwsgi.ini
 
   channelserver:
-    <<: *web
+    <<: *app
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
+    depends_on:
+      - web
 
   db:
     image: postgres:10.5-alpine
@@ -57,22 +63,24 @@ services:
   #   #  - 9200:9200
   #   # networks:  # use this if adding nodes
   #   #   - esnet
-  
-  celery-main: &celery-main
-    build:
-      context: ./app
-    env_file: variables.env
+
+  celery-main:
+    <<: *app
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
     depends_on:
-      - db
-      - redis
-    volumes:
-      - static:/usr/src/app/static
-      - media:/usr/src/app/media
-    command: "celery worker -l INFO -E -A escriptorium -Q default,img-processing -c ${CELERY_MAIN_CORES:-4} --max-tasks-per-child=10"
-  
+      - web
+
   celery-low-priority:
-    <<: *celery-main
-    command: "celery worker -l INFO -E -A escriptorium -Q low-priority -c ${CELERY_LOW_CORES:-2} --max-tasks-per-child=10"
+    <<: *app
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CONC:-10} --max-tasks-per-child=10"
+    depends_on:
+      - web
+
+  celery-gpu: &celery-gpu
+    <<: *app
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
+    depends_on:
+      - web
 
   flower:
     image: mher/flower
@@ -100,11 +108,11 @@ services:
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=ip-5-196-76.eu
-      - ALLOWED_HOSTS=web ; celery-main ; docker0
+      - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
+      - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
 
 volumes:
    static:
    media:
-   postgres:   
+   postgres:
    esdata:
