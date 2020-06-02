@@ -52,7 +52,31 @@ var DiploPanel = BasePanel.extend({
                 ev.preventDefault();
                 this.editNext();
             }
+            if(ev.keyCode==8 && this.getpositionCursor()==0){
+                this.editPrevious();
+                this.setpositionCursor("[id='"+ this.editLine.pk+ "']");
+                let idx = this.part.lines.indexOf(this.editLine);
+                for(let i=idx; i< this.$children.length; i++)
+                {
+                    let child = this.$children[i];
+                    let nextLine = this.part.lines[i+1];
+                    if(i == idx){
+                        let content = child.line.transcription.content + nextLine.transcription.content;
+
+                        child.setContent(content);
+                    }
+                    else if(nextLine){
+                        child.setContent(nextLine.transcription.content);
+                    }
+                    else {
+                        child.setContent("");
+                    }
+                    child.addToList();
+                }
+                this.toggleSave();
+            }
         },
+
         setEditLine(l) {
             this.editLine = l;
         },
@@ -120,6 +144,20 @@ var DiploPanel = BasePanel.extend({
         disableShortcuts(e){
           this.$parent.blockShortcuts = true;
         },
+        getpositionCursor() {
+            return window.getSelection().getRangeAt(0).startOffset;
+        },
+        setpositionCursor(id) {
+            const elt =  document.querySelector(id);
+            const textNode = elt.childNodes[0];
+            let  sel = window.getSelection();
+
+            const range = document.createRange();
+            range.setStart(textNode,textNode.length );  // Start at first character
+            range.setEnd(textNode, textNode.length);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     },
 
 });
