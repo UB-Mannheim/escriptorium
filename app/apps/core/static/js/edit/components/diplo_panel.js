@@ -77,6 +77,11 @@ var DiploPanel = BasePanel.extend({
                 this.updateEditLine(this.part.lines.length -1);
             }
 
+            if((ev.ctrlKey || ev.metaKey) && ev.keyCode==65){
+                ev.target.contenteditable= false;
+                 this.selectTextLines(ev);
+            }
+
         },
 
         setEditLine(l) {
@@ -158,7 +163,18 @@ var DiploPanel = BasePanel.extend({
             range.setEnd(textNode, textNode.length);
             sel.removeAllRanges();
             sel.addRange(range);
-        }
+        },
+        selectTextLines(e) {
+            e.preventDefault();
+            let selection = window.getSelection();
+            let lines = document.getElementById('diplomatic-lines');
+
+            selection.removeAllRanges();
+            let range = document.createRange();
+            range.selectNode(lines);
+            selection.addRange(range);
+
+        },
     },
 
 });
