@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os.path
-import redis
 import shutil
 
 from django.apps import apps
@@ -112,6 +111,15 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-success", level='success')
 
 
+def make_segmentation_training_data(part):
+    return {
+        'image': part.image.path,
+        'baselines': [{'script': 'default', 'baseline': bl}
+                      for bl in part.lines.values_list('baseline', flat=True) if bl],
+        'regions': {'default': [r.box for r in part.blocks.all().only('box')]}
+    }
+
+
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -158,15 +166,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         training_data = []
         evaluation_data = []
         for part in qs[partition:]:
-            training_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            training_data.append(make_segmentation_training_data(part))
         for part in qs[:partition]:
-            evaluation_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            evaluation_data.append(make_segmentation_training_data(part))
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)

@@ -117,13 +117,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                    'min': '0.1', 'max': '1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
-        # ('regions', _('Regions')),
-        ('lines', _('Baselines and Masks')),
-        ('masks', _('Only Masks')),
-        # ('both', _('Lines and regions'))
+        ('both', _('Lines and regions')),
+        ('lines', _('Lines Baselines and Masks')),
+        ('masks', _('Only lines Masks')),
+        ('regions', _('Regions')),
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
-                                           initial='lines', required=False)
+                                           initial='both', required=False)
     seg_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                        .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                        label=_("Model"), required=False)

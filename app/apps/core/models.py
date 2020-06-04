@@ -572,45 +572,56 @@ class DocumentPart(OrderedModel):
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
 
-        with Image.open(self.image.file.name) as im:
-            options = {'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')}  # {'maxcolseps': 1}
-            if text_direction:
-                options['text_direction'] = text_direction
-            if model:
-                model_path = model.file.path
-            else:
-                model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
-            options['model'] = vgsl.TorchVGSLModel.load_model(model_path)
-            # blocks = self.blocks.all()
-            # if blocks:
-            #     for block in blocks:
-            #         if block.box[2] < block.box[0] + 10 or block.box[3] < block.box[1] + 10:
-            #             continue
-            #         ic = im.crop(block.box)
-            #         res = blla.segment(ic, **options)
-            #         # if script_detect:
-            #         #     res = pageseg.detect_scripts(im, res, valid_scripts=allowed_scripts)
-            #         for line in res['lines']:
-            #             Line.objects.create(
-            #                 document_part=self, block=block,
-            #                 box=(line[0]+block.box[0], line[1]+block.box[1],
-            #                      line[2]+block.box[0], line[3]+block.box[1]))
-            # else:
-            with transaction.atomic():
-                # cleanup pre-existing
-                if steps in ['lines', 'both'] and override:
-                    self.lines.all().delete()
-                if steps in ['regions', 'both'] and override:
-                    self.blocks.all().delete()
+        if model:
+            model_path = model.file.path
+        else:
+            model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        model_ = vgsl.TorchVGSLModel.load_model(model_path)
+        # TODO: check model_type [None, 'recognition', 'segmentation']
+        #    &  seg_type [None, 'bbox', 'baselines']
 
-                res = blla.segment(im, **options)
+        if model_.one_channel_mode == '1':
+            # TODO: need to binarize, probably not live...
+            if not self.bw_image:
+                self.binarize()
+            im = Image.open(self.bw_image.file.name)
+        elif model_.one_channel_mode == 'L':
+            im = Image.open(self.image.file.name).convert('L')
+        else:
+            im = Image.open(self.image.file.name)
 
+        options = {
+            'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'),
+            'model': model_
+        }
+        if text_direction:
+            options['text_direction'] = text_direction
+
+        with transaction.atomic():
+            # cleanup pre-existing
+            if steps in ['lines', 'both'] and override:
+                self.lines.all().delete()
+            if steps in ['regions', 'both'] and override:
+                self.blocks.all().delete()
+
+            res = blla.segment(im, **options)
+
+            print(res['regions'])
+
+            if steps in ['lines', 'both']:
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None
                     Line.objects.create(
                         document_part=self,
                         baseline=line['baseline'],
                         mask=mask)
+            if steps in ['regions', 'both']:
+                for region_type in res['regions'].items():
+                    for region in region_type:
+                        Block.objects.create(
+                            document_part=self,
+                            box=region)
+        im.close()
 
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
         self.save()
