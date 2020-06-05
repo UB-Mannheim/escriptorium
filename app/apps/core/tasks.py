@@ -179,6 +179,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             load=load,
             training_data=training_data,
             evaluation_data=evaluation_data,
+            valid_regions=['default'],
             threads=LOAD_THREADS,
             augment=True,
             load_hyper_parameters=True)

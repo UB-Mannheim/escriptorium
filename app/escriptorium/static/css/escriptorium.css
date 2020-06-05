@@ -463,6 +463,16 @@ i.panel-icon {
     margin: 10px;
 }
 
+.panel #context-menu button {
+    display: block;
+    width: 40px;
+    opacity: 80%;
+}
+
+.panel #context-menu button:hover {
+    opacity: 100%;
+}
+
 #trans-modal .modal-content {
     display: block;
 }

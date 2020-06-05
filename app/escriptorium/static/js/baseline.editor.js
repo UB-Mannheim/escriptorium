@@ -1,23 +1,24 @@
+
 /*
-Baseline editor
-a javascript based baseline segmentation editor,
-requires paper.js and colorThief is optional.
+   Baseline editor
+   a javascript based baseline segmentation editor,
+   requires paper.js and colorThief is optional.
 
-Usage:
-var segmenter = new Segmenter(img, options);
-segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
+   Usage:
+   var segmenter = new Segmenter(img, options);
+   segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
 
-Options:
-  lengthTreshold=15
-  lengthTreshold=15,
-  delayInit=false,
-  deletePointBtn=null,
-  deleteSelectionBtn=null,
-  toggleMasksBtn=null,
-  splitBtn=null,
-  mergeBtn=null,
+   Options:
+   lengthTreshold=15
+   lengthTreshold=15,
+   delayInit=false,
+   deletePointBtn=null,
+   deleteSelectionBtn=null,
+   toggleMasksBtn=null,
+   splitBtn=null,
+   mergeBtn=null,
 
-*/
+ */
 var lastId = 0;
 function generateUniqueId() { return lastId++; };
 
@@ -418,6 +419,8 @@ class Segmenter {
                         directionHintColor=null,
                         regionColor=null,
 
+                        regionTypes=['Title', 'Main', 'Marginal', 'Illustration', 'Numbering'],
+                        lineTypes=['Main', 'Interlinear'],
                         // todo: choose keyboard shortcuts
 
                         inactiveLayerOpacity=0.5,
@@ -432,6 +435,10 @@ class Segmenter {
         this.mode = 'lines'; // | 'regions'
         this.lines = [];
         this.regions = [];
+
+        this.regionTypes = regionTypes;
+        this.lineTypes = lineTypes;
+
         this.selection = {lines:[], segments:[], regions:[]};
         this.defaultTextDirection = defaultTextDirection;
 
@@ -486,6 +493,7 @@ class Segmenter {
         this.reverseBtn = document.getElementById('be-reverse-selection');
         this.linkRegionBtn = document.getElementById('be-link-region');
         this.unlinkRegionBtn = document.getElementById('be-unlink-region');
+        this.setTypeBtn = document.getElementById('be-set-type')
 
         // editor settings;
         this.baselinesColorInput = document.getElementById('be-bl-color');
@@ -499,7 +507,6 @@ class Segmenter {
         if (!this.contextMenu) {
             document.createElement('div');
             this.contextMenu.id = 'context-menu';
-            this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         }
         this.contextMenu.style.position = 'fixed';
         this.contextMenu.style.transform = 'translateZ(0)'; // css trick to fix to an element
@@ -509,9 +516,11 @@ class Segmenter {
         if (this.unlinkRegionBtn) this.contextMenu.appendChild(this.unlinkRegionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
         if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+        if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
 
+        this.createTypeSelects();
         this.bindButtons();
 
         // init paperjs
@@ -545,7 +554,7 @@ class Segmenter {
             let segment = this.selection.segments[i];
             if (segment.path && (
                 (segment.path.closed && segment.path.segments.length > 3) ||
-                    segment.path.segments.length > 2)) {
+                segment.path.segments.length > 2)) {
                 this.selection.segments[i].remove();
                 this.selection.segments.pop();
             }
@@ -595,7 +604,9 @@ class Segmenter {
         if (this.reverseBtn) this.reverseBtn.addEventListener('click', function(event) {
             this.reverseSelection();
         }.bind(this));
-
+        if (this.setTypeBtn) this.setTypeBtn.addEventListener('click', function(event) {
+            this.showTypeSelect();
+        }.bind(this));
         if (this.toggleOrderingBtn) this.toggleOrderingBtn.addEventListener('click', function(ev) {
             this.toggleOrdering();
         }.bind(this));
@@ -657,6 +668,8 @@ class Segmenter {
                 this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
+            } else if (event.keyCode ==  84) {  // T
+                this.showTypeSelect();
             } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
                 event.preventDefault();
                 event.stopPropagation();
@@ -1316,10 +1329,10 @@ class Segmenter {
     exportJSON() {
         /* Returns a list of lines containing each a baseline polygon and a mask polygon
          * {
-              regions: [[[xr1, yr1], [xr2, yr2], [xr3, yr3]], [..]],
-              lines:[{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}]
+           regions: [[[xr1, yr1], [xr2, yr2], [xr3, yr3]], [..]],
+           lines:[{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}]
            }
-        */
+         */
         return {
             regions: this.regions.map(region => region.polygon),
             lines: this.lines.map(function(line) {
@@ -1425,7 +1438,7 @@ class Segmenter {
 
         if (this.selection.lines.length) {
             if (this.reverseBtn) this.reverseBtn.style.display = 'block';
-            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+
             // we can only merge if all lines contain a baseline
             if (this.selection.lines.filter(l => l.baseline !== null).length > 1) {
                 this.mergeBtn.style.display = 'block';
@@ -1446,11 +1459,91 @@ class Segmenter {
             if (this.deletePointBtn) this.deletePointBtn.style.display = 'block';
         }
 
-        if (this.selection.regions.length) {
-            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+        this.contextMenu.style.display = 'block';
+    }
+
+    showTypeSelect() {
+        if (this.selection.lines.length) {
+            this.lineTypesSelect.style.display = 'block';
+            this.lineTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
+            this.lineTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
+            this.lineTypesSelect.focus();
+        } else if (this.selection.regions.length) {
+            this.regionTypesSelect.style.display = 'block';
+            this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
+            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
+            this.regionTypesSelect.focus();
         }
 
-        this.contextMenu.style.display = 'block';
+        function unbindKb() {
+            document.removeEventListener('keydown', bindKb);
+            this.regionTypesSelect.blur();
+            this.lineTypesSelect.blur();
+        }
+
+        function bindKb(ev) {
+            if (ev.keyCode == 27) {  // escape
+                unbindKb.bind(this)();
+                ev.stopPropagation();
+            } else if (ev.keyCode == 13) {  // enter
+                // this.setSelectionType(select.value)
+                unbindKb.bind(this)();
+                ev.stopPropagation();
+            }
+            let max = 95 + document.activeElement.childElementCount;
+            if (ev.keyCode >= 96 && ev.keyCode <= max) {
+                // this.setSelectionType(select.value)
+                unbindKb.bind(this)();
+                ev.stopPropagation();
+            }
+            // numeric: 48-57 select index
+        }
+
+        // disable other shortcuts
+        this.disableShortcuts = true;
+        document.addEventListener('keydown', bindKb.bind(this));
+    }
+
+    createTypeSelects() {
+        this.regionTypesSelect = document.createElement('select');
+        this.regionTypesSelect.style.position = 'absolute';
+
+        this.regionTypesSelect.style.display = 'none';
+        let opt = document.createElement('option');
+        opt.text = 'None (0)';
+        this.regionTypesSelect.appendChild(opt);
+        this.regionTypes.forEach(function(type, i) {
+            opt = document.createElement('option');
+            opt.value = type;
+            opt.text = type + ' ('+(i+1)+')';
+            this.regionTypesSelect.appendChild(opt);
+            this.setTypeBtn.appendChild(this.regionTypesSelect);
+        }.bind(this));
+        this.regionTypesSelect.size = this.regionTypes.length+1;
+        this.regionTypesSelect.addEventListener('blur', function(ev) {
+            this.regionTypesSelect.style.display = 'none';
+            this.disableShortcuts = false;
+        }.bind(this));
+
+        this.lineTypesSelect = document.createElement('select');
+        this.lineTypesSelect.style.position = 'absolute';
+
+        this.lineTypesSelect.style.display = 'none';
+        opt = document.createElement('option');
+        opt.text = 'None (0)';
+        this.lineTypesSelect.appendChild(opt);
+        this.lineTypes.forEach(function(type, i) {
+            opt = document.createElement('option');
+            opt.value = type;
+            opt.text = type + ' ('+(i+1)+')';
+            this.lineTypesSelect.appendChild(opt);
+            this.setTypeBtn.appendChild(this.lineTypesSelect);
+        }.bind(this));
+        this.lineTypesSelect.size = this.lineTypes.length+1;
+        this.lineTypesSelect.addEventListener('blur', function(ev) {
+            this.lineTypesSelect.style.display = 'none';
+            this.disableShortcuts = false;
+        }.bind(this));
     }
 
     hasSelection() {
