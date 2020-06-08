@@ -41,7 +41,8 @@ var DiploPanel = BasePanel.extend({
                 ev.preventDefault();
                 this.updateEditLine(index -1);
             }
-            else if (ev.keyCode == 40 || ev.keyCode == 13) {
+            else if (ev.keyCode == 40) {
+            // else if (ev.keyCode == 40 || ev.keyCode == 13) {
                 ev.preventDefault();
                 this.updateEditLine(index +1);
             }
@@ -80,6 +81,13 @@ var DiploPanel = BasePanel.extend({
             if((ev.ctrlKey || ev.metaKey) && ev.keyCode==65){
                 ev.target.contenteditable= false;
                  this.selectTextLines(ev);
+            }
+            if(ev.keyCode == 13){
+                let idx = this.part.lines.indexOf(this.editLine) ;
+                if(idx < this.part.lines.length -1){
+                // this.updateEditLine(index +1);
+                this.carriage(ev,idx);
+                }
             }
 
         },
@@ -175,6 +183,32 @@ var DiploPanel = BasePanel.extend({
             selection.addRange(range);
 
         },
+        //return --> insert carriage return here and push rest of text of this line into the next line.
+        // If there is text in the next line push that line one down etc. If there is no text in the next line dont push further
+        carriage(ev,idx){
+            ev.preventDefault(); //Prevent default browser behavior
+            if (window.getSelection) {
+                  var selection = window.getSelection(),
+                  range = selection.getRangeAt(0),
+                      br = document.createElement("br"),
+                      textNode = document.createTextNode($("<div></div>").text()); //Passing " " directly will not end up being shown correctly
+                  range.deleteContents();
+                  range.insertNode(br);
+                  range.collapse(false);
+                  range.insertNode(textNode);
+                  range.selectNodeContents(textNode);
+                  selection.removeAllRanges();
+                  selection.addRange(range);
+                  let child = this.$children[idx+1];
+                  let html = ev.target.innerHTML ;
+                  let after_break = html.substring(html.indexOf('br')+3);
+                  child.setContent(after_break + child.line.transcription.content);
+                  ev.target.innerHTML = html.substring(0, html.indexOf('<br')) + "</div>";
+                  this.updateEditLine(idx+1);
+                  return false;
+            }
+
+        }
     },
 
 });
