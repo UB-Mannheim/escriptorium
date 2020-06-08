@@ -343,7 +343,7 @@ def train_(qs, document, transcription, model=None, user=None):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy
-        model.training_total = chars
+        model.training_total = int(chars)
         model.training_errors = error
         new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
         model.new_version(file=new_version_filename)
@@ -354,7 +354,7 @@ def train_(qs, document, transcription, model=None, user=None):
             'versions': model.versions,
             'epoch': epoch,
             'accuracy': accuracy,
-            'chars': chars,
+            'chars': int(chars),
             'error': error})
 
     trainer.run(_print_eval)
