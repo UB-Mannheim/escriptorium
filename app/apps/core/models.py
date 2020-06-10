@@ -708,9 +708,12 @@ class DocumentPart(OrderedModel):
                                                 [l.baseline for l in to_calc],
                                                 suppl_obj=[l.baseline for l in context],
                                                 scale=(1200, 0))
-        for line, mask in zip(to_calc, masks):
+        ziped = zip(to_calc, masks)
+        for line, mask in ziped:
             line.mask = mask
             line.save()
+
+        return to_calc
 
 
 def validate_polygon(value):

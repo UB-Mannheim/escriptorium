@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os.path
-import redis
 import shutil
 
 from django.apps import apps
@@ -280,6 +279,22 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         if user:
             user.notify(_("Segmentation done!"),
                         id="segmentation-success", level='success')
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
+def recalculate_masks(instance_pk, user_pk=None, only=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist as e:
+        logger.error('Trying to recalculate masks of innexistant DocumentPart : %d', instance_pk)
+        return
+
+    result = part.make_masks(only=only)
+    send_event('document', part.document.pk, "part:mask", {
+        "id": part.pk,
+        "lines": [{'pk': line.pk, 'mask': line.mask} for line in result]
+    })
 
 
 def train_(qs, document, transcription, model=None, user=None):

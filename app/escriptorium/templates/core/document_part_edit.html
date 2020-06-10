@@ -604,6 +604,16 @@
    var PART_ID = {{part.id}};  // can be changed with next & previous pages
   </script>
 
+  <script type="text/javascript">
+   'use strict';
+   $(document).ready(function() {
+       // join the ws room
+       msgSocket.addEventListener('open', function(ev) {
+           msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
+       });
+   });
+  </script>
+
   {% compress js file part_edit %}
   <script type="text/javascript" src="{% static 'js/diff.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/math.min.js' %}"></script>

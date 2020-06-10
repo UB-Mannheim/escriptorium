@@ -29,6 +29,7 @@ from core.models import (Document,
                          Line,
                          Transcription,
                          LineTranscription)
+from core.tasks import recalculate_masks
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
@@ -149,19 +150,8 @@ class PartViewSet(ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
-
-        try:
-            part.make_masks(only=only)
-        except Exception as e:
-            logger.exception(e)
-            return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if only is None:
-            qs = part.lines.all()
-        else:
-            qs = part.lines.filter(pk__in=only)
-        serializer = LineSerializer(qs, many=True)
-        return Response({'status': 'done', 'lines': serializer.data}, status=200)
+        recalculate_masks.delay(part.pk, only=only)
+        return Response({'status': 'ok'})
 
     @action(detail=True, methods=['post'])
     def recalculate_ordering(self, request, document_pk=None, pk=None):
