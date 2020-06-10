@@ -1818,8 +1818,8 @@ class Segmenter {
 
             for (let j in this.regions) {
                 let region = this.regions[j];
-                if (region.polygonPath.intersects(line.baselinePath) ||
-                    line.baselinePath.isInside(region.polygonPath.bounds)) {
+                let center = line.baselinePath.getPointAt(line.baselinePath.length/2);
+                if (region.polygonPath.contains(center)) {
                     line.region = region;
                     continue;
                 }
