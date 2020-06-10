@@ -323,26 +323,31 @@
                       <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
                       <button v-if="save" @click="toggleSave" class="btn btn-success" id="save-diplomatic" title="{% trans "Save Line content" %}">Save</button>
                   </div>
-                  <div v-if="part" id="diplomatic-lines" class="content-container {{ document.read_direction }}">
+                  <div v-if="part" id="diplomatic-lines" contenteditable="true"
+                       @keydown="onKeyDown"
+                       class="content-container {{ document.read_direction }}">
+
                       <diploline v-for="line in part.lines"
                                  v-bind:line="line"
                                  v-bind:ratio="ratio"
                                  v-bind:key="line.pk"   inline-template>
                           <div class="d-flex flex-column diplomatic-line">
                               <div  class="d-flex flex-row">
-                                  <div class ="table-row line-region " class="w-10">${region}</div>
+                                  <div class ="table-row line-region " class="w-10" contenteditable="false">${region}</div>
                                   <div class ="table-row line-order" class="w-10" v-bind:draggable="true"
                                     @dragstart="$parent.dragStart(line,$event)"
                                     @dragover.prevent
                                     @dragend="$parent.dragEnd"
                                     @drop="$parent.dragFinish(line,$event)"
+                                    contenteditable="false"
                                   >${line.order + 1}</div>
+
                                   <div v-bind:id="line.pk"
                                        @mouseup="startEdit"
                                        @focusout="stopEdit"
                                        @mouseover="showOverlay"
                                        @mouseleave="hideOverlay"
-                                       @keydown="$parent.onKeyDown"
+{#                                       @keydown="$parent.onKeyDown"#}
                                        @select="stopEdit"
                                        @paste="onPaste"
                                        class="table-row line-content {{ document.default_text_direction }}"
