@@ -7,72 +7,79 @@
 {% block extra_nav %}
 {% if object and can_publish %}
 <div class="ml-auto">
-  <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
-  {% comment %}
-  {% if not object.is_published %}
-  <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
-    <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
-    <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
-      <i class="fas fa-globe-europe"></i>
-    </button>
-  </form>
-  {% endif %}
-  {% endcomment %}
-  <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-    <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
-    <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-  </form>
+    <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
+    {% comment %}
+    {% if not object.is_published %}
+    <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
+        <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
+        <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
+            <i class="fas fa-globe-europe"></i>
+        </button>
+    </form>
+    {% endif %}
+    {% endcomment %}
+    <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+        <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
+        <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+    </form>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block tab_content %}
 <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
-  <form method="post">
-    {% csrf_token %}
-    <fieldset>
-      {% if object %}
-      {% render_field form.name %}
-      {% else %}
-      {% render_field form.name autofocus=1 %}
-      {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <fieldset>
+            {% if object %}
+            {% render_field form.name %}
+            {% else %}
+            {% render_field form.name autofocus=1 %}
+            {% endif %}
 
-      {% render_field form.main_script %}
-      {% render_field form.read_direction %}
-      {# render_field form.typology #}
-      
-      <div class="js-metadata-form">
-        <label class="my-1">{% trans "Metadata" %}</label>
-        {{ metadata_form.management_form }}
+            {% render_field form.main_script %}
+            {% render_field form.read_direction %}
+            {# render_field form.typology #}
 
-        {% for form in metadata_form.forms %}
-        <div class="input-group input-group-sm mb-2 js-metadata-row">
-          {{ form.id }}  {# hidden #}
-          {{ form.document }}  {# hidden #}
-          <div class="input-group-sm input-group-prepend">
-            {% render_field form.key group=True autocomplete="on" list="metadataKeys" class="input-group-text" %}
-          </div>
-          {% render_field form.value group=True %}
-          <div class="input-group-prepend">
-            <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
-            <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
-          </div>
-        </div>
-        {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
-        {% endfor %}
 
-        {% if metadata_form.forms.0.choices %}
-        <datalist id="metadataKeys">
-          {% for md in metadata_form.forms.0.choices %}
-          <option>{{ md.name }}</option>
-          {% endfor %}
-        </datalist>
-        {% endif %}
-      </div>
-      
-      <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
-    </fieldset>
-  </form>
+            <div class="form-group">
+                <label class="my-1">{% trans "Ontology" %}</label>
+                {{ form.block_types }}
+                {{ form.line_types }}
+            </div>
+
+            <div class="js-metadata-form">
+                <label class="my-1">{% trans "Metadata" %}</label>
+                {{ metadata_form.management_form }}
+
+                {% for form in metadata_form.forms %}
+                <div class="input-group input-group-sm mb-2 js-metadata-row">
+                    {{ form.id }}  {# hidden #}
+                    {{ form.document }}  {# hidden #}
+                    <div class="input-group-sm input-group-prepend">
+                        {% render_field form.key group=True autocomplete="on" list="metadataKeys" class="input-group-text" %}
+                    </div>
+                    {% render_field form.value group=True %}
+                    <div class="input-group-prepend">
+                        <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
+                        <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
+                    </div>
+                </div>
+                {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
+                {% endfor %}
+
+                {% if metadata_form.forms.0.choices %}
+                <datalist id="metadataKeys">
+                    {% for md in metadata_form.forms.0.choices %}
+                    <option>{{ md.name }}</option>
+                    {% endfor %}
+                </datalist>
+                {% endif %}
+            </div>
+
+            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+        </fieldset>
+    </form>
 </div>
 {% endblock %}
 
@@ -80,31 +87,31 @@
 {% if share_form %}
 <!-- shareModal -->
 <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form method="post" action="{% url 'document-share' pk=object.pk %}">
-        {% csrf_token %}
-        
-      <div class="modal-header">
-        <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <h5>{% trans "Teams" %}</h5>
-        {% render_field share_form.shared_with_groups %}
-        <h5>{% trans "Users" %}</h5>
-        {% render_field share_form.username %}
-        {% render_field share_form.shared_with_users %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-      </div>
-      </form>      
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'document-share' pk=object.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>{% trans "Teams" %}</h5>
+                    {% render_field share_form.shared_with_groups %}
+                    <h5>{% trans "Users" %}</h5>
+                    {% render_field share_form.username %}
+                    {% render_field share_form.shared_with_users %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 {% endif %}
 {% endblock %}

@@ -60,13 +60,20 @@ class Typology(models.Model):
     TARGET_DOCUMENT = 1
     TARGET_PART = 2
     TARGET_BLOCK = 3
+    TARGET_LINE = 4
     TARGET_CHOICES = (
         (TARGET_DOCUMENT, 'Document'),
-        (TARGET_PART, 'Part (eg Page)'),
-        (TARGET_BLOCK, 'Block (eg Paragraph)'),
+        (TARGET_PART, 'Part (eg Page, Cover)'),
+        (TARGET_BLOCK, 'Block (eg Paragraph, Illustration)'),
+        (TARGET_LINE, 'Line (eg Main, Commentary)'),
     )
     name = models.CharField(max_length=128)
     target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
+
+    # if True, is visible as a choice in the ontology edition in a new document
+    public = models.BooleanField(default=False)
+    # if True, is a valid choice by default in a new document
+    default = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -177,6 +184,10 @@ class Document(models.Model):
     )
     typology = models.ForeignKey(Typology, null=True, blank=True, on_delete=models.SET_NULL,
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
+
+    # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
+    valid_types = models.ManyToManyField(Typology, related_name='valid_in')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -791,6 +802,10 @@ class Line(OrderedModel):  # Versioned,
     # text direction
     order_with_respect_to = 'document_part'
     version_ignore_fields = ('document_part', 'order')
+
+    typology = models.ForeignKey(Typology, null=True, blank=True,
+                                 on_delete=models.SET_NULL,
+                                 limit_choices_to={'target': Typology.TARGET_LINE})
 
     external_id = models.CharField(max_length=128, blank=True, null=True)
 
