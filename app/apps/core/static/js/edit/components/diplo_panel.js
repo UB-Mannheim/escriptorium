@@ -37,15 +37,7 @@ var DiploPanel = BasePanel.extend({
 
             //disable shortcuts
             this.$parent.blockShortcuts = true;
-            if (ev.keyCode == 38) {
-                ev.preventDefault();
-                this.updateEditLine(index -1);
-            }
-            else if (ev.keyCode == 40) {
-            // else if (ev.keyCode == 40 || ev.keyCode == 13) {
-                ev.preventDefault();
-                this.updateEditLine(index +1);
-            }
+
             if(ev.keyCode==8 && this.getpositionCursor()==0){
                 this.updateEditLine(index -1);
                 let idx = this.part.lines.indexOf(this.editLine);
@@ -69,19 +61,7 @@ var DiploPanel = BasePanel.extend({
                 }
                 this.toggleSave();
             }
-            // ctrl and home to go to the first line
-            if (ev.ctrlKey && ev.keyCode == 36){
-                this.updateEditLine(0);
-            }
-            // ctrl and end to go to the last line
-            if (ev.ctrlKey && ev.keyCode == 35){
-                this.updateEditLine(this.part.lines.length -1);
-            }
 
-            if((ev.ctrlKey || ev.metaKey) && ev.keyCode==65){
-                ev.target.contenteditable= false;
-                 this.selectTextLines(ev);
-            }
             if(ev.keyCode == 13){
                 let idx = this.part.lines.indexOf(this.editLine) ;
                 if(idx < this.part.lines.length -1){
@@ -156,9 +136,6 @@ var DiploPanel = BasePanel.extend({
         updateView() {
             this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
-        disableShortcuts(e){
-          this.$parent.blockShortcuts = true;
-        },
         getpositionCursor() {
             return window.getSelection().getRangeAt(0).startOffset;
         },
@@ -172,21 +149,10 @@ var DiploPanel = BasePanel.extend({
             sel.removeAllRanges();
             sel.addRange(range);
         },
-        selectTextLines(e) {
-            e.preventDefault();
-            let selection = window.getSelection();
-            let lines = document.getElementById('diplomatic-lines');
-
-            selection.removeAllRanges();
-            let range = document.createRange();
-            range.selectNode(lines);
-            selection.addRange(range);
-
-        },
         //return --> insert carriage return here and push rest of text of this line into the next line.
         // If there is text in the next line push that line one down etc. If there is no text in the next line dont push further
         carriage(ev,idx){
-            ev.preventDefault(); //Prevent default browser behavior
+            ev.preventDefault();
             if (window.getSelection) {
                   var selection = window.getSelection(),
                   range = selection.getRangeAt(0),
@@ -200,10 +166,12 @@ var DiploPanel = BasePanel.extend({
                   selection.removeAllRanges();
                   selection.addRange(range);
                   let child = this.$children[idx+1];
-                  let html = ev.target.innerHTML ;
+                  let target = selection.anchorNode.nextSibling.parentNode ;
+                  let html = target.innerHTML ;
                   let after_break = html.substring(html.indexOf('br')+3);
+
                   child.setContent(after_break + child.line.transcription.content);
-                  ev.target.innerHTML = html.substring(0, html.indexOf('<br')) + "</div>";
+                  target.innerHTML = html.substring(0, html.indexOf('<br')) + "</div>";
                   this.updateEditLine(idx+1);
                   return false;
             }
