@@ -33,21 +33,16 @@ var diploLine = LineBase.extend({
         }
     },
     methods: {
-        startEdit(ev) {
+        startEdit(ev){
             // if we are selecting text we don't want to start editing
             // to be able to do multiline selection
             if (document.getSelection().toString()) {
                 return true;
             }
-            this.$content.setAttribute('contenteditable', true);
-            this.$content.focus();  // needed in case we edit from the panel
             this.$parent.setEditLine(this.line);
-            this.$content.style.backgroundColor =  '#F8F8F8';
             this.$parent.$parent.blockShortcuts = true;
         },
         stopEdit(ev) {
-            this.$content.setAttribute('contenteditable', false);
-            this.$content.style.backgroundColor = 'white';
             this.$parent.$parent.blockShortcuts = false;
             this.pushUpdate();
         },
