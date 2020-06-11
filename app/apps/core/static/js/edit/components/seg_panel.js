@@ -30,7 +30,9 @@ const SegPanel = BasePanel.extend({
                 evenMasksColor: beSettings['color-even-masks'] || null,
                 oddMasksColor: beSettings['color-odd-masks'] || null,
                 directionHintColor: beSettings['color-directions'] || null,
-                regionColor: beSettings['color-regions'] || null
+                regionColor: beSettings['color-regions'] || null,
+                regionTypes: this.part.types.regions.map(t=>t.name),
+                lineTypes: this.part.types.lines.map(t=>t.name)
             });
             // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
             let canvas = this.segmenter.canvas;
@@ -239,10 +241,12 @@ const SegPanel = BasePanel.extend({
             if (data.regions && data.regions.length) {
                 for(let i=0; i<data.regions.length; i++) {
                     let region = data.regions[i];
+                    console.log();
                     this.$parent.$emit(
                         'update:region', {
                             pk: region.context.pk,
-                            box: region.box
+                            box: region.box,
+                            type: region.type
                         },
                         function(region) {
                             let segmenterRegion = this.segmenter.regions.find(r=>r.context.pk==region.pk);
@@ -259,7 +263,8 @@ const SegPanel = BasePanel.extend({
                             pk: l.context.pk,
                             baseline: l.baseline,
                             mask: l.mask,
-                            region: l.region && l.region.context.pk
+                            region: l.region && l.region.context.pk,
+                            type: l.type
                         };
                     }),
                     function(updatedLines) {

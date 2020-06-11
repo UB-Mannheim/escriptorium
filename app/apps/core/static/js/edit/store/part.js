@@ -46,7 +46,7 @@ const partStore = {
     fetchPart(pk, callback) {
         this.reset();
         this.pk = pk;
-        this.fetchTranscriptions(function() {
+        this.fetchDocument(function() {
             let uri = this.getApiPart(pk);
             fetch(uri)
                 .then((response)=>response.json())
@@ -59,16 +59,23 @@ const partStore = {
                 });
         }.bind(this));
     },
-    fetchTranscriptions(callback) {
-        if (this.transcriptions.length) {
-            if (callback) callback(this.transcriptions);
+    fetchDocument(callback) {
+        if (this.transcriptions.length) {  // assuming there is always at least one
+            if (callback) callback({
+                'transcriptions': this.transcriptions,
+                'types': this.types
+            });
             return;
         }
-        let uri = this.getApiRoot() + 'transcriptions/';
+        let uri = this.getApiRoot();
         fetch(uri)
             .then((response)=>response.json())
             .then(function(data) {
-                this.transcriptions = data;
+                this.transcriptions = data.transcriptions;
+                this.types = {
+                    'regions': data.valid_types.filter(t=>t.target=='Block'),
+                    'lines': data.valid_types.filter(t=>t.target=='Line')
+                };
                 if (callback) callback(data);
             }.bind(this));
     },
@@ -206,14 +213,23 @@ const partStore = {
     },
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiPart() + 'lines/bulk_update/';
-        lines.forEach(l=>l.document_part = this.pk);
+
+        data = lines.map(l=>function(l) {
+            return {
+                document_part: this.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                region: l.region,
+                type: l.type && this.types.regions.find(t=>t.name==l.type).pk
+            };
+        });
+
         this.push(uri, {lines: lines}, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
                 let updatedBaselines = [];
                 for (let i=0; i<data.lines.length; i++) {
-
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
                         return l.pk==lineData.pk;
@@ -340,9 +356,11 @@ const partStore = {
     },
     updateRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/' + region.pk + '/';
+        let type = region.type && this.types.regions.find(t=>t.name==region.type).pk
         data = {
             document_part: this.pk,
-            box: region.box
+            box: region.box,
+            typology: type
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())

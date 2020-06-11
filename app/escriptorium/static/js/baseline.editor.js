@@ -36,10 +36,11 @@ function isRightClick(event) {
 }
 
 class SegmenterRegion {
-    constructor(polygon, context, segmenter_) {
+    constructor(polygon, type, context, segmenter_) {
         this.id = generateUniqueId();
         this.segmenter = segmenter_;
         this.polygon = polygon;
+        this.type = type;
         this.context = context;
         this.selected = false;
         this.polygonPath = new Path({
@@ -48,7 +49,7 @@ class SegmenterRegion {
             strokeColor: this.segmenter.regionColor,
             dashOffset: 5/this.segmenter.getRatio(),
             strokeWidth: 2/this.segmenter.getRatio(),
-            fillColor: this.segmenter.mode == 'regions' ? this.segmenter.regionColor : null,
+            fillColor: 'red', // this.segmenter.mode == 'regions' ? this.segmenter.regionColor : null,
             selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
             visible: true,
             segments: this.polygon
@@ -109,14 +110,15 @@ class SegmenterRegion {
     get() {
         return {
             id: this.id,
-            context: this.context,  // copy
             box: this.polygon.slice(),  // copy
+            type: this.type,
+            context: this.context
         };
     }
 }
 
 class SegmenterLine {
-    constructor(order, baseline, mask, region, textDirection, context, segmenter_) {
+    constructor(order, baseline, mask, region, textDirection, type, context, segmenter_) {
         this.id = generateUniqueId();
         this.order = order;
         this.segmenter = segmenter_;
@@ -125,6 +127,7 @@ class SegmenterLine {
         this.context = context;
         this.selected = false;
         this.textDirection = textDirection || 'lr';
+        this.type = type;
         this.directionHint = null;
 
         if (baseline) {
@@ -399,7 +402,8 @@ class SegmenterLine {
             context: this.context,
             baseline: this.baseline && this.baseline.slice() || null,
             mask: this.mask && this.mask.slice() || null,
-            region: this.region && this.region.get() || null
+            region: this.region && this.region.get() || null,
+            type: this.type
         };
     }
 }
@@ -780,7 +784,7 @@ class Segmenter {
         this.loaded = true;
     }
 
-    createLine(order, baseline, mask, region, context, postponeEvents) {
+    createLine(order, baseline, mask, region, type, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -794,7 +798,7 @@ class Segmenter {
         if (!order) order = parseInt(this.getMaxOrder()) + 1;
         this.linesLayer.activate();
         var line = new SegmenterLine(order, baseline, mask, region,
-                                     this.defaultTextDirection, context, this);
+                                     this.defaultTextDirection, type, context, this);
         this.linesGroup.addChild(line.baselinePath);
         if (line.maskPath) {
             if (line.order%2)this.evenMasksGroup.addChild(line.maskPath);
@@ -819,7 +823,7 @@ class Segmenter {
         this.resetToolEvents();  // unregistering
     }
 
-    createRegion(polygon, context, postponeEvents) {
+    createRegion(polygon, type, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -830,7 +834,7 @@ class Segmenter {
             }
         }
         this.regionsLayer.activate();
-        var region = new SegmenterRegion(polygon, context, this);
+        var region = new SegmenterRegion(polygon, type, context, this);
         if (!postponeEvents) this.bindRegionEvents(region);
         this.regions.push(region);
         this.regionsGroup.addChild(region.polygonPath);
@@ -1095,7 +1099,7 @@ class Segmenter {
         let clickLocation = [event.point.x, event.point.y];
         // check if we start from a known region, if we do we bind the line to it.
         let region = this.getRegionsAt(clickLocation).pop() || null;
-        let newLine = this.createLine(null, [clickLocation], null, region, null, true);
+        let newLine = this.createLine(null, [clickLocation], null, region, null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
 
         // adds all the events bindings
@@ -1147,7 +1151,7 @@ class Segmenter {
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
-        ], null);
+        ], null, null);
         newRegion.polygonPath.fillColor = this.regionColor;
 
         let onCancel = function(event) {
@@ -1296,7 +1300,7 @@ class Segmenter {
             if (this.idField) context[this.idField] = line[this.idField];
             if (!line.baseline) this.toggleMasks(true);
             return this.createLine(null, line.baseline, line.mask,
-                                   region || line.region || null, context);
+                                   region || line.region || null, line.type, context);
         } else {
             console.log('EDITOR SKIPING invalid line: ', line);
             return null;
@@ -1306,7 +1310,7 @@ class Segmenter {
     loadRegion(region) {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
-        let r = this.createRegion(region.box, context);
+        let r = this.createRegion(region.box, region.type, context);
         for (let j in region.lines) {
             this.loadLine(region.lines[j], r);
         }
@@ -1396,15 +1400,15 @@ class Segmenter {
 
     applyRegionMode() {
         if (this.mode == 'regions') {
+            this.regionsGroup.strokeColor = this.shadeColor(this.regionColor, -50);
             this.regionsGroup.fillColor = this.regionColor;
             this.regionsGroup.bringToFront();
             this.regionsLayer.opacity = 1;
             this.linesLayer.opacity = this.inactiveLayerOpacity;
         } else {
+            this.regionsGroup.strokeColor = this.regionColor;
             this.regionsGroup.fillColor = null;
             this.regionsGroup.sendToBack();
-            // this.evenLinesGroup.bringToFront();
-            // this.oddLinesGroup.bringToFront();
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
             this.linesLayer.opacity = 1;
         }
@@ -1453,6 +1457,14 @@ class Segmenter {
                     this.unlinkRegionBtn.style.display = 'block';
                 }
             }
+
+            if (this.lineTypes.length) this.setTypeBtn.style.display = 'block';
+            else this.setTypeBtn.style.display = 'none';
+        }
+
+        if (this.selection.regions.length) {
+            if (this.regionTypes.length) this.setTypeBtn.style.display = 'block';
+            else this.setTypeBtn.style.display = 'none';
         }
 
         if (this.selection.segments.length) {
@@ -1471,12 +1483,13 @@ class Segmenter {
         } else if (this.selection.regions.length) {
             this.regionTypesSelect.style.display = 'block';
             this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
-            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
+            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
             this.regionTypesSelect.focus();
         }
 
         function unbindKb() {
             document.removeEventListener('keydown', bindKb);
+            this.disableShortcuts = false;
             this.regionTypesSelect.blur();
             this.lineTypesSelect.blur();
         }
@@ -1486,17 +1499,20 @@ class Segmenter {
                 unbindKb.bind(this)();
                 ev.stopPropagation();
             } else if (ev.keyCode == 13) {  // enter
-                // this.setSelectionType(select.value)
+                this.setSelectionType(document.activeElement.value);
                 unbindKb.bind(this)();
                 ev.stopPropagation();
             }
+            // numpad
             let max = 95 + document.activeElement.childElementCount;
-            if (ev.keyCode >= 96 && ev.keyCode <= max) {
-                // this.setSelectionType(select.value)
+            // below f1, f2..
+            let max2 = 48 + document.activeElement.childElementCount;
+            if ((ev.keyCode >= 96 && ev.keyCode <= max) ||
+                (ev.keyCode >= 48 && ev.keyCode <= max2)) {
+                this.setSelectionType(document.activeElement.value);
                 unbindKb.bind(this)();
                 ev.stopPropagation();
             }
-            // numeric: 48-57 select index
         }
 
         // disable other shortcuts
@@ -1524,6 +1540,11 @@ class Segmenter {
             this.regionTypesSelect.style.display = 'none';
             this.disableShortcuts = false;
         }.bind(this));
+        this.regionTypesSelect.addEventListener('dblclick', function() {
+            this.setSelectionType(this.regionTypesSelect.value);
+            this.disableShortcuts = false;
+            this.regionTypesSelect.blur();
+        }.bind(this));
 
         this.lineTypesSelect = document.createElement('select');
         this.lineTypesSelect.style.position = 'absolute';
@@ -1544,6 +1565,22 @@ class Segmenter {
             this.lineTypesSelect.style.display = 'none';
             this.disableShortcuts = false;
         }.bind(this));
+        this.lineTypesSelect.addEventListener('dblclick', function() {
+            this.setSelectionType(this.lineTypesSelect.value);
+            this.disableShortcuts = false;
+            this.lineTypesSelect.blur();
+        }.bind(this));
+    }
+
+    setSelectionType(value) {
+        for (let i=0; i<this.selection.lines.length-1; i++) {
+            this.selection.lines[i].type = value;
+            this.addToUpdateQueue({lines: this.selection.lines[i]});
+        }
+        for (let i=0; i<this.selection.regions.length; i++) {
+            this.selection.regions[i].type = value;
+            this.addToUpdateQueue({regions: this.selection.regions[i]});
+        }
     }
 
     hasSelection() {
@@ -1793,7 +1830,7 @@ class Segmenter {
                             }
                         }
 
-                        let newLine = this.createLine(null, split, newMask || null, line.region, null);
+                        let newLine = this.createLine(null, split, newMask || null, line.region, line.type, null);
                         newLine.updateDataFromCanvas();
                     }
 

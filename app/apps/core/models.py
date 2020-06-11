@@ -63,9 +63,9 @@ class Typology(models.Model):
     TARGET_LINE = 4
     TARGET_CHOICES = (
         (TARGET_DOCUMENT, 'Document'),
-        (TARGET_PART, 'Part (eg Page, Cover)'),
-        (TARGET_BLOCK, 'Block (eg Paragraph, Illustration)'),
-        (TARGET_LINE, 'Line (eg Main, Commentary)'),
+        (TARGET_PART, 'Part'),
+        (TARGET_BLOCK, 'Block'),
+        (TARGET_LINE, 'Line'),
     )
     name = models.CharField(max_length=128)
     target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
