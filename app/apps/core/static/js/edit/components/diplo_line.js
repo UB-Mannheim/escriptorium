@@ -44,16 +44,8 @@ var diploLine = LineBase.extend({
         },
         stopEdit(ev) {
             this.$parent.$parent.blockShortcuts = false;
-            this.pushUpdate();
         },
-        pushUpdate(){
-            // set content of input to line content
-            this.line.transcription.content = this.$content.textContent;
-            this.addToList();
-            // call save of parent method
-            this.$parent.toggleSave();
 
-        },
         setContent(content){
             let id = this.line.pk;
             $("#" + id).text(content);
@@ -88,11 +80,6 @@ var diploLine = LineBase.extend({
                 }
             }
         },
-        addToList(){
-            if(this.line.transcription.pk)
-                this.$parent.$emit('update:transcription:content', this.line.transcription);
-            else
-                this.$parent.$emit('create:transcription', this.line.transcription);
-        }
+
     }
 });
