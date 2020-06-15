@@ -186,7 +186,7 @@ class Document(models.Model):
                                  limit_choices_to={'target': Typology.TARGET_DOCUMENT})
 
     # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
-    valid_types = models.ManyToManyField(Typology, related_name='valid_in')
+    valid_types = models.ManyToManyField(Typology, blank=True, related_name='valid_in')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

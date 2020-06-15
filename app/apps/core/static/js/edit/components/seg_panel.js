@@ -241,7 +241,6 @@ const SegPanel = BasePanel.extend({
             if (data.regions && data.regions.length) {
                 for(let i=0; i<data.regions.length; i++) {
                     let region = data.regions[i];
-                    console.log();
                     this.$parent.$emit(
                         'update:region', {
                             pk: region.context.pk,

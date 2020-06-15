@@ -21,18 +21,20 @@ logger = logging.getLogger(__name__)
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
     block_types = forms.ModelMultipleChoiceField(
         queryset=Typology.objects.filter(target=Typology.TARGET_BLOCK),
+        required=False,
         widget=forms.CheckboxSelectMultiple)
     line_types = forms.ModelMultipleChoiceField(
         queryset=Typology.objects.filter(target=Typology.TARGET_LINE),
+        required=False,
         widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         self.fields['block_types'].queryset = self.fields['block_types'].queryset.filter(
-            Q(public=True) | Q(valid_in=self.instance))
+            Q(public=True) | Q(valid_in=self.instance)).distinct()
         self.fields['line_types'].queryset = self.fields['line_types'].queryset.filter(
-            Q(public=True) | Q(valid_in=self.instance))
+            Q(public=True) | Q(valid_in=self.instance)).distinct()
 
     class Meta:
         model = Document

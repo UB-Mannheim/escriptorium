@@ -36,8 +36,9 @@ function isRightClick(event) {
 }
 
 class SegmenterRegion {
-    constructor(polygon, type, context, segmenter_) {
+    constructor(order, polygon, type, context, segmenter_) {
         this.id = generateUniqueId();
+        this.order = order;
         this.segmenter = segmenter_;
         this.polygon = polygon;
         this.type = type;
@@ -54,6 +55,9 @@ class SegmenterRegion {
             visible: true,
             segments: this.polygon
         });
+
+        this.tooltipText = this.type;
+        this.segmenter.attachTooltip(this, this.polygonPath);
     }
 
     select() {
@@ -98,13 +102,17 @@ class SegmenterRegion {
     remove() {
         this.unselect();
         this.polygonPath.remove();
+        if(this.orderDisplay) this.orderDisplay.remove();
         this.segmenter.regions.splice(this.segmenter.regions.findIndex(e => e.id == this.id), 1);
     }
 
     delete() {
         this.unselect();
-
         this.remove();
+    }
+
+    refresh() {
+        this.tooltipText = this.type;
     }
 
     get() {
@@ -305,41 +313,46 @@ class SegmenterLine {
         }
     }
 
+    createOrderDisplay(anchor) {
+        let offset = 10, circle, text, region;
+        this.segmenter.orderingLayer.activate();
+        circle = new Shape.Circle(anchor, offset);
+        circle.fillColor = 'yellow';
+        circle.strokeColor = 'black';
+        text = new PointText(anchor);
+        text.fillColor = 'black';
+        text.fontSize = offset;
+        text.fontWeight = 'bold';
+        text.justification = 'center';
+        text.content = parseInt(this.order)+1;
+
+        // adds the region hint
+        region = new Shape.Circle({
+            x: anchor.x+5,
+            y: anchor.y}, offset);
+        if (this.region) region.fillColor = this.segmenter.regionColor;
+        else region.fillColor = 'transparent';
+        region.strokeColor = 'black';
+        region.strokeWidth = 1;
+
+        this.orderDisplay = new Group({
+            children: [region, circle, text]
+        });
+        this.orderDisplay.scale(1/this.segmenter.getRatio());
+        // Note: for some reason we need to reposition it after scaling
+        // todo: investigate why
+        text.position = anchor;
+    }
+
     showOrdering() {
         let anchorPath = this.baselinePath?this.baselinePath:this.maskPath;
         let anchor = (this.textDirection == 'lr' ?
                       anchorPath.firstSegment.point :
                       anchorPath.lastSegment.point);
-        let offset = 10, circle, text, region;
+
         if (!this.orderDisplay) {
             // create it if it doesnt already exists
-            this.segmenter.orderingLayer.activate();
-            circle = new Shape.Circle(anchor, offset);
-            circle.fillColor = 'yellow';
-            circle.strokeColor = 'black';
-            text = new PointText(anchor);
-            text.fillColor = 'black';
-            text.fontSize = offset;
-            text.fontWeight = 'bold';
-            text.justification = 'center';
-            text.content = parseInt(this.order)+1;
-
-            // adds the region hint
-            region = new Shape.Circle({
-                x: anchor.x+5,
-                y: anchor.y}, offset);
-            if (this.region) region.fillColor = this.segmenter.regionColor;
-            else region.fillColor = 'transparent';
-            region.strokeColor = 'black';
-            region.strokeWidth = 1;
-
-            this.orderDisplay = new Group({
-                children: [region, circle, text]
-            });
-            this.orderDisplay.scale(1/this.segmenter.getRatio());
-            // Note: for some reason we need to reposition it after scaling
-            // todo: investigate why
-            text.position = anchor;
+            this.createOrderDisplay(anchor);
         } else {
             // update
             let region = this.orderDisplay.children[0],
@@ -354,18 +367,22 @@ class SegmenterLine {
         }
     }
 
+    createDirectionHint() {
+        this.directionHint = new Path({
+            visible: true,
+            strokeWidth: Math.max(2, 4 / this.segmenter.getRatio()),
+            opacity: 0.5,
+            strokeColor: this.segmenter.directionHintColor
+        });
+        this.segmenter.dirHintsGroup.addChild(this.directionHint);
+    }
+
     showDirection() {
         // shows an orthogonal segment at the start of the line, length depends on line height
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
             this.segmenter.linesLayer.activate();
             if (this.directionHint === null) {
-                this.directionHint = new Path({
-                    visible: true,
-                    strokeWidth: Math.max(2, 4 / this.segmenter.getRatio()),
-                    opacity: 0.5,
-                    strokeColor: this.segmenter.directionHintColor
-                });
-                this.segmenter.dirHintsGroup.addChild(this.directionHint);
+                this.createDirectionHint();
             }
             let anchor;
             if (this.textDirection == 'lr') {
@@ -512,10 +529,6 @@ class Segmenter {
             document.createElement('div');
             this.contextMenu.id = 'context-menu';
         }
-        this.contextMenu.style.position = 'fixed';
-        this.contextMenu.style.transform = 'translateZ(0)'; // css trick to fix to an element
-        this.contextMenu.style.display = 'none';
-        this.contextMenu.style.zIndex = 3;
         if (this.linkRegionBtn) this.contextMenu.appendChild(this.linkRegionBtn);
         if (this.unlinkRegionBtn) this.contextMenu.appendChild(this.unlinkRegionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
@@ -523,6 +536,8 @@ class Segmenter {
         if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
+
+        this.tooltip = document.getElementById('info-tooltip');
 
         this.createTypeSelects();
         this.bindButtons();
@@ -795,10 +810,11 @@ class Segmenter {
             }
         }
 
-        if (!order) order = parseInt(this.getMaxOrder()) + 1;
+        if (!order) order = parseInt(this.getLineMaxOrder()) + 1;
         this.linesLayer.activate();
         var line = new SegmenterLine(order, baseline, mask, region,
-                                     this.defaultTextDirection, type, context, this);
+                                     this.defaultTextDirection, type,
+                                     context, this);
         this.linesGroup.addChild(line.baselinePath);
         if (line.maskPath) {
             if (line.order%2)this.evenMasksGroup.addChild(line.maskPath);
@@ -823,7 +839,7 @@ class Segmenter {
         this.resetToolEvents();  // unregistering
     }
 
-    createRegion(polygon, type, context, postponeEvents) {
+    createRegion(order, polygon, type, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -833,8 +849,9 @@ class Segmenter {
                 context[this.idField] = null;
             }
         }
+        if (!order) order = parseInt(this.getMaxRegionOrder()) + 1;
         this.regionsLayer.activate();
-        var region = new SegmenterRegion(polygon, type, context, this);
+        var region = new SegmenterRegion(order, polygon, type, context, this);
         if (!postponeEvents) this.bindRegionEvents(region);
         this.regions.push(region);
         this.regionsGroup.addChild(region.polygonPath);
@@ -1013,6 +1030,20 @@ class Segmenter {
         this.tool.onMouseUp = null;
     }
 
+    attachTooltip(obj, target) {
+        if (obj.tooltipText) {
+            target.onMouseEnter = function(event) {
+                this.tooltip.position = event.point;
+                this.tooltip.textContent = obj.tooltipText;
+                this.tooltip.style.display = 'block';
+
+            }.bind(this);
+            target.onMouseLeave = function(event) {
+                this.tooltip.style.display = 'none';
+            }.bind(this);
+        }
+    }
+
     multiMove(event) {
         var delta = event.delta;
         if (this.mode == 'lines') {
@@ -1146,7 +1177,7 @@ class Segmenter {
     startNewRegion(event) {
         this.purgeSelection();
         var originPoint = event.point;
-        let newRegion = this.createRegion([
+        let newRegion = this.createRegion(null, [
             [event.point.x, event.point.y],
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
@@ -1310,7 +1341,7 @@ class Segmenter {
     loadRegion(region) {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
-        let r = this.createRegion(region.box, region.type, context);
+        let r = this.createRegion(null, region.box, region.type, context);
         for (let j in region.lines) {
             this.loadLine(region.lines[j], r);
         }
@@ -1523,7 +1554,7 @@ class Segmenter {
     createTypeSelects() {
         this.regionTypesSelect = document.createElement('select');
         this.regionTypesSelect.style.position = 'absolute';
-
+        this.regionTypesSelect.autocomplete = "off";
         this.regionTypesSelect.style.display = 'none';
         let opt = document.createElement('option');
         opt.text = 'None (0)';
@@ -1548,7 +1579,7 @@ class Segmenter {
 
         this.lineTypesSelect = document.createElement('select');
         this.lineTypesSelect.style.position = 'absolute';
-
+        this.lineTypesSelect.autocomplete = "off";
         this.lineTypesSelect.style.display = 'none';
         opt = document.createElement('option');
         opt.text = 'None (0)';
@@ -1742,9 +1773,14 @@ class Segmenter {
         }.bind(this));
     }
 
-    getMaxOrder() {
+    getLineMaxOrder() {
         if (!this.lines.length) return -1;
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
+    }
+
+    getMaxRegionOrder() {
+        if (!this.regions.length) return -1;
+        return this.regions.map(r=>r.order).reduce((a,b)=>Math.max(a, b));
     }
 
     getDeterminant(v1, v2) {
