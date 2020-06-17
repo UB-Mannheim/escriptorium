@@ -13,7 +13,9 @@ from core.models import (Document,
                          Line,
                          Transcription,
                          LineTranscription,
-                         Typology)
+                         Typology,
+                         BlockType,
+                         LineType)
 
 logger = logging.getLogger(__name__)
 
@@ -79,21 +81,27 @@ class UserOnboardingSerializer(serializers.ModelSerializer):
         self.user.save()
 
 
-class TypologySerializer(serializers.ModelSerializer):
-    target = serializers.CharField(source='get_target_display')
-
+class BlockTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Typology
-        fields = ('pk', 'name', 'target')
+        model = BlockType
+        fields = ('pk', 'name')
+
+
+class LineTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LineType
+        fields = ('pk', 'name')
 
 
 class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
-    valid_types = TypologySerializer(many=True, read_only=True)
+    valid_block_types = BlockTypeSerializer(many=True, read_only=True)
+    valid_line_types = LineTypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'transcriptions', 'valid_types')
+        fields = ('pk', 'name', 'transcriptions',
+                  'valid_block_types', 'valid_line_types')
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -130,7 +138,8 @@ class PartSerializer(serializers.ModelSerializer):
 
 class BlockSerializer(serializers.ModelSerializer):
     typology = serializers.PrimaryKeyRelatedField(
-        queryset=Typology.objects.filter(target=Typology.TARGET_BLOCK),
+        queryset=BlockType.objects.all(),
+        allow_null=True,
         required=False)
 
     class Meta:
@@ -173,7 +182,8 @@ class LineSerializer(serializers.ModelSerializer):
         required=False,
         source='block')
     typology = serializers.PrimaryKeyRelatedField(
-        queryset=Typology.objects.filter(target=Typology.TARGET_LINE),
+        queryset=LineType.objects.all(),
+        allow_null=True,
         required=False)
 
     class Meta:

@@ -81,8 +81,8 @@ const partStore = {
             .then(function(data) {
                 this.transcriptions = data.transcriptions;
                 this.types = {
-                    'regions': data.valid_types.filter(t=>t.target=='Block'),
-                    'lines': data.valid_types.filter(t=>t.target=='Line')
+                    'regions': data.valid_block_types,
+                    'lines': data.valid_line_types
                 };
                 if (callback) callback(data);
             }.bind(this));
@@ -222,17 +222,19 @@ const partStore = {
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiPart() + 'lines/bulk_update/';
 
-        data = lines.map(l=>function(l) {
+        data = lines.map(function(l) {
+            let type  = l.type && this.types.lines.find(t=>t.name==l.type)
             return {
+                pk: l.pk,
                 document_part: this.pk,
                 baseline: l.baseline,
                 mask: l.mask,
                 region: l.region,
-                type: l.type && this.types.regions.find(t=>t.name==l.type).pk
+                typology: type && type.pk || null
             };
-        });
+        }.bind(this));
 
-        this.push(uri, {lines: lines}, method="put")
+        this.push(uri, {lines: data}, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
@@ -364,11 +366,11 @@ const partStore = {
     },
     updateRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/' + region.pk + '/';
-        let type = region.type && this.types.regions.find(t=>t.name==region.type).pk
+        let type = region.type && this.types.regions.find(t=>t.name==region.type);
         data = {
             document_part: this.pk,
             box: region.box,
-            typology: type
+            typology: type && type.pk || null
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())

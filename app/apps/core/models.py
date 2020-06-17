@@ -52,31 +52,34 @@ class AlreadyProcessingException(Exception):
 
 
 class Typology(models.Model):
-    """
-    Document: map, poem, novel ..
-    Part: page, log, cover ..
-    Block: main text, floating text, illustration,
-    """
-    TARGET_DOCUMENT = 1
-    TARGET_PART = 2
-    TARGET_BLOCK = 3
-    TARGET_LINE = 4
-    TARGET_CHOICES = (
-        (TARGET_DOCUMENT, 'Document'),
-        (TARGET_PART, 'Part'),
-        (TARGET_BLOCK, 'Block'),
-        (TARGET_LINE, 'Line'),
-    )
     name = models.CharField(max_length=128)
-    target = models.PositiveSmallIntegerField(choices=TARGET_CHOICES)
 
     # if True, is visible as a choice in the ontology edition in a new document
     public = models.BooleanField(default=False)
     # if True, is a valid choice by default in a new document
     default = models.BooleanField(default=False)
 
+    class Meta:
+        abstract = True
+
     def __str__(self):
         return self.name
+
+
+class DocumentType(Typology):
+    pass
+
+
+class DocumentPartType(Typology):
+    pass
+
+
+class BlockType(Typology):
+    pass
+
+
+class LineType(Typology):
+    pass
 
 
 class Metadata(models.Model):
@@ -182,11 +185,11 @@ class Document(models.Model):
         choices=READ_DIRECTION_CHOICES,
         default=READ_DIRECTION_LTR
     )
-    typology = models.ForeignKey(Typology, null=True, blank=True, on_delete=models.SET_NULL,
-                                 limit_choices_to={'target': Typology.TARGET_DOCUMENT})
+    typology = models.ForeignKey(DocumentType, null=True, blank=True, on_delete=models.SET_NULL)
 
     # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
-    valid_types = models.ManyToManyField(Typology, blank=True, related_name='valid_in')
+    valid_block_types = models.ManyToManyField(BlockType, blank=True, related_name='valid_in')
+    valid_line_types = models.ManyToManyField(LineType, blank=True, related_name='valid_in')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -258,9 +261,8 @@ class DocumentPart(OrderedModel):
     bw_image = models.ImageField(upload_to=document_images_path,
                                  null=True, blank=True,
                                  help_text=_("Binarized image needs to be the same size as original image."))
-    typology = models.ForeignKey(Typology, null=True, blank=True,
-                                 on_delete=models.SET_NULL,
-                                 limit_choices_to={'target': Typology.TARGET_PART})
+    typology = models.ForeignKey(DocumentPartType, null=True, blank=True,
+                                 on_delete=models.SET_NULL)
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='parts')
     order_with_respect_to = 'document'
 
@@ -753,9 +755,8 @@ class Block(OrderedModel, models.Model):
     """
     # box = models.BoxField()  # in case we use PostGIS
     box = JSONField(validators=[validate_polygon])
-    typology = models.ForeignKey(Typology, null=True, blank=True,
-                                 on_delete=models.SET_NULL,
-                                 limit_choices_to={'target': Typology.TARGET_BLOCK})
+    typology = models.ForeignKey(BlockType, null=True, blank=True,
+                                 on_delete=models.SET_NULL)
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
                                       related_name='blocks')
     order_with_respect_to = 'document_part'
@@ -803,9 +804,8 @@ class Line(OrderedModel):  # Versioned,
     order_with_respect_to = 'document_part'
     version_ignore_fields = ('document_part', 'order')
 
-    typology = models.ForeignKey(Typology, null=True, blank=True,
-                                 on_delete=models.SET_NULL,
-                                 limit_choices_to={'target': Typology.TARGET_LINE})
+    typology = models.ForeignKey(LineType, null=True, blank=True,
+                                 on_delete=models.SET_NULL)
 
     external_id = models.CharField(max_length=128, blank=True, null=True)
 

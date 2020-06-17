@@ -78,8 +78,8 @@
 
             <label class="my-1">{% trans "Ontology" %}</label>
             <br>
-            <small>{% trans "Region types" %}</small>{% render_field form.block_types %}
-            <small>{% trans "Line types" %}</small>{% render_field form.line_types %}
+            <small>{% trans "Region types" %}</small>{% render_field form.valid_block_types %}
+            <small>{% trans "Line types" %}</small>{% render_field form.valid_line_types %}
 
             <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
         </fieldset>

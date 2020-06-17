@@ -19,27 +19,18 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
-    block_types = forms.ModelMultipleChoiceField(
-        queryset=Typology.objects.filter(target=Typology.TARGET_BLOCK),
-        required=False,
-        widget=forms.CheckboxSelectMultiple)
-    line_types = forms.ModelMultipleChoiceField(
-        queryset=Typology.objects.filter(target=Typology.TARGET_LINE),
-        required=False,
-        widget=forms.CheckboxSelectMultiple)
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        self.fields['block_types'].queryset = self.fields['block_types'].queryset.filter(
-            Q(public=True) | Q(valid_in=self.instance)).distinct()
-        self.fields['line_types'].queryset = self.fields['line_types'].queryset.filter(
-            Q(public=True) | Q(valid_in=self.instance)).distinct()
 
     class Meta:
         model = Document
         fields = ['name', 'read_direction', 'main_script',
-                  'block_types', 'line_types']  # 'typology'
+                  'valid_block_types', 'valid_line_types']
+        widgets = {
+            'valid_block_types': forms.CheckboxSelectMultiple,
+            'valid_line_types': forms.CheckboxSelectMultiple
+        }
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
