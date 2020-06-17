@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os.path
-import redis
 import shutil
 
 from django.apps import apps
@@ -15,6 +14,7 @@ from django.utils.translation import gettext as _
 
 from celery import shared_task
 from celery.signals import before_task_publish, task_prerun, task_success, task_failure
+from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken.lib import train as kraken_train
 
@@ -22,9 +22,7 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-redis_ = redis.Redis(host=settings.REDIS_HOST,
-                     port=settings.REDIS_PORT,
-                     db=getattr(settings, 'REDIS_DB', 0))
+redis_ = get_redis_connection()
 
 
 def update_client_state(part_id, task, status, task_id=None, data=None):
@@ -153,7 +151,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         qs = DocumentPart.objects.filter(pk__in=part_pks)
 
         ground_truth = list(qs.prefetch_related('lines'))
-        np.random.shuffle(ground_truth)
+        np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
         training_data = []
@@ -283,6 +281,22 @@ def segment(instance_pk, user_pk=None, model_pk=None,
                         id="segmentation-success", level='success')
 
 
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
+def recalculate_masks(instance_pk, user_pk=None, only=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist as e:
+        logger.error('Trying to recalculate masks of innexistant DocumentPart : %d', instance_pk)
+        return
+
+    result = part.make_masks(only=only)
+    send_event('document', part.document.pk, "part:mask", {
+        "id": part.pk,
+        "lines": [{'pk': line.pk, 'mask': line.mask} for line in result]
+    })
+
+
 def train_(qs, document, transcription, model=None, user=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
@@ -293,8 +307,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                   baseline=F('line__baseline'),
                                   mask=F('line__mask'),
                                   image=F('line__document_part__image')))
-    # is it a good idea with a very large number of lines?
-    np.random.shuffle(ground_truth)
+
+    np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
 
     partition = int(len(ground_truth) / 10)
 
@@ -344,7 +358,7 @@ def train_(qs, document, transcription, model=None, user=None):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy
-        model.training_total = chars
+        model.training_total = int(chars)
         model.training_errors = error
         new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
         model.new_version(file=new_version_filename)
@@ -355,7 +369,7 @@ def train_(qs, document, transcription, model=None, user=None):
             'versions': model.versions,
             'epoch': epoch,
             'accuracy': accuracy,
-            'chars': chars,
+            'chars': int(chars),
             'error': error})
 
     trainer.run(_print_eval)

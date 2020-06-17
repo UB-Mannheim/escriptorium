@@ -1,9 +1,7 @@
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
-    created() {
-        Vue.nextTick(function() {
-            this.$content = this.$refs.content[0];
-        }.bind(this));
+    mounted() {
+        this.$content = this.$refs.content[0];
     },
     computed: {
         region()
@@ -49,7 +47,7 @@ var diploLine = LineBase.extend({
         setContent(content){
             let id = this.line.pk;
             $("#" + id).text(content);
-            this.line.transcription.content = content;
+            this.line.currentTrans.content = content;
         },
         onPaste(e){
             let pastedData = e.clipboardData.getData('text/plain');
@@ -80,6 +78,5 @@ var diploLine = LineBase.extend({
                 }
             }
         },
-
     }
 });

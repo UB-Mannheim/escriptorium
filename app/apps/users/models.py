@@ -23,8 +23,7 @@ class User(AbstractUser):
     onboarding = models.BooleanField(
         _('first connection'),
         default=True
-        )
-
+    )
 
     class Meta:
         permissions = (('can_invite', 'Can invite users'),)

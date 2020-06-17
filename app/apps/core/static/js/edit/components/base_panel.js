@@ -1,19 +1,12 @@
 const BasePanel = Vue.extend({
-    props: ['part', 'full-size-image'],
+    props: ['part'],
     data() {
-        return {ratio: 1};
+        return {
+            ratio: 1
+        };
     },
     updated() {
-        this.refresh();
-    },
-    computed: {
-        imageSrc() {
-            let src = (this.part.loaded
-                       && (!this.fullSizeImage
-                           && this.part.image.thumbnails.large
-                           || this.part.image.uri));
-            return src;
-        },
+        if (this.part.loaded) this.refresh();
     },
     methods: {
         setRatio() {

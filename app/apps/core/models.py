@@ -23,6 +23,7 @@ from django.utils.translation import gettext_lazy as _
 
 from celery.task.control import inspect, revoke
 from celery import chain
+from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from ordered_model.models import OrderedModel
 from kraken import blla, rpred
@@ -32,11 +33,12 @@ from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
 
 from versioning.models import Versioned
-from core.tasks import (segtrain, train, binarize, redis_,
+from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
 from users.consumers import send_event
 
+redis_ = get_redis_connection()
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -131,7 +133,7 @@ class DocumentManager(models.Manager):
                            & (Q(shared_with_users=user)
                               | Q(shared_with_groups__in=user.groups.all()))))
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
-                .prefetch_related('shared_with_groups')
+                .prefetch_related('shared_with_groups', 'transcriptions')
                 .select_related('typology')
                 .distinct())
 
@@ -571,7 +573,7 @@ class DocumentPart(OrderedModel):
         self.save()
 
         with Image.open(self.image.file.name) as im:
-            options = {}  # {'maxcolseps': 1}
+            options = {'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')}  # {'maxcolseps': 1}
             if text_direction:
                 options['text_direction'] = text_direction
             if model:
@@ -701,13 +703,17 @@ class DocumentPart(OrderedModel):
         lines = list(self.lines.all())  # needs to store the qs result
         to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
         context = [l for l in lines if only and l.pk not in only]
+
         masks = calculate_polygonal_environment(im,
                                                 [l.baseline for l in to_calc],
                                                 suppl_obj=[l.baseline for l in context],
                                                 scale=(1200, 0))
-        for line, mask in zip(to_calc, masks):
+        ziped = zip(to_calc, masks)
+        for line, mask in ziped:
             line.mask = mask
             line.save()
+
+        return to_calc
 
 
 def validate_polygon(value):
@@ -818,6 +824,7 @@ class Transcription(models.Model):
                                  related_name='transcriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    archived = models.BooleanField(default=False)
 
     DEFAULT_NAME = 'manual'
 
@@ -827,6 +834,10 @@ class Transcription(models.Model):
 
     def __str__(self):
         return self.name
+
+    def archive(self):
+        self.archived = True
+        self.save()
 
 
 class LineTranscription(Versioned, models.Model):

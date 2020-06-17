@@ -5,7 +5,7 @@ Pillow>=5.4.1
 Django==2.1.4
 redis==3.2.1
 uwsgi==2.0.17
-daphne==2.2.0  # dependency conflic, remove once https://github.com/django/channels/pull/1278 is merged
+daphne==2.2.0  # dependency conflict, remove once https://github.com/django/channels/pull/1278 is merged
 channels==2.1.7
 channels-redis==2.3.1
 django-redis==4.10.0
@@ -16,7 +16,7 @@ git+https://github.com/mittagessen/kraken.git@fix/memory_leaks#egg=kraken
 django-cleanup==3.0.1
 djangorestframework==3.9.2
 drf-nested-routers==0.91
-bleach==3.1.0
+bleach==3.1.5
 beautifulsoup4==4.7.1
 requests==2.21.0
 numpy>=1.17

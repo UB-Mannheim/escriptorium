@@ -33,7 +33,7 @@ class zoomTarget {
         this.container = container;
         //this.rotationContainer = rotationContainer;
         this.element = domElement;
-        
+
         this.map = map;
         if (this.map) {
             this.mapScale = mapScale;
@@ -70,7 +70,7 @@ class zoomTarget {
             }.bind(this), 100);
         }
     }
-    
+
     refreshMap() {
         if (this.map) {
             let bounds = this.container.getBoundingClientRect();
@@ -80,15 +80,16 @@ class zoomTarget {
             this.mapWhole.style.height = (bounds.height * this.mapScale) + 'px';
         }
     }
-    
-    makeMap(mapMargin, mapColors) {        
+
+    makeMap(mapMargin, mapColors) {
         this.mapWhole = document.createElement('div');
         this.mapWhole.classList.add('wheelzoom-outter-map');
         this.mapWhole.style.position = 'fixed';
         this.mapWhole.style.opacity = 0;
         this.mapWhole.style.backgroundColor = mapColors[0];
+        this.mapWhole.style.pointerEvents = 'none';
         this.container.appendChild(this.mapWhole);
-        
+
         this.mapCurrent = document.createElement('div');
         this.mapCurrent.classList.add('wheelzoom-inner-map');
         this.mapCurrent.style.position = 'absolute';
@@ -113,23 +114,23 @@ class WheelZoom {
         this.maxScale = maxScale;
         this.initialScale = initialScale;
         this.disabled = disabled;
-        
+
         // create a dummy tag for event bindings
         this.events = document.createElement('div');
         this.events.classList.add('wheelzoom-events-js');
         document.body.appendChild(this.events);
-        
+
         this.targets = [];
         this.previousEvent = null;
         this.scale = this.initialScale;
         this.angle = 0;
         this.pos = {x:0, y:0};
     }
-    
+
     register(domElement, {mirror=false, map=false} = {}) {
         this.events.addEventListener('wheelzoom.reset', this.reset.bind(this));
         this.events.addEventListener('wheelzoom.refresh', this.refresh.bind(this));
-        
+
         let target = new zoomTarget(domElement, {map: map});
         target.update(this.pos, this.scale);
         this.targets.push(target);
@@ -149,7 +150,7 @@ class WheelZoom {
                 this.dragging = target;
                 this.draggable.bind(this)(event);
             }
-            
+
             target.container.addEventListener('mousewheel', scroll.bind(this));
             target.container.addEventListener('DOMMouseScroll', scroll.bind(this)); // firefox
             target.container.addEventListener('mousedown', drag.bind(this));
@@ -168,16 +169,16 @@ class WheelZoom {
         var diff = {scale: this.scale / oldScale};
         this.pos.x -= Math.round((target.x - target.x / diff.scale)*diff.scale);
         this.pos.y -= Math.round((target.y - target.y / diff.scale)*diff.scale);
-        
+
         this.updateStyle(diff);
         this.targets[0].showMap(this.pos, this.scale);
         return diff;
     }
-    
+
 	scrolled(e) {
         if (this.disabled) return null;
         e.preventDefault();
-        
+
 		var delta = e.delta || e.wheelDelta;
 		if (delta === undefined) {
 	      //we are on firefox
@@ -192,7 +193,7 @@ class WheelZoom {
 
         return this.zoomTo(zoom_point, delta * this.factor);
 	}
-    
+
 	drag(e) {
         if (this.disabled) return null;
 		e.preventDefault();
@@ -200,7 +201,7 @@ class WheelZoom {
         if (!target) return null;
         let ts = target.container.getBoundingClientRect();
         let delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
-        
+
         if (this.previousEvent) {
             if (e.altKey) {
                 this.angle = (this.angle + (e.pageX - this.previousEvent.pageX)) % 360;
@@ -215,7 +216,7 @@ class WheelZoom {
             if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth * this.scale;
             }
-            
+
             if (this.pos.y > 0) { this.pos.y = 0; }
 	        // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
             //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
@@ -225,13 +226,13 @@ class WheelZoom {
 	        if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth *  this.scale;
             }
-            
+
             if (this.pos.y < 0) { this.pos.y = 0; }
             if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
                 this.pos.y = ts.height - target.element.clientHeight *  this.scale;
             }
         }
-        
+
 		this.previousEvent = e;
         let diff = {
             x: (this.pos.x - oldPos.x) / this.scale,
@@ -242,12 +243,12 @@ class WheelZoom {
         this.dragging.showMap(this.pos, this.scale);
         return diff;
 	}
-    
+
 	removeDrag() {
         // this.targets.forEach(function(target,i) {
         //     target.element.classList.remove('notransition');
         // });
-        
+
 		document.removeEventListener('mouseup', this.bRemDrag);
 		document.removeEventListener('mousemove', this.bDrag);
         this.previousEvent = null;
@@ -258,14 +259,14 @@ class WheelZoom {
 		event.preventDefault();
 		this.previousEvent = event;
         // this.rotationOrigin = e.point;
-        
+
         // set bound event handlers
         this.bDrag = this.drag.bind(this);
         this.bRemDrag = this.removeDrag.bind(this);
 		document.addEventListener('mousemove', this.bDrag);
 		document.addEventListener('mouseup', this.bRemDrag);
 	}
-    
+
 	updateStyle(delta) {
         this.targets.forEach(function(target, i) {
             target.update(this.pos, this.scale);
@@ -277,18 +278,18 @@ class WheelZoom {
         var event = new CustomEvent('wheelzoom.updated', {detail:delta});
         if (this.events) this.events.dispatchEvent(event);
 	}
-    
+
     refresh() {
         this.updateStyle();
     }
-    
+
     reset() {
         let oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
         this.pos = {x:0, y:0};
 	    this.scale = this.initialScale || 1;
         this.updateStyle({x: -oldPos.x, y:-oldPos.y, scale: 1/oldAngle});
     }
-    
+
     disable() {
         this.disabled = true;
     }
@@ -296,7 +297,7 @@ class WheelZoom {
     enable() {
         this.disabled = false;
     }
-    
+
     destroy() {
         // TODO
     }

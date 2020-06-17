@@ -24,6 +24,9 @@ var DiploPanel = BasePanel.extend({
                 nextLine.startEdit();
             }
         },
+        setHeight() {
+            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+        },
         onKeyDown(ev){
             let index = this.part.lines.indexOf(this.editLine);
 
@@ -136,7 +139,7 @@ var DiploPanel = BasePanel.extend({
             }
         },
         updateView() {
-            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            this.setHeight();
         },
         getpositionCursor() {
             return window.getSelection().getRangeAt(0).startOffset;

@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
     path('', include('django.contrib.auth.urls')),
-    path('invite/', permission_required('users.can_invite')(SendInvitation.as_view()), name='send-invitation'),
+    path('invite/',
+         permission_required('users.can_invite', raise_exception=True)(SendInvitation.as_view()),
+         name='send-invitation'),
     path('accept/<token>/', AcceptInvitation.as_view(), name='accept-invitation'),
 ]

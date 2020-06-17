@@ -1,10 +1,12 @@
-/* 
-Baseline editor panel (or segmentation panel)
-*/
+/*
+   Baseline editor panel (or segmentation panel)
+ */
 
 const SegPanel = BasePanel.extend({
+    props: ['part', 'fullsizeimage'],
     data() { return {
         segmenter: {loaded: false},
+        imgloaded: false,
         colorMode: 'color',  //  color - binary - grayscale
         undoManager: new UndoManager()
     };},
@@ -19,7 +21,7 @@ const SegPanel = BasePanel.extend({
                                        {map: true});
             let beSettings = userProfile.get('baseline-editor') || {};
             this.$img = this.$el.querySelector('img');
-            
+
             this.segmenter = new Segmenter(this.$img, {
                 delayInit:true,
                 idField:'pk',
@@ -33,18 +35,18 @@ const SegPanel = BasePanel.extend({
             // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
             let canvas = this.segmenter.canvas;
             canvas.parentNode.parentNode.appendChild(canvas);
-            
+
             // already mounted with a part = opening the panel after page load
             if (this.part.loaded) {
-                this.onShow();
+                this.initSegmenter();
             }
-            
+
             // simulates wheelzoom for canvas
             var zoom = this.$parent.zoom;
             zoom.events.addEventListener('wheelzoom.updated', function(e) {
-                this.updateView();
+                this.updateZoom();
             }.bind(this));
-            
+
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
                 let settings = userProfile.get('baseline-editor') || {};
                 settings[event.detail.name] = event.detail.value;
@@ -62,7 +64,7 @@ const SegPanel = BasePanel.extend({
                 // same event for creation and modification of a line/region
                 let data = ev.detail;
                 this.extractPrevious(data);
-                
+
                 let toCreate = {
                     lines: data.lines && data.lines.filter(l=>l.context.pk===null) || [],
                     regions: data.regions && data.regions.filter(l=>l.context.pk===null) || []
@@ -85,7 +87,7 @@ const SegPanel = BasePanel.extend({
                         this.bulkCreate(toCreate, createInEditor=true)
                         this.bulkUpdate(toUpdate);
                     }.bind(this)
-                );                
+                );
             }.bind(this));
         }.bind(this));
 
@@ -103,40 +105,49 @@ const SegPanel = BasePanel.extend({
             }
         }.bind(this));
     },
-    computed: {        
+    computed: {
         hasBinaryColor() {
             return this.part.loaded && this.part.bw_image !== null;
         },
-        
-        // overrides imageSrc to deal with color modes
-        imageSrcBin() {
-            return (
-                this.part.loaded && (
-                    (this.colorMode == 'binary'
-                     && this.part.bw_image
-                     && this.part.bw_image.uri)
-                        || this.imageSrc
-                )
-            );
+        loaded() {
+            // for this panel we need both the image and the segmenter
+            return this.segmenter && this.segmenter.loaded && this.$img.complete;
+        },
+        imageSrc() {
+            // empty the src to make sure the complete event gets fired
+            if (!this.part.loaded) return '';
+            // overrides imageSrc to deal with color modes
+            // Note: vue.js doesn't have super call wtf we need to copy the code :(
+            let src = !this.fullsizeimage
+                   && this.part.image.thumbnails.large
+                   || this.part.image.uri;
+
+            let bwSrc = (this.colorMode == 'binary'
+                      && this.part.bw_image
+                      && this.part.bw_image.uri)
+                     || src;
+
+            return bwSrc;
         }
     },
     watch: {
-        'part.pk': function(n, o) {
-            this.segmenter.empty();
-            this.undoManager.clear();
-            this.refreshHistoryBtns();
-            
-            if (this.part.loaded) {
+        'part.loaded': function(isLoaded, wasLoaded) {
+            if (isLoaded===true) {
                 if (this.colorMode !== 'binary' && !this.hasBinaryColor) {
                     this.colorMode = 'color';
                 }
-                this.onShow();
+                this.initSegmenter();
+            } else {
+                this.segmenter.reset();
+                this.undoManager.clear();
+                this.refreshHistoryBtns();
             }
         },
-        'fullSizeImage': function(n,o) {
-            this.$img.addEventListener('load', function(ev) {
-                this.refreshSegmenter();
-            }.bind(this));
+        'fullsizeimage': function(n, o) {
+            // TODO/FIX: doesnt work anymore
+            // it was prefetched
+            // this.$img.src = this.imageSrc;
+            // this.segmenter.refresh();
         }
     },
     methods: {
@@ -144,7 +155,7 @@ const SegPanel = BasePanel.extend({
             if (this.colorMode == 'color') this.colorMode = 'binary';
             else this.colorMode = 'color';
         },
-        
+
         pushHistory(undo, redo) {
             this.undoManager.add({
                 undo: undo,
@@ -152,39 +163,33 @@ const SegPanel = BasePanel.extend({
             });
             this.refreshHistoryBtns();
         },
-        onShow() {
-            Vue.nextTick(function() {
-                // the baseline editor needs to wait for the image to be fully loaded
-                if (this.$img.complete) {
-                    this.initSegmenter();
-                } else {
-                    this.$img.addEventListener('load', this.initSegmenter.bind(this), {once: true});
-                }
-                this.updateView();
+        initSegmenter() {
+            this.$parent.prefetchImage(this.imageSrc, function(src) {
+                this.$img.src = src;
+                this.refreshSegmenter();
             }.bind(this));
         },
-        initSegmenter() {
-            // we use a thumbnail so its size might not be the same as advertised in the api
-            this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
-            if (this.segmenter.loaded) this.segmenter.refresh();
-            else this.segmenter.init();
-            
-            // recalculate average line heights for lines without masks
-            this.segmenter.resetLineHeights();
-            this.segmenter.applyRegionMode();
-        },
         refreshSegmenter() {
-            this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
-            this.segmenter.refresh();
+            Vue.nextTick(function() {
+                this.segmenter.scale = this.$img.naturalWidth / this.part.image.size[0];
+                if (this.segmenter.loaded) {
+                    this.segmenter.refresh();
+                } else {
+                    this.segmenter.init();
+                }
+            }.bind(this));
         },
-        updateView() {
+        updateZoom() {
             // might not be mounted yet
-            if (this.segmenter && this.$el.clientWidth) {
+            if (this.segmenter && this.$img.complete) {
                 var zoom = this.$parent.zoom;
                 this.segmenter.canvas.style.top = zoom.pos.y + 'px';
-                this.segmenter.canvas.style.left = zoom.pos.x + 'px';
+                this.segmenter.canvas.style.left = zoom.pos.x + 'px'
                 this.segmenter.refresh();
             }
+        },
+        updateView() {
+            this.segmenter.refresh();
         },
 
         // undo manager helpers
@@ -203,7 +208,7 @@ const SegPanel = BasePanel.extend({
                             // also update pk in the original data for undo/redo
                             data.regions[i].context.pk = region.pk;
                         }.bind(this));
-                    }
+                }
             }
             if (data.lines && data.lines.length) {
                 this.$parent.$emit(
@@ -328,7 +333,7 @@ const SegPanel = BasePanel.extend({
             ev.target.disabled = true;
             this.part.recalculateMasks();
         },
-        
+
         /* History */
         undo() {
             this.undoManager.undo();
