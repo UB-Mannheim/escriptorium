@@ -73,9 +73,9 @@ var diploLine = LineBase.extend({
                         let content = pasted_data_split.slice(i - 1).join('\n');
                         let child = this.$parent.$children[index + 1];
                         child.setContent(content);
-                        child.addToList();
                     }
                 }
+                this.$parent.toggleSave();
             }
         },
     }
