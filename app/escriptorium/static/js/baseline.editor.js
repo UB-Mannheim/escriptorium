@@ -1651,6 +1651,7 @@ class Segmenter {
     }
 
     setSelectionType(value) {
+        if (value == 'None') value = null;
         for (let i=0; i<this.selection.lines.length; i++) {
             let line = this.selection.lines[i];
             line.type = value;

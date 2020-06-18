@@ -16,17 +16,21 @@ from api.serializers import (UserOnboardingSerializer,
                              PartDetailSerializer,
                              PartSerializer,
                              PartMoveSerializer,
+                             BlockSerializer,
                              LineSerializer,
+                             BlockTypeSerializer,
+                             LineTypeSerializer,
                              DetailedLineSerializer,
                              LineMoveSerializer,
                              LineOrderSerializer,
-                             BlockSerializer,
                              TranscriptionSerializer,
                              LineTranscriptionSerializer)
 from core.models import (Document,
                          DocumentPart,
                          Block,
                          Line,
+                         BlockType,
+                         LineType,
                          Transcription,
                          LineTranscription)
 from users.models import User
@@ -184,6 +188,16 @@ class DocumentTranscriptionViewSet(ModelViewSet):
 
     def perform_delete(self, serializer):
         serializer.instance.archive()
+
+
+class BlockTypeViewSet(ModelViewSet):
+    queryset = BlockType.objects.filter(public=True)
+    serializer_class = BlockTypeSerializer
+
+
+class LineTypeViewSet(ModelViewSet):
+    queryset = LineType.objects.filter(public=True)
+    serializer_class = LineTypeSerializer
 
 
 class BlockViewSet(ModelViewSet):

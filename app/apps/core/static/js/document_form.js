@@ -42,10 +42,63 @@ $(document).ready(function() {
         }
     });
 
+    // add region/line types
+
+    function pushType(type, name) {
+        let uri = '/api/types/'+type+'/';
+        return fetch(uri, {
+            method: "post",
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": Cookies.get("csrftoken"),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({name: name})
+        });
+    }
+
+    function addTypeOption(parent, pk, name) {
+        let checks = document.querySelectorAll(parent + " .form-check");
+        let last_check = checks[checks.length-1];
+        let new_check = last_check.cloneNode(true);
+        let new_input = new_check.querySelector("input");
+        new_input.value = pk;
+        new_input.checked = true;
+        new_check.querySelector("label").textContent = name;
+        last_check.after(new_check);
+
+    }
+
+    document.getElementById("add-region-type-btn").addEventListener("click", function(ev) {
+        ev.preventDefault();
+        let input = document.getElementById("add-region-type-input");
+        if (input.value) {
+            pushType('block', input.value)
+                .then((response) => response.json())
+                .then(function (data) {
+                    addTypeOption('#region-types', data.pk, data.name);
+                    input.value = '';  // empty the input for future use
+                });
+        }
+    });
+
+    document.getElementById("add-line-type-btn").addEventListener("click", function(ev) {
+        ev.preventDefault();
+        let input = document.getElementById("add-line-type-input");
+        if (input.value) {
+            pushType('line', input.value)
+                .then((response) => response.json())
+                .then(function (data) {
+                    addTypeOption('#line-types', data.pk, data.name);
+                    input.value = '';  // empty the input for future use
+                });
+        }
+    });
 
     // link tabs
     var hash = window.location.hash;
-    hash && $('div.nav.nav-tabs a[href="' + hash + '"]').tab('show'); 
+    hash && $('div.nav.nav-tabs a[href="' + hash + '"]').tab('show');
     $('div.nav.nav-tabs a').click(function (e) {
         if (!$(this).is('.disabled')) {
             $(this).tab('show');

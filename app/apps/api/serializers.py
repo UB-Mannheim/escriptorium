@@ -13,7 +13,6 @@ from core.models import (Document,
                          Line,
                          Transcription,
                          LineTranscription,
-                         Typology,
                          BlockType,
                          LineType)
 
