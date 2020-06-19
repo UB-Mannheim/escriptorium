@@ -447,8 +447,6 @@ class Segmenter {
                         disableShortcuts=false,
 
                         baselinesColor=null,
-                        // evenMasksColor=null,
-                        // oddMasksColor=null,
                         directionHintColors=null,
                         regionColors=null,
 
@@ -653,7 +651,8 @@ class Segmenter {
         if(this.baselinesColorInput) this.baselinesColorInput.addEventListener('change', function(ev) {
             this.baselinesColor = ev.target.value;
             this.linesGroup.strokeColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-baselines', value: ev.target.value});
+            this.trigger('baseline-editor:settings', {name: 'color-baselines',
+                                                      value: ev.target.value});
         }.bind(this));
 
         if (this.dirHintColorInputs) {
@@ -662,15 +661,15 @@ class Segmenter {
                 input.addEventListener('change', function(ev) {
                     let type = this.lineTypes[index];
                     this.directionHintColors[type] = ev.target.value;
+                    if (type == 'None') type = null;  // switch to null for comparison
                     for (let index in this.lines) {
                         let line = this.lines[index];
                         if (line.type == type) {
-                            line.hintColor = ev.target.value;
                             line.refresh();
                         }
                     }
                     this.trigger('baseline-editor:settings', {name: 'color-directions',
-                                                              value: ev.target.value});
+                                                              value: this.directionHintColors});
                 }.bind(this));
             }
         }
@@ -680,15 +679,15 @@ class Segmenter {
                 input.addEventListener('change', function(ev) {
                     let type = this.regionTypes[index];
                     this.regionColors[type] = ev.target.value;
+                    if (type == 'None') type = null;  // switch to null for comparison
                     for (let index in this.regions) {
                         let region = this.regions[index];
                         if (region.type == type) {
-                            region.color = ev.target.value;
                             region.refresh();
                         }
                     }
                     this.trigger('baseline-editor:settings', {name: 'color-regions',
-                                                              value: ev.target.value});
+                                                              value: this.regionColors});
                 }.bind(this));
             }
         }
@@ -2200,20 +2199,20 @@ class Segmenter {
 
     setColors() {
         var choices = ['#0000FF', '#9A56FF', '#11FF76'];
-        if(!this.baselinesColors) this.baselinesColor = choices[0];
+        if (this.baselinesColor == null) this.baselinesColor = choices[0];
         this.evenMasksColor = this.baselinesColor;
         this.oddMasksColor = this.changeHue(this.baselinesColor, 30);
 
-        this.directionHintColors['None'] = choices[1];
         for (let index in this.lineTypes) {
-            if (!this.directionHintColors[index]) {
-                this.directionHintColors[this.lineTypes[index]] = this.changeHue(choices[1], 3*(index+1));
+            let type = this.lineTypes[index];
+            if (this.directionHintColors[type] == null) {
+                this.directionHintColors[type] = this.changeHue(choices[1], 3*(index+1));
             }
         }
-        this.regionColors['None'] = choices[2];
         for (let index in this.regionTypes) {
-            if (!this.regionColors[index]) {
-                this.regionColors[this.regionTypes[index]] = this.changeHue(choices[2], 3*(index+1));
+            let type = this.regionTypes[index];
+            if (this.regionColors[type] == null) {
+                this.regionColors[type] = this.changeHue(choices[2], 3*(index+1));
             }
         }
 
