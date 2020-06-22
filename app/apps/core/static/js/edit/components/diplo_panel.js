@@ -93,11 +93,12 @@ var DiploPanel = BasePanel.extend({
         addToList(){
             for(let i=0;i<this.$children.length; i++) {
                 let currentLine = this.$children[i];
-                if(currentLine.line.transcription.content != currentLine.$content.textContent){
-                    if(currentLine.line.transcription.pk)
-                        this.addToUpdatedLines(currentLine.line.transcription);
+                if(currentLine.line.currentTrans.content != currentLine.$refs.content[0].textContent){
+                    currentLine.line.currentTrans.content = currentLine.$refs.content[0].textContent ;
+                    if(currentLine.line.currentTrans.pk)
+                        this.addToUpdatedLines(currentLine.line.currentTrans);
                     else
-                        this.createdLines.push(currentLine.line.transcription);
+                        this.createdLines.push(currentLine.line.currentTrans);
                 }
             }
         },

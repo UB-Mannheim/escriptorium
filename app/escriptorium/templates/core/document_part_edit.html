@@ -560,7 +560,8 @@
                                        @select="stopEdit"
                                        @paste="onPaste"
                                        class="table-row line-content {{ document.default_text_direction }}"
-                                       ref="content">${line.transcription.content}</div>
+                                       ref="content"
+                                  >${line.currentTrans.content}</div>
                               </div>
                           </div>
                       </diploline>
