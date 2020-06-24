@@ -410,7 +410,8 @@ const partStore = {
             return {
                 pk: l.pk,
                 content: l.content,
-                line : l.line
+                line : l.line,
+                transcription : l.transcription
             };
         });
 
