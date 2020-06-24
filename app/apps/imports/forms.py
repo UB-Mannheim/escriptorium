@@ -1,23 +1,20 @@
 from datetime import datetime
 import json
-import os, io
+import os
+import io
 import requests
-from lxml import etree
 from zipfile import ZipFile
 
 from django import forms
-from django.core.validators import FileExtensionValidator
 from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Prefetch
 from django.http import StreamingHttpResponse, HttpResponse
 from django.template import loader
 from django.utils.translation import gettext as _
-from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Transcription, LineTranscription, DocumentPart
+from core.models import Transcription, LineTranscription
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
@@ -30,7 +27,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         help_text=_("The name of the target transcription. Will default to '{format} Import'."))
     upload_file = forms.FileField(
         required=False,
-        help_text=_("A single Alto XML file, or a zip file."))
+        help_text=_("A single AltoXML, PageXML file, or a zip file."))
     override = forms.BooleanField(
         initial=True, required=False,
         label=_("Override existing segmentation."),
@@ -43,16 +40,16 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         label=_("Resume previous import"),
         initial=True)
-    
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         self.current_import = self.document.documentimport_set.order_by('started_on').last()
         super().__init__(*args, **kwargs)
-    
+
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
-        
+
         if uri:
             try:
                 resp = requests.get(uri)
@@ -72,7 +69,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 if len(e.args):
                     msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
-    
+
     def clean_upload_file(self):
         upload_file = self.cleaned_data.get('upload_file')
         if upload_file:
@@ -86,16 +83,16 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                     msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
             return upload_file
-    
+
     def clean(self):
         cleaned_data = super().clean()
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
             and not cleaned_data['iiif_uri']):
             raise forms.ValidationError(_("Choose one type of import."))
-        
+
         return cleaned_data
-    
+
     def save(self):
         if self.cleaned_data['resume_import'] and self.current_import.failed:
             self.instance = self.current_import
@@ -113,11 +110,11 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                     ContentFile(content))
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
-            
+
             imp.save()
             self.instance = imp
         return self.instance
-    
+
     def process(self):
         document_import.delay(self.instance.pk)
 
@@ -135,13 +132,13 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     parts = forms.CharField()
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
-    
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-    
+
     def clean_parts(self):
         pks = json.loads(self.data.get('parts'))
         if len(pks) < 1:
@@ -154,12 +151,12 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         transcription = self.cleaned_data['transcription']
         document_export.delay(file_format, self.user.pk, self.document.pk,
                               parts, transcription.pk)
-    
+
     def stream(self):
         file_format = self.cleaned_data['file_format']
         parts = self.cleaned_data['parts']
         transcription = self.cleaned_data['transcription']
-        
+
         if file_format == self.TEXT_FORMAT:
             content_type = 'text/plain'
             lines = (LineTranscription.objects
@@ -168,7 +165,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
                      .order_by('line__document_part', 'line__document_part__order', 'line__order'))
             return StreamingHttpResponse(['%s\n' % line.content for line in lines],
                                          content_type=content_type)
-        
+
         elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
             filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
                                                 file_format,

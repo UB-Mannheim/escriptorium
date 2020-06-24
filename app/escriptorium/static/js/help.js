@@ -34,10 +34,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (closed) {
         closed.forEach(function(e, i) {
-            let container = document.querySelector('.js-help-container#'+e);
-            if (container) {
-                container.querySelector('.alert.help-text').style.display = 'none';
-            }
+            let help = document.querySelector('.help-text#'+e);
+            if (help) help.style.display = 'none';
         });
     }
 });

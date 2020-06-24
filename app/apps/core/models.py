@@ -619,8 +619,6 @@ class DocumentPart(OrderedModel):
 
             res = blla.segment(im, **options)
 
-            print(res['regions'])
-
             if steps in ['lines', 'both']:
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None

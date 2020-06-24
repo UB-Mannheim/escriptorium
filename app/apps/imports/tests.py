@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from imports.models import DocumentImport
 from imports.parsers import AltoParser, IIIFManifestParser
-from core.models import Block, Line, Transcription, LineTranscription
+from core.models import Block, Line, Transcription, LineTranscription, BlockType, LineType
 from core.tests.factory import CoreFactoryTestCase
 
 
@@ -134,6 +134,34 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.lines.count(), 3)
         self.assertEqual(self.part2.blocks.count(), 1)
         self.assertEqual(self.part2.lines.count(), 1)
+
+    def test_alto_types(self):
+        bt = BlockType.objects.create(name="test_block_type")
+        lt = LineType.objects.create(name="test_line_type")
+        self.document.valid_block_types.add(bt)
+        self.document.valid_line_types.add(lt)
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'test_composedblock.alto'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            with self.assertNumQueries(59):
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                self.assertEqual(response.content, b'{"status":"ok"}', response.content)
+                self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(DocumentImport.objects.count(), 1)
+        self.assertEqual(DocumentImport.objects.first().workflow_state,
+                         DocumentImport.WORKFLOW_STATE_DONE)
+        self.assertEqual(self.part1.blocks.count(), 3)
+        self.part1.blocks.all()[0].typology = None
+        self.part1.blocks.all()[1].typology.name = 'test_block_type'
+        self.part1.blocks.all()[2].typology = None  # invalid
+        self.part1.lines.all()[0].typology = None
+        self.part1.lines.all()[1].typology.name = 'test_line_type'
+        self.part1.lines.all()[2].typology = None  # invalid
+        self.assertEqual(self.part1.lines.count(), 3)
 
     def test_resume(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -322,6 +350,38 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part3.blocks.count(), 0)
         self.assertEqual(self.part3.lines.count(), 19)
 
+    def test_pagexml_types(self):
+        bt = BlockType.objects.create(name="test_block_type")
+        bt2 = BlockType.objects.create(name="heading")
+        lt = LineType.objects.create(name="test_line_type")
+        self.document.valid_block_types.add(bt)
+        self.document.valid_block_types.add(bt2)
+        self.document.valid_line_types.add(lt)
+
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'test_pagexml_types.xml'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+        with open(mock_path, 'rb') as fh:
+            with self.assertNumQueries(67):
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                self.assertEqual(response.content, b'{"status":"ok"}', response.content)
+                self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(DocumentImport.objects.count(), 1)
+        self.assertEqual(DocumentImport.objects.first().workflow_state,
+                         DocumentImport.WORKFLOW_STATE_DONE)
+        self.assertEqual(self.part1.blocks.count(), 4)
+        self.part1.blocks.all()[0].typology = None
+        self.part1.blocks.all()[1].typology.name = 'test_block_type'
+        self.part1.blocks.all()[2].typology.name = 'heading'
+        self.part1.blocks.all()[3].typology = None  # invalid
+        self.part1.lines.all()[0].typology = None
+        self.part1.lines.all()[1].typology.name = 'test_line_type'
+        self.part1.lines.all()[2].typology = None  # invalid
+        self.assertEqual(self.part1.lines.count(), 3)
+
     def test_iiif(self):
         filename = 'iiif.json'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
@@ -408,7 +468,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(19):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,

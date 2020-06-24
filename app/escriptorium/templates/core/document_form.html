@@ -79,7 +79,18 @@
 
                 <div id="ontology-form" class="col-xl">
                     <label class="my-1">{% trans "Ontology" %}</label>
-                    <br>
+
+                    <button type="button" class="btn help open" aria-label="Help">
+                        <span class="fas fa-question"></span>
+                    </button>
+                    <div id="ontology-help" class="alert alert-primary help-text">
+                        <button type="button" class="close" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                        <p class="form-text text-muted mb-0">{% trans "The default configuration only contains semantic types. <br>It is not recommended to mix semantic, stylistic and layout types." %}</p>
+                    </div>
+
+
                     <div id="region-types">
                         <div><small>{% trans "Region types" %}</small></div>
                         {% render_field form.valid_block_types group=True %}
@@ -157,4 +168,5 @@
 {% block scripts %}
 {{ block.super }}
 <script src="{% static 'js/document_form.js' %}"></script>
+<script src="{% static 'js/help.js' %}"></script>
 {% endblock %}

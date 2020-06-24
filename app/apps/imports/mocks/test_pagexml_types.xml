@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+    <Metadata>
+        <Creator>prov=University of Rostock/Institute of Mathematics/CITlab/Gundram Leifert/gundram.leifert@uni-rostock.de:name=Beth Mardutho Qoruyo Syriac-Estrangelo 1.0(htr_id=16190)::::v=2.4.2
+prov=University of Rostock/Institute of Mathematics/CITlab/Tobias Gruening/tobias.gruening@uni-rostock.de:name=de.uros.citlab.module.baseline2polygon.B2PSeamMultiOriented:v=2.4.2
+prov=University of Rostock/Institute of Mathematics/CITlab/Tobias Gruening/tobias.gruening@uni-rostock.de:name=/net_tf/LA73_249_0mod360.pb:de.uros.citlab.segmentation.CITlab_LA_ML:v=2.4.2
+TRP</Creator>
+        <Created>2019-09-27T23:23:02.181+02:00</Created>
+        <LastChange>2019-09-30T19:47:30.802+02:00</LastChange>
+    </Metadata>
+    <Page imageFilename="test1.png" imageWidth="738" imageHeight="1139">
+
+        <TextRegion id="r1" custom="readingOrder {index:0;}">
+            <Coords points="64,854 64,1005 75,1005 75,854"/>
+            <TextLine id="r1l1" custom="readingOrder {index:0;}">
+                <Coords points="59,960 64,960 66,962 69,960 71,960 72,962 80,961 85,921 80,920 76,923 74,919 64,918"/>
+                <Baseline points="64,954 75,955"/>
+                <TextEquiv>
+                    <Unicode>ܦ</Unicode>
+                </TextEquiv>
+            </TextLine>
+        </TextRegion>
+
+        <TextRegion id="r2" custom="readingOrder {index:1;} structure {type: test_block_type;}">
+            <Coords points="113,29 113,1021 697,1021 697,29"/>
+
+            <TextLine id="r2l1" custom="readingOrder {index:0;} structure {type: test_line_type;}">
+                <Coords points="50,64 346,60 425,81 460,60"/>
+                <Baseline points="155,55 180,55 206,55 231,55 257,55 283,55 308,55 334,56 359,56 385,56 411,56 436,56 462,56 487,56 513,55 539,55 564,55 590,54 616,53"/>
+                <TextEquiv>
+                    <Unicode>ܡ ܗܘܡ ܐܘ ܥܒ</Unicode>
+                </TextEquiv>
+            </TextLine>
+
+            <TextLine id="r2l2" custom="readingOrder {index:1;} structure {type: invalid_line_type;}">
+                <Coords points="120,121 644,119 670,113 669,68 563,80 492,60 436,87 306,70 257,84 180,62 119,83"/>
+                <Baseline points="125,109 152,109 179,109 206,108 233,108 260,107 287,107 314,107 341,106 368,106 395,106 422,105 449,105 476,105 503,105 530,105 557,106 584,106 611,107 638,107 665,108"/>
+                <TextEquiv>
+                    <Unicode>ܠܘܬ ܛܘܪܐ ܗ̇ܘ ܕܡܬܩܪܐ</Unicode>
+                </TextEquiv>
+            </TextLine>
+
+
+        </TextRegion>
+
+        <TextRegion id="r3" type="heading">
+          <Coords points="120,121 644,119 670,113"/>
+        </TextRegion>
+
+        <TextRegion id="r4" custom="readingOrder {index:2;} structure {type: invalid_block_type;}">
+          <Coords points="120,121 644,119 670,113"/>
+        </TextRegion>
+
+    </Page>
+</PcGts>
