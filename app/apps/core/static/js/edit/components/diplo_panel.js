@@ -41,12 +41,12 @@ var DiploPanel = BasePanel.extend({
                     let child = this.$children[i];
                     let nextLine = this.part.lines[i+1];
                     if(i == idx){
-                        let content = child.line.transcription.content + nextLine.transcription.content;
+                        let content = child.line.currentTrans.content + nextLine.currentTrans.content;
 
                         child.setContent(content);
                     }
                     else if(nextLine){
-                        child.setContent(nextLine.transcription.content);
+                        child.setContent(nextLine.currentTrans.content);
                     }
                     else {
                         child.setContent("");
@@ -111,6 +111,7 @@ var DiploPanel = BasePanel.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
+
         dragStart(line,ev){
             ev.dataTransfer.setData('Text', "#diplomatic-lines");
             ev.target.style.border = 'solid #33A2FF';
@@ -176,7 +177,7 @@ var DiploPanel = BasePanel.extend({
                   let html = target.innerHTML ;
                   let after_break = html.substring(html.indexOf('br')+3);
 
-                  child.setContent(after_break + child.line.transcription.content);
+                  child.setContent(after_break + child.line.currentTrans.content);
                   target.innerHTML = html.substring(0, html.indexOf('<br')) + "</div>";
                   this.updateEditLine(idx+1);
                   return false;
