@@ -552,7 +552,7 @@
                                     contenteditable="false"
                                   >${line.order + 1}</div>
 
-                                  <div v-bind:id="line.pk"
+                                  <div v-bind:id="line.pk" v-if="line.currentTrans"
                                        @mouseup="startEdit"
                                        @focusout="stopEdit"
                                        @mouseover="showOverlay"

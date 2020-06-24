@@ -1,5 +1,8 @@
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
+    mounted() {
+        this.$content = this.$refs.content[0];
+    },
     computed: {
         showregion() {
             let idx = this.$parent.part.lines.indexOf(this.line);
