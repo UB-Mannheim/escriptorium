@@ -54,6 +54,7 @@ var diploLine = LineBase.extend({
             } else {
                 e.preventDefault();
 
+                //remove the last line if it's empty
                 if (pasted_data_split[pasted_data_split.length - 1] == "")
                     pasted_data_split.pop();
 
@@ -64,7 +65,6 @@ var diploLine = LineBase.extend({
                         let content = pasted_data_split[i];
                         let child = this.$parent.$children[index + i];
                         child.setContent(content);
-                        child.addToList();
                     } else {
                         let content = pasted_data_split.slice(i - 1).join('\n');
                         let child = this.$parent.$children[index + 1];

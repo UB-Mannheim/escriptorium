@@ -52,7 +52,6 @@ var DiploPanel = BasePanel.extend({
                         child.setContent("");
                     }
                     this.setpositionCursor("[id='"+ this.editLine.pk+ "']");
-                    child.addToList();
                 }
                 this.toggleSave();
             }
