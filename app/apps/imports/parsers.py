@@ -549,7 +549,8 @@ class IIIFManifestParser(ParserDocument):
         try:
             for metadata in self.manifest["metadata"]:
                 if metadata["value"]:
-                    md, created = Metadata.objects.get_or_create(name=metadata["label"])
+                    name = str(metadata["label"])[:128]
+                    md, created = Metadata.objects.get_or_create(name=name)
                     DocumentMetadata.objects.get_or_create(
                         document=self.document, key=md, value=metadata["value"][:512]
                     )

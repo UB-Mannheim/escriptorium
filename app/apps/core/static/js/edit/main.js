@@ -164,6 +164,15 @@ var partVM = new Vue({
                 }
             }
         }.bind(this));
+
+        // catch background emited events when masks are recalculated
+        let $alertsContainer = $('#alerts-container');
+        $alertsContainer.on('part:mask', function(ev, data) {
+            data.lines.forEach(function(lineData) {
+                let line = this.part.lines.find(l=>l.pk == lineData.pk);
+                line.mask = lineData.mask;
+            }.bind(this));
+        }.bind(this));
     },
     methods: {
         resetZoom() {

@@ -289,6 +289,22 @@ def segment(instance_pk, user_pk=None, model_pk=None,
                         id="segmentation-success", level='success')
 
 
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
+def recalculate_masks(instance_pk, user_pk=None, only=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist as e:
+        logger.error('Trying to recalculate masks of innexistant DocumentPart : %d', instance_pk)
+        return
+
+    result = part.make_masks(only=only)
+    send_event('document', part.document.pk, "part:mask", {
+        "id": part.pk,
+        "lines": [{'pk': line.pk, 'mask': line.mask} for line in result]
+    })
+
+
 def train_(qs, document, transcription, model=None, user=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
@@ -350,7 +366,7 @@ def train_(qs, document, transcription, model=None, user=None):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy
-        model.training_total = chars
+        model.training_total = int(chars)
         model.training_errors = error
         new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
         model.new_version(file=new_version_filename)
@@ -361,7 +377,7 @@ def train_(qs, document, transcription, model=None, user=None):
             'versions': model.versions,
             'epoch': epoch,
             'accuracy': accuracy,
-            'chars': chars,
+            'chars': int(chars),
             'error': error})
 
     trainer.run(_print_eval)

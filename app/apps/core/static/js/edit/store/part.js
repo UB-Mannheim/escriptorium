@@ -303,18 +303,6 @@ const partStore = {
                 if (this.masksToRecalc.length >0) uri += '?only=' + this.masksToRecalc.toString();
                 this.masksToRecalc = [];
                 this.push(uri, {}, method="post")
-                    .then((response) => response.json())
-                    .then(function(data) {
-                        for (let i=0; i<data.lines.length; i++) {
-                            let lineData = data.lines[i];
-                            let line = this.lines.find(function(l) {
-                                return l.pk==lineData.pk;
-                            });
-                            if (line) {
-                                line.mask = lineData.mask;
-                            }
-                        }
-                    }.bind(this))
                     .catch(function(error) {
                         console.log('couldnt recalculate masks!', error);
                     });
