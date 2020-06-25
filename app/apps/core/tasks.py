@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os.path
-import redis
 import shutil
 
 from django.apps import apps
@@ -37,7 +36,6 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
         "task_id": task_id,
         "data": data or {}
     })
-
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk):
@@ -112,6 +110,15 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-success", level='success')
 
 
+def make_segmentation_training_data(part):
+    return {
+        'image': part.image.path,
+        'baselines': [{'script': 'default', 'baseline': bl}
+                      for bl in part.lines.values_list('baseline', flat=True) if bl],
+        'regions': {'test': [r.box for r in part.blocks.all().only('box')]}
+    }
+
+
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -126,6 +133,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     else:
         user = None
 
+    def msg(txt, fg=None, nl=False):
+        logger.info(txt)
+
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
     DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -136,7 +146,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
     except ValueError:  # model is empty
-        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        # load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        load = None
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         model.file = upload_to
 
@@ -158,19 +169,14 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         training_data = []
         evaluation_data = []
         for part in qs[partition:]:
-            training_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            training_data.append(make_segmentation_training_data(part))
         for part in qs[:partition]:
-            evaluation_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            evaluation_data.append(make_segmentation_training_data(part))
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
+            message=msg,
             output=os.path.join(os.path.split(modelpath)[0], 'version'),
             format_type=None,
             device=DEVICE,
@@ -223,6 +229,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             user.notify(_("Training finished!"),
                         id="training-success",
                         level='success')
+            user.notify(report)
     finally:
         model.training = False
         model.save()
@@ -280,6 +287,22 @@ def segment(instance_pk, user_pk=None, model_pk=None,
         if user:
             user.notify(_("Segmentation done!"),
                         id="segmentation-success", level='success')
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
+def recalculate_masks(instance_pk, user_pk=None, only=None):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist as e:
+        logger.error('Trying to recalculate masks of innexistant DocumentPart : %d', instance_pk)
+        return
+
+    result = part.make_masks(only=only)
+    send_event('document', part.document.pk, "part:mask", {
+        "id": part.pk,
+        "lines": [{'pk': line.pk, 'mask': line.mask} for line in result]
+    })
 
 
 def train_(qs, document, transcription, model=None, user=None):
@@ -343,7 +366,7 @@ def train_(qs, document, transcription, model=None, user=None):
         model.refresh_from_db()
         model.training_epoch = epoch
         model.training_accuracy = accuracy
-        model.training_total = chars
+        model.training_total = int(chars)
         model.training_errors = error
         new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
         model.new_version(file=new_version_filename)
@@ -354,7 +377,7 @@ def train_(qs, document, transcription, model=None, user=None):
             'versions': model.versions,
             'epoch': epoch,
             'accuracy': accuracy,
-            'chars': chars,
+            'chars': int(chars),
             'error': error})
 
     trainer.run(_print_eval)

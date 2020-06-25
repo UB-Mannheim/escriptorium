@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="modal fade" id="{{proc}}-wizard" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
-    <div class="modal-content">      
+    <div class="modal-content">
       {% comment %}
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">{% block wizard_title %}{% endblock %}</h5>
@@ -15,7 +15,7 @@
           <button type="button" class="btn help open" aria-label="Help">
             <span class="fas fa-question"></span>
           </button>
-          
+
           {% block selected_images %}
           <p><span id="selected-num"></span> {% trans "image(s) selected." %}</p>
           {% endblock %}

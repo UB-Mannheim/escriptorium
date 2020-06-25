@@ -86,6 +86,6 @@ class DocumentImport(models.Model):
 
         except Exception as e:
             self.workflow_state = self.WORKFLOW_STATE_ERROR
-            self.error_message = str(e)
+            self.error_message = str(e)[:512]
             self.save()
             raise e

@@ -1,6 +1,7 @@
 import json
 import logging
 import os.path
+import re
 import requests
 import time
 import uuid
@@ -330,11 +331,34 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
         return [(l.get("ID"), l) for l in blockTag.findall("TextLine", self.root.nsmap)]
 
     def update_block(self, block, blockTag):
-        x = int(blockTag.get("HPOS"))
-        y = int(blockTag.get("VPOS"))
-        w = int(blockTag.get("WIDTH"))
-        h = int(blockTag.get("HEIGHT"))
-        block.box = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+        polygon = blockTag.find("Shape/Polygon", self.root.nsmap)
+        if polygon is not None:
+            try:
+                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                block.box = tuple(zip(coords[::2], coords[1::2]))
+            except ValueError:
+                logger.warning("Invalid polygon %s" % polygon)
+        else:
+            x = int(blockTag.get("HPOS"))
+            y = int(blockTag.get("VPOS"))
+            w = int(blockTag.get("WIDTH"))
+            h = int(blockTag.get("HEIGHT"))
+            block.box = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+
+        try:
+            tag = blockTag.get("TAGREFS").split(" ")[0]
+            type_ = self.root.find("./Tags/*[@ID='"+tag+"']", self.root.nsmap).get("LABEL")
+        except (IndexError, AttributeError):
+            # Index to catch empty tagrefs, Attribute to catch no tagrefs or invalid
+            type_ = None
+
+        if type_:
+            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
+            if type_ in valid_types_mapping.keys():
+                block.typology = valid_types_mapping[type_]
+            else:
+                # raise warning discard type
+                pass
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("BASELINE")
@@ -365,6 +389,20 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                 int(lineTag.get("HPOS")) + int(lineTag.get("WIDTH")),
                 int(lineTag.get("VPOS")) + int(lineTag.get("HEIGHT")),
             ]
+
+        try:
+            tag = lineTag.get("TAGREFS").split(" ")[0]
+            type_ = self.root.find("./Tags/*[@ID='"+tag+"']", self.root.nsmap).get("LABEL")
+        except (IndexError, AttributeError):
+            type_ = None
+
+        if type_:
+            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
+            if type_ in valid_types_mapping.keys():
+                line.typology = valid_types_mapping[type_]
+            else:
+                # raise warning discard type
+                pass
 
     def get_transcription_content(self, lineTag):
         return " ".join(
@@ -415,6 +453,22 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
         #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
         block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
 
+        type_ = blockTag.get("type")
+        if not type_:
+            custom = blockTag.get("custom")
+            if custom:
+                match = re.search('structure\s?{.*?type:\s?(\w+);', custom)
+                if match:
+                    type_ = match.groups()[0]
+
+        if type_:
+            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
+            if type_ in valid_types_mapping.keys():
+                block.typology = valid_types_mapping[type_]
+            else:
+                # raise warning discard type
+                pass
+
     def update_line(self, line, lineTag):
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
@@ -426,6 +480,22 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
         polygon = lineTag.find("Coords", self.root.nsmap)
         if polygon is not None:
             line.mask = self.clean_coords(polygon)
+
+        type_ = lineTag.get("type")
+        if not type_:
+            custom = lineTag.get("custom")
+            if custom:
+                match = re.search('structure\s?{.*?type:\s?(\w+);', custom)
+                if match:
+                    type_ = match.groups()[0]
+
+        if type_:
+            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
+            if type_ in valid_types_mapping.keys():
+                line.typology = valid_types_mapping[type_]
+            else:
+                # raise warning discard type
+                pass
 
     def clean_coords(self, coordTag):
         return [
@@ -479,7 +549,8 @@ class IIIFManifestParser(ParserDocument):
         try:
             for metadata in self.manifest["metadata"]:
                 if metadata["value"]:
-                    md, created = Metadata.objects.get_or_create(name=metadata["label"])
+                    name = str(metadata["label"])[:128]
+                    md, created = Metadata.objects.get_or_create(name=name)
                     DocumentMetadata.objects.get_or_create(
                         document=self.document, key=md, value=metadata["value"][:512]
                     )
