@@ -1556,11 +1556,15 @@ class Segmenter {
             this.lineTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.lineTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
             this.lineTypesSelect.focus();
+            if (this.selection.regions.length == 1) this.lineTypesSelect.value = this.selection.regions[0].type || 'None';
+            else this.lineTypesSelect.selectedIndex = 0;  // selects none
         } else if (this.selection.regions.length) {
             this.regionTypesSelect.style.display = 'block';
             this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
             this.regionTypesSelect.focus();
+            if (this.selection.regions.length == 1) this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
+            else this.regionTypesSelect.selectedIndex = 0;  // selects none
         }
 
         var self = this;  // mandatory for unbinding
@@ -1596,6 +1600,7 @@ class Segmenter {
                 unbindKb.bind(this)();
                 ev.stopPropagation();
             }
+            ev.preventDefault();
         }
 
         // disable other shortcuts
@@ -1613,9 +1618,9 @@ class Segmenter {
             opt.value = type;
             opt.text = type + ' ('+i+')';
             this.regionTypesSelect.appendChild(opt);
-            this.setTypeBtn.appendChild(this.regionTypesSelect);
         }.bind(this));
         this.regionTypesSelect.size = this.regionTypes.length+1;
+        this.contextMenu.appendChild(this.regionTypesSelect);
         this.regionTypesSelect.addEventListener('blur', function(ev) {
             this.regionTypesSelect.style.display = 'none';
             this.disableShortcuts = false;
@@ -1626,6 +1631,7 @@ class Segmenter {
             this.regionTypesSelect.blur();
         }.bind(this));
 
+
         this.lineTypesSelect = document.createElement('select');
         this.lineTypesSelect.style.position = 'absolute';
         this.lineTypesSelect.autocomplete = "off";
@@ -1635,9 +1641,9 @@ class Segmenter {
             opt.value = type;
             opt.text = type + ' ('+i+')';
             this.lineTypesSelect.appendChild(opt);
-            this.setTypeBtn.appendChild(this.lineTypesSelect);
         }.bind(this));
         this.lineTypesSelect.size = this.lineTypes.length+1;
+        this.contextMenu.appendChild(this.lineTypesSelect);
         this.lineTypesSelect.addEventListener('blur', function(ev) {
             this.lineTypesSelect.style.display = 'none';
             this.disableShortcuts = false;
@@ -1653,15 +1659,19 @@ class Segmenter {
         if (value == 'None') value = null;
         for (let i=0; i<this.selection.lines.length; i++) {
             let line = this.selection.lines[i];
-            line.type = value;
-            this.addToUpdateQueue({lines: line});
-            line.refresh();
+            if (line.type != value) {
+                line.type = value;
+                this.addToUpdateQueue({lines: line});
+                line.refresh();
+            }
         }
         for (let i=0; i<this.selection.regions.length; i++) {
             let region = this.selection.regions[i];
-            region.type = value;
-            this.addToUpdateQueue({regions: this.selection.regions[i]});
-            region.refresh();
+            if (region.type != value) {
+                region.type = value;
+                this.addToUpdateQueue({regions: this.selection.regions[i]});
+                region.refresh();
+            }
         }
     }
 
