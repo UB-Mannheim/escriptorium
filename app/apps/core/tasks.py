@@ -37,7 +37,6 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
         "data": data or {}
     })
 
-
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
@@ -111,6 +110,15 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
                         id="binarization-success", level='success')
 
 
+def make_segmentation_training_data(part):
+    return {
+        'image': part.image.path,
+        'baselines': [{'script': 'default', 'baseline': bl}
+                      for bl in part.lines.values_list('baseline', flat=True) if bl],
+        'regions': {'test': [r.box for r in part.blocks.all().only('box')]}
+    }
+
+
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -125,6 +133,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     else:
         user = None
 
+    def msg(txt, fg=None, nl=False):
+        logger.info(txt)
+
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
     DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -135,7 +146,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
     except ValueError:  # model is empty
-        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        # load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        load = None
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         model.file = upload_to
 
@@ -157,19 +169,14 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         training_data = []
         evaluation_data = []
         for part in qs[partition:]:
-            training_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            training_data.append(make_segmentation_training_data(part))
         for part in qs[:partition]:
-            evaluation_data.append({
-                'image': part.image.path,
-                'baselines': [{'script': 'default', 'baseline': bl}
-                              for bl in part.lines.values_list('baseline', flat=True) if bl]})
+            evaluation_data.append(make_segmentation_training_data(part))
 
         DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
+            message=msg,
             output=os.path.join(os.path.split(modelpath)[0], 'version'),
             format_type=None,
             device=DEVICE,
@@ -222,6 +229,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             user.notify(_("Training finished!"),
                         id="training-success",
                         level='success')
+            user.notify(report)
     finally:
         model.training = False
         model.save()

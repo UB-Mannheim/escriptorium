@@ -6,7 +6,7 @@ register = template.Library()
 @register.filter
 def level_to_color(tags):
     """
-    map django.contrib.messages level to bootstraps color code 
+    map django.contrib.messages level to bootstraps color code
     """
     level_map = {
         'debug': 'dark',
@@ -23,9 +23,10 @@ def render_field(field, group=False, **kwargs):
     tplt = template.loader.get_template('django/forms/widgets/field.html')
     if 'class' in kwargs and 'class' in field.field.widget.attrs:
         kwargs['class'] = field.field.widget.attrs['class'] + " " + kwargs['class']
-    
+
     field.field.widget.attrs.update(**{k.replace('_', '-'): v
-                                       for k,v in kwargs.items()})
-    
+                                       for k, v in kwargs.items()
+                                       if isinstance(k, str)})
+
     context = {'field': field, 'group': group}
-    return tplt.render(context)  #.mark_safe()
+    return tplt.render(context)  # .mark_safe()

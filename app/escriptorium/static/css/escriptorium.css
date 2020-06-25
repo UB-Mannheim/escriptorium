@@ -427,6 +427,7 @@ i.panel-icon {
     width: 100%;
     padding: 0 10px;
     /* height: 100%; */
+    position: relative;
 }
 
 .panel .content-container {
@@ -461,6 +462,33 @@ i.panel-icon {
     border: 1px solid grey;
     border-radius: 5px;
     margin: 10px;
+    position: fixed;
+    transform: translateZ(0); /* css trick to fix to an element */
+    display: none;
+    z-index: 3;
+}
+
+.panel #context-menu button {
+    display: block;
+    width: 40px;
+    opacity: 80%;
+}
+
+.panel #context-menu button:hover {
+    opacity: 100%;
+}
+
+.panel #info-tooltip {
+    border: 1px solid grey;
+    border-radius: 5px;
+    margin: 10px;
+    padding: 0 5px;
+    background-color: lightyellow;
+    position: absolute;
+    right: 10px;
+    z-index: 3;
+    display: none;
+    opacity: 90%;
 }
 
 #trans-modal .modal-content {

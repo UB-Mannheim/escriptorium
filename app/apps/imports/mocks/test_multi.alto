@@ -5,7 +5,7 @@
   <Description>
 	<MeasurementUnit>pixel</MeasurementUnit>
 	<sourceImageInformation>
-	  <fileName>/fake/path/doesnt/matter/test.png</fileName>
+	  <fileName>test.png</fileName>
 	</sourceImageInformation>
 	<OCRProcessing ID="OCR_0">
 	  <ocrProcessingStep>
@@ -22,14 +22,14 @@
 		<TextBlock HPOS="0" VPOS="0" ID="textblock_0_0" WIDTH="850" HEIGHT="1083">
 		  <TextLine ID="line_0_0"
 					HPOS="160"
-					VPOS="771" 
-					WIDTH="0" 
+					VPOS="771"
+					WIDTH="0"
 					HEIGHT="28">
 			<String ID="segment_0_0_0"
-					CONTENT="Test page 1 block 1 line 1" 
-					HPOS="160" 
+					CONTENT="Test page 1 block 1 line 1"
+					HPOS="160"
 					VPOS="771"
-					WIDTH="0" 
+					WIDTH="0"
 					HEIGHT="28"></String>
 		  </TextLine>
         </TextBlock>
@@ -40,28 +40,28 @@
 		<TextBlock HPOS="0" VPOS="0" ID="textblock_1_0" WIDTH="850" HEIGHT="1083">
 		  <TextLine ID="line_1_0"
 					HPOS="160"
-					VPOS="771" 
-					WIDTH="0" 
+					VPOS="771"
+					WIDTH="0"
 					HEIGHT="28">
 			<String ID="segment_1_0_0"
-					CONTENT="Test page 2 block 1 line 1" 
-					HPOS="160" 
+					CONTENT="Test page 2 block 1 line 1"
+					HPOS="160"
 					VPOS="771"
-					WIDTH="0" 
+					WIDTH="0"
 					HEIGHT="28"></String>
 		  </TextLine>
         </TextBlock>
         <TextBlock HPOS="0" VPOS="0" ID="textblock_1_1" WIDTH="850" HEIGHT="1083">
 		  <TextLine ID="line_1_1"
 					HPOS="160"
-					VPOS="771" 
-					WIDTH="0" 
+					VPOS="771"
+					WIDTH="0"
 					HEIGHT="28">
 			<String ID="segment_1_0_1"
 					CONTENT="Test page 2 block 2 line 2"
-					HPOS="160" 
+					HPOS="160"
 					VPOS="771"
-					WIDTH="0" 
+					WIDTH="0"
 					HEIGHT="28"></String>
 		  </TextLine>
         </TextBlock>

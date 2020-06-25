@@ -7,7 +7,14 @@ from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
 
 from users.models import User
-from core.models import Document, DocumentPart, Block, Line, Transcription, LineTranscription
+from core.models import (Document,
+                         DocumentPart,
+                         Block,
+                         Line,
+                         Transcription,
+                         LineTranscription,
+                         BlockType,
+                         LineType)
 
 logger = logging.getLogger(__name__)
 
@@ -73,12 +80,27 @@ class UserOnboardingSerializer(serializers.ModelSerializer):
         self.user.save()
 
 
+class BlockTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlockType
+        fields = ('pk', 'name')
+
+
+class LineTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LineType
+        fields = ('pk', 'name')
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
+    valid_block_types = BlockTypeSerializer(many=True, read_only=True)
+    valid_line_types = LineTypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'transcriptions')
+        fields = ('pk', 'name', 'transcriptions',
+                  'valid_block_types', 'valid_line_types')
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -114,9 +136,14 @@ class PartSerializer(serializers.ModelSerializer):
 
 
 class BlockSerializer(serializers.ModelSerializer):
+    typology = serializers.PrimaryKeyRelatedField(
+        queryset=BlockType.objects.all(),
+        allow_null=True,
+        required=False)
+
     class Meta:
         model = Block
-        fields = ('pk', 'document_part', 'order', 'box')
+        fields = ('pk', 'document_part', 'order', 'box', 'typology')
 
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):
@@ -153,10 +180,14 @@ class LineSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
         source='block')
+    typology = serializers.PrimaryKeyRelatedField(
+        queryset=LineType.objects.all(),
+        allow_null=True,
+        required=False)
 
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask')
+        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask', 'typology')
         list_serializer_class = LineListSerializer
 
 

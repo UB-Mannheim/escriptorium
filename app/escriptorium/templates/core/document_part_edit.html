@@ -191,24 +191,31 @@
                             </button>
                             <div id="be-settings-menu" class="dropdown-menu">
                                 <div>
-                                    <input id="be-bl-color" type="color"/>
                                     <label for="be-even-bl-color"> {% trans "Baselines" %}</label>
+                                    <br><input id="be-bl-color" type="color"/>
                                 </div>
                                 <div>
-                                    <input id="be-even-mask-color" type="color"/>
-                                    <label for="be-odd-bl-color"> {% trans "Even Masks" %}</label>
+                                    <label for="be-dir-color"> {% trans "Line direction hints (by type)" %}</label>
+                                    <br>
+                                    <input  type="color" id="be-dir-color-0" title="None">
+                                    <input  type="color"
+                                            v-for="(type, index) in part.types.lines"
+                                            :key="'BT' + type"
+                                            v-bind:data-type="type.name"
+                                            v-bind:title="type.name"
+                                            v-bind:id="'be-dir-color-'+(index+1)"/>
                                 </div>
                                 <div>
-                                    <input id="be-odd-mask-color" type="color"/>
-                                    <label for="be-odd-mask-color"> {% trans "Odd Masks" %}</label>
-                                </div>
-                                <div>
-                                    <input id="be-dir-color" type="color"/>
-                                    <label for="be-dir-color"> {% trans "Direction hints" %}</label>
-                                </div>
-                                <div>
-                                    <input id="be-reg-color" type="color"/>
-                                    <label for="be-reg-color"> {% trans "Regions" %}</label>
+                                    <label for="be-reg-color"> {% trans "Regions (by type)" %}</label>
+                                    <br>
+                                    <input  type="color" id="be-reg-color-0" title="None">
+                                    <input  type="color"
+                                            v-for="(type, index) in part.types.regions"
+                                            :key="'LT' + type"
+                                            v-bind:data-type="type.name"
+                                            v-bind:title="type.name"
+                                            v-bind:id="'be-reg-color-'+(index+1)"/>
+
                                 </div>
                                 <!-- <div class="dropdown-divider"></div> -->
                                 <!-- {% trans "Line thickness" %}<input type="slider"/> -->
@@ -268,19 +275,24 @@
                     <button id="be-unlink-region"
                             title="{% trans "Unlink selected lines from their region." %}"
                             class="hide btn btn-info m-1 fas fa-unlink"></button>
-                    <button id="be-delete-point"
-                            title="{% trans "Delete selected points. (ctrl+suppr)" %}"
-                            class="hide btn btn-warning m-1 fas fa-trash"></button>
                     <button id="be-merge-selection"
                             title="{% trans "Join selected lines. (J)" %}"
                             class="hide btn btn-info fas m-1 fa-compress-arrows-alt"></button>
                     <button id="be-reverse-selection"
                             title="{% trans "Reverse selected lines. (I)" %}"
                             class="hide btn btn-info fas m-1 fa-arrows-alt-h"></button>
+                    <button id="be-set-type"
+                            title="{% trans "Set the type on all selected lines/regions. (T)" %}"
+                            class="btn m-1 btn-info fas fa-text-height"></button>
+                    <button id="be-delete-point"
+                            title="{% trans "Delete selected points. (ctrl+suppr)" %}"
+                            class="hide btn btn-warning m-1 fas fa-trash"></button>
                     <button id="be-delete-selection"
                             title="{% trans "Delete all selected lines/regions. (suppr)" %}"
-                            class="hide btn m-1 btn-danger fas fa-trash"></button>
+                            class="btn m-1 btn-danger fas fa-trash"></button>
                 </div>
+
+                <div id="info-tooltip"></div>
 
                 <div class="content-container">
                     <div id="seg-zoom-container" class="content">
@@ -621,7 +633,7 @@
   <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
   {# TODO: can we trash that? #}
-  <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script>
+  {# <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script> #}
   <script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>

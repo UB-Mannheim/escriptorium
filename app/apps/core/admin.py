@@ -7,7 +7,10 @@ from core.models import (Document,
                          LineTranscription,
                          OcrModel,
                          Script,
-                         Typology)
+                         DocumentType,
+                         DocumentPartType,
+                         BlockType,
+                         LineType)
 
 
 class MetadataInline(admin.TabularInline):
@@ -44,7 +47,10 @@ class OcrModelAdmin(admin.ModelAdmin):
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
-admin.site.register(Typology)
+admin.site.register(DocumentType)
+admin.site.register(DocumentPartType)
+admin.site.register(BlockType)
+admin.site.register(LineType)
 admin.site.register(Script, ScriptAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)

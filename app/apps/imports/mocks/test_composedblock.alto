@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
+  <Description>
+	<MeasurementUnit>pixel</MeasurementUnit>
+	<sourceImageInformation>
+	  <fileName>test1.png</fileName>
+	</sourceImageInformation>
+	<OCRProcessing ID="OCR_0">
+	  <ocrProcessingStep>
+		<processingSoftware>
+		  <softwareName>kraken</softwareName>
+		</processingSoftware>
+	  </ocrProcessingStep>
+	</OCRProcessing>
+  </Description>
+
+  <Tags>
+    <StructureTag ID="BT1" LABEL="test_block_type" DESCRIPTION="test block type"/>
+    <OtherTag ID="LT1" LABEL="test_line_type" DESCRIPTION="test line type"/>
+  </Tags>
+
+  <Layout>
+    <Page WIDTH="850" HEIGHT="1083" PHYSICAL_IMG_NR="0" ID="page_0">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
+	<TextBlock HPOS="0" VPOS="0" ID="textblock_0_0" WIDTH="850" HEIGHT="1083">
+	  <TextLine ID="line_0_0"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28">
+	    <String ID="segment_0_0_0"
+		    CONTENT="Test page 1 block 1 line 1"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28"></String>
+	  </TextLine>
+        </TextBlock>
+
+	<TextBlock HPOS="0" VPOS="0" ID="textblock_2_0" WIDTH="850" HEIGHT="1083" TAGREFS="BT1">
+	  <TextLine ID="line_2_0"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28" TAGREFS="LT1">
+	    <String ID="segment_2_0_0"
+		    CONTENT="Test page 2 block 1 line 1"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28"></String>
+	  </TextLine>
+        </TextBlock>
+
+	<TextBlock ID="textblock_3_0" HPOS="0" VPOS="0"  WIDTH="850" HEIGHT="1083" TAGREFS="BT2">
+	  <TextLine ID="line_3_0"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28" TAGREFS="LT2">
+	    <String ID="segment_3_0_0"
+		    CONTENT="Test page 3 block 1 line 1"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="0"
+		    HEIGHT="28"></String>
+	  </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+
+  </Layout>
+</alto>

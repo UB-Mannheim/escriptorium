@@ -103,6 +103,8 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
         with ZipFile(filepath, 'w') as zip_:
             for part in parts:
                 page = tplt.render({
+                    'valid_block_types': document.valid_block_types.all(),
+                    'valid_line_types': document.valid_line_types.all(),
                     'part': part,
                     'lines': part.lines.order_by('block__order', 'order')
                                        .prefetch_related(
