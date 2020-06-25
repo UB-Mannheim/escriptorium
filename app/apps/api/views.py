@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import action
@@ -61,7 +62,10 @@ class DocumentViewSet(ModelViewSet):
     paginate_by = 10
 
     def get_queryset(self):
-        return Document.objects.for_user(self.request.user)
+        return Document.objects.for_user(self.request.user).prefetch_related(
+            Prefetch('valid_block_types', queryset=BlockType.objects.order_by('name')),
+            Prefetch('valid_line_types', queryset=LineType.objects.order_by('name')),
+        )
 
     def form_error(self, msg):
         return Response({'status': 'error', 'error': msg}, status=400)

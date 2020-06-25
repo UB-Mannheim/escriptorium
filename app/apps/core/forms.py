@@ -22,17 +22,23 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        # we need to accept all types when posting for added ones
-        if self.instance.pk or self.request.method == "POST":
-            self.fields['valid_block_types'].queryset = BlockType.objects.filter(
+        if self.request.method == "POST":
+            # we need to accept all types when posting for added ones
+            block_qs = BlockType.objects.all()
+            line_qs = LineType.objects.all()
+        elif self.instance.pk:
+            block_qs = BlockType.objects.filter(
                 Q(public=True) | Q(valid_in=self.instance)).distinct()
-            self.fields['valid_line_types'].queryset = LineType.objects.filter(
+            line_qs = LineType.objects.filter(
                 Q(public=True) | Q(valid_in=self.instance)).distinct()
         else:
-            self.fields['valid_block_types'].queryset = BlockType.objects.filter(public=True)
-            self.fields['valid_line_types'].queryset = LineType.objects.filter(public=True)
+            block_qs = BlockType.objects.filter(public=True)
+            line_qs = LineType.objects.filter(public=True)
             self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
             self.initial['valid_line_types'] = LineType.objects.filter(default=True)
+
+        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
+        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
     class Meta:
         model = Document
