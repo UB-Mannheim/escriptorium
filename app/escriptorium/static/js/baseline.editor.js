@@ -719,6 +719,7 @@ class Segmenter {
                 this.toggleRegionMode();
             } else if (event.keyCode ==  84) {  // T
                 this.showTypeSelect();
+                event.preventDefault();  // avoid selecting an option starting with T
             } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
                 event.preventDefault();
                 event.stopPropagation();
@@ -1553,15 +1554,23 @@ class Segmenter {
             this.lineTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.lineTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
             this.lineTypesSelect.focus();
-            if (this.selection.regions.length == 1) this.lineTypesSelect.value = this.selection.regions[0].type || 'None';
-            else this.lineTypesSelect.selectedIndex = 0;  // selects none
+            // if all type are the same selects it in the type selector
+            if (this.selection.lines.every((line, i, arr) => line.type === arr[0].type)) {
+                this.lineTypesSelect.value = this.selection.lines[0].type || 'None';
+            } else {
+                this.lineTypesSelect.value = 'None';
+            }
         } else if (this.selection.regions.length) {
             this.regionTypesSelect.style.display = 'block';
             this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
             this.regionTypesSelect.focus();
-            if (this.selection.regions.length == 1) this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
-            else this.regionTypesSelect.selectedIndex = 0;  // selects none
+            // if all type are the same selects it in the type selector
+            if (this.selection.regions.every((reg, i, arr) => reg.type === arr[0].type)) {
+                this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
+            } else {
+                this.regionTypesSelect.value = 'None';
+            }
         }
 
         var self = this;  // mandatory for unbinding
