@@ -1581,23 +1581,14 @@ class Segmenter {
                 self.setSelectionType(document.activeElement.value);
                 unbindKb.bind(this)();
                 ev.stopPropagation();
+            } else {
+                let num = Number(ev.key);
+                if (!isNaN(num) && num <= document.activeElement.childElementCount) {
+                    self.setSelectionType(document.activeElement.children[num].value);
+                    unbindKb.bind(this)();
+                    ev.stopPropagation();
+                }
             }
-            // numpad
-            let max = 95 + document.activeElement.childElementCount;
-            if (ev.keyCode >= 96 && ev.keyCode <= max) {
-                self.setSelectionType(document.activeElement.children[ev.keyCode-96].value);
-                unbindKb.bind(this)();
-                ev.stopPropagation();
-            }
-
-            // below f1, f2..
-            let max2 = 47 + document.activeElement.childElementCount;
-            if (ev.keyCode >= 48 && ev.keyCode <= max2) {
-                self.setSelectionType(document.activeElement.children[ev.keyCode-48].value);
-                unbindKb.bind(this)();
-                ev.stopPropagation();
-            }
-            ev.preventDefault();
         }
 
         // disable other shortcuts
