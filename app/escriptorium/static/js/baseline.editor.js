@@ -1,4 +1,3 @@
-
 /*
    Baseline editor
    a javascript based baseline segmentation editor,
@@ -196,7 +195,6 @@ class SegmenterLine {
         this.maskPath = new Path({
             closed: true,
             opacity: 0.2,
-            // Note: not a bug to use baseline color for even masks
             fillColor: this.getMaskColor(),
             selectedColor: 'black',
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
@@ -1221,7 +1219,6 @@ class Segmenter {
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
         ], null, null);
-        newRegion.polygonPath.fillColor = this.regionColors[null];
 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
