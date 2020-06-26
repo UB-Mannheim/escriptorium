@@ -28,7 +28,7 @@
 
 {% block tab_content %}
 <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
-    <form method="post">
+    <form id="document-form" method="post">
         {% csrf_token %}
         <fieldset>
             <div class="form-group">
