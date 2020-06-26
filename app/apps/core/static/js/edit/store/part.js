@@ -15,10 +15,12 @@ const partStore = {
     load (part) {
         // for each line/region enrich the correct type depending on typology id
         part.lines.forEach(function(line) {
-            line.type = line.typology && this.types.lines.find(t=>t.pk == line.typology).name;
+            let type_ = line.typology && this.types.lines.find(t=>t.pk == line.typology);
+            line.type = type_ && type_.name;
         }.bind(this));
         part.regions.forEach(function(reg) {
-            reg.type = reg.typology && this.types.regions.find(t=>t.pk == reg.typology).name;
+            let type_ = reg.typology && this.types.regions.find(t=>t.pk == reg.typology)
+            reg.type = type_ && type_.name;
         }.bind(this));
 
         // will trigger all bindings
