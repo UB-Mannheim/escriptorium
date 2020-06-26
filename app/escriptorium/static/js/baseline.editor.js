@@ -1,4 +1,3 @@
-
 /*
    Baseline editor
    a javascript based baseline segmentation editor,
@@ -196,7 +195,6 @@ class SegmenterLine {
         this.maskPath = new Path({
             closed: true,
             opacity: 0.2,
-            // Note: not a bug to use baseline color for even masks
             fillColor: this.getMaskColor(),
             selectedColor: 'black',
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
@@ -721,6 +719,7 @@ class Segmenter {
                 this.toggleRegionMode();
             } else if (event.keyCode ==  84) {  // T
                 this.showTypeSelect();
+                event.preventDefault();  // avoid selecting an option starting with T
             } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
                 event.preventDefault();
                 event.stopPropagation();
@@ -1221,7 +1220,6 @@ class Segmenter {
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
         ], null, null);
-        newRegion.polygonPath.fillColor = this.regionColors[null];
 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
@@ -1556,15 +1554,23 @@ class Segmenter {
             this.lineTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.lineTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
             this.lineTypesSelect.focus();
-            if (this.selection.regions.length == 1) this.lineTypesSelect.value = this.selection.regions[0].type || 'None';
-            else this.lineTypesSelect.selectedIndex = 0;  // selects none
+            // if all type are the same selects it in the type selector
+            if (this.selection.lines.every((line, i, arr) => line.type === arr[0].type)) {
+                this.lineTypesSelect.value = this.selection.lines[0].type || 'None';
+            } else {
+                this.lineTypesSelect.value = 'None';
+            }
         } else if (this.selection.regions.length) {
             this.regionTypesSelect.style.display = 'block';
             this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
             this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
             this.regionTypesSelect.focus();
-            if (this.selection.regions.length == 1) this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
-            else this.regionTypesSelect.selectedIndex = 0;  // selects none
+            // if all type are the same selects it in the type selector
+            if (this.selection.regions.every((reg, i, arr) => reg.type === arr[0].type)) {
+                this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
+            } else {
+                this.regionTypesSelect.value = 'None';
+            }
         }
 
         var self = this;  // mandatory for unbinding
@@ -1584,23 +1590,14 @@ class Segmenter {
                 self.setSelectionType(document.activeElement.value);
                 unbindKb.bind(this)();
                 ev.stopPropagation();
+            } else {
+                let num = Number(ev.key);
+                if (!isNaN(num) && num <= document.activeElement.childElementCount) {
+                    self.setSelectionType(document.activeElement.children[num].value);
+                    unbindKb.bind(this)();
+                    ev.stopPropagation();
+                }
             }
-            // numpad
-            let max = 95 + document.activeElement.childElementCount;
-            if (ev.keyCode >= 96 && ev.keyCode <= max) {
-                self.setSelectionType(document.activeElement.children[ev.keyCode-96].value);
-                unbindKb.bind(this)();
-                ev.stopPropagation();
-            }
-
-            // below f1, f2..
-            let max2 = 47 + document.activeElement.childElementCount;
-            if (ev.keyCode >= 48 && ev.keyCode <= max2) {
-                self.setSelectionType(document.activeElement.children[ev.keyCode-48].value);
-                unbindKb.bind(this)();
-                ev.stopPropagation();
-            }
-            ev.preventDefault();
         }
 
         // disable other shortcuts

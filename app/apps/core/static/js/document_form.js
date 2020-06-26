@@ -58,6 +58,10 @@ $(document).ready(function() {
         });
     }
 
+    var submitedForm = false;
+    let form = document.querySelector('#document-form');
+    form.addEventListener('submit', ev => submitedForm = true);
+
     function addTypeOption(parent, pk, name) {
         let checks = document.querySelectorAll(parent + " .form-check");
         let last_check = checks[checks.length-1];
@@ -68,6 +72,15 @@ $(document).ready(function() {
         new_check.querySelector("label").textContent = name;
         last_check.after(new_check);
 
+        // if trying to leave the page without updating show a warning
+        window.addEventListener('beforeunload', function(ev) {
+            if (!submitedForm) {
+                var confirmationMessage = 'It looks like you have unsaved Types. '
+                                        + 'If you leave before saving, your changes will be lost.';
+                (ev || window.event).returnValue = confirmationMessage;
+                return confirmationMessage;
+            }
+        });
     }
 
     document.getElementById("add-region-type-btn").addEventListener("click", function(ev) {
