@@ -19,7 +19,7 @@ const SegPanel = BasePanel.extend({
         Vue.nextTick(function() {
             this.$parent.zoom.register(this.$el.querySelector('#seg-zoom-container'),
                                        {map: true});
-            let beSettings = userProfile.get('baseline-editor-'+this.part.pk) || {};
+            let beSettings = userProfile.get('baseline-editor-'+DOCUMENT_ID) || {};
             this.$img = this.$el.querySelector('img');
 
             this.segmenter = new Segmenter(this.$img, {
@@ -48,7 +48,7 @@ const SegPanel = BasePanel.extend({
             }.bind(this));
 
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
-                let key = 'baseline-editor-'+this.part.pk;
+                let key = 'baseline-editor-'+DOCUMENT_ID;
                 let settings = userProfile.get(key) || {};
                 settings[event.detail.name] = event.detail.value;
                 userProfile.set(key, settings);
