@@ -580,3 +580,7 @@ i.panel-icon {
     overflow-wrap: break-word;
     flex-basis: 85%;
 }
+.selected {
+  background-color: #f9c7c8;
+  border: solid red 1px;
+}

@@ -534,6 +534,7 @@
                        @keydown="onKeyDown"
                        @input="toggleSave"
                        class="content-container {{ document.read_direction }}">
+                          <div id="list" class="list-group">
 
                       <diploline v-for="line in part.lines"
                                  v-bind:line="line"
@@ -541,14 +542,15 @@
                                  v-bind:key="line.pk"
                                  inline-template>
 
-                          <div class="d-flex flex-column diplomatic-line">
                               <div  class="d-flex flex-row">
                                   <div class ="table-row line-region " class="w-10" contenteditable="false">${showregion}</div>
-                                  <div class ="table-row line-order" class="w-10" v-bind:draggable="true"
-                                    @dragstart="$parent.dragStart(line,$event)"
-                                    @dragover.prevent
-                                    @dragend="$parent.dragEnd"
-                                    @drop="$parent.dragFinish(line,$event)"
+                                  <div class ="table-row line-order" class="w-10"
+{#                                       v-bind:draggable="true"#}
+{#                                    @click="$parent.onClickLine"#}
+{#                                    @dragstart="$parent.dragStart(line,$event)"#}
+{#                                    @dragover.prevent#}
+{#                                    @dragend="$parent.dragEnd"#}
+{#                                    @drop="$parent.dragFinish(line,$event)"#}
                                     contenteditable="false"
                                   >${line.order + 1}</div>
 
@@ -616,6 +618,7 @@
   <script type="text/javascript" src="{% static 'js/diff.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/math.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/vue/vue.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/vue-draggable/Sortable.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
   {# TODO: can we trash that? #}
