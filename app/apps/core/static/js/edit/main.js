@@ -133,6 +133,9 @@ var partVM = new Vue({
             this.part.move(linePK,to, region, cb);
         }.bind(this));
 
+        this.$on('line:move', function(movedLines, cb) {
+            this.part.move(movedLines, cb);
+        }.bind(this));
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up

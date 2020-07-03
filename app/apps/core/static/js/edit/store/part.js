@@ -424,9 +424,9 @@ const partStore = {
                 console.log('couldnt update line', error)
             });
     },
-    move(linePk,index,region,callback){
-        let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
-        this.push(uri,{index : index, region: region},method="post")
+    move(movedLines,callback){
+        let uri = this.getApiPart()+ 'lines/move/';
+        this.push(uri,{"lines": movedLines},method="post")
             .then((response) =>response.json())
             .then(function (data) {
                 callback();
