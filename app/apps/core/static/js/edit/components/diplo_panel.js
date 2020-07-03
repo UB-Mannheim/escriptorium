@@ -5,13 +5,53 @@ var DiploPanel = BasePanel.extend({
         updatedLines : [],
         createdLines : [],
         dragging: -1,
-        lineDragged: null
+        lineDragged: null,
+        movedLines:[],
 
     };},
     components: {
         'diploline': diploLine,
     },
+    mounted(){
+        Vue.nextTick(function() {
+            var vm = this ;
+             var el = document.getElementById('list');
+             sortable = Sortable.create(el, {
+                group: 'shared',
+                multiDrag: true,
+                multiDragKey : 'CTRL',
+                selectedClass: "selected",
+                animation: 150,
+                onEnd: function(/**Event*/evt) {
+                    vm.onEnd(evt);
+                }
+
+        });
+
+
+        }.bind(this));
+
+
+
+    },
     methods:{
+        onEnd(ev) {
+            for(let i=0; i< ev.newIndicies.length; i++){
+                let line = ev.newIndicies[i];
+                let pk = line.multiDragElement.querySelector('.line-content').id;
+                let index = line.index;
+                let elt = {"pk":pk, "index":index};
+                this.movedLines.push(elt);
+            }
+
+            this.moveLines();
+        },
+        moveLines(){
+
+            this.$parent.$emit('line:move',this.movedLines, function () {
+                this.movedLines = [];
+            }.bind(this));
+        },
         toggleSave(){
             this.addToList();
             this.bulkUpdate();
