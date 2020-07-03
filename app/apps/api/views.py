@@ -220,16 +220,26 @@ class LineViewSet(ModelViewSet):
         qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
+        lines = request.data.get("lines")
+        response = []
+        errors = []
 
-        line = get_object_or_404(Line, pk=pk)
-        serializer = LineMoveSerializer(line=line, data=request.data)
-        if serializer.is_valid():
-            serializer.move()
-            return Response(status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        for line in lines:
+            l = get_object_or_404(Line, pk=line["pk"])
+            serializer = LineMoveSerializer(line=l, data=line)
+            if serializer.is_valid():
+                serializer.move()
+                response.append(serializer.data)
+            else:
+                errors.append(errors)
+
+        if errors:
+            return Response(errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=200, data=response)
 
 
 class LargeResultsSetPagination(PageNumberPagination):
