@@ -150,28 +150,6 @@ var DiploPanel = BasePanel.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
-
-        dragStart(line,ev){
-            ev.dataTransfer.setData('Text', "#diplomatic-lines");
-            ev.target.style.border = 'solid #33A2FF';
-            ev.dataTransfer.dropEffect = 'move';
-            let index = this.part.lines.indexOf(line);
-            this.dragging = index;
-            this.lineDragged = line.pk ;
-        },
-        dragEnd(){
-            this.dragging = -1;
-        },
-        dragFinish(line, ev){
-            let to = this.part.lines.indexOf(line);
-            ev.target.style = '';
-            this.moveLine(this.dragging, to);
-            this.$parent.$emit('line:move_to',this.lineDragged,to,line.region, function () {
-                this.dragging = -1;
-                this.lineDragged = null;
-            }.bind(this));
-            this.$children[this.dragging].$el.querySelector('.line-order').removeAttribute('style');
-        },
         moveLine(from, to) {
             if (to === -1) {
                 return 0;
