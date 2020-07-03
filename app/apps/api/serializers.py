@@ -162,11 +162,10 @@ class LineSerializer(serializers.ModelSerializer):
 
 class LineMoveSerializer(serializers.ModelSerializer):
     index = serializers.IntegerField()
-    region = serializers.IntegerField()
 
     class Meta:
         model = Line
-        fields = ('index','region')
+        fields = ('index',)
 
     def __init__(self, *args, line=None, **kwargs):
         self.line = line
@@ -174,8 +173,6 @@ class LineMoveSerializer(serializers.ModelSerializer):
 
     def move(self):
         self.line.to(self.validated_data['index'])
-        block = Block.objects.get(pk=self.validated_data['region'])
-        self.line.block = block
         self.line.save()
 
 
