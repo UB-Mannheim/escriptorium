@@ -581,6 +581,6 @@ i.panel-icon {
     flex-basis: 85%;
 }
 .selected {
-  background-color: #f9c7c8;
-  border: solid red 1px;
+  background-color:#33A2FF;
+  border: solid #33A2FF 1px;
 }
