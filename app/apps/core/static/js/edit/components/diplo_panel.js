@@ -4,8 +4,6 @@ var DiploPanel = BasePanel.extend({
         save: false, //show save button
         updatedLines : [],
         createdLines : [],
-        dragging: -1,
-        lineDragged: null,
         movedLines:[],
 
     };},
@@ -148,13 +146,6 @@ var DiploPanel = BasePanel.extend({
             } else {
                 elt.content = lt.content;
                 elt.version_updated_at = lt.version_updated_at;
-            }
-        },
-        moveLine(from, to) {
-            if (to === -1) {
-                return 0;
-            } else {
-                this.part.lines.splice(to, 0,this.part.lines.splice(from, 1)[0]);
             }
         },
         updateView() {

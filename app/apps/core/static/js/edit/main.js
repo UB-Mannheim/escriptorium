@@ -128,10 +128,6 @@ var partVM = new Vue({
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));
 
-        this.$on('line:move_to', function(linePK,to,region, cb) {
-            this.part.move(linePK,to, region, cb);
-        }.bind(this));
-
         this.$on('line:move', function(movedLines, cb) {
             this.part.move(movedLines, cb);
         }.bind(this));
