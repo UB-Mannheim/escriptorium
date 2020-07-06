@@ -23,14 +23,8 @@ var DiploPanel = BasePanel.extend({
                 onEnd: function(/**Event*/evt) {
                     vm.onEnd(evt);
                 }
-
         });
-
-
         }.bind(this));
-
-
-
     },
     methods:{
         onEnd(ev) {
@@ -45,7 +39,6 @@ var DiploPanel = BasePanel.extend({
             this.moveLines();
         },
         moveLines(){
-
             this.$parent.$emit('line:move',this.movedLines, function () {
                 this.movedLines = [];
             }.bind(this));
