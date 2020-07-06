@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 
@@ -118,11 +119,21 @@ class DocumentViewSet(ModelViewSet):
             return self.form_error(json.dumps(form.errors))
 
 
-class PartViewSet(ModelViewSet):
+class DocumentPermissionMixin():
+    def get_queryset(self):
+        try:
+            Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return super().get_queryset()
+
+
+class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
 
     def get_queryset(self):
-        qs = self.queryset.filter(document=self.kwargs.get('document_pk'))
+        qs = super().get_queryset()
+        qs = qs.filter(document=self.kwargs.get('document_pk'))
         if self.action == 'retrieve':
             return qs.prefetch_related('lines', 'blocks')
         else:
