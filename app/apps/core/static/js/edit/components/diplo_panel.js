@@ -21,13 +21,16 @@ var DiploPanel = BasePanel.extend({
                 selectedClass: "selected",
                 animation: 150,
                 onEnd: function(/**Event*/evt) {
-                    vm.onEnd(evt);
+                    vm.onDragginEnd(evt);
                 }
         });
         }.bind(this));
     },
     methods:{
-        onEnd(ev) {
+        onDragginEnd(ev) {
+            /*
+            Finish dragging lines, save new positions
+            */
             for(let i=0; i< ev.newIndicies.length; i++){
                 let line = ev.newIndicies[i];
                 let pk = line.multiDragElement.querySelector('.line-content').id;
@@ -44,6 +47,9 @@ var DiploPanel = BasePanel.extend({
             }.bind(this));
         },
         toggleSave(){
+            /*
+             if some lines are modified add them to updatedlines, new lines add them to createdLines then save
+            */
             this.addToList();
             this.bulkUpdate();
             this.bulkCreate();
@@ -64,7 +70,7 @@ var DiploPanel = BasePanel.extend({
             //disable shortcuts
             this.$parent.blockShortcuts = true;
 
-            if(ev.keyCode==8 && this.getpositionCursor()==0){
+            if(ev.keyCode==8 && this.getCursorPosition()==0){
                 this.updateEditLine(index -1);
                 let idx = this.part.lines.indexOf(this.editLine);
                 for(let i=idx; i< this.$children.length; i++)
@@ -82,7 +88,7 @@ var DiploPanel = BasePanel.extend({
                     else {
                         child.setContent("");
                     }
-                    this.setpositionCursor("[id='"+ this.editLine.pk+ "']");
+                    this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
                 }
                 this.toggleSave();
             }
@@ -121,6 +127,9 @@ var DiploPanel = BasePanel.extend({
             }
         },
         addToList(){
+            /*
+               parse all lines if the content changed, add it to updated lines
+            */
             for(let i=0;i<this.$children.length; i++) {
                 let currentLine = this.$children[i];
                 if(currentLine.line.currentTrans.content != currentLine.$refs.content[0].textContent){
@@ -133,6 +142,9 @@ var DiploPanel = BasePanel.extend({
             }
         },
         addToUpdatedLines(lt){
+            /*
+            if line already exists in updatedLines update its content on the list
+             */
             let elt = this.updatedLines.find(l => l.pk === lt.pk);
             if(elt == undefined) {
                 this.updatedLines.push(lt);
@@ -142,12 +154,15 @@ var DiploPanel = BasePanel.extend({
             }
         },
         updateView() {
+            /*
+            update the size of the panel
+             */
             this.setHeight();
         },
-        getpositionCursor() {
+        getCursorPosition() {
             return window.getSelection().getRangeAt(0).startOffset;
         },
-        setpositionCursor(id) {
+        setCursorPosition(id) {
             const elt =  document.querySelector(id);
             const textNode = elt.childNodes[0];
             let  sel = window.getSelection();
@@ -162,7 +177,7 @@ var DiploPanel = BasePanel.extend({
         carriage(ev,idx){
             ev.preventDefault();
             if (window.getSelection) {
-                  var selection = window.getSelection(),
+                  let selection = window.getSelection(),
                   range = selection.getRangeAt(0),
                       br = document.createElement("br"),
                       textNode = document.createTextNode($("<div></div>").text()); //Passing " " directly will not end up being shown correctly
