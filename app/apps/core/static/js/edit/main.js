@@ -91,7 +91,6 @@ var partVM = new Vue({
         this.$on('update:transcription', function(lineTranscription) {
             this.part.pushContent(lineTranscription);
         }.bind(this));
-
         this.$on('create:line', function(line, cb) {
             this.part.createLine(line, this.selectedTranscription, cb);
         }.bind(this));

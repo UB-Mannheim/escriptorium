@@ -19,18 +19,18 @@ const SegPanel = BasePanel.extend({
         Vue.nextTick(function() {
             this.$parent.zoom.register(this.$el.querySelector('#seg-zoom-container'),
                                        {map: true});
-            let beSettings = userProfile.get('baseline-editor') || {};
+            let beSettings = userProfile.get('baseline-editor-'+DOCUMENT_ID) || {};
             this.$img = this.$el.querySelector('img');
 
             this.segmenter = new Segmenter(this.$img, {
                 delayInit:true,
                 idField:'pk',
                 defaultTextDirection: TEXT_DIRECTION.slice(-2),
+                regionTypes: this.part.types.regions.map(t=>t.name),
+                lineTypes: this.part.types.lines.map(t=>t.name),
                 baselinesColor: beSettings['color-baselines'] || null,
-                evenMasksColor: beSettings['color-even-masks'] || null,
-                oddMasksColor: beSettings['color-odd-masks'] || null,
-                directionHintColor: beSettings['color-directions'] || null,
-                regionColor: beSettings['color-regions'] || null
+                regionColors: beSettings['color-regions'] || null,
+                directionHintColors: beSettings['color-directions'] || null
             });
             // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
             let canvas = this.segmenter.canvas;
@@ -48,10 +48,11 @@ const SegPanel = BasePanel.extend({
             }.bind(this));
 
             this.segmenter.events.addEventListener('baseline-editor:settings', function(ev) {
-                let settings = userProfile.get('baseline-editor') || {};
+                let key = 'baseline-editor-'+DOCUMENT_ID;
+                let settings = userProfile.get(key) || {};
                 settings[event.detail.name] = event.detail.value;
-                userProfile.set('baseline-editor', settings);
-            });
+                userProfile.set(key, settings);
+            }.bind(this));
             this.segmenter.events.addEventListener('baseline-editor:delete', function(ev) {
                 let data = ev.detail;
                 this.bulkDelete(data);
@@ -242,7 +243,8 @@ const SegPanel = BasePanel.extend({
                     this.$parent.$emit(
                         'update:region', {
                             pk: region.context.pk,
-                            box: region.box
+                            box: region.box,
+                            type: region.type
                         },
                         function(region) {
                             let segmenterRegion = this.segmenter.regions.find(r=>r.context.pk==region.pk);
@@ -259,7 +261,8 @@ const SegPanel = BasePanel.extend({
                             pk: l.context.pk,
                             baseline: l.baseline,
                             mask: l.mask,
-                            region: l.region && l.region.context.pk
+                            region: l.region && l.region.context.pk,
+                            type: l.type
                         };
                     }),
                     function(updatedLines) {

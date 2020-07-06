@@ -13,6 +13,16 @@ const partStore = {
 
     // mutators
     load (part) {
+        // for each line/region enrich the correct type depending on typology id
+        part.lines.forEach(function(line) {
+            let type_ = line.typology && this.types.lines.find(t=>t.pk == line.typology);
+            line.type = type_ && type_.name;
+        }.bind(this));
+        part.regions.forEach(function(reg) {
+            let type_ = reg.typology && this.types.regions.find(t=>t.pk == reg.typology)
+            reg.type = type_ && type_.name;
+        }.bind(this));
+
         // will trigger all bindings
         Object.assign(this, part);
         this.loaded = true;
@@ -46,7 +56,7 @@ const partStore = {
     fetchPart(pk, callback) {
         this.reset();
         this.pk = pk;
-        this.fetchTranscriptions(function() {
+        this.fetchDocument(function() {
             let uri = this.getApiPart(pk);
             fetch(uri)
                 .then((response)=>response.json())
@@ -59,16 +69,23 @@ const partStore = {
                 });
         }.bind(this));
     },
-    fetchTranscriptions(callback) {
-        if (this.transcriptions.length) {
-            if (callback) callback(this.transcriptions);
+    fetchDocument(callback) {
+        if (this.transcriptions.length) {  // assuming there is always at least one
+            if (callback) callback({
+                'transcriptions': this.transcriptions,
+                'types': this.types
+            });
             return;
         }
-        let uri = this.getApiRoot() + 'transcriptions/';
+        let uri = this.getApiRoot();
         fetch(uri)
             .then((response)=>response.json())
             .then(function(data) {
-                this.transcriptions = data;
+                this.transcriptions = data.transcriptions;
+                this.types = {
+                    'regions': data.valid_block_types,
+                    'lines': data.valid_line_types
+                };
                 if (callback) callback(data);
             }.bind(this));
     },
@@ -206,14 +223,25 @@ const partStore = {
     },
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiPart() + 'lines/bulk_update/';
-        lines.forEach(l=>l.document_part = this.pk);
-        this.push(uri, {lines: lines}, method="put")
+
+        data = lines.map(function(l) {
+            let type  = l.type && this.types.lines.find(t=>t.name==l.type)
+            return {
+                pk: l.pk,
+                document_part: this.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                region: l.region,
+                typology: type && type.pk || null
+            };
+        }.bind(this));
+
+        this.push(uri, {lines: data}, method="put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
                 let updatedBaselines = [];
                 for (let i=0; i<data.lines.length; i++) {
-
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
                         return l.pk==lineData.pk;
@@ -328,9 +356,11 @@ const partStore = {
     },
     updateRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/' + region.pk + '/';
+        let type = region.type && this.types.regions.find(t=>t.name==region.type);
         data = {
             document_part: this.pk,
-            box: region.box
+            box: region.box,
+            typology: type && type.pk || null
         };
         this.push(uri, data, method="put")
             .then((response) => response.json())

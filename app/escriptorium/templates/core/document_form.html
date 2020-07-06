@@ -7,72 +7,128 @@
 {% block extra_nav %}
 {% if object and can_publish %}
 <div class="ml-auto">
-  <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
-  {% comment %}
-  {% if not object.is_published %}
-  <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
-    <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
-    <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
-      <i class="fas fa-globe-europe"></i>
-    </button>
-  </form>
-  {% endif %}
-  {% endcomment %}
-  <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-    <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
-    <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-  </form>
+    <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
+    {% comment %}
+    {% if not object.is_published %}
+    <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
+        <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_PUBLISHED }}">
+        <button type="submit" value="{% trans 'Publish' %}" class="nav-item btn btn-success mr-1" title="{% trans 'Publish' %}">
+            <i class="fas fa-globe-europe"></i>
+        </button>
+    </form>
+    {% endif %}
+    {% endcomment %}
+    <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+        <input type="hidden" name="workflow_state" value="{{ object.WORKFLOW_STATE_ARCHIVED }}">
+        <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+    </form>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block tab_content %}
 <div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
-  <form method="post">
-    {% csrf_token %}
-    <fieldset>
-      {% if object %}
-      {% render_field form.name %}
-      {% else %}
-      {% render_field form.name autofocus=1 %}
-      {% endif %}
+    <form id="document-form" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <div class="form-group">
+                {% for err in form.non_field_errors %}
+                <p class="error">{{ err }}</p>
+                {% endfor %}
+            </div>
 
-      {% render_field form.main_script %}
-      {% render_field form.read_direction %}
-      {# render_field form.typology #}
-      
-      <div class="js-metadata-form">
-        <label class="my-1">{% trans "Metadata" %}</label>
-        {{ metadata_form.management_form }}
+            {% if object %}
+            {% render_field form.name %}
+            {% else %}
+            {% render_field form.name autofocus=1 %}
+            {% endif %}
 
-        {% for form in metadata_form.forms %}
-        <div class="input-group input-group-sm mb-2 js-metadata-row">
-          {{ form.id }}  {# hidden #}
-          {{ form.document }}  {# hidden #}
-          <div class="input-group-sm input-group-prepend">
-            {% render_field form.key group=True autocomplete="on" list="metadataKeys" class="input-group-text" %}
-          </div>
-          {% render_field form.value group=True %}
-          <div class="input-group-prepend">
-            <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
-            <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
-          </div>
-        </div>
-        {% for errors in form.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
-        {% endfor %}
+            {% render_field form.main_script %}
+            {% render_field form.read_direction %}
+            {# render_field form.typology #}
 
-        {% if metadata_form.forms.0.choices %}
-        <datalist id="metadataKeys">
-          {% for md in metadata_form.forms.0.choices %}
-          <option>{{ md.name }}</option>
-          {% endfor %}
-        </datalist>
-        {% endif %}
-      </div>
-      
-      <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
-    </fieldset>
-  </form>
+            <div class="row">
+                <div id="metadata-form" class="col-xl js-metadata-form">
+                    <label class="my-1">{% trans "Metadata" %}</label>
+                    {{ metadata_form.management_form }}
+
+                    {% for subform in metadata_form.forms %}
+                    <div class="input-group input-group-sm mb-2 js-metadata-row">
+                        {{ subform.id }}  {# hidden #}
+                        {{ subform.document }}  {# hidden #}
+                        <div class="input-group-sm input-group-prepend">
+                            {% render_field subform.key group=True autocomplete="on" list="metadataKeys" class="input-group-text" %}
+                        </div>
+                        {% render_field subform.value group=True %}
+                        <div class="input-group-prepend">
+                            <input type="hidden" name="documentmetadata_set-{{forloop.counter0}}-DELETE" id="id_documentmetadata_set-{{forloop.counter0}}-DELETE">
+                            <button class="btn btn-outline-secondary js-metadata-delete" type="button" for="id_documentmetadata_set-{{forloop.counter0}}-DELETE">✗</button>
+                        </div>
+                    </div>
+                    {% for errors in subform.errors.values %}{% for error in errors %}<div class="text-danger mb-2">{{ error }}</div>{% endfor %}{% endfor %}
+                    {% endfor %}
+
+                    {% if metadata_form.forms.0.choices %}
+                    <datalist id="metadataKeys">
+                        {% for md in metadata_form.forms.0.choices %}
+                        <option>{{ md.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                    {% endif %}
+                </div>
+
+                <div id="ontology-form" class="col-xl">
+                    <label class="my-1">{% trans "Ontology" %}</label>
+
+                    <button type="button" class="btn help open" aria-label="Help">
+                        <span class="fas fa-question"></span>
+                    </button>
+                    <div id="ontology-help" class="alert alert-primary help-text">
+                        <button type="button" class="close" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                        <p class="form-text text-muted mb-0">{% trans "The default configuration only contains semantic types. <br>It is not recommended to mix semantic, stylistic and layout types.<br><b>It is required to hit 'Update' to add your new types to the document.</b>" %}</p>
+                    </div>
+
+
+                    <div id="region-types">
+                        <div><small>{% trans "Region types" %}</small></div>
+                        {% render_field form.valid_block_types group=True %}
+                        <!-- free input handleed by js-->
+                        <div class="form-row">
+                            <div class="col">
+                                <input class="form-control form-control-sm"
+                                       id="add-region-type-input"
+                                       placeholder="{% trans "Add a region type" %}" />
+                            </div>
+                            <div class="col-auto">
+                                <button id="add-region-type-btn"
+                                        class="btn btn-success fas fa-plus"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="line-types">
+                        <div class="mt-2"><small>{% trans "Line types" %}</small></div>
+                        {% render_field form.valid_line_types group=True %}
+                        <div class="form-row">
+                            <div class="col">
+                                <input class="form-control form-control-sm"
+                                       id="add-line-type-input"
+                                       placeholder="{% trans "Add a line type" %}" />
+                            </div>
+                            <div class="col-auto">
+                                <button id="add-line-type-btn"
+                                        class="btn btn-success fas fa-plus"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+        </fieldset>
+    </form>
 </div>
 {% endblock %}
 
@@ -80,31 +136,31 @@
 {% if share_form %}
 <!-- shareModal -->
 <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form method="post" action="{% url 'document-share' pk=object.pk %}">
-        {% csrf_token %}
-        
-      <div class="modal-header">
-        <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <h5>{% trans "Teams" %}</h5>
-        {% render_field share_form.shared_with_groups %}
-        <h5>{% trans "Users" %}</h5>
-        {% render_field share_form.username %}
-        {% render_field share_form.shared_with_users %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-      </div>
-      </form>      
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'document-share' pk=object.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>{% trans "Teams" %}</h5>
+                    {% render_field share_form.shared_with_groups %}
+                    <h5>{% trans "Users" %}</h5>
+                    {% render_field share_form.username %}
+                    {% render_field share_form.shared_with_users %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 {% endif %}
 {% endblock %}
@@ -112,4 +168,5 @@
 {% block scripts %}
 {{ block.super }}
 <script src="{% static 'js/document_form.js' %}"></script>
+<script src="{% static 'js/help.js' %}"></script>
 {% endblock %}

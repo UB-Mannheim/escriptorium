@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from bootstrap.forms import BootstrapFormMixin
 from core.models import (Document, Metadata, DocumentMetadata,
                          DocumentPart, OcrModel, Transcription,
-                         AlreadyProcessingException)
+                         BlockType, LineType, AlreadyProcessingException)
 from users.models import User
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,32 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
+        if self.request.method == "POST":
+            # we need to accept all types when posting for added ones
+            block_qs = BlockType.objects.all()
+            line_qs = LineType.objects.all()
+        elif self.instance.pk:
+            block_qs = BlockType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+            line_qs = LineType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+        else:
+            block_qs = BlockType.objects.filter(public=True)
+            line_qs = LineType.objects.filter(public=True)
+            self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
+            self.initial['valid_line_types'] = LineType.objects.filter(default=True)
+
+        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
+        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
     class Meta:
         model = Document
-        fields = ['name', 'read_direction', 'main_script']  # 'typology'
+        fields = ['name', 'read_direction', 'main_script',
+                  'valid_block_types', 'valid_line_types']
+        widgets = {
+            'valid_block_types': forms.CheckboxSelectMultiple,
+            'valid_line_types': forms.CheckboxSelectMultiple
+        }
 
 
 class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
@@ -117,13 +139,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                    'min': '0.1', 'max': '1'}))
     # segment
     SEGMENTATION_STEPS_CHOICES = (
-        # ('regions', _('Regions')),
-        ('lines', _('Baselines and Masks')),
-        ('masks', _('Only Masks')),
-        # ('both', _('Lines and regions'))
+        ('both', _('Lines and regions')),
+        ('lines', _('Lines Baselines and Masks')),
+        ('masks', _('Only lines Masks')),
+        ('regions', _('Regions')),
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
-                                           initial='lines', required=False)
+                                           initial='both', required=False)
     seg_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                        .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                        label=_("Model"), required=False)

@@ -244,11 +244,6 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
-        'kraken_logs': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(PROJECT_ROOT, 'logs', 'kraken', 'train.log'),
-        },
         'console': {
             'level': 'INFO',
             'filters': ['require_debug_true'],
@@ -267,7 +262,8 @@ LOGGING = {
     },
     'loggers': {
         'kraken': {
-            'handlers': ['kraken_logs', 'console', 'mail_admins'],
+            'handlers': ['console', 'mail_admins'],
+            'propagate': True,
         },
         'core': {
             'handlers': ['file', 'console', 'mail_admins'],

@@ -7,11 +7,15 @@ from api.views import (DocumentViewSet,
                        DocumentTranscriptionViewSet,
                        BlockViewSet,
                        LineViewSet,
+                       BlockTypeViewSet,
+                       LineTypeViewSet,
                        LineTranscriptionViewSet)
 
 router = routers.DefaultRouter()
 router.register(r'documents', DocumentViewSet)
 router.register(r'users', UserViewSet)
+router.register(r'types/block', BlockTypeViewSet)
+router.register(r'types/line', LineTypeViewSet)
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')

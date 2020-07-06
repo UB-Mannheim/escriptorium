@@ -1,23 +1,23 @@
 /*
-Baseline editor
-a javascript based baseline segmentation editor,
-requires paper.js and colorThief is optional.
+   Baseline editor
+   a javascript based baseline segmentation editor,
+   requires paper.js and colorThief is optional.
 
-Usage:
-var segmenter = new Segmenter(img, options);
-segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
+   Usage:
+   var segmenter = new Segmenter(img, options);
+   segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
 
-Options:
-  lengthTreshold=15
-  lengthTreshold=15,
-  delayInit=false,
-  deletePointBtn=null,
-  deleteSelectionBtn=null,
-  toggleMasksBtn=null,
-  splitBtn=null,
-  mergeBtn=null,
+   Options:
+   lengthTreshold=15
+   lengthTreshold=15,
+   delayInit=false,
+   deletePointBtn=null,
+   deleteSelectionBtn=null,
+   toggleMasksBtn=null,
+   splitBtn=null,
+   mergeBtn=null,
 
-*/
+ */
 var lastId = 0;
 function generateUniqueId() { return lastId++; };
 
@@ -35,23 +35,29 @@ function isRightClick(event) {
 }
 
 class SegmenterRegion {
-    constructor(polygon, context, segmenter_) {
+    constructor(order, polygon, type, context, segmenter_) {
         this.id = generateUniqueId();
+        this.order = order;
         this.segmenter = segmenter_;
         this.polygon = polygon;
+        this.type = type;
         this.context = context;
         this.selected = false;
+        this.color = this.segmenter.regionColors[type || 'None'];
         this.polygonPath = new Path({
             closed: true,
-            opacity: 0.4,
-            strokeColor: this.segmenter.regionColor,
+            opacity: 0.5,
+            strokeColor: this.color,
             dashOffset: 5/this.segmenter.getRatio(),
             strokeWidth: 2/this.segmenter.getRatio(),
-            fillColor: this.segmenter.mode == 'regions' ? this.segmenter.regionColor : null,
-            selectedColor: this.segmenter.shadeColor(this.segmenter.regionColor, -50),
+            fillColor: this.segmenter.mode == 'regions' ? this.color : null,
+            selectedColor: this.segmenter.shadeColor(this.color, -50),
             visible: true,
             segments: this.polygon
         });
+
+        this.tooltipText = this.type;
+        this.segmenter.attachTooltip(this, this.polygonPath);
     }
 
     select() {
@@ -96,26 +102,35 @@ class SegmenterRegion {
     remove() {
         this.unselect();
         this.polygonPath.remove();
+        if(this.orderDisplay) this.orderDisplay.remove();
         this.segmenter.regions.splice(this.segmenter.regions.findIndex(e => e.id == this.id), 1);
     }
 
     delete() {
         this.unselect();
-
         this.remove();
+    }
+
+    refresh() {
+        this.color = this.segmenter.regionColors[this.type || 'None'];
+        this.tooltipText = this.type;
+        this.polygonPath.strokeColor = this.color;
+        this.polygonPath.fillColor = this.segmenter.mode == 'regions' ? this.color : null;
+        this.polygonPath.selectedColor = this.segmenter.shadeColor(this.color, -50);
     }
 
     get() {
         return {
             id: this.id,
-            context: this.context,  // copy
             box: this.polygon.slice(),  // copy
+            type: this.type,
+            context: this.context
         };
     }
 }
 
 class SegmenterLine {
-    constructor(order, baseline, mask, region, textDirection, context, segmenter_) {
+    constructor(order, baseline, mask, region, textDirection, type, context, segmenter_) {
         this.id = generateUniqueId();
         this.order = order;
         this.segmenter = segmenter_;
@@ -124,7 +139,9 @@ class SegmenterLine {
         this.context = context;
         this.selected = false;
         this.textDirection = textDirection || 'lr';
+        this.type = type;
         this.directionHint = null;
+        this.hintColor = this.segmenter.directionHintColors[type || 'None'];
 
         if (baseline) {
             if(baseline.segments) {  // already a paperjs.Path
@@ -153,15 +170,21 @@ class SegmenterLine {
             this.maskPath = null;
         }
 
+        this.tooltipText = this.type;
+        this.segmenter.attachTooltip(this, this.baselinePath);
+
         this.refresh();
     }
 
     refresh() {
+        this.tooltipText = this.type;
+        this.hintColor = this.segmenter.directionHintColors[this.type || 'None'];
         this.showOrdering();
         this.showDirection();
         if (this.baselinePath) {
             this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
         }
+        if (this.directionHint) this.directionHint.strokeColor = this.hintColor;
     }
 
     getMaskColor() {
@@ -172,7 +195,6 @@ class SegmenterLine {
         this.maskPath = new Path({
             closed: true,
             opacity: 0.2,
-            // Note: not a bug to use baseline color for even masks
             fillColor: this.getMaskColor(),
             selectedColor: 'black',
             visible: (this.baseline && this.baseline.length==0) || this.segmenter.showMasks,
@@ -301,41 +323,46 @@ class SegmenterLine {
         }
     }
 
+    createOrderDisplay(anchor) {
+        let offset = 10, circle, text, region;
+        this.segmenter.orderingLayer.activate();
+        circle = new Shape.Circle(anchor, offset);
+        circle.fillColor = 'yellow';
+        circle.strokeColor = 'black';
+        text = new PointText(anchor);
+        text.fillColor = 'black';
+        text.fontSize = offset;
+        text.fontWeight = 'bold';
+        text.justification = 'center';
+        text.content = parseInt(this.order)+1;
+
+        // adds the region hint
+        region = new Shape.Circle({
+            x: anchor.x+5,
+            y: anchor.y}, offset);
+        if (this.region) region.fillColor = this.region.color;
+        else region.fillColor = 'transparent';
+        region.strokeColor = 'black';
+        region.strokeWidth = 1;
+
+        this.orderDisplay = new Group({
+            children: [region, circle, text]
+        });
+        this.orderDisplay.scale(1/this.segmenter.getRatio());
+        // Note: for some reason we need to reposition it after scaling
+        // todo: investigate why
+        text.position = anchor;
+    }
+
     showOrdering() {
         let anchorPath = this.baselinePath?this.baselinePath:this.maskPath;
         let anchor = (this.textDirection == 'lr' ?
                       anchorPath.firstSegment.point :
                       anchorPath.lastSegment.point);
-        let offset = 10, circle, text, region;
+
         if (!this.orderDisplay) {
             // create it if it doesnt already exists
-            this.segmenter.orderingLayer.activate();
-            circle = new Shape.Circle(anchor, offset);
-            circle.fillColor = 'yellow';
-            circle.strokeColor = 'black';
-            text = new PointText(anchor);
-            text.fillColor = 'black';
-            text.fontSize = offset;
-            text.fontWeight = 'bold';
-            text.justification = 'center';
-            text.content = parseInt(this.order)+1;
-
-            // adds the region hint
-            region = new Shape.Circle({
-                x: anchor.x+5,
-                y: anchor.y}, offset);
-            if (this.region) region.fillColor = this.segmenter.regionColor;
-            else region.fillColor = 'transparent';
-            region.strokeColor = 'black';
-            region.strokeWidth = 1;
-
-            this.orderDisplay = new Group({
-                children: [region, circle, text]
-            });
-            this.orderDisplay.scale(1/this.segmenter.getRatio());
-            // Note: for some reason we need to reposition it after scaling
-            // todo: investigate why
-            text.position = anchor;
+            this.createOrderDisplay(anchor);
         } else {
             // update
             let region = this.orderDisplay.children[0],
@@ -345,9 +372,19 @@ class SegmenterLine {
             text.position = anchor;
             text.content = parseInt(this.order)+1;
             region.position = {x: anchor.x+5/this.segmenter.getRatio(), y: anchor.y};
-            if (this.region) region.fillColor = this.segmenter.regionColor;
+            if (this.region) region.fillColor = this.region.color;
             else region.fillColor = 'transparent';
         }
+    }
+
+    createDirectionHint() {
+        this.directionHint = new Path({
+            visible: true,
+            strokeWidth: Math.max(2, 4 / this.segmenter.getRatio()),
+            opacity: 0.5,
+            strokeColor: this.hintColor
+        });
+        this.segmenter.dirHintsGroup.addChild(this.directionHint);
     }
 
     showDirection() {
@@ -355,13 +392,7 @@ class SegmenterLine {
         if (this.baselinePath && this.baselinePath.segments.length > 1) {
             this.segmenter.linesLayer.activate();
             if (this.directionHint === null) {
-                this.directionHint = new Path({
-                    visible: true,
-                    strokeWidth: Math.max(2, 4 / this.segmenter.getRatio()),
-                    opacity: 0.5,
-                    strokeColor: this.segmenter.directionHintColor
-                });
-                this.segmenter.dirHintsGroup.addChild(this.directionHint);
+                this.createDirectionHint();
             }
             let anchor;
             if (this.textDirection == 'lr') {
@@ -398,7 +429,8 @@ class SegmenterLine {
             context: this.context,
             baseline: this.baseline && this.baseline.slice() || null,
             mask: this.mask && this.mask.slice() || null,
-            region: this.region && this.region.get() || null
+            region: this.region && this.region.get() || null,
+            type: this.type
         };
     }
 }
@@ -413,11 +445,11 @@ class Segmenter {
                         disableShortcuts=false,
 
                         baselinesColor=null,
-                        evenMasksColor=null,
-                        oddMasksColor=null,
-                        directionHintColor=null,
-                        regionColor=null,
+                        directionHintColors=null,
+                        regionColors=null,
 
+                        regionTypes=['Title', 'Main', 'Marginal', 'Illustration', 'Numbering'],
+                        lineTypes=['Main', 'Interlinear'],
                         // todo: choose keyboard shortcuts
 
                         inactiveLayerOpacity=0.5,
@@ -432,6 +464,10 @@ class Segmenter {
         this.mode = 'lines'; // | 'regions'
         this.lines = [];
         this.regions = [];
+
+        this.regionTypes = ['None'].concat(regionTypes);
+        this.lineTypes = ['None'].concat(lineTypes);
+
         this.selection = {lines:[], segments:[], regions:[]};
         this.defaultTextDirection = defaultTextDirection;
 
@@ -458,10 +494,11 @@ class Segmenter {
         this.img.parentNode.insertBefore(this.canvas, this.img);
 
         this.baselinesColor=baselinesColor;
-        this.evenMasksColor=evenMasksColor;
-        this.oddMasksColor=oddMasksColor;
-        this.directionHintColor=directionHintColor;
-        this.regionColor=regionColor;
+        /* this.evenMasksColor=baselinesColor;
+         * this.evenMasksColor=evenMasksColor;
+         * this.oddMasksColor=oddMasksColor; */
+        this.directionHintColors=directionHintColors || {};
+        this.regionColors=regionColors || {};
         this.maxSegments = maxSegments;
 
         // the minimal length in pixels below which the line will be removed automatically
@@ -486,32 +523,38 @@ class Segmenter {
         this.reverseBtn = document.getElementById('be-reverse-selection');
         this.linkRegionBtn = document.getElementById('be-link-region');
         this.unlinkRegionBtn = document.getElementById('be-unlink-region');
+        this.setTypeBtn = document.getElementById('be-set-type')
 
         // editor settings;
         this.baselinesColorInput = document.getElementById('be-bl-color');
         this.evenMasksColorInput = document.getElementById('be-even-mask-color');
         this.oddMasksColorInput = document.getElementById('be-odd-mask-color');
-        this.dirHintColorInput = document.getElementById('be-dir-color');
-        this.regionColorInput = document.getElementById('be-reg-color');
+        this.dirHintColorInputs = [];
+        for (let index in this.lineTypes) {
+            this.dirHintColorInputs.push(document.getElementById('be-dir-color-'+index));
+        }
+        this.regionColorInputs = [];
+        for (let index in this.regionTypes) {
+            this.regionColorInputs.push(document.getElementById('be-reg-color-'+index));
+        }
 
         // create a menu for the context buttons
         this.contextMenu = document.getElementById('context-menu')
         if (!this.contextMenu) {
             document.createElement('div');
             this.contextMenu.id = 'context-menu';
-            this.deleteSelectionBtn.parentNode.insertBefore(this.contextMenu, this.deleteSelectionBtn);
         }
-        this.contextMenu.style.position = 'fixed';
-        this.contextMenu.style.transform = 'translateZ(0)'; // css trick to fix to an element
-        this.contextMenu.style.display = 'none';
-        this.contextMenu.style.zIndex = 3;
         if (this.linkRegionBtn) this.contextMenu.appendChild(this.linkRegionBtn);
         if (this.unlinkRegionBtn) this.contextMenu.appendChild(this.unlinkRegionBtn);
         if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
         if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+        if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
         if (this.deletePointBtn) this.contextMenu.appendChild(this.deletePointBtn);
         if (this.deleteSelectionBtn) this.contextMenu.appendChild(this.deleteSelectionBtn);
 
+        this.tooltip = document.getElementById('info-tooltip');
+
+        this.createTypeSelects();
         this.bindButtons();
 
         // init paperjs
@@ -545,7 +588,7 @@ class Segmenter {
             let segment = this.selection.segments[i];
             if (segment.path && (
                 (segment.path.closed && segment.path.segments.length > 3) ||
-                    segment.path.segments.length > 2)) {
+                segment.path.segments.length > 2)) {
                 this.selection.segments[i].remove();
                 this.selection.segments.pop();
             }
@@ -595,7 +638,9 @@ class Segmenter {
         if (this.reverseBtn) this.reverseBtn.addEventListener('click', function(event) {
             this.reverseSelection();
         }.bind(this));
-
+        if (this.setTypeBtn) this.setTypeBtn.addEventListener('click', function(event) {
+            this.showTypeSelect();
+        }.bind(this));
         if (this.toggleOrderingBtn) this.toggleOrderingBtn.addEventListener('click', function(ev) {
             this.toggleOrdering();
         }.bind(this));
@@ -604,31 +649,46 @@ class Segmenter {
         if(this.baselinesColorInput) this.baselinesColorInput.addEventListener('change', function(ev) {
             this.baselinesColor = ev.target.value;
             this.linesGroup.strokeColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-baselines', value: ev.target.value});
+            this.trigger('baseline-editor:settings', {name: 'color-baselines',
+                                                      value: ev.target.value});
         }.bind(this));
-        if (this.evenMasksColorInput) this.evenMasksColorInput.addEventListener('change', function(ev) {
-            this.evenMasksColor = ev.target.value;
-            this.evenMasksGroup.strokeColor = ev.target.value;
-            this.evenMasksGroup.fillColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-even-masks', value: ev.target.value});
-        }.bind(this));
-        if (this.oddMasksColorInput) this.oddMasksColorInput.addEventListener('change', function(ev) {
-            this.oddMasksColor = ev.target.value;
-            this.oddMasksGroup.strokeColor = ev.target.value;
-            this.oddMasksGroup.fillColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-odd-masks', value: ev.target.value});
-        }.bind(this));
-        if (this.dirHintColorInput) this.dirHintColorInput.addEventListener('change', function(ev) {
-            this.directionHintColor = ev.target.value;
-            this.dirHintsGroup.strokeColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-directions', value: ev.target.value});
-        }.bind(this));
-        if (this.regionColorInput) this.regionColorInput.addEventListener('change', function(ev) {
-            this.regionColor = ev.target.value;
-            this.regionsGroup.strokeColor = ev.target.value;
-            if (this.mode == 'regions') this.regionsGroup.fillColor = ev.target.value;
-            this.trigger('baseline-editor:settings', {name: 'color-regions', value: ev.target.value});
-        }.bind(this));
+
+        if (this.dirHintColorInputs) {
+            for (let index in this.dirHintColorInputs) {
+                let input = this.dirHintColorInputs[index];
+                input.addEventListener('change', function(ev) {
+                    let type = this.lineTypes[index];
+                    this.directionHintColors[type] = ev.target.value;
+                    if (type == 'None') type = null;  // switch to null for comparison
+                    for (let index in this.lines) {
+                        let line = this.lines[index];
+                        if (line.type == type) {
+                            line.refresh();
+                        }
+                    }
+                    this.trigger('baseline-editor:settings', {name: 'color-directions',
+                                                              value: this.directionHintColors});
+                }.bind(this));
+            }
+        }
+        if (this.regionColorInputs) {
+            for (let index in this.regionColorInputs) {
+                let input = this.regionColorInputs[index];
+                input.addEventListener('change', function(ev) {
+                    let type = this.regionTypes[index];
+                    this.regionColors[type] = ev.target.value;
+                    if (type == 'None') type = null;  // switch to null for comparison
+                    for (let index in this.regions) {
+                        let region = this.regions[index];
+                        if (region.type == type) {
+                            region.refresh();
+                        }
+                    }
+                    this.trigger('baseline-editor:settings', {name: 'color-regions',
+                                                              value: this.regionColors});
+                }.bind(this));
+            }
+        }
 
         document.addEventListener('keydown', function(event) {
             if (this.disableShortcuts) return;
@@ -657,6 +717,9 @@ class Segmenter {
                 this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
+            } else if (event.keyCode ==  84) {  // T
+                this.showTypeSelect();
+                event.preventDefault();  // avoid selecting an option starting with T
             } else if (event.keyCode == 65 && event.ctrlKey) { // Ctrl+A
                 event.preventDefault();
                 event.stopPropagation();
@@ -767,7 +830,7 @@ class Segmenter {
         this.loaded = true;
     }
 
-    createLine(order, baseline, mask, region, context, postponeEvents) {
+    createLine(order, baseline, mask, region, type, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -778,10 +841,11 @@ class Segmenter {
             }
         }
 
-        if (!order) order = parseInt(this.getMaxOrder()) + 1;
+        if (!order) order = parseInt(this.getLineMaxOrder()) + 1;
         this.linesLayer.activate();
         var line = new SegmenterLine(order, baseline, mask, region,
-                                     this.defaultTextDirection, context, this);
+                                     this.defaultTextDirection, type,
+                                     context, this);
         this.linesGroup.addChild(line.baselinePath);
         if (line.maskPath) {
             if (line.order%2)this.evenMasksGroup.addChild(line.maskPath);
@@ -806,7 +870,7 @@ class Segmenter {
         this.resetToolEvents();  // unregistering
     }
 
-    createRegion(polygon, context, postponeEvents) {
+    createRegion(order, polygon, type, context, postponeEvents) {
         if (this.idField) {
             if (context === undefined || context === null) {
                 context = {};
@@ -816,8 +880,9 @@ class Segmenter {
                 context[this.idField] = null;
             }
         }
+        if (!order) order = parseInt(this.getMaxRegionOrder()) + 1;
         this.regionsLayer.activate();
-        var region = new SegmenterRegion(polygon, context, this);
+        var region = new SegmenterRegion(order, polygon, type, context, this);
         if (!postponeEvents) this.bindRegionEvents(region);
         this.regions.push(region);
         this.regionsGroup.addChild(region.polygonPath);
@@ -996,6 +1061,26 @@ class Segmenter {
         this.tool.onMouseUp = null;
     }
 
+    attachTooltip(obj, target) {
+        target.onMouseEnter = function(event) {
+            if (obj.tooltipText) {
+                this.tooltip.textContent = obj.tooltipText;
+                this.tooltip.style.display = 'block';
+            } else {
+                this.tooltip.style.display = 'none';
+            }
+
+        }.bind(this);
+        target.onMouseLeave = function(event) {
+            this.tooltip.style.display = 'none';
+        }.bind(this);
+
+        // also hide it when leaving the editor since it's missing a lot of events
+        this.canvas.addEventListener('mouseleave', function() {
+            this.tooltip.style.display = 'none';
+        }.bind(this));
+    }
+
     multiMove(event) {
         var delta = event.delta;
         if (this.mode == 'lines') {
@@ -1082,7 +1167,7 @@ class Segmenter {
         let clickLocation = [event.point.x, event.point.y];
         // check if we start from a known region, if we do we bind the line to it.
         let region = this.getRegionsAt(clickLocation).pop() || null;
-        let newLine = this.createLine(null, [clickLocation], null, region, null, true);
+        let newLine = this.createLine(null, [clickLocation], null, region, null, null, true);
         let point = newLine.extend(event.point).point;  // the point that we move around
 
         // adds all the events bindings
@@ -1129,13 +1214,12 @@ class Segmenter {
     startNewRegion(event) {
         this.purgeSelection();
         var originPoint = event.point;
-        let newRegion = this.createRegion([
+        let newRegion = this.createRegion(null, [
             [event.point.x, event.point.y],
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
-        ], null);
-        newRegion.polygonPath.fillColor = this.regionColor;
+        ], null, null);
 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
@@ -1283,7 +1367,7 @@ class Segmenter {
             if (this.idField) context[this.idField] = line[this.idField];
             if (!line.baseline) this.toggleMasks(true);
             return this.createLine(null, line.baseline, line.mask,
-                                   region || line.region || null, context);
+                                   region || line.region || null, line.type, context);
         } else {
             console.log('EDITOR SKIPING invalid line: ', line);
             return null;
@@ -1293,7 +1377,7 @@ class Segmenter {
     loadRegion(region) {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
-        let r = this.createRegion(region.box, context);
+        let r = this.createRegion(null, region.box, region.type, context);
         for (let j in region.lines) {
             this.loadLine(region.lines[j], r);
         }
@@ -1316,10 +1400,10 @@ class Segmenter {
     exportJSON() {
         /* Returns a list of lines containing each a baseline polygon and a mask polygon
          * {
-              regions: [[[xr1, yr1], [xr2, yr2], [xr3, yr3]], [..]],
-              lines:[{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}]
+           regions: [[[xr1, yr1], [xr2, yr2], [xr3, yr3]], [..]],
+           lines:[{baseline: [[x1, y1], [x2, y2], ..], mask:[[x1, y1], [x2, y2], ]}, {..}]
            }
-        */
+         */
         return {
             regions: this.regions.map(region => region.polygon),
             lines: this.lines.map(function(line) {
@@ -1383,15 +1467,22 @@ class Segmenter {
 
     applyRegionMode() {
         if (this.mode == 'regions') {
-            this.regionsGroup.fillColor = this.regionColor;
+            for(let index in this.regions)  {
+                let region = this.regions[index];
+                region.polygonPath.strokeColor = this.shadeColor(region.color, -50);
+                region.polygonPath.fillColor = region.color;
+            }
             this.regionsGroup.bringToFront();
             this.regionsLayer.opacity = 1;
             this.linesLayer.opacity = this.inactiveLayerOpacity;
         } else {
+            // this.regionsGroup.strokeColor = this.regionColor;
+            for(let index in this.regions)  {
+                let region = this.regions[index];
+                region.polygonPath.strokeColor = region.color;
+            }
             this.regionsGroup.fillColor = null;
             this.regionsGroup.sendToBack();
-            // this.evenLinesGroup.bringToFront();
-            // this.oddLinesGroup.bringToFront();
             this.regionsLayer.opacity = this.inactiveLayerOpacity;
             this.linesLayer.opacity = 1;
         }
@@ -1425,7 +1516,7 @@ class Segmenter {
 
         if (this.selection.lines.length) {
             if (this.reverseBtn) this.reverseBtn.style.display = 'block';
-            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+
             // we can only merge if all lines contain a baseline
             if (this.selection.lines.filter(l => l.baseline !== null).length > 1) {
                 this.mergeBtn.style.display = 'block';
@@ -1440,17 +1531,145 @@ class Segmenter {
                     this.unlinkRegionBtn.style.display = 'block';
                 }
             }
+
+            if (this.lineTypes.length) this.setTypeBtn.style.display = 'block';
+            else this.setTypeBtn.style.display = 'none';
+        }
+
+        if (this.selection.regions.length) {
+            if (this.regionTypes.length) this.setTypeBtn.style.display = 'block';
+            else this.setTypeBtn.style.display = 'none';
         }
 
         if (this.selection.segments.length) {
             if (this.deletePointBtn) this.deletePointBtn.style.display = 'block';
         }
 
-        if (this.selection.regions.length) {
-            if (this.deleteSelectionBtn) this.deleteSelectionBtn.style.display = 'block';
+        this.contextMenu.style.display = 'block';
+    }
+
+    showTypeSelect() {
+        if (this.selection.lines.length) {
+            this.lineTypesSelect.style.display = 'block';
+            this.lineTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
+            this.lineTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
+            this.lineTypesSelect.focus();
+            // if all type are the same selects it in the type selector
+            if (this.selection.lines.every((line, i, arr) => line.type === arr[0].type)) {
+                this.lineTypesSelect.value = this.selection.lines[0].type || 'None';
+            } else {
+                this.lineTypesSelect.value = 'None';
+            }
+        } else if (this.selection.regions.length) {
+            this.regionTypesSelect.style.display = 'block';
+            this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
+            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
+            this.regionTypesSelect.focus();
+            // if all type are the same selects it in the type selector
+            if (this.selection.regions.every((reg, i, arr) => reg.type === arr[0].type)) {
+                this.regionTypesSelect.value = this.selection.regions[0].type || 'None';
+            } else {
+                this.regionTypesSelect.value = 'None';
+            }
         }
 
-        this.contextMenu.style.display = 'block';
+        var self = this;  // mandatory for unbinding
+
+        function unbindKb() {
+            document.removeEventListener('keydown', bindKb);
+            self.disableShortcuts = false;
+            self.regionTypesSelect.blur();
+            self.lineTypesSelect.blur();
+        }
+
+        function bindKb(ev) {
+            if (ev.keyCode == 27) {  // escape
+                unbindKb.bind(this)();
+                ev.stopPropagation();
+            } else if (ev.keyCode == 13) {  // enter
+                self.setSelectionType(document.activeElement.value);
+                unbindKb.bind(this)();
+                ev.stopPropagation();
+            } else {
+                let num = Number(ev.key);
+                if (!isNaN(num) && num <= document.activeElement.childElementCount) {
+                    self.setSelectionType(document.activeElement.children[num].value);
+                    unbindKb.bind(this)();
+                    ev.stopPropagation();
+                }
+            }
+        }
+
+        // disable other shortcuts
+        this.disableShortcuts = true;
+        document.addEventListener('keydown', bindKb);
+    }
+
+    createTypeSelects() {
+        this.regionTypesSelect = document.createElement('select');
+        this.regionTypesSelect.style.position = 'absolute';
+        this.regionTypesSelect.autocomplete = "off";
+        this.regionTypesSelect.style.display = 'none';
+        this.regionTypes.forEach(function(type, i) {
+            let opt = document.createElement('option');
+            opt.value = type;
+            opt.text = type + ' ('+i+')';
+            this.regionTypesSelect.appendChild(opt);
+        }.bind(this));
+        this.regionTypesSelect.size = this.regionTypes.length+1;
+        this.contextMenu.appendChild(this.regionTypesSelect);
+        this.regionTypesSelect.addEventListener('blur', function(ev) {
+            this.regionTypesSelect.style.display = 'none';
+            this.disableShortcuts = false;
+        }.bind(this));
+        this.regionTypesSelect.addEventListener('dblclick', function() {
+            this.setSelectionType(this.regionTypesSelect.value);
+            this.disableShortcuts = false;
+            this.regionTypesSelect.blur();
+        }.bind(this));
+
+
+        this.lineTypesSelect = document.createElement('select');
+        this.lineTypesSelect.style.position = 'absolute';
+        this.lineTypesSelect.autocomplete = "off";
+        this.lineTypesSelect.style.display = 'none';
+        this.lineTypes.forEach(function(type, i) {
+            let opt = document.createElement('option');
+            opt.value = type;
+            opt.text = type + ' ('+i+')';
+            this.lineTypesSelect.appendChild(opt);
+        }.bind(this));
+        this.lineTypesSelect.size = this.lineTypes.length+1;
+        this.contextMenu.appendChild(this.lineTypesSelect);
+        this.lineTypesSelect.addEventListener('blur', function(ev) {
+            this.lineTypesSelect.style.display = 'none';
+            this.disableShortcuts = false;
+        }.bind(this));
+        this.lineTypesSelect.addEventListener('dblclick', function() {
+            this.setSelectionType(this.lineTypesSelect.value);
+            this.disableShortcuts = false;
+            this.lineTypesSelect.blur();
+        }.bind(this));
+    }
+
+    setSelectionType(value) {
+        if (value == 'None') value = null;
+        for (let i=0; i<this.selection.lines.length; i++) {
+            let line = this.selection.lines[i];
+            if (line.type != value) {
+                line.type = value;
+                this.addToUpdateQueue({lines: line});
+                line.refresh();
+            }
+        }
+        for (let i=0; i<this.selection.regions.length; i++) {
+            let region = this.selection.regions[i];
+            if (region.type != value) {
+                region.type = value;
+                this.addToUpdateQueue({regions: this.selection.regions[i]});
+                region.refresh();
+            }
+        }
     }
 
     hasSelection() {
@@ -1547,7 +1766,7 @@ class Segmenter {
                 tmpSelected.push(segment);
             } else {
                 let fi = tmpSelected.findIndex(s=>s.path && s.path.id == segment.path.id
-                                               && s.index==segment.index);
+                                              && s.index==segment.index);
                 if (fi !== -1) {
                     tmpSelected.slice(fi);
                     this.removeFromSelection(segment);
@@ -1612,9 +1831,14 @@ class Segmenter {
         }.bind(this));
     }
 
-    getMaxOrder() {
+    getLineMaxOrder() {
         if (!this.lines.length) return -1;
         return this.lines.map(l=>l.order).reduce((a,b)=>Math.max(a, b));
+    }
+
+    getMaxRegionOrder() {
+        if (!this.regions.length) return -1;
+        return this.regions.map(r=>r.order).reduce((a,b)=>Math.max(a, b));
     }
 
     getDeterminant(v1, v2) {
@@ -1700,7 +1924,7 @@ class Segmenter {
                             }
                         }
 
-                        let newLine = this.createLine(null, split, newMask || null, line.region, null);
+                        let newLine = this.createLine(null, split, newMask || null, line.region, line.type, null);
                         newLine.updateDataFromCanvas();
                     }
 
@@ -1725,8 +1949,8 @@ class Segmenter {
 
             for (let j in this.regions) {
                 let region = this.regions[j];
-                if (region.polygonPath.intersects(line.baselinePath) ||
-                    line.baselinePath.isInside(region.polygonPath.bounds)) {
+                let center = line.baselinePath.getPointAt(line.baselinePath.length/2);
+                if (region.polygonPath.contains(center)) {
                     line.region = region;
                     continue;
                 }
@@ -1752,12 +1976,12 @@ class Segmenter {
 
     mergeSelection() {
         /* strategy is:
-          1) order the lines by their position,
-             line direction doesn't matter since .join() can merge from start or end points
-          2) join the lines 2 by 2 setting tolerance to the shortest distance between
-             the starting and ending points of both lines.
-          3) Delete the left over
-        */
+           1) order the lines by their position,
+           line direction doesn't matter since .join() can merge from start or end points
+           2) join the lines 2 by 2 setting tolerance to the shortest distance between
+           the starting and ending points of both lines.
+           3) Delete the left over
+         */
         if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
             return;
         }
@@ -1802,6 +2026,7 @@ class Segmenter {
         // make copys to void race conditions
         let lines = this.updateQueue.lines.map(l=>l.get());
         let regions = this.updateQueue.regions.map(r=>r.get());
+
         // empty the queue asap
         this.updateQueue = {lines: [], regions: []};
 
@@ -1827,7 +2052,7 @@ class Segmenter {
         } else {
             this.averageLineHeight = Math.abs(
                 this.lines
-                .map(l=>l.baseline && l.baseline[0][0] || 0)
+                    .map(l=>l.baseline && l.baseline[0][0] || 0)
                 .reduce((a,b)=>b-a) / this.lines.length / 2);
         }
     }
@@ -1860,66 +2085,153 @@ class Segmenter {
         return "#"+RR+GG+BB;
     }
 
+    changeHue(rgb, degree) {
+        // exepcts a string and returns an object
+        function rgbToHSL(rgb) {
+            // strip the leading # if it's there
+            rgb = rgb.replace(/^\s*#|\s*$/g, '');
+
+            // convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
+            if(rgb.length == 3){
+                rgb = rgb.replace(/(.)/g, '$1$1');
+            }
+
+            var r = parseInt(rgb.substr(0, 2), 16) / 255,
+                g = parseInt(rgb.substr(2, 2), 16) / 255,
+                b = parseInt(rgb.substr(4, 2), 16) / 255,
+                cMax = Math.max(r, g, b),
+                cMin = Math.min(r, g, b),
+                delta = cMax - cMin,
+                l = (cMax + cMin) / 2,
+                h = 0,
+                s = 0;
+
+            if (delta == 0) {
+                h = 0;
+            }
+            else if (cMax == r) {
+                h = 60 * (((g - b) / delta) % 6);
+            }
+            else if (cMax == g) {
+                h = 60 * (((b - r) / delta) + 2);
+            }
+            else {
+                h = 60 * (((r - g) / delta) + 4);
+            }
+
+            if (delta == 0) {
+                s = 0;
+            }
+            else {
+                s = (delta/(1-Math.abs(2*l - 1)))
+            }
+
+            return {
+                h: h,
+                s: s,
+                l: l
+            }
+        }
+
+        // expects an object and returns a string
+        function hslToRGB(hsl) {
+            var h = hsl.h,
+                s = hsl.s,
+                l = hsl.l,
+                c = (1 - Math.abs(2*l - 1)) * s,
+                x = c * ( 1 - Math.abs((h / 60 ) % 2 - 1 )),
+                m = l - c/ 2,
+                r, g, b;
+
+            if (h < 60) {
+                r = c;
+                g = x;
+                b = 0;
+            }
+            else if (h < 120) {
+                r = x;
+                g = c;
+                b = 0;
+            }
+            else if (h < 180) {
+                r = 0;
+                g = c;
+                b = x;
+            }
+            else if (h < 240) {
+                r = 0;
+                g = x;
+                b = c;
+            }
+            else if (h < 300) {
+                r = x;
+                g = 0;
+                b = c;
+            }
+            else {
+                r = c;
+                g = 0;
+                b = x;
+            }
+
+            r = normalize_rgb_value(r, m);
+            g = normalize_rgb_value(g, m);
+            b = normalize_rgb_value(b, m);
+
+            return rgbToHex(r,g,b);
+        }
+
+        function normalize_rgb_value(color, m) {
+            color = Math.floor((color + m) * 255);
+            if (color < 0) {
+                color = 0;
+            }
+            return color;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        var hsl = rgbToHSL(rgb);
+        hsl.h += degree;
+        if (hsl.h > 360) {
+            hsl.h -= 360;
+        }
+        else if (hsl.h < 0) {
+            hsl.h += 360;
+        }
+        return hslToRGB(hsl);
+    }
+
     setColors() {
-        // Attempt to choose the best color for highlighting
+        var choices = ['#0000FF', '#9A56FF', '#11FF76'];
+        if (this.baselinesColor == null) this.baselinesColor = choices[0];
+        this.evenMasksColor = this.baselinesColor;
+        this.oddMasksColor = this.changeHue(this.baselinesColor, 30);
 
-        function isGrey_(color) {
-            return (
-                Math.abs(color[0] - color[1]) < 30 &&
-                Math.abs(color[0] - color[2]) < 30 &&
-                Math.abs(color[1] - color[2]) < 30
-            );
-        }
-
-        function hasColor_(pal, channel) {
-            for (let i in pal) {
-                if (isGrey_(pal[i])) {continue;}
-                if (pal[i][channel] == Math.max.apply(null, pal[i]) && pal[i][channel] > 100) {
-                    // the channel is dominant in this color
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function chooseColors(pal, depth=0) {
-            if (hasColor_(pal, 2)) {
-                // has blue
-                if (hasColor_(pal, 0)) {
-                    // has red
-                    if (hasColor_(pal, 1)) {
-                        // has green; the document is quite rich, start again with only the 2 main colors
-                        pal = pal.slice(0, 2);
-                        if (depth < 1) return chooseColors(pal, depth=depth+1);
-                        else return ['#0000FF', '#9A56FF', '#00FF76']; // give up
-                    } else {
-                        return ['#FF0000', '#FFFF00', '##FF7600'];
-                    }
-                } else {
-                    return ['#FF0000', '#FFFF00', '#FF7600'];
-                }
-            } else {
-                return ['#0000FF', '#9A56FF', '#00FF76'];
+        for (let index in this.lineTypes) {
+            let type = this.lineTypes[index];
+            if (this.directionHintColors[type] == null) {
+                this.directionHintColors[type] = this.changeHue(choices[1], 3*(index+1));
             }
         }
-
-        // do we even need to load color thief?
-        if (!(this.baselinesColor && this.evenMasksColor&& this.oddMasksColor&& this.directionHintColor&& this.regionColor)) {
-            var colorThief = new ColorThief();
-            let palette = colorThief.getPalette(this.img, 5);
-            let choices = chooseColors(palette);
-            if (!this.baselinesColor) this.baselinesColor = choices[0];
-            if (!this.evenMasksColor) this.evenMasksColor = choices[0];
-            if (!this.oddMasksColor) this.oddMasksColor  = choices[1];
-            if (!this.directionHintColor) this.directionHintColor = '#FF00AA';
-            if (!this.regionColor) this.regionColor = choices[2];
+        for (let index in this.regionTypes) {
+            let type = this.regionTypes[index];
+            if (this.regionColors[type] == null) {
+                this.regionColors[type] = this.changeHue(choices[2], 3*(index+1));
+            }
         }
 
         // set the inputs
         if(this.baselinesColorInput) this.baselinesColorInput.value = this.baselinesColor;
-        if(this.evenMasksColorInput) this.evenMasksColorInput.value = this.evenMasksColor;
-        if(this.oddMasksColorInput) this.oddMasksColorInput.value = this.oddMasksColor;
-        if(this.dirHintColorInput) this.dirHintColorInput.value = this.directionHintColor;
-        if(this.regionColorInput) this.regionColorInput.value = this.regionColor;
+        for (let index in this.dirHintColorInputs) {
+            let input = this.dirHintColorInputs[index];
+            input.value = this.directionHintColors[this.lineTypes[index]];
+        }
+        for (let index in this.regionColorInputs) {
+            let input = this.regionColorInputs[index];
+            input.value = this.regionColors[this.regionTypes[index]];
+        }
     }
 }

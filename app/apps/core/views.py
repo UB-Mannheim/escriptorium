@@ -75,10 +75,13 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
+        self.object = None
         metadata_form = self.get_metadata_formset(self.request.POST)
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
+            print(form.errors)
+            print(metadata_form.errors)
             return self.form_invalid(form)
 
     def form_valid(self, form, metadata_form):
