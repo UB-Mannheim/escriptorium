@@ -299,12 +299,12 @@
                         <div id="seg-data-binding" v-if="loaded">
                             <segregion v-for="region in part.regions"
                                        v-bind:region="region"
-                                       v-bind:key="'R' + region.pk"
+                                       v-bind:key="'sR' + region.pk"
                                        inline-template>
                             </segregion>
                             <segline v-for="line in part.lines"
                                      v-bind:line="line"
-                                     v-bind:key="'L' + line.pk"/>
+                                     v-bind:key="'sL' + line.pk"/>
                         </div>
 
                         <img class="panel-img"/>
