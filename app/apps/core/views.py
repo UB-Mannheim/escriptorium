@@ -4,6 +4,7 @@ import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -61,6 +62,15 @@ class DocumentMixin():
             qs = Metadata.objects.filter(public=True)
         return MetadataFormSet(*args, instance=instance, form_kwargs={'choices': qs})
 
+    def get_object(self):
+        obj = super().get_object()
+        try:
+            # we fetched the object already, now we check that the user has perms to edit it
+            Document.objects.for_user(self.request.user).get(pk=obj.pk)
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return obj
+
 
 class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, CreateView):
     model = Document
@@ -98,10 +108,6 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     form_class = DocumentForm
     success_message = _("Document saved successfully!")
 
-    def get_queryset(self):
-        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
-        return Document.objects.for_user(self.request.user)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_publish'] = self.object.owner == self.request.user
@@ -131,13 +137,9 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         return response
 
 
-class DocumentImages(LoginRequiredMixin, DetailView):
+class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
     model = Document
     template_name = "core/document_images.html"
-
-    def get_queryset(self):
-        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
-        return Document.objects.for_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -228,6 +230,15 @@ class EditPart(LoginRequiredMixin, DetailView):
     template_name = "core/document_part_edit.html"
     http_method_names = ('get',)
 
+    def get_object(self):
+        obj = super().get_object()
+        try:
+            # we fetched the object already, now we check that the user has perms to edit it
+            Document.objects.for_user(self.request.user).get(pk=obj.document.pk)
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return obj
+
     def get_queryset(self):
         return DocumentPart.objects.filter(
             document=self.kwargs.get('pk')).select_related('document')
@@ -261,7 +272,10 @@ class ModelsList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if 'document_pk' in self.kwargs:
-            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            try:
+                self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            except Document.DoesNotExist:
+                raise PermissionDenied
             return OcrModel.objects.filter(document=self.document)
         else:
             self.document = None
