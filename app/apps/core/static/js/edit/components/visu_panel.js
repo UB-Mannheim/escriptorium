@@ -32,9 +32,11 @@ const VisuPanel = BasePanel.extend({
         updateView() {
             this.$el.querySelector('svg').style.height = Math.round(this.part.image.size[1] * this.ratio) + 'px';
             Vue.nextTick(function() {
-                this.$refs.visulines.forEach(function(line) {
-                    line.reset();
-                });
+                if (this.part.lines.length) {
+                    this.$refs.visulines.forEach(function(line) {
+                        line.reset();
+                    });
+                }
             }.bind(this));
         }
     }
