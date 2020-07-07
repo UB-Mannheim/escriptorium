@@ -8,8 +8,7 @@
    segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
 
    Options:
-   lengthTreshold=15
-   lengthTreshold=15,
+   lengthThreshold=15
    delayInit=false,
    deletePointBtn=null,
    deleteSelectionBtn=null,
@@ -73,6 +72,7 @@ class SegmenterRegion {
         this.polygonPath.selected = false;
         this.segmenter.removeFromSelection(this);
         this.selected = false;
+
     }
 
     toggleSelect() {
@@ -436,7 +436,8 @@ class SegmenterLine {
 }
 
 class Segmenter {
-    constructor(image, {lengthTreshold=10,
+    constructor(image, {lengthThreshold=10,
+                        regionAreaThreshold=20,
                         // scale = real coordinates to image coordinates
                         // for example if drawing on a 1000px wide thumbnail for a 'real' 3000px wide image,
                         // the scale would be 1/3, the container (DOM) width is irrelevant here.
@@ -502,7 +503,8 @@ class Segmenter {
         this.maxSegments = maxSegments;
 
         // the minimal length in pixels below which the line will be removed automatically
-        this.lengthThreshold = lengthTreshold;
+        this.lengthThreshold = lengthThreshold;
+        this.regionAreaThreshold = regionAreaThreshold;
         this.showMasks = false;
         this.showLineNumbers = false;
 
@@ -890,9 +892,13 @@ class Segmenter {
     }
 
     finishRegion(region) {
-        this.bindRegionEvents(region);
+        if (Math.abs(region.polygonPath.area) < this.regionAreaThreshold) {
+            region.remove();
+        } else {
+            this.bindRegionEvents(region);
+            region.updateDataFromCanvas();
+        }
         this.resetToolEvents();
-        region.updateDataFromCanvas();
     }
 
     bindRegionEvents(region) {
@@ -1219,7 +1225,7 @@ class Segmenter {
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
-        ], null, null);
+        ], null, null, true);
 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
