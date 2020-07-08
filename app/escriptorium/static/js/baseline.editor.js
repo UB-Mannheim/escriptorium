@@ -93,9 +93,15 @@ class SegmenterRegion {
     update(polygon) {
         if (polygon && polygon.length) {
             this.polygon = polygon;
-            this.polygonPath.removeSegments();
-            this.polygonPath.addSegments(polygon);
-            this.segmenter.bindRegionEvents(this);
+            if (polygon.length == this.polygonPath.segments.length) {
+                // if number of points didn't change make sure to keep selection
+                for (let i in this.polygon) {
+                    this.polygonPath.segments[i].point = this.polygon[i];
+                }
+            } else {
+                this.polygonPath.removeSegments();
+                this.polygonPath.addSegments(this.polygon);
+            }
         }
     }
 
@@ -252,19 +258,33 @@ class SegmenterLine {
     update(baseline, mask, region, order) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
-            this.baselinePath.removeSegments();
-            this.baselinePath.addSegments(baseline);
-            this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
-            this.segmenter.bindLineEvents(this);
+            if (baseline.length == this.baselinePath.segments.length) {
+                // make sure to keep selection
+                for (let i in this.baseline) {
+                    this.baselinePath.segments[i].point = this.baseline[i];
+                }
+            } else {
+                this.baselinePath.removeSegments();
+                this.baselinePath.addSegments(baseline);
+            }
+            /* this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
+             * this.segmenter.bindLineEvents(this); */
         }
         if (mask && mask.length) {
             if (! this.maskPath) {
                 this.makeMaskPath();
             }
             this.mask = mask;
-            this.maskPath.removeSegments();
-            this.maskPath.addSegments(mask);
-            this.segmenter.bindMaskEvents(this);
+            if (mask.length == this.maskPath.segments.length) {
+                // make sure to keep selection
+                for (let i in this.mask) {
+                    this.maskPath.segments[i].point = this.mask[i];
+                }
+            } else {
+                this.maskPath.removeSegments();
+                this.maskPath.addSegments(mask);
+            }
+            // this.segmenter.bindMaskEvents(this);
         }
         if (region !== undefined) {
             this.region = region;
