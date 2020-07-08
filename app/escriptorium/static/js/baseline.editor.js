@@ -297,6 +297,8 @@ class SegmenterLine {
     }
 
     extend(point) {
+        // make sure the point is inside img boundaries
+        this.segmenter.movePointInView(point, {x:0, y:0});
         return this.baselinePath.add(point);
     }
 
@@ -1093,22 +1095,41 @@ class Segmenter {
             if (this.selection.segments.length) {
                 for (let i in this.selection.segments) {
                     this.movePointInView(this.selection.segments[i].point, delta);
-                    this.movePointInView(this.selection.segments[i].point, delta);
                 }
                 for (let i in this.selection.lines) {
+                    // refresh hints positions
                     this.selection.lines[i].refresh();
                 }
             } else {
+                // move the entire line
                 for (let i in this.selection.lines) {
-                    let l = this.selection.lines[i];
-                    if(l.baselinePath) this.movePointInView(l.baselinePath.position, delta);
-                    if(l.maskPath) this.movePointInView(l.maskPath.position, delta);
-                    l.refresh();
+                    let line = this.selection.lines[i];
+                    if (line.baselinePath) {
+                        for (let j in line.baselinePath.segments) {
+                            this.movePointInView(line.baselinePath.segments[j].point, delta);
+                        }
+                    }
+                    if (line.maskPath) {
+                        for (let j in line.maskPath.segments) {
+                            this.movePointInView(line.maskPath.segments[j].point, delta);
+                        }
+                    }
+                    // refresh hint positions
+                    line.refresh();
                 }
             }
         } else if (this.mode == 'regions') {
-            for (let i in this.selection.regions) {
-                this.movePointInView(this.selection.regions[i].polygonPath.position, delta);
+            if (this.selection.segments.length) {
+                for (let i in this.selection.segments) {
+                    this.movePointInView(this.selection.segments[i].point, delta);
+                }
+            } else {
+                for (let i in this.selection.regions) {
+                    let region = this.selection.regions[i];
+                    for (let j in region.polygonPath.segments) {
+                        this.movePointInView(region.polygonPath.segments[j].point, delta);
+                    }
+                }
             }
         }
     }
@@ -1237,10 +1258,12 @@ class Segmenter {
             return null;
         }.bind(this);
         let onRegionDraw = function(event) {
-            newRegion.polygonPath.segments[1].point.y = event.point.y;
-            newRegion.polygonPath.segments[2].point.x = event.point.x;
-            newRegion.polygonPath.segments[2].point.y = event.point.y;
-            newRegion.polygonPath.segments[3].point.x = event.point.x;
+            let pt = {x: event.point.x, y: event.point.y};
+            this.movePointInView(pt, {x: 0, y:0}); // make sure it stays inside boundaries
+            newRegion.polygonPath.segments[1].point.y = pt.y;
+            newRegion.polygonPath.segments[2].point.x = pt.x;
+            newRegion.polygonPath.segments[2].point.y = pt.y;
+            newRegion.polygonPath.segments[3].point.x = pt.x;
         }.bind(this);
 
         this.tool.onMouseDown = function(event) {
