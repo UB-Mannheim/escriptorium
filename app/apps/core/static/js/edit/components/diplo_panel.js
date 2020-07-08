@@ -31,13 +31,22 @@ var DiploPanel = BasePanel.extend({
             /*
             Finish dragging lines, save new positions
             */
-            for(let i=0; i< ev.newIndicies.length; i++){
-                let line = ev.newIndicies[i];
-                let pk = line.multiDragElement.querySelector('.line-content').id;
-                let index = line.index;
-                let elt = {"pk":pk, "index":index};
+            if(ev.newIndicies.length == 0){
+                let pk = ev.item.querySelector('.line-content').id;
+                let elt = {"pk":pk, "index":ev.newIndex};
                 this.movedLines.push(elt);
+
             }
+            else {
+                for(let i=0; i< ev.newIndicies.length; i++){
+                    let line = ev.newIndicies[i];
+                    let pk = line.multiDragElement.querySelector('.line-content').id;
+                    let index = line.index;
+                    let elt = {"pk":pk, "index":index};
+                    this.movedLines.push(elt);
+                }
+            }
+
 
             this.moveLines();
         },
