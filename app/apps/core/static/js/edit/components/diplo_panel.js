@@ -31,7 +31,7 @@ var DiploPanel = BasePanel.extend({
             /*
             Finish dragging lines, save new positions
             */
-            if(ev.newIndicies.length == 0){
+            if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex){
                 let pk = ev.item.querySelector('.line-content').id;
                 let elt = {"pk":pk, "index":ev.newIndex};
                 this.movedLines.push(elt);
@@ -47,13 +47,15 @@ var DiploPanel = BasePanel.extend({
                 }
             }
 
-
             this.moveLines();
         },
         moveLines(){
-            this.$parent.$emit('line:move',this.movedLines, function () {
-                this.movedLines = [];
-            }.bind(this));
+            if(this.movedLines.length != 0){
+                this.$parent.$emit('line:move',this.movedLines, function () {
+                    this.movedLines = [];
+                }.bind(this));
+            }
+
         },
         toggleSave(){
             /*
