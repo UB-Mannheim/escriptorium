@@ -114,7 +114,7 @@
                 <button id="zoom-reset"
                         @click="resetZoom"
                         class="btn btn-sm btn-info"
-                        title="{% trans "Reset zoom." %}">
+                        title="{% trans "Reset zoom. (Ctrl+Backspace)" %}">
                     <i class="fas fa-search-minus"></i>
                 </button>
                 <input id="zoom-range"
@@ -270,10 +270,10 @@
 
                 <div id="context-menu">
                     <button id="be-link-region"
-                            title="{% trans "Link selected lines to (the first detected) background region." %}"
+                            title="{% trans "Link selected lines to (the first detected) background region. (Y)" %}"
                             class="hide btn btn-info m-1 fas fa-link"></button>
                     <button id="be-unlink-region"
-                            title="{% trans "Unlink selected lines from their region." %}"
+                            title="{% trans "Unlink selected lines from their region. (U)" %}"
                             class="hide btn btn-info m-1 fas fa-unlink"></button>
                     <button id="be-merge-selection"
                             title="{% trans "Join selected lines. (J)" %}"
@@ -299,12 +299,12 @@
                         <div id="seg-data-binding" v-if="loaded">
                             <segregion v-for="region in part.regions"
                                        v-bind:region="region"
-                                       v-bind:key="'R' + region.pk"
+                                       v-bind:key="'sR' + region.pk"
                                        inline-template>
                             </segregion>
                             <segline v-for="line in part.lines"
                                      v-bind:line="line"
-                                     v-bind:key="'L' + line.pk"/>
+                                     v-bind:key="'sL' + line.pk"/>
                         </div>
 
                         <img class="panel-img"/>

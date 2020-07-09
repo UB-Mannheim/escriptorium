@@ -2,6 +2,7 @@ import bleach
 import logging
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
@@ -64,6 +65,14 @@ class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription
         fields = ('pk', 'name')
+
+    def create(self, data):
+        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        data['document'] = document
+        try:
+            return super().create(data)
+        except IntegrityError:
+            return Transcription.objects.get(name=data['name'])
 
 
 class UserOnboardingSerializer(serializers.ModelSerializer):

@@ -1,5 +1,6 @@
 import re
 import logging
+import math
 import os
 import json
 import functools
@@ -350,33 +351,54 @@ class DocumentPart(OrderedModel):
         Re-order the lines of the DocumentPart depending on read direction.
         """
         read_direction = read_direction or self.document.read_direction
-        imgbox = ((0, 0), (self.image.width, self.image.height))
+        # imgbox = ((0, 0), (self.image.width, self.image.height))
+        if read_direction == Document.READ_DIRECTION_RTL:
+            origin_box = [self.image.width, 0]
+        else:
+            origin_box = [0, 0]
 
-        def origin_pt(shape):
+        def distance(x, y):
+            return math.sqrt(sum([(a - b) ** 2 for a, b in zip(x, y)]))
+
+        def poly_origin_pt(shape):
+            return min(shape, key=lambda pt: distance(pt, origin_box))
+
+        def line_origin_pt(line):
             if read_direction == Document.READ_DIRECTION_RTL:
-                return max(shape, key=lambda pt: pt[0])
+                return line[-1]
             else:
-                return min(shape, key=lambda pt: pt[0])
+                return line[0]
+
         # fetch all lines and regroup them by block
         qs = self.lines.select_related('block').all()
         ls = list(qs)
         if len(ls) == 0:
             return
-        ords = list(map(lambda l: origin_pt(l.baseline or l.mask)[0], ls))
+        ords = list(map(lambda l: (line_origin_pt(l.baseline) if l.baseline
+                                   else poly_origin_pt(l.mask))[0], ls))
         averageLineHeight = (max(ords) - min(ords)) / len(ords)
 
         def cmp_lines(a, b):
+            # cache origin pts for efficiency
+            if not hasattr(a, 'origin_pt'):
+                a.origin_pt = line_origin_pt(a.baseline) if a.baseline else poly_origin_pt(a.mask)
+            if not hasattr(b, 'origin_pt'):
+                b.origin_pt = line_origin_pt(b.baseline) if b.baseline else poly_origin_pt(b.mask)
+
             try:
                 if a.block != b.block:
-                    pt1 = origin_pt(a.block.box) if a.block else origin_pt(a.baseline or a.mask)
-                    pt2 = origin_pt(b.block.box) if b.block else origin_pt(b.baseline or a.mask)
-                else:
-                    pt1 = origin_pt(a.baseline or a.mask)
-                    pt2 = origin_pt(b.baseline or a.mask)
+                    pt1 = poly_origin_pt(a.block.box) if a.block else a.origin_pt
+                    pt2 = poly_origin_pt(b.block.box) if b.block else b.origin_pt
 
-                # 2 lines more or less on the same level
-                if abs(pt1[1] - pt2[1]) < averageLineHeight:
-                    return abs(pt1[0] - origin_pt(imgbox)[0]) - abs(pt2[0] - origin_pt(imgbox)[0])
+                    # when comparing blocks we can use the distance
+                    return distance(pt1, origin_box) - distance(pt2, origin_box)
+                else:
+                    pt1 = a.origin_pt
+                    pt2 = b.origin_pt
+
+                    # # 2 lines more or less on the same level
+                    if abs(pt1[1] - pt2[1]) < averageLineHeight:
+                        return distance(pt1, origin_box) - distance(pt2, origin_box)
                 return pt1[1] - pt2[1]
             except TypeError as e:  # invalid line
                 return 0

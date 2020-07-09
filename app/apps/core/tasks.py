@@ -115,7 +115,7 @@ def make_segmentation_training_data(part):
         'image': part.image.path,
         'baselines': [{'script': 'default', 'baseline': bl}
                       for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {'test': [r.box for r in part.blocks.all().only('box')]}
+        'regions': {'default': [r.box for r in part.blocks.all().only('box')]}
     }
 
 

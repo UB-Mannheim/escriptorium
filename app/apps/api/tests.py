@@ -21,7 +21,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-list')
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(8):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -29,9 +29,18 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
+
+    def test_perm(self):
+        user = self.factory.make_user()
+        self.client.force_login(user)
+        uri = reverse('api:document-detail',
+                      kwargs={'pk': self.doc.pk})
+        resp = self.client.get(uri)
+        # Note: raises a 404 instead of 403 but its fine
+        self.assertEqual(resp.status_code, 404)
 
     # not used
     # def test_update
@@ -50,9 +59,17 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
+
+    def test_list_perm(self):
+        user = self.factory.make_user()
+        self.client.force_login(user)
+        uri = reverse('api:part-list',
+                      kwargs={'document_pk': self.part.document.pk})
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 403)
 
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_detail(self):
@@ -60,9 +77,18 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(10):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
+
+    def test_detail_perm(self):
+        user = self.factory.make_user()
+        self.client.force_login(user)
+        uri = reverse('api:part-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'pk': self.part.pk})
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 403)
 
     @override_settings(THUMBNAIL_ENABLE=False)
     def test_create(self):
@@ -82,7 +108,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             resp = self.client.patch(
                 uri, {'transcription_progress': 50},
                 content_type='application/json')

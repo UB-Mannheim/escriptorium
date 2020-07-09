@@ -284,7 +284,7 @@ const partStore = {
                 let deletedLines = [];
                 for (let i=0; i<pks.length; i++) {
                     let index = this.lines.findIndex(l=>l.pk==pks[i]);
-                    if(index) {
+                    if(index != -1) {
                         deletedLines.push(pks[i]);
                         Vue.delete(this.lines, index);
                     }
