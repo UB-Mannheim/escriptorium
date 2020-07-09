@@ -741,6 +741,10 @@ class Segmenter {
                 this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
+            } else if (event.keyCode == 89) { // Y
+                this.linkSelection();
+            } else if (event.keyCode == 85) { // U
+                this.unlinkSelection();
             } else if (event.keyCode ==  84) {  // T
                 this.showTypeSelect();
                 event.preventDefault();  // avoid selecting an option starting with T
