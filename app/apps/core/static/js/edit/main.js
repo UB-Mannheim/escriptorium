@@ -143,6 +143,8 @@ var partVM = new Vue({
                        (event.keyCode == (READ_DIRECTION == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
                 this.getNext();
                 event.preventDefault();
+            } else if (event.keyCode == 8 && event.ctrlKey) {  // backspace
+                 this.zoom.reset();
             }
         }.bind(this));
 
