@@ -220,7 +220,7 @@ class LineViewSet(ModelViewSet):
     serializer_class = DetailedLineSerializer
 
     def get_serializer_class(self):
-        if self.action in ['retrieve', 'list']:
+        if self.action == 'retrieve':
             return DetailedLineSerializer
         else:  # create
             return LineSerializer
