@@ -221,7 +221,6 @@ class LineOrderSerializer(serializers.ModelSerializer):
 
 
 class DetailedLineSerializer(LineSerializer):
-    region = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
 
     class Meta(LineSerializer.Meta):
