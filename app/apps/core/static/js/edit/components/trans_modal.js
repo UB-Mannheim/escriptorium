@@ -72,12 +72,10 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             if (!this.line.currentTrans) return;
             let diff = Diff.diffChars(this.line.currentTrans.content, content);
             return diff.map(function(part){
-                let color = part.added ? 'green' :
-                            part.removed ? 'red' : '';
                 if (part.removed) {
-                    return '<small><font color="'+color+'" class="collapse show history-deletion">'+part.value+'</font></small>';
+                    return '<span class="cmp-del">'+part.value+'</span>';
                 } else if (part.added) {
-                    return '<font color="'+color+'">'+part.value+'</font>';
+                    return '<span class="cmp-add">'+part.value+'</span>';
                 } else {
                     return part.value;
                 }
