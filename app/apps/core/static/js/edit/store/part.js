@@ -54,7 +54,6 @@ const partStore = {
 
     // actions
     fetchPart(pk, callback) {
-        this.reset();
         this.pk = pk;
         this.fetchDocument(function() {
             let uri = this.getApiPart(pk);
@@ -475,11 +474,13 @@ const partStore = {
 
     getPrevious(cb) {
         if (this.loaded && this.previous) {
+            this.reset();
             this.fetchPart(this.previous, cb);
         }
     },
     getNext(cb) {
         if (this.loaded && this.next) {
+            this.reset();
             this.fetchPart(this.next, cb);
         }
     }

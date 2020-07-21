@@ -1,7 +1,10 @@
 const LineVersion = Vue.extend({
     props: ['version', 'previous'],
     created() {
-        this.timeZone = moment.tz.guess();
+        this.timeZone = this.$parent.timeZone;
+    },
+    beoforeDestroy() {
+        this.timeZone = null;  // make sure it's garbage collected
     },
     computed: {
         momentDate() {
