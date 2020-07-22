@@ -100,6 +100,6 @@ class Profile(SuccessMessageMixin, UpdateView):
                  if isfile(join(upath, f))]
         paginator = Paginator(files, 25)  # Show 25 files per page.
         page_number = self.request.GET.get('page')
-        context['is_paginated'] = True
+        context['is_paginated'] = paginator.count != 0
         context['page_obj'] = paginator.get_page(page_number)
         return context
