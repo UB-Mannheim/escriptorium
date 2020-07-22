@@ -1,10 +1,11 @@
 from django.urls import path, include
 
-from users.views import SendInvitation, AcceptInvitation
+from users.views import SendInvitation, AcceptInvitation, Profile
 from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
     path('', include('django.contrib.auth.urls')),
+    path('profile/', Profile.as_view(), name='user_profile'),
     path('invite/',
          permission_required('users.can_invite', raise_exception=True)(SendInvitation.as_view()),
          name='send-invitation'),

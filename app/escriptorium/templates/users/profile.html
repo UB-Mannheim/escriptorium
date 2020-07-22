@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n bootstrap static %}
+
+{% block body %}
+<div class="container">
+<div class="row">
+    <div class="col-md-10 col-md-offset-10">
+
+        <form method="post">
+            {% csrf_token %}
+            <fieldset>
+                {% render_field form.email %}
+                {% render_field form.first_name %}
+                {% render_field form.last_name %}
+
+                <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
+            </fieldset>
+        </form>
+
+        <p class="form-text alert alert-secondary mt-5">
+            {% trans "API Authentication Token:" %} {{ api_auth_token.key }}
+            <br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
+        </p>
+
+        <div class="form-text jumbotron mt-3">
+            <h2>{% trans "All my files" %}</h2>
+            {% for fpath, fname in page_obj %}
+            <br><a href="{{request.scheme}}://{{request.get_host}}{% get_media_prefix %}{{fpath}}"><i class="fas fa-download"></i></a> {{ fname }}
+            {% endfor %}
+            {% include "includes/pagination.html" %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
