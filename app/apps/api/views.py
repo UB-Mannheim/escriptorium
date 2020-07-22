@@ -340,8 +340,12 @@ class LineTranscriptionViewSet(ModelViewSet):
             serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
 
             if serializer.is_valid():
-                lt.new_version(author=request.user.username,
+                try:
+                    lt.new_version(author=request.user.username,
                                source=settings.VERSIONING_DEFAULT_SOURCE)
+                except NoChangeException:
+                    pass
+
                 serializer.save()
                 response.append(serializer.data)
 
