@@ -42,8 +42,10 @@ var diploLine = LineBase.extend({
 
         setContent(content){
             let id = this.line.pk;
-            $("#" + id).text(content);
-            this.line.currentTrans.content = content;
+            if(this.line.currentTrans.content != content){
+                $("#" + id).text(content);
+                this.line.currentTrans.content = content;
+            }
         },
         onPaste(e){
             let pastedData = e.clipboardData.getData('text/plain');
