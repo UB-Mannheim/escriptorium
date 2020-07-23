@@ -115,10 +115,11 @@ var DiploPanel = BasePanel.extend({
                         child.setContent("");
                         this.addToUpdatedLines(child.line.currentTrans);
                     }
-                    // this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
+                    this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
 
 
                     }
+                 this.updateEditLine( -1);
 
 
                 }
