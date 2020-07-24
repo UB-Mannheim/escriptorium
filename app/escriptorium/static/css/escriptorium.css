@@ -608,3 +608,11 @@ i.panel-icon {
     overflow-wrap: break-word;
     flex-basis: 85%;
 }
+
+.cmp-add {
+    background-color: lightgreen;
+}
+
+.cmp-del {
+    color: red;
+}

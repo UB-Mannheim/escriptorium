@@ -642,17 +642,21 @@ class DocumentPart(OrderedModel):
             res = blla.segment(im, **options)
 
             if steps in ['lines', 'both']:
+                # line_types = {t.name: t for t in self.document.valid_line_types.all()}
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None
                     Line.objects.create(
                         document_part=self,
+                        # typology=line_types.get(line['type']),
                         baseline=line['baseline'],
                         mask=mask)
             if steps in ['regions', 'both']:
-                for region_type in res['regions'].items():
-                    for region in region_type:
+                block_types = {t.name: t for t in self.document.valid_block_types.all()}
+                for region_type, regions in res['regions'].items():
+                    for region in regions:
                         Block.objects.create(
                             document_part=self,
+                            typology=block_types.get(region_type),
                             box=region)
         im.close()
 

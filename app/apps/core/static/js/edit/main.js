@@ -48,10 +48,10 @@ var partVM = new Vue({
                                                    '$1'+this.part.pk+'$2'));
 
                 // set the 'image' tab btn to select the corresponding image
-                var tabUrl = new URL($('#images-tab-link').attr('href'),
+                var tabUrl = new URL($('#nav-img-tab').attr('href'),
                                      window.location.origin);
                 tabUrl.searchParams.set('select', this.part.pk);
-                $('#images-tab-link').attr('href', tabUrl);
+                $('#nav-img-tab').attr('href', tabUrl);
             }
         },
         selectedTranscription: function(n, o) {

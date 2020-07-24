@@ -183,7 +183,6 @@ class LineListSerializer(serializers.ListSerializer):
 
 
 class LineSerializer(serializers.ModelSerializer):
-    pk = serializers.IntegerField(required=False)
     region = serializers.PrimaryKeyRelatedField(
         queryset=Block.objects.all(),
         allow_null=True,
@@ -222,7 +221,6 @@ class LineOrderSerializer(serializers.ModelSerializer):
 
 
 class DetailedLineSerializer(LineSerializer):
-    region = BlockSerializer(required=False)
     transcriptions = LineTranscriptionSerializer(many=True, required=False)
 
     class Meta(LineSerializer.Meta):

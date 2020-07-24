@@ -113,7 +113,6 @@ class SegmenterRegion {
     }
 
     delete() {
-        this.unselect();
         this.remove();
     }
 
@@ -332,7 +331,6 @@ class SegmenterLine {
     }
 
     delete() {
-        this.unselect();
         this.remove();
     }
 
@@ -853,6 +851,11 @@ class Segmenter {
 
         tool.onMouseDown = this.onMouseDown.bind(this);
 
+        // hide the tooltip on leaving the area
+        this.canvas.addEventListener('mouseleave', function() {
+            this.tooltip.style.display = 'none';
+        }.bind(this));
+
         this.tool = tool;
         this.tool.activate();
         this.loaded = true;
@@ -1106,11 +1109,6 @@ class Segmenter {
         target.onMouseLeave = function(event) {
             this.tooltip.style.display = 'none';
         }.bind(this);
-
-        // also hide it when leaving the editor since it's missing a lot of events
-        this.canvas.addEventListener('mouseleave', function() {
-            this.tooltip.style.display = 'none';
-        }.bind(this));
     }
 
     multiMove(event) {
@@ -1680,7 +1678,6 @@ class Segmenter {
             this.disableShortcuts = false;
             this.regionTypesSelect.blur();
         }.bind(this));
-
 
         this.lineTypesSelect = document.createElement('select');
         this.lineTypesSelect.style.position = 'absolute';
