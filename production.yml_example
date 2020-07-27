@@ -12,8 +12,10 @@ services:
 
     nginx:
       restart: always
-      ports:
-        - 80:80
+      volumes:
+        - static:/usr/src/app/static
+        - media:/usr/src/app/media
+        - /etc/letsencrypt/live/$DOMAIN/:/etc/certs
 
     flower:
       restart: always

@@ -40,8 +40,10 @@ services:
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
+      - ./nginx/certs/:/etc/certs
     ports:
       - 8080:80
+      - 443:443
     depends_on:
       - web
 
@@ -108,7 +110,7 @@ services:
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
+      - PRIMARY_HOST=${DOMAIN}
       - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
 
 volumes:
