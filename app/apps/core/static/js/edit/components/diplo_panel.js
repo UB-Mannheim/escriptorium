@@ -1,7 +1,7 @@
+var timer ;
 var DiploPanel = BasePanel.extend({
     data() { return {
         editLine: null,
-        save: false, //show save button
         updatedLines : [],
         createdLines : [],
         movedLines:[],
@@ -27,6 +27,13 @@ var DiploPanel = BasePanel.extend({
         }.bind(this));
     },
     methods:{
+        toggleSave(){
+            clearTimeout(timer);
+            timer = setTimeout(function (){
+                this.save();
+            }.bind(this),
+                2000);
+        },
         onDragginEnd(ev) {
             /*
             Finish dragging lines, save new positions
@@ -57,7 +64,7 @@ var DiploPanel = BasePanel.extend({
             }
 
         },
-        toggleSave(){
+        save(){
             /*
              if some lines are modified add them to updatedlines, new lines add them to createdLines then save
             */
