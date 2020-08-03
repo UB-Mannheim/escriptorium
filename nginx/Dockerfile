@@ -1,4 +1,12 @@
 FROM nginx:1.15.0-alpine
 
 RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d
+
+ARG NGINX_CONF=nginx.conf
+
+ARG SSL_CERT
+ARG SSL_KEY
+
+COPY ${NGINX_CONF} /etc/nginx/conf.d/nginx.conf
+COPY ${SSL_CERT} /etc/certs/cert.pem
+COPY ${SSL_KEY} /etc/certs/key.pem

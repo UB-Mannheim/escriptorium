@@ -13,11 +13,19 @@ services:
     nginx:
       restart: always
       ports:
-        - 80:80
+       - "80:80"
+      # - "443:443"
+
+      ### To enable SSL, generate keys with letsencrypt/certbot
+      ### and uncomment this block and the port 443
+      # build:
+      #   args:
+      #     - NGINX_CONF=ssl.conf
+      #     - SSL_CERT=/etc/letsencrypt/live/$DOMAIN/fullchain.pem
+      #     - SSL_KEY=/etc/letsencrypt/live/$DOMAIN/privkey.pem
 
     flower:
       restart: always
-
 
     # cpus and mem_limit imposes a hard limit on cpus usage,
     # needed to keep some for http/db when working with a single machine
