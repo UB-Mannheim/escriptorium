@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'easy_thumbnails.optimize',
     'channels',
     'rest_framework',
+    'rest_framework.authtoken',
     'compressor',
 
     'bootstrap',
@@ -313,6 +314,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
         'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.BasicAuthentication',  # Only for testing
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
