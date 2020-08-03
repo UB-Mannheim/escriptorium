@@ -37,6 +37,8 @@ services:
 
   nginx:
     build: ./nginx
+    environment:
+      - SERVERNAME=${DOMAIN:-localhost}
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
@@ -44,6 +46,7 @@ services:
       - 8080:80
     depends_on:
       - web
+      - channelserver
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
@@ -108,7 +111,7 @@ services:
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
+      - PRIMARY_HOST=${DOMAIN:-localhost}
       - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
 
 volumes:
