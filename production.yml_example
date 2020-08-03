@@ -23,6 +23,7 @@ services:
       #     - NGINX_CONF=ssl.conf
       #     - SSL_CERT=/etc/letsencrypt/live/$DOMAIN/fullchain.pem
       #     - SSL_KEY=/etc/letsencrypt/live/$DOMAIN/privkey.pem
+      #     - ACME_FILE=./<some_hash>
 
     flower:
       restart: always
