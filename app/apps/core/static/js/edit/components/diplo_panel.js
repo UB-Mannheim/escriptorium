@@ -90,57 +90,55 @@ var DiploPanel = BasePanel.extend({
 
             // click delete button if you are at the beggining of the line
 
-            if(ev.keyCode==8 && this.getCursorPosition()==0){
-                ev.preventDefault();
-
-                this.updateEditLine(index -1);
-                let idx = this.part.lines.indexOf(this.editLine);
-                let child = this.$children[idx];
-                let nextLine = this.part.lines[idx+1];
-                let content = child.line.currentTrans.content + nextLine.currentTrans.content;
-                child.setContent(content);
-                this.addToUpdatedLines(child.line.currentTrans);
-
-                for(let i=idx +1; i < this.part.lines.length; i++) {
-
-                    let child = this.$children[i];
-                    let nextLine = this.part.lines[i+1];
-                    let currentLine = child.line;
-                    if(nextLine){
-
-                        if(currentLine.currentTrans.pk){
-                            child.setContent(nextLine.currentTrans.content);
-                            this.addToUpdatedLines(currentLine.currentTrans);
-
-                        }
-                        else{
-                            child.setContent(nextLine.currentTrans.content);
-                            this.createdLines.push(currentLine.currentTrans);
-                        }
-                    }
-                    else {
-                        child.setContent("");
-                        this.addToUpdatedLines(child.line.currentTrans);
-                    }
-                    this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
-
-
-                    }
-                 this.updateEditLine( -1);
-
-
-                }
+            // if(ev.keyCode==8 && this.getCursorPosition()==0){
+            //     ev.preventDefault();
+            //
+            //     this.updateEditLine(index -1);
+            //     let idx = this.part.lines.indexOf(this.editLine);
+            //     let child = this.$children[idx];
+            //     let nextLine = this.part.lines[idx+1];
+            //     let content = child.line.currentTrans.content + nextLine.currentTrans.content;
+            //     child.setContent(content);
+            //     this.addToUpdatedLines(child.line.currentTrans);
+            //
+            //     for(let i=idx +1; i < this.part.lines.length; i++) {
+            //
+            //         let child = this.$children[i];
+            //         let nextLine = this.part.lines[i+1];
+            //         let currentLine = child.line;
+            //         if(nextLine){
+            //
+            //             if(currentLine.currentTrans.pk){
+            //                 child.setContent(nextLine.currentTrans.content);
+            //                 this.addToUpdatedLines(currentLine.currentTrans);
+            //
+            //             }
+            //             else{
+            //                 child.setContent(nextLine.currentTrans.content);
+            //                 this.createdLines.push(currentLine.currentTrans);
+            //             }
+            //         }
+            //         else {
+            //             child.setContent("");
+            //             this.addToUpdatedLines(child.line.currentTrans);
+            //         }
+            //         this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
+            //
+            //
+            //         }
+            //      this.updateEditLine( -1);
+            //
+            //
+            //     }
 
             //click on enter button
             if(ev.keyCode == 13){
-                let idx = this.part.lines.indexOf(this.editLine) ;
+                ev.preventDefault();
+                let idx = this.part.lines.indexOf(this.editLine);
                 if(idx < this.part.lines.length -1){
-                // this.updateEditLine(index +1);
-                this.carriage(ev,idx);
+                this.updateEditLine(idx +1);
                 }
             }
-            this.toggleSave();
-
         },
 
         setEditLine(l) {
