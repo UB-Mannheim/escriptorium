@@ -28,6 +28,7 @@ var DiploPanel = BasePanel.extend({
     },
     methods:{
         toggleSave(){
+
             clearTimeout(timer);
             timer = setTimeout(function (){
                 this.save();
@@ -139,8 +140,10 @@ var DiploPanel = BasePanel.extend({
                 this.updateEditLine(idx +1);
                 }
             }
+            if(ev.keyCode == 8){
+                this.toggleSave();
+            }
         },
-
         setEditLine(l) {
             this.editLine = l;
         },
