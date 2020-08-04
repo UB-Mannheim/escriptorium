@@ -78,6 +78,8 @@ var DiploPanel = BasePanel.extend({
                 this.setEditLine(this.part.lines[position]);
                 let nextLine = this.$children[position];
                 nextLine.startEdit();
+                this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
+
             }
         },
         setHeight() {
@@ -204,8 +206,8 @@ var DiploPanel = BasePanel.extend({
             return window.getSelection().getRangeAt(0).startOffset;
         },
         setCursorPosition(id) {
-            const elt =  document.querySelector(id);
-            const textNode = elt.childNodes[0];
+
+            const textNode = document.querySelector(id);
             let  sel = window.getSelection();
             const range = document.createRange();
             range.setStart(textNode,textNode.length );  // Start at first character
