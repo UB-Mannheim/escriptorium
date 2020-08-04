@@ -542,7 +542,7 @@
                   <div class="tools">
                       <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
                   </div>
-                  <div v-if="part" id="diplomatic-lines" contenteditable="true"
+                  <div v-if="part" id="diplomatic-lines" contenteditable
                        @keyup="toggleSave"
                        class="content-container {{ document.read_direction }}">
                           <div id="list" class="list-group">
@@ -553,18 +553,26 @@
                                  v-bind:key="line.pk"
                                  inline-template>
 
-                                  <div v-bind:id="line.pk" v-if="line.currentTrans"
+                              <div class="d-flex flex-row">
+{#                                  <div class ="table-row line-region " class="w-10" contenteditable="false">${showregion}</div>#}
+                                  <div class ="table-row line-order w-10"
+                                    contenteditable="false"
+                                  >${line.order + 1}</div>
+
+                                  <p v-bind:id="line.pk"
+                                       v-if="line.currentTrans"
                                        @mouseup="startEdit"
                                        @focusout="stopEdit"
                                        @mouseover="showOverlay"
                                        @mouseleave="hideOverlay"
                                        @select="stopEdit"
-                                       @paste="onPaste"
+{#                                       @paste="onPaste"#}
                                        class="table-row line-content"
                                        ref="content"
-                                  >${line.currentTrans.content}</div>
-                          </div>
+                                  v-html="line.currentTrans.content"></p>
+                              </div>
                       </diploline>
+                    </div>
                   </div>
               </div>
           </DiploPanel>
