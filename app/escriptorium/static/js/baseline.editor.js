@@ -1317,7 +1317,11 @@ class Segmenter {
             return null;
         }.bind(this);
         let finishCut = function(event) {
-            this.splitByPath(clip);
+            if (this.mode == 'lines') {
+                this.splitLinesByPath(clip);
+            } else if (this.mode == 'regions') {
+                this.splitRegionsByPath(clip);
+            }
             clip.remove();
 
             this.resetToolEvents();
@@ -1856,29 +1860,39 @@ class Segmenter {
     }
 
     splitHelper(clip, event) {
-        this.lines.forEach(function(line) {
-            if (!line.baselinePath) return;
-            let intersections = line.baselinePath.getIntersections(clip);
-            for (var i = 0; i < intersections.length; i++) {
-                new Path.Circle({
-                    center: intersections[i].point,
-                    radius: 5,
-                    fillColor: 'red'
-                }).removeOnDrag().removeOnUp();
+        if (this.mode == 'lines') {
+            this.lines.forEach(function(line) {
+                if (!line.baselinePath) return;
+                let intersections = line.baselinePath.getIntersections(clip);
+                for (var i = 0; i < intersections.length; i++) {
+                    new Path.Circle({
+                        center: intersections[i].point,
+                        radius: 5,
+                        fillColor: 'red'
+                    }).removeOnDrag().removeOnUp();
 
-                if (intersections.length) {
-                    // show what is going to be cut
-                    let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
-                    intersections.forEach(location => cut.add(location));
-                    cut.bringToFront();
-                    line.baselinePath.segments.forEach(function(segment) {
-                        if (clip.contains(segment.point)) {
-                            cut.insert(segment.index, segment);
-                        }
-                    }.bind(this));
+                    if (intersections.length) {
+                        // show what is going to be cut
+                        let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
+                        intersections.forEach(location => cut.add(location));
+                        cut.bringToFront();
+                        line.baselinePath.segments.forEach(function(segment) {
+                            if (clip.contains(segment.point)) {
+                                cut.insert(segment.index, segment);
+                            }
+                        }.bind(this));
+                    }
                 }
-            }
-        }.bind(this));
+            }.bind(this));
+        } else if (this.mode == 'regions') {
+            this.regions.forEach(function(region) {
+                let inter = region.polygonPath.intersect(clip);
+                inter.strokeColor = 'red';
+                inter.strokeWidth = 2;
+                inter.fillColor = 'red';
+                inter.removeOnDrag().removeOnUp();
+            }.bind(this));
+        }
     }
 
     getLineMaxOrder() {
@@ -1896,7 +1910,32 @@ class Segmenter {
         return math.det(matrix);
     }
 
-    splitByPath(path) {
+    splitRegionsByPath(path) {
+        this.regions.forEach(function(region) {
+            let intersections = region.polygonPath.getIntersections(path);
+            if (intersections.length == 2) {
+                // remove everything in the selection rectangle
+                let newPath = region.polygonPath.subtract(path, {insert: true});
+                region.polygonPath.removeSegments();
+                newPath.segments.forEach(s=>region.polygonPath.add(s));
+                newPath.remove();
+            } else if (intersections.length > 2) {
+                let coumpound = region.polygonPath.subtract(path, {insert: true});
+                region.polygonPath.removeSegments();
+                coumpound.children[0].segments.forEach(s=>region.polygonPath.add(s));
+                for (let i=1;i<coumpound.children.length;i++) {
+                    let newRegion = this.createRegion(null, coumpound.children[i].segments, region.type, null, false);
+                    newRegion.updateDataFromCanvas();
+                    coumpound.children[i].remove();
+                }
+                coumpound.remove();
+            }
+            region.refresh();
+            region.updateDataFromCanvas();
+        }.bind(this));
+    }
+
+    splitLinesByPath(path) {
         this.lines.forEach(function(line) {
             if (line.baseline !== null) {
                 let intersections = line.baselinePath.getIntersections(path);
@@ -2103,7 +2142,7 @@ class Segmenter {
             this.averageLineHeight = Math.abs(
                 this.lines
                     .map(l=>l.baseline && l.baseline[0][0] || 0)
-                .reduce((a,b)=>b-a) / this.lines.length / 2);
+                    .reduce((a,b)=>b-a) / this.lines.length / 2);
         }
     }
 

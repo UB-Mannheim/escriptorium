@@ -40,15 +40,16 @@ class Alert {
 }
 
 $(document).ready(function() {
-    msgSocket = new ReconnectingWebSocket('ws://' + window.location.host + '/ws/notif/');
+    let scheme = location.protocol === 'https:'?'wss:':'ws:';
+    msgSocket = new ReconnectingWebSocket(scheme + '//' + window.location.host + '/ws/notif/');
     msgSocket.maxReconnectAttempts = 3;
-    
+
     msgSocket.addEventListener('open', function(e) {
         if (DEBUG) {
             console.log('Connected to notification socket');
         }
     });
-    
+
     msgSocket.addEventListener('message', function(e) {
         var data = JSON.parse(e.data);
         if (DEBUG) {
@@ -63,7 +64,7 @@ $(document).ready(function() {
             $container.trigger(data["name"], data["data"]);
         }
     });
-    
+
     msgSocket.addEventListener('close', function(e) {
         if (DEBUG) {
             console.error('Notification socket closed unexpectedly');
