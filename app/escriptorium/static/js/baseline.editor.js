@@ -1177,6 +1177,16 @@ class Segmenter {
     onMouseDown(event) {
         if (isRightClick(event.event)) return;
         if (this.selecting) {
+            if (this.mode == 'regions') {
+                // if what we are selecting is already selected, check there isn't something below
+                for (let i=0; i<this.regions.length; i++) {
+                    if (this.selecting.selected && this.regions[i] != this.selecting) {
+                        let hit = this.regions[i].polygonPath.hitTest(event.point);
+                        if (hit) this.selecting = this.regions[i];
+                        break;
+                    }
+                }
+            }
             // selection
             if (event.event.shiftKey) {
                 this.selecting.toggleSelect();
