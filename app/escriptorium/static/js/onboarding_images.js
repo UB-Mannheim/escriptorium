@@ -1,6 +1,6 @@
 var document_images_intro = introJs();
-document_images_intro.setOptions({'doneLabel', 'Next page',
-steps: [
+document_images_intro.setOptions('doneLabel', 'Next page');
+document_images_intro.setOptions({steps: [
 {
   element: '#nav-doc-tab',
   intro: 'Update Document description (Name, Text direction or metadata).<br>',
@@ -44,12 +44,7 @@ steps: [
 {
   element: '#transcribe-selected',
   intro: 'Transcribe automatically the selected images.',
-  position: 'top'
-},
-{
-  element: '#js-edit',
-  intro: 'Transcribe, Segment Manually the image.',
-  position: 'bottom'
+  position: 'left'
 },
 ]});
 
