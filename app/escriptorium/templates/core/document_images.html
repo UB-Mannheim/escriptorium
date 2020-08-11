@@ -133,7 +133,7 @@ $(document).ready(function() {
     <script src="{% static 'js/image_cards.js' %}"></script>
     <script src="{% static 'js/lazyload.js' %}"></script>
     <script src="{% static 'js/help.js' %}"></script>
-    <script src="{% static 'js/onboarding.js' %}"></script>
+    <script src="{% static 'js/onboarding_images.js' %}"></script>
 {% endcompress %}
 
 <script type="text/javascript">
@@ -145,7 +145,8 @@ if (onboarding == "True")
     });
 
     document_images_intro.oncomplete(function() {
-        exitonboarding();
+        var edit_url = "{% url 'document-part-edit' pk=document.pk %}";
+        window.location.href = edit_url;
     });
 
 }

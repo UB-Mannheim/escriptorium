@@ -1,5 +1,5 @@
 var document_images_intro = introJs();
-document_images_intro.setOptions({
+document_images_intro.setOptions({'doneLabel', 'Next page',
 steps: [
 {
   element: '#nav-doc-tab',
@@ -14,10 +14,6 @@ steps: [
 {
   element: '#nav-models-tab',
   intro: 'Handle Transcription and Segmentation models related to this document.',
-  position: 'bottom'
-},  {
-  element: '#document-image-dropzone',
-  intro: 'Upload a new document part image.',
   position: 'bottom'
 },
 {
