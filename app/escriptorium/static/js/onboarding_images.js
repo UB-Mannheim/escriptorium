@@ -48,17 +48,3 @@ document_images_intro.setOptions({steps: [
 },
 ]});
 
-function exitonboarding() {
-  $.ajax({type: 'PUT', url:'/api/users/onboarding/',
-          contentType: "application/json; charset=utf-8",
-          data:JSON.stringify({
-            onboarding : "False",
-            })
-
-      }).done($.proxy(function(data){
-                console.log("success",data)
-            }, this)).fail(function(data) {
-                alert(data);
-            });
-
-}
