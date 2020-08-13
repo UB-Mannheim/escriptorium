@@ -46,5 +46,10 @@ document_images_intro.setOptions({steps: [
   intro: 'Transcribe automatically the selected images.',
   position: 'left'
 },
+{
+  element : "#cards-container",
+  intro : 'This shows all the images for your manuscript. You can select one or multiple images for training, segmentation, transcribing, or export. Clicking on the [fas fa-edit] icon allows you to edit the segmentation and text. The [fa-align-left] icon shows you if the page has been segmented (green = yes, black = no, ‘pulsing’ green = segmentation in progress). The blue progress bar shows the amount of text that has been entered.\n',
+  position : 'top'
+}
 ]});
 
