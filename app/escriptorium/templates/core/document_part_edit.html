@@ -62,7 +62,7 @@
     {% endblock %}
 
     {% block extra_nav %}
-    <div class="nav-item ml-auto">
+    <div class="nav-item ml-auto" id="toggle-panels">
         <button type="button"
                 @click="togglePanel"
                 data-target="source"
@@ -171,6 +171,7 @@
             <SegmentationPanel v-if="show.segmentation && part.loaded"
                                v-bind:fullsizeimage="fullsizeimage"
                                v-bind:part="part"
+                               id="segmentation-panel"
                                ref="segPanel" inline-template>
                 <div class="col panel">
                     <div class="tools">
@@ -333,6 +334,7 @@
     <keep-alive>
         <VisuPanel v-if="show.visualisation && part.loaded"
                    v-bind:part="part"
+                   id="transcription-panel"
                    ref="visuPanel" inline-template>
             <div class="col panel">
                 <div class="tools">
@@ -544,6 +546,7 @@
     <keep-alive>
         <DiploPanel v-if="show.diplomatic && part.loaded"
                     v-bind:part="part"
+                    id="diplomatic-panel"
                     ref="diploPanel"
                     inline-template>
             <div class="col panel">
@@ -618,6 +621,7 @@
    const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
    const DOCUMENT_ID = '{{document.id}}';
    var PART_ID = {{part.id}};  // can be changed with next & previous pages
+  const onboarding  = "{{ onboarding }}";
   </script>
 
   <script type="text/javascript">
@@ -643,6 +647,8 @@
   <script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/lodash/lodash.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+  <script src="{% static 'vendor/introjs/intro.js' %}"></script>
+  <script src="{% static 'js/onboarding/edit.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>

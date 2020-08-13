@@ -15,6 +15,23 @@ var partVM = new Vue({
         selectedTranscription: null,
         comparedTranscriptions: []
     },
+    mounted(){
+        if(onboarding) {
+            this.$nextTick(function () {
+                this.show = {
+                    source: true,
+                    segmentation: true,
+                    visualisation: true,
+                    diplomatic: true
+                };
+                let timer = setTimeout(function (){
+                        this.call_introjs();
+                     }.bind(this),
+                2000);
+
+            });
+        }
+    },
     computed: {
         imageSize() {
             return this.part.image.size[0]+'x'+this.part.image.size[1];
@@ -177,6 +194,19 @@ var partVM = new Vue({
         }.bind(this));
     },
     methods: {
+        call_introjs(){
+            var document_edit = introJs();
+            document_edit.setOptions({steps: steps_intro});
+            document_edit.start();
+            document_edit.onexit(function () {
+                // exitonboarding();
+            });
+
+            document_edit.oncomplete(function () {
+            segmentation_intro.start();
+            });
+            console.log("hey you");
+        },
         resetZoom() {
             this.zoom.reset();
         },

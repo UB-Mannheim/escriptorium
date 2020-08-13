@@ -250,6 +250,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         context['object'] = self.object.document
         context['document'] = self.object.document
         context['part'] = self.object
+        context['onboarding'] = self.request.user.onboarding
         return context
 
     def dispatch(self, *args, **kwargs):
