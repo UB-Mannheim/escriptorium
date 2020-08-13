@@ -13,7 +13,8 @@ var partVM = new Vue({
         blockShortcuts: false,
         fullsizeimage: false,
         selectedTranscription: null,
-        comparedTranscriptions: []
+        comparedTranscriptions: [],
+        intro : introJs()
     },
     mounted(){
         if(onboarding) {
@@ -195,17 +196,16 @@ var partVM = new Vue({
     },
     methods: {
         call_introjs(){
-            var document_edit = introJs();
-            document_edit.setOptions({steps: steps_intro});
-            document_edit.start();
-            document_edit.onexit(function () {
-                // exitonboarding();
+
+            this.intro.setOptions({steps: steps_intro});
+            this.intro.start();
+            this.intro.onexit(function () {
+                exitonboarding();
             });
 
-            document_edit.oncomplete(function () {
-            segmentation_intro.start();
+            this.intro.oncomplete(function () {
+                window.location.href= models_url;
             });
-            console.log("hey you");
         },
         resetZoom() {
             this.zoom.reset();
