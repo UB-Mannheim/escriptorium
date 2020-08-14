@@ -622,6 +622,7 @@
    const DOCUMENT_ID = '{{document.id}}';
    var PART_ID = {{part.id}};  // can be changed with next & previous pages
   const onboarding  = "{{ onboarding }}";
+  var models_url = "{% url 'document-models' document_pk=document.pk %}";
   </script>
 
   <script type="text/javascript">

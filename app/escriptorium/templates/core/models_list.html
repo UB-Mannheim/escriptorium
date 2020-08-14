@@ -73,6 +73,9 @@
 
 {% block scripts %}
 {{ block.super }}
+<script src="{% static 'vendor/introjs/intro.js' %}"></script>
+<script src="{% static 'js/onboarding/models.js' %}"></script>
+<script src="{% static 'js/onboarding/exit.js' %}"></script>
 <script type="text/javascript">
 'use strict';
 $(document).ready(function() {
@@ -83,4 +86,19 @@ $(document).ready(function() {
 });
 </script>
 <script src="{% static 'js/models.js' %}"></script>
+<script type="text/javascript">
+const onboarding  = "{{ onboarding }}";
+if (onboarding == "True") {
+
+    models_intro.start();
+    models_intro.onexit(function () {
+        exitonboarding();
+    });
+
+    models_intro.oncomplete(function () {
+        exitonboarding();
+
+    });
+}
+</script>
 {% endblock %}
