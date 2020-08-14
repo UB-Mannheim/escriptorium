@@ -1182,8 +1182,10 @@ class Segmenter {
                 for (let i=0; i<this.regions.length; i++) {
                     if (this.selecting.selected && this.regions[i] != this.selecting) {
                         let hit = this.regions[i].polygonPath.hitTest(event.point);
-                        if (hit) this.selecting = this.regions[i];
-                        break;
+                        if (hit) {
+                            this.selecting = this.regions[i];
+                            break;
+                        }
                     }
                 }
             }
