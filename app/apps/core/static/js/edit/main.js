@@ -17,7 +17,7 @@ var partVM = new Vue({
         intro : introJs()
     },
     mounted(){
-        if(onboarding) {
+        if(onboarding_edit) {
             this.$nextTick(function () {
                 this.show = {
                     source: true,
