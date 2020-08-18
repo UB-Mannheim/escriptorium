@@ -11,6 +11,27 @@ from django.urls import reverse
 from core.models import Block, Line, Transcription, LineTranscription
 from core.tests.factory import CoreFactoryTestCase
 
+class UserViewSetTestCase(CoreFactoryTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+    def test_onboarding(self):
+        user = self.factory.make_user()
+        self.client.force_login(user)
+        uri = reverse('api:user-onboarding')
+        resp = self.client.put(uri, {
+                'onboarding_edit' : 'False',
+                }, content_type='application/json')
+
+        user.refresh_from_db()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(user.onboarding_edit, False)
+        self.assertEqual(user.onboarding_images, True)
+
+
+
+
 
 class DocumentViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
