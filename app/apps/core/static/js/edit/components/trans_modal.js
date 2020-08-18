@@ -26,6 +26,10 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         $(this.$el).draggable({handle: '.modal-header'});
         $(this.$el).resizable();
         this.computeStyles();
+        let timer = setTimeout(function (){
+            this.show_onboarding();
+                     }.bind(this),
+                1000);
     },
     watch: {
         line(new_, old_) {
@@ -164,5 +168,38 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 overlay.style.display = 'none';
             }
         },
+        show_onboarding(){
+
+            if(onboarding_trans == "True"){
+                this.intro = introJs();
+                this.intro.setOptions({steps: [
+                    {
+                     element: '#modal-img-container',
+                     intro: "This shows the transcription pane where you can enter or correct a transcription line-by-line.<br>" +
+                         " Clicking on a line of text will bring up a window showing the image of that line, and a box where you can enter or correct the transcription.\n",
+                     position: 'top'
+                    },
+                    {
+                        element: '#trans-input-container',
+                        intro : "Here you can select which transcriptions to show in the transcription pane for comparison.",
+                        position: 'top'
+                        }
+                ]});
+
+                this.intro.start();
+                this.intro.onexit(function () {
+                exitonboarding({
+                    onboarding_trans : "False",
+                    });
+                });
+
+                this.intro.oncomplete(function () {
+                    exitonboarding({
+                        onboarding_trans : "False",
+                    });
+                });
+
+            }
+        }
     },
 });

@@ -17,7 +17,7 @@ var partVM = new Vue({
         intro : introJs()
     },
     mounted(){
-        if(onboarding_edit) {
+        if(onboarding_edit =="True") {
             this.$nextTick(function () {
                 this.show = {
                     source: true,
@@ -26,7 +26,7 @@ var partVM = new Vue({
                     diplomatic: true
                 };
                 let timer = setTimeout(function (){
-                        this.call_introjs();
+                        this.show_onboarding();
                      }.bind(this),
                 2000);
 
@@ -195,7 +195,7 @@ var partVM = new Vue({
         }.bind(this));
     },
     methods: {
-        call_introjs(){
+        show_onboarding(){
 
             this.intro.setOptions({steps: steps_intro});
             this.intro.start();
