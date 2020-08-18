@@ -200,7 +200,9 @@ var partVM = new Vue({
             this.intro.setOptions({steps: steps_intro});
             this.intro.start();
             this.intro.onexit(function () {
-                exitonboarding();
+                exitonboarding({
+                onboarding_edit : "False",
+                });
             });
 
             this.intro.oncomplete(function () {

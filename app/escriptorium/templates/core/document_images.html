@@ -116,7 +116,7 @@
 <script type="text/javascript">
 'use strict';
 const DOCUMENT_ID = {{ document.pk }};
-const onboarding  = "{{ onboarding }}";
+const onboarding_images  = "{{ onboarding_images }}";
 $(document).ready(function() {
   // join the ws room
   msgSocket.addEventListener('open', function(ev) {
@@ -138,11 +138,13 @@ $(document).ready(function() {
 {% endcompress %}
 
 <script type="text/javascript">
-if (onboarding == "True")
+if (onboarding_images == "True")
 {
     document_images_intro.start();
     document_images_intro.onexit(function() {
-        exitonboarding();
+        exitonboarding({
+            onboarding_images : "False",
+            });
     });
 
     document_images_intro.oncomplete(function() {

@@ -87,16 +87,20 @@ $(document).ready(function() {
 </script>
 <script src="{% static 'js/models.js' %}"></script>
 <script type="text/javascript">
-const onboarding  = "{{ onboarding }}";
-if (onboarding == "True") {
+const onboarding_models  = "{{ onboarding_models }}";
+if (onboarding_models == "True") {
 
     models_intro.start();
     models_intro.onexit(function () {
-        exitonboarding();
+        exitonboarding({
+            onboarding_models : "False",
+            });
     });
 
     models_intro.oncomplete(function () {
-        exitonboarding();
+        exitonboarding({
+            onboarding_models : "False",
+            });
 
     });
 }
