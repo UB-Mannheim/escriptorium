@@ -1,5 +1,6 @@
 from django.urls import include, path
 from rest_framework_nested import routers
+from rest_framework.authtoken import views
 
 from api.views import (DocumentViewSet,
                        UserViewSet,
@@ -29,5 +30,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(documents_router.urls)),
     path('', include(parts_router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('token-auth/', views.obtain_auth_token)
 ]

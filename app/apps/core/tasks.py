@@ -115,7 +115,7 @@ def make_segmentation_training_data(part):
         'image': part.image.path,
         'baselines': [{'script': 'default', 'baseline': bl}
                       for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {'test': [r.box for r in part.blocks.all().only('box')]}
+        'regions': {'default': [r.box for r in part.blocks.all().only('box')]}
     }
 
 
@@ -146,8 +146,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
     except ValueError:  # model is empty
-        # load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
-        load = None
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         model.file = upload_to
 
@@ -185,6 +184,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             evaluation_data=evaluation_data,
             threads=LOAD_THREADS,
             augment=True,
+            resize='both',
             load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):

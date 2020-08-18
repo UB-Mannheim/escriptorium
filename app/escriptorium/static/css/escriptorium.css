@@ -608,7 +608,15 @@ i.panel-icon {
     overflow-wrap: break-word;
     flex-basis: 85%;
 }
-.selected {
+.line-selected {
   background-color:#33A2FF;
   border: solid #33A2FF 1px;
+}
+
+.cmp-add {
+    background-color: lightgreen;
+}
+
+.cmp-del {
+    color: red;
 }

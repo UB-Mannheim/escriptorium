@@ -206,7 +206,7 @@ class LineTypeViewSet(ModelViewSet):
 
 
 class BlockViewSet(ModelViewSet):
-    queryset = Block.objects.all()
+    queryset = Block.objects.select_related('typology')
     serializer_class = BlockSerializer
 
     def get_queryset(self):
@@ -214,15 +214,16 @@ class BlockViewSet(ModelViewSet):
 
 
 class LineViewSet(ModelViewSet):
-    queryset = (Line.objects.all()
-                .select_related('block')
-                .prefetch_related('transcriptions__transcription'))
-    serializer_class = DetailedLineSerializer
+    queryset = (Line.objects.select_related('block')
+                            .select_related('typology'))
+
+    def get_queryset(self):
+        return super().get_queryset().filter(document_part=self.kwargs['part_pk'])
 
     def get_serializer_class(self):
-        if self.action in ['retrieve', 'list']:
+        if self.action == 'retrieve':
             return DetailedLineSerializer
-        else:  # create
+        else:  # create, list
             return LineSerializer
 
     @action(detail=False, methods=['post'])
@@ -268,7 +269,15 @@ class LineViewSet(ModelViewSet):
             return Response(errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(status=200, data=response)
+        # return Response(status=200, data=response)
+
+        # line = get_object_or_404(Line, pk=pk)
+        # serializer = LineMoveSerializer(line=line, data=request.data)
+        # if serializer.is_valid():
+        #     serializer.move()
+        #     return Response({'status': 'moved'})
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LargeResultsSetPagination(PageNumberPagination):

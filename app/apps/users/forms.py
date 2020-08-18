@@ -32,7 +32,7 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
     """
     This is a registration form since a user is created.
     """
-    
+
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ('email',
@@ -41,8 +41,14 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
                   'last_name',
                   'password1',
                   'password2')
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].help_text = None
         self.fields['password1'].help_text = None
+
+
+class ProfileForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('email', 'first_name', 'last_name')

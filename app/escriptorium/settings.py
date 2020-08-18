@@ -34,6 +34,9 @@ sys.path.append(APPS_DIR)
 SITE_ID = 1
 SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
+# SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', False) == 'True'  # should be done by  nginx
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
@@ -57,6 +60,7 @@ INSTALLED_APPS = [
     'easy_thumbnails.optimize',
     'channels',
     'rest_framework',
+    'rest_framework.authtoken',
     'compressor',
 
     'bootstrap',
@@ -149,8 +153,8 @@ LANGUAGES = [
   ('de', _('French')),
 ]
 
-EMAIL_HOST = 'mail'
-EMAIL_PORT = 25
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail')
+EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
 DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@escriptorium.fr')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
@@ -313,6 +317,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
         'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.BasicAuthentication',  # Only for testing
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,

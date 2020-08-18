@@ -37,6 +37,8 @@ services:
 
   nginx:
     build: ./nginx
+    environment:
+      - SERVERNAME=${DOMAIN:-localhost}
     volumes:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
@@ -44,6 +46,7 @@ services:
       - 8080:80
     depends_on:
       - web
+      - channelserver
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
@@ -87,6 +90,8 @@ services:
     command: ["flower", "--broker=redis://redis:6379/0", "--port=5555"]
     ports:
       - 5555:5555
+    depends_on:
+      - redis
 
   # No need while we don't have regular tasks
   # celerybeat:
@@ -108,7 +113,7 @@ services:
     expose:
       - 25
     environment:
-      - PRIMARY_HOST=${MAIL_PRIMARY_HOST}
+      - PRIMARY_HOST=${DOMAIN:-localhost}
       - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
 
 volumes:

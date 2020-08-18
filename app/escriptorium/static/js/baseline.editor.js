@@ -8,8 +8,7 @@
    segmenter.load([{baseline: [[0,0],[10,10]], mask: null}]);
 
    Options:
-   lengthTreshold=15
-   lengthTreshold=15,
+   lengthThreshold=15
    delayInit=false,
    deletePointBtn=null,
    deleteSelectionBtn=null,
@@ -73,6 +72,7 @@ class SegmenterRegion {
         this.polygonPath.selected = false;
         this.segmenter.removeFromSelection(this);
         this.selected = false;
+
     }
 
     toggleSelect() {
@@ -93,9 +93,15 @@ class SegmenterRegion {
     update(polygon) {
         if (polygon && polygon.length) {
             this.polygon = polygon;
-            this.polygonPath.removeSegments();
-            this.polygonPath.addSegments(polygon);
-            this.segmenter.bindRegionEvents(this);
+            if (polygon.length == this.polygonPath.segments.length) {
+                // if number of points didn't change make sure to keep selection
+                for (let i in this.polygon) {
+                    this.polygonPath.segments[i].point = this.polygon[i];
+                }
+            } else {
+                this.polygonPath.removeSegments();
+                this.polygonPath.addSegments(this.polygon);
+            }
         }
     }
 
@@ -107,7 +113,6 @@ class SegmenterRegion {
     }
 
     delete() {
-        this.unselect();
         this.remove();
     }
 
@@ -252,19 +257,33 @@ class SegmenterLine {
     update(baseline, mask, region, order) {
         if (baseline && baseline.length) {
             this.baseline = baseline;
-            this.baselinePath.removeSegments();
-            this.baselinePath.addSegments(baseline);
-            this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
-            this.segmenter.bindLineEvents(this);
+            if (baseline.length == this.baselinePath.segments.length) {
+                // make sure to keep selection
+                for (let i in this.baseline) {
+                    this.baselinePath.segments[i].point = this.baseline[i];
+                }
+            } else {
+                this.baselinePath.removeSegments();
+                this.baselinePath.addSegments(baseline);
+            }
+            /* this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
+             * this.segmenter.bindLineEvents(this); */
         }
         if (mask && mask.length) {
             if (! this.maskPath) {
                 this.makeMaskPath();
             }
             this.mask = mask;
-            this.maskPath.removeSegments();
-            this.maskPath.addSegments(mask);
-            this.segmenter.bindMaskEvents(this);
+            if (mask.length == this.maskPath.segments.length) {
+                // make sure to keep selection
+                for (let i in this.mask) {
+                    this.maskPath.segments[i].point = this.mask[i];
+                }
+            } else {
+                this.maskPath.removeSegments();
+                this.maskPath.addSegments(mask);
+            }
+            // this.segmenter.bindMaskEvents(this);
         }
         if (region !== undefined) {
             this.region = region;
@@ -297,6 +316,8 @@ class SegmenterLine {
     }
 
     extend(point) {
+        // make sure the point is inside img boundaries
+        this.segmenter.movePointInView(point, {x:0, y:0});
         return this.baselinePath.add(point);
     }
 
@@ -310,7 +331,6 @@ class SegmenterLine {
     }
 
     delete() {
-        this.unselect();
         this.remove();
     }
 
@@ -436,7 +456,8 @@ class SegmenterLine {
 }
 
 class Segmenter {
-    constructor(image, {lengthTreshold=10,
+    constructor(image, {lengthThreshold=10,
+                        regionAreaThreshold=20,
                         // scale = real coordinates to image coordinates
                         // for example if drawing on a 1000px wide thumbnail for a 'real' 3000px wide image,
                         // the scale would be 1/3, the container (DOM) width is irrelevant here.
@@ -502,7 +523,8 @@ class Segmenter {
         this.maxSegments = maxSegments;
 
         // the minimal length in pixels below which the line will be removed automatically
-        this.lengthThreshold = lengthTreshold;
+        this.lengthThreshold = lengthThreshold;
+        this.regionAreaThreshold = regionAreaThreshold;
         this.showMasks = false;
         this.showLineNumbers = false;
 
@@ -717,6 +739,10 @@ class Segmenter {
                 this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
                 this.toggleRegionMode();
+            } else if (event.keyCode == 89) { // Y
+                this.linkSelection();
+            } else if (event.keyCode == 85) { // U
+                this.unlinkSelection();
             } else if (event.keyCode ==  84) {  // T
                 this.showTypeSelect();
                 event.preventDefault();  // avoid selecting an option starting with T
@@ -825,6 +851,11 @@ class Segmenter {
 
         tool.onMouseDown = this.onMouseDown.bind(this);
 
+        // hide the tooltip on leaving the area
+        this.canvas.addEventListener('mouseleave', function() {
+            this.tooltip.style.display = 'none';
+        }.bind(this));
+
         this.tool = tool;
         this.tool.activate();
         this.loaded = true;
@@ -890,9 +921,13 @@ class Segmenter {
     }
 
     finishRegion(region) {
-        this.bindRegionEvents(region);
+        if (Math.abs(region.polygonPath.area) < this.regionAreaThreshold) {
+            region.remove();
+        } else {
+            this.bindRegionEvents(region);
+            region.updateDataFromCanvas();
+        }
         this.resetToolEvents();
-        region.updateDataFromCanvas();
     }
 
     bindRegionEvents(region) {
@@ -1074,11 +1109,6 @@ class Segmenter {
         target.onMouseLeave = function(event) {
             this.tooltip.style.display = 'none';
         }.bind(this);
-
-        // also hide it when leaving the editor since it's missing a lot of events
-        this.canvas.addEventListener('mouseleave', function() {
-            this.tooltip.style.display = 'none';
-        }.bind(this));
     }
 
     multiMove(event) {
@@ -1087,22 +1117,41 @@ class Segmenter {
             if (this.selection.segments.length) {
                 for (let i in this.selection.segments) {
                     this.movePointInView(this.selection.segments[i].point, delta);
-                    this.movePointInView(this.selection.segments[i].point, delta);
                 }
                 for (let i in this.selection.lines) {
+                    // refresh hints positions
                     this.selection.lines[i].refresh();
                 }
             } else {
+                // move the entire line
                 for (let i in this.selection.lines) {
-                    let l = this.selection.lines[i];
-                    if(l.baselinePath) this.movePointInView(l.baselinePath.position, delta);
-                    if(l.maskPath) this.movePointInView(l.maskPath.position, delta);
-                    l.refresh();
+                    let line = this.selection.lines[i];
+                    if (line.baselinePath) {
+                        for (let j in line.baselinePath.segments) {
+                            this.movePointInView(line.baselinePath.segments[j].point, delta);
+                        }
+                    }
+                    if (line.maskPath) {
+                        for (let j in line.maskPath.segments) {
+                            this.movePointInView(line.maskPath.segments[j].point, delta);
+                        }
+                    }
+                    // refresh hint positions
+                    line.refresh();
                 }
             }
         } else if (this.mode == 'regions') {
-            for (let i in this.selection.regions) {
-                this.movePointInView(this.selection.regions[i].polygonPath.position, delta);
+            if (this.selection.segments.length) {
+                for (let i in this.selection.segments) {
+                    this.movePointInView(this.selection.segments[i].point, delta);
+                }
+            } else {
+                for (let i in this.selection.regions) {
+                    let region = this.selection.regions[i];
+                    for (let j in region.polygonPath.segments) {
+                        this.movePointInView(region.polygonPath.segments[j].point, delta);
+                    }
+                }
             }
         }
     }
@@ -1128,6 +1177,18 @@ class Segmenter {
     onMouseDown(event) {
         if (isRightClick(event.event)) return;
         if (this.selecting) {
+            if (this.mode == 'regions') {
+                // if what we are selecting is already selected, check there isn't something below
+                for (let i=0; i<this.regions.length; i++) {
+                    if (this.selecting.selected && this.regions[i] != this.selecting) {
+                        let hit = this.regions[i].polygonPath.hitTest(event.point);
+                        if (hit) {
+                            this.selecting = this.regions[i];
+                            break;
+                        }
+                    }
+                }
+            }
             // selection
             if (event.event.shiftKey) {
                 this.selecting.toggleSelect();
@@ -1219,7 +1280,7 @@ class Segmenter {
             [event.point.x, event.point.y+1],
             [event.point.x+1, event.point.y+1],
             [event.point.x+1, event.point.y]
-        ], null, null);
+        ], null, null, true);
 
         let onCancel = function(event) {
             if (event.keyCode == 27) {  // escape
@@ -1231,10 +1292,12 @@ class Segmenter {
             return null;
         }.bind(this);
         let onRegionDraw = function(event) {
-            newRegion.polygonPath.segments[1].point.y = event.point.y;
-            newRegion.polygonPath.segments[2].point.x = event.point.x;
-            newRegion.polygonPath.segments[2].point.y = event.point.y;
-            newRegion.polygonPath.segments[3].point.x = event.point.x;
+            let pt = {x: event.point.x, y: event.point.y};
+            this.movePointInView(pt, {x: 0, y:0}); // make sure it stays inside boundaries
+            newRegion.polygonPath.segments[1].point.y = pt.y;
+            newRegion.polygonPath.segments[2].point.x = pt.x;
+            newRegion.polygonPath.segments[2].point.y = pt.y;
+            newRegion.polygonPath.segments[3].point.x = pt.x;
         }.bind(this);
 
         this.tool.onMouseDown = function(event) {
@@ -1266,7 +1329,11 @@ class Segmenter {
             return null;
         }.bind(this);
         let finishCut = function(event) {
-            this.splitByPath(clip);
+            if (this.mode == 'lines') {
+                this.splitLinesByPath(clip);
+            } else if (this.mode == 'regions') {
+                this.splitRegionsByPath(clip);
+            }
             clip.remove();
 
             this.resetToolEvents();
@@ -1628,7 +1695,6 @@ class Segmenter {
             this.regionTypesSelect.blur();
         }.bind(this));
 
-
         this.lineTypesSelect = document.createElement('select');
         this.lineTypesSelect.style.position = 'absolute';
         this.lineTypesSelect.autocomplete = "off";
@@ -1806,29 +1872,39 @@ class Segmenter {
     }
 
     splitHelper(clip, event) {
-        this.lines.forEach(function(line) {
-            if (!line.baselinePath) return;
-            let intersections = line.baselinePath.getIntersections(clip);
-            for (var i = 0; i < intersections.length; i++) {
-                new Path.Circle({
-                    center: intersections[i].point,
-                    radius: 5,
-                    fillColor: 'red'
-                }).removeOnDrag().removeOnUp();
+        if (this.mode == 'lines') {
+            this.lines.forEach(function(line) {
+                if (!line.baselinePath) return;
+                let intersections = line.baselinePath.getIntersections(clip);
+                for (var i = 0; i < intersections.length; i++) {
+                    new Path.Circle({
+                        center: intersections[i].point,
+                        radius: 5,
+                        fillColor: 'red'
+                    }).removeOnDrag().removeOnUp();
 
-                if (intersections.length) {
-                    // show what is going to be cut
-                    let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
-                    intersections.forEach(location => cut.add(location));
-                    cut.bringToFront();
-                    line.baselinePath.segments.forEach(function(segment) {
-                        if (clip.contains(segment.point)) {
-                            cut.insert(segment.index, segment);
-                        }
-                    }.bind(this));
+                    if (intersections.length) {
+                        // show what is going to be cut
+                        let cut = new Path({strokeColor: 'red', strokeWidth: 2}).removeOnDrag().removeOnUp();
+                        intersections.forEach(location => cut.add(location));
+                        cut.bringToFront();
+                        line.baselinePath.segments.forEach(function(segment) {
+                            if (clip.contains(segment.point)) {
+                                cut.insert(segment.index, segment);
+                            }
+                        }.bind(this));
+                    }
                 }
-            }
-        }.bind(this));
+            }.bind(this));
+        } else if (this.mode == 'regions') {
+            this.regions.forEach(function(region) {
+                let inter = region.polygonPath.intersect(clip);
+                inter.strokeColor = 'red';
+                inter.strokeWidth = 2;
+                inter.fillColor = 'red';
+                inter.removeOnDrag().removeOnUp();
+            }.bind(this));
+        }
     }
 
     getLineMaxOrder() {
@@ -1846,7 +1922,32 @@ class Segmenter {
         return math.det(matrix);
     }
 
-    splitByPath(path) {
+    splitRegionsByPath(path) {
+        this.regions.forEach(function(region) {
+            let intersections = region.polygonPath.getIntersections(path);
+            if (intersections.length == 2) {
+                // remove everything in the selection rectangle
+                let newPath = region.polygonPath.subtract(path, {insert: true});
+                region.polygonPath.removeSegments();
+                newPath.segments.forEach(s=>region.polygonPath.add(s));
+                newPath.remove();
+            } else if (intersections.length > 2) {
+                let coumpound = region.polygonPath.subtract(path, {insert: true});
+                region.polygonPath.removeSegments();
+                coumpound.children[0].segments.forEach(s=>region.polygonPath.add(s));
+                for (let i=1;i<coumpound.children.length;i++) {
+                    let newRegion = this.createRegion(null, coumpound.children[i].segments, region.type, null, false);
+                    newRegion.updateDataFromCanvas();
+                    coumpound.children[i].remove();
+                }
+                coumpound.remove();
+            }
+            region.refresh();
+            region.updateDataFromCanvas();
+        }.bind(this));
+    }
+
+    splitLinesByPath(path) {
         this.lines.forEach(function(line) {
             if (line.baseline !== null) {
                 let intersections = line.baselinePath.getIntersections(path);
@@ -2053,7 +2154,7 @@ class Segmenter {
             this.averageLineHeight = Math.abs(
                 this.lines
                     .map(l=>l.baseline && l.baseline[0][0] || 0)
-                .reduce((a,b)=>b-a) / this.lines.length / 2);
+                    .reduce((a,b)=>b-a) / this.lines.length / 2);
         }
     }
 

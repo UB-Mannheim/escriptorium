@@ -1,0 +1,3 @@
+ssl_certificate /etc/certs/fullchain.pem;
+ssl_certificate_key /etc/certs/privkey.pem;
+ssl_trusted_certificate /etc/certs/fullchain.pem;

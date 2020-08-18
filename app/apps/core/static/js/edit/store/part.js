@@ -54,7 +54,6 @@ const partStore = {
 
     // actions
     fetchPart(pk, callback) {
-        this.reset();
         this.pk = pk;
         this.fetchDocument(function() {
             let uri = this.getApiPart(pk);
@@ -284,7 +283,7 @@ const partStore = {
                 let deletedLines = [];
                 for (let i=0; i<pks.length; i++) {
                     let index = this.lines.findIndex(l=>l.pk==pks[i]);
-                    if(index) {
+                    if(index != -1) {
                         deletedLines.push(pks[i]);
                         Vue.delete(this.lines, index);
                     }
@@ -476,11 +475,13 @@ const partStore = {
 
     getPrevious(cb) {
         if (this.loaded && this.previous) {
+            this.reset();
             this.fetchPart(this.previous, cb);
         }
     },
     getNext(cb) {
         if (this.loaded && this.next) {
+            this.reset();
             this.fetchPart(this.next, cb);
         }
     }
