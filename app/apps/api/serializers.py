@@ -78,7 +78,7 @@ class TranscriptionSerializer(serializers.ModelSerializer):
 class UserOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('onboarding_images','onboarding_edit','onboarding_models','onboarding_trans')
+        fields = ('onboarding',)
 
 
 class BlockTypeSerializer(serializers.ModelSerializer):

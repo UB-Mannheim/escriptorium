@@ -147,7 +147,7 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
-        context['onboarding_images'] = self.request.user.onboarding_images
+        context['onboarding'] = self.request.user.onboarding
 
         return context
 
@@ -250,8 +250,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         context['object'] = self.object.document
         context['document'] = self.object.document
         context['part'] = self.object
-        context['onboarding_edit'] = self.request.user.onboarding_edit
-        context['onboarding_trans'] = self.request.user.onboarding_trans
+        context['onboarding'] = self.request.user.onboarding
         return context
 
     def dispatch(self, *args, **kwargs):
@@ -288,7 +287,7 @@ class ModelsList(LoginRequiredMixin, ListView):
         if self.document:
             context['document'] = self.document
             context['object'] = self.document  # legacy
-            context['onboarding_models'] = self.request.user.onboarding_models
+            context['onboarding'] = self.request.user.onboarding
         return context
 
 

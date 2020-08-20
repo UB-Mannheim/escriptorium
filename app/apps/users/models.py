@@ -20,20 +20,8 @@ class User(AbstractUser):
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
 
-    onboarding_images = models.BooleanField(
+    onboarding = models.BooleanField(
         _('first connection'),
-        default=True
-    )
-
-    onboarding_edit = models.BooleanField(
-        default=True
-    )
-
-    onboarding_models = models.BooleanField(
-        default=True
-    )
-
-    onboarding_trans = models.BooleanField(
         default=True
     )
 

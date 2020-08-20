@@ -21,13 +21,12 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(user)
         uri = reverse('api:user-onboarding')
         resp = self.client.put(uri, {
-                'onboarding_edit' : 'False',
+                'onboarding' : 'False',
                 }, content_type='application/json')
 
         user.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(user.onboarding_edit, False)
-        self.assertEqual(user.onboarding_images, True)
+        self.assertEqual(user.onboarding, False)
 
 
 
