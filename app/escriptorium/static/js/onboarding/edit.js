@@ -1,4 +1,4 @@
-steps_intro = [
+steps_edit = [
 {
   element: '#document-transcriptions',
   intro: 'Here you can select which transcription to display. You may have several transcriptions for a given page,<br> for instance a manual one and one created automatically, or two different editions that you have imported.\n',

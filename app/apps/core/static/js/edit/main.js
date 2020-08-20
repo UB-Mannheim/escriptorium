@@ -17,7 +17,7 @@ var partVM = new Vue({
         intro : introJs()
     },
     mounted(){
-        if(onboarding_edit =="True") {
+        if(onboarding =="True"  && !onboarding_edit) {
             this.$nextTick(function () {
                 this.show = {
                     source: true,
@@ -197,16 +197,15 @@ var partVM = new Vue({
     methods: {
         show_onboarding(){
 
-            this.intro.setOptions({steps: steps_intro});
+            this.intro.setOptions({steps: steps_edit});
             this.intro.start();
             this.intro.onexit(function () {
-                exitonboarding({
-                onboarding_edit : "False",
-                });
+                exitonboarding();
             });
 
             this.intro.oncomplete(function () {
                 window.location.href= models_url;
+                userProfile.set('onboarding_edit',true);
             });
         },
         resetZoom() {

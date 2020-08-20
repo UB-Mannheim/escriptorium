@@ -621,9 +621,10 @@
    const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
    const DOCUMENT_ID = '{{document.id}}';
    var PART_ID = {{part.id}};  // can be changed with next & previous pages
-  const onboarding_edit  = "{{ onboarding_edit }}";
-  const onboarding_trans  = "{{ onboarding_trans }}";
-  var models_url = "{% url 'document-models' document_pk=document.pk %}";
+   const onboarding  = "{{ onboarding }}";
+   var onboarding_edit  = userProfile.get('onboarding_edit');
+   var onboarding_trans  = userProfile.get('onboarding_trans');
+   var models_url = "{% url 'document-models' document_pk=document.pk %}";
   </script>
 
   <script type="text/javascript">
@@ -651,6 +652,7 @@
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
   <script src="{% static 'vendor/introjs/intro.js' %}"></script>
   <script src="{% static 'js/onboarding/edit.js' %}"></script>
+  <script src="{% static 'js/onboarding/trans.js' %}"></script>
   <script src="{% static 'js/onboarding/exit.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
