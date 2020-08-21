@@ -1,7 +1,6 @@
 var timer ;
 var DiploPanel = BasePanel.extend({
     data() { return {
-        editLine: null,
         updatedLines : [],
         createdLines : [],
         movedLines:[],
@@ -10,30 +9,28 @@ var DiploPanel = BasePanel.extend({
     components: {
         'diploline': diploLine,
     },
-    mounted(){
-        Vue.nextTick(function() {
-            var vm = this ;
-             var el = document.getElementById('list');
-             sortable = Sortable.create(el, {
-                group: 'shared',
-                multiDrag: true,
-                multiDragKey : 'CTRL',
-                selectedClass: "selected",
-                animation: 150,
-                onEnd: function(/**Event*/evt) {
-                    vm.onDragginEnd(evt);
-                }
-        });
-        }.bind(this));
-    },
+    /* mounted(){
+     *     Vue.nextTick(function() {
+     *         var vm = this ;
+     *          var el = document.getElementById('list');
+     *          sortable = Sortable.create(el, {
+     *             group: 'shared',
+     *             multiDrag: true,
+     *             multiDragKey : 'CTRL',
+     *             selectedClass: "selected",
+     *             animation: 150,
+     *             onEnd: function(evt) {
+     *                 vm.onDragginEnd(evt);
+     *             }
+     *     });
+     *     }.bind(this));
+     * }, */
     methods:{
-        toggleSave(){
-
-            clearTimeout(timer);
-            timer = setTimeout(function (){
-                this.save();
-            }.bind(this),
-                2000);
+        startEdit(ev){
+            this.$parent.blockShortcuts = true;
+        },
+        stopEdit(ev) {
+            this.$parent.blockShortcuts = false;
         },
         onDragginEnd(ev) {
             /*
@@ -57,99 +54,113 @@ var DiploPanel = BasePanel.extend({
 
             this.moveLines();
         },
-        moveLines(){
+        moveLines() {
             if(this.movedLines.length != 0){
-                this.$parent.$emit('line:move',this.movedLines, function () {
+                this.$parent.$emit('line:move', this.movedLines, function () {
                     this.movedLines = [];
                 }.bind(this));
             }
-
         },
-        save(){
+        save() {
             /*
-             if some lines are modified add them to updatedlines, new lines add them to createdLines then save
-            */
+             if some lines are modified add them to updatedlines,
+               new lines add them to createdLines then save
+             */
             this.addToList();
             this.bulkUpdate();
             this.bulkCreate();
         },
-        updateEditLine(position){
-            if(position < this.part.lines.length && position >= 0) {
-                this.setEditLine(this.part.lines[position]);
-                let nextLine = this.$children[position];
-                nextLine.startEdit();
-                this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
-
-            }
-        },
         setHeight() {
             this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
-        onKeyDown(ev){
-            let index = this.part.lines.indexOf(this.editLine);
-
-            //disable shortcuts
-            this.$parent.blockShortcuts = true;
-
-            // click delete button if you are at the beggining of the line
-
-            // if(ev.keyCode==8 && this.getCursorPosition()==0){
-            //     ev.preventDefault();
-            //
-            //     this.updateEditLine(index -1);
-            //     let idx = this.part.lines.indexOf(this.editLine);
-            //     let child = this.$children[idx];
-            //     let nextLine = this.part.lines[idx+1];
-            //     let content = child.line.currentTrans.content + nextLine.currentTrans.content;
-            //     child.setContent(content);
-            //     this.addToUpdatedLines(child.line.currentTrans);
-            //
-            //     for(let i=idx +1; i < this.part.lines.length; i++) {
-            //
-            //         let child = this.$children[i];
-            //         let nextLine = this.part.lines[i+1];
-            //         let currentLine = child.line;
-            //         if(nextLine){
-            //
-            //             if(currentLine.currentTrans.pk){
-            //                 child.setContent(nextLine.currentTrans.content);
-            //                 this.addToUpdatedLines(currentLine.currentTrans);
-            //
-            //             }
-            //             else{
-            //                 child.setContent(nextLine.currentTrans.content);
-            //                 this.createdLines.push(currentLine.currentTrans);
-            //             }
-            //         }
-            //         else {
-            //             child.setContent("");
-            //             this.addToUpdatedLines(child.line.currentTrans);
-            //         }
-            //         this.setCursorPosition("[id='"+ this.editLine.pk+ "']");
-            //
-            //
-            //         }
-            //      this.updateEditLine( -1);
-            //
-            //
-            //     }
-
-            //click on enter button
-            if(ev.keyCode == 13){
+        focusNextLine(sel, line) {
+            if (line.nextSibling) {
+                let range = document.createRange();
+                range.setStart(line.nextSibling, 0);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        },
+        focusPreviousLine(sel, line) {
+            if (line.previousSibling) {
+                let range = document.createRange();
+                range.setStart(line.previousSibling, 0);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        },
+        onKeyPress(ev) {
+            // arrows  needed to avoid skipping empty lines
+            if (ev.key == 'ArrowDown' && !ev.shiftKey) {
+                let sel = window.getSelection();
+                let div = sel.anchorNode.nodeType==Node.TEXT_NODE?sel.anchorNode.parentElement:sel.anchorNode;
+                this.focusNextLine(sel, div);
                 ev.preventDefault();
-                let idx = this.part.lines.indexOf(this.editLine);
-                if(idx < this.part.lines.length -1){
-                this.updateEditLine(idx +1);
+            } else if (ev.key == 'ArrowUp' && !ev.shiftKey) {
+                let sel = window.getSelection();
+                let div = sel.anchorNode.nodeType==Node.TEXT_NODE?sel.anchorNode.parentElement:sel.anchorNode;
+                this.focusPreviousLine(sel, div);
+                ev.preventDefault();
+            } else if (ev.key == 'Enter') {
+                if (window.getSelection) {
+                    const selection = window.getSelection();
+                    let range = selection.getRangeAt(0);
+                    // push text down
+                    let lineNode = range.endContainer.nodeType==Node.TEXT_NODE?range.endContainer.parentNode:range.endContainer;
+                    let lines = lineNode.parentNode.childNodes;
+                    let curIndex = Array.prototype.indexOf.call(lines, lineNode);
+                    let nextText = lineNode.textContent.slice(range.endOffset).trim();
+                    this.$children[curIndex].$el.textContent = lineNode.textContent.slice(0, range.startOffset).trim();
+                    for (let i=curIndex+1; i<lines.length-1; i++) {
+                        let text = nextText;
+                        nextText = lines[i].textContent;
+                        this.$children[i].$el.textContent = text;
+                    }
+                    // focus next line
+                    this.focusNextLine(selection, lineNode);
+                }
+                ev.preventDefault();
+            } else if (ev.key == 'Backspace') {
+                const selection = window.getSelection();
+                let range = selection.getRangeAt(0);
+                if (range.startContainer != range.endContainer) {
+                    // override default behavior to avoid deleting entire lines
+                    let startLine = range.startContainer.nodeType==Node.TEXT_NODE?range.startContainer.parentNode:range.startContainer;
+                    let endLine = range.endContainer.nodeType==Node.TEXT_NODE?range.endContainer.parentNode:range.endContainer;
+                    let inRange = false;
+                    for (let i=0; i<this.$children.length; i++) {
+                        let line = this.$children[i].$el;
+                        if (line == startLine) {
+                            line.textContent = line.textContent.slice(0, range.startOffset);
+                            inRange = true;
+                        } else if (line == endLine) {
+                            line.textContent = line.textContent.slice(range.endOffset);
+                            break;
+                        } else if (inRange) {
+                            line.textContent = '';
+                        }
+                    }
+
+                    ev.preventDefault();
+                } else if (range.startOffset == 0 && range.endOffset == 0) {
+                    // push text up
+                    let lineNode = range.startContainer.nodeType==Node.TEXT_NODE?range.startContainer.parentNode:range.startContainer;
+                    let lines = lineNode.parentNode.childNodes;
+                    let curIndex = Array.prototype.indexOf.call(lines, lineNode);
+                    if (curIndex > 0) {
+                        // append content to previous line
+                        this.$children[curIndex-1].$el.textContent += this.$children[curIndex].$el.textContent;
+                        for (let i=curIndex; i<lines.length-1; i++) {
+                            this.$children[i].$el.textContent = this.$children[i+1].$el.textContent;
+                        }
+                        this.$children[lines.length-1].$el.textContent = '';
+                    }
+                    ev.preventDefault();
                 }
             }
-            if(ev.keyCode == 8){
-                this.toggleSave();
-            }
         },
-        setEditLine(l) {
-            this.editLine = l;
-        },
-        bulkUpdate(){
+        bulkUpdate() {
             if(this.updatedLines.length){
                 this.$parent.$emit(
                     'bulk_update:transcriptions',
@@ -159,7 +170,7 @@ var DiploPanel = BasePanel.extend({
                     }.bind(this));
             }
         },
-        bulkCreate(){
+        bulkCreate() {
             if(this.createdLines.length){
                 this.$parent.$emit(
                     'bulk_create:transcriptions',
@@ -169,22 +180,24 @@ var DiploPanel = BasePanel.extend({
                     }.bind(this));
             }
         },
-        addToList(){
+        addToList() {
             /*
                parse all lines if the content changed, add it to updated lines
-            */
-            for(let i=0;i<this.$children.length; i++) {
+             */
+            for(let i=0; i<this.$children.length; i++) {
                 let currentLine = this.$children[i];
-                if(currentLine.line.currentTrans.content != currentLine.$refs.content[0].textContent){
-                    currentLine.line.currentTrans.content = currentLine.$refs.content[0].textContent ;
-                    if(currentLine.line.currentTrans.pk)
+                if(currentLine.line.currentTrans.content != currentLine.$el.textContent){
+                    // TODO: sanitize text content?!
+                    currentLine.line.currentTrans.content = currentLine.$el.textContent;
+                    if(currentLine.line.currentTrans.pk) {
                         this.addToUpdatedLines(currentLine.line.currentTrans);
-                    else
+                    } else {
                         this.createdLines.push(currentLine.line.currentTrans);
+                    }
                 }
             }
         },
-        addToUpdatedLines(lt){
+        addToUpdatedLines(lt) {
             /*
             if line already exists in updatedLines update its content on the list
              */
@@ -202,47 +215,6 @@ var DiploPanel = BasePanel.extend({
              */
             this.setHeight();
         },
-        getCursorPosition() {
-            return window.getSelection().getRangeAt(0).startOffset;
-        },
-        setCursorPosition(id) {
-
-            const textNode = document.querySelector(id);
-            let  sel = window.getSelection();
-            const range = document.createRange();
-            range.setStart(textNode,textNode.length );  // Start at first character
-            range.setEnd(textNode, textNode.length);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        },
-        //return --> insert carriage return here and push rest of text of this line into the next line.
-        // If there is text in the next line push that line one down etc. If there is no text in the next line dont push further
-        carriage(ev,idx){
-            ev.preventDefault();
-            if (window.getSelection) {
-                  let selection = window.getSelection(),
-                  range = selection.getRangeAt(0),
-                      br = document.createElement("br"),
-                      textNode = document.createTextNode($("<div></div>").text()); //Passing " " directly will not end up being shown correctly
-                  range.deleteContents();
-                  range.insertNode(br);
-                  range.collapse(false);
-                  range.insertNode(textNode);
-                  range.selectNodeContents(textNode);
-                  selection.removeAllRanges();
-                  selection.addRange(range);
-                  let child = this.$children[idx+1];
-                  let target = selection.anchorNode.nextSibling.parentNode ;
-                  let html = target.innerHTML ;
-                  let after_break = html.substring(html.indexOf('br')+3);
-
-                  child.setContent(after_break + child.line.currentTrans.content);
-                  target.innerHTML = html.substring(0, html.indexOf('<br')) + "</div>";
-                  this.updateEditLine(idx+1);
-                  return false;
-            }
-
-        }
     },
 
 });

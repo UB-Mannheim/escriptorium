@@ -268,6 +268,7 @@ class LineViewSet(ModelViewSet):
         if errors:
             return Response(errors,
                             status=status.HTTP_400_BAD_REQUEST)
+        return Response(response)
 
         # return Response(status=200, data=response)
 

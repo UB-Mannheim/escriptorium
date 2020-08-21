@@ -27,56 +27,47 @@ var diploLine = LineBase.extend({
         }
     },
     methods: {
-        startEdit(ev){
-            // if we are selecting text we don't want to start editing
-            // to be able to do multiline selection
-            if (document.getSelection().toString()) {
-                return true;
-            }
-            this.$parent.setEditLine(this.line);
-            this.$parent.$parent.blockShortcuts = true;
+        cleanSource(dirtyText) {
+            // cleanup html and possibly other tags (?)
+            var tmp = document.createElement("DIV");
+            tmp.innerHTML = dirtyText;
+            let clean = tmp.textContent || tmp.innerText || "";
+            tmp.remove();
+            return clean;
         },
-        stopEdit(ev) {
-            this.$parent.$parent.blockShortcuts = false;
-        },
-
-        setContent(content){
-            let id = this.line.pk;
-            if(this.line.currentTrans.content != content){
-                $("#" + id).text(content);
-                this.line.currentTrans.content = content;
-            }
-        },
-        onPaste(e){
+        onPaste(e) {
             let pastedData = e.clipboardData.getData('text/plain');
             let pasted_data_split = pastedData.split('\n');
 
-            if (pasted_data_split.length < 2) {
-                return
+            if (pasted_data_split.length == 1) {
+                // all of this just to call cleanSource on the data
+                let paste = (event.clipboardData || window.clipboardData).getData('text');
+                paste = this.cleanSource(paste);
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return false;
+                selection.deleteFromDocument();
+                selection.getRangeAt(0).insertNode(document.createTextNode(paste));
             } else {
-                e.preventDefault();
-
                 //remove the last line if it's empty
-                if (pasted_data_split[pasted_data_split.length - 1] == "")
+                if (pasted_data_split[pasted_data_split.length - 1] == "") {
                     pasted_data_split.pop();
+                }
 
                 let index = this.$parent.$children.indexOf(this);
-
-                for (let i = 1; i < pasted_data_split.length; i++) {
-                    if (this.$parent.$children[index + i]) {
-                        let content = pasted_data_split[i];
-                        let child = this.$parent.$children[index + i];
-                        child.setContent(content);
-                    } else {
-                        let content = pasted_data_split.slice(i - 1).join('\n');
-                        let child = this.$parent.$children[index + 1];
-                        child.setContent(content);
+                for (let i = 0; i < pasted_data_split.length; i++) {
+                    let content = pasted_data_split[i];
+                    let child = this.$parent.$children[index + i];
+                    if (child) {
+                        child.$el.textContent = this.cleanSource(content);
                     }
                 }
-                this.$parent.toggleSave();
             }
+            e.preventDefault();
         },
-        getRegion(){
+        getContentOrFake() {
+            return this.line.currentTrans.content;
+        },
+        getRegion() {
             return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
         }
     }
