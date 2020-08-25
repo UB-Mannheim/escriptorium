@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
-from users.models import Invitation, User
+from users.models import Invitation, User, ContactUs
 
 
 class InvitationForm(BootstrapFormMixin, forms.ModelForm):
@@ -52,3 +52,11 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('email', 'first_name', 'last_name')
+
+
+class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
+
+    class Meta:
+        model = ContactUs
+        fields = ('name','subject','email','message')
+

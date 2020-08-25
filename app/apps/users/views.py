@@ -1,6 +1,6 @@
 from os import listdir, stat
 from os.path import isfile, join, relpath
-
+from django.shortcuts import reverse
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -12,8 +12,8 @@ from django.views.generic.edit import CreateView, UpdateView
 
 from rest_framework.authtoken.models import Token
 
-from users.models import User, Invitation
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm
+from users.models import User, Invitation, ContactUs
+from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -103,3 +103,15 @@ class Profile(SuccessMessageMixin, UpdateView):
         context['is_paginated'] = paginator.count != 0
         context['page_obj'] = paginator.get_page(page_number)
         return context
+
+class ContactUsView(SuccessMessageMixin, CreateView):
+
+    model = ContactUs
+    form_class = ContactUsForm
+
+    success_message = _('Your message successfully sent.')
+
+    template_name = 'users/contactus.html'
+
+    def get_success_url(self):
+        return reverse('home')
