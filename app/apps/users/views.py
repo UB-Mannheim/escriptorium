@@ -113,5 +113,4 @@ class ContactUsView(SuccessMessageMixin, CreateView):
 
     template_name = 'users/contactus.html'
 
-    def get_success_url(self):
-        return reverse('home')
+    success_url = '/contact/'
