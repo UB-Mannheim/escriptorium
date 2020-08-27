@@ -167,7 +167,7 @@ class ContactUs(models.Model):
             'users/email/contactus_subject.txt',
             'users/email/contactus_message.txt',
             'users/email/contactus_html.html',
-            'elhassanegargem@gmail.com',
+            settings.ADMINS,
             context=context,
             result_interface=None
         )
