@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n bootstrap static %}
+
+{% block body %}
+<div class="container">
+    <div class="row">
+        <form id="contact-form" method="post">
+            {% csrf_token %}
+            <fieldset>
+                <div class="form-group">
+                    {% for error in form.non_field_errors %}
+                        <p class="error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                 {% render_field form.name %}
+                {% render_field form.email %}
+                {% render_field form.message %}
+                {{ form.captcha }}
+                <input type="submit" value="{% trans 'Send' %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+            </fieldset>
+        </form>
+    </div>
+</div>
+{% endblock %}
