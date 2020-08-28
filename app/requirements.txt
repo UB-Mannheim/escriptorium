@@ -22,3 +22,4 @@ requests==2.21.0
 numpy>=1.17
 django-compressor==2.4
 albumentations
+django-simple-captcha==0.5.12

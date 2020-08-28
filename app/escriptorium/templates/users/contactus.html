@@ -15,6 +15,7 @@
                  {% render_field form.name %}
                 {% render_field form.email %}
                 {% render_field form.message %}
+                {{ form.captcha }}
                 <input type="submit" value="{% trans 'Send' %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
             </fieldset>
         </form>

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.translation import gettext as _
+from captcha.fields import CaptchaField
 
 from bootstrap.forms import BootstrapFormMixin
 from users.models import Invitation, User, ContactUs
@@ -56,7 +57,10 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
 
+    message = forms.CharField(label="Message : Please precise your institution or research center if applicable", widget=forms.Textarea(attrs={'placeholder':'Message : Please precise your institution or research center if applicable' }))
+    captcha = CaptchaField()
+
     class Meta:
         model = ContactUs
-        fields = ('name','email','message')
+        fields = ('name','email','message','captcha')
 
