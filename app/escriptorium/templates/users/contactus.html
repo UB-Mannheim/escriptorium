@@ -8,22 +8,13 @@
             {% csrf_token %}
             <fieldset>
                 <div class="form-group">
-                    {% for error in form.errors %}
+                    {% for error in form.non_field_errors %}
                         <p class="error">{{ error }}</p>
                     {% endfor %}
                 </div>
-                <div class="form-group">
-                    {{ form.name }}
-                </div>
-                <div class="form-group">
-                    {{ form.email }}
-                </div>
-                <div class="form-group">
-                    {{ form.subject }}
-                </div>
-                <div class="form-group">
-                    {{ form.message }}
-                </div>
+                 {% render_field form.name %}
+                {% render_field form.email %}
+                {% render_field form.message %}
                 <input type="submit" value="{% trans 'Send' %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
             </fieldset>
         </form>

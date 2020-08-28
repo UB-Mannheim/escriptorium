@@ -139,7 +139,6 @@ class ContactUs(models.Model):
     Represents Contact Us form
     """
     name = models.CharField(max_length=255)
-    subject = models.CharField(max_length=255)
     email = models.EmailField(
         verbose_name=_('email address'),
         max_length=255,
@@ -160,7 +159,6 @@ class ContactUs(models.Model):
             "sender_name": self.name,
             "sender_email": self.email,
             "message": self.message,
-            "subject": self.subject
         }
 
         send_email(

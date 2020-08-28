@@ -58,5 +58,5 @@ class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = ContactUs
-        fields = ('name','subject','email','message')
+        fields = ('name','email','message')
 
