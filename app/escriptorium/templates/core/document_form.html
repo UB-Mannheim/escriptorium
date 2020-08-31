@@ -169,4 +169,27 @@
 {{ block.super }}
 <script src="{% static 'js/document_form.js' %}"></script>
 <script src="{% static 'js/help.js' %}"></script>
+<script src="{% static 'vendor/introjs/intro.js' %}"></script>
+<script src="{% static 'js/onboarding/document_form.js' %}"></script>
+<script src="{% static 'js/onboarding/exit.js' %}"></script>
+
+<script type="text/javascript">
+var onboarding_document  = userProfile.get('onboarding_document');
+const onboarding  = "{{ onboarding }}";
+if (onboarding== "True" && !onboarding_document)
+{
+
+    document_intro.start();
+    document_intro.onexit(function() {
+        exitonboarding();
+    });
+
+    document_intro.oncomplete(function() {
+        userProfile.set('onboarding_document',true);
+    });
+
+}
+</script>
+
 {% endblock %}
+
