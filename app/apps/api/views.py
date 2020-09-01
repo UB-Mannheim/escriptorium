@@ -205,20 +205,24 @@ class LineTypeViewSet(ModelViewSet):
     serializer_class = LineTypeSerializer
 
 
-class BlockViewSet(ModelViewSet):
+class BlockViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = Block.objects.select_related('typology')
     serializer_class = BlockSerializer
 
     def get_queryset(self):
-        return Block.objects.filter(document_part=self.kwargs['part_pk'])
+        return (super().get_queryset()
+                .filter(document_part=self.kwargs['part_pk'])
+                .filter(document_part__document=self.kwargs['document_pk']))
 
 
-class LineViewSet(ModelViewSet):
+class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = (Line.objects.select_related('block')
                             .select_related('typology'))
 
     def get_queryset(self):
-        return super().get_queryset().filter(document_part=self.kwargs['part_pk'])
+        return (super().get_queryset()
+                .filter(document_part=self.kwargs['part_pk'])
+                .filter(document_part__document=self.kwargs['document_pk']))
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -265,14 +269,15 @@ class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100
 
 
-class LineTranscriptionViewSet(ModelViewSet):
+class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = LineTranscription.objects.all()
     serializer_class = LineTranscriptionSerializer
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
-        qs = (self.queryset
+        qs = (super().get_queryset()
               .filter(line__document_part=self.kwargs['part_pk'])
+              .filter(line__document_part__document=self.kwargs['document_pk'])
               .select_related('line', 'transcription')
               .order_by('line__order'))
         transcription = self.request.GET.get('transcription')
