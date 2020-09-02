@@ -206,6 +206,14 @@ form.inline-form {
     opacity: .5;
 }
 
+.tools .notice {
+    color: var(--warning);
+    border: 1px solid;
+    padding: .25rem .5rem;
+    border-radius: .2rem;
+    float: right;
+}
+
 .help.open:hover {
     opacity: 1;
 }
@@ -596,8 +604,9 @@ i.panel-icon {
 }
 #diplomatic-lines {
     counter-reset: line;
+    line-clamp: 10;
 }
-#diplomatic-lines div.line-content {
+#diplomatic-lines div {
     display: block;
     line-height: 1.7rem;
     margin-bottom: 0px;
@@ -605,7 +614,7 @@ i.panel-icon {
     margin-left: 50px;
 }
 
-#diplomatic-lines .line-content:before {
+#diplomatic-lines div:before {
     user-select: none;
     text-align: center;
     counter-increment: line;

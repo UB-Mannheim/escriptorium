@@ -548,29 +548,27 @@
                   inline-template>
           <div class="col panel">
               <div class="tools">
-                  <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-language"></i>
+                  <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-list-ol"></i>
+                  <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
               </div>
               <div class="content-container {{ document.read_direction }}">
+
+                  <diploline v-for="line in part.lines"
+                             v-bind:line="line"
+                             v-bind:ratio="ratio"
+                             v-bind:key="'DL' + line.pk">
+                  </diploline>
+
                   <div id="diplomatic-lines"
                        contenteditable="true"
                        @keydown="onKeyPress"
+                       @keyup="constrainLineNumber"
+                       @input="changed"
                        @focusin="startEdit"
                        @focusout="stopEdit"
-                       @blur="save">
-                      <diploline v-for="line in part.lines"
-                                 v-bind:line="line"
-                                 v-bind:ratio="ratio"
-                                 v-bind:key="'DL' + line.pk"
-                                 inline-template>
-                          <div class="line-content"
-                               v-if="line.currentTrans"
-                               @mouseover="showOverlay"
-                               @mouseleave="hideOverlay"
-                               @paste="onPaste"
-                               ref="content"
-                               v-html="line.currentTrans.content">
-                          </div>
-                      </diploline>
+                       @mousemove="showOverlay"
+                       @mouseleave="hideOverlay"
+                       @paste="onPaste">
                   </div>
               </div>
           </div>
