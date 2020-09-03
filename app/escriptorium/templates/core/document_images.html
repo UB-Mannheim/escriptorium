@@ -116,7 +116,6 @@
 <script type="text/javascript">
 'use strict';
 const DOCUMENT_ID = {{ document.pk }};
-var onboarding_images  = userProfile.get('onboarding_images');
 const onboarding  = "{{ onboarding }}";
 $(document).ready(function() {
   // join the ws room
@@ -140,12 +139,14 @@ if (onboarding== "True" && !onboarding_images)
 {
     document_images_intro.start();
     document_images_intro.onexit(function() {
+        userProfile.set('onboarding_images',true);
         exitonboarding();
     });
 
     document_images_intro.oncomplete(function() {
         var edit_url = "{% url 'document-part-edit' pk=document.pk %}";
         userProfile.set('onboarding_images',true);
+        exitonboarding();
         window.location.href = edit_url;
     });
 

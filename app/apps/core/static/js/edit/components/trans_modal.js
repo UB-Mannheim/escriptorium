@@ -176,10 +176,12 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
 
                 this.intro.start();
                 this.intro.onexit(function () {
+                userProfile.set('onboarding_trans',true);
                 exitonboarding();
                 });
 
                 this.intro.oncomplete(function () {
+                    userProfile.set('onboarding_trans',true);
                     exitonboarding();
                 });
 

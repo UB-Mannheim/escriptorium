@@ -1,3 +1,9 @@
+var onboarding_document  = userProfile.get('onboarding_document');
+var onboarding_images  = userProfile.get('onboarding_images');
+var onboarding_edit  = userProfile.get('onboarding_edit');
+var onboarding_trans  = userProfile.get('onboarding_trans');
+var onboarding_models  = userProfile.get('onboarding_models');
+
 //document_form
 var document_intro = introJs();
 document_intro.setOptions({
@@ -127,7 +133,9 @@ steps_trans = [{
 ];
 
 function exitonboarding() {
-    $.ajax({
+   if(onboarding_document && onboarding_images && onboarding_edit && onboarding_trans && onboarding_models){
+
+       $.ajax({
         type: 'PUT',
         url: '/api/users/onboarding/',
         contentType: "application/json; charset=utf-8",
@@ -138,5 +146,7 @@ function exitonboarding() {
     }).done($.proxy(function(data) {}, this)).fail(function(data) {
         alert(data);
     });
+
+   }
 
 }

@@ -251,6 +251,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         # so we need context['object'] = document
         context['object'] = self.object.document
         context['document'] = self.object.document
+        context['onboarding'] = self.request.user.onboarding
         context['part'] = self.object
         return context
 
@@ -288,6 +289,7 @@ class ModelsList(LoginRequiredMixin, ListView):
         if self.document:
             context['document'] = self.document
             context['object'] = self.document  # legacy
+            context['onboarding'] = self.request.onboarding
         return context
 
 

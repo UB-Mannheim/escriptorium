@@ -200,12 +200,14 @@ var partVM = new Vue({
             this.intro.setOptions({steps: steps_edit});
             this.intro.start();
             this.intro.onexit(function () {
+                 userProfile.set('onboarding_edit',true);
                 exitonboarding();
             });
 
             this.intro.oncomplete(function () {
-                window.location.href= models_url;
                 userProfile.set('onboarding_edit',true);
+                exitonboarding();
+                window.location.href= models_url;
             });
         },
         resetZoom() {

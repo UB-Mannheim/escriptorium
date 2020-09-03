@@ -84,20 +84,19 @@ $(document).ready(function() {
 </script>
 <script src="{% static 'js/models.js' %}"></script>
 <script type="text/javascript">
-const onboarding_models  = "{{ onboarding_models }}";
-if (onboarding_models == "True") {
+const onboarding  = "{{ onboarding }}";
+
+if (onboarding== "True" && !onboarding_models) {
 
     models_intro.start();
     models_intro.onexit(function () {
-        exitonboarding({
-            onboarding_models : "False",
-            });
+        userProfile.set('onboarding_models',true);
+        exitonboarding();
     });
 
     models_intro.oncomplete(function () {
-        exitonboarding({
-            onboarding_models : "False",
-            });
+        userProfile.set('onboarding_models',true);
+        exitonboarding();
 
     });
 }
