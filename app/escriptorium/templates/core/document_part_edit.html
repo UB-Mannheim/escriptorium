@@ -550,6 +550,11 @@
               <div class="tools">
                   <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-list-ol"></i>
                   <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
+                  <button id="sortMode"
+                          title="{% trans "Toggle sorting mode." %}"
+                          class="btn btn-sm ml-3 btn-info fas fa-sort"
+                          @click="toggleSort"
+                          autocomplete="off"></button>
               </div>
               <div class="content-container {{ document.read_direction }}">
 
@@ -566,9 +571,9 @@
                        @input="changed"
                        @focusin="startEdit"
                        @focusout="stopEdit"
+                       @paste="onPaste"
                        @mousemove="showOverlay"
-                       @mouseleave="hideOverlay"
-                       @paste="onPaste">
+                       @mouseleave="hideOverlay">
                   </div>
               </div>
           </div>

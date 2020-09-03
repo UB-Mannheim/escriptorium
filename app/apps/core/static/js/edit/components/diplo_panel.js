@@ -16,25 +16,38 @@ var DiploPanel = BasePanel.extend({
         }.bind(this), 10000);
     },
     mounted() {
-        /*     Vue.nextTick(function() {
-         *         var vm = this ;
-         *          var el = document.getElementById('list');
-         *          sortable = Sortable.create(el, {
-         *             group: 'shared',
-         *             multiDrag: true,
-         *             multiDragKey : 'CTRL',
-         *             selectedClass: "selected",
-         *             animation: 150,
-         *             onEnd: function(evt) {
-         *                 vm.onDragginEnd(evt);
-         *             }
-         *     });
-         *     }.bind(this));
-         */
+        Vue.nextTick(function() {
+            var vm = this ;
+            vm.sortable = Sortable.create(this.editor, {
+                disabled: true,
+                multiDrag: true,
+                multiDragKey : 'CTRL',
+                selectedClass: "selected",
+                animation: 150,
+                onEnd: function(evt) {
+                    vm.onDragginEnd(evt);
+                }
+            });
+        }.bind(this));
+
         this.editor = this.$el.querySelector('#diplomatic-lines');
+        this.sortModeBtn = this.$el.querySelector('#sortMode');
         this.saveNotif = this.$el.querySelector('.tools #save-notif');
     },
     methods: {
+        toggleSort() {
+            if (this.editor.contentEditable === 'true') {
+                this.editor.contentEditable = 'false';
+                this.sortable.option('disabled', false);
+                this.sortModeBtn.classList.remove('btn-info');
+                this.sortModeBtn.classList.add('btn-success');
+            } else {
+                this.editor.contentEditable = 'true';
+                this.sortable.option('disabled', true);
+                this.sortModeBtn.classList.remove('btn-success');
+                this.sortModeBtn.classList.add('btn-info');
+            }
+        },
         changed() {
             this.saveNotif.classList.remove('hide');
             this.debouncedSave();
@@ -89,20 +102,19 @@ var DiploPanel = BasePanel.extend({
                Finish dragging lines, save new positions
              */
             if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex){
-                let pk = ev.item.querySelector('.line-content').id;
-                let elt = {"pk":pk, "index":ev.newIndex};
-                this.movedLines.push(elt);
-            }
-            else {
+                this.movedLines.push({
+                    "pk": this.$children[ev.oldIndex].line.pk,
+                    "index": ev.newIndex
+                });
+            } else {
                 for(let i=0; i< ev.newIndicies.length; i++){
-                    let line = ev.newIndicies[i];
-                    let pk = line.multiDragElement.querySelector('.line-content').id;
-                    let index = line.index;
-                    let elt = {"pk":pk, "index":index};
-                    this.movedLines.push(elt);
+                    // TODO: doesn't appear to  work?!
+                    this.movedLines.push({
+                        "pk": this.$children[ev.oldIndicies[i].index].line.pk,
+                        "index": ev.newIndicies[i].index
+                    });
                 }
             }
-
             this.moveLines();
         },
         moveLines() {
@@ -207,7 +219,7 @@ var DiploPanel = BasePanel.extend({
             }
         },
         hideOverlay() {
-            this.$children[0].hideOverlay();
+            if (this.$children.length) this.$children[0].hideOverlay();
         },
 
         bulkUpdate() {
