@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.translation import gettext as _
 from captcha.fields import CaptchaField
+from django.contrib.auth.models import Group, Permission
 
 from bootstrap.forms import BootstrapFormMixin
 from users.models import Invitation, User, ContactUs
@@ -53,6 +54,17 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('email', 'first_name', 'last_name')
+
+
+class TeamForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('name','permissions',)
+
+    def __init__(self,*args, **kwargs):
+        # give permissions to adding add invite change delete view users
+        super().__init__(*args, **kwargs)
+        self.fields['permissions'].queryset = Permission.objects.filter(content_type__app_label="users")
 
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):

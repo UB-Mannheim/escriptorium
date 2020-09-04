@@ -11,9 +11,9 @@ from django.utils.translation import gettext as _
 from django.views.generic.edit import CreateView, UpdateView
 
 from rest_framework.authtoken.models import Token
-
+from django.contrib.auth.models import Group
 from users.models import User, Invitation, ContactUs
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm
+from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -73,7 +73,20 @@ class AcceptInvitation(CreateView):
         # TODO: send a welcome message ?!
         return response
 
-# request invitation
+
+class CreateGroup(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Group
+    success_message = _('Team successfully created.')
+    success_url = '/profile/'
+    form_class = TeamForm
+
+    def form_valid(self, form):
+
+        response = super().form_valid(form)
+        form.instance.user_set.add(self.request.user)
+        return super().form_valid(form)
+
+
 
 
 class Profile(SuccessMessageMixin, UpdateView):
@@ -89,6 +102,7 @@ class Profile(SuccessMessageMixin, UpdateView):
     def get_context_data(self):
         context = super().get_context_data()
         context['api_auth_token'], created = Token.objects.get_or_create(user=self.object)
+        context['team_form'] = TeamForm()
 
         # files directory
         upath = self.object.get_document_store_path() + '/'
