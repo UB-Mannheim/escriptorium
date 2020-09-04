@@ -21,7 +21,16 @@
     border-left: 1px solid lightgrey;
 }
 
-.rtl .line-content {
+.rtl #diplomatic-lines div {
     /* fixes table like alignment */
     text-align: right;
+    margin-right: 50px;
+    margin-left: .5em;
+}
+
+.rtl #diplomatic-lines div:before {
+    margin-right: -50px;
+    margin-left: .5em;
+    border-left: 1px solid #ddd;
+    border-right: none;
 }

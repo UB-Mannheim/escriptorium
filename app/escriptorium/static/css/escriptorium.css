@@ -615,8 +615,6 @@ i.panel-icon {
 }
 
 #diplomatic-lines div:before {
-    /* user-select: none; */
-    pointer-events: all;
     text-align: center;
     counter-increment: line;
     content: counter(line);

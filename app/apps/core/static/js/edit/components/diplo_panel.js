@@ -275,7 +275,7 @@ var DiploPanel = BasePanel.extend({
                update the size of the panel
              */
             this.setHeight();
-        },
+        }
     },
 
 });

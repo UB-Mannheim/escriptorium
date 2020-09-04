@@ -19,6 +19,9 @@ var diploLine = LineBase.extend({
             this.$parent.appendLine();
         }.bind(this));
     },
+    beforeDestroy() {
+        this.getEl().remove();
+    },
     watch: {
         'line.order': function(n,o) {
             // make sure it's at the right place,
@@ -28,18 +31,22 @@ var diploLine = LineBase.extend({
                 this.$el.parentNode.insertBefore(
                     this.$el,
                     this.$el.parentNode.children[this.line.order]);
+                this.setElContent(this.line.currentTrans.content);
             }
         },
         'line.currentTrans': function(n, o) {
-            let line = this.getEl();
             if (n!=undefined && n.content) {
-                line.textContent = n.content;
+                this.setElContent(n.content);
             }
         }
     },
     methods: {
         getEl() {
             return this.$parent.editor.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
+        },
+        setElContent(content) {
+            let line = this.getEl();
+            line.textContent = content;
         },
         getRegion() {
             return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
