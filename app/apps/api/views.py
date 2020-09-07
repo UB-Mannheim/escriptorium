@@ -23,7 +23,6 @@ from api.serializers import (UserOnboardingSerializer,
                              BlockTypeSerializer,
                              LineTypeSerializer,
                              DetailedLineSerializer,
-                             LineMoveSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
                              LineTranscriptionSerializer)
@@ -252,33 +251,14 @@ class LineViewSet(ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
-        lines = request.data.get("lines")
-        response = []
-        errors = []
-
-        for line in lines:
-            l = get_object_or_404(Line, pk=line["pk"])
-            serializer = LineMoveSerializer(line=l, data=line)
-            if serializer.is_valid():
-                serializer.move()
-                response.append(serializer.data)
-            else:
-                errors.append(errors)
-
-        if errors:
-            return Response(errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-        return Response(response)
-
-        # return Response(status=200, data=response)
-
-        # line = get_object_or_404(Line, pk=pk)
-        # serializer = LineMoveSerializer(line=line, data=request.data)
-        # if serializer.is_valid():
-        #     serializer.move()
-        #     return Response({'status': 'moved'})
-        # else:
-        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.get('lines')
+        qs = Line.objects.filter(pk__in=[l['pk'] for l in data])
+        serializer = LineOrderSerializer(qs, data=data, many=True)
+        if serializer.is_valid():
+            resp = serializer.save()
+            return Response(resp, status=200)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LargeResultsSetPagination(PageNumberPagination):

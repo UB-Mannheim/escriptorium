@@ -25,7 +25,7 @@ var DiploPanel = BasePanel.extend({
                 selectedClass: "selected",
                 animation: 150,
                 onEnd: function(evt) {
-                    vm.onDragginEnd(evt);
+                    vm.onDraggingEnd(evt);
                 }
             });
         }.bind(this));
@@ -97,21 +97,23 @@ var DiploPanel = BasePanel.extend({
             this.constrainLineNumber();
             this.save();
         },
-        onDragginEnd(ev) {
+        onDraggingEnd(ev) {
             /*
                Finish dragging lines, save new positions
              */
-            if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex){
+            if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex) {
+                let diploLine = this.$children.find(dl=>dl.line.order==ev.oldIndex);
                 this.movedLines.push({
-                    "pk": this.$children[ev.oldIndex].line.pk,
-                    "index": ev.newIndex
+                    "pk": diploLine.line.pk,
+                    "order": ev.newIndex
                 });
             } else {
-                for(let i=0; i< ev.newIndicies.length; i++){
-                    // TODO: doesn't appear to  work?!
+                for(let i=0; i< ev.newIndicies.length; i++) {
+
+                    let diploLine = this.$children.find(dl=>dl.line.order==ev.oldIndicies[i].index);
                     this.movedLines.push({
-                        "pk": this.$children[ev.oldIndicies[i].index].line.pk,
-                        "index": ev.newIndicies[i].index
+                        "pk": diploLine.line.pk,
+                        "order": ev.newIndicies[i].index
                     });
                 }
             }
@@ -119,7 +121,7 @@ var DiploPanel = BasePanel.extend({
         },
         moveLines() {
             if(this.movedLines.length != 0){
-                this.$parent.$emit('line:move', this.movedLines, function () {
+                this.$parent.$emit('move:line', this.movedLines, function () {
                     this.movedLines = [];
                 }.bind(this));
             }
@@ -213,7 +215,8 @@ var DiploPanel = BasePanel.extend({
             let target = ev.target.nodeType==Node.TEXT_NODE?ev.target.parentNode:ev.target;
             let index = Array.prototype.indexOf.call(target.parentNode.children, target);
             if (index > -1 && index < this.$children.length) {
-                this.$children[index].showOverlay();
+                let diploLine = this.$children.find(dl=>dl.line.order==index);
+                if (diploLine) diploLine.showOverlay();
             } else {
                 this.hideOverlay();
             }
@@ -248,8 +251,9 @@ var DiploPanel = BasePanel.extend({
              */
             for(let i=0; i<this.$children.length; i++) {
                 let currentLine = this.$children[i];
-                if(currentLine.line.currentTrans.content != currentLine.getEl().textContent){
-                    currentLine.line.currentTrans.content = currentLine.getEl().textContent;
+                let content = currentLine.getEl().textContent;
+                if(currentLine.line.currentTrans.content != content){
+                    currentLine.line.currentTrans.content = content;
                     if(currentLine.line.currentTrans.pk) {
                         this.addToUpdatedLines(currentLine.line.currentTrans);
                     } else {

@@ -128,9 +128,10 @@ var partVM = new Vue({
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));
 
-        this.$on('line:move', function(movedLines, cb) {
+        this.$on('move:line', function(movedLines, cb) {
             this.part.move(movedLines, cb);
         }.bind(this));
+
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
