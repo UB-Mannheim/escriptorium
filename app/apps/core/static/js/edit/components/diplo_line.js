@@ -20,7 +20,10 @@ var diploLine = LineBase.extend({
         }.bind(this));
     },
     beforeDestroy() {
-        this.getEl().remove();
+        let el = this.getEl();
+        if (el != null) {
+            el.remove();
+        }
     },
     watch: {
         /* 'line.order': function(n,o) {

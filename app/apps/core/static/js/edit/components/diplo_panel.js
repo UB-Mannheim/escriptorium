@@ -8,6 +8,14 @@ var DiploPanel = BasePanel.extend({
     components: {
         'diploline': diploLine,
     },
+    watch: {
+        'part.loaded': function(isLoaded, wasLoaded) {
+            if (!isLoaded) {
+                // changed page probably
+                this.empty();
+            }
+        }
+    },
     created() {
         // vue.js quirck, have to dinamically create the event handler
         // call save every 10 seconds after last change
@@ -35,6 +43,11 @@ var DiploPanel = BasePanel.extend({
         this.saveNotif = this.$el.querySelector('.tools #save-notif');
     },
     methods: {
+        empty() {
+            while (this.editor.hasChildNodes()) {
+                this.editor.removeChild(this.editor.lastChild);
+            }
+        },
         toggleSort() {
             if (this.editor.contentEditable === 'true') {
                 this.editor.contentEditable = 'false';
