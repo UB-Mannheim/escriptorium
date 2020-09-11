@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.http import Http404
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, DetailView
 
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
@@ -87,6 +87,8 @@ class CreateGroup(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
+class GroupsDetail(LoginRequiredMixin, DetailView):
+    model = Group
 
 
 class Profile(SuccessMessageMixin, UpdateView):
