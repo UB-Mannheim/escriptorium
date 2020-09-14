@@ -1,0 +1,39 @@
+{% extends "users/profile.html" %}
+{% load i18n bootstrap static %}
+{% block body %}
+<div class="container">
+<div class="row">
+  <div class="col-md-4">
+      <h3>my teams</h3>
+      {% for team in  my_teams.all %}
+          <br><a href="{% url 'team-invite' pk=team.pk %}">{{ team }}</a>
+      {% endfor %}
+  </div>
+  <div class="col-md-6 col-md-offset-4">
+    <h3>Invite Users to {{ object }}</h3>
+    <form method="post" action="{% url 'team-invite' pk=object.pk %}">
+        {% csrf_token %}
+        <fieldset>
+        {%  render_field form.user %}
+
+        <input type="submit" value="{% trans 'Add' %}" class="btn btn-lg btn-success btn-block">
+      </fieldset>
+    </form>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Name </th>
+          <th scope="col">email</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for user in object.user_set.all %}
+            <td>{{ user }}</td>
+            <td>{{ user.email }}</td>
+      </tbody>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

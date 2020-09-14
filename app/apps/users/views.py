@@ -13,7 +13,7 @@ from django.views.generic import CreateView, UpdateView, DetailView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
 from users.models import User, Invitation, ContactUs
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm
+from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm, InvitationTeamForm
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -87,8 +87,23 @@ class CreateGroup(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
-class GroupsDetail(LoginRequiredMixin, DetailView):
+class InviteToTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
     model = Group
+    success_message = _('User added successfully to the team.')
+
+    form_class = InvitationTeamForm
+
+    def get_success_url(self):
+        return reverse('team-invite', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        self.object.user_set.add(form.cleaned_data['user'])
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['my_teams'] = self.request.user.groups.all
+        return context
 
 
 class Profile(SuccessMessageMixin, UpdateView):

@@ -66,6 +66,16 @@ class TeamForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['permissions'].queryset = Permission.objects.filter(content_type__app_label="users")
 
+class InvitationTeamForm(BootstrapFormMixin,forms.ModelForm):
+
+    user = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        )
+
+    class Meta:
+        model = Group
+        fields = ('user',)
+
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
 
