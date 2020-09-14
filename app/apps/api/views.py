@@ -23,7 +23,6 @@ from api.serializers import (UserOnboardingSerializer,
                              BlockTypeSerializer,
                              LineTypeSerializer,
                              DetailedLineSerializer,
-                             LineMoveSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
                              LineTranscriptionSerializer)
@@ -254,13 +253,14 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
-        line = get_object_or_404(Line, pk=pk)
-        serializer = LineMoveSerializer(line=line, data=request.data)
+        data = request.data.get('lines')
+        qs = Line.objects.filter(pk__in=[l['pk'] for l in data])
+        serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
-            serializer.move()
-            return Response({'status': 'moved'})
+            resp = serializer.save()
+            return Response(resp, status=200)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -327,19 +327,35 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=False, methods=['PUT'])
     def bulk_update(self, request, document_pk=None, part_pk=None, pk=None):
-        lines = request.data.get("lines")
+        lines = request.data.get('lines')
+        response = []
+        errors = []
         for line in lines:
             lt = get_object_or_404(LineTranscription, pk=line["pk"])
-            lt.new_version(author=request.user.username,
-                           source=settings.VERSIONING_DEFAULT_SOURCE)
             serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        return Response({'status': 'ok'}, status=200)
+
+            if serializer.is_valid():
+                try:
+                    lt.new_version(author=request.user.username,
+                               source=settings.VERSIONING_DEFAULT_SOURCE)
+                except NoChangeException:
+                    pass
+
+                serializer.save()
+                response.append(serializer.data)
+
+            else:
+                errors.append(errors)
+
+        if errors:
+            return Response(errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=200, data=response)
 
     @action(detail=False, methods=['POST'])
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
         qs = LineTranscription.objects.filter(pk__in=lines)
         qs.update(content='')
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT, )

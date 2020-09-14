@@ -763,6 +763,15 @@ class DocumentPart(OrderedModel):
 
         return to_calc
 
+    def enforce_line_order(self):
+        # django-ordered-model doesn't care about unicity and linearity...
+        lines = self.lines.order_by('order', 'pk')
+        for i, line in enumerate(lines):
+            if line.order != i:
+                logger.debug('Enforcing line order %d : %d' % (line.pk, i))
+                line.order = i
+                line.save()
+
 
 def validate_polygon(value):
     if value is None:
@@ -829,7 +838,7 @@ class Line(OrderedModel):  # Versioned,
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'
-    version_ignore_fields = ('document_part', 'order')
+    # version_ignore_fields = ('document_part', 'order')
 
     typology = models.ForeignKey(LineType, null=True, blank=True,
                                  on_delete=models.SET_NULL)
