@@ -106,6 +106,28 @@ class InviteToTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
         return context
 
 
+class RemoveFromTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
+    model = Group
+    success_message = _('User removed successfully from the team.')
+    form_class = InvitationTeamForm
+
+    def get_success_url(self):
+        return reverse('team-invite', kwargs={'pk': self.object.pk})
+
+
+    def form_valid(self, form):
+        import pdb
+        pdb.set_trace()
+        self.object.user_set.remove(form.cleaned_data['user'])
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['my_teams'] = self.request.user.groups.all
+        return context
+
+
+
 class Profile(SuccessMessageMixin, UpdateView):
     model = User
     form_class = ProfileForm
