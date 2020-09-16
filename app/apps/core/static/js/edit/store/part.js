@@ -464,7 +464,6 @@ const partStore = {
                         return l.pk==lineData.pk;
                     });
                     if (line) {
-                        if (line.order != lineData.order) console.log('change', line.pk, line.order, lineData.order);
                         line.order = lineData.order;
                     }
                 }
