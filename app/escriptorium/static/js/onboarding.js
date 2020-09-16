@@ -7,11 +7,15 @@ var onboarding_models  = userProfile.get('onboarding_models');
 //document_form
 var document_intro = introJs();
 document_intro.setOptions({
+    'doneLabel':'Next page',
     steps: [{
-        element: ".container-fluid",
-        intro: 'Create your first document',
-        position: 'top'
-    }, ]
+            element: '.container-fluid',
+            intro: 'Update Document description (Name, Text direction or metadata).' +
+                'Edit Document Part. Panels to update transcriptions, baselines and masks',
+            position: 'top',
+            tooltipClass: 'tooltip-large'
+        },
+    ]
 });
 
 //document_edit
@@ -28,7 +32,7 @@ steps_edit = [{
     {
         element: '#part-edit',
         intro: 'Here you can edit your document, by adding or correcting lines and regions, and by entering or correcting transcriptions',
-        position: 'right',
+        position: 'top',
     },
     {
         element: '#segmentation-panel',
@@ -51,16 +55,7 @@ steps_edit = [{
 var document_images_intro = introJs();
 document_images_intro.setOptions('doneLabel', 'Next page');
 document_images_intro.setOptions({
-    steps: [{
-            element: '#nav-doc-tab',
-            intro: 'Update Document description (Name, Text direction or metadata).<br>',
-            position: 'bottom'
-        },
-        {
-            element: '#nav-edit-tab',
-            intro: 'Edit Document Part. Panels to update transcriptions, baselines and masks',
-            position: 'bottom'
-        },
+    steps: [
         {
             element: '#nav-models-tab',
             intro: 'Handle Transcription and Segmentation models related to this document.',
@@ -133,7 +128,7 @@ steps_trans = [{
 ];
 
 function exitonboarding() {
-   if(onboarding_document && onboarding_images && onboarding_edit && onboarding_trans && onboarding_models){
+   if(onboarding_document && onboarding_images && onboarding_edit && onboarding_trans && onboarding_models && onboarding_create){
 
        $.ajax({
         type: 'PUT',
