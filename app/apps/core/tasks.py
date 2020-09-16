@@ -16,7 +16,9 @@ from celery import shared_task
 from celery.signals import before_task_publish, task_prerun, task_success, task_failure
 from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
+from kraken.lib import default_specs
 from kraken.lib import train as kraken_train
+
 
 from users.consumers import send_event
 
@@ -146,8 +148,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
     except ValueError:  # model is empty
-        # load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
-        load = None
+        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
         model.file = upload_to
 
@@ -185,6 +186,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             evaluation_data=evaluation_data,
             threads=LOAD_THREADS,
             augment=True,
+            resize='both',
             load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
@@ -350,6 +352,8 @@ def train_(qs, document, transcription, model=None, user=None):
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    hyper_params = default_specs.RECOGNITION_HYPER_PARAMS.copy()
+    hyper_params['batch_size'] = 1
     trainer = (kraken_train.KrakenTrainer
                .recognition_train_gen(device=DEVICE,
                                       load=load,
@@ -357,9 +361,10 @@ def train_(qs, document, transcription, model=None, user=None):
                                       format_type=None,
                                       training_data=training_data,
                                       evaluation_data=evaluation_data,
-                                      resize='both',
+                                      resize='add',
                                       threads=LOAD_THREADS,
                                       augment=True,
+                                      hyper_params=hyper_params,
                                       load_hyper_parameters=True))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):

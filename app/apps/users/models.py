@@ -133,3 +133,41 @@ class Invitation(models.Model):
                           _('{username} accepted your invitation!').format(
                               username=self.recipient.username),
                           level='success')
+
+class ContactUs(models.Model):
+    """
+    Represents Contact Us form
+    """
+    name = models.CharField(max_length=255)
+    email = models.EmailField(
+        verbose_name=_('email address'),
+        max_length=255,
+    )
+    message = models.TextField()
+
+    class Meta:
+        verbose_name ="message"
+        verbose_name_plural = "messages"
+
+
+    def __str__(self):
+
+        return "from {}({})".format(self.name,self.email)
+
+    def save(self, *args, **kwargs):
+        context = {
+            "sender_name": self.name,
+            "sender_email": self.email,
+            "message": self.message,
+        }
+
+        send_email(
+            'users/email/contactus_subject.txt',
+            'users/email/contactus_message.txt',
+            'users/email/contactus_html.html',
+            settings.ADMINS,
+            context=context,
+            result_interface=None
+        )
+
+        super().save(*args, **kwargs)

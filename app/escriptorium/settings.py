@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'compressor',
+    'captcha',
 
     'bootstrap',
     'versioning',
@@ -104,8 +105,8 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-COMPRESS_ENABLED = not DEBUG
-COMPRESS_OFFLINE = not DEBUG
+COMPRESS_ENABLED = False
+COMPRESS_OFFLINE = False
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 

@@ -439,7 +439,8 @@ const partStore = {
             return {
                 pk: l.pk,
                 content: l.content,
-                line : l.line
+                line : l.line,
+                transcription : l.transcription
             };
         });
 
@@ -452,13 +453,23 @@ const partStore = {
                 console.log('couldnt update line', error)
             });
     },
-    move(linePk,index,callback){
-        let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
-        this.push(uri,{index : index},method="post")
+    move(movedLines, callback){
+        let uri = this.getApiPart()+ 'lines/move/';
+        this.push(uri,{"lines": movedLines},method="post")
             .then((response) =>response.json())
             .then(function (data) {
+                for (let i=0; i<data.length; i++) {
+                    let lineData = data[i];
+                    let line = this.lines.find(function(l) {
+                        return l.pk==lineData.pk;
+                    });
+                    if (line) {
+                        if (line.order != lineData.order) console.log('change', line.pk, line.order, lineData.order);
+                        line.order = lineData.order;
+                    }
+                }
                 callback();
-            }).catch(function(error) {
+            }.bind(this)).catch(function(error) {
                 console.log('couldnt recalculate order of line', error)
             });
     },

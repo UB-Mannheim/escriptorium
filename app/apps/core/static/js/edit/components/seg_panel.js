@@ -145,10 +145,12 @@ const SegPanel = BasePanel.extend({
             }
         },
         'fullsizeimage': function(n, o) {
-            // TODO/FIX: doesnt work anymore
             // it was prefetched
-            // this.$img.src = this.imageSrc;
-            // this.segmenter.refresh();
+            if (n && n != o) {
+                this.$img.src = this.imageSrc;
+                this.segmenter.scale = 1;
+                this.segmenter.refresh();
+            }
         }
     },
     methods: {
