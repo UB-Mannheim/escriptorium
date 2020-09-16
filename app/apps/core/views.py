@@ -289,7 +289,7 @@ class ModelsList(LoginRequiredMixin, ListView):
         if self.document:
             context['document'] = self.document
             context['object'] = self.document  # legacy
-            context['onboarding'] = self.request.onboarding
+            context['onboarding'] = self.request.user.onboarding
         return context
 
 
