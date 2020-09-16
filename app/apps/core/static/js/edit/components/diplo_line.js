@@ -39,7 +39,7 @@ var diploLine = LineBase.extend({
          *     }
          * }, */
         'line.currentTrans': function(n, o) {
-            if (n!=undefined && n.content) {
+            if (n!=undefined) {
                 this.setElContent(n.content);
             }
         }
