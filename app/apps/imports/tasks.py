@@ -11,6 +11,7 @@ from django.utils.text import slugify
 
 from celery import shared_task
 
+from core.models import Line
 from users.consumers import send_event
 from escriptorium.utils import send_email
 
@@ -106,12 +107,15 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
                     'valid_block_types': document.valid_block_types.all(),
                     'valid_line_types': document.valid_line_types.all(),
                     'part': part,
-                    'lines': part.lines.order_by('block__order', 'order')
-                                       .prefetch_related(
-                                           Prefetch('transcriptions',
-                                                    to_attr='transcription',
-                                                    queryset=LineTranscription.objects.filter(
-                                                        transcription=transcription)))})
+                    'blocks': (part.blocks.order_by('order')
+                                          .prefetch_related(
+                                             Prefetch(
+                                                 'lines',
+                                                 queryset=Line.objects.prefetch_transcription(transcription)))),
+
+                    'orphan_lines': (part.lines.prefetch_transcription(transcription)
+                                               .filter(block=None))
+                })
                 zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
         zip_.close()
 

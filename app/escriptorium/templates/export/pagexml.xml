@@ -6,20 +6,22 @@
     <LastChange>{% current_time %}</LastChange>
   </Metadata>
   <Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
-    {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
-    <TextRegion id="{{ line.block.external_id|default:'eSc_dummyblock_' }}"  {% if line.block.typology %}custom="structure {type:{{line.block.typology.name}};}"{% endif %}>
-      <Coords points="{% box_coordinates line.block part %}"/>{% endifchanged %}
-      <TextLine id="{{ line.external_id }}" {% if line.typology %}custom="structure {type:{{line.typology.name}};}"{% endif %}>
-          <Coords points="{% pagexml_points line.mask %}"/>
-        {% if line.baseline %}<Baseline points="{% pagexml_points line.baseline %}"/>{% endif %}
-        <TextEquiv>
-          <Unicode>{{ line.transcription.0.content|default_if_none:"" }}</Unicode>
-        </TextEquiv>
-      </TextLine>
-      {% if forloop.last %}<TextEquiv>
-        <Unicode>{% for line in lines %}{% line_break line.transcription.0.content|default_if_none:"" %}{% endfor %}</Unicode>
-      </TextEquiv>
-    </TextRegion>{% endif %}
+
+    {% for block in blocks %}
+    <TextRegion id="{{ block.external_id }}"  {% if block.typology %}custom="structure {type:{{block.typology.name}};}"{% endif %}>
+      <Coords points="{% pagexml_points block.box %}"/>
+      {% for line in block.lines.all %}
+      {% include 'export/pagexml_line.xml' %}
+      {% endfor %}
+    </TextRegion>
     {% endfor %}
+
+    {% if orphan_lines|length %}
+    <TextRegion id="eSc_dummyblock_">
+    {% for line in orphan_lines %}
+    {% include 'export/pagexml_line.xml' %}
+    {% endfor %}
+    </TextRegion>
+    {% endif %}
   </Page>
 </PcGts>

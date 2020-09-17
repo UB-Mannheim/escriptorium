@@ -23,33 +23,28 @@
                   VPOS="0"
                   WIDTH="{{ part.image.width }}"
                   HEIGHT="{{ part.image.height }}">
-        {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextBlock>{% endif %}
-        <TextBlock {% if line.block %}HPOS="{{ line.block.coordinates_box.0 }}"
-                   VPOS="{{ line.block.coordinates_box.1 }}"
-                   WIDTH="{{ line.block.width }}"
-                   HEIGHT="{{ line.block.height }}"
-                   ID="{{ line.block.external_id }}"
-                   {% if line.block.typology %}TAGREFS="BT{{line.block.typology.id}}"{% endif %}>
-          <Shape><Polygon POINTS="{% alto_points line.block.box %}"/></Shape>
-         {% else %}ID="eSc_dummyblock_">{% endif %}
-          {% endifchanged %}
-	  <TextLine ID="{{ line.external_id }}"
-                    {% if line.typology %}TAGREFS="LT{{line.typology.id}}"{% endif %}
-                    {% if line.baseline %}BASELINE="{% alto_points line.baseline %}" {% endif %}
-                    HPOS="{{ line.box.0 }}"
-                    VPOS="{{ line.box.1 }}"
-                    WIDTH="{{ line.width }}"
-                    HEIGHT="{{ line.height }}">
-            {% if line.mask %}<Shape><Polygon POINTS="{% alto_points line.mask %}"/></Shape>{% endif %}
-	    <String CONTENT="{{ line.transcription.0.content }}"
-                    HPOS="{{ line.box.0 }}"
-                    VPOS="{{ line.box.1 }}"
-                    WIDTH="{{ line.width }}"
-                    HEIGHT="{{ line.height }}"></String>
-          </TextLine>
-          {% if forloop.last %}</TextBlock>{% endif %}
+        {% for block in blocks %}
+        <TextBlock HPOS="{{ block.coordinates_box.0 }}"
+                   VPOS="{{ block.coordinates_box.1 }}"
+                   WIDTH="{{ block.width }}"
+                   HEIGHT="{{ block.height }}"
+                   ID="{{ block.external_id }}"
+                   TAGREFS="BT{{block.typology.id}}">
+          <Shape><Polygon POINTS="{% alto_points block.box %}"/></Shape>
+          {% for line in block.lines.all %}
+          {% include "export/alto_line.xml" %}
           {% endfor %}
-        </PrintSpace>
-      </Page>
-    </Layout>
-  </alto>
+        </TextBlock>
+        {% endfor %}
+
+        {% if orphan_lines|length %}
+        <TextBlock ID="eSc_dummyblock_">
+          {% for line in orphan_lines %}
+          {% include "export/alto_line.xml" %}
+          {% endfor %}
+        </TextBlock>
+        {% endif %}
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

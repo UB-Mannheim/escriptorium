@@ -10,7 +10,7 @@ from PIL import Image
 from datetime import datetime
 
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -825,6 +825,16 @@ class Block(OrderedModel, models.Model):
         return super().save(*args, **kwargs)
 
 
+class LineManager(models.Manager):
+    def prefetch_transcription(self, transcription):
+        return (self.get_queryset().order_by('order')
+                                   .prefetch_related(
+                                       Prefetch('transcriptions',
+                                                to_attr='transcription',
+                                                queryset=LineTranscription.objects.filter(
+                                                    transcription=transcription))))
+
+
 class Line(OrderedModel):  # Versioned,
     """
     Represents a segmented line from a DocumentPart
@@ -837,7 +847,7 @@ class Line(OrderedModel):  # Versioned,
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
-    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL)
+    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL, related_name='lines')
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'
@@ -847,6 +857,8 @@ class Line(OrderedModel):  # Versioned,
                                  on_delete=models.SET_NULL)
 
     external_id = models.CharField(max_length=128, blank=True, null=True)
+
+    objects = LineManager()
 
     class Meta(OrderedModel.Meta):
         pass
