@@ -7,9 +7,9 @@
   </Metadata>
   <Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
     {% for line in lines %}{% ifchanged line.block %}{% if not forloop.first %}</TextRegion>{% endif %}
-    <TextRegion id="{{ line.block.make_external_id|default:'eSc_dummyblock_' }}"  {% if line.block.typology %}custom="structure {type:{{line.block.typology.name}};}"{% endif %}>
+    <TextRegion id="{{ line.block.external_id|default:'eSc_dummyblock_' }}"  {% if line.block.typology %}custom="structure {type:{{line.block.typology.name}};}"{% endif %}>
       <Coords points="{% box_coordinates line.block part %}"/>{% endifchanged %}
-      <TextLine id="{{ line.make_external_id }}" {% if line.typology %}custom="structure {type:{{line.typology.name}};}"{% endif %}>
+      <TextLine id="{{ line.external_id }}" {% if line.typology %}custom="structure {type:{{line.typology.name}};}"{% endif %}>
           <Coords points="{% pagexml_points line.mask %}"/>
         {% if line.baseline %}<Baseline points="{% pagexml_points line.baseline %}"/>{% endif %}
         <TextEquiv>

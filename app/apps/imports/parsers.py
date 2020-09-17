@@ -219,19 +219,8 @@ class XMLParser(ParserDocument):
                     for block_id, blockTag in self.get_blocks(pageTag):
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
-                                if block_id.startswith("eSc_textblock_"):
-                                    internal_id = int(block_id[len("eSc_textblock_"):])
-                                    block = Block.objects.get(
-                                        document_part=part, pk=internal_id
-                                    )
-                                else:
-                                    block = Block.objects.get(
-                                        document_part=part, external_id=block_id
-                                    )
+                                block = Block.objects.get(document_part=part, external_id=block_id)
                             except Block.DoesNotExist:
-                                block = None
-
-                            if block is None:
                                 # not found, create it then
                                 block = Block(document_part=part, external_id=block_id)
                             try:
@@ -251,15 +240,7 @@ class XMLParser(ParserDocument):
                         for line_id, lineTag in self.get_lines(blockTag):
                             if line_id:
                                 try:
-                                    if line_id.startswith("eSc_line_"):
-                                        line = Line.objects.get(
-                                            document_part=part,
-                                            pk=int(line_id[len("eSc_line_"):]),
-                                        )
-                                    else:
-                                        line = Line.objects.get(
-                                            document_part=part, external_id=line_id
-                                        )
+                                    line = Line.objects.get(document_part=part, external_id=line_id)
                                 except Line.DoesNotExist:
                                     line = None
                             else:
@@ -267,9 +248,7 @@ class XMLParser(ParserDocument):
 
                             if line is None:
                                 # not found, create it then
-                                line = Line(
-                                    document_part=part, block=block, external_id=line_id
-                                )
+                                line = Line(document_part=part, block=block, external_id=line_id)
 
                             self.update_line(line, lineTag)
                             try:

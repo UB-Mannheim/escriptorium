@@ -28,12 +28,12 @@
                    VPOS="{{ line.block.coordinates_box.1 }}"
                    WIDTH="{{ line.block.width }}"
                    HEIGHT="{{ line.block.height }}"
-                   ID="{{ line.block.make_external_id }}"
+                   ID="{{ line.block.external_id }}"
                    {% if line.block.typology %}TAGREFS="BT{{line.block.typology.id}}"{% endif %}>
           <Shape><Polygon POINTS="{% alto_points line.block.box %}"/></Shape>
          {% else %}ID="eSc_dummyblock_">{% endif %}
           {% endifchanged %}
-	  <TextLine ID="{{ line.make_external_id }}"
+	  <TextLine ID="{{ line.external_id }}"
                     {% if line.typology %}TAGREFS="LT{{line.typology.id}}"{% endif %}
                     {% if line.baseline %}BASELINE="{% alto_points line.baseline %}" {% endif %}
                     HPOS="{{ line.box.0 }}"

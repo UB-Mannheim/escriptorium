@@ -5,6 +5,7 @@ import os
 import json
 import functools
 import subprocess
+import uuid
 from PIL import Image
 from datetime import datetime
 
@@ -331,9 +332,6 @@ class DocumentPart(OrderedModel):
             return True
         except IndexError:
             return False
-
-    def make_external_id(self):
-        return 'eSc_page_%d' % self.pk
 
     @property
     def filename(self):
@@ -819,7 +817,12 @@ class Block(OrderedModel, models.Model):
         return self.coordinates_box[3] - self.coordinates_box[1]
 
     def make_external_id(self):
-        return self.external_id or 'eSc_textblock_%d' % self.pk
+        self.external_id = 'eSc_textblock_%s' % str(uuid.uuid4())[:8]
+
+    def save(self, *args, **kwargs):
+        if self.external_id is None:
+            self.make_external_id()
+        return super().save(*args, **kwargs)
 
 
 class Line(OrderedModel):  # Versioned,
@@ -874,7 +877,12 @@ class Line(OrderedModel):  # Versioned,
     box = property(get_box, set_box)
 
     def make_external_id(self):
-        return self.external_id or 'eSc_line_%d' % self.pk
+        self.external_id = 'eSc_line_%s' % str(uuid.uuid4())[:8]
+
+    def save(self, *args, **kwargs):
+        if self.external_id is None:
+            self.make_external_id()
+        return super().save(*args, **kwargs)
 
 
 class Transcription(models.Model):

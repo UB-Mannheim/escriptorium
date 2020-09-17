@@ -31,7 +31,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     override = forms.BooleanField(
         initial=True, required=False,
         label=_("Override existing segmentation."),
-        help_text=_("Destroys existing regions and lines before importing."))
+        help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
         required=False,
         label=_("IIIF manifesto uri"),
