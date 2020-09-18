@@ -205,7 +205,7 @@ class XMLParser(ParserDocument):
                 )[0]
             except IndexError:
                 raise ParseError(
-                    _("No match found for file {} with filename <{}>.").format(
+                    _("No match found for file {} with filename \"{}\".").format(
                         self.file.name, filename
                     )
                 )
