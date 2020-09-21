@@ -128,7 +128,8 @@ steps_trans = [{
 ];
 
 function exitonboarding() {
-   if(onboarding_document && onboarding_images && onboarding_edit && onboarding_trans && onboarding_models){
+   if(userProfile.get('onboarding_document') == userProfile.get('onboarding_images') == userProfile.get('onboarding_edit') == userProfile.get('onboarding_trans') ==  userProfile.get('onboarding_models') == true)
+   {
 
        $.ajax({
         type: 'PUT',

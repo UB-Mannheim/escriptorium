@@ -179,10 +179,14 @@ if (onboarding== "True" && !onboarding_document)
     document_intro.start();
     document_intro.onexit(function() {
         userProfile.set('onboarding_document',true);
+        exitonboarding();
     });
 
     document_intro.oncomplete(function() {
         userProfile.set('onboarding_document',true);
+        exitonboarding();
+        var images_url = "{% url 'document-images' pk=document.pk %}";
+        window.location.href = images_url;
     });
 
 }
