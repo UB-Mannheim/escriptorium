@@ -3,16 +3,16 @@
 var API = {
     'document': '/api/documents/' + DOCUMENT_ID,
     'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
-    'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/' 
+    'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
 };
 
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var lastSelected = null;
 
-function openWizard(proc) {        
+function openWizard(proc) {
     var selected_num = partCard.getSelectedPks().length;
-        
+
     if(!proc.startsWith('import') && selected_num < 1) {
         alert('Select at least one image.');
         return;
@@ -22,16 +22,17 @@ function openWizard(proc) {
     // can't send more than one binarized image at a time
     if (selected_num != 1) { $('#id_bw_image').attr('disabled', true); }
     else { $('#id_bw_image').attr('disabled', false); }
-    
+
     // Reset the form
     $('.process-part-form', '#'+proc+'-wizard').get(0).reset();
-    
+
     // initialize transcription field with user's last edited transcription
     let itrans = userProfile.get('initialTranscriptions');
     if (itrans && itrans[DOCUMENT_ID]) {
+        $('#process-part-form-export #id_transcription').val(itrans[DOCUMENT_ID]);
         $('#process-part-form-train #id_transcription').val(itrans[DOCUMENT_ID]);
     }
-    
+
     $('#'+proc+'-wizard').modal('show');
 }
 
@@ -50,7 +51,7 @@ class partCard {
         this.locked = false;
 
         this.api = API.part.replace('{part_pk}', this.pk);
-        
+
         var $new = $('.card', '#card-template').clone();
         this.$element = $new;
         this.domElement = this.$element.get(0);
@@ -58,7 +59,7 @@ class partCard {
         this.selectButton = $('.js-card-select-hdl', $new);
         this.deleteButton = $('.js-card-delete', $new);
         this.dropAfter = $('.js-drop', '#card-template').clone();
-        
+
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
@@ -73,7 +74,7 @@ class partCard {
         }, this)).on('mouseout', $.proxy(function(ev) {
             this.$element.attr('draggable', true);
         }, this));
-        
+
         // add to the dom
         $('#cards-container').append($new);
         $('#cards-container').append(this.dropAfter);
@@ -96,7 +97,7 @@ class partCard {
         this.cancelTasksButton.click($.proxy(function(ev) {
             this.cancelTasks();
         }, this));
-        
+
         this.binarizedButton.click($.proxy(function(ev) {
             this.select();
             partCard.refreshSelectedCount();
@@ -112,16 +113,16 @@ class partCard {
             partCard.refreshSelectedCount();
             openWizard('transcribe');
         }, this));
-        
+
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
         $new.data('partCard', this);
-        
+
         // add the image element to the lazy loader
         imageObserver.observe($('img', $new).get(0));
-        
+
         this.defaultColor = this.$element.css('color');
-        
+
         //************* events **************
         this.selectButton.on('click', $.proxy(function(ev) {
             if (ev.shiftKey) {
@@ -142,12 +143,12 @@ class partCard {
             this.delete();
             partCard.refreshSelectedCount();
         }, this));
-        
+
         this.$element.on('dblclick', $.proxy(function(ev) {
             this.toggleSelect();
             partCard.refreshSelectedCount();
         }, this));
-        
+
         // drag'n'drop
         this.$element.on('dragstart', $.proxy(function(ev) {
             if (this.locked) return;
@@ -157,7 +158,7 @@ class partCard {
         }, this));
         this.$element.on('dragend', $.proxy(function(ev) {
             $('.js-drop').removeClass('drop-target');
-        }, this));        
+        }, this));
     }
 
     inQueue() {
@@ -174,7 +175,7 @@ class partCard {
                 this.workflow['segment'] == 'ongoing' ||
                 this.workflow['transcribe'] == 'ongoing');
     }
-    
+
     isCancelable() {
         return (this.workflow['binarize'] == 'ongoing' ||
                 this.workflow['segment'] == 'ongoing' ||
@@ -186,7 +187,7 @@ class partCard {
 
     updateThumbnail() {
         let uri, img = $('img.card-img-top', this.$element);
-        
+
         if (this.image.thumbnails && this.image.thumbnails['card'] != undefined) {
             uri = this.image.thumbnails['card'];
         } else {
@@ -196,7 +197,7 @@ class partCard {
         if (img.attr('src')) img.attr('src', uri);
         img.attr('data-src', uri);
     }
-    
+
     updateWorkflowIcons() {
         var map = [
             ['convert', this.convertIcon],
@@ -212,9 +213,9 @@ class partCard {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.addClass(this.workflow[proc]);
                 btn.attr('title', btn.data('title') + ' ('+this.workflow[proc]+')');
-            }            
+            }
         }
-        
+
         if (this.inQueue() || this.working()) {
             this.lock();
         } else {
@@ -232,7 +233,7 @@ class partCard {
         this.dropAfter.remove();
         this.$element.remove();
     }
-    
+
     select(scroll=true) {
         if (this.locked) return;
         lastSelected = this;
@@ -266,7 +267,7 @@ class partCard {
         this.$element.removeClass('locked');
         this.$element.attr('draggable', true);
     }
-    
+
     moveTo(index, upload) {
         if (upload === undefined) upload = true;
         // store the previous index in case of error
@@ -297,7 +298,7 @@ class partCard {
             this.updateWorkflowIcons();
         }, this)).fail($.proxy(function(data){console.log("Couldn't cancel the task.");}));
     }
-    
+
     delete() {
         var posting = $.ajax({url:this.api, type: 'DELETE'})
             .done($.proxy(function(data) {
@@ -346,12 +347,12 @@ $(document).ready(function() {
             ev.preventDefault();
         }
     });
-    
+
     $('#cards-container').on('dragleave','.js-drop', function(ev) {
         ev.preventDefault();
         $(ev.target).removeClass('drop-accept');
     });
-    
+
     $('#cards-container').on('drop', '.js-drop', function(ev) {
         ev.preventDefault();
         $(ev.target).removeClass('drop-accept');
@@ -363,7 +364,7 @@ $(document).ready(function() {
         card.moveTo(index);
         g_dragged = null;
     });
-    
+
     // update workflow icons, send by notification through web socket
     var workflow_order = ['pending', 'ongoing', 'error', 'done'];
     $('#alerts-container').on('part:workflow', function(ev, data) {
@@ -377,7 +378,7 @@ $(document).ready(function() {
             if (data.task_id) card.task_ids[data.process] = data.task_id;
             card.updateWorkflowIcons();
 
-            
+
             // special case, done with thumbnails:
             if (data.process == 'generate_part_thumbnails' && data.status == 'done') {
                 card.image.thumbnails = data.data;
@@ -450,7 +451,7 @@ $(document).ready(function() {
                 console.log("Couldn't cancel import");
             });
     });
-    
+
     // Exports
     var $exportBtn = $('#document-export');
     $alertsContainer.on('export:start', function(ev, data)  {
@@ -463,7 +464,7 @@ $(document).ready(function() {
     $alertsContainer.on('export:done', function(ev, data)  {
         $exportBtn.removeClass('blink');
     });
-    
+
     // training
     var max_accuracy = 0;
     $alertsContainer.on('training:start', function(ev, data) {
@@ -497,7 +498,7 @@ $(document).ready(function() {
                 console.log("Couldn't cancel training");
             });
     });
-    
+
     // create & configure dropzone
     var imageDropzone = new Dropzone('.dropzone', {
         paramName: "image",
@@ -506,7 +507,7 @@ $(document).ready(function() {
         // retryChunks: true,
         parallelUploads: 1  // ! important or the 'order' field gets duplicates
     });
-    
+
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
         var card = new partCard(data);
@@ -520,7 +521,7 @@ $(document).ready(function() {
             }
         }
     });
-    
+
     // processor buttons
     $('#select-all').click(function(ev) {
         var cards = partCard.getRange(0, $('#cards-container .card').length);
@@ -536,7 +537,7 @@ $(document).ready(function() {
         });
         partCard.refreshSelectedCount();
     });
-    
+
     $('.js-proc-selected').click(function(ev) {
         openWizard($(ev.target).data('proc'));
     });
@@ -544,7 +545,7 @@ $(document).ready(function() {
     $('#process-part-form-binarize #id_threshold').on('input', function() {
         $(this).attr('title', this.value);
     });
-    
+
     $('.process-part-form').submit(function(ev) {
         $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         ev.preventDefault();
@@ -574,13 +575,13 @@ $(document).ready(function() {
     /* Select card if coming from edit page */
     var tabUrl = new URL(window.location);
     var select = tabUrl.searchParams.get('select');
-    
+
     /* fetch the images and create the cards */
     var counter=0;
     var getNextParts = function(page) {
         var uri = API.parts + '?paginate_by=50&page=' + page;
         $.get(uri, function(data) {
-            counter += data.results.length;            
+            counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
                 var pc = new partCard(data.results[i]);
