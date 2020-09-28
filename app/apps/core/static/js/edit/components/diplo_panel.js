@@ -31,6 +31,8 @@ var DiploPanel = BasePanel.extend({
                 multiDrag: true,
                 multiDragKey : 'CTRL',
                 selectedClass: "selected",
+                ghostClass: "ghost",
+                dragClass: "info",
                 animation: 150,
                 onEnd: function(evt) {
                     vm.onDraggingEnd(evt);
@@ -150,7 +152,7 @@ var DiploPanel = BasePanel.extend({
             this.bulkCreate();
         },
         setHeight() {
-            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
         focusNextLine(sel, line) {
             if (line.nextSibling) {

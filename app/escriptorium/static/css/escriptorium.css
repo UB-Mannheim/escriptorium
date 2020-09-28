@@ -447,9 +447,9 @@ i.panel-icon {
     min-height: calc(100vh - 190px);
 }
 
-.panel #diplomatic-lines {
+.panel#diplo-panel .content-container {
     overflow-y: scroll;
-    min-height: calc(100vh - 190px);
+    max-height: calc(100vh - 190px);
 }
 
 .panel .panel-img {
@@ -611,7 +611,6 @@ i.panel-icon {
     line-height: 1.7rem;
     margin-bottom: 0px;
     overflow-wrap: break-word;
-    margin-left: 50px;
 }
 
 #diplomatic-lines div:before {
@@ -620,16 +619,20 @@ i.panel-icon {
     content: counter(line);
     display: inline-block;
     border-right: 1px solid #ddd;
-    padding: 0 .5em;
+    /* padding: 0 .5em; */
     margin-right: .5em;
+    margin-left: 0;
     width: 50px;
-    margin-left: -50px;
     color: #888;
 }
 
 #diplomatic-lines div.selected {
   background-color:#33A2FF;
   border: solid #33A2FF 1px;
+}
+
+#diplomatic-lines div.ghost {
+  background-color: lightyellow;
 }
 
 .cmp-add {
@@ -641,5 +644,5 @@ i.panel-icon {
 }
 
 #contact-form{
- width: 100%;
+    width: 100%;
 }
