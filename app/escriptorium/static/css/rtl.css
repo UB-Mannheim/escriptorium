@@ -24,11 +24,13 @@
 .rtl #diplomatic-lines div {
     /* fixes table like alignment */
     text-align: right;
+    margin-left: .5rem;
+    padding-right: 50px;
 }
 
 .rtl #diplomatic-lines div:before {
-    margin-left: .5em;
-    margin-right: 0;
+    margin-right: -50px;
+    margin-left: .5rem;
     border-left: 1px solid #ddd;
     border-right: none;
 }

@@ -609,18 +609,18 @@ i.panel-icon {
 #diplomatic-lines div {
     display: block;
     line-height: 1.7rem;
-    margin-bottom: 0px;
     overflow-wrap: break-word;
+    margin-right: .5rem;
 }
 
 #diplomatic-lines div:before {
+    height: 100%;
     text-align: center;
     counter-increment: line;
-    content: counter(line);
     display: inline-block;
+    content: counter(line);
     border-right: 1px solid #ddd;
-    /* padding: 0 .5em; */
-    margin-right: .5em;
+    margin-right: .5rem;
     margin-left: 0;
     width: 50px;
     color: #888;
