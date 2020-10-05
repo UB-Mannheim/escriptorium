@@ -26,7 +26,7 @@ var diploLine = LineBase.extend({
         }
     },
     watch: {
-        'line.order': function(n,o) {
+        'line.order': function(n, o) {
             // make sure it's at the right place,
             // in case it was just created or the ordering got recalculated
             let index = Array.from(this.$el.parentNode.children).indexOf(this.$el);
@@ -49,7 +49,7 @@ var diploLine = LineBase.extend({
         },
         setElContent(content) {
             let line = this.getEl();
-            line.textContent = content;
+            if (line) line.textContent = content;
         },
         getRegion() {
             return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
