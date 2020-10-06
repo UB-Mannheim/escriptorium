@@ -210,14 +210,23 @@ var partVM = new Vue({
                 }.bind(this));
             }.bind(this));
         },
+        getComparisonContent() {
+            this.comparedTranscriptions.forEach(function(tr, i) {
+                if (tr != this.selectedTranscription) {
+                    this.part.fetchContent(tr);
+                }
+            }.bind(this));
+        },
         getPrevious(ev) {
             return this.part.getPrevious(function() {
                 this.getCurrentContent(this.selectedTranscription);
+                this.getComparisonContent();
             }.bind(this));
         },
         getNext(ev) {
             return this.part.getNext(function() {
                 this.getCurrentContent(this.selectedTranscription);
+                this.getComparisonContent();
             }.bind(this));
         },
 

@@ -640,7 +640,7 @@ i.panel-icon {
 }
 
 .cmp-del {
-    color: red;
+    background-color: tomato;
 }
 
 #contact-form{
