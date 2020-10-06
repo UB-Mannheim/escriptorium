@@ -404,7 +404,7 @@ i.panel-icon {
 }
 
 #zoom-range {
-    height: 100px;
+    height: 200px;
 }
 
 #part-trans,
@@ -447,9 +447,9 @@ i.panel-icon {
     min-height: calc(100vh - 190px);
 }
 
-.panel #diplomatic-lines {
+.panel#diplo-panel .content-container {
     overflow-y: scroll;
-    min-height: calc(100vh - 190px);
+    max-height: calc(100vh - 190px);
 }
 
 .panel .panel-img {
@@ -609,21 +609,20 @@ i.panel-icon {
 #diplomatic-lines div {
     display: block;
     line-height: 1.7rem;
-    margin-bottom: 0px;
     overflow-wrap: break-word;
-    margin-left: 50px;
+    margin-right: .5rem;
 }
 
 #diplomatic-lines div:before {
+    height: 100%;
     text-align: center;
     counter-increment: line;
-    content: counter(line);
     display: inline-block;
+    content: counter(line);
     border-right: 1px solid #ddd;
-    padding: 0 .5em;
-    margin-right: .5em;
+    margin-right: .5rem;
+    margin-left: 0;
     width: 50px;
-    margin-left: -50px;
     color: #888;
 }
 
@@ -632,14 +631,18 @@ i.panel-icon {
   border: solid #33A2FF 1px;
 }
 
+#diplomatic-lines div.ghost {
+  background-color: lightyellow;
+}
+
 .cmp-add {
     background-color: lightgreen;
 }
 
 .cmp-del {
-    color: red;
+    background-color: tomato;
 }
 
 #contact-form{
- width: 100%;
+    width: 100%;
 }

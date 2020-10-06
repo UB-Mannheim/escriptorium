@@ -31,6 +31,8 @@ var DiploPanel = BasePanel.extend({
                 multiDrag: true,
                 multiDragKey : 'CTRL',
                 selectedClass: "selected",
+                ghostClass: "ghost",
+                dragClass: "info",
                 animation: 150,
                 onEnd: function(evt) {
                     vm.onDraggingEnd(evt);
@@ -71,7 +73,7 @@ var DiploPanel = BasePanel.extend({
             if (pos === undefined) {
                 this.editor.appendChild(div);
             } else {
-                this.editor.insertBefore(div, pos.nextSibling);
+                this.editor.insertBefore(div, pos);
             }
             return div;
         },
@@ -150,7 +152,7 @@ var DiploPanel = BasePanel.extend({
             this.bulkCreate();
         },
         setHeight() {
-            this.$el.querySelector('.content-container').style.maxHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
         },
         focusNextLine(sel, line) {
             if (line.nextSibling) {
@@ -186,7 +188,7 @@ var DiploPanel = BasePanel.extend({
         },
         cleanSource(dirtyText) {
             // cleanup html and possibly other tags (?)
-            var tmp = document.createElement("DIV");
+            var tmp = document.createElement("div");
             tmp.innerHTML = dirtyText;
             let clean = tmp.textContent || tmp.innerText || "";
             tmp.remove();
@@ -203,21 +205,17 @@ var DiploPanel = BasePanel.extend({
                 const selection = window.getSelection();
                 let range = selection.getRangeAt(0);
                 let target = range.startContainer.nodeType==Node.TEXT_NODE?range.startContainer.parentNode:range.startContainer;
-                let start = Array.prototype.indexOf.call(target.parentNode.children, target);
+                let start = Array.prototype.indexOf.call(this.editor.children, target);
+                let newDiv, child = this.editor.children[start];
                 for (let i = 0; i < pasted_data_split.length; i++) {
-                    let content = pasted_data_split[i];
-                    let child = target.parentNode.children[start+i];
-                    let newDiv;
-                    if (child) {
-                        newDiv = this.appendLine(child);
-                    } else {
-                        newDiv = this.appendLine();
-                    }
+                    newDiv = this.appendLine(child);
+                    newDiv.textContent = this.cleanSource(pasted_data_split[i]);
                     // trick to get at least 'some' ctrl+z functionality
-                    range.setStart(newDiv, 0);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    document.execCommand("insertText", false, this.cleanSource(content));
+                    // this fails in spectacular ways differently in firefox and chrome... so no ctrl+z
+                    /* range.setStart(newDiv, 0);
+                     * selection.removeAllRanges();
+                     * selection.addRange(range);
+                     * document.execCommand("insertText", false, this.cleanSource(content)); */
                 }
             }
 

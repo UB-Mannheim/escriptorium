@@ -86,7 +86,7 @@
                 data-target="diplomatic"
                 class="open-panel nav-item btn"
                 v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Diplomatic" %}"><i class="click-through fas fa-list-ol"></i></button>
+                title="{% trans "Text" %}"><i class="click-through fas fa-list-ol"></i></button>
     </div>
     {% endblock %}
 
@@ -125,7 +125,7 @@
                        v-bind:min="zoom.minScale"
                        v-bind:max="zoom.maxScale"
                        v-model="zoomScale"
-                       step="0.5">
+                       step="0.3">
             </div>
         </div>
 
@@ -548,7 +548,7 @@
                   inline-template>
           <div class="col panel">
               <div class="tools">
-                  <i title="{% trans 'Transcription Panel' %}" class="panel-icon fas fa-list-ol"></i>
+                  <i title="{% trans 'Text Panel' %}" class="panel-icon fas fa-list-ol"></i>
                   <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
                   <button id="sortMode"
                           title="{% trans "Toggle sorting mode." %}"

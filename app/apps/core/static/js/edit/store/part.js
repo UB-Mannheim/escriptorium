@@ -474,6 +474,14 @@ const partStore = {
     },
 
     reset() {
+        // triggers delayed function immediately before the underlying data(pks) changes
+        if (this.debouncedRecalculateMasks) {
+            this.debouncedRecalculateMasks.flush();
+        }
+        if (this.debouncedRecalculateOrdering) {
+            this.debouncedRecalculateOrdering.flush();
+        }
+
         // note: keep the transcriptions
         this.loaded = false;
         this.pk = null;
