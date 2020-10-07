@@ -9,8 +9,10 @@ from django.conf import settings
 def get_group_name(user_pk):
     return 'notif-' + str(user_pk)
 
+
 def get_room_name(cls, pk):
     return "room-%s-%d" % (cls, pk)
+
 
 def send_event(cls, pk, event_name, data):
     channel_layer = get_channel_layer()
@@ -20,6 +22,7 @@ def send_event(cls, pk, event_name, data):
          'name': event_name,
          'data': data},
     )
+
 
 def send_notification(user_pk, message, id=None, level='info', link=None):
     channel_layer = get_channel_layer()
@@ -41,7 +44,7 @@ class NotificationConsumer(WebsocketConsumer):
                 get_group_name(self.scope['user'].pk),
                 self.channel_name)
             self.accept()
-    
+
     def disconnect(self, close_code):
         if self.scope['user'].is_authenticated:
             async_to_sync(self.channel_layer.group_discard)(
@@ -52,7 +55,7 @@ class NotificationConsumer(WebsocketConsumer):
                     self.room,
                     self.channel_name)
             self.close()
-    
+
     def receive(self, text_data):
         msg = json.loads(text_data)
         if 'type' in msg:
@@ -63,7 +66,7 @@ class NotificationConsumer(WebsocketConsumer):
                 async_to_sync(self.channel_layer.group_add)(
                     self.room,
                     self.channel_name)
-    
+
     def notification_message(self, event):
         self.send(json.dumps({'type': 'message',
                               'id': event['id'],

@@ -132,6 +132,10 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     parts = forms.CharField()
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
+    include_images = forms.BooleanField(
+        initial=False, required=False,
+        label=_('Include images'),
+        help_text=_("Will significantly increase the time to produce and download the export."))
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -150,43 +154,4 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
         document_export.delay(file_format, self.user.pk, self.document.pk,
-                              parts, transcription.pk)
-
-    def stream(self):
-        file_format = self.cleaned_data['file_format']
-        parts = self.cleaned_data['parts']
-        transcription = self.cleaned_data['transcription']
-
-        if file_format == self.TEXT_FORMAT:
-            content_type = 'text/plain'
-            lines = (LineTranscription.objects
-                     .filter(transcription=transcription, line__document_part__in=parts)
-                     .exclude(content="")
-                     .order_by('line__document_part', 'line__document_part__order', 'line__order'))
-            return StreamingHttpResponse(['%s\n' % line.content for line in lines],
-                                         content_type=content_type)
-
-        elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
-            filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
-                                                file_format,
-                                                datetime.now().strftime('%Y%m%d%H%M'))
-            buff = io.BytesIO()
-            if file_format == self.ALTO_FORMAT:
-                tplt = loader.get_template('export/alto.xml')
-            elif file_format == self.PAGEXML_FORMAT:
-                tplt = loader.get_template('export/pagexml.xml')
-            with ZipFile(buff, 'w') as zip_:
-                for part in parts:
-                    page = tplt.render({
-                        'part': part,
-                        'lines': part.lines.order_by('block__order', 'order')
-                                           .prefetch_related(
-                                               Prefetch('transcriptions',
-                                                        to_attr='transcription',
-                                                        queryset=LineTranscription.objects.filter(
-                                                            transcription=transcription)))})
-                    zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
-            response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
-            response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            # TODO: add METS file
-            return response
+                              parts, transcription.pk, self.cleaned_data['include_images'])

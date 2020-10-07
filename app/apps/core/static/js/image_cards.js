@@ -465,6 +465,17 @@ $(document).ready(function() {
         $exportBtn.removeClass('blink');
     });
 
+    // disables including images for text export
+    $("#process-part-form-export #id_file_format").on('change', function(ev) {
+        let sel = ev.target;
+        if ($(sel).val() == 'text') {
+            $("#process-part-form-export #include_images").prop('checked', false);
+            $("#process-part-form-export #include_images").prop('disabled', true);
+        } else {
+            $("#process-part-form-export #include_images").prop('disabled', false);
+        }
+    });
+
     // training
     var max_accuracy = 0;
     $alertsContainer.on('training:start', function(ev, data) {

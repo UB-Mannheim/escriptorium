@@ -782,13 +782,27 @@ def validate_polygon(value):
             params={'value': value})
 
 
+def validate_2_points(value):
+    if len(value) <= 2:
+        raise ValidationError(
+            _('Polygon needs to have at least 2 points %(value)s.'),
+            params={'value': value})
+
+
+def validate_3_points(value):
+    if len(value) <= 3:
+        raise ValidationError(
+            _('Polygon needs to have at least 2 points %(value)s.'),
+            params={'value': value})
+
+
 class Block(OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
     """
     # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField(validators=[validate_polygon])
+    box = JSONField(validators=[validate_polygon, validate_3_points])
     typology = models.ForeignKey(BlockType, null=True, blank=True,
                                  on_delete=models.SET_NULL)
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
@@ -803,8 +817,8 @@ class Block(OrderedModel, models.Model):
     @property
     def coordinates_box(self):
         """
-        Cast the box field to the format [xmin,ymin,xmax,ymax]
-        to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto
+        Cast the box field to the format [xmin, ymin, xmax, ymax]
+        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for Alto
         """
         return [*map(min, *self.box), *map(max, *self.box)]
 
@@ -841,9 +855,9 @@ class Line(OrderedModel):  # Versioned,
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
     # Closed Polygon: [[x1, y1], [x2, y2], ..]
-    mask = JSONField(null=True, blank=True, validators=[validate_polygon])
+    mask = JSONField(null=True, blank=True, validators=[validate_polygon, validate_3_points])
     # Polygon: [[x1, y1], [x2, y2], ..]
-    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])
+    baseline = JSONField(null=True, blank=True, validators=[validate_polygon, validate_2_points])
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')

@@ -204,6 +204,7 @@ class XMLParser(ParserDocument):
                     document=self.document, original_filename=filename
                 )[0]
             except IndexError:
+                # TODO: check for the image in the zip
                 raise ParseError(
                     _("No match found for file {} with filename \"{}\".").format(
                         self.file.name, filename
@@ -231,7 +232,9 @@ class XMLParser(ParserDocument):
                                 try:
                                     block.full_clean()
                                 except ValidationError as e:
-                                    raise ParseError(e)
+                                    raise ParseError(
+                                        "Block in '{filen}' line N°{line} was skipped because: {error}".format(
+                                            filen=self.file.name, line=blockTag.sourceline, error=e))
                                 else:
                                     block.save()
                         else:
@@ -254,7 +257,8 @@ class XMLParser(ParserDocument):
                             try:
                                 line.full_clean()
                             except ValidationError as e:
-                                raise ParseError(e)
+                                raise ParseError("Line in '{filen}' line N°{line} was skipped because: {error}".format(
+                                            filen=self.file.name, line=blockTag.sourceline, error=e))
                             else:
                                 line.save()
 

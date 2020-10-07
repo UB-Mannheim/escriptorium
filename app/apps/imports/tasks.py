@@ -54,7 +54,7 @@ def document_import(task, import_pk, resume=True, task_id=None):
 
 
 @shared_task(bind=True)
-def document_export(task, file_format, user_pk, document_pk, part_pks, transcription_pk):
+def document_export(task, file_format, user_pk, document_pk, part_pks, transcription_pk, include_images=False):
     ALTO_FORMAT = "alto"
     PAGEXML_FORMAT = "pagexml"
     TEXT_FORMAT = "text"
@@ -117,6 +117,8 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
                                                .filter(block=None))
                 })
                 zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
+                if include_images:
+                    zip_.write(part.image.path, part.filename)
         zip_.close()
 
     # send websocket msg

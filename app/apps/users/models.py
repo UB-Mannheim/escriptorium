@@ -134,6 +134,7 @@ class Invitation(models.Model):
                               username=self.recipient.username),
                           level='success')
 
+
 class ContactUs(models.Model):
     """
     Represents Contact Us form
@@ -146,13 +147,11 @@ class ContactUs(models.Model):
     message = models.TextField()
 
     class Meta:
-        verbose_name ="message"
+        verbose_name = "message"
         verbose_name_plural = "messages"
 
-
     def __str__(self):
-
-        return "from {}({})".format(self.name,self.email)
+        return "from {}({})".format(self.name, self.email)
 
     def save(self, *args, **kwargs):
         context = {
