@@ -133,7 +133,7 @@ function exitonboarding() {
 
        $.ajax({
         type: 'PUT',
-        url: '/api/users/onboarding/',
+        url: '/api/user/onboarding/',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
             onboarding: "False",
