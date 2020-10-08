@@ -97,7 +97,13 @@ class InviteToTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
         return reverse('team-invite', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
-        self.object.user_set.add(form.cleaned_data['user'])
+        try:
+            user = User.objects.get(email=form.cleaned_data['email'])
+            self.object.user_set.add(user)
+
+        except User.DoesNotExist:
+            print('no user with this email')
+
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

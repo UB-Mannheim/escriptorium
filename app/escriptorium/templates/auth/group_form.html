@@ -14,7 +14,8 @@
     <form method="post" action="{% url 'team-invite' pk=object.pk %}">
         {% csrf_token %}
         <fieldset>
-        {%  render_field form.user %}
+{#        {%  render_field form.user %}#}
+        {%  render_field form.email %}
 
         <input type="submit" value="{% trans 'Add' %}" class="btn btn-lg btn-success btn-block">
       </fieldset>

@@ -68,13 +68,15 @@ class TeamForm(BootstrapFormMixin, forms.ModelForm):
 
 class InvitationTeamForm(BootstrapFormMixin,forms.ModelForm):
 
-    user = forms.ModelChoiceField(
-        queryset=User.objects.all(),
-        )
+    # user = forms.ModelChoiceField(
+    #     queryset=User.objects.all(),
+    #     )
+
+    email = forms.CharField()
 
     class Meta:
         model = Group
-        fields = ('user',)
+        fields = ('email',)
 
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
