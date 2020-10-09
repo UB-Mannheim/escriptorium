@@ -22,6 +22,8 @@
                         <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
                     </fieldset>
                 </form>
+
+               <button id="reset-onboarding" style="" class="btn btn-lg btn-primary btn-block">Reset onboarding</button>
             </div>
 
             <div class="tab-pane fade show" id="key-tab" role="tabpanel" aria-labelledby="v-pills-home-tab">
@@ -47,6 +49,8 @@
 {% block scripts %}
 {{ block.super }}
 <script>
+ const onboarding  = "{{ onboarding }}";
+
  $(document).ready(function() {
      $('#api-key-clipboard').click(function() {
          navigator.clipboard.writeText($(this).data('key'))
@@ -71,6 +75,31 @@
          history.replaceState(null, null, newUrl);
          updatePagination(hash);
      });
+
+     $('#reset-onboarding').on('click',function () {
+
+            userProfile.set('onboarding_document', false);
+            userProfile.set('onboarding_images', false);
+            userProfile.set('onboarding_edit', false);
+            userProfile.set('onboarding_trans', false);
+            userProfile.set('onboarding_models', false);
+
+            $.ajax({
+            type: 'PUT',
+            url: '/api/user/onboarding/',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                onboarding: "True",
+            })
+
+            }).done($.proxy(function(data) {}, this)).fail(function(data) {
+        });
+         Alert.add(Date.now(), "onboarding set to False", 'success');
+
+     });
+
  }, false);
+
 </script>
+<script src="{% static 'js/onboarding.js' %}"></script>
 {% endblock %}
