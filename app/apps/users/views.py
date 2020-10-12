@@ -102,6 +102,8 @@ class Profile(SuccessMessageMixin, UpdateView):
         page_number = self.request.GET.get('page')
         context['is_paginated'] = paginator.count != 0
         context['page_obj'] = paginator.get_page(page_number)
+        context['onboarding'] = self.request.user.onboarding
+
         return context
 
 class ContactUsView(SuccessMessageMixin, CreateView):

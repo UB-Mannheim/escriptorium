@@ -170,6 +170,8 @@
 <script src="{% static 'js/document_form.js' %}"></script>
 <script src="{% static 'js/help.js' %}"></script>
 
+{% if object %}
+
 <script type="text/javascript">
 
 const onboarding  = "{{ onboarding }}";
@@ -191,6 +193,7 @@ if (onboarding== "True" && !onboarding_document)
 
 }
 </script>
+{% endif %}
 
 {% endblock %}
 
