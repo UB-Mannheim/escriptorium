@@ -171,6 +171,14 @@
 <script src="{% static 'js/help.js' %}"></script>
 
 {% if object %}
+<script type="text/javascript">
+    var images_url = "{% url 'document-images' pk=object.pk %}";
+</script>
+{% else %}
+<script type="text/javascript">
+    var images_url = "#";
+</script>
+{% endif %}
 
 <script type="text/javascript">
 
@@ -187,13 +195,11 @@ if (onboarding== "True" && !onboarding_document)
     document_intro.oncomplete(function() {
         userProfile.set('onboarding_document',true);
         exitonboarding();
-        var images_url = "{% url 'document-images' pk=document.pk %}";
         window.location.href = images_url;
     });
 
 }
 </script>
-{% endif %}
 
 {% endblock %}
 
