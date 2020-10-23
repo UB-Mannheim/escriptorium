@@ -13,8 +13,7 @@ var partVM = new Vue({
         blockShortcuts: false,
         fullsizeimage: false,
         selectedTranscription: null,
-        comparedTranscriptions: [],
-        intro : introJs()
+        comparedTranscriptions: []
     },
     computed: {
         imageSize() {
@@ -178,9 +177,6 @@ var partVM = new Vue({
         }.bind(this));
     },
     methods: {
-        show_onboarding(){
-
-        },
         resetZoom() {
             this.zoom.reset();
         },

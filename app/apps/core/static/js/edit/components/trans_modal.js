@@ -26,10 +26,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         $(this.$el).draggable({handle: '.modal-header'});
         $(this.$el).resizable();
         this.computeStyles();
-        let timer = setTimeout(function (){
-            this.show_onboarding();
-                     }.bind(this),
-                1000);
     },
     watch: {
         line(new_, old_) {
@@ -166,25 +162,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 overlay.style.display = 'block';
             } else {
                 overlay.style.display = 'none';
-            }
-        },
-        show_onboarding(){
-
-            if(onboarding == "True"  && !onboarding_trans) {
-                this.intro = introJs();
-                this.intro.setOptions({steps: steps_trans});
-
-                this.intro.start();
-                this.intro.onexit(function () {
-                userProfile.set('onboarding_trans',true);
-                exitonboarding();
-                });
-
-                this.intro.oncomplete(function () {
-                    userProfile.set('onboarding_trans',true);
-                    exitonboarding();
-                });
-
             }
         }
     },
