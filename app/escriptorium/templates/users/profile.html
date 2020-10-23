@@ -49,8 +49,6 @@
 {% block scripts %}
 {{ block.super }}
 <script>
- const onboarding  = "{{ onboarding }}";
-
  $(document).ready(function() {
      $('#api-key-clipboard').click(function() {
          navigator.clipboard.writeText($(this).data('key'))
@@ -78,7 +76,7 @@
 
      $('#reset-onboarding').on('click',function () {
 
-         userProfile.set('onboarding_document', false);
+         userProfile.set('onboarding_document_form', false);
          userProfile.set('onboarding_images', false);
          userProfile.set('onboarding_edit', false);
          userProfile.set('onboarding_trans', false);
@@ -103,5 +101,4 @@
  }, false);
 
 </script>
-<script src="{% static 'js/onboarding.js' %}"></script>
 {% endblock %}

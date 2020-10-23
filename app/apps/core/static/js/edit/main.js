@@ -16,23 +16,6 @@ var partVM = new Vue({
         comparedTranscriptions: [],
         intro : introJs()
     },
-    mounted(){
-        if(onboarding =="True"  && !onboarding_edit) {
-            this.$nextTick(function () {
-                this.show = {
-                    source: true,
-                    segmentation: true,
-                    visualisation: true,
-                    diplomatic: true
-                };
-                let timer = setTimeout(function (){
-                        this.show_onboarding();
-                     }.bind(this),
-                2000);
-
-            });
-        }
-    },
     computed: {
         imageSize() {
             return this.part.image.size[0]+'x'+this.part.image.size[1];
@@ -197,18 +180,6 @@ var partVM = new Vue({
     methods: {
         show_onboarding(){
 
-            this.intro.setOptions({steps: steps_edit});
-            this.intro.start();
-            this.intro.onexit(function () {
-                 userProfile.set('onboarding_edit',true);
-                exitonboarding();
-            });
-
-            this.intro.oncomplete(function () {
-                userProfile.set('onboarding_edit',true);
-                exitonboarding();
-                window.location.href= models_url;
-            });
         },
         resetZoom() {
             this.zoom.reset();

@@ -81,7 +81,6 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['metadata_form'] = self.get_metadata_formset()
-        context['onboarding'] = self.request.user.onboarding
         return context
 
     def post(self, request, *args, **kwargs):
@@ -115,7 +114,6 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = self.get_metadata_formset(instance=self.object)
         context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
-        context['onboarding'] = self.request.user.onboarding
         return context
 
     def post(self, request, *args, **kwargs):
@@ -149,8 +147,6 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
-        context['onboarding'] = self.request.user.onboarding
-
         return context
 
 
@@ -251,7 +247,6 @@ class EditPart(LoginRequiredMixin, DetailView):
         # so we need context['object'] = document
         context['object'] = self.object.document
         context['document'] = self.object.document
-        context['onboarding'] = self.request.user.onboarding
         context['part'] = self.object
         return context
 
@@ -289,7 +284,6 @@ class ModelsList(LoginRequiredMixin, ListView):
         if self.document:
             context['document'] = self.document
             context['object'] = self.document  # legacy
-            context['onboarding'] = self.request.user.onboarding
         return context
 
 

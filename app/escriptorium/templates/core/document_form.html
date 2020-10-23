@@ -166,40 +166,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+ {% if user.onboarding %}
+ const ONBOARDING_PAGE = 'onboarding_document_form';
+ {% endif %}
+</script>
 {{ block.super }}
 <script src="{% static 'js/document_form.js' %}"></script>
 <script src="{% static 'js/help.js' %}"></script>
-
-{% if object %}
-<script type="text/javascript">
-    var images_url = "{% url 'document-images' pk=object.pk %}";
-</script>
-{% else %}
-<script type="text/javascript">
-    var images_url = "#";
-</script>
-{% endif %}
-
-<script type="text/javascript">
-
-const onboarding  = "{{ onboarding }}";
-if (onboarding== "True" && !onboarding_document)
-{
-
-    document_intro.start();
-    document_intro.onexit(function() {
-        userProfile.set('onboarding_document',true);
-        exitonboarding();
-    });
-
-    document_intro.oncomplete(function() {
-        userProfile.set('onboarding_document',true);
-        exitonboarding();
-        window.location.href = images_url;
-    });
-
-}
-</script>
-
 {% endblock %}
-

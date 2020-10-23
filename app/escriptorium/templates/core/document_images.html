@@ -112,45 +112,29 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+    'use strict';
+    const DOCUMENT_ID = {{ document.pk }};
+    const ONBOARDING_PAGE = 'onboarding_images';
+</script>
+
 {{ block.super }}
 <script type="text/javascript">
-'use strict';
-const DOCUMENT_ID = {{ document.pk }};
-const onboarding  = "{{ onboarding }}";
-$(document).ready(function() {
-  // join the ws room
-  msgSocket.addEventListener('open', function(ev) {
-    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
-  });
-});
+    'use strict';
+
+    $(document).ready(function() {
+    // join the ws room
+    msgSocket.addEventListener('open', function(ev) {
+         msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
+     });
+ });
 </script>
+
 {% compress js file document_images %}
-
-    <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-    <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'js/image_cards.js' %}"></script>
-    <script src="{% static 'js/lazyload.js' %}"></script>
-    <script src="{% static 'js/help.js' %}"></script>
-
+<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+<script src="{% static 'js/image_cards.js' %}"></script>
+<script src="{% static 'js/lazyload.js' %}"></script>
+<script src="{% static 'js/help.js' %}"></script>
 {% endcompress %}
-
-<script type="text/javascript">
-if (onboarding== "True" && !onboarding_images)
-{
-    document_images_intro.start();
-    document_images_intro.onexit(function() {
-        userProfile.set('onboarding_images',true);
-        exitonboarding();
-    });
-
-    document_images_intro.oncomplete(function() {
-        var edit_url = "{% url 'document-part-edit' pk=document.pk %}";
-        userProfile.set('onboarding_images',true);
-        exitonboarding();
-        window.location.href = edit_url;
-    });
-
-}
-</script>
-
 {% endblock %}
