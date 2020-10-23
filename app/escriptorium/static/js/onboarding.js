@@ -8,18 +8,33 @@ var onboarding_models  = userProfile.get('onboarding_models');
 var document_intro = introJs();
 document_intro.setOptions({
     'doneLabel':'Next page',
-    steps: [{
-            element: '.container-fluid',
-            intro: 'Update Document description (Name, Text direction or metadata).' +
-                'Edit Document Part. Panels to update transcriptions, baselines and masks',
-            position: 'top',
-            tooltipClass: 'tooltip-large'
+    steps: [
+        {
+            element: '#nav-doc-tab',
+            intro: 'Update Document description (Name, Text direction or metadata).',
+            position: 'bottom',
+        },
+        {
+            element: '#nav-img-tab',
+            intro: 'Upload images and changes their orders, import and export transcriptions, launch mass automatic segmentation or transcription.',
+            position: 'bottom',
+        },
+        {
+            element: '#nav-edit-tab',
+            intro: 'Panels to update transcriptions, baselines and masks.',
+            position: 'bottom',
+        },
+        {
+            element: '#nav-models-tab',
+            intro: 'Handle Transcription and Segmentation models related to this document.',
+            position: 'bottom'
         },
     ]
 });
 
 //document_edit
-steps_edit = [{
+steps_edit = [
+    {
         element: '#document-transcriptions',
         intro: 'Here you can select which transcription to display. You may have several transcriptions for a given page,<br> for instance a manual one and one created automatically, or two different editions that you have imported.\n',
         position: 'bottom',
@@ -56,11 +71,6 @@ var document_images_intro = introJs();
 document_images_intro.setOptions('doneLabel', 'Next page');
 document_images_intro.setOptions({
     steps: [
-        {
-            element: '#nav-models-tab',
-            intro: 'Handle Transcription and Segmentation models related to this document.',
-            position: 'bottom'
-        },
         {
             element: '#import-selected',
             intro: 'Import document part. <br> accepted formats : IIIF, Pagexml, Alto.',
@@ -100,7 +110,6 @@ document_images_intro.setOptions({
 });
 
 // models list
-
 var models_intro = introJs();
 models_intro.setOptions('doneLabel', 'Next page');
 models_intro.setOptions({
@@ -112,9 +121,8 @@ models_intro.setOptions({
 });
 
 // transcription modal
-
-
-steps_trans = [{
+steps_trans = [
+    {
         element: '#modal-img-container',
         intro: "This shows the transcription pane where you can enter or correct a transcription line-by-line.<br>" +
             " Clicking on a line of text will bring up a window showing the image of that line, and a box where you can enter or correct the transcription.\n",
@@ -128,21 +136,17 @@ steps_trans = [{
 ];
 
 function exitonboarding() {
-   if(userProfile.get('onboarding_document') == userProfile.get('onboarding_images') == userProfile.get('onboarding_edit') == userProfile.get('onboarding_trans') ==  userProfile.get('onboarding_models') == true)
-   {
+    if(userProfile.get('onboarding_document') == userProfile.get('onboarding_images') == userProfile.get('onboarding_edit') == userProfile.get('onboarding_trans') ==  userProfile.get('onboarding_models') == true)
+    {
 
-       $.ajax({
-        type: 'PUT',
-        url: '/api/user/onboarding/',
-        contentType: "application/json; charset=utf-8",
-        data: JSON.stringify({
-            onboarding: "False",
-        })
+        $.ajax({
+            type: 'PUT',
+            url: '/api/user/onboarding/',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                onboarding: "False",
+            })
 
-    }).done($.proxy(function(data) {}, this)).fail(function(data) {
-        alert(data);
-    });
-
-   }
-
+        });
+    }
 }

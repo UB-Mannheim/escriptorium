@@ -78,24 +78,26 @@
 
      $('#reset-onboarding').on('click',function () {
 
-            userProfile.set('onboarding_document', false);
-            userProfile.set('onboarding_images', false);
-            userProfile.set('onboarding_edit', false);
-            userProfile.set('onboarding_trans', false);
-            userProfile.set('onboarding_models', false);
+         userProfile.set('onboarding_document', false);
+         userProfile.set('onboarding_images', false);
+         userProfile.set('onboarding_edit', false);
+         userProfile.set('onboarding_trans', false);
+         userProfile.set('onboarding_models', false);
 
-            $.ajax({
-            type: 'PUT',
-            url: '/api/user/onboarding/',
-            contentType: "application/json; charset=utf-8",
-            data: JSON.stringify({
-                onboarding: "True",
-            })
-
-            }).done($.proxy(function(data) {}, this)).fail(function(data) {
-        });
-         Alert.add(Date.now(), "onboarding set to False", 'success');
-
+         $.ajax({
+             type: 'PUT',
+             url: '/api/user/onboarding/',
+             contentType: "application/json; charset=utf-8",
+             data: JSON.stringify({
+                 onboarding: "True",
+             })
+         })
+         .done($.proxy(function(data) {
+             Alert.add(Date.now(), "Help was reset.", 'success');
+         }, this))
+         .fail(function(data) {
+             Alert.add(Date.now(), "Couldn't reset help.", 'error');
+         });
      });
 
  }, false);
