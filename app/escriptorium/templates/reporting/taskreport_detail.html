@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block body %}
+<div class="container">
+    <div>{{ report.label }}</div>
+    <div>{% trans "Status:" %} {{ report.get_workflow_state_display }}</div>
+    <div>{% trans "Queued at:" %} {{ report.queued_at }}</div>
+    {% if report.workflow_state > 0 %}<div>{% trans "Started at:" %} {{ report.queued_at }}</div>{% endif %}
+    {% if report.workflow_state > 1 %}<div>{% trans "Ended at:" %} {{ report.done_at }}</div>{% endif %}
+    <div class="jumbotron">{{ report.messages }}</div>
+</div>
+{% endblock %}

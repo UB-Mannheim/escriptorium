@@ -8,6 +8,7 @@ from escriptorium.celery import app
 from core.models import Document
 from users.models import User
 from imports.parsers import make_parser, XML_EXTENSIONS
+from reporting.models import TaskReport
 
 
 class DocumentImport(models.Model):
@@ -39,7 +40,8 @@ class DocumentImport(models.Model):
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json'])])
 
-    task_id = models.CharField(max_length=64, blank=True)  # celery task id
+    report = models.ForeignKey(TaskReport, max_length=64, null=True, blank=True,
+                               on_delete=models.CASCADE)
     processed = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=None, null=True, blank=True)
 
@@ -74,7 +76,8 @@ class DocumentImport(models.Model):
             self.save()
 
             start_at = resume and self.processed or 0
-            parser = make_parser(self.document, self.import_file, name=self.name)
+            parser = make_parser(self.document, self.import_file,
+                                 name=self.name, report=self.report)
             for obj in parser.parse(start_at=start_at,
                                     override=self.override,
                                     user=self.started_by):
@@ -87,5 +90,6 @@ class DocumentImport(models.Model):
         except Exception as e:
             self.workflow_state = self.WORKFLOW_STATE_ERROR
             self.error_message = str(e)[:512]
+            self.report.error(str(e))
             self.save()
             raise e

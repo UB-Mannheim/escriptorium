@@ -1,23 +1,18 @@
-from datetime import datetime
 import json
-import os
 import io
 import requests
-from zipfile import ZipFile
 
 from django import forms
 from django.core.files.base import ContentFile
-from django.db.models import Prefetch
-from django.http import StreamingHttpResponse, HttpResponse
-from django.template import loader
 from django.utils.translation import gettext as _
-from django.utils.text import slugify
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Transcription, LineTranscription
+from core.models import Transcription
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
+from reporting.models import TaskReport
+from users.consumers import send_event
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
@@ -98,11 +93,11 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             self.instance = self.current_import
         else:
             imp = DocumentImport(
-                document = self.document,
+                document=self.document,
                 name=self.cleaned_data['name'],
                 override=self.cleaned_data['override'],
                 total=self.cleaned_data['total'],  # added to the dict by clean_*()
-                started_by = self.user)
+                started_by=self.user)
             if self.cleaned_data.get('iiif_uri'):
                 content = self.cleaned_data.get('iiif_uri')
                 imp.import_file.save(
@@ -111,12 +106,22 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
 
+            # create a report and link to it
+            report = TaskReport.objects.create(
+                label='Import',
+                user=self.user)
+            imp.report = report
+
             imp.save()
             self.instance = imp
+
         return self.instance
 
     def process(self):
         document_import.delay(self.instance.pk)
+        send_event('document', self.document.pk, "import:queued", {
+            "id": self.document.pk
+        })
 
 
 class ExportForm(BootstrapFormMixin, forms.Form):
@@ -153,5 +158,8 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         parts = self.cleaned_data['parts']
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
+
+        report = TaskReport.objects.create(user=self.user, label='Export')
         document_export.delay(file_format, self.user.pk, self.document.pk,
-                              parts, transcription.pk, self.cleaned_data['include_images'])
+                              parts, transcription.pk, report.pk,
+                              include_images=self.cleaned_data['include_images'])

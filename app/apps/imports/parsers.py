@@ -27,6 +27,7 @@ from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
+OWN_RISK = "the validity of the data can not be automaatically checked, use at your own risks."
 
 
 class ParseError(Exception):
@@ -41,9 +42,10 @@ class ParserDocument:
 
     DEFAULT_NAME = None
 
-    def __init__(self, document, file_handler, transcription_name=None):
+    def __init__(self, document, file_handler, report, transcription_name=None):
         self.file = file_handler
         self.document = document
+        self.report = report
         self.name = transcription_name or self.DEFAULT_NAME
 
     @property
@@ -96,16 +98,17 @@ class ZipParser(ParserDocument):
                     continue
                 with zfh.open(finfo) as zipedfh:
                     parser = make_parser(self.document, zipedfh,
-                                         name=self.name)
+                                         name=self.name, report=self.report)
                     try:
                         for part in parser.parse(override=override):
                             yield part
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {error}").format(
+                        msg = _("Parse error in {filename}: {error}, skipping it.").format(
                             filename=self.file.name, error=e.args[0]
                         )
                         logger.warning(msg)
+                        self.report.append(msg)
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
 
@@ -113,7 +116,7 @@ class ZipParser(ParserDocument):
 class XMLParser(ParserDocument):
     ACCEPTED_SCHEMAS = ()
 
-    def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
+    def __init__(self, document, file_handler, report, transcription_name=None, xml_root=None):
         if xml_root is not None:
             self.root = xml_root
             try:
@@ -122,14 +125,18 @@ class XMLParser(ParserDocument):
                     namespaces={"xsi": "http://www.w3.org/2001/XMLSchema-instance"},
                 )[0].split(" ")[-1]
             except (etree.XPathEvalError, IndexError) as e:
-                raise ParseError("Cannot Find Schema location %s" % e.args[0])
-
+                message = "Cannot Find Schema location %s, %s" % (e.args[0], OWN_RISK)
+                if report:
+                    report.append(message)
+                else:
+                    raise ParseError(message)
         else:
             try:
                 self.root = etree.parse(self.file).getroot()
             except (AttributeError, etree.XMLSyntaxError) as e:
                 raise ParseError("Invalid XML. %s" % e.args[0])
-        super().__init__(document, file_handler, transcription_name=transcription_name)
+        super().__init__(document, file_handler, transcription_name=transcription_name,
+                         report=report)
 
     def validate(self):
         if self.schema_location in self.ACCEPTED_SCHEMAS:
@@ -139,7 +146,8 @@ class XMLParser(ParserDocument):
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % self.schema_location)
+
+                self.report.append("Can't reach validation document %s, %s" % (self.schema_location, OWN_RISK))
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
@@ -149,10 +157,10 @@ class XMLParser(ParserDocument):
                     etree.DocumentInvalid,
                     etree.XMLSyntaxError,
                 ) as e:
-                    raise ParseError("Document didn't validate. %s" % e.args[0])
+                    self.report.append("Document didn't validate. %s, %s" % (e.args[0], OWN_RISK))
         else:
-            raise ParseError("Document Schema not valid %s. Valid schemas are: %s" %
-                             (self.schema_location, self.ACCEPTED_SCHEMAS))
+            self.report.append("Document Schema %s is not in the accepted escriptiium list. Valid schemas are: %s, %s" %
+                               (self.schema_location, self.ACCEPTED_SCHEMAS, OWN_RISK))
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -205,7 +213,7 @@ class XMLParser(ParserDocument):
                 )[0]
             except IndexError:
                 # TODO: check for the image in the zip
-                raise ParseError(
+                self.report.append(
                     _("No match found for file {} with filename \"{}\".").format(
                         self.file.name, filename
                     )
@@ -232,7 +240,7 @@ class XMLParser(ParserDocument):
                                 try:
                                     block.full_clean()
                                 except ValidationError as e:
-                                    raise ParseError(
+                                    self.report.append(
                                         "Block in '{filen}' line N°{line} was skipped because: {error}".format(
                                             filen=self.file.name, line=blockTag.sourceline, error=e))
                                 else:
@@ -257,8 +265,8 @@ class XMLParser(ParserDocument):
                             try:
                                 line.full_clean()
                             except ValidationError as e:
-                                raise ParseError("Line in '{filen}' line N°{line} was skipped because: {error}".format(
-                                            filen=self.file.name, line=blockTag.sourceline, error=e))
+                                self.report.append("Line in '{filen}' line N°{line} was skipped because: {error}".format(
+                                    filen=self.file.name, line=blockTag.sourceline, error=e))
                             else:
                                 line.save()
 
@@ -281,6 +289,7 @@ class AltoParser(XMLParser):
         "http://www.loc.gov/standards/alto/v4/alto.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-0.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-1.xsd",
+        "http://www.loc.gov/standards/alto/v4/alto-4-2.xsd",
         escriptorium_alto
     )
 
@@ -356,7 +365,9 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    logger.warning("Invalid baseline %s" % baseline)
+                    msg = "Invalid baseline %s in {filen} line {linen}" % (baseline, self.file.name, lineTag.sourceline)
+                    logger.warning(msg)
+                    self.report.append(msg)
 
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
@@ -364,7 +375,9 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                 coords = tuple(map(float, polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                logger.warning("Invalid polygon %s" % polygon)
+                msg = "Invalid polygon %s in {filen} line {linen}" % (polygon, self.file.name, lineTag.sourceline)
+                logger.warning(msg)
+                self.report.append(msg)
         else:
             line.box = [
                 int(lineTag.get("HPOS")),
@@ -592,7 +605,7 @@ class TranskribusPageXmlParser(PagexmlParser):
             ]
 
 
-def make_parser(document, file_handler, name=None):
+def make_parser(document, file_handler, name=None, report=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -610,16 +623,16 @@ def make_parser(document, file_handler, name=None):
         #     return AbbyyParser(root, name=name)
         if "alto" in schema:
             return AltoParser(
-                document, file_handler, transcription_name=name, xml_root=root
+                document, file_handler, report, transcription_name=name, xml_root=root
             )
         elif "PAGE" in schema:
             if b"Transkribus" in etree.tostring(root):
                 return TranskribusPageXmlParser(
-                    document, file_handler, transcription_name=name, xml_root=root
+                    document, file_handler, report, transcription_name=name, xml_root=root
                 )
             else:
                 return PagexmlParser(
-                    document, file_handler, transcription_name=name, xml_root=root
+                    document, file_handler, report, transcription_name=name, xml_root=root
                 )
 
         else:
@@ -627,9 +640,9 @@ def make_parser(document, file_handler, name=None):
                 "Couldn't determine xml schema, check the content of the root tag."
             )
     elif ext == "json":
-        return IIIFManifestParser(document, file_handler)
+        return IIIFManifestParser(document, file_handler, report)
     elif ext == "zip":
-        return ZipParser(document, file_handler, transcription_name=name)
+        return ZipParser(document, file_handler, report, transcription_name=name)
     else:
         raise ValueError(
             "Invalid extension for the file to be parsed %s." % file_handler.name

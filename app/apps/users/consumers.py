@@ -20,11 +20,10 @@ def send_event(cls, pk, event_name, data):
         get_room_name(cls, pk),
         {'type': 'notification_event',
          'name': event_name,
-         'data': data},
-    )
+         'data': data})
 
 
-def send_notification(user_pk, message, id=None, level='info', link=None):
+def send_notification(user_pk, message, id=None, level='info', links=None):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         get_group_name(user_pk),
@@ -32,8 +31,7 @@ def send_notification(user_pk, message, id=None, level='info', link=None):
          'id': id,
          'level': level,
          'text': message,
-         'link': link},
-    )
+         'links': links or []})
 
 
 class NotificationConsumer(WebsocketConsumer):
@@ -72,7 +70,7 @@ class NotificationConsumer(WebsocketConsumer):
                               'id': event['id'],
                               'level': event['level'],
                               'text': event['text'],
-                              'link': event['link']}))
+                              'links': event['links']}))
 
     def notification_event(self, event):
         self.send(json.dumps({'type': 'event',

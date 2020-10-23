@@ -2,18 +2,19 @@ var msgSocket;
 
 var alerts = {};
 class Alert {
-    constructor(id, message, level, link) {
+    constructor(id, message, level, links) {
         this.id = id;
         this.count = 1;
         this.message = message;
         this.level = level || 'info';
-        this.link = link;
+        this.links = links;
         var $new = $('.alert', '#alert-tplt').clone();
         $new.addClass('alert-' + this.level);
         $('.message', $new).html(message);
-        if (this.link) {
-            $('.additional', $new).html('<a href="'+'/media/'+this.link.src+'" download>'+this.link.text+'</a>');
-            $('.additional', $new).css('display', 'block');
+        for (let i=0; i<this.links.length; i++) {
+            let link = $('<div>').html('<a href="'+this.links[i].src+'" >'+this.links[i].text+'</a>');
+            $('.additional', $new).append(link).css('display', 'block');
+
         }
         this.$element = $new;
         $('#alerts-container').append($new);
@@ -58,7 +59,7 @@ $(document).ready(function() {
 
         if (data.type == 'message') {
             var message = data['text'];
-            Alert.add(data['id'], message, data['level'], data['link']);
+            Alert.add(data['id'], message, data['level'], data['links']);
         } else if (data.type == 'event') {
             var $container = $('#alerts-container');
             $container.trigger(data["name"], data["data"]);
