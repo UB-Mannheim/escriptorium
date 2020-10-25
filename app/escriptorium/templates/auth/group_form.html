@@ -20,27 +20,12 @@
         <input type="submit" value="{% trans 'Add' %}" class="btn btn-lg btn-success btn-block">
       </fieldset>
     </form>
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Name </th>
-          <th scope="col">email</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for user in object.user_set.all %}
-            <td>{{ user }}</td>
-            <td>{{ user.email }}</td>
-            <td>
-                <form method="post" action="{% url 'team-remove-user' pk=object.pk %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="user" id="id_user" value="{{ user.pk }}">
-                    <button type="submit" class="nav-item btn btn-danger" title="remove"><i class="fas fa-trash"></i></button></td>
-                </form>
-      </tbody>
-      {% endfor %}
-    </table>
+    <h3>Remove user from  {{ object }}</h3>
+    <form method="post" action="{% url 'team-remove-user' pk=object.pk %}">
+        {% csrf_token %}
+        {%  render_field form.email %}
+        <button type="submit" class="nav-item btn btn-danger" title="remove"><i class="fas fa-trash"></i>Remove</button>
+    </form>
   </div>
 </div>
 </div>

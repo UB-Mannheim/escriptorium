@@ -79,6 +79,15 @@ class InvitationTeamForm(BootstrapFormMixin,forms.ModelForm):
         fields = ('email',)
 
 
+class RemoveUser(BootstrapFormMixin,forms.ModelForm):
+
+    email = forms.CharField()
+    class Meta:
+        model = Group
+        fields = ('email',)
+
+
+
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
 
     message = forms.CharField(label="Message : Please precise your institution or research center if applicable", widget=forms.Textarea(attrs={'placeholder':'Message : Please precise your institution or research center if applicable' }))

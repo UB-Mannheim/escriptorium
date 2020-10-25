@@ -13,7 +13,7 @@ from django.views.generic import CreateView, UpdateView, DetailView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
 from users.models import User, Invitation, ContactUs
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm, InvitationTeamForm
+from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm, InvitationTeamForm, RemoveUser
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -115,16 +115,21 @@ class InviteToTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
 class RemoveFromTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
     model = Group
     success_message = _('User removed successfully from the team.')
-    form_class = InvitationTeamForm
+    form_class = RemoveUser
 
     def get_success_url(self):
         return reverse('team-invite', kwargs={'pk': self.object.pk})
 
-
     def form_valid(self, form):
         import pdb
         pdb.set_trace()
-        self.object.user_set.remove(form.cleaned_data['user'])
+        try:
+            user = User.objects.get(email=form.cleaned_data['email'])
+            self.object.user_set.remove(user)
+
+        except User.DoesNotExist:
+            print('no user with this email')
+
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from users.views import SendInvitation, AcceptInvitation, Profile, ContactUsView, CreateGroup, InviteToTeam, RemoveFromTeam
+from users.views import SendInvitation, AcceptInvitation, Profile, ContactUsView, CreateGroup, InviteToTeam,RemoveFromTeam
 from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
