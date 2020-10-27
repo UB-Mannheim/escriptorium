@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.utils.translation import ngettext
 
 
-from users.models import User, ResearchField, Invitation, ContactUs
+from users.models import User, ResearchField, Invitation, ContactUs, Team
 
 
 class MyUserChangeForm(UserChangeForm):
@@ -63,4 +63,5 @@ admin.site.register(User, MyUserAdmin)
 admin.site.register(ResearchField)
 admin.site.register(Invitation, InvitationAdmin)
 admin.site.register(ContactUs)
+admin.site.register(Team)
 
