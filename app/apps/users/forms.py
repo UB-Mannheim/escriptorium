@@ -5,7 +5,7 @@ from captcha.fields import CaptchaField
 from django.contrib.auth.models import Group, Permission
 
 from bootstrap.forms import BootstrapFormMixin
-from users.models import Invitation, User, ContactUs
+from users.models import Invitation, User, ContactUs, Team
 
 
 class InvitationForm(BootstrapFormMixin, forms.ModelForm):
@@ -56,21 +56,16 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
         fields = ('email', 'first_name', 'last_name')
 
 
-class TeamForm(BootstrapFormMixin, forms.ModelForm):
+class GroupForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Group
-        fields = ('name','permissions',)
+        fields = ('name',)
 
     def __init__(self,*args, **kwargs):
         # give permissions to adding add invite change delete view users
         super().__init__(*args, **kwargs)
-        self.fields['permissions'].queryset = Permission.objects.filter(content_type__app_label="users")
 
 class InvitationTeamForm(BootstrapFormMixin,forms.ModelForm):
-
-    # user = forms.ModelChoiceField(
-    #     queryset=User.objects.all(),
-    #     )
 
     email = forms.CharField()
 

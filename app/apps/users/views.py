@@ -11,9 +11,9 @@ from django.utils.translation import gettext as _
 from django.views.generic import CreateView, UpdateView, DetailView
 
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import Group
-from users.models import User, Invitation, ContactUs
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, TeamForm, InvitationTeamForm, RemoveUser
+from django.contrib.auth.models import Group, Permission
+from users.models import User, Invitation, ContactUs, Team
+from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm, GroupForm, InvitationTeamForm, RemoveUser
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -78,64 +78,59 @@ class CreateGroup(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Group
     success_message = _('Team successfully created.')
     success_url = '/profile/'
-    form_class = TeamForm
+    form_class = GroupForm
 
     def form_valid(self, form):
 
         response = super().form_valid(form)
         form.instance.user_set.add(self.request.user)
+        group_permissions = Permission.objects.filter(content_type__app_label="users")
+        form.instance.permissions.add(group_permissions)
         return super().form_valid(form)
 
+class TeamMixen():
 
-class InviteToTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
-    model = Group
+    def get_success_url(self):
+        return reverse('team-invite', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['my_teams'] = self.request.user.teams.all
+        return context
+
+
+class InviteToTeam(TeamMixen, LoginRequiredMixin,SuccessMessageMixin, UpdateView):
+    model = Team
     success_message = _('User added successfully to the team.')
 
     form_class = InvitationTeamForm
 
-    def get_success_url(self):
-        return reverse('team-invite', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
         try:
             user = User.objects.get(email=form.cleaned_data['email'])
-            self.object.user_set.add(user)
+            self.object.add_user(user)
 
         except User.DoesNotExist:
             print('no user with this email')
 
         return super().form_valid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context['my_teams'] = self.request.user.groups.all
-        return context
 
-
-class RemoveFromTeam(LoginRequiredMixin,SuccessMessageMixin, UpdateView):
-    model = Group
+class RemoveFromTeam(TeamMixen,LoginRequiredMixin,SuccessMessageMixin, UpdateView):
+    model = Team
     success_message = _('User removed successfully from the team.')
     form_class = RemoveUser
 
-    def get_success_url(self):
-        return reverse('team-invite', kwargs={'pk': self.object.pk})
-
     def form_valid(self, form):
-        import pdb
-        pdb.set_trace()
         try:
             user = User.objects.get(email=form.cleaned_data['email'])
-            self.object.user_set.remove(user)
+            self.object.remove_user(user)
 
         except User.DoesNotExist:
             print('no user with this email')
 
         return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context['my_teams'] = self.request.user.groups.all
-        return context
 
 
 
@@ -152,7 +147,7 @@ class Profile(SuccessMessageMixin, UpdateView):
     def get_context_data(self):
         context = super().get_context_data()
         context['api_auth_token'], created = Token.objects.get_or_create(user=self.object)
-        context['team_form'] = TeamForm()
+        context['team_form'] = GroupForm()
 
         # files directory
         upath = self.object.get_document_store_path() + '/'
