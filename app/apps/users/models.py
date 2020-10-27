@@ -1,12 +1,13 @@
 import os
 import uuid
 from datetime import datetime
-
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 from django.utils.translation import gettext as _
 from django.urls import reverse
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 from escriptorium.utils import send_email
 from users.consumers import send_notification
@@ -171,3 +172,35 @@ class ContactUs(models.Model):
         )
 
         super().save(*args, **kwargs)
+
+
+class Team(models.Model):
+    """
+    Model for the team to share documents with
+    the group owner is the first user
+
+    """
+
+    group = models.OneToOneField(Group, null=True, on_delete=models.SET_NULL)
+
+    owner = models.ForeignKey(User,null=True, on_delete=models.SET_NULL,related_name='teams')
+
+    def __str__(self):
+        return self.group
+
+    def add_user(self,user):
+        return self.group.user_set.add(user)
+
+    def remove_user(self,user):
+        return self.group.user_set.remove(user)
+
+
+@receiver(post_save , sender=Group)
+def create_group_for_team(sender,instance,created , **kwargs):
+    if created:
+        Team.objects.create(
+            group = instance,
+            owner = instance.user_set[0]
+        )
+
+
