@@ -36,7 +36,7 @@
                     {{ team_form }}
                     <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
                 </form>
-                {% for team in  object.groups.all %}
+                {% for team in  object.teams.all %}
                     <br><a href="{% url 'team-invite' pk=team.pk %}">{{ team }}</a>
                 {% endfor %}
             </div>
