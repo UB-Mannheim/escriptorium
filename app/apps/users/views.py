@@ -9,6 +9,7 @@ from django.http import Http404
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, UpdateView, DetailView
+from django.core.exceptions import PermissionDenied
 
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group, Permission
@@ -90,6 +91,13 @@ class CreateGroup(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 
 class TeamMixen():
 
+    def get_object(self, *args, **kwargs):
+        obj = super().get_object(*args, **kwargs)
+        if obj.owner != self.request.user:
+            raise PermissionDenied()  # or Http404
+        return obj
+
+
     def get_success_url(self):
         return reverse('team-invite', kwargs={'pk': self.object.pk})
 
@@ -104,6 +112,7 @@ class InviteToTeam(TeamMixen, LoginRequiredMixin,SuccessMessageMixin, UpdateView
     success_message = _('User added successfully to the team.')
 
     form_class = InvitationTeamForm
+
 
 
     def form_valid(self, form):
