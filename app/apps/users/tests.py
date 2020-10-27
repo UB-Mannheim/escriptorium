@@ -4,8 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from users.models import Invitation
-from users.models import User as CustomUser, ResearchField
+from users.models import Invitation, User as CustomUser, ResearchField, Team
 
 
 User = get_user_model()
@@ -156,3 +155,35 @@ class NotificationTestCase(TestCase):
     todo https://channels.readthedocs.io/en/latest/topics/testing.html
     """
     pass
+
+
+class TeamTestCase(TestCase):
+    def setUp(self):
+
+        self.user = User.objects.create_user(username="test",
+                                             password="test",
+                                             email="test@test.com")
+
+        self.user2 = User.objects.create_user(username="test2",
+                                             password="test2",
+                                             email="test2@test.com")
+
+        self.group = Group.objects.create(name='testgroup')
+
+        self.team = Team(group=self.group)
+
+    def test_add_user_to_team(self):
+
+        self.team.add_user(self.user)
+        self.team.add_user(self.user2)
+        self.assertEqual(self.team.group.user_set.count(), 2)
+
+    def test_remove_user_from_team(self):
+        self.team.add_user(self.user)
+        self.team.remove_user(self.user)
+
+        self.assertEqual(self.team.group.user_set.count(), 0)
+
+
+
+
