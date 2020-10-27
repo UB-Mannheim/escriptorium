@@ -186,7 +186,7 @@ class Team(models.Model):
     owner = models.ForeignKey(User,null=True, on_delete=models.SET_NULL,related_name='teams')
 
     def __str__(self):
-        return self.group
+        return str(self.group)
 
     def add_user(self,user):
         return self.group.user_set.add(user)
