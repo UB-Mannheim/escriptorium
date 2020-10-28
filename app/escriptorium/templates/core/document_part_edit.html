@@ -62,26 +62,30 @@
     {% endblock %}
 
     {% block extra_nav %}
-    <div class="nav-item ml-auto">
+    <div class="nav-item ml-auto" id="toggle-panels">
         <button type="button"
+                id="source-panel-btn"
                 @click="togglePanel"
                 data-target="source"
                 class="open-panel nav-item btn"
                 v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]"
                 title="{% trans "Source Image" %}"><i class="click-through fas fa-eye"></i></button>
         <button type="button"
+                id="seg-panel-btn"
                 @click="togglePanel"
                 data-target="segmentation"
                 class="open-panel nav-item btn"
                 v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]"
                 title="{% trans "Segmentation" %}"><i class="click-through fas fa-align-left"></i></button>
         <button type="button"
+                id="trans-panel-btn"
                 @click="togglePanel"
                 data-target="visualisation"
                 class="open-panel nav-item btn"
                 v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]"
                 title="{% trans "Transcription" %}"><i class="click-through fas fa-language"></i></button>
         <button type="button"
+                id="diplo-panel-btn"
                 @click="togglePanel"
                 data-target="diplomatic"
                 class="open-panel nav-item btn"
@@ -171,6 +175,7 @@
             <SegmentationPanel v-if="show.segmentation && part.loaded"
                                v-bind:fullsizeimage="fullsizeimage"
                                v-bind:part="part"
+                               id="segmentation-panel"
                                ref="segPanel" inline-template>
                 <div class="col panel">
                     <div class="tools">
@@ -333,6 +338,7 @@
     <keep-alive>
         <VisuPanel v-if="show.visualisation && part.loaded"
                    v-bind:part="part"
+                   id="transcription-panel"
                    ref="visuPanel" inline-template>
             <div class="col panel">
                 <div class="tools">
@@ -538,8 +544,7 @@
                 </TranscriptionModal>
             </div>
         </VisuPanel>
-    </keep-alive>
-
+  </keep-alive>
   <keep-alive>
       <DiploPanel id="diplo-panel"
                   v-bind:part="part"
@@ -601,17 +606,23 @@
         </a>
         {% endif %}
     </div>
-  </div>
-  {% endblock %}
+    </div>
+    {% endblock %}
 
-  {% block scripts %}
-  {{ block.super }}
-  <script type="text/javascript">
-   const READ_DIRECTION = '{{document.read_direction}}';
-   const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
-   const DOCUMENT_ID = '{{document.id}}';
-   var PART_ID = {{part.id}};  // can be changed with next & previous pages
-  </script>
+    {% block scripts %}
+
+    <script type="text/javascript">
+     const READ_DIRECTION = '{{document.read_direction}}';
+     const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
+     const DOCUMENT_ID = '{{document.id}}';
+     var PART_ID = {{part.id}};  // can be changed with next & previous pages
+     {% if user.onboarding %}
+     const ONBOARDING_PAGE  = "onboarding_edit";
+     {% endif %}
+     var models_url = "{% url 'document-models' document_pk=document.pk %}";
+    </script>
+
+    {{ block.super }}
 
   <script type="text/javascript">
    'use strict';

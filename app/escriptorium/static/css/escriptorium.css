@@ -644,5 +644,8 @@ i.panel-icon {
 }
 
 #contact-form{
-    width: 100%;
+ width: 100%;
+}
+#reset-onboarding{
+    margin-top: 5%;
 }

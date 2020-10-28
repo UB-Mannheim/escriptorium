@@ -50,9 +50,9 @@ class UserViewSet(ModelViewSet):
 
     @action(detail=False, methods=['put'])
     def onboarding(self, request):
-        serializer = UserOnboardingSerializer(data=request.data, user=self.request.user)
+        serializer = UserOnboardingSerializer(self.request.user,data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            serializer.complete()
+            serializer.save()
             return Response(status=status.HTTP_200_OK)
 
 

@@ -4,7 +4,6 @@
 {% block styles %}
 <link href="{% static 'vendor/dropzone/basic.min.css' %}" rel="stylesheet" type="text/css">
 <link href="{% static 'vendor/dropzone/dropzone.min.css' %}" rel="stylesheet" type="text/css">
-<link href="{% static 'vendor/introjs/introjs.css' %}" rel="stylesheet" type="text/css">
 
 {# custom jquery ui build with draggable and resizable only #}
 <link href="{% static 'vendor/jquery/jquery-ui.min.css' %}" rel="stylesheet" type="text/css">
@@ -113,42 +112,31 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+ 'use strict';
+ const DOCUMENT_ID = {{ document.pk }};
+ {% if user.onboarding %}
+ const ONBOARDING_PAGE = 'onboarding_images';
+ {% endif %}
+</script>
+
 {{ block.super }}
 <script type="text/javascript">
-'use strict';
-const DOCUMENT_ID = {{ document.pk }};
-const onboarding  = "{{ onboarding }}";
-$(document).ready(function() {
-  // join the ws room
-  msgSocket.addEventListener('open', function(ev) {
-    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
-  });
-});
+    'use strict';
+
+    $(document).ready(function() {
+    // join the ws room
+    msgSocket.addEventListener('open', function(ev) {
+         msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
+     });
+ });
 </script>
+
 {% compress js file document_images %}
-
-    <script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
-    <script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'vendor/introjs/intro.js' %}"></script>
-    <script src="{% static 'js/image_cards.js' %}"></script>
-    <script src="{% static 'js/lazyload.js' %}"></script>
-    <script src="{% static 'js/help.js' %}"></script>
-    <script src="{% static 'js/onboarding.js' %}"></script>
+<script src="{% static 'vendor/dropzone/dropzone.min.js' %}"></script>
+<script src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
+<script src="{% static 'js/image_cards.js' %}"></script>
+<script src="{% static 'js/lazyload.js' %}"></script>
+<script src="{% static 'js/help.js' %}"></script>
 {% endcompress %}
-
-<script type="text/javascript">
-if (onboarding == "True")
-{
-    document_images_intro.start();
-    document_images_intro.onexit(function() {
-        exitonboarding();
-    });
-
-    document_images_intro.oncomplete(function() {
-        exitonboarding();
-    });
-
-}
-</script>
-
 {% endblock %}
