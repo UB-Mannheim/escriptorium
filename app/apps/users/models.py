@@ -21,7 +21,7 @@ class User(AbstractUser):
     fields = models.ManyToManyField('ResearchField', blank=True)
 
     onboarding = models.BooleanField(
-        _('first connection'),
+        _('Show onboarding'),
         default=True
     )
 

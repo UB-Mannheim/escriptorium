@@ -147,8 +147,6 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['process_form'] = DocumentProcessForm(self.object, self.request.user)
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
-        context['onboarding'] = self.request.user.onboarding
-
         return context
 
 
