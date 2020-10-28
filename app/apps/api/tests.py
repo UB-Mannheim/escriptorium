@@ -164,7 +164,7 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': self.block.pk})
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(6):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -173,7 +173,7 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:block-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -199,7 +199,7 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': self.block.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(7):
             resp = self.client.patch(uri, {
                 'box': '[[100,100], [150,150]]'
             }, content_type='application/json')
@@ -250,7 +250,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': self.line.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             resp = self.client.patch(uri, {
                 'baseline': '[[100,100], [150,150]]'
             }, content_type='application/json')
@@ -272,7 +272,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-update',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             resp = self.client.put(uri, {'lines': [
                 {'pk': self.line.pk,
                  'mask': '[[60, 40], [60, 50], [90, 50], [90, 40]]',
@@ -320,7 +320,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': self.lt.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             resp = self.client.patch(uri, {
                 'content': 'update'
             }, content_type='application/json')
@@ -347,7 +347,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                               'part_pk': self.part.pk,
                               'pk': self.lt.pk})
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(10):
             resp = self.client.put(uri, {'content': 'test',
                                          'transcription': self.lt.transcription.pk,
                                          'line': self.lt.line.pk},

@@ -105,8 +105,8 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-COMPRESS_ENABLED = not DEBUG
-COMPRESS_OFFLINE = not DEBUG
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 

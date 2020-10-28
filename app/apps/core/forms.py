@@ -3,6 +3,7 @@ import logging
 from PIL import Image
 
 from django import forms
+from django.conf import settings
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
@@ -146,9 +147,10 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     )
     segmentation_steps = forms.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
                                            initial='both', required=False)
-    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects
-                                       .filter(job=OcrModel.MODEL_JOB_SEGMENT),
-                                       label=_("Model"), required=False)
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                       label=_("Model"), empty_label="default ({name})".format(
+                                           name=settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL.rsplit('/')[-1]),
+                                       required=False)
     override = forms.BooleanField(required=False, initial=True,
                                   help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
     TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),

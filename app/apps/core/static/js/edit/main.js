@@ -128,8 +128,8 @@ var partVM = new Vue({
             this.part.bulkUpdateLineTranscriptions(lines, cb);
         }.bind(this));
 
-        this.$on('line:move_to', function(linePK,to, cb) {
-            this.part.move(linePK,to, cb);
+        this.$on('move:line', function(movedLines, cb) {
+            this.part.move(movedLines, cb);
         }.bind(this));
 
         document.addEventListener('keydown', function(event) {
@@ -172,7 +172,9 @@ var partVM = new Vue({
         $alertsContainer.on('part:mask', function(ev, data) {
             data.lines.forEach(function(lineData) {
                 let line = this.part.lines.find(l=>l.pk == lineData.pk);
-                line.mask = lineData.mask;
+                if (line) {  // might have been deleted in the meantime
+                    line.mask = lineData.mask;
+                }
             }.bind(this));
         }.bind(this));
     },
@@ -208,14 +210,23 @@ var partVM = new Vue({
                 }.bind(this));
             }.bind(this));
         },
+        getComparisonContent() {
+            this.comparedTranscriptions.forEach(function(tr, i) {
+                if (tr != this.selectedTranscription) {
+                    this.part.fetchContent(tr);
+                }
+            }.bind(this));
+        },
         getPrevious(ev) {
             return this.part.getPrevious(function() {
                 this.getCurrentContent(this.selectedTranscription);
+                this.getComparisonContent();
             }.bind(this));
         },
         getNext(ev) {
             return this.part.getNext(function() {
                 this.getCurrentContent(this.selectedTranscription);
+                this.getComparisonContent();
             }.bind(this));
         },
 

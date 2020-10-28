@@ -1,5 +1,6 @@
 import bleach
 import logging
+import html
 
 from django.conf import settings
 from django.db.utils import IntegrityError
@@ -154,7 +155,9 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):
-        return bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
+        nd = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
+        nd = html.unescape(nd)
+        return nd
 
     def validate_content(self, content):
         return self.cleanup(content)
@@ -192,25 +195,39 @@ class LineSerializer(serializers.ModelSerializer):
         list_serializer_class = LineListSerializer
 
 
-class LineMoveSerializer(serializers.ModelSerializer):
-    index = serializers.IntegerField()
+class LineOrderListSerializer(serializers.ListSerializer):
+    def update(self, qs, validated_data):
+        # Maps for id->instance and id->data item.
+        line_mapping = {line.pk: line for line in qs}
+        data_mapping = {item['pk']: item for item in validated_data}
 
-    class Meta:
-        model = Line
-        fields = ('index',)
+        # we can only go down or up (not both)
+        first_ = qs[0]
+        down = first_.order < data_mapping[first_.pk]['order']
+        lines = list(data_mapping.items())
+        lines.sort(key=lambda l: l[1]['order'])
+        if down:
+            # reverse to avoid pushing up already moved lines
+            lines.reverse()
 
-    def __init__(self, *args, line=None, **kwargs):
-        self.line = line
-        super().__init__(*args, **kwargs)
+        for i, (line_id, data) in enumerate(lines):
+            line = line_mapping.get(line_id, None)
+            line.to(data['order'])
 
-    def move(self):
-        self.line.to(self.validated_data['index'])
+        line.document_part.enforce_line_order()
+        # returns all new ordering for the whole page
+        data = self.child.__class__(line.document_part.lines.all(), many=True).data
+        return data
 
 
 class LineOrderSerializer(serializers.ModelSerializer):
+    pk = serializers.IntegerField()
+    order = serializers.IntegerField()
+
     class Meta:
         model = Line
         fields = ('pk', 'order')
+        list_serializer_class = LineOrderListSerializer
 
 
 class DetailedLineSerializer(LineSerializer):

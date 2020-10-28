@@ -90,7 +90,7 @@
                 data-target="diplomatic"
                 class="open-panel nav-item btn"
                 v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Diplomatic" %}"><i class="click-through fas fa-list-ol"></i></button>
+                title="{% trans "Text" %}"><i class="click-through fas fa-list-ol"></i></button>
     </div>
     {% endblock %}
 
@@ -129,7 +129,7 @@
                        v-bind:min="zoom.minScale"
                        v-bind:max="zoom.maxScale"
                        v-model="zoomScale"
-                       step="0.5">
+                       step="0.3">
             </div>
         </div>
 
@@ -503,7 +503,6 @@
                                                data-target=".history-show">
                                                 <span>{% trans "Toggle history" %}</span>
                                             </a>
-
                                             <button title="{% trans "Help." %}"
                                                     data-toggle="collapse"
                                                     data-target="#versions-help"
@@ -545,55 +544,47 @@
                 </TranscriptionModal>
             </div>
         </VisuPanel>
-    </keep-alive>
+  </keep-alive>
+  <keep-alive>
+      <DiploPanel id="diplo-panel"
+                  v-bind:part="part"
+                  v-if="show.diplomatic && part.loaded"
+                  ref="diploPanel"
+                  inline-template>
+          <div class="col panel">
+              <div class="tools">
+                  <i title="{% trans 'Text Panel' %}" class="panel-icon fas fa-list-ol"></i>
+                  <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
+                  <button id="sortMode"
+                          title="{% trans "Toggle sorting mode." %}"
+                          class="btn btn-sm ml-3 btn-info fas fa-sort"
+                          @click="toggleSort"
+                          autocomplete="off"></button>
+              </div>
+              <div class="content-container {{ document.read_direction }}">
 
-    <keep-alive>
-        <DiploPanel v-if="show.diplomatic && part.loaded"
-                    v-bind:part="part"
-                    id="diplomatic-panel"
-                    ref="diploPanel"
-                    inline-template>
-            <div class="col panel">
-                <div class="tools">
-                    <i title="{% trans 'Transcription Panel' %}"
-                       class="panel-icon fas fa-language"></i>
-                    <button v-if="save"
-                            @click="toggleSave"
-                            class="btn btn-success"
-                            id="save-diplomatic"
-                            title="{% trans "Save Line content" %}">
-                        Save
-                    </button>
-                </div>
-                <div id="diplomatic-lines"
-                     class="content-container {{ document.read_direction }}">
-                    <diploline v-if="line.currentTrans"
-                               v-for="line in part.lines"
-                               v-bind:line="line"
-                               v-bind:ratio="ratio"
-                               v-bind:key="line.pk"   inline-template>
-                            <div class="d-flex d-flex-row">
-                                <div class ="table-row line-order d-flex-col" class="w-10">${line.order + 1}</div>
-                                <div v-bind:id="'DipL' + line.pk"
-                                     @mouseup="startEdit"
-                                     @focusout="stopEdit"
-                                     @mouseover="showOverlay"
-                                     @mouseleave="hideOverlay"
-                                     @keydown.enter="$parent.editNext"
-                                     @paste="onPaste"
-                                     {# v-bind:draggable="true" #}
-                                     @dragstart="$parent.dragStart(line,$event)"
-                                     @dragover.prevent
-                                     @dragend="$parent.dragEnd"
-                                     @drop="$parent.dragFinish(line,$event)"
-                                     class="table-row d-flex-col line-content {{ document.default_text_direction }}"
-                                     ref="content">${line.currentTrans.content}</div>
-                            </div>
-                    </diploline>
-                </div>
-            </div>
-        </DiploPanel>
-    </keep-alive>
+                  <diploline v-for="line in part.lines"
+                             v-bind:line="line"
+                             v-bind:ratio="ratio"
+                             v-bind:key="'DL' + line.pk">
+                  </diploline>
+
+                  <div id="diplomatic-lines"
+                       contenteditable="true"
+                       autocomplete="off"
+                       @keydown="onKeyPress"
+                       @keyup="constrainLineNumber"
+                       @input="changed"
+                       @focusin="startEdit"
+                       @focusout="stopEdit"
+                       @paste="onPaste"
+                       @mousemove="showOverlay"
+                       @mouseleave="hideOverlay">
+                  </div>
+              </div>
+          </div>
+      </DiploPanel>
+  </keep-alive>
 
     <div class="col-sides">
         {% if document.read_direction == 'rtl' %}
@@ -647,6 +638,7 @@
   <script type="text/javascript" src="{% static 'js/diff.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/math.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/vue/vue.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/vue-draggable/Sortable.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
   <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
   {# TODO: can we trash that? #}
