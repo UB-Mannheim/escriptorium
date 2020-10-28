@@ -641,15 +641,6 @@ class DocumentPart(OrderedModel):
 
             res = blla.segment(im, **options)
 
-            if steps in ['lines', 'both']:
-                # line_types = {t.name: t for t in self.document.valid_line_types.all()}
-                for line in res['lines']:
-                    mask = line['boundary'] if line['boundary'] is not None else None
-                    Line.objects.create(
-                        document_part=self,
-                        # typology=line_types.get(line['type']),
-                        baseline=line['baseline'],
-                        mask=mask)
             if steps in ['regions', 'both']:
                 block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res['regions'].items():
@@ -658,6 +649,18 @@ class DocumentPart(OrderedModel):
                             document_part=self,
                             typology=block_types.get(region_type),
                             box=region)
+
+            if steps in ['lines', 'both']:
+                line_types = {t.name: t for t in self.document.valid_line_types.all()}
+                for line in res['lines']:
+                    mask = line['boundary'] if line['boundary'] is not None else None
+                    Line.objects.create(
+                        document_part=self,
+                        typology=line_types.get(line['script']),
+                        # region=region_map.get(line['region']),
+                        baseline=line['baseline'],
+                        mask=mask)
+
         im.close()
 
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
