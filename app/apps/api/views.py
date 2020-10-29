@@ -70,6 +70,9 @@ class DocumentViewSet(ModelViewSet):
     def form_error(self, msg):
         return Response({'status': 'error', 'error': msg}, status=400)
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
         document = self.get_object()
