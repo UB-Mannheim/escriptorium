@@ -108,7 +108,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
             # create a report and link to it
             report = TaskReport.objects.create(
-                label='Import',
+                label=_('Import in %(document_name)s') % {'document_name': self.document.name},
                 user=self.user)
             imp.report = report
 
@@ -159,7 +159,10 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 
-        report = TaskReport.objects.create(user=self.user, label='Export')
+        report = TaskReport.objects.create(
+            user=self.user,
+            label=_('Export %(document_name)s') % {
+                'document_name': self.document.name})
         document_export.delay(file_format, self.user.pk, self.document.pk,
                               parts, transcription.pk, report.pk,
                               include_images=self.cleaned_data['include_images'])

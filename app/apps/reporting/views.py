@@ -10,7 +10,9 @@ class ReportList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.filter(user=self.request.user)
+        return (qs.filter(user=self.request.user)
+                .exclude(messages='')
+                .order_by('-queued_at'))
 
 
 class ReportDetail(LoginRequiredMixin, DetailView):

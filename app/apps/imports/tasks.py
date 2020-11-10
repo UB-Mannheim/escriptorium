@@ -5,10 +5,10 @@ from zipfile import ZipFile
 
 from django.apps import apps
 from django.conf import settings
-from django.urls import reverse
 from django.db.models import Q, Prefetch
 from django.template import loader
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 from celery import shared_task
 
@@ -110,6 +110,9 @@ def document_export(task, file_format, user_pk, document_pk, part_pks,
         parts = DocumentPart.objects.filter(document=document, pk__in=part_pks)
         with ZipFile(filepath, 'w') as zip_:
             for part in parts:
+                if include_images:
+                    # Note adds image before the xml file
+                    zip_.write(part.image.path, part.filename)
                 try:
                     page = tplt.render({
                         'valid_block_types': document.valid_block_types.all(),
@@ -131,19 +134,14 @@ def document_export(task, file_format, user_pk, document_pk, part_pks,
                     ))
                 else:
                     zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
-                if include_images:
-                    zip_.write(part.image.path, part.filename)
-        report.end()
+
         zip_.close()
 
-    # send websocket msg
     rel_path = os.path.relpath(filepath, settings.MEDIA_ROOT)
-    report_uri = reverse('report-detail', kwargs={'pk': report.pk})
-    user.notify('Export ready!', level='success', links=[
-        {'text': 'Download', 'src': settings.MEDIA_URL + rel_path},
-        {'text': 'Report', 'src': report_uri},
-    ])
+    report.end(extra_links=[{'text': _('Download'),
+                             'src': settings.MEDIA_URL + rel_path}])
 
+    # send websocket msg
     send_event('document', document.pk, "export:done", {
         "id": document.pk
     })

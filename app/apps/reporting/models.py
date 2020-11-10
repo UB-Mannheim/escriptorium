@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
+from django.db import models
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -38,6 +39,10 @@ class TaskReport(models.Model):
     def append(self, text):
         self.messages += text + '\n'
 
+    @property
+    def uri(self):
+        return reverse('report-detail', kwargs={'pk': self.pk})
+
     def start(self, task_id):
         self.task_id = task_id
         self.workflow_state = self.WORKFLOW_STATE_STARTED
@@ -50,8 +55,18 @@ class TaskReport(models.Model):
         self.append(message)
         self.save()
 
-    def end(self):
+        self.user.notify(_('%(task_label)s error!') % {'task_label': self.label},
+                         level='error',
+                         links=[{'text': 'Report', 'src': self.uri}])
+
+    def end(self, extra_links=None):
         self.workflow_state = self.WORKFLOW_STATE_DONE
         self.done_at = datetime.now(timezone.utc)
-        self.append('Done.')
         self.save()
+
+        links = extra_links or []
+        if self.messages != '':
+            links.append({'text': 'Report', 'src': self.uri})
+        self.user.notify(_('%(task_label)s done!') % {'task_label': self.label},
+                         level='success',
+                         links=links)

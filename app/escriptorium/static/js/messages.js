@@ -11,10 +11,11 @@ class Alert {
         var $new = $('.alert', '#alert-tplt').clone();
         $new.addClass('alert-' + this.level);
         $('.message', $new).html(message);
-        for (let i=0; i<this.links.length; i++) {
-            let link = $('<div>').html('<a href="'+this.links[i].src+'" >'+this.links[i].text+'</a>');
-            $('.additional', $new).append(link).css('display', 'block');
-
+        if (this.links !== undefined) {
+            for (let i=0; i<this.links.length; i++) {
+                let link = $('<div>').html('<a href="'+this.links[i].src+'" >'+this.links[i].text+'</a>');
+                $('.additional', $new).append(link).css('display', 'block');
+            }
         }
         this.$element = $new;
         $('#alerts-container').append($new);

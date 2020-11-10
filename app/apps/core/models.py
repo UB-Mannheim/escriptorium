@@ -783,17 +783,17 @@ def validate_polygon(value):
 
 
 def validate_2_points(value):
-    if len(value) <= 2:
+    if len(value) < 2:
         raise ValidationError(
-            _('Polygon needs to have at least 2 points %(value)s.'),
-            params={'value': value})
+            _('Polygon needs to have at least 2 points, it has %(length)d: %(value)s.'),
+            params={'length': len(value), 'value': value})
 
 
 def validate_3_points(value):
-    if len(value) <= 3:
+    if len(value) < 3:
         raise ValidationError(
-            _('Polygon needs to have at least 2 points %(value)s.'),
-            params={'value': value})
+            _('Polygon needs to have at least 3 points, it has %(length)d: %(value)s.'),
+            params={'length': len(value), 'value': value})
 
 
 class Block(OrderedModel, models.Model):

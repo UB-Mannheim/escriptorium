@@ -40,7 +40,8 @@ class DocumentImport(models.Model):
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json'])])
 
-    report = models.ForeignKey(TaskReport, max_length=64, null=True, blank=True,
+    report = models.ForeignKey(TaskReport, max_length=64,
+                               null=True, blank=True,
                                on_delete=models.CASCADE)
     processed = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=None, null=True, blank=True)

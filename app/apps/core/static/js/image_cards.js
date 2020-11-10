@@ -429,15 +429,16 @@ $(document).ready(function() {
         Alert.add(Date.now(), data.reason, 'warning');
     });
     $alertsContainer.on('import:fail', function(ev, data) {
-        $('#import-counter').text('failed');
+        $('#import-counter').text('Failed.');
         $('#import-selected').removeClass('blink');
         $('#cancel-import').hide();
         Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
     });
     $alertsContainer.on('import:done', function(ev, data) {
+        $('#import-counter').text('Done.');
         $('#import-counter').parent().removeClass('ongoing');
         $('#import-selected').removeClass('blink');
-        Alert.add('import-done', "Import finished!", 'success');
+        $('#cancel-import').hide();
     });
     $('#cancel-import').click(function(ev, data) {
         let url = API.document + '/cancel_import/';
