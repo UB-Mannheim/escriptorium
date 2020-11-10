@@ -106,12 +106,6 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
 
-            # create a report and link to it
-            report = TaskReport.objects.create(
-                label=_('Import in %(document_name)s') % {'document_name': self.document.name},
-                user=self.user)
-            imp.report = report
-
             imp.save()
             self.instance = imp
 

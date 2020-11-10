@@ -1,78 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <alto xmlns="http://www.loc.gov/standards/alto/ns-v4#"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	  xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
+      xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-0.xsd">
   <Description>
-	<MeasurementUnit>pixel</MeasurementUnit>
-	<sourceImageInformation>
-	  <fileName>test1.png</fileName>
-	</sourceImageInformation>
-	<OCRProcessing ID="OCR_0">
-	  <ocrProcessingStep>
-		<processingSoftware>
-		  <softwareName>kraken</softwareName>
-		</processingSoftware>
-	  </ocrProcessingStep>
-	</OCRProcessing>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+      <fileName>test1.png</fileName>
+    </sourceImageInformation>
+    <OCRProcessing ID="OCR_0">
+      <ocrProcessingStep>
+	<processingSoftware>
+	  <softwareName>kraken</softwareName>
+	</processingSoftware>
+      </ocrProcessingStep>
+    </OCRProcessing>
   </Description>
 
   <Layout>
     <Page WIDTH="850" HEIGHT="1083" PHYSICAL_IMG_NR="0" ID="page_0">
-	  <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
-		<TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
-		  <TextLine ID="line_0"
-					HPOS="160"
-					VPOS="771" 
-					WIDTH="60" 
-					HEIGHT="28">
-			<String ID="segment_0"
-					CONTENT="This" 
-					HPOS="160" 
-					VPOS="771"
-					WIDTH="20" 
-					HEIGHT="28"></String>
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="850" HEIGHT="1083">
+	<TextBlock HPOS="0" VPOS="0" ID="textblock_0" WIDTH="850" HEIGHT="1083">
+	  <TextLine ID="line_0"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="60"
+		    HEIGHT="28">
+	    <String ID="segment_0"
+		    CONTENT="This"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="20"
+		    HEIGHT="28"></String>
             <String ID="segment_1"
-					CONTENT="is" 
-					HPOS="185" 
-					VPOS="771"
-					WIDTH="10" 
-					HEIGHT="28"></String>
+		    CONTENT="is"
+		    HPOS="185"
+		    VPOS="771"
+		    WIDTH="10"
+		    HEIGHT="28"></String>
             <String ID="segment_2"
-					CONTENT="a" 
-					HPOS="195" 
-					VPOS="771"
-					WIDTH="5" 
-					HEIGHT="28"></String>
+		    CONTENT="a"
+		    HPOS="195"
+		    VPOS="771"
+		    WIDTH="5"
+		    HEIGHT="28"></String>
             <String ID="segment_3"
-					CONTENT="test" 
-					HPOS="200" 
-					VPOS="771"
-					WIDTH="20" 
-					HEIGHT="28"></String>
-		  </TextLine>
+		    CONTENT="test"
+		    HPOS="200"
+		    VPOS="771"
+		    WIDTH="20"
+		    HEIGHT="28"></String>
+	  </TextLine>
           <TextLine ID="line_1"
-					HPOS="160"
-					VPOS="800" 
-					WIDTH="25" 
-					HEIGHT="28">
+		    HPOS="160"
+		    VPOS="800"
+		    WIDTH="25"
+		    HEIGHT="28">
             <String ID="segment_1_0"
-					CONTENT="Line 2" 
-					HPOS="160" 
-					VPOS="771"
-					WIDTH="25" 
-					HEIGHT="28"></String>
+		    CONTENT="Line"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="25"
+		    HEIGHT="28"></String>
+            <String ID="segment_1_1"
+		    CONTENT="2"
+		    HPOS="185"
+		    VPOS="771"
+		    WIDTH="25"
+		    HEIGHT="28"></String>
           </TextLine>
           <TextLine ID="line_2"
-					HPOS="160"
-					VPOS="830" 
-					WIDTH="25" 
-					HEIGHT="28">
+		    HPOS="160"
+		    VPOS="830"
+		    WIDTH="25"
+		    HEIGHT="28">
             <String ID="segment_2_0"
-					CONTENT="Line 3" 
-					HPOS="160" 
-					VPOS="771"
-					WIDTH="25" 
-					HEIGHT="28"></String>
+		    CONTENT="3"
+		    HPOS="160"
+		    VPOS="771"
+		    WIDTH="25"
+		    HEIGHT="28"></String>
+            <String ID="segment_2_1"
+		    CONTENT="3"
+		    HPOS="185"
+		    VPOS="771"
+		    WIDTH="25"
+		    HEIGHT="28"></String>
           </TextLine>
         </TextBlock>
       </PrintSpace>

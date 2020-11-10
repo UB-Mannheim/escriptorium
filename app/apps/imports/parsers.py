@@ -116,7 +116,7 @@ class ZipParser(ParserDocument):
                             part.save()
 
                         # xml
-                        elif file_extension == 'xml':
+                        elif file_extension in XML_EXTENSIONS:
                             parser = make_parser(self.document, zipedfh,
                                                  name=self.name, report=self.report)
 
@@ -386,6 +386,7 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("BASELINE")
+
         if baseline is not None:
             # sometimes baseline is just a single number,
             # an offset maybe it's not super clear
@@ -401,6 +402,13 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)
+        else:
+            # extract it from <String>s then
+            strings = lineTag.findall("String", self.root.nsmap)
+            last_segment = strings[-1]
+            line.baseline = [(int(e.get('HPOS')), int(e.get('VPOS'))) for e in strings]
+            line.baseline.append((int(last_segment.get('HPOS'))+int(last_segment.get('WIDTH')),
+                                  int(last_segment.get('VPOS'))))
 
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
