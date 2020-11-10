@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block body %}
+<div class="container">
+    <table class="table table-hover">
+    {% for report in object_list %}
+    <tr>
+        <td>{{ report.label }}</td>
+        <td>{{ report.get_workflow_state_display }}</td>
+        <td>{{ report.queued_at }}</td>
+        <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
+    </tr>
+    {% empty %}
+    <tr><td>{% trans "You don't have any task report yet." %}</td></tr>
+    {% endfor %}
+    </table>
+</div>
+{% endblock %}

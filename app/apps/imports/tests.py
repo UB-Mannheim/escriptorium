@@ -11,6 +11,7 @@ from imports.models import DocumentImport
 from imports.parsers import AltoParser, IIIFManifestParser
 from core.models import Block, Line, Transcription, LineTranscription, BlockType, LineType
 from core.tests.factory import CoreFactoryTestCase
+from reporting.models import TaskReport
 
 
 class XmlImportTestCase(CoreFactoryTestCase):
@@ -36,7 +37,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(13):
+            with self.assertNumQueries(20):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -51,17 +52,14 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
         # import was created since the form validated
         imp = DocumentImport.objects.first()
-        self.assertTrue(imp.error_message, 'No match found')
-
-        self.part1.original_filename = 'test1.png'
-        self.part1.save()
+        self.assertTrue(imp.report.messages.startswith('No match found for file import_src/test_single_'))
 
     def test_alto_invalid_xml(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_invalid_alto.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(8):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -72,7 +70,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(47):
+            with self.assertNumQueries(54):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -86,7 +84,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.blocks.count(), 1)
         self.assertEqual(self.part1.blocks.first().box, [[0, 0], [850, 0], [850, 1083], [0, 1083]])
         self.assertEqual(self.part1.lines.count(), 3)
-        self.assertEqual(self.part1.lines.first().box, [160, 771, 220, 799])
+        self.assertEqual(self.part1.lines.first().box, [160, 771, 220, 771])
         self.assertEqual(self.part1.lines.first().transcriptions.first().content, 'This is a test')
         self.assertEqual(self.part2.blocks.count(), 0)
         self.assertEqual(self.part2.lines.count(), 0)
@@ -96,7 +94,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single_baselines.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(33):
+            with self.assertNumQueries(40):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -120,7 +118,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(65):
+            with self.assertNumQueries(72):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -130,6 +128,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(DocumentImport.objects.count(), 1)
         self.assertEqual(DocumentImport.objects.first().workflow_state,
                          DocumentImport.WORKFLOW_STATE_DONE)
+
         self.assertEqual(self.part1.blocks.count(), 1)
         self.assertEqual(self.part1.lines.count(), 3)
         self.assertEqual(self.part2.blocks.count(), 1)
@@ -144,7 +143,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_composedblock.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(59):
+            with self.assertNumQueries(66):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -170,6 +169,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         with open(mock_path, 'rb') as fh:
             imp = DocumentImport.objects.create(
                 document=self.document,
+                started_by=self.document.owner,
                 import_file=ContentFile(
                     fh.read(),
                     name=os.path.join(
@@ -189,7 +189,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0",
                                  box=[[0, 0], [100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0",
-                                box=[10, 10, 50, 20])
+                                baseline=((5, 5), (5, 10)),
+                                mask=((0, 0), (0, 10), (10, 0), (10,10)))
         lt = LineTranscription.objects.create(transcription=trans, line=l)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -221,12 +222,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
         b = Block.objects.create(document_part=self.part1, external_id="textblock_0",
                                  box=[[0, 0], [100, 100]])
         l = Line.objects.create(document_part=self.part1, block=b, external_id="line_0",
-                                box=[10, 10, 50, 20])
+                                baseline=((5, 5), (5, 10)),
+                                mask=((0, 0), (0, 10), (10, 0), (10,10)))
         lt = LineTranscription.objects.create(transcription=trans, line=l, content="test history")
 
         # historic line without external_id
         b2 = Block.objects.create(document_part=self.part1, box=[[0, 0], [100, 100]])
-        l2 = Line.objects.create(document_part=self.part1, block=b2, box=[10, 10, 50, 20])
+        l2 = Line.objects.create(document_part=self.part1, block=b2, baseline=((10, 10), (50, 20)))
         lt2 = LineTranscription.objects.create(transcription=trans, line=l2, content="test dummy")
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -263,7 +265,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'pagexml_test.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(13):
+            with self.assertNumQueries(20):
                 response = self.client.post(uri, {'upload_file': SimpleUploadedFile(filename,
                                                                                     fh.read())})
                 # Note: the ParseError is raised by the processing of the import,
@@ -276,7 +278,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part3.lines.count(), 0)
         # import was created since the form validated
         imp = DocumentImport.objects.first()
-        self.assertTrue(imp.error_message, 'No match found')
+        self.assertTrue(imp.report.messages.startswith('No match found'))
         self.part3.original_filename = 'test3.png'
         self.part3.save()
 
@@ -285,7 +287,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
         block = Block.objects.create(document_part=self.part3, external_id="r2",
                                      box=[[0, 0], [100, 100]])
         l = Line.objects.create(document_part=self.part3, block=block, external_id="r2l1",
-                                box=[10, 10, 50, 20])
+                                baseline=((5, 5), (5, 10)),
+                                mask=((0, 0), (0, 10), (10, 0), (10,10)))
         lt = LineTranscription.objects.create(transcription=trans, line=l)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -307,8 +310,11 @@ class XmlImportTestCase(CoreFactoryTestCase):
         trans = Transcription.objects.create(name="test import", document=self.document)
         block = Block.objects.create(document_part=self.part3, external_id="r2",
                                      box=[[0, 0], [100, 100]])
-        line = Line.objects.create(document_part=self.part3, block=block, external_id="r2l1",
-                                   box=[10, 10, 50, 20])
+        line = Line.objects.create(document_part=self.part3,
+                                   block=block,
+                                   external_id="r2l1",
+                                   baseline=((5, 5), (5, 10)),
+                                   mask=((0, 0), (0, 10), (10, 0), (10,10)))
         lt = LineTranscription.objects.create(transcription=trans, line=line)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -333,7 +339,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_pagexml.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(406):  # theres a lot of lines in there
+            with self.assertNumQueries(413):  # theres a lot of lines in there
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -362,7 +368,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_pagexml_types.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(67):
+            with self.assertNumQueries(74):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -398,7 +404,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
             # we don't go through the form but we want to test json validation
             fh.seek(0)
-            IIIFManifestParser(self.document, fh).validate()
+            IIIFManifestParser(self.document, fh, imp.report).validate()
 
             imp.save()
 
@@ -424,6 +430,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
             document=self.document,
             import_file=ContentFile('', name='doesntmatter.xml'),
             workflow_state=DocumentImport.WORKFLOW_STATE_STARTED,
+            started_by=self.document.owner,
             processed=0)
         uri = reverse('api:document-cancel-import', kwargs={'pk': self.document.pk})
         response = self.client.post(uri)
@@ -447,7 +454,8 @@ class DocumentExportTestCase(CoreFactoryTestCase):
             self.parts.append(part)
             for j in range(1, 4):
                 l = Line.objects.create(document_part=part,
-                                        box=(0, 0, 1, 1))
+                                        baseline=((5, 5), (5, 10)),
+                                        mask=((0, 0), (0, 10), (10, 0), (10,10)))
                 LineTranscription.objects.create(
                     line=l,
                     transcription=self.trans,
@@ -455,7 +463,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(17):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -468,7 +476,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(19):
+        with self.assertNumQueries(28):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -485,13 +493,14 @@ class DocumentExportTestCase(CoreFactoryTestCase):
             for j in range(1, 4):
                 l = Line.objects.create(document_part=part,
                                         block=block,
-                                        box=(0, 0, 1, 1))
+                                        baseline=((5, 5), (5, 10)),
+                                        mask=((0, 0), (0, 10), (10, 0), (10,10)))
                 LineTranscription.objects.create(
                     line=l,
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
         self.client.force_login(self.user)
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(17):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,

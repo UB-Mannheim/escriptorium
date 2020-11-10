@@ -1,6 +1,6 @@
 from os import listdir, stat
 from os.path import isfile, join, relpath
-from django.shortcuts import reverse
+
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -73,8 +73,6 @@ class AcceptInvitation(CreateView):
         # TODO: send a welcome message ?!
         return response
 
-# request invitation
-
 
 class Profile(SuccessMessageMixin, UpdateView):
     model = User
@@ -104,8 +102,8 @@ class Profile(SuccessMessageMixin, UpdateView):
         context['page_obj'] = paginator.get_page(page_number)
         return context
 
-class ContactUsView(SuccessMessageMixin, CreateView):
 
+class ContactUsView(SuccessMessageMixin, CreateView):
     model = ContactUs
     form_class = ContactUsForm
 

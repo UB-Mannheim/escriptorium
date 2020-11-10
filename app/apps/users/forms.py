@@ -57,10 +57,10 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
 
-    message = forms.CharField(label="Message : Please precise your institution or research center if applicable", widget=forms.Textarea(attrs={'placeholder':'Message : Please precise your institution or research center if applicable' }))
+    message = forms.CharField(widget=forms.Textarea(attrs={
+        'placeholder': 'Message : Please precise your institution or research center if applicable'}))
     captcha = CaptchaField()
 
     class Meta:
         model = ContactUs
-        fields = ('name','email','message','captcha')
-
+        fields = ('name', 'email', 'message', 'captcha')

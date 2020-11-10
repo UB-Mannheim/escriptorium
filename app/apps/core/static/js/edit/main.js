@@ -55,7 +55,9 @@ var partVM = new Vue({
             }
         },
         selectedTranscription: function(n, o) {
-            userProfile.set('default-transcription-' + DOCUMENT_ID, n);
+            let itrans = userProfile.get('initialTranscriptions') || {};
+            itrans[DOCUMENT_ID] = n;
+            userProfile.set('initialTranscriptions', itrans);
             this.getCurrentContent(n);
         },
         comparedTranscriptions: function(n, o) {
@@ -82,7 +84,8 @@ var partVM = new Vue({
     created() {
         // this.fetch();
         this.part.fetchPart(PART_ID, function() {
-            let tr = userProfile.get('default-transcription-' + DOCUMENT_ID)
+            let tr = userProfile.get('initialTranscriptions')
+                  && userProfile.get('initialTranscriptions')[DOCUMENT_ID]
                   || this.part.transcriptions[0].pk;
             this.selectedTranscription = tr;
         }.bind(this));

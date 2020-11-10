@@ -15,16 +15,6 @@ def line_break(lines):
 
 
 @register.simple_tag
-def box_coordinates(block, part):
-    # coordinates in pagexml template <TextRegion coords ="x1,x2..xn,yn>
-    if block is not None:
-        return ' '.join(','.join(map(lambda x: str(int(x)), pt)) for pt in block.box)
-    else:
-        w, h = part.image.width, part.image.height
-        return '0,0 %d,0 %d,%d 0,%d' % (w, w, h, h)
-
-
-@register.simple_tag
 def pagexml_points(points):
     return ' '.join(','.join(map(lambda x: str(int(x)), pt)) for pt in points)
 
