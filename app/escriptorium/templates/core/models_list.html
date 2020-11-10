@@ -35,13 +35,13 @@
         <i class="fas fa-save"></i>
       </button>
       {% endif %}
-      
+
       {% if model.file %}
       <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
         <i class="fas fa-file-download"></i>
       </a>
       {% endif %}
-        
+
       {% if model.owner == request.user and not model.training %}
       <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
         {% csrf_token %}
@@ -54,7 +54,7 @@
   </tr>
   {% for version in model.history %}
   <tr id="model-version-{{version.revision}}" class="versions-{{model.pk}} collapse">
-    
+
     <td title="{% trans "Model name" %}" class="pl-5">{{ version.name }} (epoch #{{version.training_epoch}})</td>
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
@@ -62,7 +62,7 @@
     <td>
       <a href="{{ version.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
-          <i class="fas fa-file-download"></i>
+            <i class="fas fa-file-download"></i>
         </button>
     </td>
   </tr>
@@ -72,6 +72,13 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+    'use strict';
+    {% if user.onboarding %}
+     const ONBOARDING_PAGE  = "onboarding_models";
+    {% endif %}
+</script>
+
 {{ block.super }}
 <script type="text/javascript">
 'use strict';

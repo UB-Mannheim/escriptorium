@@ -1,0 +1,8 @@
+{% load export_tags %}
+      <TextLine id="{{ line.external_id }}" {% if line.typology %}custom="structure {type:{{line.typology.name}};}"{% endif %}>
+        {% if line.mask %}<Coords points="{% pagexml_points line.mask %}"/>{% endif %}
+        {% if line.baseline %}<Baseline points="{% pagexml_points line.baseline %}"/>{% endif %}
+        <TextEquiv>
+          <Unicode>{{ line.transcription.0.content|default_if_none:"" }}</Unicode>
+        </TextEquiv>
+      </TextLine>

@@ -640,9 +640,12 @@ i.panel-icon {
 }
 
 .cmp-del {
-    background-color: tomato;
+    background-color: #FFAAAA;
 }
 
 #contact-form{
-    width: 100%;
+ width: 100%;
+}
+#reset-onboarding{
+    margin-top: 5%;
 }

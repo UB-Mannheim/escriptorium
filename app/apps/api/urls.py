@@ -14,7 +14,7 @@ from api.views import (DocumentViewSet,
 
 router = routers.DefaultRouter()
 router.register(r'documents', DocumentViewSet)
-router.register(r'users', UserViewSet)
+router.register(r'user', UserViewSet)
 router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')

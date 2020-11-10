@@ -50,9 +50,9 @@ class UserViewSet(ModelViewSet):
 
     @action(detail=False, methods=['put'])
     def onboarding(self, request):
-        serializer = UserOnboardingSerializer(data=request.data, user=self.request.user)
+        serializer = UserOnboardingSerializer(self.request.user,data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            serializer.complete()
+            serializer.save()
             return Response(status=status.HTTP_200_OK)
 
 
@@ -70,6 +70,9 @@ class DocumentViewSet(ModelViewSet):
     def form_error(self, msg):
         return Response({'status': 'error', 'error': msg}, status=400)
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
         document = self.get_object()
@@ -79,7 +82,7 @@ class DocumentViewSet(ModelViewSet):
             form.save()  # create the import
             try:
                 form.process()
-            except ParseError as e:
+            except ParseError:
                 return self.form_error("Incorrectly formated file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:
