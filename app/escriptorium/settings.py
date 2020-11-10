@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'imports',
+    'reporting',
 ]
 
 MIDDLEWARE = [
