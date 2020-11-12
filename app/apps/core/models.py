@@ -8,6 +8,7 @@ import subprocess
 import uuid
 from PIL import Image
 from datetime import datetime
+from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
 from django.db.models import Q, Prefetch
@@ -639,24 +640,33 @@ class DocumentPart(OrderedModel):
 
             res = blla.segment(im, **options)
 
+            regs = []
             if steps in ['regions', 'both']:
                 block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res['regions'].items():
                     for region in regions:
-                        Block.objects.create(
+                        block = Block.objects.create(
                             document_part=self,
                             typology=block_types.get(region_type),
                             box=region)
+                        regs.append(block)
 
             if steps in ['lines', 'both']:
                 line_types = {t.name: t for t in self.document.valid_line_types.all()}
                 for line in res['lines']:
                     mask = line['boundary'] if line['boundary'] is not None else None
+                    baseline = line['baseline']
+
+                    # calculate if the center of the line is contained in one of the region
+                    # (pick the first one that matches)
+                    center = LineString(baseline).interpolate(0.5, normalized=True)
+                    region = next((r for r in regs if Polygon(r.box).contains(center)), None)
+
                     Line.objects.create(
                         document_part=self,
                         typology=line_types.get(line['script']),
-                        # region=region_map.get(line['region']),
-                        baseline=line['baseline'],
+                        block=region,
+                        baseline=baseline,
                         mask=mask)
 
         im.close()
