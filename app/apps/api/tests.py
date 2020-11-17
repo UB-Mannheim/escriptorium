@@ -8,9 +8,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
 
-from core.models import Block, Line, Transcription, LineTranscription
+from core.models import Block, Line, Transcription, LineTranscription, OcrModel
 from core.tests.factory import CoreFactoryTestCase
-
+from api.serializers import DocumentProcessSerializer
 class UserViewSetTestCase(CoreFactoryTestCase):
 
     def setUp(self):
@@ -37,6 +37,31 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         super().setUp()
         self.doc = self.factory.make_document()
         self.doc2 = self.factory.make_document(owner=self.doc.owner)
+        self.part = self.factory.make_part(document=self.doc)
+        self.part2 = self.factory.make_part(document=self.doc)
+        self.model_uri = reverse('api:document-model',kwargs={'pk': self.doc.pk})
+
+
+        self.line = Line.objects.create(
+            box=[10, 10, 50, 50],
+            document_part=self.part)
+        self.line2 = Line.objects.create(
+            box=[10, 60, 50, 100],
+            document_part=self.part)
+        self.transcription = Transcription.objects.create(
+            document=self.part.document,
+            name='test')
+        self.transcription2 = Transcription.objects.create(
+            document=self.part.document,
+            name='tr2')
+        self.lt = LineTranscription.objects.create(
+            transcription=self.transcription,
+            line=self.line,
+            content='test')
+        self.lt2 = LineTranscription.objects.create(
+            transcription=self.transcription2,
+            line=self.line2,
+            content='test2')
 
     def test_list(self):
         self.client.force_login(self.doc.owner)
@@ -61,6 +86,45 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.get(uri)
         # Note: raises a 404 instead of 403 but its fine
         self.assertEqual(resp.status_code, 404)
+
+    def test_segtrain_less_two_parts(self):
+        self.client.force_login(self.doc.owner)
+
+
+        resp = self.client.post(self.model_uri,data={
+                'parts': [self.part.pk],
+                'transcription':self.transcription.pk,
+                'task': DocumentProcessSerializer.TASK_SEGTRAIN,
+        })
+        self.assertEqual(resp.status_code, 400)
+
+    def test_segtrain_new_model(self):
+        self.client.force_login(self.doc.owner)
+
+
+        resp = self.client.post(self.model_uri,data={
+                'parts': [self.part.pk, self.part2.pk],
+                'transcription':self.transcription.pk,
+                'task': DocumentProcessSerializer.TASK_SEGTRAIN,
+                'new_model':'new model'
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(OcrModel.objects.count(),1)
+        self.assertEqual(OcrModel.objects.first().name,"new model")
+
+    def test_segment(self):
+
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT,document=self.doc)
+
+        resp = self.client.post(self.model_uri, data={
+            'parts': [self.part.pk,self.part2.pk],
+            'task': DocumentProcessSerializer.TASK_SEGMENT,
+            'segmentation_steps':'both',
+            'seg_model': model.pk,
+        })
+
+        self.assertEqual(resp.status_code, 200)
 
     # not used
     # def test_update
