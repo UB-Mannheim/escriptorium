@@ -25,7 +25,9 @@ from api.serializers import (UserOnboardingSerializer,
                              DetailedLineSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
-                             LineTranscriptionSerializer)
+                             LineTranscriptionSerializer,
+                             DocumentProcessSerializer)
+
 from core.models import (Document,
                          DocumentPart,
                          Block,
@@ -33,8 +35,11 @@ from core.models import (Document,
                          BlockType,
                          LineType,
                          Transcription,
-                         LineTranscription)
+                         LineTranscription,
+                         AlreadyProcessingException)
+
 from core.tasks import recalculate_masks
+from core.forms import DocumentProcessForm
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
@@ -119,6 +124,24 @@ class DocumentViewSet(ModelViewSet):
             return Response({'status': 'ok'})
         else:
             return self.form_error(json.dumps(form.errors))
+
+    @action(detail=True, methods=['post'])
+    def model(self, request, pk=None):
+        document = self.get_object()
+        self.serializer_class = DocumentProcessSerializer
+        serializer = DocumentProcessSerializer(document=document, user=request.user,data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.process()
+            except AlreadyProcessingException:
+                return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':'Already processing.'})
+
+            return Response(status=status.HTTP_200_OK,data={'status': 'ok'})
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':serializer.errors})
+
+
+
 
 
 class DocumentPermissionMixin():
