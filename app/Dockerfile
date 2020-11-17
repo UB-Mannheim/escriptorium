@@ -1,7 +1,7 @@
 # pull official base image
 FROM python:3.7.5-stretch
 
-ARG KRAKEN_VERSION=3.0b5
+# ARG KRAKEN_VERSION=3.0b5
 # EXPOSE 8000
 
 # set environment variables
@@ -23,7 +23,8 @@ RUN apt-get update
 RUN addgroup --system uwsgi
 RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-RUN apt-get install netcat-traditional jpegoptim pngcrush libvips
+RUN apt-get install netcat-traditional jpegoptim pngcrush
+RUN apt-get --assume-yes install libvips
 
 RUN pip install --upgrade pip
 
