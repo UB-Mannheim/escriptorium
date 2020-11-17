@@ -1,7 +1,7 @@
 /*
    Baseline editor
    a javascript based baseline segmentation editor,
-   requires paper.js and colorThief is optional.
+   requires paper.js.
 
    Usage:
    var segmenter = new Segmenter(img, options);
@@ -13,6 +13,7 @@
    deletePointBtn=null,
    deleteSelectionBtn=null,
    toggleMasksBtn=null,
+   toggleLineModeBtn=null,
    splitBtn=null,
    mergeBtn=null,
 
@@ -155,7 +156,7 @@ class SegmenterLine {
                 this.baseline = baseline.map(pt=>[Math.round(pt[0]), Math.round(pt[1])]);
                 this.baselinePath = new Path({
                     strokeColor: this.segmenter.baselinesColor,
-                    strokeWidth: 5/this.segmenter.getRatio(),
+                    // strokeWidth: 5/this.segmenter.getRatio(),
                     strokeCap: 'butt',
                     selectedColor: 'black',
                     opacity: 0.5,
@@ -187,9 +188,20 @@ class SegmenterLine {
         this.showOrdering();
         this.showDirection();
         if (this.baselinePath) {
-            this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
+            if (this.segmenter.wideLineStrokes) {
+                this.baselinePath.strokeWidth = 5/this.segmenter.getRatio();
+            } else {
+                this.baselinePath.strokeWidth = 1;
+            }
         }
-        if (this.directionHint) this.directionHint.strokeColor = this.hintColor;
+        if (this.directionHint) {
+            if (this.segmenter.showDirectionHint) {
+                this.directionHint.visible = true;
+                this.directionHint.strokeColor = this.hintColor;
+            } else {
+                this.directionHint.visible = false;
+            }
+        }
     }
 
     getMaskColor() {
@@ -471,6 +483,7 @@ class Segmenter {
 
                         regionTypes=['Title', 'Main', 'Marginal', 'Illustration', 'Numbering'],
                         lineTypes=['Main', 'Interlinear'],
+                        wideLineStrokes=true,
                         // todo: choose keyboard shortcuts
 
                         inactiveLayerOpacity=0.5,
@@ -527,6 +540,8 @@ class Segmenter {
         this.regionAreaThreshold = regionAreaThreshold;
         this.showMasks = false;
         this.showLineNumbers = false;
+        this.showDirectionHint = true;
+        this.wideLineStrokes = wideLineStrokes;
 
         this.selecting = null;
         this.spliting = false;
@@ -534,6 +549,7 @@ class Segmenter {
 
         // menu btns
         this.toggleMasksBtn = document.getElementById('be-toggle-masks');
+        this.toggleLineModeBtn = document.getElementById('be-toggle-line-mode');
         this.toggleOrderingBtn = document.getElementById('be-toggle-order');
         this.toggleRegionModeBtn = document.getElementById('be-toggle-regions');
         this.splitBtn = document.getElementById('be-split-lines');
@@ -641,6 +657,11 @@ class Segmenter {
                 this.toggleMasks();
             }.bind(this));
         }
+        if (this.toggleLineModeBtn) {
+            this.toggleLineModeBtn.addEventListener('click', function(event) {
+                this.toggleLineMode();
+            }.bind(this));
+        }
 
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
             this.spliting = !this.spliting;
@@ -734,7 +755,7 @@ class Segmenter {
             } else if (event.keyCode == 74) { // J (for join)
                 this.mergeSelection();
             } else if (event.keyCode == 77) { // M
-                this.toggleMasks();
+                this.toggleLineMode();
             } else if (event.keyCode == 76) { // L
                 this.toggleOrdering();
             } else if (event.keyCode == 82) { // R
@@ -1499,14 +1520,56 @@ class Segmenter {
         }
     }
 
-    toggleMasks(force) {
-        this.showMasks = force || !this.showMasks;
-        if (this.showMasks) {
-            this.toggleMasksBtn.classList.add('btn-success');
-            this.toggleMasksBtn.classList.remove('btn-info');
+    toggleLineMode() {
+        // wide: default mode
+        // mask: show the boundary of the line
+        // slim: set the strokeWidth at 1px
+        if (this.showMasks) { // mask -> slim
+            this.toggleMasks(false);
+            this.toggleLineStrokes(false);
+
+            this.toggleLineModeBtn.classList.add('btn-secondary');
+            this.toggleLineModeBtn.classList.remove('btn-success');
         } else {
-            this.toggleMasksBtn.classList.add('btn-info');
-            this.toggleMasksBtn.classList.remove('btn-success');
+            if (!this.wideLineStrokes) { // slim -> wide
+                this.toggleMasks(false);
+                this.toggleLineStrokes(true);
+
+                this.toggleLineModeBtn.classList.add('btn-info');
+                this.toggleLineModeBtn.classList.remove('btn-secondary');
+            } else { // wide -> mask
+                this.toggleMasks(true);
+                this.toggleLineStrokes(true);
+
+                this.toggleLineModeBtn.classList.add('btn-success');
+                this.toggleLineModeBtn.classList.remove('btn-info');
+            }
+        }
+    }
+
+    toggleLineStrokes(force) {
+        // wide / slim
+        if (force != undefined) this.wideLineStrokes = force;
+        else this.wideLineStrokes = !this.wideLineStrokes;
+
+        this.showDirectionHint = this.wideLineStrokes;
+
+        for (let i in this.lines) {
+            this.lines[i].refresh();
+        }
+    }
+
+    toggleMasks(force) {
+        if (force !== undefined) this.showMasks = force;
+        else this.showMasks = !this.showMasks;
+        if (this.toggleMasksBtn) {
+            if (this.showMasks) {
+                this.toggleMasksBtn.classList.add('btn-success');
+                this.toggleMasksBtn.classList.remove('btn-info');
+            } else {
+                this.toggleMasksBtn.classList.add('btn-info');
+                this.toggleMasksBtn.classList.remove('btn-success');
+            }
         }
         for (let i in this.lines) {
             let poly = this.lines[i].maskPath;
