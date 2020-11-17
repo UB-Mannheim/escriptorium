@@ -5,8 +5,8 @@ import re
 import requests
 import time
 import uuid
-import warnings
 import zipfile
+import pyvips
 from lxml import etree
 
 from django.conf import settings
@@ -64,6 +64,47 @@ class ParserDocument:
             document=self.document, name=self.name
         )
         return transcription
+
+
+class PdfParser(ParserDocument):
+    def validate(self):
+        try:
+            self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
+                                                    dpi=300, n=-1, access="sequential")
+        except pyvips.error.Error as e:
+            logger.exception(e)
+            raise ParseError(_("Invalid pdf file."))
+
+    @property
+    def total(self):
+        if 'n-pages' in self.doc.get_fields():
+            return self.doc.get('n-pages')
+        else:
+            return 0
+
+    def parse(self, start_at=0, override=False, user=None):
+        self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
+                                                dpi=300, n=-1, access="sequential")
+        try:
+            self.doc.flatten(background=255)
+            n_pages = self.doc.get('n-pages')
+            page_width = self.doc.width
+            page_height = self.doc.height / n_pages
+
+            for i in range(0, n_pages):
+                page = self.doc.crop(0, i * page_height, page_width, page_height)
+                part = DocumentPart(document=self.document)
+                part.image.save('%s_page_%d.png' % (self.file.name, i+1),
+                                ContentFile(page.write_to_buffer('.png')))
+                part.save()
+                yield part
+        except pyvips.error.Error as e:
+            msg = _("Parse error in {filename}: {error}, skipping it.").format(
+                filename=self.file.name, error=e.args[0]
+            )
+            logger.warning(msg)
+            if self.report:
+                self.report.append(msg)
 
 
 class ZipParser(ParserDocument):
@@ -684,6 +725,8 @@ def make_parser(document, file_handler, name=None, report=None):
         return IIIFManifestParser(document, file_handler, report)
     elif ext == "zip":
         return ZipParser(document, file_handler, report, transcription_name=name)
+    elif ext == "pdf":
+        return PdfParser(document, file_handler, report)
     else:
         raise ValueError(
             "Invalid extension for the file to be parsed %s." % file_handler.name

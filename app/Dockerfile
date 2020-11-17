@@ -23,7 +23,7 @@ RUN apt-get update
 RUN addgroup --system uwsgi
 RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-RUN apt-get install netcat-traditional jpegoptim pngcrush
+RUN apt-get install netcat-traditional jpegoptim pngcrush libvips
 
 RUN pip install --upgrade pip
 
