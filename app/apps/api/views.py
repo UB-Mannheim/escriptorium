@@ -87,7 +87,7 @@ class DocumentViewSet(ModelViewSet):
             form.save()  # create the import
             try:
                 form.process()
-            except ParseError as e:
+            except ParseError:
                 return self.form_error("Incorrectly formated file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:

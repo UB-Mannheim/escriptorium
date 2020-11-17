@@ -143,7 +143,7 @@
                     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
                     <a v-bind:href="part.image.uri" target="_blank">
                         <button class="btn btn-sm btn-info ml-3 fas fa-download"
-                                title="{% trans "Download full size image." %}"></button>
+                                title="{% trans "Download full size image." %}" download></button>
                     </a>
                 </div>
                 <div class="content-container">
@@ -248,8 +248,8 @@
                                     title="{% trans "Toggle ordering display. (L)" %}"
                                     class="btn btn-sm btn-info fas fa-sort-numeric-down"
                                     autocomplete="off"></button>
-                            <button id="be-toggle-masks"
-                                    title="{% trans "Show line masks. (M)" %}"
+                            <button id="be-toggle-line-mode"
+                                    title="{% trans "Toggle line masks and stroke width. (M)" %}"
                                     class="btn btn-sm btn-info fas fa-mask"></button>
                         </div>
                         <div class="btn-group">
@@ -316,7 +316,7 @@
                                      v-bind:key="'sL' + line.pk"/>
                         </div>
 
-                        <img class="panel-img"/>
+                        <img class="panel-img" v-bind:src="imageSrc"/>
                         {# TODO: make line overlay component #}
                         <div id="segmentation-overlay" class="overlay panel-overlay">
                             <svg width="100%" height="100%">

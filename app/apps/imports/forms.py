@@ -1,23 +1,18 @@
-from datetime import datetime
 import json
-import os
 import io
 import requests
-from zipfile import ZipFile
 
 from django import forms
 from django.core.files.base import ContentFile
-from django.db.models import Prefetch
-from django.http import StreamingHttpResponse, HttpResponse
-from django.template import loader
 from django.utils.translation import gettext as _
-from django.utils.text import slugify
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Transcription, LineTranscription
+from core.models import Transcription
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
+from reporting.models import TaskReport
+from users.consumers import send_event
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
@@ -31,7 +26,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     override = forms.BooleanField(
         initial=True, required=False,
         label=_("Override existing segmentation."),
-        help_text=_("Destroys existing regions and lines before importing."))
+        help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
         required=False,
         label=_("IIIF manifesto uri"),
@@ -98,11 +93,11 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             self.instance = self.current_import
         else:
             imp = DocumentImport(
-                document = self.document,
+                document=self.document,
                 name=self.cleaned_data['name'],
                 override=self.cleaned_data['override'],
                 total=self.cleaned_data['total'],  # added to the dict by clean_*()
-                started_by = self.user)
+                started_by=self.user)
             if self.cleaned_data.get('iiif_uri'):
                 content = self.cleaned_data.get('iiif_uri')
                 imp.import_file.save(
@@ -113,10 +108,14 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
             imp.save()
             self.instance = imp
+
         return self.instance
 
     def process(self):
         document_import.delay(self.instance.pk)
+        send_event('document', self.document.pk, "import:queued", {
+            "id": self.document.pk
+        })
 
 
 class ExportForm(BootstrapFormMixin, forms.Form):
@@ -132,6 +131,10 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     parts = forms.CharField()
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
+    include_images = forms.BooleanField(
+        initial=False, required=False,
+        label=_('Include images'),
+        help_text=_("Will significantly increase the time to produce and download the export."))
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -149,44 +152,11 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         parts = self.cleaned_data['parts']
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
+
+        report = TaskReport.objects.create(
+            user=self.user,
+            label=_('Export %(document_name)s') % {
+                'document_name': self.document.name})
         document_export.delay(file_format, self.user.pk, self.document.pk,
-                              parts, transcription.pk)
-
-    def stream(self):
-        file_format = self.cleaned_data['file_format']
-        parts = self.cleaned_data['parts']
-        transcription = self.cleaned_data['transcription']
-
-        if file_format == self.TEXT_FORMAT:
-            content_type = 'text/plain'
-            lines = (LineTranscription.objects
-                     .filter(transcription=transcription, line__document_part__in=parts)
-                     .exclude(content="")
-                     .order_by('line__document_part', 'line__document_part__order', 'line__order'))
-            return StreamingHttpResponse(['%s\n' % line.content for line in lines],
-                                         content_type=content_type)
-
-        elif file_format == self.ALTO_FORMAT or file_format == self.PAGEXML_FORMAT:
-            filename = "export_%s_%s_%s.zip" % (slugify(self.document.name).replace('-', '_'),
-                                                file_format,
-                                                datetime.now().strftime('%Y%m%d%H%M'))
-            buff = io.BytesIO()
-            if file_format == self.ALTO_FORMAT:
-                tplt = loader.get_template('export/alto.xml')
-            elif file_format == self.PAGEXML_FORMAT:
-                tplt = loader.get_template('export/pagexml.xml')
-            with ZipFile(buff, 'w') as zip_:
-                for part in parts:
-                    page = tplt.render({
-                        'part': part,
-                        'lines': part.lines.order_by('block__order', 'order')
-                                           .prefetch_related(
-                                               Prefetch('transcriptions',
-                                                        to_attr='transcription',
-                                                        queryset=LineTranscription.objects.filter(
-                                                            transcription=transcription)))})
-                    zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
-            response = HttpResponse(buff.getvalue(),content_type='application/x-zip-compressed')
-            response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            # TODO: add METS file
-            return response
+                              parts, transcription.pk, report.pk,
+                              include_images=self.cleaned_data['include_images'])

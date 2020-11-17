@@ -2,7 +2,7 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-<p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}}(DEPRECATED) for details.{% endblocktrans %}</p>
+<p>{% blocktrans with opentag='<a target="_blank" href="https://gitlab.inria.fr/scripta/escriptorium/wikis/imports">'|safe closetag='</a>'|safe %}See {{opentag}}the import documentation{{closetag}} for details.{% endblocktrans %}</p>
 {% endblock %}
 
 {% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
