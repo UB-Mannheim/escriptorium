@@ -93,8 +93,6 @@ class PdfParser(ParserDocument):
 
             for i in range(0, n_pages):
                 page = self.doc.crop(0, i * page_height, page_width, page_height)
-                # page.write_to_file(filename)
-                # new_input.append((filename, pdf_format.format(**dest_dict) + suffix))
                 part = DocumentPart(document=self.document)
                 part.image.save('%s_page_%d.png' % (self.file.name, i+1),
                                 ContentFile(page.write_to_buffer('.png')))
