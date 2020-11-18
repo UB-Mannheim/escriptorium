@@ -190,6 +190,7 @@ var partVM = new Vue({
             let img = new Image();
             img.addEventListener('load', function() {
                 if (callback) callback(src);
+                img.remove();
             }.bind(this));
             img.src = src;
         },
