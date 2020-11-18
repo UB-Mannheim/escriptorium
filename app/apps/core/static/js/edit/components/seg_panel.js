@@ -116,6 +116,7 @@ const SegPanel = BasePanel.extend({
         },
         imageSrc() {
             // empty the src to make sure the complete event gets fired
+            // this.$img.src = '';
             if (!this.part.loaded) return '';
             // overrides imageSrc to deal with color modes
             // Note: vue.js doesn't have super call wtf we need to copy the code :(
@@ -143,6 +144,12 @@ const SegPanel = BasePanel.extend({
                 this.undoManager.clear();
                 this.refreshHistoryBtns();
             }
+        },
+        'colorMode': function(n, o) {
+            this.$parent.prefetchImage(this.imageSrc, function(src) {
+                this.$img.src = src;
+                this.refreshSegmenter();
+            }.bind(this));
         },
         'fullsizeimage': function(n, o) {
             // it was prefetched
@@ -194,7 +201,6 @@ const SegPanel = BasePanel.extend({
         updateView() {
             this.segmenter.refresh();
         },
-
         // undo manager helpers
         bulkCreate(data, createInEditor=false) {
             if (data.regions && data.regions.length) {
