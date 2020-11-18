@@ -614,15 +614,16 @@ class DocumentPart(OrderedModel):
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
-        if model_.one_channel_mode == '1':
-            # TODO: need to binarize, probably not live...
-            if not self.bw_image:
-                self.binarize()
-            im = Image.open(self.bw_image.file.name)
-        elif model_.one_channel_mode == 'L':
-            im = Image.open(self.image.file.name).convert('L')
-        else:
-            im = Image.open(self.image.file.name)
+        # will be fixed sometime in the future
+        # if model_.one_channel_mode == '1':
+        #     # TODO: need to binarize, probably not live...
+        #     if not self.bw_image:
+        #         self.binarize()
+        #     im = Image.open(self.bw_image.file.name)
+        # elif model_.one_channel_mode == 'L':
+        #     im = Image.open(self.image.file.name).convert('L')
+        # else:
+        #     im = Image.open(self.image.file.name)
 
         options = {
             'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'),
