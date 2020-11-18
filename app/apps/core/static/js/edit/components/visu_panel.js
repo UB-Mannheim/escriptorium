@@ -14,6 +14,7 @@ const VisuPanel = BasePanel.extend({
         Vue.nextTick(function() {
             this.$parent.zoom.register(this.$el.querySelector('#visu-zoom-container'),
                                        {map: true});
+            this.refresh();
         }.bind(this));
     },
     methods: {
