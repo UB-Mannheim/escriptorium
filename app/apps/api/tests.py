@@ -43,10 +43,10 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
 
 
         self.line = Line.objects.create(
-            box=[10, 10, 50, 50],
+            mask=[10, 10, 50, 50],
             document_part=self.part)
         self.line2 = Line.objects.create(
-            box=[10, 60, 50, 100],
+            mask=[10, 60, 50, 100],
             document_part=self.part)
         self.transcription = Transcription.objects.create(
             document=self.part.document,
@@ -123,7 +123,18 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'segmentation_steps':'both',
             'seg_model': model.pk,
         })
+        self.assertEqual(resp.status_code, 200)
 
+    def test_segment_file_upload(self):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT,document=self.doc)
+
+        resp = self.client.post(self.model_uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'task': DocumentProcessSerializer.TASK_SEGMENT,
+            'segmentation_steps': 'both',
+            'upload_model': SimpleUploadedFile(model.name,model.file.read())
+        })
         self.assertEqual(resp.status_code, 200)
 
     # not used
@@ -279,15 +290,15 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                 box=[10, 10, 200, 200],
                 document_part=self.part)
         self.line = Line.objects.create(
-                box=[60, 10, 100, 50],
+                mask=[60, 10, 100, 50],
                 document_part=self.part,
                 block=self.block)
         self.line2 = Line.objects.create(
-                box=[90, 10, 70, 50],
+                mask=[90, 10, 70, 50],
                 document_part=self.part,
                 block=self.block)
         self.orphan = Line.objects.create(
-            box=[0, 0, 10, 10],
+            mask=[0, 0, 10, 10],
             document_part=self.part,
             block=None)
 
@@ -358,10 +369,10 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.line = Line.objects.create(
-            box=[10, 10, 50, 50],
+            mask=[10, 10, 50, 50],
             document_part=self.part)
         self.line2 = Line.objects.create(
-            box=[10, 60, 50, 100],
+            mask=[10, 60, 50, 100],
             document_part=self.part)
         self.transcription = Transcription.objects.create(
             document=self.part.document,
@@ -425,7 +436,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:linetranscription-bulk-create',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
         ll = Line.objects.create(
-            box=[10, 10, 50, 50],
+            mask=[10, 10, 50, 50],
             document_part=self.part)
         with self.assertNumQueries(10):
             resp = self.client.post(
