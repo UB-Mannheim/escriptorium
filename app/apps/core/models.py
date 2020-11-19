@@ -614,6 +614,7 @@ class DocumentPart(OrderedModel):
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
+        im = Image.open(self.image.file.name)
         # will be fixed sometime in the future
         # if model_.one_channel_mode == '1':
         #     # TODO: need to binarize, probably not live...
