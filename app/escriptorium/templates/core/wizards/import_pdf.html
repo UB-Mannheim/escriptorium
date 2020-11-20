@@ -10,7 +10,8 @@
 {% if not import_form.current_import.ongoing %}
 <h5>{% trans "Import images from a PDF document." %}</h5>
 <div class="form-group">
-  {% render_field import_form.upload_file class="js-proc-settings" accept=".pdf" %}
+    {% trans "A single pdf with one image per page." as help_text %}
+    {% render_field import_form.upload_file class="js-proc-settings" accept=".pdf" help_text=help_text %}
 </div>
 {% endif %}
 {% endblock %}
