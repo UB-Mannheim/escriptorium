@@ -344,10 +344,10 @@ class DocumentProcessSerializer(serializers.Serializer):
     # segtrain
     segtrain_model = serializers.IntegerField(required=False)
 
-
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
+        self.document_parts = []
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         super().__init__(*args, **kwargs)
@@ -372,20 +372,19 @@ class DocumentProcessSerializer(serializers.Serializer):
             raise AlreadyProcessingException
         return train_model
 
-    def validate_seg_model(self,value):
-        model = get_object_or_404(OcrModel,pk=value)
+    def validate_seg_model(self, value):
+        model = get_object_or_404(OcrModel, pk=value)
         return model
 
-    def validate_ocr_model(self,value):
-        model = get_object_or_404(OcrModel,pk=value)
+    def validate_ocr_model(self, value):
+        model = get_object_or_404(OcrModel, pk=value)
         return model
 
-    def  validate_segtrain_model(self,value):
-        model = get_object_or_404(OcrModel,pk=value)
+    def validate_segtrain_model(self, value):
+        model = get_object_or_404(OcrModel, pk=value)
         return model
 
-
-    def validate(self,data):
+    def validate(self, data):
 
         task = data['task']
         parts = data['parts']
