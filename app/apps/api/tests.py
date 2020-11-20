@@ -120,7 +120,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(self.model_uri, data={
             'parts': [self.part.pk,self.part2.pk],
             'task': DocumentProcessSerializer.TASK_SEGMENT,
-            'segmentation_steps':'both',
+            'seg_steps':'both',
             'seg_model': model.pk,
         })
         self.assertEqual(resp.status_code, 200)
@@ -132,7 +132,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(self.model_uri, data={
             'parts': [self.part.pk, self.part2.pk],
             'task': DocumentProcessSerializer.TASK_SEGMENT,
-            'segmentation_steps': 'both',
+            'seg_steps': 'both',
             'upload_model': SimpleUploadedFile(model.name,model.file.read())
         })
         self.assertEqual(resp.status_code, 200)

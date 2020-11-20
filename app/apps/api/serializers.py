@@ -309,14 +309,14 @@ class DocumentProcessSerializer(serializers.Serializer):
         help_text=_('Increase it for low contrast documents, if the letters are not visible enough.'),
     )
     # segment
-    SEGMENTATION_STEPS_CHOICES = (
+    SEG_STEPS_CHOICES = (
         ('both', _('Lines and regions')),
         ('lines', _('Lines Baselines and Masks')),
         ('masks', _('Only lines Masks')),
         ('regions', _('Regions')),
     )
 
-    segmentation_steps = serializers.ChoiceField(choices=SEGMENTATION_STEPS_CHOICES,
+    seg_steps = serializers.ChoiceField(choices=SEG_STEPS_CHOICES,
                                            initial='both', required=False)
     seg_model = serializers.IntegerField(required=False)
 
@@ -333,7 +333,8 @@ class DocumentProcessSerializer(serializers.Serializer):
     upload_model = serializers.FileField(required=False,
                                    validators=[FileExtensionValidator(
                                        allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
-    ocr_model = OcrModelSerializer(required=False)
+
+    ocr_model = serializers.IntegerField(required=False)
 
     # train
     new_model = serializers.CharField(required=False, label=_('Model name'))
@@ -341,7 +342,7 @@ class DocumentProcessSerializer(serializers.Serializer):
     transcription = serializers.PrimaryKeyRelatedField(many=False,read_only=True)
 
     # segtrain
-    segtrain_model = OcrModelSerializer(required=False)
+    segtrain_model = serializers.IntegerField(required=False)
 
 
     def __init__(self, document, user, *args, **kwargs):
@@ -372,6 +373,14 @@ class DocumentProcessSerializer(serializers.Serializer):
         return train_model
 
     def validate_seg_model(self,value):
+        model = get_object_or_404(OcrModel,pk=value)
+        return model
+
+    def validate_ocr_model(self,value):
+        model = get_object_or_404(OcrModel,pk=value)
+        return model
+
+    def  validate_segtrain_model(self,value):
         model = get_object_or_404(OcrModel,pk=value)
         return model
 
@@ -447,7 +456,7 @@ class DocumentProcessSerializer(serializers.Serializer):
             for part in self.document_parts:
                 part.task('segment',
                           user_pk=self.user.pk,
-                          steps=self.validated_data.get('segmentation_steps'),
+                          steps=self.validated_data.get('seg_steps'),
                           text_direction=self.validated_data.get('text_direction'),
                           model_pk=model and model.pk or None,
                           override=self.validated_data.get('override'))
