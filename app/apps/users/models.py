@@ -6,8 +6,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.dispatch import receiver
-from django.db.models.signals import post_save
 
 from escriptorium.utils import send_email
 from users.consumers import send_notification
@@ -96,6 +94,29 @@ class Invitation(models.Model):
         return '%s -> %s' % (self.sender, self.recipient_email)
 
     def send(self, request):
+        if self.recipient and self.group:  # already exists in the system
+            self.send_invitation_to_group(request)
+        elif self.recipient_email:
+            self.send_invitation_to_service(request)
+        else:
+            # shouldn't happen(?)
+            pass
+
+    def send_invitation_to_group(self, request):
+        accept_url = request.build_absolute_uri(
+            reverse("accept-invitation-group", kwargs={"token": self.token.hex}))
+
+        context = {
+            "sender": self.sender.get_full_name() or self.sender.username,
+            "recipient_first_name": self.recipient.first_name,
+            "recipient_last_name": self.recipient.last_name,
+            "recipient_email": self.recipient.email,
+            "team": self.group.name,
+            "accept_link": accept_url,
+        }
+        self.send_email(self.recipient.email, context)
+
+    def send_invitation_to_service(self, request):
         accept_url = request.build_absolute_uri(
             reverse("accept-invitation", kwargs={"token": self.token.hex}))
         context = {
@@ -106,11 +127,14 @@ class Invitation(models.Model):
             "team": self.group and self.group.name,
             "accept_link": accept_url,
         }
+        self.send_email(self.recipient_email, context)
+
+    def send_email(self, to, context):
         send_email(
             'users/email/invitation_subject.txt',
             'users/email/invitation_message.txt',
             'users/email/invitation_html.html',
-            self.recipient_email,
+            to,
             context=context,
             result_interface=('users', 'Invitation', self.id))
 
@@ -125,6 +149,8 @@ class Invitation(models.Model):
         self.save()
 
     def accept(self, user):
+        if self.recipient and self.recipient != user:
+            return False
         self.recipient = user
         self.workflow_state = self.STATE_ACCEPTED
         self.save()
@@ -134,6 +160,8 @@ class Invitation(models.Model):
                           _('{username} accepted your invitation!').format(
                               username=self.recipient.username),
                           level='success')
+        return True
+
 
 class ContactUs(models.Model):
     """
@@ -147,13 +175,11 @@ class ContactUs(models.Model):
     message = models.TextField()
 
     class Meta:
-        verbose_name ="message"
+        verbose_name = "message"
         verbose_name_plural = "messages"
 
-
     def __str__(self):
-
-        return "from {}({})".format(self.name,self.email)
+        return "from {}({})".format(self.name, self.email)
 
     def save(self, *args, **kwargs):
         context = {
@@ -174,33 +200,14 @@ class ContactUs(models.Model):
         super().save(*args, **kwargs)
 
 
-class Team(models.Model):
+class GroupOwner(models.Model):
     """
     Model for the team to share documents with
     the group owner is the first user
-
     """
-
-    group = models.OneToOneField(Group, null=True, on_delete=models.SET_NULL)
-
-    owner = models.ForeignKey(User,null=True, on_delete=models.SET_NULL,related_name='teams')
+    group = models.OneToOneField(Group, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL,
+                              related_name='owned_groups')
 
     def __str__(self):
         return str(self.group)
-
-    def add_user(self,user):
-        return self.group.user_set.add(user)
-
-    def remove_user(self,user):
-        return self.group.user_set.remove(user)
-
-
-@receiver(post_save , sender=Group)
-def create_group_for_team(sender,instance,created , **kwargs):
-    if created:
-        Team.objects.create(
-            group = instance,
-            owner = instance.user_set[0]
-        )
-
-

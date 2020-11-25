@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from users.models import Invitation, User as CustomUser, ResearchField, Team
+from users.models import Invitation, User as CustomUser, ResearchField, GroupOwner
 
 
 User = get_user_model()
@@ -159,31 +159,34 @@ class NotificationTestCase(TestCase):
 
 class TeamTestCase(TestCase):
     def setUp(self):
+        self.owner = User.objects.create_user(username="test",
+                                              password="test",
+                                              email="test@test.com")
 
-        self.user = User.objects.create_user(username="test",
-                                             password="test",
-                                             email="test@test.com")
-
-        self.user2 = User.objects.create_user(username="test2",
-                                             password="test2",
-                                             email="test2@test.com")
+        self.invitee = User.objects.create_user(username="test2",
+                                                password="test2",
+                                                email="test2@test.com")
 
         self.group = Group.objects.create(name='testgroup')
+        self.group.user_set.add(self.owner)
+        GroupOwner.objects.create(group=self.group, owner=self.owner)
 
-        self.team = Team(group=self.group)
+    def test_accept(self):
+        invitation = Invitation.objects.create(
+            sender=self.owner,
+            recipient=self.invitee,
+            group=self.group)
 
-    def test_add_user_to_team(self):
+        self.client.force_login(self.invitee)
+        url = reverse('accept-group-invitation', kwargs={'slug': invitation.token})
+        with self.assertNumQueries(9):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
 
-        self.team.add_user(self.user)
-        self.team.add_user(self.user2)
-        self.assertEqual(self.team.group.user_set.count(), 2)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.workflow_state, Invitation.STATE_ACCEPTED)
 
-    def test_remove_user_from_team(self):
-        self.team.add_user(self.user)
-        self.team.remove_user(self.user)
+        self.assertEqual(self.group.user_set.count(), 2)
 
-        self.assertEqual(self.team.group.user_set.count(), 0)
-
-
-
-
+        self.invitee.refresh_from_db()
+        self.assertEqual(self.invitee.groups.count(), 1)

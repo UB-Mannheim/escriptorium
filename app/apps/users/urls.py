@@ -1,17 +1,22 @@
 from django.urls import path, include
 
-from users.views import SendInvitation, AcceptInvitation, Profile, ContactUsView, CreateGroup, InviteToTeam,RemoveFromTeam
+from users.views import (SendInvitation, AcceptInvitation, AcceptGroupInvitation, ContactUsView,
+                         ProfileInfos, ProfileGroupListCreate, ProfileApiKey, ProfileFiles,
+                         GroupDetail, RemoveFromTeam)
 from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
     path('', include('django.contrib.auth.urls')),
-    path('profile/', Profile.as_view(), name='user_profile'),
-    path('contact/', ContactUsView.as_view(), name='contactus'),
-    path('teams/', CreateGroup.as_view(), name='teams'),
-    path('teams/<int:pk>', InviteToTeam.as_view(), name='team-invite'),
-    path('teams/<int:pk>/remove', RemoveFromTeam.as_view(), name='team-remove-user'),
+    path('profile/', ProfileInfos.as_view(), name='profile'),
+    path('profile/apikey/', ProfileApiKey.as_view(), name='profile-api-key'),
+    path('profile/files/', ProfileFiles.as_view(), name='profile-files'),
+    path('profile/teams/', ProfileGroupListCreate.as_view(), name='profile-team-list'),
+    path('teams/<int:pk>/', GroupDetail.as_view(), name='team-detail'),
+    path('teams/<int:pk>/remove/', RemoveFromTeam.as_view(), name='team-remove-user'),
     path('invite/',
          permission_required('users.can_invite', raise_exception=True)(SendInvitation.as_view()),
          name='send-invitation'),
     path('accept/<token>/', AcceptInvitation.as_view(), name='accept-invitation'),
+    path('accept/group/<slug>/', AcceptGroupInvitation.as_view(), name='accept-group-invitation'),
+    path('contact/', ContactUsView.as_view(), name='contactus'),
 ]

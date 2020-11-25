@@ -1,0 +1,37 @@
+{% extends "users/profile.html" %}
+{% load i18n bootstrap static %}
+
+{% block infos-tab-active %}{% endblock %}
+{% block key-tab-active %}{% endblock %}
+{% block files-tab-active %}{% endblock %}
+{% block team-tab-active %}active{% endblock %}
+
+{% block tab-content %}
+
+<h4>{% trans "Create a new Team" %}</h4>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-row">
+        <div class="col">{% render_field form.name group=True %}</div>
+        <div class="col-auto"><input type="submit" value="{% trans 'Create' %}" class="btn btn-success btn-block col-auto"></div>
+    </div>
+
+</form>
+
+<br>
+<h4>{% trans "My teams" %}</h4>
+<table class="table table-hover">
+    {% for team in user.groups.all %}
+    <tr>
+        <td>
+        {% if team.groupowner.owner == user %}
+        <a href="{% url 'team-detail' team.pk %}">{{ team }} (owner)</a>
+        {% else %}
+        {{ team }}
+        {% endif  %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

@@ -5,14 +5,15 @@
 <div class="container">
     <div class="row">
         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-            <a class="nav-link active" id="nav-infos-tab" data-toggle="pill" href="#infos-tab" role="tab">{% trans "Informations" %}</a>
-            <a class="nav-link" id="nav-key-tab" data-toggle="pill" href="#key-tab" role="tab">{% trans "Api key" %}</a>
-            <a class="nav-link" id="nav-key-tab" data-toggle="pill" href="#teams-tab" role="tab">{% trans "Teams" %}</a>
-            <a class="nav-link" id="nav-files-tab" data-toggle="pill" href="#files-tab" role="tab">{% trans "Files" %}</a>
+            <a class="nav-link {% block infos-tab-active %}active{% endblock %}" id="nav-infos-tab" href="{% url 'profile' %}" role="tab">{% trans "Informations" %}</a>
+            <a class="nav-link {% block key-tab-active %}{% endblock %}" id="nav-key-tab"  href="{% url 'profile-api-key' %}" role="tab">{% trans "Api key" %}</a>
+            <a class="nav-link {% block files-tab-active %}{% endblock %}" id="nav-files-tab" href="{% url 'profile-files' %}" role="tab">{% trans "Files" %}</a>
+            <a class="nav-link {% block team-tab-active %}{% endblock %}" id="nav-infos-tab" href="{% url 'profile-team-list' %}" role="tab">{% trans "Teams" %}</a>
         </div>
 
         <div class="col-md-8 tab-content" id="v-pills-tabContent">
-            <div class="tab-pane fade show active" id="infos-tab" role="tabpanel" aria-labelledby="v-pills-home-tab">
+            <div class="tab-pane fade show active" id="infos-tab" role="tabpanel">
+                {% block tab-content %}
                 <form method="post">
                     {% csrf_token %}
                     <fieldset>
@@ -23,32 +24,7 @@
                         <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
                     </fieldset>
                 </form>
-            </div>
-
-            <div class="tab-pane fade show" id="key-tab" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                {% trans "API Authentication Token:" %} {{ api_auth_token.key }}
-                <button class="btn btn-secondary btn-sm fas fa-clipboard float-right" id="api-key-clipboard" title="{% trans "Copy to clipboard." %}" data-key="{{ api_auth_token.key }}"></button>
-                <br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
-            </div>
-            <div class="tab-pane fade show" id="teams-tab" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                <form method="post" action="{% url 'teams' %}">
-                    {% csrf_token %}
-                    {{ team_form }}
-                    <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
-                </form>
-                {% for team in  object.teams.all %}
-                    <br><a href="{% url 'team-invite' pk=team.pk %}">{{ team }}</a>
-                {% endfor %}
-            </div>
-
-            <div class="tab-pane fade show" id="files-tab" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                {% for fpath, fname in page_obj %}
-                <br><a href="{{request.scheme}}://{{request.get_host}}{% get_media_prefix %}{{fpath}}"><i class="fas fa-download"></i></a> {{ fname }}
-                {% empty %}
-                {% trans "You don't have any saved files yet." %}
-                {% endfor %}
-
-                {% include "includes/pagination.html" %}
+                {% endblock %}
             </div>
         </div>
     </div>
@@ -78,9 +54,11 @@
      $('a[data-toggle="pill"]').on("click", function() {
          let url = location.href;
          let hash = $(this).attr("href");
-         let newUrl = url.split("#")[0] + hash;
-         history.replaceState(null, null, newUrl);
-         updatePagination(hash);
+         if (hash.startsWith('#')) {
+             let newUrl = url.split("#")[0] + hash;
+             history.replaceState(null, null, newUrl);
+             updatePagination(hash);
+         }
      });
  }, false);
 </script>
