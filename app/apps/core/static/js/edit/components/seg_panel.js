@@ -65,7 +65,6 @@ const SegPanel = BasePanel.extend({
                 // same event for creation and modification of a line/region
                 let data = ev.detail;
                 this.extractPrevious(data);
-
                 let toCreate = {
                     lines: data.lines && data.lines.filter(l=>l.context.pk===null) || [],
                     regions: data.regions && data.regions.filter(l=>l.context.pk===null) || []
@@ -85,7 +84,7 @@ const SegPanel = BasePanel.extend({
                         });
                     }.bind(this),
                     function() {   // redo
-                        this.bulkCreate(toCreate, createInEditor=true)
+                        this.bulkCreate(toCreate, createInEditor=true);
                         this.bulkUpdate(toUpdate);
                     }.bind(this)
                 );
@@ -209,7 +208,8 @@ const SegPanel = BasePanel.extend({
                     this.$parent.$emit(
                         'create:region', {
                             pk: data.regions[i].pk,
-                            box: data.regions[i].box
+                            box: data.regions[i].box,
+                            type: data.regions[i].type
                         }, function(region) {
                             if (createInEditor) {
                                 this.segmenter.loadRegion(region);

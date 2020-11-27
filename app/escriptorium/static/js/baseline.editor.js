@@ -1701,6 +1701,9 @@ class Segmenter {
             } else {
                 this.regionTypesSelect.value = 'None';
             }
+        } else {
+            // avoid unbinding keyboard then
+            return;
         }
 
         var self = this;  // mandatory for unbinding
@@ -1999,7 +2002,8 @@ class Segmenter {
                 region.polygonPath.removeSegments();
                 coumpound.children[0].segments.forEach(s=>region.polygonPath.add(s));
                 for (let i=1;i<coumpound.children.length;i++) {
-                    let newRegion = this.createRegion(null, coumpound.children[i].segments, region.type, null, false);
+                    let newRegion = this.createRegion(null, coumpound.children[i].segments,
+                                                      region.type, null, false);
                     newRegion.updateDataFromCanvas();
                     coumpound.children[i].remove();
                 }
