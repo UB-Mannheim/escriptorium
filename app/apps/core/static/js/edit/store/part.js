@@ -339,8 +339,10 @@ const partStore = {
 
     createRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/';
+        let type = region.type && this.types.regions.find(t=>t.name==region.type);
         data = {
             document_part: this.pk,
+            typology: type && type.pk || null,
             box: region.box
         };
         this.push(uri, data, method="post")
