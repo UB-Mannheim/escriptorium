@@ -642,17 +642,16 @@ class DocumentPart(OrderedModel):
 
             res = blla.segment(im, **options)
 
-            regs = []
             if steps in ['regions', 'both']:
                 block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res['regions'].items():
                     for region in regions:
-                        block = Block.objects.create(
+                        Block.objects.create(
                             document_part=self,
                             typology=block_types.get(region_type),
                             box=region)
-                        regs.append(block)
 
+            regions = self.blocks.all()
             if steps in ['lines', 'both']:
                 line_types = {t.name: t for t in self.document.valid_line_types.all()}
                 for line in res['lines']:
@@ -662,7 +661,7 @@ class DocumentPart(OrderedModel):
                     # calculate if the center of the line is contained in one of the region
                     # (pick the first one that matches)
                     center = LineString(baseline).interpolate(0.5, normalized=True)
-                    region = next((r for r in regs if Polygon(r.box).contains(center)), None)
+                    region = next((r for r in regions if Polygon(r.box).contains(center)), None)
 
                     Line.objects.create(
                         document_part=self,
@@ -763,16 +762,22 @@ class DocumentPart(OrderedModel):
         im = Image.open(self.image).convert('L')
         lines = list(self.lines.all())  # needs to store the qs result
         to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
-        context = [l for l in lines if only and l.pk not in only]
 
-        masks = calculate_polygonal_environment(im,
-                                                [l.baseline for l in to_calc],
-                                                suppl_obj=[l.baseline for l in context],
-                                                scale=(1200, 0))
-        ziped = zip(to_calc, masks)
-        for line, mask in ziped:
-            line.mask = mask
-            line.save()
+        for line in to_calc:
+            context = [l.baseline for l in lines if l.pk != line.pk]
+            if line.block:
+                poly = line.block.box
+                poly.append(line.block.box[0])  # close it
+                context.append(poly)
+
+            mask = calculate_polygonal_environment(
+                im,
+                [line.baseline],
+                suppl_obj=context,
+                scale=(1200, 0))
+            if mask[0]:
+                line.mask = mask[0]
+                line.save()
 
         return to_calc
 

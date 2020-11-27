@@ -23,6 +23,8 @@ def render_field(field, group=False, **kwargs):
     tplt = template.loader.get_template('django/forms/widgets/field.html')
     if 'class' in kwargs and 'class' in field.field.widget.attrs:
         kwargs['class'] = field.field.widget.attrs['class'] + " " + kwargs['class']
+    if 'help_text' in kwargs:
+        field.help_text = kwargs.pop('help_text')
 
     field.field.widget.attrs.update(**{k.replace('_', '-'): v
                                        for k, v in kwargs.items()
