@@ -444,12 +444,12 @@ i.panel-icon {
 }
 
 .panel .content-container .js-wheelzoom-container {
-    min-height: calc(100vh - 190px);
+    min-height: calc(100vh - 200px);
 }
 
 .panel#diplo-panel .content-container {
     overflow-y: scroll;
-    max-height: calc(100vh - 190px);
+    max-height: calc(100vh - 200px);
 }
 
 .panel .panel-img {
