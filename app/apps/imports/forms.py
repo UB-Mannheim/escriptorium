@@ -44,7 +44,6 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
-
         if uri:
             try:
                 resp = requests.get(uri)
@@ -83,7 +82,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         cleaned_data = super().clean()
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
-            and not cleaned_data['iiif_uri']):
+            and not cleaned_data.get('iiif_uri')):
             raise forms.ValidationError(_("Choose one type of import."))
 
         return cleaned_data
