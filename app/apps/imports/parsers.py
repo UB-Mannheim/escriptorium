@@ -70,7 +70,8 @@ class PdfParser(ParserDocument):
     def validate(self):
         try:
             self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
-                                                    dpi=300, n=-1, access="sequential")
+                                                    dpi=300, n=-1,
+                                                    access="sequential")
         except pyvips.error.Error as e:
             logger.exception(e)
             raise ParseError(_("Invalid pdf file."))
@@ -83,21 +84,22 @@ class PdfParser(ParserDocument):
             return 0
 
     def parse(self, start_at=0, override=False, user=None):
-        self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
-                                                dpi=300, n=-1, access="sequential")
+        buff = self.file.read()
+        doc = pyvips.Image.new_from_buffer(buff, "",
+                                           dpi=300, n=-1,
+                                           access="sequential")
+        n_pages = doc.get('n-pages')
         try:
-            self.doc.flatten(background=255)
-            n_pages = self.doc.get('n-pages')
-            page_width = self.doc.width
-            page_height = self.doc.height / n_pages
-
-            for i in range(0, n_pages):
-                page = self.doc.crop(0, i * page_height, page_width, page_height)
+            for page_nb in range(start_at, n_pages):
+                page = pyvips.Image.new_from_buffer(buff, "", dpi=300,
+                                                    access="sequential",
+                                                    page=page_nb)
                 part = DocumentPart(document=self.document)
-                part.image.save('%s_page_%d.png' % (self.file.name, i+1),
+                part.image.save('%s_page_%d.png' % (self.file.name, page_nb+1),
                                 ContentFile(page.write_to_buffer('.png')))
                 part.save()
                 yield part
+                page_nb = page_nb + 1
         except pyvips.error.Error as e:
             msg = _("Parse error in {filename}: {error}, skipping it.").format(
                 filename=self.file.name, error=e.args[0]

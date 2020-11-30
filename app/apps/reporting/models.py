@@ -56,7 +56,7 @@ class TaskReport(models.Model):
         self.save()
 
         self.user.notify(_('%(task_label)s error!') % {'task_label': self.label},
-                         level='error',
+                         level='danger',
                          links=[{'text': 'Report', 'src': self.uri}])
 
     def end(self, extra_links=None):
