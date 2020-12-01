@@ -30,14 +30,17 @@ const VisuPanel = BasePanel.extend({
                 this.editLine = this.part.lines[index - 1];
             }
         },
+        resetLines() {
+            if (this.part.lines.length) {
+                this.$refs.visulines.forEach(function(line) {
+                    line.reset();
+                });
+            }
+        },
         updateView() {
             this.$el.querySelector('svg').style.height = Math.round(this.part.image.size[1] * this.ratio) + 'px';
             Vue.nextTick(function() {
-                if (this.part.lines.length) {
-                    this.$refs.visulines.forEach(function(line) {
-                        line.reset();
-                    });
-                }
+                this.resetLines();
             }.bind(this));
         }
     }
