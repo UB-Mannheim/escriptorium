@@ -6,8 +6,10 @@ const BasePanel = Vue.extend({
         };
     },
     watch: {
-        'ratio': function(n, o) {
-            if (this.part.loaded) this.refresh();
+        'part.loaded': function(n, o) {
+            if (this.part.loaded) {
+                this.refresh();
+            }
         }
     },
     methods: {

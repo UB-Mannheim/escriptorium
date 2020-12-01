@@ -70,7 +70,8 @@ class PdfParser(ParserDocument):
     def validate(self):
         try:
             self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
-                                                    dpi=300, n=-1, access="sequential")
+                                                    dpi=300, n=-1,
+                                                    access="sequential")
         except pyvips.error.Error as e:
             logger.exception(e)
             raise ParseError(_("Invalid pdf file."))
@@ -83,21 +84,22 @@ class PdfParser(ParserDocument):
             return 0
 
     def parse(self, start_at=0, override=False, user=None):
-        self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
-                                                dpi=300, n=-1, access="sequential")
+        buff = self.file.read()
+        doc = pyvips.Image.new_from_buffer(buff, "",
+                                           dpi=300, n=-1,
+                                           access="sequential")
+        n_pages = doc.get('n-pages')
         try:
-            self.doc.flatten(background=255)
-            n_pages = self.doc.get('n-pages')
-            page_width = self.doc.width
-            page_height = self.doc.height / n_pages
-
-            for i in range(0, n_pages):
-                page = self.doc.crop(0, i * page_height, page_width, page_height)
+            for page_nb in range(start_at, n_pages):
+                page = pyvips.Image.new_from_buffer(buff, "", dpi=300,
+                                                    access="sequential",
+                                                    page=page_nb)
                 part = DocumentPart(document=self.document)
-                part.image.save('%s_page_%d.png' % (self.file.name, i+1),
+                part.image.save('%s_page_%d.png' % (self.file.name, page_nb+1),
                                 ContentFile(page.write_to_buffer('.png')))
                 part.save()
                 yield part
+                page_nb = page_nb + 1
         except pyvips.error.Error as e:
             msg = _("Parse error in {filename}: {error}, skipping it.").format(
                 filename=self.file.name, error=e.args[0]
@@ -606,19 +608,19 @@ class IIIFManifestParser(ParserDocument):
     def manifest(self):
         try:
             return json.loads(self.file.read())
-        except (json.JSONDecodeError) as e:
-            raise ParseError(e)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise ParseError(_("Couldn't decode invalid manifest ({error})").format(error=e))
 
     @cached_property
     def canvases(self):
         try:
             return self.manifest["sequences"][0]["canvases"]
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
+        except (KeyError, IndexError):
+            return 0
 
     def validate(self):
         if len(self.canvases) < 1:
-            raise ParseError(_("Empty manifesto."))
+            raise ParseError(_("Empty or invalid manifest, no images found."))
 
     @property
     def total(self):
@@ -633,13 +635,13 @@ class IIIFManifestParser(ParserDocument):
                     DocumentMetadata.objects.get_or_create(
                         document=self.document, key=md, value=metadata["value"][:512]
                     )
-        except KeyError as e:
+        except KeyError:
             pass
 
-        try:
-            for i, canvas in enumerate(self.canvases):
-                if i < start_at:
-                    continue
+        for i, canvas in enumerate(self.canvases):
+            if i < start_at:
+                continue
+            try:
                 resource = canvas["images"][0]["resource"]
                 url = resource["@id"]
                 uri_template = "{image}/{region}/{size}/{rotation}/{quality}.{format}"
@@ -664,8 +666,10 @@ class IIIFManifestParser(ParserDocument):
                 part.save()
                 yield part
                 time.sleep(0.1)  # avoid being throttled
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
+            except (KeyError, IndexError) as e:
+                if self.report:
+                    self.report.append(_('Error while fetching {filename}: {error}').format(
+                        filename=name, error=e))
 
 
 class TranskribusPageXmlParser(PagexmlParser):

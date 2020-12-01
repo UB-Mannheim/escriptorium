@@ -17,6 +17,7 @@ var diploLine = LineBase.extend({
     mounted() {
         Vue.nextTick(function() {
             this.$parent.appendLine();
+            if (this.line.currentTrans) this.setElContent(this.line.currentTrans.content);
         }.bind(this));
     },
     beforeDestroy() {

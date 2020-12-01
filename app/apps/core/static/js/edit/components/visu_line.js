@@ -29,7 +29,6 @@ const visuLine = LineBase.extend({
             this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
             return 10+'px';
         },
-
         computeTextLength() {
             if (!this.line.currentTrans) return;
             content = this.line.currentTrans.content;
@@ -61,7 +60,6 @@ const visuLine = LineBase.extend({
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
         },
-
         maskStrokeColor() {
             if (this.line.currentTrans && this.line.currentTrans.content) {
                 return 'none';
@@ -73,7 +71,6 @@ const visuLine = LineBase.extend({
             if (this.line == null || !this.line.mask) return '';
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
-
         fakeBaseline() {
             // create a fake path based on the mask,
             var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);

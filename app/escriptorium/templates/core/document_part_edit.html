@@ -544,47 +544,48 @@
                 </TranscriptionModal>
             </div>
         </VisuPanel>
-  </keep-alive>
-  <keep-alive>
-      <DiploPanel id="diplo-panel"
-                  v-bind:part="part"
-                  v-if="show.diplomatic && part.loaded"
-                  ref="diploPanel"
-                  inline-template>
-          <div class="col panel">
-              <div class="tools">
-                  <i title="{% trans 'Text Panel' %}" class="panel-icon fas fa-list-ol"></i>
-                  <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
-                  <button id="sortMode"
-                          title="{% trans "Toggle sorting mode." %}"
-                          class="btn btn-sm ml-3 btn-info fas fa-sort"
-                          @click="toggleSort"
-                          autocomplete="off"></button>
-              </div>
-              <div class="content-container {{ document.read_direction }}">
+    </keep-alive>
 
-                  <diploline v-for="line in part.lines"
-                             v-bind:line="line"
-                             v-bind:ratio="ratio"
-                             v-bind:key="'DL' + line.pk">
-                  </diploline>
+    <keep-alive>
+        <DiploPanel id="diplo-panel"
+                    v-bind:part="part"
+                    v-if="show.diplomatic && part.loaded"
+                    ref="diploPanel"
+                    inline-template>
+            <div class="col panel">
+                <div class="tools">
+                    <i title="{% trans 'Text Panel' %}" class="panel-icon fas fa-list-ol"></i>
+                    <i id="save-notif" title="{% trans "There is content waiting to be saved (don't leave the page)" %}" class="notice fas fa-save hide"></i>
+                    <button id="sortMode"
+                            title="{% trans "Toggle sorting mode." %}"
+                            class="btn btn-sm ml-3 btn-info fas fa-sort"
+                            @click="toggleSort"
+                            autocomplete="off"></button>
+                </div>
+                <div class="content-container {{ document.read_direction }}">
 
-                  <div id="diplomatic-lines"
-                       contenteditable="true"
-                       autocomplete="off"
-                       @keydown="onKeyPress"
-                       @keyup="constrainLineNumber"
-                       @input="changed"
-                       @focusin="startEdit"
-                       @focusout="stopEdit"
-                       @paste="onPaste"
-                       @mousemove="showOverlay"
-                       @mouseleave="hideOverlay">
-                  </div>
-              </div>
-          </div>
-      </DiploPanel>
-  </keep-alive>
+                    <diploline v-for="line in part.lines"
+                               v-bind:line="line"
+                               v-bind:ratio="ratio"
+                               v-bind:key="'DL' + line.pk">
+                    </diploline>
+
+                    <div id="diplomatic-lines"
+                         contenteditable="true"
+                         autocomplete="off"
+                         @keydown="onKeyPress"
+                         @keyup="constrainLineNumber"
+                         @input="changed"
+                         @focusin="startEdit"
+                         @focusout="stopEdit"
+                         @paste="onPaste"
+                         @mousemove="showOverlay"
+                         @mouseleave="hideOverlay">
+                    </div>
+                </div>
+            </div>
+        </DiploPanel>
+    </keep-alive>
 
     <div class="col-sides">
         {% if document.read_direction == 'rtl' %}

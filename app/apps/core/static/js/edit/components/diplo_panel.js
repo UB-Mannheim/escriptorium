@@ -43,6 +43,7 @@ var DiploPanel = BasePanel.extend({
         this.editor = this.$el.querySelector('#diplomatic-lines');
         this.sortModeBtn = this.$el.querySelector('#sortMode');
         this.saveNotif = this.$el.querySelector('.tools #save-notif');
+        this.refresh();
     },
     methods: {
         empty() {
@@ -151,15 +152,18 @@ var DiploPanel = BasePanel.extend({
             this.bulkUpdate();
             this.bulkCreate();
         },
-        setHeight() {
-            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
-        },
         focusNextLine(sel, line) {
             if (line.nextSibling) {
                 let range = document.createRange();
                 range.setStart(line.nextSibling, 0);
                 range.collapse(false);
                 sel.removeAllRanges();
+
+                if (line.nextSibling.offsetTop >
+                    this.editor.parentNode.scrollTop + this.editor.parentNode.clientHeight) {
+                    line.nextSibling.scrollIntoView(false);
+                }
+
                 sel.addRange(range);
             }
         },
@@ -168,6 +172,12 @@ var DiploPanel = BasePanel.extend({
                 let range = document.createRange();
                 range.setStart(line.previousSibling, 0);
                 sel.removeAllRanges();
+
+                if (line.previousSibling.offsetTop - this.editor.parentNode.offsetTop <
+                    this.editor.parentNode.scrollTop) {
+                    line.previousSibling.scrollIntoView(true);
+                }
+
                 sel.addRange(range);
             }
         },
@@ -285,12 +295,11 @@ var DiploPanel = BasePanel.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
+        setHeight() {
+            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+        },
         updateView() {
-            /*
-               update the size of the panel
-             */
             this.setHeight();
         }
-    },
-
+    }
 });
