@@ -83,13 +83,6 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
         self.fields['password1'].help_text = None
 
 
-class GroupInvitationAcceptForm(InvitationAcceptForm):
-    """
-    The user already exists and was simply invited in a Team(Group).
-    """
-    pass
-
-
 class ProfileForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = User

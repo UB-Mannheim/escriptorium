@@ -104,7 +104,7 @@ class Invitation(models.Model):
 
     def send_invitation_to_group(self, request):
         accept_url = request.build_absolute_uri(
-            reverse("accept-invitation-group", kwargs={"token": self.token.hex}))
+            reverse("accept-group-invitation", kwargs={"slug": self.token.hex}))
 
         context = {
             "sender": self.sender.get_full_name() or self.sender.username,

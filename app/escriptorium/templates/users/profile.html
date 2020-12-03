@@ -38,28 +38,6 @@
      $('#api-key-clipboard').click(function() {
          navigator.clipboard.writeText($(this).data('key'))
      });
-
-     function updatePagination(hash) {
-         $('ul.pagination a').each(function(i, a) {
-             let href = $(a).attr("href").split('#')[0];
-             $(a).attr("href", href+location.hash);
-         });
-     }
-
-     if (location.hash) {
-         let tab = location.hash.split('#')[1];
-         $('#nav-' + tab).tab("show");
-         updatePagination(location.hash);
-     }
-     $('a[data-toggle="pill"]').on("click", function() {
-         let url = location.href;
-         let hash = $(this).attr("href");
-         if (hash.startsWith('#')) {
-             let newUrl = url.split("#")[0] + hash;
-             history.replaceState(null, null, newUrl);
-             updatePagination(hash);
-         }
-     });
  }, false);
 </script>
 {% endblock %}
