@@ -10,7 +10,6 @@ from django.urls import reverse
 
 from core.models import Block, Line, Transcription, LineTranscription, OcrModel
 from core.tests.factory import CoreFactoryTestCase
-from api.serializers import DocumentProcessSerializer
 class UserViewSetTestCase(CoreFactoryTestCase):
 
     def setUp(self):
@@ -39,7 +38,9 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.doc2 = self.factory.make_document(owner=self.doc.owner)
         self.part = self.factory.make_part(document=self.doc)
         self.part2 = self.factory.make_part(document=self.doc)
-        self.model_uri = reverse('api:document-model',kwargs={'pk': self.doc.pk})
+        self.segtrain_uri = reverse('api:document-segtrain',kwargs={'pk': self.doc.pk})
+        self.segment_uri = reverse('api:document-segment', kwargs={'pk': self.doc.pk})
+        self.train_uri = reverse('api:document-train', kwargs={'pk': self.doc.pk})
 
 
         self.line = Line.objects.create(
@@ -89,37 +90,43 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
 
     def test_segtrain_less_two_parts(self):
         self.client.force_login(self.doc.owner)
-
-
-        resp = self.client.post(self.model_uri,data={
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        resp = self.client.post(self.segtrain_uri,data={
                 'parts': [self.part.pk],
-                'transcription':self.transcription.pk,
-                'task': DocumentProcessSerializer.TASK_SEGTRAIN,
+                'segtrain_model': model.pk
         })
+
         self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'],{'non_field_errors': ['Segmentation training requires at least 2 images.']})
 
     def test_segtrain_new_model(self):
         self.client.force_login(self.doc.owner)
 
-
-        resp = self.client.post(self.model_uri,data={
+        resp = self.client.post(self.segtrain_uri,data={
                 'parts': [self.part.pk, self.part2.pk],
-                'transcription':self.transcription.pk,
-                'task': DocumentProcessSerializer.TASK_SEGTRAIN,
                 'new_model':'new model'
         })
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(OcrModel.objects.count(),1)
         self.assertEqual(OcrModel.objects.first().name,"new model")
 
+    def test_segtrain_existing_model(self):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+
+        resp = self.client.post(self.segtrain_uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'segtrain_model': model.pk
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(OcrModel.objects.count(), 2)
+
     def test_segment(self):
 
         self.client.force_login(self.doc.owner)
         model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT,document=self.doc)
-
-        resp = self.client.post(self.model_uri, data={
+        resp = self.client.post(self.segment_uri, data={
             'parts': [self.part.pk,self.part2.pk],
-            'task': DocumentProcessSerializer.TASK_SEGMENT,
             'seg_steps':'both',
             'seg_model': model.pk,
         })
@@ -129,13 +136,27 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT,document=self.doc)
 
-        resp = self.client.post(self.model_uri, data={
+        resp = self.client.post(self.segment_uri, data={
             'parts': [self.part.pk, self.part2.pk],
-            'task': DocumentProcessSerializer.TASK_SEGMENT,
             'seg_steps': 'both',
             'upload_model': SimpleUploadedFile(model.name,model.file.read())
         })
         self.assertEqual(resp.status_code, 200)
+        # assert creation of new model
+        self.assertEqual(OcrModel.objects.filter(document=self.doc,job=OcrModel.MODEL_JOB_SEGMENT).count(), 2)
+
+    def test_train_new_model(self):
+        self.client.force_login(self.doc.owner)
+
+        resp = self.client.post(self.train_uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'new_model': 'testing new model',
+            'transcription':self.transcription.pk
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(OcrModel.objects.filter(document=self.doc, job=OcrModel.MODEL_JOB_RECOGNIZE).count(), 1)
+
+
 
     # not used
     # def test_update
