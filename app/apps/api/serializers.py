@@ -354,8 +354,6 @@ class SegmentSerializer(OcrModelSerializer):
                       override=self.validated_data.get('override'))
 
 
-
-
 class SegTrainSerializer(OcrModelSerializer):
 
     parts = serializers.ListField(

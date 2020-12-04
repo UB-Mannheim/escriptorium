@@ -26,7 +26,9 @@ from api.serializers import (UserOnboardingSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
                              LineTranscriptionSerializer,
-                             DocumentProcessSerializer)
+                             SegmentSerializer,
+                             TrainSerializer,
+                             SegTrainSerializer)
 
 from core.models import (Document,
                          DocumentPart,
@@ -48,6 +50,21 @@ from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 
+class OcrModelSerializerMixen():
+
+
+    def serve_view(self,serializer):
+        if serializer.is_valid():
+            try:
+                serializer.process()
+            except AlreadyProcessingException:
+                return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':'Already processing.'})
+
+            return Response(status=status.HTTP_200_OK,data={'status': 'ok'})
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':serializer.errors})
+
+
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
@@ -61,7 +78,7 @@ class UserViewSet(ModelViewSet):
             return Response(status=status.HTTP_200_OK)
 
 
-class DocumentViewSet(ModelViewSet):
+class DocumentViewSet(ModelViewSet,OcrModelSerializerMixen):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     paginate_by = 10
@@ -126,21 +143,32 @@ class DocumentViewSet(ModelViewSet):
             return self.form_error(json.dumps(form.errors))
 
     @action(detail=True, methods=['post'])
-    def model(self, request, pk=None):
+    def segment(self, request, pk=None):
         document = self.get_object()
-        self.serializer_class = DocumentProcessSerializer
-        serializer = DocumentProcessSerializer(document=document, user=request.user,data=request.data)
-        if serializer.is_valid():
-            try:
-                serializer.process()
-            except AlreadyProcessingException:
-                return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':'Already processing.'})
+        self.serializer_class = SegmentSerializer
+        serializer = SegmentSerializer(document=document, user=request.user,data=request.data)
+        return self.serve_view(serializer)
 
-            return Response(status=status.HTTP_200_OK,data={'status': 'ok'})
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST,data={'status': 'error', 'error':serializer.errors})
+    @action(detail=True, methods=['post'])
+    def train(self, request, pk=None):
+        document = self.get_object()
+        self.serializer_class = TrainSerializer
+        serializer = TrainSerializer(document=document, user=request.user,data=request.data)
+        return self.serve_view(serializer)
 
+    @action(detail=True, methods=['post'])
+    def segtrain(self, request, pk=None):
+        document = self.get_object()
+        self.serializer_class = SegTrainSerializer
+        serializer = SegTrainSerializer(document=document, user=request.user,data=request.data)
+        return self.serve_view(serializer)
 
+    @action(detail=True, methods=['post'])
+    def transcribe(self, request, pk=None):
+        document = self.get_object()
+        self.serializer_class = SegTrainSerializer
+        serializer = SegTrainSerializer(document=document, user=request.user,data=request.data)
+        return self.serve_view(serializer)
 
 
 
