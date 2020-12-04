@@ -391,7 +391,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
             if serializer.is_valid():
                 try:
                     lt.new_version(author=request.user.username,
-                               source=settings.VERSIONING_DEFAULT_SOURCE)
+                                   source=settings.VERSIONING_DEFAULT_SOURCE)
                 except NoChangeException:
                     pass
 

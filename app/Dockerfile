@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.7.5-stretch
+FROM python:3.7.5-buster
 
 # ARG KRAKEN_VERSION=3.0b5
 # EXPOSE 8000
