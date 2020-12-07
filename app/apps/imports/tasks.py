@@ -8,9 +8,11 @@ from django.conf import settings
 from django.db.models import Q, Prefetch
 from django.template import loader
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 from celery import shared_task
 
+from core.models import Line
 from users.consumers import send_event
 from escriptorium.utils import send_email
 
@@ -28,7 +30,7 @@ def document_import(task, import_pk, resume=True, task_id=None):
         pk=import_pk)
 
     try:
-        imp.task_id = task.request.id
+        imp.report.start(task.request.id)
 
         send_event('document', imp.document.pk, "import:start", {
             "id": imp.document.pk
@@ -46,14 +48,17 @@ def document_import(task, import_pk, resume=True, task_id=None):
             "reason": str(e)
         })
         logger.exception(e)
+        imp.report.error(str(e))
     else:
         send_event('document', imp.document.pk, "import:done", {
             "id": imp.document.pk
         })
+        imp.report.end()
 
 
 @shared_task(bind=True)
-def document_export(task, file_format, user_pk, document_pk, part_pks, transcription_pk):
+def document_export(task, file_format, user_pk, document_pk, part_pks,
+                    transcription_pk, report_pk, include_images=False):
     ALTO_FORMAT = "alto"
     PAGEXML_FORMAT = "pagexml"
     TEXT_FORMAT = "text"
@@ -63,10 +68,13 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
     DocumentPart = apps.get_model('core', 'DocumentPart')
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
+    TaskReport = apps.get_model('reporting', 'TaskReport')
 
     user = User.objects.get(pk=user_pk)
     document = Document.objects.get(pk=document_pk)
+    report = TaskReport.objects.get(pk=report_pk)
 
+    report.start(task.request.id)
     send_event('document', document.pk, "export:start", {
         "id": document.pk
     })
@@ -102,23 +110,38 @@ def document_export(task, file_format, user_pk, document_pk, part_pks, transcrip
         parts = DocumentPart.objects.filter(document=document, pk__in=part_pks)
         with ZipFile(filepath, 'w') as zip_:
             for part in parts:
-                page = tplt.render({
-                    'valid_block_types': document.valid_block_types.all(),
-                    'valid_line_types': document.valid_line_types.all(),
-                    'part': part,
-                    'lines': part.lines.order_by('block__order', 'order')
-                                       .prefetch_related(
-                                           Prefetch('transcriptions',
-                                                    to_attr='transcription',
-                                                    queryset=LineTranscription.objects.filter(
-                                                        transcription=transcription)))})
-                zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
+                if include_images:
+                    # Note adds image before the xml file
+                    zip_.write(part.image.path, part.filename)
+                try:
+                    page = tplt.render({
+                        'valid_block_types': document.valid_block_types.all(),
+                        'valid_line_types': document.valid_line_types.all(),
+                        'part': part,
+                        'blocks': (part.blocks.order_by('order')
+                                   .prefetch_related(
+                                       Prefetch(
+                                           'lines',
+                                           queryset=Line.objects.prefetch_transcription(
+                                               transcription)))),
+
+                        'orphan_lines': (part.lines.prefetch_transcription(transcription)
+                                         .filter(block=None))
+                    })
+                except Exception as e:
+                    report.append("Skipped {element}({image}) because '{reason}'.".format(
+                        element=part.name, image=part.filename, reason=str(e)
+                    ))
+                else:
+                    zip_.writestr('%s.xml' % os.path.splitext(part.filename)[0], page)
+
         zip_.close()
 
-    # send websocket msg
     rel_path = os.path.relpath(filepath, settings.MEDIA_ROOT)
-    user.notify('Export ready!', level='success', link={'text': 'Download', 'src': rel_path})
+    report.end(extra_links=[{'text': _('Download'),
+                             'src': settings.MEDIA_URL + rel_path}])
 
+    # send websocket msg
     send_event('document', document.pk, "export:done", {
         "id": document.pk
     })

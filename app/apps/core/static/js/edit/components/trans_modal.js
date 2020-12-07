@@ -163,6 +163,6 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             } else {
                 overlay.style.display = 'none';
             }
-        },
+        }
     },
 });

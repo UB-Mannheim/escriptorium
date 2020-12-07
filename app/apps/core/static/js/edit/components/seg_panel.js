@@ -65,7 +65,6 @@ const SegPanel = BasePanel.extend({
                 // same event for creation and modification of a line/region
                 let data = ev.detail;
                 this.extractPrevious(data);
-
                 let toCreate = {
                     lines: data.lines && data.lines.filter(l=>l.context.pk===null) || [],
                     regions: data.regions && data.regions.filter(l=>l.context.pk===null) || []
@@ -85,7 +84,7 @@ const SegPanel = BasePanel.extend({
                         });
                     }.bind(this),
                     function() {   // redo
-                        this.bulkCreate(toCreate, createInEditor=true)
+                        this.bulkCreate(toCreate, createInEditor=true);
                         this.bulkUpdate(toUpdate);
                     }.bind(this)
                 );
@@ -116,6 +115,7 @@ const SegPanel = BasePanel.extend({
         },
         imageSrc() {
             // empty the src to make sure the complete event gets fired
+            // this.$img.src = '';
             if (!this.part.loaded) return '';
             // overrides imageSrc to deal with color modes
             // Note: vue.js doesn't have super call wtf we need to copy the code :(
@@ -144,11 +144,19 @@ const SegPanel = BasePanel.extend({
                 this.refreshHistoryBtns();
             }
         },
+        'colorMode': function(n, o) {
+            this.$parent.prefetchImage(this.imageSrc, function(src) {
+                this.$img.src = src;
+                this.refreshSegmenter();
+            }.bind(this));
+        },
         'fullsizeimage': function(n, o) {
-            // TODO/FIX: doesnt work anymore
             // it was prefetched
-            // this.$img.src = this.imageSrc;
-            // this.segmenter.refresh();
+            if (n && n != o) {
+                this.$img.src = this.imageSrc;
+                this.segmenter.scale = 1;
+                this.segmenter.refresh();
+            }
         }
     },
     methods: {
@@ -192,7 +200,6 @@ const SegPanel = BasePanel.extend({
         updateView() {
             this.segmenter.refresh();
         },
-
         // undo manager helpers
         bulkCreate(data, createInEditor=false) {
             if (data.regions && data.regions.length) {
@@ -201,7 +208,8 @@ const SegPanel = BasePanel.extend({
                     this.$parent.$emit(
                         'create:region', {
                             pk: data.regions[i].pk,
-                            box: data.regions[i].box
+                            box: data.regions[i].box,
+                            type: data.regions[i].type
                         }, function(region) {
                             if (createInEditor) {
                                 this.segmenter.loadRegion(region);

@@ -5,12 +5,13 @@ import re
 import requests
 import time
 import uuid
-import warnings
 import zipfile
+import pyvips
 from lxml import etree
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.validators import get_available_image_extensions
 from django.db import transaction
 from django.forms import ValidationError
 from django.utils.translation import gettext as _
@@ -27,6 +28,7 @@ from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
+OWN_RISK = "the validity of the data can not be automaatically checked, use at your own risks."
 
 
 class ParseError(Exception):
@@ -41,9 +43,10 @@ class ParserDocument:
 
     DEFAULT_NAME = None
 
-    def __init__(self, document, file_handler, transcription_name=None):
+    def __init__(self, document, file_handler, report, transcription_name=None):
         self.file = file_handler
         self.document = document
+        self.report = report
         self.name = transcription_name or self.DEFAULT_NAME
 
     @property
@@ -61,6 +64,49 @@ class ParserDocument:
             document=self.document, name=self.name
         )
         return transcription
+
+
+class PdfParser(ParserDocument):
+    def validate(self):
+        try:
+            self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
+                                                    dpi=300, n=-1,
+                                                    access="sequential")
+        except pyvips.error.Error as e:
+            logger.exception(e)
+            raise ParseError(_("Invalid pdf file."))
+
+    @property
+    def total(self):
+        if 'n-pages' in self.doc.get_fields():
+            return self.doc.get('n-pages')
+        else:
+            return 0
+
+    def parse(self, start_at=0, override=False, user=None):
+        buff = self.file.read()
+        doc = pyvips.Image.new_from_buffer(buff, "",
+                                           dpi=300, n=-1,
+                                           access="sequential")
+        n_pages = doc.get('n-pages')
+        try:
+            for page_nb in range(start_at, n_pages):
+                page = pyvips.Image.new_from_buffer(buff, "", dpi=300,
+                                                    access="sequential",
+                                                    page=page_nb)
+                part = DocumentPart(document=self.document)
+                part.image.save('%s_page_%d.png' % (self.file.name, page_nb+1),
+                                ContentFile(page.write_to_buffer('.png')))
+                part.save()
+                yield part
+                page_nb = page_nb + 1
+        except pyvips.error.Error as e:
+            msg = _("Parse error in {filename}: {error}, skipping it.").format(
+                filename=self.file.name, error=e.args[0]
+            )
+            logger.warning(msg)
+            if self.report:
+                self.report.append(msg)
 
 
 class ZipParser(ParserDocument):
@@ -95,17 +141,41 @@ class ZipParser(ParserDocument):
                 if index < start_at:
                     continue
                 with zfh.open(finfo) as zipedfh:
-                    parser = make_parser(self.document, zipedfh,
-                                         name=self.name)
                     try:
-                        for part in parser.parse(override=override):
-                            yield part
+                        file_extension = os.path.splitext(zipedfh.name)[1][1:]
+                        # image
+                        if file_extension in get_available_image_extensions():
+                            try:
+                                part = DocumentPart.objects.filter(
+                                    document=self.document,
+                                    original_filename=zipedfh.name
+                                )[0]
+                            except IndexError:
+                                part = DocumentPart(
+                                    document=self.document,
+                                    original_filename=zipedfh.name
+                                )
+                            part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
+                            part.save()
+
+                        # xml
+                        elif file_extension in XML_EXTENSIONS:
+                            parser = make_parser(self.document, zipedfh,
+                                                 name=self.name, report=self.report)
+
+                            for part in parser.parse(override=override):
+                                yield part
+                    except IndexError:
+                        # no file extension!?
+                        pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {error}").format(
+                        msg = _("Parse error in {filename}: {error}, skipping it.").format(
                             filename=self.file.name, error=e.args[0]
                         )
                         logger.warning(msg)
+                        if self.report:
+                            self.report.append(msg)
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
 
@@ -113,7 +183,11 @@ class ZipParser(ParserDocument):
 class XMLParser(ParserDocument):
     ACCEPTED_SCHEMAS = ()
 
-    def __init__(self, document, file_handler, transcription_name=None, xml_root=None):
+    def __init__(self, document, file_handler, report, transcription_name=None, xml_root=None):
+        super().__init__(document,
+                         file_handler,
+                         transcription_name=transcription_name,
+                         report=report)
         if xml_root is not None:
             self.root = xml_root
             try:
@@ -122,14 +196,16 @@ class XMLParser(ParserDocument):
                     namespaces={"xsi": "http://www.w3.org/2001/XMLSchema-instance"},
                 )[0].split(" ")[-1]
             except (etree.XPathEvalError, IndexError) as e:
-                raise ParseError("Cannot Find Schema location %s" % e.args[0])
-
+                message = "Cannot Find Schema location %s, %s" % (e.args[0], OWN_RISK)
+                if report:
+                    report.append(message)
+                else:
+                    raise ParseError(message)
         else:
             try:
                 self.root = etree.parse(self.file).getroot()
             except (AttributeError, etree.XMLSyntaxError) as e:
                 raise ParseError("Invalid XML. %s" % e.args[0])
-        super().__init__(document, file_handler, transcription_name=transcription_name)
 
     def validate(self):
         if self.schema_location in self.ACCEPTED_SCHEMAS:
@@ -139,7 +215,9 @@ class XMLParser(ParserDocument):
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                raise ParseError("Can't reach validation document %s." % self.schema_location)
+                if self.report:
+                    self.report.append("Can't reach validation document %s, %s" % (
+                        self.schema_location, OWN_RISK))
             else:
                 try:
                     xmlschema = etree.XMLSchema(schema_root)
@@ -149,10 +227,12 @@ class XMLParser(ParserDocument):
                     etree.DocumentInvalid,
                     etree.XMLSyntaxError,
                 ) as e:
-                    raise ParseError("Document didn't validate. %s" % e.args[0])
+                    if self.report:
+                        self.report.append("Document didn't validate. %s, %s" % (e.args[0], OWN_RISK))
         else:
-            raise ParseError("Document Schema not valid %s. Valid schemas are: %s" %
-                             (self.schema_location, self.ACCEPTED_SCHEMAS))
+            if self.report:
+                self.report.append("Document Schema %s is not in the accepted escriptiium list. Valid schemas are: %s, %s" %
+                                   (self.schema_location, self.ACCEPTED_SCHEMAS, OWN_RISK))
 
     def get_filename(self, pageTag):
         raise NotImplementedError
@@ -204,11 +284,13 @@ class XMLParser(ParserDocument):
                     document=self.document, original_filename=filename
                 )[0]
             except IndexError:
-                raise ParseError(
-                    _("No match found for file {} with filename <{}>.").format(
-                        self.file.name, filename
+                # TODO: check for the image in the zip
+                if self.report:
+                    self.report.append(
+                        _("No match found for file {} with filename \"{}\".").format(
+                            self.file.name, filename
+                        )
                     )
-                )
             else:
                 # if something fails, revert everything for this document part
                 with transaction.atomic():
@@ -219,19 +301,8 @@ class XMLParser(ParserDocument):
                     for block_id, blockTag in self.get_blocks(pageTag):
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
-                                if block_id.startswith("eSc_textblock_"):
-                                    internal_id = int(block_id[len("eSc_textblock_"):])
-                                    block = Block.objects.get(
-                                        document_part=part, pk=internal_id
-                                    )
-                                else:
-                                    block = Block.objects.get(
-                                        document_part=part, external_id=block_id
-                                    )
+                                block = Block.objects.get(document_part=part, external_id=block_id)
                             except Block.DoesNotExist:
-                                block = None
-
-                            if block is None:
                                 # not found, create it then
                                 block = Block(document_part=part, external_id=block_id)
                             try:
@@ -242,7 +313,10 @@ class XMLParser(ParserDocument):
                                 try:
                                     block.full_clean()
                                 except ValidationError as e:
-                                    raise ParseError(e)
+                                    if self.report:
+                                        self.report.append(
+                                            "Block in '{filen}' line N°{line} was skipped because: {error}".format(
+                                                filen=self.file.name, line=blockTag.sourceline, error=e))
                                 else:
                                     block.save()
                         else:
@@ -251,15 +325,7 @@ class XMLParser(ParserDocument):
                         for line_id, lineTag in self.get_lines(blockTag):
                             if line_id:
                                 try:
-                                    if line_id.startswith("eSc_line_"):
-                                        line = Line.objects.get(
-                                            document_part=part,
-                                            pk=int(line_id[len("eSc_line_"):]),
-                                        )
-                                    else:
-                                        line = Line.objects.get(
-                                            document_part=part, external_id=line_id
-                                        )
+                                    line = Line.objects.get(document_part=part, external_id=line_id)
                                 except Line.DoesNotExist:
                                     line = None
                             else:
@@ -267,15 +333,15 @@ class XMLParser(ParserDocument):
 
                             if line is None:
                                 # not found, create it then
-                                line = Line(
-                                    document_part=part, block=block, external_id=line_id
-                                )
+                                line = Line(document_part=part, block=block, external_id=line_id)
 
                             self.update_line(line, lineTag)
                             try:
                                 line.full_clean()
                             except ValidationError as e:
-                                raise ParseError(e)
+                                if self.report:
+                                    self.report.append("Line in '{filen}' line N°{line} was skipped because: {error}".format(
+                                        filen=self.file.name, line=blockTag.sourceline, error=e))
                             else:
                                 line.save()
 
@@ -284,10 +350,10 @@ class XMLParser(ParserDocument):
                             if tc:
                                 self.make_transcription(line, lineTag, tc, user=user)
 
-            # TODO: store glyphs too
-            logger.info("Uncompressed and parsed %s" % self.file.name)
-            part.calculate_progress()
-            yield part
+                # TODO: store glyphs too
+                logger.info("Uncompressed and parsed %s" % self.file.name)
+                part.calculate_progress()
+                yield part
 
 
 class AltoParser(XMLParser):
@@ -298,6 +364,7 @@ class AltoParser(XMLParser):
         "http://www.loc.gov/standards/alto/v4/alto.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-0.xsd",
         "http://www.loc.gov/standards/alto/v4/alto-4-1.xsd",
+        "http://www.loc.gov/standards/alto/v4/alto-4-2.xsd",
         escriptorium_alto
     )
 
@@ -362,6 +429,7 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("BASELINE")
+
         if baseline is not None:
             # sometimes baseline is just a single number,
             # an offset maybe it's not super clear
@@ -373,7 +441,17 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    logger.warning("Invalid baseline %s" % baseline)
+                    msg = "Invalid baseline %s in {filen} line {linen}" % (baseline, self.file.name, lineTag.sourceline)
+                    logger.warning(msg)
+                    if self.report:
+                        self.report.append(msg)
+        else:
+            # extract it from <String>s then
+            strings = lineTag.findall("String", self.root.nsmap)
+            last_segment = strings[-1]
+            line.baseline = [(int(e.get('HPOS')), int(e.get('VPOS'))) for e in strings]
+            line.baseline.append((int(last_segment.get('HPOS'))+int(last_segment.get('WIDTH')),
+                                  int(last_segment.get('VPOS'))))
 
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
@@ -381,7 +459,10 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                 coords = tuple(map(float, polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                logger.warning("Invalid polygon %s" % polygon)
+                msg = "Invalid polygon %s in {filen} line {linen}" % (polygon, self.file.name, lineTag.sourceline)
+                logger.warning(msg)
+                if self.report:
+                    self.report.append(msg)
         else:
             line.box = [
                 int(lineTag.get("HPOS")),
@@ -527,19 +608,19 @@ class IIIFManifestParser(ParserDocument):
     def manifest(self):
         try:
             return json.loads(self.file.read())
-        except (json.JSONDecodeError) as e:
-            raise ParseError(e)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise ParseError(_("Couldn't decode invalid manifest ({error})").format(error=e))
 
     @cached_property
     def canvases(self):
         try:
             return self.manifest["sequences"][0]["canvases"]
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
+        except (KeyError, IndexError):
+            return 0
 
     def validate(self):
         if len(self.canvases) < 1:
-            raise ParseError(_("Empty manifesto."))
+            raise ParseError(_("Empty or invalid manifest, no images found."))
 
     @property
     def total(self):
@@ -554,13 +635,13 @@ class IIIFManifestParser(ParserDocument):
                     DocumentMetadata.objects.get_or_create(
                         document=self.document, key=md, value=metadata["value"][:512]
                     )
-        except KeyError as e:
+        except KeyError:
             pass
 
-        try:
-            for i, canvas in enumerate(self.canvases):
-                if i < start_at:
-                    continue
+        for i, canvas in enumerate(self.canvases):
+            if i < start_at:
+                continue
+            try:
                 resource = canvas["images"][0]["resource"]
                 url = resource["@id"]
                 uri_template = "{image}/{region}/{size}/{rotation}/{quality}.{format}"
@@ -585,8 +666,10 @@ class IIIFManifestParser(ParserDocument):
                 part.save()
                 yield part
                 time.sleep(0.1)  # avoid being throttled
-        except (KeyError, IndexError) as e:
-            raise ParseError(e)
+            except (KeyError, IndexError) as e:
+                if self.report:
+                    self.report.append(_('Error while fetching {filename}: {error}').format(
+                        filename=name, error=e))
 
 
 class TranskribusPageXmlParser(PagexmlParser):
@@ -594,13 +677,12 @@ class TranskribusPageXmlParser(PagexmlParser):
     A Pagexml Parser for documents exported from Transkribus to handle data
     """
 
-    def validate(self):
-
-        warnings.warn(
-            "Validation is skipped for Transkribus Files but coordinates will be corrected",
-            SyntaxWarning,
-            2,
-        )
+    # def validate(self):
+    #     warnings.warn(
+    #         "Validation is skipped for Transkribus Files but coordinates will be corrected",
+    #         SyntaxWarning,
+    #         2,
+    #     )
 
     def clean_coords(self, coordTag):
         return [
@@ -609,7 +691,7 @@ class TranskribusPageXmlParser(PagexmlParser):
             ]
 
 
-def make_parser(document, file_handler, name=None):
+def make_parser(document, file_handler, name=None, report=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -627,16 +709,16 @@ def make_parser(document, file_handler, name=None):
         #     return AbbyyParser(root, name=name)
         if "alto" in schema:
             return AltoParser(
-                document, file_handler, transcription_name=name, xml_root=root
+                document, file_handler, report, transcription_name=name, xml_root=root
             )
         elif "PAGE" in schema:
             if b"Transkribus" in etree.tostring(root):
                 return TranskribusPageXmlParser(
-                    document, file_handler, transcription_name=name, xml_root=root
+                    document, file_handler, report, transcription_name=name, xml_root=root
                 )
             else:
                 return PagexmlParser(
-                    document, file_handler, transcription_name=name, xml_root=root
+                    document, file_handler, report, transcription_name=name, xml_root=root
                 )
 
         else:
@@ -644,9 +726,11 @@ def make_parser(document, file_handler, name=None):
                 "Couldn't determine xml schema, check the content of the root tag."
             )
     elif ext == "json":
-        return IIIFManifestParser(document, file_handler)
+        return IIIFManifestParser(document, file_handler, report)
     elif ext == "zip":
-        return ZipParser(document, file_handler, transcription_name=name)
+        return ZipParser(document, file_handler, report, transcription_name=name)
+    elif ext == "pdf":
+        return PdfParser(document, file_handler, report)
     else:
         raise ValueError(
             "Invalid extension for the file to be parsed %s." % file_handler.name

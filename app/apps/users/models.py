@@ -20,7 +20,7 @@ class User(AbstractUser):
     fields = models.ManyToManyField('ResearchField', blank=True)
 
     onboarding = models.BooleanField(
-        _('first connection'),
+        _('Show onboarding'),
         default=True
     )
 
@@ -33,10 +33,10 @@ class User(AbstractUser):
         else:
             return self.username
 
-    def notify(self, message, id=None, level='info', link=None):
+    def notify(self, message, id=None, level='info', links=None):
         if id is None:
             id = hash(message)
-        return send_notification(self.pk, message, id=id, level=level, link=link)
+        return send_notification(self.pk, message, id=id, level=level, links=links)
 
     def get_document_store_path(self):
         store_path = os.path.join(settings.MEDIA_ROOT, 'users', str(self.pk))
@@ -161,6 +161,7 @@ class Invitation(models.Model):
                               username=self.recipient.username),
                           level='success')
         return True
+
 
 
 class ContactUs(models.Model):

@@ -1,10 +1,33 @@
 var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
+    computed: {
+        showregion() {
+            let idx = this.$parent.part.lines.indexOf(this.line);
+            if (idx) {
+                let pr = this.$parent.part.lines[idx - 1].region;
+                if (this.line.region == pr)
+                    return "";
+                else
+                    return this.getRegion() + 1 ;
+            } else {
+                return this.getRegion() + 1 ;
+            }
+        }
+    },
     mounted() {
-        this.$content = this.$refs.content[0];
+        Vue.nextTick(function() {
+            this.$parent.appendLine();
+            if (this.line.currentTrans) this.setElContent(this.line.currentTrans.content);
+        }.bind(this));
+    },
+    beforeDestroy() {
+        let el = this.getEl();
+        if (el != null) {
+            el.remove();
+        }
     },
     watch: {
-        'line.order': function(o, n) {
+        'line.order': function(n, o) {
             // make sure it's at the right place,
             // in case it was just created or the ordering got recalculated
             let index = Array.from(this.$el.parentNode.children).indexOf(this.$el);
@@ -12,76 +35,25 @@ var diploLine = LineBase.extend({
                 this.$el.parentNode.insertBefore(
                     this.$el,
                     this.$el.parentNode.children[this.line.order]);
+                this.setElContent(this.line.currentTrans.content);
+            }
+        },
+        'line.currentTrans': function(n, o) {
+            if (n!=undefined) {
+                this.setElContent(n.content);
             }
         }
     },
     methods: {
-        startEdit(ev) {
-            // if we are selecting text we don't want to start editing
-            // to be able to do multiline selection
-            if (document.getSelection().toString()) {
-                return true;
-            }
-            this.$content.setAttribute('contenteditable', true);
-            this.$content.focus();  // needed in case we edit from the panel
-            this.$parent.setEditLine(this.line);
-            this.$content.style.backgroundColor =  '#F8F8F8';
-            this.$parent.$parent.blockShortcuts = true;
+        getEl() {
+            return this.$parent.editor.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
         },
-        stopEdit(ev) {
-            this.$content.setAttribute('contenteditable', false);
-            this.$content.style.backgroundColor = 'white';
-            this.$parent.$parent.blockShortcuts = false;
-            this.pushUpdate();
+        setElContent(content) {
+            let line = this.getEl();
+            if (line) line.textContent = content;
         },
-        pushUpdate(){
-            // set content of input to line content
-            if (this.line.currentTrans.content != this.$content.textContent) {
-                this.line.currentTrans.content = this.$content.textContent;
-                this.addToList();
-                // call save of parent method
-                this.$parent.toggleSave();
-            }
-        },
-        setContent(content){
-            let id = this.line.pk;
-            $("#" + id).text(content);
-            this.line.currentTrans.content = content;
-        },
-        onPaste(e) {
-            let pastedData = e.clipboardData.getData('text/plain');
-            let pasted_data_split = pastedData.split('\n');
-
-            if (pasted_data_split.length < 2) {
-                return
-            } else {
-                e.preventDefault();
-
-                if (pasted_data_split[pasted_data_split.length - 1] == "")
-                    pasted_data_split.pop();
-
-                let index = this.$parent.$children.indexOf(this);
-
-                for (let i = 1; i < pasted_data_split.length; i++) {
-                    if (this.$parent.$children[index + i]) {
-                        let content = pasted_data_split[i];
-                        let child = this.$parent.$children[index + i];
-                        child.setContent(content);
-                        child.addToList();
-                    } else {
-                        let content = pasted_data_split.slice(i - 1).join('\n');
-                        let child = this.$parent.$children[index + 1];
-                        child.setContent(content);
-                        child.addToList();
-                    }
-                }
-            }
-        },
-        addToList(){
-            if(this.line.currentTrans.pk)
-                this.$parent.$emit('update:transcription:content', this.line.currentTrans);
-            else
-                this.$parent.$emit('create:transcription', this.line.currentTrans);
+        getRegion() {
+            return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
         }
     }
 });

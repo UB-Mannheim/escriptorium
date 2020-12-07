@@ -339,8 +339,10 @@ const partStore = {
 
     createRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/';
+        let type = region.type && this.types.regions.find(t=>t.name==region.type);
         data = {
             document_part: this.pk,
+            typology: type && type.pk || null,
             box: region.box
         };
         this.push(uri, data, method="post")
@@ -439,7 +441,8 @@ const partStore = {
             return {
                 pk: l.pk,
                 content: l.content,
-                line : l.line
+                line : l.line,
+                transcription : l.transcription
             };
         });
 
@@ -452,18 +455,35 @@ const partStore = {
                 console.log('couldnt update line', error)
             });
     },
-    move(linePk,index,callback){
-        let uri = this.getApiRoot() + 'lines/'+ linePk + '/move/';
-        this.push(uri,{index : index},method="post")
+    move(movedLines, callback){
+        let uri = this.getApiPart()+ 'lines/move/';
+        this.push(uri,{"lines": movedLines},method="post")
             .then((response) =>response.json())
             .then(function (data) {
+                for (let i=0; i<data.length; i++) {
+                    let lineData = data[i];
+                    let line = this.lines.find(function(l) {
+                        return l.pk==lineData.pk;
+                    });
+                    if (line) {
+                        line.order = lineData.order;
+                    }
+                }
                 callback();
-            }).catch(function(error) {
+            }.bind(this)).catch(function(error) {
                 console.log('couldnt recalculate order of line', error)
             });
     },
 
     reset() {
+        // triggers delayed function immediately before the underlying data(pks) changes
+        if (this.debouncedRecalculateMasks) {
+            this.debouncedRecalculateMasks.flush();
+        }
+        if (this.debouncedRecalculateOrdering) {
+            this.debouncedRecalculateOrdering.flush();
+        }
+
         // note: keep the transcriptions
         this.loaded = false;
         this.pk = null;

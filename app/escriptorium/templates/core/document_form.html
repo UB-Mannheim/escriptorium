@@ -166,6 +166,11 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+ {% if user.onboarding %}
+ const ONBOARDING_PAGE = 'onboarding_document_form';
+ {% endif %}
+</script>
 {{ block.super }}
 <script src="{% static 'js/document_form.js' %}"></script>
 <script src="{% static 'js/help.js' %}"></script>

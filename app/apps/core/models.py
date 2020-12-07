@@ -5,11 +5,13 @@ import os
 import json
 import functools
 import subprocess
+import uuid
 from PIL import Image
 from datetime import datetime
+from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -332,9 +334,6 @@ class DocumentPart(OrderedModel):
         except IndexError:
             return False
 
-    def make_external_id(self):
-        return 'eSc_page_%d' % self.pk
-
     @property
     def filename(self):
         return self.original_filename or os.path.split(self.image.path)[1]
@@ -615,15 +614,17 @@ class DocumentPart(OrderedModel):
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
-        if model_.one_channel_mode == '1':
-            # TODO: need to binarize, probably not live...
-            if not self.bw_image:
-                self.binarize()
-            im = Image.open(self.bw_image.file.name)
-        elif model_.one_channel_mode == 'L':
-            im = Image.open(self.image.file.name).convert('L')
-        else:
-            im = Image.open(self.image.file.name)
+        im = Image.open(self.image.file.name)
+        # will be fixed sometime in the future
+        # if model_.one_channel_mode == '1':
+        #     # TODO: need to binarize, probably not live...
+        #     if not self.bw_image:
+        #         self.binarize()
+        #     im = Image.open(self.bw_image.file.name)
+        # elif model_.one_channel_mode == 'L':
+        #     im = Image.open(self.image.file.name).convert('L')
+        # else:
+        #     im = Image.open(self.image.file.name)
 
         options = {
             'device': getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'),
@@ -641,15 +642,6 @@ class DocumentPart(OrderedModel):
 
             res = blla.segment(im, **options)
 
-            if steps in ['lines', 'both']:
-                # line_types = {t.name: t for t in self.document.valid_line_types.all()}
-                for line in res['lines']:
-                    mask = line['boundary'] if line['boundary'] is not None else None
-                    Line.objects.create(
-                        document_part=self,
-                        # typology=line_types.get(line['type']),
-                        baseline=line['baseline'],
-                        mask=mask)
             if steps in ['regions', 'both']:
                 block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res['regions'].items():
@@ -658,6 +650,26 @@ class DocumentPart(OrderedModel):
                             document_part=self,
                             typology=block_types.get(region_type),
                             box=region)
+
+            regions = self.blocks.all()
+            if steps in ['lines', 'both']:
+                line_types = {t.name: t for t in self.document.valid_line_types.all()}
+                for line in res['lines']:
+                    mask = line['boundary'] if line['boundary'] is not None else None
+                    baseline = line['baseline']
+
+                    # calculate if the center of the line is contained in one of the region
+                    # (pick the first one that matches)
+                    center = LineString(baseline).interpolate(0.5, normalized=True)
+                    region = next((r for r in regions if Polygon(r.box).contains(center)), None)
+
+                    Line.objects.create(
+                        document_part=self,
+                        typology=line_types.get(line['script']),
+                        block=region,
+                        baseline=baseline,
+                        mask=mask)
+
         im.close()
 
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTED
@@ -750,18 +762,33 @@ class DocumentPart(OrderedModel):
         im = Image.open(self.image).convert('L')
         lines = list(self.lines.all())  # needs to store the qs result
         to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
-        context = [l for l in lines if only and l.pk not in only]
 
-        masks = calculate_polygonal_environment(im,
-                                                [l.baseline for l in to_calc],
-                                                suppl_obj=[l.baseline for l in context],
-                                                scale=(1200, 0))
-        ziped = zip(to_calc, masks)
-        for line, mask in ziped:
-            line.mask = mask
-            line.save()
+        for line in to_calc:
+            context = [l.baseline for l in lines if l.pk != line.pk]
+            if line.block:
+                poly = line.block.box
+                poly.append(line.block.box[0])  # close it
+                context.append(poly)
+
+            mask = calculate_polygonal_environment(
+                im,
+                [line.baseline],
+                suppl_obj=context,
+                scale=(1200, 0))
+            if mask[0]:
+                line.mask = mask[0]
+                line.save()
 
         return to_calc
+
+    def enforce_line_order(self):
+        # django-ordered-model doesn't care about unicity and linearity...
+        lines = self.lines.order_by('order', 'pk')
+        for i, line in enumerate(lines):
+            if line.order != i:
+                logger.debug('Enforcing line order %d : %d' % (line.pk, i))
+                line.order = i
+                line.save()
 
 
 def validate_polygon(value):
@@ -775,13 +802,27 @@ def validate_polygon(value):
             params={'value': value})
 
 
+def validate_2_points(value):
+    if len(value) < 2:
+        raise ValidationError(
+            _('Polygon needs to have at least 2 points, it has %(length)d: %(value)s.'),
+            params={'length': len(value), 'value': value})
+
+
+def validate_3_points(value):
+    if len(value) < 3:
+        raise ValidationError(
+            _('Polygon needs to have at least 3 points, it has %(length)d: %(value)s.'),
+            params={'length': len(value), 'value': value})
+
+
 class Block(OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
     """
     # box = models.BoxField()  # in case we use PostGIS
-    box = JSONField(validators=[validate_polygon])
+    box = JSONField(validators=[validate_polygon, validate_3_points])
     typology = models.ForeignKey(BlockType, null=True, blank=True,
                                  on_delete=models.SET_NULL)
     document_part = models.ForeignKey(DocumentPart, on_delete=models.CASCADE,
@@ -796,8 +837,8 @@ class Block(OrderedModel, models.Model):
     @property
     def coordinates_box(self):
         """
-        Cast the box field to the format [xmin,ymin,xmax,ymax]
-        to make it usable to calculate VPOS,HPOS,WIDTH, HEIGHT for Alto
+        Cast the box field to the format [xmin, ymin, xmax, ymax]
+        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for Alto
         """
         return [*map(min, *self.box), *map(max, *self.box)]
 
@@ -810,7 +851,22 @@ class Block(OrderedModel, models.Model):
         return self.coordinates_box[3] - self.coordinates_box[1]
 
     def make_external_id(self):
-        return self.external_id or 'eSc_textblock_%d' % self.pk
+        self.external_id = 'eSc_textblock_%s' % str(uuid.uuid4())[:8]
+
+    def save(self, *args, **kwargs):
+        if self.external_id is None:
+            self.make_external_id()
+        return super().save(*args, **kwargs)
+
+
+class LineManager(models.Manager):
+    def prefetch_transcription(self, transcription):
+        return (self.get_queryset().order_by('order')
+                                   .prefetch_related(
+                                       Prefetch('transcriptions',
+                                                to_attr='transcription',
+                                                queryset=LineTranscription.objects.filter(
+                                                    transcription=transcription))))
 
 
 class Line(OrderedModel):  # Versioned,
@@ -819,22 +875,24 @@ class Line(OrderedModel):  # Versioned,
     """
     # box = gis_models.PolygonField()  # in case we use PostGIS
     # Closed Polygon: [[x1, y1], [x2, y2], ..]
-    mask = JSONField(null=True, blank=True, validators=[validate_polygon])
+    mask = JSONField(null=True, blank=True, validators=[validate_polygon, validate_3_points])
     # Polygon: [[x1, y1], [x2, y2], ..]
-    baseline = JSONField(null=True, blank=True, validators=[validate_polygon])
+    baseline = JSONField(null=True, blank=True, validators=[validate_polygon, validate_2_points])
     document_part = models.ForeignKey(DocumentPart,
                                       on_delete=models.CASCADE,
                                       related_name='lines')
-    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL)
+    block = models.ForeignKey(Block, null=True, blank=True, on_delete=models.SET_NULL, related_name='lines')
     script = models.CharField(max_length=8, null=True, blank=True)  # choices ??
     # text direction
     order_with_respect_to = 'document_part'
-    version_ignore_fields = ('document_part', 'order')
+    # version_ignore_fields = ('document_part', 'order')
 
     typology = models.ForeignKey(LineType, null=True, blank=True,
                                  on_delete=models.SET_NULL)
 
     external_id = models.CharField(max_length=128, blank=True, null=True)
+
+    objects = LineManager()
 
     class Meta(OrderedModel.Meta):
         pass
@@ -862,10 +920,15 @@ class Line(OrderedModel):  # Versioned,
                      (box[2], box[3]),
                      (box[2], box[1])]
 
-    box = property(get_box, set_box)
+    box = cached_property(get_box, set_box)
 
     def make_external_id(self):
-        return self.external_id or 'eSc_line_%d' % self.pk
+        self.external_id = 'eSc_line_%s' % str(uuid.uuid4())[:8]
+
+    def save(self, *args, **kwargs):
+        if self.external_id is None:
+            self.make_external_id()
+        return super().save(*args, **kwargs)
 
 
 class Transcription(models.Model):

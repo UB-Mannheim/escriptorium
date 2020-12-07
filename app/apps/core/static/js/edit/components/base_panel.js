@@ -5,8 +5,12 @@ const BasePanel = Vue.extend({
             ratio: 1
         };
     },
-    updated() {
-        if (this.part.loaded) this.refresh();
+    watch: {
+        'part.loaded': function(n, o) {
+            if (this.part.loaded) {
+                this.refresh();
+            }
+        }
     },
     methods: {
         setRatio() {

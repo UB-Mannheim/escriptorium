@@ -1,0 +1,15 @@
+{% load export_tags %}
+          <TextLine ID="{{ line.external_id }}"
+                    {% if line.typology %}TAGREFS="LT{{line.typology.id}}"{% endif %}
+                    {% if line.baseline %}BASELINE="{% alto_points line.baseline %}" {% endif %}
+                    HPOS="{{ line.box.0 }}"
+                    VPOS="{{ line.box.1 }}"
+                    WIDTH="{{ line.width }}"
+                    HEIGHT="{{ line.height }}">
+            {% if line.mask %}<Shape><Polygon POINTS="{% alto_points line.mask %}"/></Shape>{% endif %}
+	    <String CONTENT="{{ line.transcription.0.content }}"
+                    HPOS="{{ line.box.0 }}"
+                    VPOS="{{ line.box.1 }}"
+                    WIDTH="{{ line.width }}"
+                    HEIGHT="{{ line.height }}"></String>
+          </TextLine>

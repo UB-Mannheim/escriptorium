@@ -32,7 +32,7 @@ class MyUserAdmin(UserAdmin):
     add_form = MyUserCreationForm
     list_display = UserAdmin.list_display + ('last_login',)
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('fields',)}),  # second fields refers to research fields
+        (None, {'fields': ('fields','onboarding')}),  # second fields refers to research fields
     )
 
 

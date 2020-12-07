@@ -23,7 +23,6 @@ from api.serializers import (UserOnboardingSerializer,
                              BlockTypeSerializer,
                              LineTypeSerializer,
                              DetailedLineSerializer,
-                             LineMoveSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
                              LineTranscriptionSerializer)
@@ -51,9 +50,9 @@ class UserViewSet(ModelViewSet):
 
     @action(detail=False, methods=['put'])
     def onboarding(self, request):
-        serializer = UserOnboardingSerializer(data=request.data, user=self.request.user)
+        serializer = UserOnboardingSerializer(self.request.user,data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            serializer.complete()
+            serializer.save()
             return Response(status=status.HTTP_200_OK)
 
 
@@ -71,6 +70,9 @@ class DocumentViewSet(ModelViewSet):
     def form_error(self, msg):
         return Response({'status': 'error', 'error': msg}, status=400)
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
         document = self.get_object()
@@ -80,7 +82,7 @@ class DocumentViewSet(ModelViewSet):
             form.save()  # create the import
             try:
                 form.process()
-            except ParseError as e:
+            except ParseError:
                 return self.form_error("Incorrectly formated file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:
@@ -254,13 +256,14 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
-        line = get_object_or_404(Line, pk=pk)
-        serializer = LineMoveSerializer(line=line, data=request.data)
+        data = request.data.get('lines')
+        qs = Line.objects.filter(pk__in=[l['pk'] for l in data])
+        serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
-            serializer.move()
-            return Response({'status': 'moved'})
+            resp = serializer.save()
+            return Response(resp, status=200)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -327,19 +330,35 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=False, methods=['PUT'])
     def bulk_update(self, request, document_pk=None, part_pk=None, pk=None):
-        lines = request.data.get("lines")
+        lines = request.data.get('lines')
+        response = []
+        errors = []
         for line in lines:
             lt = get_object_or_404(LineTranscription, pk=line["pk"])
-            lt.new_version(author=request.user.username,
-                           source=settings.VERSIONING_DEFAULT_SOURCE)
             serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        return Response({'status': 'ok'}, status=200)
+
+            if serializer.is_valid():
+                try:
+                    lt.new_version(author=request.user.username,
+                                   source=settings.VERSIONING_DEFAULT_SOURCE)
+                except NoChangeException:
+                    pass
+
+                serializer.save()
+                response.append(serializer.data)
+
+            else:
+                errors.append(errors)
+
+        if errors:
+            return Response(errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=200, data=response)
 
     @action(detail=False, methods=['POST'])
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
         qs = LineTranscription.objects.filter(pk__in=lines)
         qs.update(content='')
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT, )
