@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.http import Http404, HttpResponseRedirect
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.urls import reverse
 from django.views.generic import CreateView, UpdateView, TemplateView, DetailView
 from django.core.exceptions import PermissionDenied
 
@@ -76,6 +77,7 @@ class AcceptInvitation(CreateView):
         # TODO: send a welcome message ?!
         return response
 
+
 class AcceptGroupInvitation(DetailView):
     model = Invitation
     slug_field = 'token'
@@ -90,7 +92,7 @@ class AcceptGroupInvitation(DetailView):
         if not valid:
             return Http404
         messages.success(self.request, self.get_success_message())
-        return HttpResponseRedirect(reverse('team-detail', kwargs={'pk': self.object.group.pk}))
+        return HttpResponseRedirect(reverse('profile-team-list'))
 
 
 class GroupOwnerMixin():
@@ -172,6 +174,13 @@ class ProfileGroupListCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView
         kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['invitations'] = Invitation.objects.filter(
+            recipient=self.request.user,
+            workflow_state__lt=Invitation.STATE_ACCEPTED)
+        return context
 
 
 class GroupDetail(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):

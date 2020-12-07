@@ -17,8 +17,27 @@
     </div>
 
 </form>
-
 <br>
+
+{% if invitations %}
+<h4>{% trans "Pending Invitations"  %}</h4>
+<table class="table table-hover">
+    {% for invitation in invitations %}
+    <tr>
+        <td class="col">
+            {% blocktrans with team_name=invitation.group.name sender=invitation.sender.username %}
+            Invited to {{team_name}} by {{sender}}
+            {% endblocktrans %}
+        </td>
+        <td class="col-auto">
+            <a href="{% url 'accept-group-invitation' invitation.token %}">{% trans "Accept" %}</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+{% endif %}
+
 <h4>{% trans "My teams" %}</h4>
 <table class="table table-hover">
     {% for team in user.groups.all %}
