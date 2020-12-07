@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from users.views import (SendInvitation, AcceptInvitation, AcceptGroupInvitation, ContactUsView,
                          ProfileInfos, ProfileGroupListCreate, ProfileApiKey, ProfileFiles,
-                         GroupDetail, RemoveFromTeam)
+                         GroupDetail, RemoveFromGroup, LeaveGroup)
 from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
@@ -12,7 +12,8 @@ urlpatterns = [
     path('profile/files/', ProfileFiles.as_view(), name='profile-files'),
     path('profile/teams/', ProfileGroupListCreate.as_view(), name='profile-team-list'),
     path('teams/<int:pk>/', GroupDetail.as_view(), name='team-detail'),
-    path('teams/<int:pk>/remove/', RemoveFromTeam.as_view(), name='team-remove-user'),
+    path('teams/<int:pk>/remove/', RemoveFromGroup.as_view(), name='team-remove-user'),
+    path('teams/<int:pk>/leave/', LeaveGroup.as_view(), name='team-leave'),
     path('invite/',
          permission_required('users.can_invite', raise_exception=True)(SendInvitation.as_view()),
          name='send-invitation'),

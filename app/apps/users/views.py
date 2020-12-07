@@ -106,16 +106,32 @@ class GroupOwnerMixin():
         return reverse('team-detail', kwargs={'pk': self.get_object().pk})
 
 
-class RemoveFromTeam(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class RemoveFromGroup(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Group
     form_class = RemoveUserFromGroup
-    success_message = _('User successfully removed from the team.')
 
-    def form_valid(self, form):
-        return super().form_valid(form)
+    def get_success_message(self):
+        return _('User successfully removed from the team {{team_name}}.').format(
+            team_name=self.object)
 
     def form_invalid(self, forms):
         return reverse('team-detail', kwargs={'pk': self.get_object().pk})
+
+
+class LeaveGroup(LoginRequiredMixin, SuccessMessageMixin, DetailView):
+    model = Group
+    success_url = '/profile/teams/'
+
+    def get_success_message(self):
+        return _('You successfully left {{team}}.').format(team=self.object)
+
+    def post(self, request, **kwargs):
+        self.get_object().user_set.remove(request.user)
+        return HttpResponseRedirect(reverse('profile-team-list'))
+
+
+class GiveOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    pass
 
 
 class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

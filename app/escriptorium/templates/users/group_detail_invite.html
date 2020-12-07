@@ -29,7 +29,7 @@
             <form method="post" action="{% url 'team-remove-user' object.pk %}">
             {% csrf_token %}
             <input type="hidden" name="user" value="{{ user.pk }}">
-            <input type="submit" value="{% trans '-' %}" class="btn btn-danger btn-small" title="{% trans "Remove user from group" %}">
+            <input type="submit" value="{% trans 'Remove' %}" class="btn btn-danger btn-small" title="{% trans "Remove user from group" %}">
             </form>
         </td>
     </tr>
