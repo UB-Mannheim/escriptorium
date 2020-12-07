@@ -109,6 +109,250 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
                                         extra=1, can_delete=True)
 
 
+class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
+    parts = forms.CharField()
+
+    @cached_property
+    def parts(self):
+        pks = json.loads(self.data.get('parts'))
+        parts = DocumentPart.objects.filter(
+            document=self.document, pk__in=pks)
+        return parts
+
+    def __init__(self, document, user, *args, **kwargs):
+        self.document = document
+        self.user = user
+        super().__init__(*args, **kwargs)
+        # self.fields['typology'].widget = forms.HiddenInput()  # for now
+        # self.fields['typology'].initial = Typology.objects.get(name="Page")
+        # self.fields['typology'].widget.attrs['title'] = _("Default Typology")
+        if self.document.read_direction == self.document.READ_DIRECTION_RTL:
+            self.initial['text_direction'] = 'horizontal-rl'
+        self.fields['binarizer'].widget.attrs['disabled'] = True
+        self.fields['train_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['segtrain_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['seg_model'].queryset &= OcrModel.objects.filter(document=self.document)
+        self.fields['ocr_model'].queryset &= OcrModel.objects.filter(
+            Q(document=None, script=document.main_script)
+            | Q(document=self.document))
+        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+
+    def process(self):
+        model = self.cleaned_data.get('model')
+
+class DocumentSegmentForm(DocumentProcessForm1):
+    SEG_STEPS_CHOICES = (
+        ('both', _('Lines and regions')),
+        ('lines', _('Lines Baselines and Masks')),
+        ('masks', _('Only lines Masks')),
+        ('regions', _('Regions')),
+    )
+    segmentation_steps = forms.ChoiceField(choices=SEG_STEPS_CHOICES,
+                                           initial='both', required=False)
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                       label=_("Model"), empty_label="default ({name})".format(
+            name=settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL.rsplit('/')[-1]),
+                                       required=False)
+    override = forms.BooleanField(required=False, initial=True,
+                                  help_text=_(
+                                      "If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
+    TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
+                              ('horizontal-rl', _("Horizontal r2l")),
+                              ('vertical-lr', _("Vertical l2r")),
+                              ('vertical-rl', _("Vertical r2l")))
+    text_direction = forms.ChoiceField(initial='horizontal-lr', required=False,
+                                       choices=TEXT_DIRECTION_CHOICES)
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
+
+    def clean(self):
+        data = super().clean()
+        model_job = OcrModel.MODEL_JOB_SEGMENT
+
+        if data.get('upload_model'):
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['upload_model'].name.rsplit('.', 1)[0],
+                job=model_job)
+            # Note: needs to save the file in a second step because the path needs the db PK
+            model.file = data['upload_model']
+            model.save()
+
+        elif data.get('seg_model'):
+            model = data.get('seg_model')
+        else:
+            model = None
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+
+        for part in self.parts:
+            part.task('segment',
+                      user_pk=self.user.pk,
+                      steps=self.cleaned_data.get('segmentation_steps'),
+                      text_direction=self.cleaned_data.get('text_direction'),
+                      model_pk=model and model.pk or None,
+                      override=self.cleaned_data.get('override'))
+
+
+class DocumentTrainForm(DocumentProcessForm1):
+    new_model = forms.CharField(required=False, label=_('Model name'))
+    train_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                         .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                         label=_("Model"), required=False)
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
+
+    transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+
+    def clean_train_model(self):
+        model = self.cleaned_data['train_model']
+        if model and model.training:
+            raise AlreadyProcessingException
+        return model
+
+    def clean(self):
+        data = super().clean()
+
+        model_job = OcrModel.MODEL_JOB_RECOGNIZE
+
+        if data.get('train_model'):
+            model = data.get('train_model')
+
+        elif data.get('upload_model'):
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['upload_model'].name.rsplit('.', 1)[0],
+                job=model_job)
+            # Note: needs to save the file in a second step because the path needs the db PK
+            model.file = data['upload_model']
+            model.save()
+
+        elif data.get('new_model'):
+            # file will be created by the training process
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['new_model'],
+                job=model_job)
+
+        else:
+            raise forms.ValidationError(
+                    _("Either select a name for your new model or an existing one."))
+
+        data['model'] = model
+        return data
+
+
+    def process(self):
+        super().process()
+
+        model.train(self.parts,
+                    self.cleaned_data['transcription'],
+                    user=self.user)
+
+
+class DocumentSegtrainForm(DocumentProcessForm1):
+    segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                            .filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                            label=_("Model"), required=False)
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
+
+    new_model = forms.CharField(required=False, label=_('Model name'))
+
+    def clean(self):
+        data = super().clean()
+
+
+        model_job = OcrModel.MODEL_JOB_SEGMENT
+        if len(self.parts) < 2:
+            raise forms.ValidationError("Segmentation training requires at least 2 images.")
+
+        if data.get('segtrain_model'):
+            model = data.get('segtrain_model')
+        elif data.get('upload_model'):
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['upload_model'].name.rsplit('.', 1)[0],
+                job=model_job)
+            # Note: needs to save the file in a second step because the path needs the db PK
+            model.file = data['upload_model']
+            model.save()
+
+        elif data.get('new_model'):
+            # file will be created by the training process
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['new_model'],
+                job=model_job)
+
+        else:
+
+            raise forms.ValidationError(
+                _("Either select a name for your new model or an existing one."))
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+        model.segtrain(self.document,
+                       self.parts,
+                       user=self.user)
+
+
+class DocumentTranscribeForm(DocumentProcessForm1):
+
+    upload_model = forms.FileField(required=False,
+                                   validators=[FileExtensionValidator(
+                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
+    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                       .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                       label=_("Model"), required=False)
+
+    def clean(self):
+        data = super().clean()
+
+        model_job = OcrModel.MODEL_JOB_RECOGNIZE
+
+        if data.get('upload_model'):
+            model = OcrModel.objects.create(
+                document=self.parts[0].document,
+                owner=self.user,
+                name=data['upload_model'].name.rsplit('.', 1)[0],
+                job=model_job)
+            # Note: needs to save the file in a second step because the path needs the db PK
+            model.file = data['upload_model']
+            model.save()
+
+        elif data.get('ocr_model'):
+            model = data.get('ocr_model')
+        else:
+            raise forms.ValidationError(
+                    _("Either select a name for your new model or an existing one."))
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+        for part in self.parts:
+            part.task('transcribe',
+                  user_pk=self.user.pk,
+                  model_pk=model and model.pk or None)
+
+
 class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     # TODO: split this form into one for each process?!
     TASK_BINARIZE = 'binarize'
