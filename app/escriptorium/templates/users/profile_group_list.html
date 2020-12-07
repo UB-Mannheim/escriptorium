@@ -39,14 +39,16 @@
 {% endif %}
 
 <h4>{% trans "My teams" %}</h4>
-<table class="table table-hover">
+<table class="table table-hover container">
     {% for team in user.groups.all %}
-    <tr>
+    <tr class="row no-margin">
         {% if team.groupowner.owner == user %}
-        <td><a href="{% url 'team-detail' team.pk %}">{{ team }} (owner)</a></td>
+        <td class="col"><a href="{% url 'team-detail' team.pk %}">{{ team }} (owner)</a></td>
+        <td></td
         <td></td>
         {% else %}
         <td class="col">{{ team }}</td>
+        <td class="col-auto">{% blocktrans with owner=team.groupowner.owner.username %}Owned by {{owner}}{% endblocktrans %}</td>
         <td class="col-auto">
             <form method="post" action="{% url 'team-leave' team.pk %}">
                 {% csrf_token %}
@@ -55,7 +57,7 @@
         {% endif  %}
     </tr>
     {% empty %}
-    {% trans "You are not part of a team yet." %}
+    {% trans "You are not part of any team yet." %}
     {% endfor %}
 </table>
 {% endblock %}

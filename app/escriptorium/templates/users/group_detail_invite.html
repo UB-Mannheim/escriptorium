@@ -26,6 +26,16 @@
     <tr>
         <td class="col">{{user}}</td>
         <td class="col-auto">
+            <form method="post" action="{% url 'team-transfer-ownership' object.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="user" value="{{ user.pk }}">
+                <input type="submit"
+                       class="btn btn-warning btn-small"
+                       value="{% trans 'Transfer ownership' %}"
+                       title="{% trans "Transfer ownership" %}">
+            </form>
+        </td>
+        <td class="col-auto">
             <form method="post" action="{% url 'team-remove-user' object.pk %}">
             {% csrf_token %}
             <input type="hidden" name="user" value="{{ user.pk }}">

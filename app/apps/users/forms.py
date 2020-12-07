@@ -107,7 +107,7 @@ class GroupForm(BootstrapFormMixin, forms.ModelForm):
         return group
 
 
-class RemoveUserFromGroup(BootstrapFormMixin, forms.ModelForm):
+class RemoveUserFromGroup(forms.ModelForm):
     user = forms.ModelChoiceField(queryset=User.objects.all())
 
     class Meta:
@@ -121,6 +121,23 @@ class RemoveUserFromGroup(BootstrapFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         self.instance.user_set.remove(self.cleaned_data['user'])
+
+
+class TransferGroupOwnershipForm(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+
+    class Meta:
+        model = Group
+        fields = ('user',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = self.instance.user_set.exclude(
+            pk=self.instance.groupowner.owner.pk)
+
+    def save(self, commit=True):
+        self.instance.groupowner.owner = self.cleaned_data['user']
+        self.instance.groupowner.save()
 
 
 class ContactUsForm(BootstrapFormMixin, forms.ModelForm):

@@ -17,7 +17,8 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
 from users.models import User, Invitation, ContactUs
 from users.forms import (InvitationForm, InvitationAcceptForm, ProfileForm,
-                         ContactUsForm, GroupForm, GroupInvitationForm, RemoveUserFromGroup)
+                         ContactUsForm, GroupForm, GroupInvitationForm,
+                         RemoveUserFromGroup, TransferGroupOwnershipForm)
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -110,9 +111,10 @@ class RemoveFromGroup(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, 
     model = Group
     form_class = RemoveUserFromGroup
 
-    def get_success_message(self):
-        return _('User successfully removed from the team {{team_name}}.').format(
-            team_name=self.object)
+    def get_success_message(self, data):
+        return _('User {user} successfully removed from the team {team_name}.').format(
+            user=data.get('user'),
+            team_name=self.get_object())
 
     def form_invalid(self, forms):
         return reverse('team-detail', kwargs={'pk': self.get_object().pk})
@@ -122,16 +124,27 @@ class LeaveGroup(LoginRequiredMixin, SuccessMessageMixin, DetailView):
     model = Group
     success_url = '/profile/teams/'
 
-    def get_success_message(self):
-        return _('You successfully left {{team}}.').format(team=self.object)
+    def get_success_message(self, data):
+        return _('You successfully left {team}.').format(team=self.object)
 
     def post(self, request, **kwargs):
         self.get_object().user_set.remove(request.user)
         return HttpResponseRedirect(reverse('profile-team-list'))
 
 
-class GiveOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
-    pass
+class TransferGroupOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Group
+    form_class = TransferGroupOwnershipForm
+
+    def get_success_url(self):
+        return reverse('profile-team-list')
+
+    def get_success_message(self, data):
+        return _('Successfully transfered ownership to {user}.').format(
+            user=data.get('user'))
+
+    def form_invalid(self, forms):
+        return reverse('team-detail', kwargs={'pk': self.get_object().pk})
 
 
 class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

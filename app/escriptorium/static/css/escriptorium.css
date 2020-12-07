@@ -27,6 +27,10 @@ section {
     visibility: hidden;
 }
 
+.no-margin {
+    margin: 0;
+}
+
 .click-through {
     pointer-events: none;
 }
