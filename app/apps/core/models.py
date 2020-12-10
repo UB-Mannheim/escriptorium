@@ -825,7 +825,8 @@ class DocumentPart(OrderedModel):
 
         self.save()
 
-        # the image is shifted so we need to calculate by which offset for each points
+        # the image size is shifted so we need to calculate by which offset
+        # to update points accordingly
         new_center = (self.image.width/2, self.image.height/2)
         offset = (center[0]-new_center[0], center[1]-new_center[1])
 
@@ -836,13 +837,13 @@ class DocumentPart(OrderedModel):
             poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
             line.baseline = [(x-offset[0], y-offset[1]) for x, y in poly.coords]
             poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
-            line.mask = [(x-offset[0], y-offset[1]) for x, y in poly.exterior.coords]
+            line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             line.save()
 
         # rotate regions
         for region in self.blocks.all():
-            poly = affinity.rotate(Polygon(region.box), angle, origin=center)
-            region.box = [(int(x), int(y)) for x, y in poly.exterior.coords]
+            poly = affinity.rotate(Polygon(region.box), 360-angle, origin=center)
+            region.box = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             region.save()
 
     def enforce_line_order(self):
