@@ -181,6 +181,17 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         serializer = LineOrderSerializer(document_part.lines.all(), many=True)
         return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
+    @action(detail=True, methods=['post'])
+    def rotate(self, request, document_pk=None, pk=None):
+        document_part = DocumentPart.objects.get(pk=pk)
+        angle = self.request.data.get('angle')
+        if angle:
+            document_part.rotate(angle)
+            return Response({'status': 'done'}, status=200)
+        else:
+            return Response({'error': "Post an angle."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 class DocumentTranscriptionViewSet(ModelViewSet):
     # Note: there is no dedicated Transcription viewset, it's always in the context of a Document

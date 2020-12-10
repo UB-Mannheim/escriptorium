@@ -8,6 +8,7 @@ import subprocess
 import uuid
 from PIL import Image
 from datetime import datetime
+from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
@@ -780,6 +781,69 @@ class DocumentPart(OrderedModel):
                 line.save()
 
         return to_calc
+
+    def rotate(self, angle):
+        """
+        Rotates everything in this document part by a given angle (in degrees):
+        images, lines and regions.
+        Changes the file system image path to deal with browser cache.
+        """
+
+        def update_name(fpath):
+            # we need to change the name of the file to avoid all kind of cache issues
+            name, ext = os.path.splitext(fpath)
+            angle_match = re.search(r'_rot(\d+)', name)
+            old_angle = angle_match and int(angle_match.group(1)) or 0
+            new_angle = (old_angle + angle) % 360
+            if angle_match:
+                if new_angle:
+                    new_name = re.sub(r'_rot(\d+)', r'\g<1>'+str(new_angle), fpath)
+                else:
+                    new_name = re.sub(r'_rot(\d+)', '', fpath)
+            else:
+                # if there was no angle before, there is one now
+                new_name = f'{name}_rot{new_angle}{ext}'
+            return new_name
+
+        # rotate image
+        with Image.open(self.image.file.name) as im:
+            # store center point while it's open with old bounds
+            center = (im.width/2, im.height/2)
+            rim = im.rotate(angle, expand=True)
+            # Note: self.image.file.name (full path) != self.image.name (relative path)
+            rim.save(update_name(self.image.file.name))
+            rim.close()
+            self.image = update_name(self.image.name)
+
+        # rotate bw image
+        if self.bw_image:
+            with Image.open(self.bw_image.file.name) as im:
+                rim = im.rotate(angle, expand=True)
+                rim.save(update_name(self.bw_image.file.name))
+                rim.close()
+                self.bw_image = update_name(self.bw_image.name)
+
+        self.save()
+
+        # the image is shifted so we need to calculate by which offset for each points
+        new_center = (self.image.width/2, self.image.height/2)
+        offset = (center[0]-new_center[0], center[1]-new_center[1])
+
+        get_thumbnailer(self.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
+
+        # rotate lines
+        for line in self.lines.all():
+            poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
+            line.baseline = [(x-offset[0], y-offset[1]) for x, y in poly.coords]
+            poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
+            line.mask = [(x-offset[0], y-offset[1]) for x, y in poly.exterior.coords]
+            line.save()
+
+        # rotate regions
+        for region in self.blocks.all():
+            poly = affinity.rotate(Polygon(region.box), angle, origin=center)
+            region.box = [(int(x), int(y)) for x, y in poly.exterior.coords]
+            region.save()
 
     def enforce_line_order(self):
         # django-ordered-model doesn't care about unicity and linearity...

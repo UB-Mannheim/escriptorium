@@ -141,10 +141,25 @@
             <div class="col panel">
                 <div class="tools">
                     <i title="{% trans 'Source Panel' %}" class="panel-icon fas fa-eye"></i>
+
                     <a v-bind:href="part.image.uri" target="_blank">
                         <button class="btn btn-sm btn-info ml-3 fas fa-download"
                                 title="{% trans "Download full size image." %}" download></button>
                     </a>
+
+                    <div class="btn-group">
+                        <button id="rotate-counter-clock"
+                                @click="rotate(90)"
+                                title="{% trans "Rotate 90° counter-clockwise." %}"
+                                class="btn btn-sm btn-info ml-3 fas fa-undo"
+                                autocomplete="off">R</button>
+                        <button id="rotate-clock"
+                                @click="rotate(270)"
+                                title="{% trans "Rotate 90° clockwise." %}"
+                                class="btn btn-sm btn-info  fas fa-redo"
+                                autocomplete="off">R</button>
+                    </div>
+
                 </div>
                 <div class="content-container">
                     <div id="source-zoom-container" class="content">
