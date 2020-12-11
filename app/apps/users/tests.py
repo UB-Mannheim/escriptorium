@@ -190,3 +190,36 @@ class TeamTestCase(TestCase):
 
         self.invitee.refresh_from_db()
         self.assertEqual(self.invitee.groups.count(), 1)
+
+    def test_remove_from_group(self):
+
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.owner)
+        url = reverse('team-remove-user', kwargs={'pk': self.group.pk})
+        with self.assertNumQueries(13):
+            response = self.client.post(url, data={'user': self.invitee.pk})
+        self.assertEqual(response.status_code, 302)
+
+        self.invitee.refresh_from_db()
+        self.assertEqual(self.invitee.groups.count(), 0)
+
+    def test_leave_group(self):
+
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.invitee)
+        url = reverse('team-leave', kwargs={'pk': self.group.pk})
+        with self.assertNumQueries(4):
+            response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.invitee.groups.count(), 0)
+
+    def test_transfer_ownership(self):
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.owner)
+        url = reverse('team-transfer-ownership', kwargs={'pk': self.group.pk})
+
+        with self.assertNumQueries(7):
+            response = self.client.post(url, data={'user': self.invitee.pk})
+        self.assertEqual(response.status_code, 302)
+        self.group.groupowner.refresh_from_db()
+        self.assertEqual(self.group.groupowner.owner, self.invitee)
