@@ -22,7 +22,7 @@ numpy>=1.17
 oitei==1.0.0
 Pillow>=5.4.1
 protobuf==3.20.0  # important: get rid of that line when using kraken4
-psycopg2-binary<2.9
+psycopg2-binary>=2.7.6,<2.9
 pyvips~=2.1.12
 redis~=4.3.3
 requests==2.21.0
