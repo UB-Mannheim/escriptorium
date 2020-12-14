@@ -9,7 +9,7 @@ daphne==2.5.0
 channels==2.4.0
 channels-redis>=2.4.1,<3
 django-redis==4.10.0
-psycopg2-binary==2.7.6
+psycopg2-binary>=2.7.6
 django-ordered-model==3.1.1
 easy-thumbnails==2.5
 kraken==3.0.6
