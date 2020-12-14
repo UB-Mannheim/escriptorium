@@ -25,7 +25,7 @@ oitei==1.0.0
 git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
 Pillow>=5.4.1
 protobuf==3.20.0  # important: get rid of that line when using kraken4
-psycopg2-binary<2.9
+psycopg2-binary>=2.7.6,<2.9
 pyvips~=2.1.12
 redis~=4.3.3
 requests==2.21.0
