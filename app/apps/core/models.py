@@ -836,10 +836,12 @@ class DocumentPart(OrderedModel):
 
         # rotate lines
         for line in self.lines.all():
-            poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
-            line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
-            poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
-            line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+            if line.baseline:
+                poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
+                line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
+            if line.mask:
+                poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
+                line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             line.save()
 
         # rotate regions
@@ -855,26 +857,25 @@ class DocumentPart(OrderedModel):
         Moves the lines and regions accordingly.
         """
         with Image.open(self.image.file.name) as im:
-            cim = im.crop(x1, y1, x2, y2)
+            cim = im.crop((x1, y1, x2, y2))
             cim.save(self.image.file.name)
             cim.close()
 
         if self.bw_image:
             with Image.open(self.image.file.name) as im:
-                cim = im.crop(x1, y1, x2, y2)
+                cim = im.crop((x1, y1, x2, y2))
                 cim.save(self.image.file.name)
                 cim.close()
 
         for line in self.lines.all():
-            poly = affinity.translate(LineString(line.baseline), x1, y1)
-            line.baseline = [(int(x), int(y)) for x, y in poly.coords]
-            poly = affinity.translate(Polygon(line.mask), x1, y1)
-            line.mask = [(int(x), int(y)) for x, y in poly.exterior.coords]
+            if line.baseline:
+                line.baseline = [(int(x-x1), int(y-y1)) for x, y in line.baseline]
+            if line.mask:
+                line.mask = [(int(x-x1), int(y-y1)) for x, y in line.mask]
             line.save()
 
         for region in self.blocks.all():
-            poly = affinity.rotate(Polygon(region.box), x1, y1)
-            region.box = [(int(x), int(y)) for x, y in poly.exterior.coords]
+            region.box = [(int(x-x1), int(y-y1)) for x, y in region.box]
             region.save()
 
     def enforce_line_order(self):
@@ -899,6 +900,8 @@ def validate_polygon(value):
 
 
 def validate_2_points(value):
+    if value is None:
+        return
     if len(value) < 2:
         raise ValidationError(
             _('Polygon needs to have at least 2 points, it has %(length)d: %(value)s.'),
@@ -906,6 +909,8 @@ def validate_2_points(value):
 
 
 def validate_3_points(value):
+    if value is None:
+        return
     if len(value) < 3:
         raise ValidationError(
             _('Polygon needs to have at least 3 points, it has %(length)d: %(value)s.'),
