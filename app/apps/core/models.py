@@ -809,7 +809,7 @@ class DocumentPart(OrderedModel):
         with Image.open(self.image.file.name) as im:
             # store center point while it's open with old bounds
             center = (im.width/2, im.height/2)
-            rim = im.rotate(angle, expand=True, fillcolor=None)
+            rim = im.rotate(360-angle, expand=True, fillcolor=None)
 
             # the image size is shifted so we need to calculate by which offset
             # to update points accordingly
@@ -825,7 +825,7 @@ class DocumentPart(OrderedModel):
         # rotate bw image
         if self.bw_image:
             with Image.open(self.bw_image.file.name) as im:
-                rim = im.rotate(angle, expand=True)
+                rim = im.rotate(360-angle, expand=True)
                 rim.save(update_name(self.bw_image.file.name))
                 rim.close()
                 self.bw_image = update_name(self.bw_image.name)
@@ -837,16 +837,16 @@ class DocumentPart(OrderedModel):
         # rotate lines
         for line in self.lines.all():
             if line.baseline:
-                poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
+                poly = affinity.rotate(LineString(line.baseline), angle, origin=center)
                 line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
             if line.mask:
-                poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
+                poly = affinity.rotate(Polygon(line.mask), angle, origin=center)
                 line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             line.save()
 
         # rotate regions
         for region in self.blocks.all():
-            poly = affinity.rotate(Polygon(region.box), 360-angle, origin=center)
+            poly = affinity.rotate(Polygon(region.box), angle, origin=center)
             region.box = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             region.save()
 
