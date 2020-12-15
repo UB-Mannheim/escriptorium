@@ -192,6 +192,23 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response({'error': "Post an angle."},
                             status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['post'])
+    def crop(self, request, document_pk=None, pk=None):
+        document_part = DocumentPart.objects.get(pk=pk)
+        x1 = self.request.data.get('x1')
+        y1 = self.request.data.get('y1')
+        x2 = self.request.data.get('x2')
+        y2 = self.request.data.get('y2')
+        if (x1 is not None
+            and y1 is not None
+            and x2 is not None
+            and y2 is not None):
+            document_part.crop(x1, y1, x2, y2)
+            return Response({'status': 'done'}, status=200)
+        else:
+            return Response({'error': "Post corners as x1, y1 (top left) and x2, y2 (bottom right)."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 class DocumentTranscriptionViewSet(ModelViewSet):
     # Note: there is no dedicated Transcription viewset, it's always in the context of a Document

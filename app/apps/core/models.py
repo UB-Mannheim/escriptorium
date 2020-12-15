@@ -784,24 +784,24 @@ class DocumentPart(OrderedModel):
 
     def rotate(self, angle):
         """
-        Rotates everything in this document part by a given angle (in degrees):
+        Rotates everything in this document part around the center by a given angle (in degrees):
         images, lines and regions.
         Changes the file system image path to deal with browser cache.
         """
+        angle_match = re.search(r'_rot(\d+)', self.image.name)
+        old_angle = angle_match and int(angle_match.group(1)) or 0
+        new_angle = (old_angle + angle) % 360
 
-        def update_name(fpath):
+        def update_name(fpath, old_angle=old_angle,  new_angle=new_angle):
             # we need to change the name of the file to avoid all kind of cache issues
-            name, ext = os.path.splitext(fpath)
-            angle_match = re.search(r'_rot(\d+)', name)
-            old_angle = angle_match and int(angle_match.group(1)) or 0
-            new_angle = (old_angle + angle) % 360
-            if angle_match:
+            if old_angle:
                 if new_angle:
-                    new_name = re.sub(r'_rot(\d+)', r'\g<1>'+str(new_angle), fpath)
+                    new_name = re.sub(r'(_rot)'+str(old_angle), r'\g<1>'+str(new_angle), fpath)
                 else:
-                    new_name = re.sub(r'_rot(\d+)', '', fpath)
+                    new_name = re.sub(r'_rot'+str(old_angle), '', fpath)
             else:
                 # if there was no angle before, there is one now
+                name, ext = os.path.splitext(fpath)
                 new_name = f'{name}_rot{new_angle}{ext}'
             return new_name
 
@@ -809,10 +809,17 @@ class DocumentPart(OrderedModel):
         with Image.open(self.image.file.name) as im:
             # store center point while it's open with old bounds
             center = (im.width/2, im.height/2)
-            rim = im.rotate(angle, expand=True)
+            rim = im.rotate(angle, expand=True, fillcolor=None)
+
+            # the image size is shifted so we need to calculate by which offset
+            # to update points accordingly
+            new_center = (rim.width/2, rim.height/2)
+            offset = (center[0]-new_center[0], center[1]-new_center[1])
+
             # Note: self.image.file.name (full path) != self.image.name (relative path)
             rim.save(update_name(self.image.file.name))
             rim.close()
+            # save the updated file name in db
             self.image = update_name(self.image.name)
 
         # rotate bw image
@@ -825,17 +832,12 @@ class DocumentPart(OrderedModel):
 
         self.save()
 
-        # the image size is shifted so we need to calculate by which offset
-        # to update points accordingly
-        new_center = (self.image.width/2, self.image.height/2)
-        offset = (center[0]-new_center[0], center[1]-new_center[1])
-
         get_thumbnailer(self.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
 
         # rotate lines
         for line in self.lines.all():
             poly = affinity.rotate(LineString(line.baseline), 360-angle, origin=center)
-            line.baseline = [(x-offset[0], y-offset[1]) for x, y in poly.coords]
+            line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
             poly = affinity.rotate(Polygon(line.mask), 360-angle, origin=center)
             line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
             line.save()
@@ -844,6 +846,35 @@ class DocumentPart(OrderedModel):
         for region in self.blocks.all():
             poly = affinity.rotate(Polygon(region.box), 360-angle, origin=center)
             region.box = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+            region.save()
+
+    def crop(self, x1, y1, x2, y2):
+        """
+        Crops the image ouside the rectangle defined
+        by top left (x1, y1) and bottom right (x2, y2) points.
+        Moves the lines and regions accordingly.
+        """
+        with Image.open(self.image.file.name) as im:
+            cim = im.crop(x1, y1, x2, y2)
+            cim.save(self.image.file.name)
+            cim.close()
+
+        if self.bw_image:
+            with Image.open(self.image.file.name) as im:
+                cim = im.crop(x1, y1, x2, y2)
+                cim.save(self.image.file.name)
+                cim.close()
+
+        for line in self.lines.all():
+            poly = affinity.translate(LineString(line.baseline), x1, y1)
+            line.baseline = [(int(x), int(y)) for x, y in poly.coords]
+            poly = affinity.translate(Polygon(line.mask), x1, y1)
+            line.mask = [(int(x), int(y)) for x, y in poly.exterior.coords]
+            line.save()
+
+        for region in self.blocks.all():
+            poly = affinity.rotate(Polygon(region.box), x1, y1)
+            region.box = [(int(x), int(y)) for x, y in poly.exterior.coords]
             region.save()
 
     def enforce_line_order(self):
