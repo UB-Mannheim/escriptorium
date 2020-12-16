@@ -1,10 +1,12 @@
 from django import forms
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.db.models import Q
+from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import gettext as _
-from captcha.fields import CaptchaField
+from django.contrib.auth.models import Group
 
+from captcha.fields import CaptchaField
 from bootstrap.forms import BootstrapFormMixin
-from users.models import Invitation, User, ContactUs
+from users.models import Invitation, User, ContactUs, GroupOwner
 
 
 class InvitationForm(BootstrapFormMixin, forms.ModelForm):
@@ -24,9 +26,41 @@ class InvitationForm(BootstrapFormMixin, forms.ModelForm):
     def save(self, commit=True):
         invitation = super().save(commit=False)
         invitation.sender = self.sender
-        invitation.save()
-        invitation.send(self.request)
+        if commit:
+            invitation.save()
+            invitation.send(self.request)
         return invitation
+
+
+class GroupInvitationForm(InvitationForm):
+    recipient_id = forms.CharField(label=_("Email or username."))
+
+    class Meta:
+        model = Invitation
+        fields = ['recipient_id', 'group']
+
+    def clean_recipient_id(self):
+        # we don't throw an error on purpose to avoid fishing
+        try:
+            return User.objects.get(Q(email=self.data.get('recipient_id')) |
+                                    Q(username=self.data.get('recipient_id')))
+        except User.DoesNotExist:
+            return None
+
+    def clean(self):
+        data = super().clean()
+        return data
+
+    def save(self, commit=True):
+        recipient = self.cleaned_data['recipient_id']
+        print('recipient', recipient)
+        if recipient:
+            invitation = super().save(commit=False)
+            invitation.recipient = recipient
+            if commit:
+                invitation.save()
+                invitation.send(self.request)
+            return invitation
 
 
 class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
@@ -55,10 +89,61 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
         fields = ('email', 'first_name', 'last_name')
 
 
-class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
+class GroupForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('name',)
 
-    message = forms.CharField(widget=forms.Textarea(attrs={
-        'placeholder': 'Message : Please precise your institution or research center if applicable'}))
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('request').user
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        group = super().save(commit=True)
+        group.user_set.add(self.user)
+        GroupOwner.objects.create(
+            group=group,
+            owner=self.user)
+        return group
+
+
+class RemoveUserFromGroup(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+
+    class Meta:
+        model = Group
+        fields = ('user',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = self.instance.user_set.exclude(
+            pk=self.instance.groupowner.owner.pk)
+
+    def save(self, commit=True):
+        self.instance.user_set.remove(self.cleaned_data['user'])
+
+
+class TransferGroupOwnershipForm(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+
+    class Meta:
+        model = Group
+        fields = ('user',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = self.instance.user_set.exclude(
+            pk=self.instance.groupowner.owner.pk)
+
+    def save(self, commit=True):
+        self.instance.groupowner.owner = self.cleaned_data['user']
+        self.instance.groupowner.save()
+
+
+class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
+    message = forms.CharField(
+        label=_("Message : Please precise your institution or research center if applicable"),
+        widget=forms.Textarea)
     captcha = CaptchaField()
 
     class Meta:
