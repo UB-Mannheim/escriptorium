@@ -97,8 +97,9 @@
     </div>
     </section></main>
 
-    {% block scripts %}
     {% render_bundle 'vendor' 'js' %}
+
+    {% block scripts %}
     {% compress js file base %}
     <script src="{% static '/js/ajax.js' %}"></script>
     {% endcompress %}

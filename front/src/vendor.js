@@ -55,3 +55,7 @@ window.Cookies = require('js-cookie');
 // Diff needs to be explicitly set on window, as it's used at boot time
 // by various scripts
 window.Diff = require('diff');
+
+// Mathjs needs to be explicitly set on window, as it's used at boot time
+// by baseline.editor.js
+window.math = require('mathjs/dist/math.min');

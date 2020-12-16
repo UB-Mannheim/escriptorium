@@ -19,6 +19,7 @@
     "jquery-ui-dist": "^1.12.1",
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.10",
+    "mathjs": "^7.0.0",
     "moment": "^2.23.0",
     "moment-timezone": "^0.5.23",
     "paper": "^0.12.11",
