@@ -1,4 +1,4 @@
-{% load compress %}{% load i18n staticfiles %}<!DOCTYPE html>
+{% load compress %}{% load i18n staticfiles %}{% load render_bundle from webpack_loader %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8">
@@ -20,14 +20,11 @@
     <![endif]-->
 
     {% block styles %}
-     {% compress css file base %}
-
-    <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static '/vendor/bootstrap/bootstrap-reboot.min.css' %}" rel="stylesheet">
-    <link href="{% static '/vendor/fontawesome/all.min.css' %}" rel="stylesheet" type="text/css">
+    {% render_bundle 'vendor' 'css' %}
+    {% compress css file base %}
+    
     <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static '/css/rtl.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'vendor/introjs/introjs.css' %}" rel="stylesheet" type="text/css">
     {% endcompress %}
 
     {% endblock styles %}
@@ -101,12 +98,8 @@
     </section></main>
 
     {% block scripts %}
+    {% render_bundle 'vendor' 'js' %}
     {% compress js file base %}
-    <script src="{% static '/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
-    <script src="{% static 'vendor/popper/popper.min.js' %}"></script>
-    <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
-    <script src="{% static '/js/reconnecting-websocket.min.js' %}"></script>
-    <script src="{% static '/js/js.cookie-2.2.0.min.js' %}"></script>
     <script src="{% static '/js/ajax.js' %}"></script>
     {% endcompress %}
     <script type="text/javascript">
@@ -117,7 +110,6 @@
       {% include 'includes/messages.html' %}
       <script src="{% static 'js/profile.js' %}"></script>
       {% if user.onboarding %}
-      <script src="{% static 'vendor/introjs/intro.js' %}"></script>
       <script src="{% static 'js/onboarding.js' %}"></script>
       {% endif %}
       {% endif %}
