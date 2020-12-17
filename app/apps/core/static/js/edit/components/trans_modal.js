@@ -107,7 +107,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             tmppoly.setAttributeNS(null, 'fill', 'red');
 
             // calculate rotation needed to get the line horizontal
-            let target_angle = READ_DIRECTION == 'rtl' ? 180 : 0;
+            let target_angle = 0;  // all lines should be topologically ltr
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
