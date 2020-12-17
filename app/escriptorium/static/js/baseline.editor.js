@@ -1455,7 +1455,7 @@ class Segmenter {
             if (this.idField) context[this.idField] = line[this.idField];
             if (!line.baseline) this.toggleMasks(true);
             return this.createLine(null, line.baseline, line.mask,
-                                   region || line.region || null, line.type, context);
+                                   region, line.type, context);
         } else {
             console.log('EDITOR SKIPING invalid line: ', line);
             return null;
