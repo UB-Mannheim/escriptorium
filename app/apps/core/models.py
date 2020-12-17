@@ -716,6 +716,8 @@ class DocumentPart(OrderedModel):
                         line=line, transcription=trans)
                     for pred in it:
                         lt.content = pred.prediction
+                        lt.graphs = [(char, pred.cuts[i], float(pred.confidences[i]))
+                                     for i, char in enumerate(pred.prediction)]
                     lt.save()
         else:
             Transcription.objects.get_or_create(
