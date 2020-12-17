@@ -336,6 +336,16 @@ const partStore = {
         }
         this.debouncedRecalculateOrdering();
     },
+    rotate(angle, callback) {
+        let uri = this.getApiPart() + 'rotate/';
+        this.push(uri, {angle: angle}, method="post")
+            .then(function(data) {
+                this.reload(callback);
+            }.bind(this))
+            .catch(function(error) {
+                console.log('couldnt rotate!', error);
+            });
+    },
 
     createRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/';
@@ -503,5 +513,10 @@ const partStore = {
             this.reset();
             this.fetchPart(this.next, cb);
         }
+    },
+    reload(cb) {
+        let pk = this.pk;
+        this.reset();
+        this.fetchPart(pk, cb);
     }
 };

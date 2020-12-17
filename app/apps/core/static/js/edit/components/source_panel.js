@@ -12,5 +12,10 @@ const SourcePanel = BasePanel.extend({
         this.$parent.zoom.register(
             this.$el.querySelector('#source-zoom-container'),
             {map: true});
+    },
+    methods: {
+        rotate(angle) {
+            this.part.rotate(angle);
+        }
     }
 });

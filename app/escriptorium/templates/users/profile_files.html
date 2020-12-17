@@ -1,0 +1,17 @@
+{% extends "users/profile.html" %}
+{% load i18n static %}
+
+{% block infos-tab-active %}{% endblock %}
+{% block key-tab-active %}{% endblock %}
+{% block files-tab-active %}active{% endblock %}
+{% block team-tab-active %}{% endblock %}
+
+{% block tab-content %}
+{% for fpath, fname in page_obj %}
+<br><a href="{{request.scheme}}://{{request.get_host}}{% get_media_prefix %}{{fpath}}"><i class="fas fa-download"></i></a> {{ fname }}
+{% empty %}
+{% trans "You don't have any saved files yet." %}
+{% endfor %}
+
+{% include "includes/pagination.html" %}
+{% endblock %}

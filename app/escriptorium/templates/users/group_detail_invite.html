@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load i18n bootstrap %}
+
+{% block body %}
+<a href="{% url 'profile-team-list' %}">{% trans "Back to profile" %}</a>
+<br><br>
+<h4>{% trans "Team:" %} {{object}}</h4>
+
+<form method="post">
+    {% trans "Invite a user to this Team." %}
+        <div class="form-row">
+            <div class="col">
+                {% csrf_token %}
+                <input type="hidden" name="group" value="{{object.pk}}"/>
+                {% render_field form.recipient_id help_text="Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." %}
+            </div>
+            <div class="col-auto">
+                <input type="submit" value="{% trans 'Send invitation' %}" title="{% trans "Send invitation" %}" class="btn btn-success btn-block">
+            </div>
+        </div>
+</form>
+
+<h4>{% trans 'Users' %}</h4>
+<table class="table table-hover">
+    {% for user in other_users %}
+    <tr>
+        <td class="col">{{user}}</td>
+        <td class="col-auto">
+            <form method="post" action="{% url 'team-transfer-ownership' object.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="user" value="{{ user.pk }}">
+                <input type="submit"
+                       class="btn btn-warning btn-small"
+                       value="{% trans 'Transfer ownership' %}"
+                       title="{% trans "Transfer ownership" %}">
+            </form>
+        </td>
+        <td class="col-auto">
+            <form method="post" action="{% url 'team-remove-user' object.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="user" value="{{ user.pk }}">
+            <input type="submit" value="{% trans 'Remove' %}" class="btn btn-danger btn-small" title="{% trans "Remove user from group" %}">
+            </form>
+        </td>
+    </tr>
+    {% empty %}
+    {% trans "No other user in this Team." %}
+    {% endfor %}
+</table>
+{% endblock %}
