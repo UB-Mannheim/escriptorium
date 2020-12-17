@@ -468,6 +468,7 @@ i.panel-icon {
     width: 90%;
     position: relative;
     overflow: hidden;
+    direction: ltr; /* compensate a firefox bug */
 }
 
 .panel #context-menu {
