@@ -26,6 +26,9 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
         $(this.$el).draggable({handle: '.modal-header'});
         $(this.$el).resizable();
         this.computeStyles();
+
+        let input = this.$el.querySelector('#trans-input');
+        input.focus();
     },
     watch: {
         line(new_, old_) {
@@ -82,40 +85,86 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             }.bind(this)).join('');
         },
 
-        computeStyles() {
-            // this.zoom.reset();
+        getLineAngle() {
+            let p1 = this.line.baseline[0];
+            let p2 = this.line.baseline[this.line.baseline.length-1];
+            return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
+        },
+
+        getRotatedLineBBox() {
+            // create temporary polygon to calculate the line bounding box
+            if (this.line.mask) {
+                var maskPoints = this.line.mask.map(
+                    pt => Math.round(pt[0])+ ','+
+                        Math.round(pt[1])).join(' ');
+            } else {
+                // TODO
+            }
+            let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            let tmppoly = document.createElementNS('http://www.w3.org/2000/svg',
+                                                   'polygon');
+            tmppoly.setAttributeNS(null, 'points', maskPoints);
+            tmppoly.setAttributeNS(null, 'fill', 'red');
+
+            // calculate rotation needed to get the line horizontal
+            let target_angle = READ_DIRECTION == 'rtl' ? 180 : 0;
+            let angle = target_angle - this.getLineAngle();
+
+            // apply it to the polygon and get the resulting bbox
+            let transformOrigin =  this.$parent.part.image.size[0]/2+'px '+this.$parent.part.image.size[1]/2+'px';
+            tmppoly.style.transformOrigin = transformOrigin;
+            tmppoly.style.transform = 'rotate('+angle+'deg)';
+            svg.appendChild(tmppoly);
+            document.body.appendChild(svg);
+            let bbox = tmppoly.getBoundingClientRect();
+            let width = bbox.width;
+            let height = bbox.height
+            let top = bbox.top - svg.getBoundingClientRect().top;
+            let left = bbox.left - svg.getBoundingClientRect().left;
+            document.body.removeChild(svg); // done its job
+            return {width: width, height: height, top: top, left: left, angle: angle};
+        },
+
+        computeImgStyles(bbox, ratio, lineHeight, hContext) {
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
-            let hContext = 0.6; // vertical context added around the line, in percentage
 
-            let poly = this.line.mask || this.line.baseline;
-            let minx = Math.min.apply(null, poly.map(pt => pt[0]));
-            let miny = Math.min.apply(null, poly.map(pt => pt[1]));
-            let maxx = Math.max.apply(null, poly.map(pt => pt[0]));
-            let maxy = Math.max.apply(null, poly.map(pt => pt[1]));
-            let width = maxx - minx;
-            let height = maxy - miny;
 
-            // we use the same same vertical context horizontaly
-            let ratio = modalImgContainer.clientWidth / (width + (2*height*hContext));
-            var MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-200) / 3));
-            let lineHeight = Math.max(30, Math.round(height*ratio));
-            if (lineHeight > MAX_HEIGHT) {
-                // change the ratio so that the image can not get too big
-                ratio = (MAX_HEIGHT/lineHeight)*ratio;
-                lineHeight = MAX_HEIGHT;
-            }
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
             modalImgContainer.style.height = visuHeight+'px';
-            img.style.width = this.$parent.part.image.size[0]*ratio +'px';
 
-            let top = Math.round(miny*ratio)-context;
-            let left = Math.round(minx*ratio)-context;
-            let right = Math.round(maxx*ratio)-context;
-            img.style.top = -top+'px';
-            img.style.left = -left+'px';
+            let top = -(bbox.top*ratio - context);
+            let left = -(bbox.left*ratio - context);
+            // modalImgContainer.style.transform = 'scale('+ratio+')';
 
+            let imgWidth = this.$parent.part.image.size[0]*ratio +'px';
+            let transformOrigin =  this.$parent.part.image.size[0]*ratio/2+'px '+this.$parent.part.image.size[1]*ratio/2+'px';
+            let transform = 'translate('+left+'px, '+top+'px) rotate('+bbox.angle+'deg)';
+            img.style.width = imgWidth;
+            img.style.transformOrigin = transformOrigin;
+            img.style.transform = transform;
+
+            // Overlay
+            let overlay = modalImgContainer.querySelector('.overlay');
+            if (this.line.mask) {
+                let maskPoints = this.line.mask.map(
+                    pt => Math.round(pt[0]*ratio)+ ','+
+                        Math.round(pt[1]*ratio)).join(' ');
+                let polygon = overlay.querySelector('polygon');
+                polygon.setAttribute('points', maskPoints);
+                overlay.style.width = imgWidth;
+                overlay.style.height = this.$parent.part.image.size[1]*ratio+'px';
+                overlay.style.transformOrigin = transformOrigin;
+                overlay.style.transform = transform;
+                overlay.style.display = 'block';
+            } else {
+                // TODO: fake mask?!
+                overlay.style.display = 'none';
+            }
+        },
+
+        computeInputStyles(bbox, ratio, lineHeight, hContext) {
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
             let input = container.querySelector('#trans-input');
@@ -128,18 +177,21 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             ruler.style.whiteSpace="nowrap"
             container.appendChild(ruler);
 
-            let fontSize = Math.round(lineHeight*0.7);  // Note could depend on the script
+            let context = hContext*lineHeight;
+            let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
             ruler.style.fontSize = fontSize+'px';
             input.style.fontSize = fontSize+'px';
-            input.style.height = 'auto';
+            input.style.height = Math.round(fontSize*1.1)+'px';
 
             if (READ_DIRECTION == 'rtl') {
                 container.style.marginRight = context+'px';
             } else {
+                // left to right
+                // TODO: deal with other directions
                 container.style.marginLeft = context+'px';
             }
             if (content) {
-                let lineWidth = width*ratio;
+                let lineWidth = bbox.width*ratio;
                 var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
                 scaleX = Math.max(0.2, scaleX);
                 input.style.transform = 'scaleX('+ scaleX +')';
@@ -149,20 +201,28 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
                 input.style.width = '100%'; //'calc(100% - '+context+'px)';
             }
             container.removeChild(ruler);  // done its job
+        },
 
-            input.focus();
+        computeStyles() {
+            /*
+               Centers the image on the line (zoom + rotation)
+               Modifies input font size and height to match the image
+             */
+            let modalImgContainer = this.$el.querySelector('#modal-img-container');
 
-            // Overlay
-            let overlay = modalImgContainer.querySelector('.overlay');
-            if (this.line.mask) {
-                let maskPoints = this.line.mask.map(
-                    pt => Math.round(pt[0]*ratio-left)+ ','+
-                        Math.round(pt[1]*ratio-top)).join(' ');
-                overlay.querySelector('polygon').setAttribute('points', maskPoints);
-                overlay.style.display = 'block';
-            } else {
-                overlay.style.display = 'none';
+            bbox = this.getRotatedLineBBox();
+            let hContext = 0.3; // vertical context added around the line, in percentage
+            let ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
+            let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
+            let lineHeight = Math.max(30, Math.round(bbox.height*ratio));
+            if (lineHeight > MAX_HEIGHT) {
+                // change the ratio so that the image can not get too big
+                ratio = (MAX_HEIGHT/lineHeight)*ratio;
+                lineHeight = MAX_HEIGHT;
             }
-        }
+
+            this.computeImgStyles(bbox, ratio, lineHeight, hContext);
+            this.computeInputStyles(bbox, ratio, lineHeight, hContext);
+        },
     },
 });

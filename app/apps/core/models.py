@@ -8,6 +8,7 @@ import subprocess
 import uuid
 from PIL import Image
 from datetime import datetime
+from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
@@ -781,6 +782,102 @@ class DocumentPart(OrderedModel):
 
         return to_calc
 
+    def rotate(self, angle):
+        """
+        Rotates everything in this document part around the center by a given angle (in degrees):
+        images, lines and regions.
+        Changes the file system image path to deal with browser cache.
+        """
+        angle_match = re.search(r'_rot(\d+)', self.image.name)
+        old_angle = angle_match and int(angle_match.group(1)) or 0
+        new_angle = (old_angle + angle) % 360
+
+        def update_name(fpath, old_angle=old_angle,  new_angle=new_angle):
+            # we need to change the name of the file to avoid all kind of cache issues
+            if old_angle:
+                if new_angle:
+                    new_name = re.sub(r'(_rot)'+str(old_angle), r'\g<1>'+str(new_angle), fpath)
+                else:
+                    new_name = re.sub(r'_rot'+str(old_angle), '', fpath)
+            else:
+                # if there was no angle before, there is one now
+                name, ext = os.path.splitext(fpath)
+                new_name = f'{name}_rot{new_angle}{ext}'
+            return new_name
+
+        # rotate image
+        with Image.open(self.image.file.name) as im:
+            # store center point while it's open with old bounds
+            center = (im.width/2, im.height/2)
+            rim = im.rotate(360-angle, expand=True, fillcolor=None)
+
+            # the image size is shifted so we need to calculate by which offset
+            # to update points accordingly
+            new_center = (rim.width/2, rim.height/2)
+            offset = (center[0]-new_center[0], center[1]-new_center[1])
+
+            # Note: self.image.file.name (full path) != self.image.name (relative path)
+            rim.save(update_name(self.image.file.name))
+            rim.close()
+            # save the updated file name in db
+            self.image = update_name(self.image.name)
+
+        # rotate bw image
+        if self.bw_image:
+            with Image.open(self.bw_image.file.name) as im:
+                rim = im.rotate(360-angle, expand=True)
+                rim.save(update_name(self.bw_image.file.name))
+                rim.close()
+                self.bw_image = update_name(self.bw_image.name)
+
+        self.save()
+
+        get_thumbnailer(self.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
+
+        # rotate lines
+        for line in self.lines.all():
+            if line.baseline:
+                poly = affinity.rotate(LineString(line.baseline), angle, origin=center)
+                line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
+            if line.mask:
+                poly = affinity.rotate(Polygon(line.mask), angle, origin=center)
+                line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+            line.save()
+
+        # rotate regions
+        for region in self.blocks.all():
+            poly = affinity.rotate(Polygon(region.box), angle, origin=center)
+            region.box = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+            region.save()
+
+    def crop(self, x1, y1, x2, y2):
+        """
+        Crops the image ouside the rectangle defined
+        by top left (x1, y1) and bottom right (x2, y2) points.
+        Moves the lines and regions accordingly.
+        """
+        with Image.open(self.image.file.name) as im:
+            cim = im.crop((x1, y1, x2, y2))
+            cim.save(self.image.file.name)
+            cim.close()
+
+        if self.bw_image:
+            with Image.open(self.image.file.name) as im:
+                cim = im.crop((x1, y1, x2, y2))
+                cim.save(self.image.file.name)
+                cim.close()
+
+        for line in self.lines.all():
+            if line.baseline:
+                line.baseline = [(int(x-x1), int(y-y1)) for x, y in line.baseline]
+            if line.mask:
+                line.mask = [(int(x-x1), int(y-y1)) for x, y in line.mask]
+            line.save()
+
+        for region in self.blocks.all():
+            region.box = [(int(x-x1), int(y-y1)) for x, y in region.box]
+            region.save()
+
     def enforce_line_order(self):
         # django-ordered-model doesn't care about unicity and linearity...
         lines = self.lines.order_by('order', 'pk')
@@ -803,6 +900,8 @@ def validate_polygon(value):
 
 
 def validate_2_points(value):
+    if value is None:
+        return
     if len(value) < 2:
         raise ValidationError(
             _('Polygon needs to have at least 2 points, it has %(length)d: %(value)s.'),
@@ -810,6 +909,8 @@ def validate_2_points(value):
 
 
 def validate_3_points(value):
+    if value is None:
+        return
     if len(value) < 3:
         raise ValidationError(
             _('Polygon needs to have at least 3 points, it has %(length)d: %(value)s.'),
