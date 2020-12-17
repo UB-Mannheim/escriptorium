@@ -1,4 +1,4 @@
-$(document).ready(function() {
+export function bootModels() {
     let $alertsContainer = $('#alerts-container');
 
     let max_accuracy = {};
@@ -51,4 +51,4 @@ $(document).ready(function() {
         $('.training-error', $row).show();
         $('.cancel-training', $row).hide();
     });
-});
+}

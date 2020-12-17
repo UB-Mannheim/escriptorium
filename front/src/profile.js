@@ -24,4 +24,4 @@ class Profile {
     }
 }
 
-var userProfile = new Profile();
+export var userProfile = new Profile();

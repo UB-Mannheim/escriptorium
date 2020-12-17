@@ -21,12 +21,7 @@
 
     {% block styles %}
     {% render_bundle 'vendor' 'css' %}
-    {% compress css file base %}
-    
-    <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static '/css/rtl.css' %}" rel="stylesheet" type="text/css">
-    {% endcompress %}
-
+    {% render_bundle 'main' 'css' %}
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -100,18 +95,21 @@
     {% render_bundle 'vendor' 'js' %}
 
     {% block scripts %}
-    {% compress js file base %}
-    <script src="{% static '/js/ajax.js' %}"></script>
-    {% endcompress %}
+    {% render_bundle 'main' 'js' %}
     <script type="text/javascript">
       const DEBUG = {% if debug %}true{% else %}false{% endif %};
     </script>
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
-      <script src="{% static 'js/messages.js' %}"></script>
+      <script type="text/javascript">
+        $(document).ready(function(){
+          bootWebsocket();
+        });
+      </script>
       {% include 'includes/messages.html' %}
-      <script src="{% static 'js/profile.js' %}"></script>
       {% if user.onboarding %}
-      <script src="{% static 'js/onboarding.js' %}"></script>
+      <script type="text/javascript">
+        bootOnboarding();
+      </script>
       {% endif %}
       {% endif %}
    {% endblock scripts %}

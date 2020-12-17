@@ -1,6 +1,6 @@
 'use strict';
 /**** Metadata stuff ****/
-$(document).ready(function() {
+export function bootDocumentForm() {
     // delete a metadata row
     $('.js-metadata-delete').click(function(ev) {
         var btn = ev.target;
@@ -119,4 +119,4 @@ $(document).ready(function() {
             window.location.hash = this.hash;
         }
     });
-});
+}

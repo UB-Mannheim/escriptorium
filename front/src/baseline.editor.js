@@ -467,7 +467,7 @@ class SegmenterLine {
     }
 }
 
-class Segmenter {
+export class Segmenter {
     constructor(image, {lengthThreshold=10,
                         regionAreaThreshold=20,
                         // scale = real coordinates to image coordinates

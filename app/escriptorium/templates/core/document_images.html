@@ -121,19 +121,12 @@
 
 {{ block.super }}
 <script type="text/javascript">
-    'use strict';
-
-    $(document).ready(function() {
+  $(document).ready(function() {
     // join the ws room
-    msgSocket.addEventListener('open', function(ev) {
-         msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
-     });
- });
+    joinDocumentRoom('{{document.pk}}');
+    bootImageCards(DOCUMENT_ID);
+    bootLazyload();
+    bootHelp();
+  });
 </script>
-
-{% compress js file document_images %}
-<script src="{% static 'js/image_cards.js' %}"></script>
-<script src="{% static 'js/lazyload.js' %}"></script>
-<script src="{% static 'js/help.js' %}"></script>
-{% endcompress %}
 {% endblock %}

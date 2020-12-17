@@ -1,5 +1,5 @@
 var imageObserver;
-document.addEventListener("DOMContentLoaded", function() {
+export function bootLazyload() {
   var lazyloadImages;    
 
   if ("IntersectionObserver" in window) {
@@ -47,4 +47,8 @@ document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener("resize", lazyload);
     window.addEventListener("orientationChange", lazyload);
   }
-});
+}
+
+export function addImageToLoader(img) {
+  imageObserver.observe($('img', img).get(0));
+}

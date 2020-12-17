@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+export function bootHelp() {
     var closed = userProfile.get('closedHelps') || [];
 
     let clBtns = document.querySelectorAll('.help-text .close');
@@ -38,4 +38,4 @@ document.addEventListener("DOMContentLoaded", function() {
             if (help) help.style.display = 'none';
         });
     }
-});
+}

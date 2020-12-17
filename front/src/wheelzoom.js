@@ -102,7 +102,7 @@ class zoomTarget {
     }
 }
 
-class WheelZoom {
+export class WheelZoom {
     constructor({factor=0.1,
                  minScale=0.2,
                  maxScale=10,

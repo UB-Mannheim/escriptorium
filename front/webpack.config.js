@@ -5,6 +5,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   entry: {
     vendor: './src/vendor.js',
+    main: './src/main.js',
+    baseline_editor: './src/baseline_editor.js',
   },
 
   output: {

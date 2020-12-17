@@ -1,10 +1,7 @@
 'use strict';
 
-var API = {
-    'document': '/api/documents/' + DOCUMENT_ID,
-    'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
-    'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
-};
+var DOCUMENT_ID;
+var API;
 
 Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
@@ -119,7 +116,7 @@ class partCard {
         $new.data('partCard', this);
 
         // add the image element to the lazy loader
-        imageObserver.observe($('img', $new).get(0));
+        addImageToLoader($new);
 
         this.defaultColor = this.$element.css('color');
 
@@ -334,7 +331,13 @@ class partCard {
 }
 
 
-$(document).ready(function() {
+export function bootImageCards(documentId) {
+    DOCUMENT_ID = documentId;
+    API = {
+        'document': '/api/documents/' + DOCUMENT_ID,
+        'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
+        'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
+    };
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
         var index = $('#cards-container .js-drop').index(ev.target);
@@ -608,4 +611,4 @@ $(document).ready(function() {
         });
     };
     getNextParts(1);
-});
+}

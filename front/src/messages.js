@@ -1,7 +1,7 @@
-var msgSocket;
+export var msgSocket;
 
 var alerts = {};
-class Alert {
+export class Alert {
     constructor(id, message, level, links) {
         this.id = id;
         this.count = 1;
@@ -41,7 +41,7 @@ class Alert {
     }
 }
 
-$(document).ready(function() {
+export function bootWebsocket(){
     let scheme = location.protocol === 'https:'?'wss:':'ws:';
     msgSocket = new ReconnectingWebSocket(scheme + '//' + window.location.host + '/ws/notif/');
     msgSocket.maxReconnectAttempts = 3;
@@ -72,4 +72,10 @@ $(document).ready(function() {
             console.error('Notification socket closed unexpectedly');
         }
     });
-});
+}
+
+export function joinDocumentRoom(pk){
+    msgSocket.addEventListener('open', function(e) {
+        msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": ' + pk + ' }');
+    });
+}
