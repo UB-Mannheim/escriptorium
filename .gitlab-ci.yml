@@ -18,3 +18,18 @@ build:
 
   script:
     - npm run production
+
+docker-build:
+  stage: build
+  image: docker:19.03.1
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375/
+
+  except:
+    - schedules
+
+  script:
+    - ci/build.sh

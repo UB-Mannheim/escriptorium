@@ -3,7 +3,7 @@ version: "2.4"
 services:
   app: &app
     build:
-      context: ./app
+      context: .
     env_file: variables.env
     volumes:
       # - ./app/:/usr/src/app/
