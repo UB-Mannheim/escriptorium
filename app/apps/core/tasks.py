@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os.path
 import shutil
+from itertools import groupby
 
 from django.apps import apps
 from django.conf import settings
@@ -115,9 +116,12 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 def make_segmentation_training_data(part):
     return {
         'image': part.image.path,
-        'baselines': [{'script': 'default', 'baseline': bl}
+        'baselines': [{'script': bl.typology.name or 'default',
+                       'baseline': bl}
                       for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {'default': [r.box for r in part.blocks.all().only('box')]}
+        'regions': {typo: regs for typo, regs in groupby(
+            (r.box for r in part.blocks.all().order_by('typology')),
+            key=lambda reg: reg.typology.name)}
     }
 
 
