@@ -125,17 +125,11 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             return {width: width, height: height, top: top, left: left, angle: angle};
         },
 
-        computeImgStyles(bbox, ratio, hContext) {
+        computeImgStyles(bbox, ratio, lineHeight, hContext) {
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
 
-            let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-200) / 3));
-            let lineHeight = Math.max(30, Math.round(bbox.height*ratio));
-            if (lineHeight > MAX_HEIGHT) {
-                // change the ratio so that the image can not get too big
-                ratio = (MAX_HEIGHT/lineHeight)*ratio;
-                lineHeight = MAX_HEIGHT;
-            }
+
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
             modalImgContainer.style.height = visuHeight+'px';
@@ -170,7 +164,7 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             }
         },
 
-        computeInputStyles(bbox, ratio, hContext) {
+        computeInputStyles(bbox, ratio, lineHeight, hContext) {
             // Content input
             let container = this.$el.querySelector('#trans-modal #trans-input-container');
             let input = container.querySelector('#trans-input');
@@ -183,12 +177,11 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             ruler.style.whiteSpace="nowrap"
             container.appendChild(ruler);
 
-            let lineHeight = Math.max(30, Math.round(bbox.height*ratio));
             let context = hContext*lineHeight;
-            let fontSize = Math.round(lineHeight*0.7);  // Note could depend on the script
+            let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
             ruler.style.fontSize = fontSize+'px';
             input.style.fontSize = fontSize+'px';
-            input.style.height = 'auto';
+            input.style.height = Math.round(fontSize*1.1)+'px';
 
             if (READ_DIRECTION == 'rtl') {
                 container.style.marginRight = context+'px';
@@ -220,8 +213,16 @@ const TranscriptionModal = Vue.component('transcriptionmodal', {
             bbox = this.getRotatedLineBBox();
             let hContext = 0.3; // vertical context added around the line, in percentage
             let ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
-            this.computeImgStyles(bbox, ratio, hContext);
-            this.computeInputStyles(bbox, ratio, hContext);
+            let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
+            let lineHeight = Math.max(30, Math.round(bbox.height*ratio));
+            if (lineHeight > MAX_HEIGHT) {
+                // change the ratio so that the image can not get too big
+                ratio = (MAX_HEIGHT/lineHeight)*ratio;
+                lineHeight = MAX_HEIGHT;
+            }
+
+            this.computeImgStyles(bbox, ratio, lineHeight, hContext);
+            this.computeInputStyles(bbox, ratio, lineHeight, hContext);
         },
     },
 });
