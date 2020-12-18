@@ -1,4 +1,6 @@
-const LineVersion = Vue.extend({
+window.Vue = require('vue/dist/vue');
+
+export const LineVersion = Vue.extend({
     props: ['version', 'previous'],
     created() {
         this.timeZone = this.$parent.timeZone;

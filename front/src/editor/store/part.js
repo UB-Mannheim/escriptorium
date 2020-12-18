@@ -1,5 +1,5 @@
 // singleton!
-const partStore = {
+export const partStore = {
     // need to set empty value for vue to watch them
     loaded: false,
     pk: null,
@@ -45,7 +45,7 @@ const partStore = {
     },
 
     loadTranscription (line, transcription) {
-        tr = line.transcriptions || {};
+        let tr = line.transcriptions || {};
         if (transcription) {
             tr[transcription.transcription] = transcription;
             Vue.set(line, 'transcriptions', tr);
@@ -130,7 +130,7 @@ const partStore = {
             uri = this.getApiPart() + 'transcriptions/';
             method = "post";
         }
-        this.push(uri, data, method=method)
+        this.push(uri, data, method)
             .then((response)=>response.json())
             .then((data) => {
                 let line = this.lines.find(l=>l.pk == lineTranscription.line);
@@ -143,13 +143,13 @@ const partStore = {
     },
     createLine(line, transcription, callback) {
         let uri = this.getApiPart() + 'lines/';
-        data = {
+        let data = {
             document_part: this.pk,
             baseline: line.baseline,
             mask: line.mask,
             region: line.region
         };
-        this.push(uri, data, method="post")
+        this.push(uri, data, "post")
             .then((response) => response.json())
             .then(function(data) {
                 let newLine = data;
@@ -176,7 +176,7 @@ const partStore = {
     bulkCreateLines(lines, transcription, callback) {
         let uri = this.getApiPart() + 'lines/bulk_create/';
         lines.forEach(l=>l.document_part = this.pk);
-        this.push(uri, {lines: lines}, method="post")
+        this.push(uri, {lines: lines}, "post")
             .then((response) => response.json())
             .then(function(data) {
                 let createdLines = [];
@@ -208,7 +208,7 @@ const partStore = {
     updateLine(line, callback) {
         let uri = this.getApiPart() + 'lines/' + line.pk + '/';
         line.document_part = this.pk;
-        this.push(uri, line, method="put")
+        this.push(uri, line, "put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
@@ -223,7 +223,7 @@ const partStore = {
     bulkUpdateLines(lines, callback) {
         let uri = this.getApiPart() + 'lines/bulk_update/';
 
-        data = lines.map(function(l) {
+        let data = lines.map(function(l) {
             let type  = l.type && this.types.lines.find(t=>t.name==l.type)
             return {
                 pk: l.pk,
@@ -235,7 +235,7 @@ const partStore = {
             };
         }.bind(this));
 
-        this.push(uri, {lines: data}, method="put")
+        this.push(uri, {lines: data}, "put")
             .then((response) => response.json())
             .then(function(data) {
                 let updatedLines = [];
@@ -266,7 +266,7 @@ const partStore = {
     },
     deleteLine(linePk, callback) {
         let uri = this.getApiPart() + 'lines/' + linePk + '/';
-        this.push(uri, {}, method="delete")
+        this.push(uri, {}, "delete")
             .then(function(data) {
                 let index = this.lines.findIndex(l=>l.pk==linePk);
                 Vue.delete(this.part.lines, index);
@@ -278,7 +278,7 @@ const partStore = {
     },
     bulkDeleteLines(pks, callback) {
         let uri = this.getApiPart() + 'lines/bulk_delete/';
-        this.push(uri, {lines: pks}, method="post")
+        this.push(uri, {lines: pks}, "post")
             .then(function(data) {
                 let deletedLines = [];
                 for (let i=0; i<pks.length; i++) {
@@ -303,7 +303,7 @@ const partStore = {
                 let uri = this.getApiPart() + 'reset_masks/';
                 if (this.masksToRecalc.length >0) uri += '?only=' + this.masksToRecalc.toString();
                 this.masksToRecalc = [];
-                this.push(uri, {}, method="post")
+                this.push(uri, {}, "post")
                     .catch(function(error) {
                         console.log('couldnt recalculate masks!', error);
                     });
@@ -316,7 +316,7 @@ const partStore = {
             // avoid calling this too often
             this.debouncedRecalculateOrdering = _.debounce(function() {
                 let uri = this.getApiPart() + 'recalculate_ordering/';
-                this.push(uri, {}, method="post")
+                this.push(uri, {}, "post")
                     .then((response) => response.json())
                     .then(function(data) {
                         for (let i=0; i<data.lines.length; i++) {
@@ -350,12 +350,12 @@ const partStore = {
     createRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/';
         let type = region.type && this.types.regions.find(t=>t.name==region.type);
-        data = {
+        let data = {
             document_part: this.pk,
             typology: type && type.pk || null,
             box: region.box
         };
-        this.push(uri, data, method="post")
+        this.push(uri, data, "post")
             .then((response) => response.json())
             .then(function(data) {
                 this.regions.push(data);
@@ -368,12 +368,12 @@ const partStore = {
     updateRegion(region, callback) {
         let uri = this.getApiPart() + 'blocks/' + region.pk + '/';
         let type = region.type && this.types.regions.find(t=>t.name==region.type);
-        data = {
+        let data = {
             document_part: this.pk,
             box: region.box,
             typology: type && type.pk || null
         };
-        this.push(uri, data, method="put")
+        this.push(uri, data, "put")
             .then((response) => response.json())
             .then(function(data) {
                 let index = this.regions.findIndex(l=>l.pk==region.pk);
@@ -386,7 +386,7 @@ const partStore = {
     },
     deleteRegion(regionPk, callback) {
         let uri = this.getApiPart() + 'blocks/' + regionPk + '/';
-        this.push(uri, {}, method="delete")
+        this.push(uri, {}, "delete")
             .then(function(data) {
                 let index = this.regions.findIndex(r=>r.pk==regionPk);
                 callback(this.regions[index].pk);
@@ -398,7 +398,7 @@ const partStore = {
     },
     archiveTranscription(transPk) {
         let uri = this.getApiRoot() + 'transcriptions/' + transPk + '/';
-        this.push(uri, {}, method="delete")
+        this.push(uri, {}, "delete")
             .then(function(data) {
                 let index = this.transcriptions.findIndex(t=>t.pk==transPk)
                 Vue.delete(this.transcriptions, index);
@@ -408,7 +408,7 @@ const partStore = {
             });
     },
 
-    push(uri, data, method="post") {
+    push(uri, data, method) {
         return fetch(uri, {
             method: method,
             credentials: "same-origin",
@@ -430,7 +430,7 @@ const partStore = {
             }
         });
 
-        this.push(uri, {lines: data}, method="post")
+        this.push(uri, {lines: data}, "post")
             .then((response) => response.json())
             .then(function (data) {
                 // update line.transcriptions pks
@@ -456,7 +456,7 @@ const partStore = {
             };
         });
 
-        this.push(uri, {lines: data}, method="put")
+        this.push(uri, {lines: data}, "put")
             .then((response) => response.json())
             .then(function(data) {
                 callback();
@@ -467,7 +467,7 @@ const partStore = {
     },
     move(movedLines, callback){
         let uri = this.getApiPart()+ 'lines/move/';
-        this.push(uri,{"lines": movedLines},method="post")
+        this.push(uri,{"lines": movedLines},"post")
             .then((response) =>response.json())
             .then(function (data) {
                 for (let i=0; i<data.length; i++) {

@@ -1,4 +1,6 @@
-var diploLine = LineBase.extend({
+import { LineBase } from './base_line.js';
+
+export var diploLine = LineBase.extend({
     props: ['line', 'ratio'],
     computed: {
         showregion() {

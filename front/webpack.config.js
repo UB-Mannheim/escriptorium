@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     vendor: './src/vendor.js',
     main: './src/main.js',
+    editor: './src/editor/main.js',
     baseline_editor: './src/baseline_editor.js',
   },
 

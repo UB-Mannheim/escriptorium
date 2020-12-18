@@ -1,4 +1,7 @@
-var DiploPanel = BasePanel.extend({
+import { BasePanel } from './base_panel.js';
+import { diploLine } from './diplo_line.js';
+
+export var DiploPanel = BasePanel.extend({
     data() { return {
         updatedLines : [],
         createdLines : [],

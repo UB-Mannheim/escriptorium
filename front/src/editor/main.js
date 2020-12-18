@@ -1,4 +1,12 @@
-var partVM = new Vue({
+window.Vue = require('vue/dist/vue');
+import './components/trans_modal.js';
+import { partStore } from './store/part.js';
+import { SourcePanel } from './components/source_panel.js';
+import { SegPanel } from './components/seg_panel.js';
+import { VisuPanel } from './components/visu_panel.js';
+import { DiploPanel } from './components/diplo_panel.js';
+
+export var partVM = new Vue({
     el: "#part-edit",
     delimiters: ["${","}"],
     data: {

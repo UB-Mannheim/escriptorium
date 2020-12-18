@@ -1,8 +1,11 @@
 /*
    Baseline editor panel (or segmentation panel)
  */
+import { BasePanel } from './base_panel.js';
+import { segRegion, segLine } from './seg_line.js';
+import { Segmenter } from '../../baseline.editor.js';
 
-const SegPanel = BasePanel.extend({
+export const SegPanel = BasePanel.extend({
     props: ['part', 'fullsizeimage'],
     data() { return {
         segmenter: {loaded: false},
@@ -193,12 +196,14 @@ const SegPanel = BasePanel.extend({
             if (this.segmenter && this.$img.complete) {
                 var zoom = this.$parent.zoom;
                 this.segmenter.canvas.style.top = zoom.pos.y + 'px';
-                this.segmenter.canvas.style.left = zoom.pos.x + 'px'
+                this.segmenter.canvas.style.left = zoom.pos.x + 'px';
                 this.segmenter.refresh();
             }
         },
         updateView() {
-            this.segmenter.refresh();
+            if (this.segmenter.loaded) {
+                this.segmenter.refresh();
+            }
         },
         // undo manager helpers
         bulkCreate(data, createInEditor=false) {
@@ -276,7 +281,7 @@ const SegPanel = BasePanel.extend({
                     function(updatedLines) {
                         for (let i=0; i<updatedLines.length; i++) {
                             let line = updatedLines[i];
-                            region = this.segmenter.regions.find(r=>r.context.pk==line.region) || null;
+                            let region = this.segmenter.regions.find(r=>r.context.pk==line.region) || null;
                             let segmenterLine = this.segmenter.lines.find(l=>l.context.pk==line.pk);
                             segmenterLine.update(line.baseline, line.mask, region, line.order);
                         }

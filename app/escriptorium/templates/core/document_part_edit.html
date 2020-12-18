@@ -1,6 +1,6 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles %}
-{% load compress %}
+{% load render_bundle from webpack_loader %}
 
 {% block nav-edit-active %}active{% endblock %}
 
@@ -647,20 +647,6 @@
        bootHelp();
     });
   </script>
-
-  {% compress js file part_edit %}
-  <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/base_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/source_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/seg_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/seg_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/line_version.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/visu_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/visu_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/diplo_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/diplo_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/store/part.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/main.js' %}"></script>
-{% endcompress %}
+  
+  {% render_bundle 'editor' 'js' %}
 {% endblock %}

@@ -1,4 +1,6 @@
-const SourcePanel = BasePanel.extend({
+import { BasePanel } from './base_panel.js';
+
+export const SourcePanel = BasePanel.extend({
     props: ['part', 'fullsizeimage'],
     computed: {
         imageSrc() {

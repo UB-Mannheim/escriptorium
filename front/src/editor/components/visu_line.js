@@ -1,4 +1,6 @@
-const visuLine = LineBase.extend({
+import { LineBase } from './base_line.js';
+
+export const visuLine = LineBase.extend({
     props: ['line', 'ratio'],
     watch: {
         'line.currentTrans.content': function(n, o) {
@@ -31,7 +33,7 @@ const visuLine = LineBase.extend({
         },
         computeTextLength() {
             if (!this.line.currentTrans) return;
-            content = this.line.currentTrans.content;
+            const content = this.line.currentTrans.content;
             if (content) {
                 /* this.polyElement.setAttribute('stroke', 'none');
                  * this.pathElement.setAttribute('stroke', 'none');

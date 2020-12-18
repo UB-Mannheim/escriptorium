@@ -1,4 +1,4 @@
-const BasePanel = Vue.extend({
+export const BasePanel = Vue.extend({
     props: ['part'],
     data() {
         return {

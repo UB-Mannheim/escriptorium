@@ -1,4 +1,4 @@
-const segRegion = Vue.extend({
+export const segRegion = Vue.extend({
     props: ['region'],
     data() { return {
         segmenterObject: null,
@@ -14,7 +14,7 @@ const segRegion = Vue.extend({
     }
 });
 
-const segLine = Vue.extend({
+export const segLine = Vue.extend({
     props: ['line'],
     data() { return {
         segmenterObject: null,

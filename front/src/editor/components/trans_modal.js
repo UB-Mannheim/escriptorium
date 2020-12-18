@@ -1,4 +1,6 @@
-const TranscriptionModal = Vue.component('transcriptionmodal', {
+import { LineVersion } from './line_version.js';
+
+export const TranscriptionModal = Vue.component('transcriptionmodal', {
     props: ['line'],
     components: {
         'lineversion': LineVersion

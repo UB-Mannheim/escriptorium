@@ -1,8 +1,10 @@
 /*
 Visual transcription panel (or visualisation panel)
 */
+import { BasePanel } from './base_panel.js';
+import { visuLine } from './visu_line.js';
 
-const VisuPanel = BasePanel.extend({
+export const VisuPanel = BasePanel.extend({
     data() { return  {
       editLine: null
     };},
@@ -19,13 +21,13 @@ const VisuPanel = BasePanel.extend({
     },
     methods: {
         editNext() {
-            index = this.part.lines.indexOf(this.editLine);
+            let index = this.part.lines.indexOf(this.editLine);
             if(index < this.part.lines.length - 1) {
                 this.editLine = this.part.lines[index + 1];
             }
         },
         editPrevious() {
-            index = this.part.lines.indexOf(this.editLine);
+            let index = this.part.lines.indexOf(this.editLine);
             if(index >= 1) {
                 this.editLine = this.part.lines[index - 1];
             }

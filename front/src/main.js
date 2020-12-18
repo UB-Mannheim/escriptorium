@@ -6,9 +6,6 @@ window.Alert = Alert;
 window.bootWebsocket = bootWebsocket;
 window.joinDocumentRoom = joinDocumentRoom;
 
-import { Segmenter } from './baseline.editor.js';
-window.Segmenter = Segmenter;
-
 import { bootHelp } from './help.js';
 window.bootHelp = bootHelp;
 

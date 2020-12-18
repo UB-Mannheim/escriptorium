@@ -36,10 +36,6 @@ window.paper = require('paper');
 // by seg_panel.js
 window.UndoManager = require('undo-manager');
 
-// Vue needs to be explicitly set on window, as it's used at boot time
-// by various scripts
-window.Vue = require('vue/dist/vue');
-
 // Sortable needs to be explicitly set on window, as it's used at boot time
 // by diplo_panel.js
 window.Sortable =  require('sortablejs/Sortable');
