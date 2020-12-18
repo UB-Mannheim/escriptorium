@@ -14,9 +14,6 @@ ENV PYTHONUNBUFFERED 1
 ARG VERSION_DATE="passthistobuildcmd"
 ENV VERSION_DATE=$VERSION_DATE
 
-# set work directory
-WORKDIR /usr/src/app
-
 # update apk
 RUN apt-get update
 
@@ -26,9 +23,12 @@ RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 RUN apt-get install netcat-traditional jpegoptim pngcrush
 RUN apt-get --assume-yes install libvips
 
-RUN pip install --upgrade pip
-
 COPY ./requirements.txt /usr/src/app/requirements.txt
+
+# set work directory
+WORKDIR /usr/src/app
+
+RUN pip install --upgrade pip
 RUN pip install -U -r requirements.txt
 
 COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
