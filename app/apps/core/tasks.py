@@ -509,7 +509,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
         if (data[sender]['task_id'] == sender.request.id and
             not check_signal_order(data[sender]['status'], signal_name)):
             return
-    except KeyError:
+    except (KeyError, AttributeError):
         pass
 
     data[sender] = {

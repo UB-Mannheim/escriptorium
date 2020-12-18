@@ -24,3 +24,5 @@ django-compressor==2.4
 albumentations
 django-simple-captcha==0.5.12
 pyvips==2.1.12
+scikit-image==0.17.2
+scipy==1.5.2
