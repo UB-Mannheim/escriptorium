@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework.authtoken',
-    'compressor',
     'captcha',
 
     'bootstrap',
@@ -104,12 +103,7 @@ TEMPLATES = [
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
-    'compressor.finders.CompressorFinder',
 )
-
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 
