@@ -18,6 +18,9 @@
    mergeBtn=null,
 
  */
+import { WheelZoom } from './wheelzoom.js'
+window.WheelZoom = WheelZoom;
+
 var lastId = 0;
 function generateUniqueId() { return lastId++; };
 
@@ -2403,3 +2406,5 @@ export class Segmenter {
         }
     }
 }
+
+window.Segmenter = Segmenter;
