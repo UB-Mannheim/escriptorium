@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "NODE_ENV=development webpack",
+    "start": "NODE_ENV=development webpack --watch",
     "production": "NODE_ENV=production webpack"
   },
   "dependencies": {
