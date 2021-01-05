@@ -212,7 +212,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
              */
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
 
-            bbox = this.getRotatedLineBBox();
+            let bbox = this.getRotatedLineBBox();
             let hContext = 0.3; // vertical context added around the line, in percentage
             let ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
             let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
