@@ -1,4 +1,4 @@
-{% load i18n staticfiles %}{% load render_bundle from webpack_loader %}<!DOCTYPE html>
+{% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8">
@@ -20,8 +20,8 @@
     <![endif]-->
 
     {% block styles %}
-    {% render_bundle 'vendor' 'css' %}
-    {% render_bundle 'main' 'css' %}
+    <link href="{% static 'vendor.css.gz' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'main.css.gz' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -92,10 +92,10 @@
     </div>
     </section></main>
 
-    {% render_bundle 'vendor' 'js' %}
+    <script src="{% static 'vendor.js.gz' %}" type="text/javascript"></script>
 
     {% block scripts %}
-    {% render_bundle 'main' 'js' %}
+    <script src="{% static 'main.js.gz' %}" type="text/javascript"></script>
     <script type="text/javascript">
       const DEBUG = {% if debug %}true{% else %}false{% endif %};
     </script>

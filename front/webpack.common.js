@@ -1,5 +1,4 @@
 const path = require('path');
-const BundleTracker = require('webpack-bundle-tracker');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
@@ -17,7 +16,6 @@ module.exports = {
   },
 
   plugins: [
-    new BundleTracker({filename: './dist/webpack-stats.json'}),
     new MiniCssExtractPlugin(),
   ],
 

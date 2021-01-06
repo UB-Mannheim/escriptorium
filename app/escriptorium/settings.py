@@ -69,8 +69,6 @@ INSTALLED_APPS = [
     'core',
     'imports',
     'reporting',
-
-    'webpack_loader',
 ]
 
 MIDDLEWARE = [
@@ -221,16 +219,6 @@ STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
     FRONTEND_DIR
 ]
-
-# Load frontend chunks built by webpack
-WEBPACK_LOADER = {
-    'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': '',
-        'STATS_FILE': os.path.join(FRONTEND_DIR, 'webpack-stats.json'),
-        'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
-    }
-}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

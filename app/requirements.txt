@@ -25,4 +25,3 @@ django-simple-captcha==0.5.12
 pyvips==2.1.12
 scikit-image==0.17.2
 scipy==1.5.2
-django-webpack-loader==0.7.0

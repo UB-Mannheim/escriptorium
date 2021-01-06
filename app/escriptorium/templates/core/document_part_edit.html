@@ -1,6 +1,5 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles %}
-{% load render_bundle from webpack_loader %}
 
 {% block nav-edit-active %}active{% endblock %}
 
@@ -648,5 +647,5 @@
     });
   </script>
   
-  {% render_bundle 'editor' 'js' %}
+  <script src="{% static 'editor.js.gz' %}" type="text/javascript"></script>
 {% endblock %}
