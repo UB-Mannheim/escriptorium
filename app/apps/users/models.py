@@ -114,7 +114,7 @@ class Invitation(models.Model):
             "team": self.group.name,
             "accept_link": accept_url,
         }
-        self.send_email(self.recipient.email, context)
+        self.send_email((self.recipient.email,), context)
 
     def send_invitation_to_service(self, request):
         accept_url = request.build_absolute_uri(
@@ -127,7 +127,7 @@ class Invitation(models.Model):
             "team": self.group and self.group.name,
             "accept_link": accept_url,
         }
-        self.send_email(self.recipient_email, context)
+        self.send_email((self.recipient_email,), context)
 
     def send_email(self, to, context):
         send_email(
@@ -163,7 +163,6 @@ class Invitation(models.Model):
         return True
 
 
-
 class ContactUs(models.Model):
     """
     Represents Contact Us form
@@ -174,10 +173,11 @@ class ContactUs(models.Model):
         max_length=255,
     )
     message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
-        verbose_name = "message"
-        verbose_name_plural = "messages"
+        verbose_name = "Contact message"
+        verbose_name_plural = "Contact messages"
 
     def __str__(self):
         return "from {}({})".format(self.name, self.email)
@@ -197,7 +197,6 @@ class ContactUs(models.Model):
             context=context,
             result_interface=None
         )
-
         super().save(*args, **kwargs)
 
 

@@ -60,8 +60,12 @@ class InvitationAdmin(admin.ModelAdmin):
         ) % count, messages.SUCCESS)
 
 
+class ContactUsAdmin(admin.ModelAdmin):
+    readonly_fields = ('created_at',)
+
+
 admin.site.register(User, MyUserAdmin)
 admin.site.register(ResearchField)
 admin.site.register(Invitation, InvitationAdmin)
-admin.site.register(ContactUs)
+admin.site.register(ContactUs, ContactUsAdmin)
 admin.site.register(GroupOwner)
