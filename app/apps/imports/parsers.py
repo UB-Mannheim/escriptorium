@@ -95,8 +95,9 @@ class PdfParser(ParserDocument):
                                                     access="sequential",
                                                     page=page_nb)
                 part = DocumentPart(document=self.document)
-                part.image.save('%s_page_%d.png' % (self.file.name, page_nb+1),
-                                ContentFile(page.write_to_buffer('.png')))
+                fname = '%s_page_%d.png' % (self.file.name, page_nb+1)
+                part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
+                part.original_filename = fname
                 part.save()
                 yield part
                 page_nb = page_nb + 1
@@ -340,8 +341,9 @@ class XMLParser(ParserDocument):
                                 line.full_clean()
                             except ValidationError as e:
                                 if self.report:
-                                    self.report.append("Line in '{filen}' line N°{line} was skipped because: {error}".format(
-                                        filen=self.file.name, line=blockTag.sourceline, error=e))
+                                    self.report.append("Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}".format(
+                                        filen=self.file.name, line=blockTag.sourceline,
+                                        lineid=line_id, error=e))
                             else:
                                 line.save()
 
