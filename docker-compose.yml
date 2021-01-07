@@ -31,13 +31,9 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data/
     env_file: variables.env
-    ports:
-      - 127.0.0.1:5432:5432
 
   redis:
     image: redis:3.0-alpine
-    ports:
-      - 127.0.0.1:6379:6379
 
   nginx:
     build: ./nginx
