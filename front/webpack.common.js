@@ -1,5 +1,6 @@
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const CompressionPlugin = require("compression-webpack-plugin");
 
 module.exports = {
@@ -17,6 +18,7 @@ module.exports = {
 
   plugins: [
     new MiniCssExtractPlugin(),
+    new VueLoaderPlugin(),
     new CompressionPlugin({
       test: /\.(js|css)$/,
     })
@@ -29,6 +31,9 @@ module.exports = {
       },
       { test: /\.(png|jpe?g|gif|woff|woff2|eot|ttf|otf|svg)$/i,
         use: ['file-loader'],
+      },
+      { test: /\.vue$/,
+        use: ['vue-loader'],
       }
     ]
   }

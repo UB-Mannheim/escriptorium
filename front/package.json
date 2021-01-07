@@ -29,7 +29,9 @@
     "sortablejs": "^1.10.2",
     "style-loader": "^2.0.0",
     "undo-manager": "^1.0.5",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-loader": "^15.9.6",
+    "vue-template-compiler": "^2.6.11"
   },
   "devDependencies": {
     "compression-webpack-plugin": "^7.1.1",

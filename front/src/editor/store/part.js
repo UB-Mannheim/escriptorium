@@ -338,7 +338,7 @@ export const partStore = {
     },
     rotate(angle, callback) {
         let uri = this.getApiPart() + 'rotate/';
-        this.push(uri, {angle: angle}, method="post")
+        this.push(uri, {angle: angle}, "post")
             .then(function(data) {
                 this.reload(callback);
             }.bind(this))

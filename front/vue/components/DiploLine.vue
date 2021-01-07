@@ -1,6 +1,10 @@
-import { LineBase } from './base_line.js';
+<template>
+</template>
 
-export var diploLine = LineBase.extend({
+<script>
+import LineBase from './LineBase.vue';
+
+export default LineBase.extend({
     props: ['line', 'ratio'],
     computed: {
         showregion() {
@@ -59,3 +63,7 @@ export var diploLine = LineBase.extend({
         }
     }
 });
+</script>
+
+<style scoped>
+</style>

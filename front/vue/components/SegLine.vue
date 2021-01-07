@@ -1,20 +1,8 @@
-export const segRegion = Vue.extend({
-    props: ['region'],
-    data() { return {
-        segmenterObject: null,
-    };},
-    mounted() {
-        this.segmenter = this.$parent.segmenter;
-        let segmenterObject = this.segmenter.regions.find(l=>l.context.pk==this.region.pk)
-        if (segmenterObject === undefined) {
-            this.segmenterObject = this.segmenter.loadRegion(this.region);
-        } else {
-            this.segmenterObject = segmenterObject;
-        }
-    }
-});
+<template>
+</template>
 
-export const segLine = Vue.extend({
+<script>
+export default Vue.extend({
     props: ['line'],
     data() { return {
         segmenterObject: null,
@@ -51,3 +39,7 @@ export const segLine = Vue.extend({
         },
     }
 });
+</script>
+
+<style scoped>
+</style>

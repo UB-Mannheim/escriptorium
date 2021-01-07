@@ -1,10 +1,9 @@
 window.Vue = require('vue/dist/vue');
-import './components/trans_modal.js';
 import { partStore } from './store/part.js';
-import { SourcePanel } from './components/source_panel.js';
-import { SegPanel } from './components/seg_panel.js';
-import { VisuPanel } from './components/visu_panel.js';
-import { DiploPanel } from './components/diplo_panel.js';
+import SourcePanel from '../../vue/components/SourcePanel.vue';
+import SegPanel from '../../vue/components/SegPanel.vue';
+import VisuPanel from '../../vue/components/VisuPanel.vue';
+import DiploPanel from '../../vue/components/DiploPanel.vue';
 
 export var partVM = new Vue({
     el: "#part-edit",

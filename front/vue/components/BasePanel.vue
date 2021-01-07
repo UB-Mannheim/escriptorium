@@ -1,4 +1,10 @@
-export const BasePanel = Vue.extend({
+<template>
+</template>
+
+<script>
+window.Vue = require('vue/dist/vue');
+
+export default Vue.extend({
     props: ['part'],
     data() {
         return {
@@ -23,3 +29,7 @@ export const BasePanel = Vue.extend({
         updateView() {}
     }
 });
+</script>
+
+<style scoped>
+</style>

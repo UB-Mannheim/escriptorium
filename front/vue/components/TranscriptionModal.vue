@@ -1,9 +1,169 @@
-import { LineVersion } from './line_version.js';
+<template>
+    <div id="trans-modal"
+         class="modal"
+         tabindex="-1"
+         role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button v-if="readDirection == 'rtl'"
+                            type="button"
+                            id="next-btn"
+                            @click="$parent.editNext()"
+                            title="Next"
+                            class="btn btn-sm mr-1 btn-secondary">
+                        <i class="fas fa-arrow-circle-left"></i>
+                    </button>
+                    <button v-else
+                            type="button"
+                            id="prev-btn"
+                            @click="$parent.editPrevious()"
+                            title="Previous"
+                            class="btn btn-sm mr-1 btn-secondary">
+                        <i class="fas fa-arrow-circle-left"></i>
+                    </button>
 
-export const TranscriptionModal = Vue.component('transcriptionmodal', {
-    props: ['line'],
+                    <button v-if="readDirection == 'rtl'"
+                            type="button"
+                            id="prev-btn"
+                            @click="$parent.editPrevious()"
+                            title="Previous"
+                            class="btn btn-sm mr-1 btn-secondary">
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </button>
+                    <button v-else
+                            type="button"
+                            id="next-btn"
+                            @click="$parent.editNext()"
+                            title="Next"
+                            class="btn btn-sm mr-1 btn-secondary">
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </button>
+
+                    <h5 class="modal-title ml-3" id="modal-label">
+                        Line #{{line.order + 1}}
+                    </h5>
+
+                    <button type="button"
+                            class="close"
+                            @click="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div :class="'modal-body ' + defaultTextDirection">
+                    <div id="modal-img-container" width="80%">
+                        <img id="line-img"
+                                v-bind:src="modalImgSrc"
+                                draggable="false" selectable="false"/>
+                        <div class="overlay">
+                            <svg width="100%" height="100%">
+                                <defs>
+                                    <mask id="modal-overlay">
+                                        <rect width="100%" height="100%" fill="white"/>
+                                        <polygon points=""/>
+                                    </mask>
+                                </defs>
+                                <rect fill="grey" opacity="0.5" width="100%" height="100%" mask="url(#modal-overlay)" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div id="trans-input-container">
+                        <input v-on:keyup.down="$parent.editNext"
+                                v-on:keyup.up="$parent.editPrevious"
+                                id="trans-input"
+                                name="content"
+                                class="form-control mb-2"
+                                v-on:keyup.enter="$parent.editNext"
+                                v-model.lazy="localTranscription"
+                                autocomplete="off"
+                                autofocus/>
+                        <small v-if="line.currentTrans && line.currentTrans.version_updated_at" class="form-text text-muted">
+                            <span>by {{line.currentTrans.version_author}} ({{line.currentTrans.version_source}})</span>
+                            <span>on {{momentDate}}</span>
+                        </small>
+                    </div>
+
+                    <!-- transcription comparison -->
+                    <div v-if="$parent.$parent.comparedTranscriptions.length"
+                            class="card history-block mt-2">
+                        <div class="card-header">
+                            <a href="#"
+                                class="card-toggle"
+                                data-toggle="collapse"
+                                data-target=".compare-show">
+                                <span>Toggle transcription comparison</span>
+                            </a>
+
+                            <button  title="Help."
+                                        data-toggle="collapse"
+                                        data-target="#compare-help"
+                                        class="btn btn-info fas fa-question help nav-item ml-2"></button>
+                            <div id="compare-help" class="alert alert-primary help-text collapse">
+                                <HelpCompareTranscriptions></HelpCompareTranscriptions>
+                            </div>
+                        </div>
+                        <div class="d-table card-body compare-show collapse show">
+                            <div v-for="trans in otherTranscriptions"
+                                    v-bind:key="'TrC' + trans.pk"
+                                    class="d-table-row">
+                                <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
+                                <div class="d-table-cell text-muted text-nowrap col" title="Transcription name"><small>
+                                    {{ trans.name }}
+                                    <span v-if="trans.pk == $parent.$parent.selectedTranscription">(current)</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- versioning/history -->
+                    <div v-if="line.currentTrans && line.currentTrans.versions && line.currentTrans.versions.length"
+                            class="card history-block mt-2">
+                        <div class="card-header">
+                            <a href="#"
+                                class="card-toggle collapsed"
+                                data-toggle="collapse"
+                                data-target=".history-show">
+                                <span>Toggle history</span>
+                            </a>
+                            <button title="Help."
+                                    data-toggle="collapse"
+                                    data-target="#versions-help"
+                                    class="btn btn-info fas fa-question help nav-item ml-2 collapsed"></button>
+                            <div id="versions-help"
+                                    class="alert alert-primary help-text collapse">
+                                <HelpVersions></HelpVersions>
+                            </div>
+                        </div>
+                        <div id="history" class="history-show card-body collapse">
+                            <div class="d-table">
+                                <LineVersion
+                                    v-if="line.currentTrans && line.currentTrans.versions"
+                                    v-for="(version, index) in line.currentTrans.versions"
+                                    v-bind:previous="line.currentTrans.versions[index+1]"
+                                    v-bind:version="version"
+                                    v-bind:key="version.revision">
+                                </LineVersion>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import LineVersion from './LineVersion.vue';
+import HelpVersions from './HelpVersions.vue';
+import HelpCompareTranscriptions from './HelpCompareTranscriptions.vue';
+
+export default Vue.extend({
+    props: ['readDirection', 'defaultTextDirection', 'line'],
     components: {
-        'lineversion': LineVersion
+        LineVersion,
+        HelpVersions,
+        HelpCompareTranscriptions,
     },
     created() {
         this.$on('update:transcription:version', function(version) {
@@ -42,7 +202,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
         modalImgSrc() {
-            return this.$parent.part.image.uri;
+            return this.$parent.$parent.part.image.uri;
         },
         otherTranscriptions() {
             let a = Object
@@ -113,7 +273,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
-            let transformOrigin =  this.$parent.part.image.size[0]/2+'px '+this.$parent.part.image.size[1]/2+'px';
+            let transformOrigin =  this.$parent.$parent.part.image.size[0]/2+'px '+this.$parent.$parent.part.image.size[1]/2+'px';
             tmppoly.style.transformOrigin = transformOrigin;
             tmppoly.style.transform = 'rotate('+angle+'deg)';
             svg.appendChild(tmppoly);
@@ -131,7 +291,6 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
             let modalImgContainer = this.$el.querySelector('#modal-img-container');
             let img = modalImgContainer.querySelector('img#line-img');
 
-
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
             modalImgContainer.style.height = visuHeight+'px';
@@ -140,8 +299,8 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
             let left = -(bbox.left*ratio - context);
             // modalImgContainer.style.transform = 'scale('+ratio+')';
 
-            let imgWidth = this.$parent.part.image.size[0]*ratio +'px';
-            let transformOrigin =  this.$parent.part.image.size[0]*ratio/2+'px '+this.$parent.part.image.size[1]*ratio/2+'px';
+            let imgWidth = this.$parent.$parent.part.image.size[0]*ratio +'px';
+            let transformOrigin =  this.$parent.$parent.part.image.size[0]*ratio/2+'px '+this.$parent.$parent.part.image.size[1]*ratio/2+'px';
             let transform = 'translate('+left+'px, '+top+'px) rotate('+bbox.angle+'deg)';
             img.style.width = imgWidth;
             img.style.transformOrigin = transformOrigin;
@@ -156,7 +315,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
                 let polygon = overlay.querySelector('polygon');
                 polygon.setAttribute('points', maskPoints);
                 overlay.style.width = imgWidth;
-                overlay.style.height = this.$parent.part.image.size[1]*ratio+'px';
+                overlay.style.height = this.$parent.$parent.part.image.size[1]*ratio+'px';
                 overlay.style.transformOrigin = transformOrigin;
                 overlay.style.transform = transform;
                 overlay.style.display = 'block';
@@ -185,7 +344,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
             input.style.fontSize = fontSize+'px';
             input.style.height = Math.round(fontSize*1.1)+'px';
 
-            if (READ_DIRECTION == 'rtl') {
+            if (this.readDirection == 'rtl') {
                 container.style.marginRight = context+'px';
             } else {
                 // left to right
@@ -228,3 +387,7 @@ export const TranscriptionModal = Vue.component('transcriptionmodal', {
         },
     },
 });
+</script>
+
+<style scoped>
+</style>

@@ -1,7 +1,44 @@
-import { BasePanel } from './base_panel.js';
-import { diploLine } from './diplo_line.js';
+<template>
+    <div class="col panel">
+        <div class="tools">
+            <i title="Text Panel" class="panel-icon fas fa-list-ol"></i>
+            <i id="save-notif" title="There is content waiting to be saved (don't leave the page)" class="notice fas fa-save hide"></i>
+            <button id="sortMode"
+                    title="Toggle sorting mode."
+                    class="btn btn-sm ml-3 btn-info fas fa-sort"
+                    @click="toggleSort"
+                    autocomplete="off"></button>
+        </div>
+        <div :class="'content-container ' + readDirection">
 
-export var DiploPanel = BasePanel.extend({
+            <diploline v-for="line in part.lines"
+                        v-bind:line="line"
+                        v-bind:ratio="ratio"
+                        v-bind:key="'DL' + line.pk">
+            </diploline>
+
+            <div id="diplomatic-lines"
+                    contenteditable="true"
+                    autocomplete="off"
+                    @keydown="onKeyPress"
+                    @keyup="constrainLineNumber"
+                    @input="changed"
+                    @focusin="startEdit"
+                    @focusout="stopEdit"
+                    @paste="onPaste"
+                    @mousemove="showOverlay"
+                    @mouseleave="hideOverlay">
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import BasePanel from './BasePanel.vue';
+import DiploLine from './DiploLine.vue';
+
+export default BasePanel.extend({
+    props: ['readDirection'],
     data() { return {
         updatedLines : [],
         createdLines : [],
@@ -9,7 +46,7 @@ export var DiploPanel = BasePanel.extend({
 
     };},
     components: {
-        'diploline': diploLine,
+        'diploline': DiploLine,
     },
     watch: {
         'part.loaded': function(isLoaded, wasLoaded) {
@@ -306,3 +343,7 @@ export var DiploPanel = BasePanel.extend({
         }
     }
 });
+</script>
+
+<style scoped>
+</style>

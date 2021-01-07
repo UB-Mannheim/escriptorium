@@ -1,4 +1,8 @@
-export var LineBase = Vue.extend({
+<template>
+</template>
+
+<script>
+export default Vue.extend({
     props: ['line', 'ratio'],
     methods: {
         setRatio() {
@@ -35,3 +39,7 @@ export var LineBase = Vue.extend({
         },
     }
 });
+</script>
+
+<style scoped>
+</style>

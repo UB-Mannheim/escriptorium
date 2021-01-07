@@ -1,7 +1,29 @@
-import { LineBase } from './base_line.js';
+<template>
+    <g @mouseover="showOverlay"
+        @mouseleave="hideOverlay"
+        @click="edit">
+        <polygon fill="transparent"
+                    v-bind:stroke="maskStrokeColor"
+                    v-bind:points="maskPoints"/>
+        <path v-bind:id="textPathId"
+                fill="none"
+                v-bind:stroke="pathStrokeColor"
+                v-bind:d="baselinePoints"></path>
+        <text :text-anchor="'end' ? textDirection : ''"
+                lengthAdjust="spacingAndGlyphs">
+            <textPath v-bind:href="'#' + textPathId"
+                        v-if="line.currentTrans">
+                {{ line.currentTrans.content }}
+            </textPath>
+        </text>
+    </g>
+</template>
 
-export const visuLine = LineBase.extend({
-    props: ['line', 'ratio'],
+<script>
+import LineBase from './LineBase.vue';
+
+export default LineBase.extend({
+    props: ['textDirection', 'line', 'ratio'],
     watch: {
         'line.currentTrans.content': function(n, o) {
             this.$nextTick(this.reset);
@@ -100,3 +122,7 @@ export const visuLine = LineBase.extend({
         },
     }
 });
+</script>
+
+<style scoped>
+</style>

@@ -1,6 +1,22 @@
+<template>
+    <div class="d-table-row pt-1">
+        <div class="d-table-cell w-100" v-bind:title="version.data.content" v-html="versionCompare"></div>
+        <div class="d-table-cell" title="Edited by author (source)">{{ version.author }} ( {{ version.source }} )</div>
+        <div class="d-table-cell" title="Edited on">{{ momentDate }}</div>
+        <div class="d-table-cell">
+            <button v-on:click="loadState"
+                    class="btn btn-sm btn-info js-pull-state"
+                    title="Load this state">
+                <i class="fas fa-file-upload"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+<script>
 window.Vue = require('vue/dist/vue');
 
-export const LineVersion = Vue.extend({
+export default Vue.extend({
     props: ['version', 'previous'],
     created() {
         this.timeZone = this.$parent.timeZone;
@@ -39,3 +55,7 @@ export const LineVersion = Vue.extend({
         },
     }
 });
+</script>
+
+<style scoped>
+</style>
