@@ -1,0 +1,6 @@
+env/
+app/static/
+app/media/
+app/test_media/
+app/logs/
+ci/
