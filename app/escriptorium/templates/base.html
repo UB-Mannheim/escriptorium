@@ -1,3 +1,4 @@
+
 {% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
@@ -20,8 +21,8 @@
     <![endif]-->
 
     {% block styles %}
-    <link href="{% static 'vendor.css.gz' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'main.css.gz' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'vendor.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -92,10 +93,10 @@
     </div>
     </section></main>
 
-    <script src="{% static 'vendor.js.gz' %}" type="text/javascript"></script>
+    <script src="{% static 'vendor.js' %}" type="text/javascript"></script>
 
     {% block scripts %}
-    <script src="{% static 'main.js.gz' %}" type="text/javascript"></script>
+    <script src="{% static 'main.js' %}" type="text/javascript"></script>
     <script type="text/javascript">
       const DEBUG = {% if debug %}true{% else %}false{% endif %};
     </script>
