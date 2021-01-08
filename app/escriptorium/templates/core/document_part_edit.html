@@ -1,6 +1,5 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n staticfiles %}
-{% load compress %}
 
 {% block nav-edit-active %}active{% endblock %}
 
@@ -641,43 +640,12 @@
     {{ block.super }}
 
   <script type="text/javascript">
-   'use strict';
-   $(document).ready(function() {
+    $(document).ready(function() {
        // join the ws room
-       msgSocket.addEventListener('open', function(ev) {
-           msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
-       });
-   });
+       joinDocumentRoom('{{document.pk}}');
+       bootHelp();
+    });
   </script>
 
-  {% compress js file part_edit %}
-  <script type="text/javascript" src="{% static 'js/diff.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/math.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/vue/vue.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/vue-draggable/Sortable.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/help.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/paperjs/paper-core.min.js' %}"></script>
-  {# TODO: can we trash that? #}
-  {# <script type="text/javascript" src="{% static 'vendor/color-thief.min.js' %}"></script> #}
-  <script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/moment/moment-timezone-with-data.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/undomanager.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/lodash/lodash.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/jquery/jquery-ui.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/wheelzoom.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/baseline.editor.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/base_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/base_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/source_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/seg_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/seg_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/line_version.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/trans_modal.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/visu_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/visu_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/diplo_line.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/components/diplo_panel.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/store/part.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/edit/main.js' %}"></script>
-{% endcompress %}
+  <script src="{% static 'editor.js' %}" type="text/javascript"></script>
 {% endblock %}

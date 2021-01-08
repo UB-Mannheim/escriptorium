@@ -84,10 +84,8 @@
 'use strict';
 $(document).ready(function() {
   // join the ws room
-  msgSocket.addEventListener('open', function(ev) {
-    msgSocket.send('{"type": "join-room", "object_cls": "document", "object_pk": {{ document.pk }}}');
-  });
+  joinDocumentRoom('{{document.pk}}');
+  bootModels();
 });
 </script>
-<script src="{% static 'js/models.js' %}"></script>
 {% endblock %}

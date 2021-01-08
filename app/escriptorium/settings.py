@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework.authtoken',
-    'compressor',
     'captcha',
 
     'bootstrap',
@@ -102,12 +101,7 @@ TEMPLATES = [
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
-    'compressor.finders.CompressorFinder',
 )
-
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 
@@ -217,10 +211,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024  # value in bytes (so 150Mb)
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
+FRONTEND_DIR = os.getenv('FRONTEND_DIR', os.path.join(BASE_DIR, '..', 'front', 'dist'))
+
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
+    FRONTEND_DIR
 ]
 
 MEDIA_URL = '/media/'

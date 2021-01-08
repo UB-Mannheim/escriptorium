@@ -2,9 +2,6 @@ from escriptorium.settings import *
 
 DEBUG=True
 
-COMPRESS_ENABLED = not DEBUG
-# COMPRESS_OFFLINE = True
-
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('SQL_ENGINE', 'django.db.backends.postgresql'),
