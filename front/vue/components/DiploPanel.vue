@@ -146,10 +146,10 @@ export default BasePanel.extend({
             }
         },
         startEdit(ev) {
-            this.$parent.blockShortcuts = true;
+            this.$parent.$parent.blockShortcuts = true;
         },
         stopEdit(ev) {
-            this.$parent.blockShortcuts = false;
+            this.$parent.$parent.blockShortcuts = false;
             this.constrainLineNumber();
             this.save();
         },
@@ -177,7 +177,7 @@ export default BasePanel.extend({
         },
         moveLines() {
             if(this.movedLines.length != 0){
-                this.$parent.$emit('move:line', this.movedLines, function () {
+                this.$parent.$parent.$emit('move:line', this.movedLines, function () {
                     this.movedLines = [];
                 }.bind(this));
             }
@@ -288,7 +288,7 @@ export default BasePanel.extend({
 
         bulkUpdate() {
             if(this.updatedLines.length){
-                this.$parent.$emit(
+                this.$parent.$parent.$emit(
                     'bulk_update:transcriptions',
                     this.updatedLines,
                     function () {
@@ -298,7 +298,7 @@ export default BasePanel.extend({
         },
         bulkCreate() {
             if(this.createdLines.length){
-                this.$parent.$emit(
+                this.$parent.$parent.$emit(
                     'bulk_create:transcriptions',
                     this.createdLines,
                     function () {

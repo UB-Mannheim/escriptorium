@@ -367,6 +367,9 @@ form.inline-form {
 
 
 /* transcription interface  */
+.nav-div {
+    display: inline-block;
+}
 
 .nav-btn {
     font-size: 50px;

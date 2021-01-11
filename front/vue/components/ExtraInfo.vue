@@ -1,0 +1,80 @@
+<template>
+    <div>
+        <div class="nav-div nav-item ml-2">
+            <span v-if="object" id="part-name">{{ documentName }}</span>
+            <span id="part-title" v-if="part.loaded">{{ part.title }} - {{ part.filename }} - ({{ imageSize }})</span>
+            <span class="loading" v-if="!part.loaded">Loading&#8230;</span>
+        </div>
+        <div v-if="part.loaded" class="nav-div nav-item form-inline ml-auto mr-auto">
+            <select v-model="$parent.selectedTranscription"
+                    id="document-transcriptions"
+                    title="Transcription"
+                    class="form-control custom-select">
+                <option v-for="transcription in part.transcriptions"
+                        v-bind:key="transcription.pk"
+                        v-bind:value="transcription.pk">{{ transcription.name }}</option>
+            </select>
+            <button type="button"
+                    class="btn btn-primary fas fa-cog ml-1"
+                    title="Transcription management"
+                    data-toggle="modal"
+                    data-target="#transcriptionsManagement"></button>
+            <div id="transcriptionsManagement"
+                class="modal ui-draggable"
+                tabindex="-1"
+                role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header ui-draggable-handle">
+                            <h5 class="modal-title">Transcriptions management</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div>
+                                <span>Compare</span>
+                                <span class="float-right">Delete</span>
+                            </div>
+                            <div v-for="trans in part.transcriptions"
+                                v-bind="trans"
+                                v-bind:key="trans.pk"
+                                class="inline-form form-check mt-1">
+                                <input type="checkbox" class="form-check-input"
+                                    v-bind:id="'opt' + trans.pk"
+                                    v-model="$parent.comparedTranscriptions"
+                                    v-bind:value="trans.pk" />
+                                <label v-bind:for="'opt'+trans.pk"
+                                    class="form-check-label col">{{ trans.name }}</label>
+                                <button v-bind:disabled="trans.pk == $parent.selectedTranscription"
+                                        v-bind:data-trPk="trans.pk"
+                                        @click="deleteTranscription"
+                                        class="btn btn-danger fas fa-trash"
+                                        title="Completely remove the transcription and all of it's content!&#10;You can not remove the manual or the current transcription."></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    props: ['object', 'documentName', 'part'],
+    computed: {
+        imageSize() {
+            return this.part.image.size[0]+'x'+this.part.image.size[1];
+        },
+    },
+    methods: {
+        deleteTranscription(ev) {
+            this.$emit('delete-transcription', ev)
+        }
+    }
+}
+</script>
+
+<style scoped>
+</style>

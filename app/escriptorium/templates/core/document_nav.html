@@ -14,10 +14,6 @@
       <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
       {% endwith %}
       {% endif %}
-      <div class="nav-item ml-2">
-        {% if object %}<span id="part-name">{{ document.name }}</span>{% endif %}
-        {% block extra_info %}{% endblock %}
-      </div>
       {% block extra_nav %}{% endblock %}
     </div>
   </nav>

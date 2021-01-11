@@ -1,6 +1,7 @@
 // singleton!
 export const partStore = {
     // need to set empty value for vue to watch them
+    documentId: null,
     loaded: false,
     pk: null,
     lines: [],
@@ -38,7 +39,7 @@ export const partStore = {
 
     // api
     getApiRoot() {
-        return '/api/documents/' + DOCUMENT_ID + '/';
+        return '/api/documents/' + this.documentId + '/';
     },
     getApiPart(pk) {
         return this.getApiRoot() + 'parts/' + (pk?pk:this.pk) + '/';

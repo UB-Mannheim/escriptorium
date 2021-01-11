@@ -1,207 +1,36 @@
-{% extends 'core/document_nav.html' %}
-{% load i18n staticfiles %}
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+{% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
-{% block nav-edit-active %}active{% endblock %}
-
-{% block extra_info %}
-   <span id="part-title" v-if="part.loaded">${part.title} - ${part.filename} - (${imageSize})</span>
-   <span class="loading" v-if="!part.loaded">{% trans "Loading&#8230;" %}</span>
+{% block body %}
+<div id="editor">
+  <editor :object="'{{object}}'"
+          :document-id="'{{document.id}}'"
+          :document-name="'{{document.name}}'"
+          :part-id="'{{part.id}}'"
+          :default-text-direction="'{{ document.default_text_direction }}'"
+          :main-text-direction="'{{ document.main_script.text_direction }}'"
+          :read-direction="'{{ document.read_direction }}'">
+    <a href="{% if object %}{% url 'document-update' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
+    <a href="{% if object %}{% url 'document-images' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
+    <a href="{% if document  %}{% url 'document-part-edit' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link active {% if not object or not document.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
+    {% if perms.core.can_train %}
+    {% with models_count=document.ocr_models.count %}
+    <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
+    {% endwith %}
+    {% endif %}
+  </editor>
 </div>
-<div v-if="part.loaded" class="nav-item form-inline ml-auto mr-auto">
-    <select v-model="selectedTranscription"
-            id="document-transcriptions"
-            title="{% trans 'Transcription' %}"
-            class="form-control custom-select">
-        <option v-for="transcription in part.transcriptions"
-                v-bind:key="transcription.pk"
-                v-bind:value="transcription.pk">${transcription.name}</option>
-    </select>
-    <button type="button"
-            class="btn btn-primary fas fa-cog ml-1"
-            title="{% trans "Transcription management" %}"
-            data-toggle="modal"
-            data-target="#transcriptionsManagement"></button>
-    <div id="transcriptionsManagement"
-         class="modal ui-draggable"
-         tabindex="-1"
-         role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header ui-draggable-handle">
-                    <h5 class="modal-title">{% trans "Transcriptions management" %}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div>
-                        <span>{% trans "Compare" %}</span>
-                        <span class="float-right">{% trans "Delete" %}</span>
-                    </div>
-                    <div v-for="trans in part.transcriptions"
-                         v-bind="trans"
-                         v-bind:key="trans.pk"
-                         class="inline-form form-check mt-1">
-                        <input type="checkbox" class="form-check-input"
-                               v-bind:id="'opt' + trans.pk"
-                               v-model="comparedTranscriptions"
-                               v-bind:value="trans.pk" />
-                        <label v-bind:for="'opt'+trans.pk"
-                               class="form-check-label col">${trans.name}</label>
-                        <button v-bind:disabled="trans.name == 'manual' || trans.pk == selectedTranscription"
-                                v-bind:data-trPk="trans.pk"
-                                @click="deleteTranscription"
-                                class="btn btn-danger fas fa-trash"
-                                title="{% trans "Completely remove the transcription and all of it's content!&#10;You can not remove the manual or the current transcription."  %}"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endblock %}
+{% endblock %}
 
-    {% block extra_nav %}
-    <div class="nav-item ml-auto" id="toggle-panels">
-        <button type="button"
-                id="source-panel-btn"
-                @click="togglePanel"
-                data-target="source"
-                class="open-panel nav-item btn"
-                v-bind:class="[ show.source ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Source Image" %}"><i class="click-through fas fa-eye"></i></button>
-        <button type="button"
-                id="seg-panel-btn"
-                @click="togglePanel"
-                data-target="segmentation"
-                class="open-panel nav-item btn"
-                v-bind:class="[ show.segmentation ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Segmentation" %}"><i class="click-through fas fa-align-left"></i></button>
-        <button type="button"
-                id="trans-panel-btn"
-                @click="togglePanel"
-                data-target="visualisation"
-                class="open-panel nav-item btn"
-                v-bind:class="[ show.visualisation ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Transcription" %}"><i class="click-through fas fa-language"></i></button>
-        <button type="button"
-                id="diplo-panel-btn"
-                @click="togglePanel"
-                data-target="diplomatic"
-                class="open-panel nav-item btn"
-                v-bind:class="[ show.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
-                title="{% trans "Text" %}"><i class="click-through fas fa-list-ol"></i></button>
-    </div>
-    {% endblock %}
+{% block scripts %}
+  <script type="text/javascript">
+    {% if user.onboarding %}
+    const ONBOARDING_PAGE  = "onboarding_edit";
+    {% endif %}
+  </script>
 
-    {% block tab_content %}
-    <div class="row">
-        <div class="col-sides">
-            {% if document.read_direction == 'rtl' %}
-            <a id="next-part"
-               v-if="part.next"
-               href="#"
-               @click="getNext"
-               class="nav-btn nav-next"
-               title="{% trans "Next (Page Down or Ctrl+Left Arrow)" %}">
-                <i class="fas fa-angle-left"></i></a>
-            {% else %}
-            <a id="prev-part"
-               v-if="part.previous"
-               href="#"
-               @click="getPrevious"
-               class="nav-btn nav-prev"
-               title="{% trans "Previous (Page Up or Ctrl+Right Arrow)" %}">
-                <i class="fas fa-angle-left"></i></a>
-            {% endif %}
-            <div>
-                <button id="zoom-reset"
-                        @click="resetZoom"
-                        class="btn btn-sm btn-info"
-                        title="{% trans "Reset zoom. (Ctrl+Backspace)" %}">
-                    <i class="fas fa-search-minus"></i>
-                </button>
-                <input id="zoom-range"
-                       type="range"
-                       name="zoom-range"
-                       class="form-control-range mt-1"
-                       orient="vertical"
-                       v-bind:min="zoom.minScale"
-                       v-bind:max="zoom.maxScale"
-                       v-model="zoomScale"
-                       step="0.3">
-            </div>
-        </div>
-
-        <SourcePanel v-if="show.source && part.loaded"
-                     v-bind:part="part"
-                     v-bind:fullsizeimage="fullsizeimage"
-                     ref="sourcePanel">
-        </SourcePanel>
-
-        <keep-alive>
-            <SegmentationPanel v-if="show.segmentation && part.loaded"
-                               v-bind:fullsizeimage="fullsizeimage"
-                               v-bind:part="part"
-                               id="segmentation-panel"
-                               ref="segPanel">
-            </SegmentationPanel>
-        </keep-alive>
-
-    <keep-alive>
-        <VisuPanel v-if="show.visualisation && part.loaded"
-                   v-bind:part="part"
-                   v-bind:default-text-direction="'{{ document.default_text_direction }}'"
-                   v-bind:read-direction="'{{ document.read_direction }}'"
-                   id="transcription-panel"
-                   ref="visuPanel">
-        </VisuPanel>
-    </keep-alive>
-
-    <keep-alive>
-        <DiploPanel id="diplo-panel"
-                    v-bind:part="part"
-                    v-if="show.diplomatic && part.loaded"
-                    ref="diploPanel">
-        </DiploPanel>
-    </keep-alive>
-
-    <div class="col-sides">
-        {% if document.read_direction == 'rtl' %}
-        <a id="prev-part"
-           v-if="part.previous"
-           @click="getPrevious"
-           href="#"
-           class="nav-btn nav-prev"
-           title="{% trans "Previous (Page Up or Ctrl+Left Arrow)" %}">
-            <i class="fas fa-angle-right"></i>
-        </a>
-        {% else %}
-        <a id="next-part"
-           v-if="part.next" @click="getNext"
-           href="#"
-           class="nav-btn nav-next"
-           title="{% trans "Next (Page Down or Ctrl+Right Arrow)" %}">
-            <i class="fas fa-angle-right"></i>
-        </a>
-        {% endif %}
-    </div>
-    </div>
-    {% endblock %}
-
-    {% block scripts %}
-
-    <script type="text/javascript">
-     const READ_DIRECTION = '{{document.read_direction}}';
-     const TEXT_DIRECTION = '{{document.main_script.text_direction}}';
-     const DOCUMENT_ID = '{{document.id}}';
-     var PART_ID = {{part.id}};  // can be changed with next & previous pages
-     {% if user.onboarding %}
-     const ONBOARDING_PAGE  = "onboarding_edit";
-     {% endif %}
-     var models_url = "{% url 'document-models' document_pk=document.pk %}";
-    </script>
-
-    {{ block.super }}
+  {{ block.super }}
 
   <script type="text/javascript">
     $(document).ready(function() {

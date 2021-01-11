@@ -167,7 +167,7 @@ import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
 
 export default BasePanel.extend({
-  props: ["part", "fullsizeimage"],
+  props: ["part", "fullsizeimage", "mainTextDirection"],
   data() {
     return {
       segmenter: { loaded: false },
@@ -190,13 +190,13 @@ export default BasePanel.extend({
           { map: true }
         );
         let beSettings =
-          userProfile.get("baseline-editor-" + DOCUMENT_ID) || {};
+          userProfile.get("baseline-editor-" + this.part.documentId) || {};
         this.$img = this.$el.querySelector("img");
 
         this.segmenter = new Segmenter(this.$img, {
           delayInit: true,
           idField: "pk",
-          defaultTextDirection: TEXT_DIRECTION.slice(-2),
+          defaultTextDirection: this.mainTextDirection.slice(-2),
           regionTypes: this.part.types.regions.map((t) => t.name),
           lineTypes: this.part.types.lines.map((t) => t.name),
           baselinesColor: beSettings["color-baselines"] || null,
@@ -224,7 +224,7 @@ export default BasePanel.extend({
         this.segmenter.events.addEventListener(
           "baseline-editor:settings",
           function (ev) {
-            let key = "baseline-editor-" + DOCUMENT_ID;
+            let key = "baseline-editor-" + this.part.documentId;
             let settings = userProfile.get(key) || {};
             settings[event.detail.name] = event.detail.value;
             userProfile.set(key, settings);
@@ -428,7 +428,7 @@ export default BasePanel.extend({
       if (data.regions && data.regions.length) {
         // note: regions dont get a bulk_create
         for (let i = 0; i < data.regions.length; i++) {
-          this.$parent.$emit(
+          this.$parent.$parent.$emit(
             "create:region",
             {
               pk: data.regions[i].pk,
@@ -446,7 +446,7 @@ export default BasePanel.extend({
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$emit(
+        this.$parent.$parent.$emit(
           "bulk_create:lines",
           data.lines.map((l) => {
             return {
@@ -477,7 +477,7 @@ export default BasePanel.extend({
       if (data.regions && data.regions.length) {
         for (let i = 0; i < data.regions.length; i++) {
           let region = data.regions[i];
-          this.$parent.$emit(
+          this.$parent.$parent.$emit(
             "update:region",
             {
               pk: region.context.pk,
@@ -494,7 +494,7 @@ export default BasePanel.extend({
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$emit(
+        this.$parent.$parent.$emit(
           "bulk_update:lines",
           data.lines.map((l) => {
             return {
@@ -530,7 +530,7 @@ export default BasePanel.extend({
       if (data.regions && data.regions.length) {
         // regions have a bulk delete
         for (let i = 0; i < data.regions.length; i++) {
-          this.$parent.$emit(
+          this.$parent.$parent.$emit(
             "delete:region",
             data.regions[i].context.pk,
             function (deletedRegionPk) {
@@ -543,7 +543,7 @@ export default BasePanel.extend({
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$emit(
+        this.$parent.$parent.$emit(
           "bulk_delete:lines",
           data.lines.map((l) => l.context.pk),
           function (deletedLines) {

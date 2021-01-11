@@ -85,7 +85,7 @@
                     </div>
 
                     <!-- transcription comparison -->
-                    <div v-if="$parent.$parent.comparedTranscriptions.length"
+                    <div v-if="$parent.$parent.$parent.comparedTranscriptions.length"
                             class="card history-block mt-2">
                         <div class="card-header">
                             <a href="#"
@@ -110,7 +110,7 @@
                                 <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
                                 <div class="d-table-cell text-muted text-nowrap col" title="Transcription name"><small>
                                     {{ trans.name }}
-                                    <span v-if="trans.pk == $parent.$parent.selectedTranscription">(current)</span></small>
+                                    <span v-if="trans.pk == $parent.$parent.$parent.selectedTranscription">(current)</span></small>
                                 </div>
                             </div>
                         </div>
@@ -168,17 +168,17 @@ export default Vue.extend({
     created() {
         this.$on('update:transcription:version', function(version) {
             this.line.currentTrans.content = version.data.content;
-            this.$parent.$parent.$emit('update:transcription', this.line.currentTrans);
+            this.$parent.$parent.$parent.$emit('update:transcription', this.line.currentTrans);
         }.bind(this));
 
         // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             this.$parent.editLine = null;
-            this.$parent.$parent.blockShortcuts = false;
+            this.$parent.$parent.$parent.blockShortcuts = false;
         }.bind(this));
 
         $(document).on('show.bs.modal', '#trans-modal', function(ev) {
-            this.$parent.$parent.blockShortcuts = true;
+            this.$parent.$parent.$parent.blockShortcuts = true;
         }.bind(this));
 
         this.timeZone = moment.tz.guess();
@@ -207,11 +207,11 @@ export default Vue.extend({
         otherTranscriptions() {
             let a = Object
                 .keys(this.line.transcriptions)
-                .filter(pk=>this.$parent.$parent.comparedTranscriptions
+                .filter(pk=>this.$parent.$parent.$parent.comparedTranscriptions
                                 .includes(parseInt(pk)))
                 .map(pk=>{ return {
                     pk: pk,
-                    name: this.$parent.$parent.part.transcriptions.find(e=>e.pk==pk).name,
+                    name: this.$parent.$parent.$parent.part.transcriptions.find(e=>e.pk==pk).name,
                     content: this.line.transcriptions[pk].content
                 }; });
             return a;
@@ -223,7 +223,7 @@ export default Vue.extend({
             set(newValue) {
                 this.line.currentTrans.content = newValue;
                 // is this ok ?
-                this.$parent.$parent.$emit('update:transcription',
+                this.$parent.$parent.$parent.$emit('update:transcription',
                                            this.line.currentTrans);
             }
         }
