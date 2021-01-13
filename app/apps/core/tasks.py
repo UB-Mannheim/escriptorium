@@ -39,6 +39,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
         "data": data or {}
     })
 
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
@@ -444,10 +445,12 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
+
         logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
         return
 
@@ -459,18 +462,10 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
     else:
         user = None
 
-    if model_pk:
-        try:
-            OcrModel = apps.get_model('core', 'OcrModel')
-            model = OcrModel.objects.get(pk=model_pk)
-        except OcrModel.DoesNotExist:
-            # Not sure how we should deal with this case
-            model = None
-    else:
-        model = None
-
     try:
-        part.transcribe(model=model)
+        OcrModel = apps.get_model('core', 'OcrModel')
+        model = OcrModel.objects.get(pk=model_pk)
+        part.transcribe(model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),
