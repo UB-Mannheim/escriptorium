@@ -42,13 +42,13 @@ export const actions = {
     async fetchDocument ({state, commit}) {
         const resp = await api.retrieveDocument(state.documentId)
         let data = resp.data
-        commit('transcriptions/setTranscriptions', data.transcriptions, {root: true})
+        commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
     },
 
     async fetchPart ({state, commit, dispatch, rootState}, pk) {
         commit('setPartPk', pk)
-        if (!rootState.transcriptions.transcriptions.length) {
+        if (!rootState.transcriptions.all.length) {
             await dispatch('fetchDocument', state.documentId)
         }
         const resp = await api.retrieveDocumentPart(state.documentId, pk)

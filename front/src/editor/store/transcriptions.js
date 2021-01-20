@@ -2,17 +2,17 @@ import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
-    transcriptions: []
+    all: []
 })
 
 export const mutations = {
-    setTranscriptions (state, transcriptions) {
-        assign(state.transcriptions, transcriptions)
+    set (state, transcriptions) {
+        assign(state.all, transcriptions)
     },
-    removeTranscription (state, pk) {
-        let index = state.transcriptions.findIndex(t=>t.pk==pk)
+    remove (state, pk) {
+        let index = state.all.findIndex(t=>t.pk==pk)
         if (index < 0) return
-        Vue.delete(state.transcriptions, index)
+        Vue.delete(state.all, index)
     },
     reset (state) {
         assign(state, initialState())
@@ -20,7 +20,7 @@ export const mutations = {
 }
 
 export const actions = {
-    async bulkCreateLineTranscriptions({commit, rootState}, transcriptions) {
+    async bulkCreate({commit, rootState}, transcriptions) {
         let data = transcriptions.map(l=>{
             return {
                 line : l.line,
@@ -38,7 +38,7 @@ export const actions = {
         }
     },
 
-    async bulkUpdateLineTranscriptions({rootState}, transcriptions) {
+    async bulkUpdate({rootState}, transcriptions) {
         let data = transcriptions.map(l => {
             return {
                 pk: l.pk,
@@ -119,10 +119,10 @@ export const actions = {
         }
     },
 
-    async archiveTranscription({commit, rootState}, transPk) {
+    async archive({commit, rootState}, transPk) {
         try {
             await api.archiveTranscription(rootState.parts.documentId, transPk)
-            commit('removeTranscription', transPk)
+            commit('remove', transPk)
         } catch (err) {
             console.log('couldnt archive transcription #', transPk, err)
         }

@@ -112,7 +112,7 @@ export default {
             await this.$store.dispatch('parts/fetchPart', this.partId);
             let tr = userProfile.get('initialTranscriptions')
                   && userProfile.get('initialTranscriptions')[this.$store.state.parts.documentId]
-                  || this.$store.state.transcriptions.transcriptions[0].pk;
+                  || this.$store.state.transcriptions.all[0].pk;
             this.selectedTranscription = tr;
         } catch (err) {
             console.log('couldnt fetch part data!', err);
@@ -155,7 +155,7 @@ export default {
             let transcription = ev.target.dataset.trpk;
             // I lied, it's only archived
             if(confirm("Are you sure you want to delete the transcription?")) {
-                await this.$store.dispatch('transcriptions/archiveTranscription', transcription)
+                await this.$store.dispatch('transcriptions/archive', transcription)
                 ev.target.parentNode.remove();  // meh
                 let compInd = this.comparedTranscriptions.findIndex(e=>e.pk == transcription);
                 if (compInd != -1) Vue.delete(this.comparedTranscriptions, compInd)

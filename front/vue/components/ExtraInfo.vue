@@ -10,7 +10,7 @@
                     id="document-transcriptions"
                     title="Transcription"
                     class="form-control custom-select">
-                <option v-for="transcription in $store.state.transcriptions.transcriptions"
+                <option v-for="transcription in $store.state.transcriptions.all"
                         v-bind:key="transcription.pk"
                         v-bind:value="transcription.pk">{{ transcription.name }}</option>
             </select>
@@ -36,7 +36,7 @@
                                 <span>Compare</span>
                                 <span class="float-right">Delete</span>
                             </div>
-                            <div v-for="trans in $store.state.transcriptions.transcriptions"
+                            <div v-for="trans in $store.state.transcriptions.all"
                                 v-bind="trans"
                                 v-bind:key="trans.pk"
                                 class="inline-form form-check mt-1">

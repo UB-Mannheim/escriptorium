@@ -291,13 +291,13 @@ export default BasePanel.extend({
 
         async bulkUpdate() {
             if(this.updatedLines.length){
-                await this.$store.dispatch('transcriptions/bulkUpdateLineTranscriptions', this.updatedLines);
+                await this.$store.dispatch('transcriptions/bulkUpdate', this.updatedLines);
                 this.updatedLines = [];
             }
         },
         async bulkCreate() {
             if(this.createdLines.length){
-                await this.$store.dispatch('transcriptions/bulkCreateLineTranscriptions', this.createdLines);
+                await this.$store.dispatch('transcriptions/bulkCreate', this.createdLines);
                 this.createdLines = [];
             }
         },

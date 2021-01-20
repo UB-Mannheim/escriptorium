@@ -207,7 +207,7 @@ export default Vue.extend({
                                 .includes(parseInt(pk)))
                 .map(pk=>{ return {
                     pk: pk,
-                    name: this.$store.state.transcriptions.transcriptions.find(e=>e.pk==pk).name,
+                    name: this.$store.state.transcriptions.all.find(e=>e.pk==pk).name,
                     content: this.line.transcriptions[pk].content
                 }; });
             return a;
