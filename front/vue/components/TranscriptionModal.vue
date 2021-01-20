@@ -1,5 +1,6 @@
 <template>
     <div id="trans-modal"
+         ref="transModal"
          class="modal"
          tabindex="-1"
          role="dialog">
@@ -51,7 +52,7 @@
                     </button>
                 </div>
                 <div :class="'modal-body ' + defaultTextDirection">
-                    <div id="modal-img-container" width="80%">
+                    <div id="modal-img-container" ref="modalImgContainer" width="80%">
                         <img id="line-img"
                                 v-bind:src="modalImgSrc"
                                 draggable="false" selectable="false"/>
@@ -68,10 +69,11 @@
                         </div>
                     </div>
 
-                    <div id="trans-input-container">
+                    <div id="trans-input-container" ref="transInputContainer">
                         <input v-on:keyup.down="$parent.editNext"
                                 v-on:keyup.up="$parent.editPrevious"
                                 id="trans-input"
+                                ref="transInput"
                                 name="content"
                                 class="form-control mb-2"
                                 v-on:keyup.enter="$parent.editNext"
@@ -180,12 +182,12 @@ export default Vue.extend({
         this.timeZone = moment.tz.guess();
     },
     mounted() {
-        $(this.$el).modal('show');
-        $(this.$el).draggable({handle: '.modal-header'});
-        $(this.$el).resizable();
+        $(this.$refs.transModal).modal('show');
+        $(this.$refs.transModal).draggable({handle: '.modal-header'});
+        $(this.$refs.transModal).resizable();
         this.computeStyles();
 
-        let input = this.$el.querySelector('#trans-input');
+        let input = this.$refs.transInput;
         input.focus();
     },
     watch: {
@@ -223,7 +225,7 @@ export default Vue.extend({
     },
     methods: {
         close() {
-            $(this.$el).modal('hide');
+            $(this.$refs.transModal).modal('hide');
         },
 
         comparedContent(content) {
@@ -281,7 +283,7 @@ export default Vue.extend({
         },
 
         computeImgStyles(bbox, ratio, lineHeight, hContext) {
-            let modalImgContainer = this.$el.querySelector('#modal-img-container');
+            let modalImgContainer = this.$refs.modalImgContainer;
             let img = modalImgContainer.querySelector('img#line-img');
 
             let context = hContext*lineHeight;
@@ -320,7 +322,7 @@ export default Vue.extend({
 
         computeInputStyles(bbox, ratio, lineHeight, hContext) {
             // Content input
-            let container = this.$el.querySelector('#trans-modal #trans-input-container');
+            let container = this.$refs.transInputContainer;
             let input = container.querySelector('#trans-input');
             // note: input is not up to date yet
             let content = this.line.currentTrans && this.line.currentTrans.content || '';
@@ -362,7 +364,7 @@ export default Vue.extend({
                Centers the image on the line (zoom + rotation)
                Modifies input font size and height to match the image
              */
-            let modalImgContainer = this.$el.querySelector('#modal-img-container');
+            let modalImgContainer = this.$refs.modalImgContainer;
 
             let bbox = this.getRotatedLineBBox();
             let hContext = 0.3; // vertical context added around the line, in percentage
