@@ -58,7 +58,7 @@ export const actions = {
             let type_ = line.typology && state.types.lines.find(t=>t.pk == line.typology)
             line.type = type_ && type_.name
         })
-        commit('lines/setLines', data.lines, {root: true})
+        commit('lines/set', data.lines, {root: true})
         delete data.lines
 
         data.regions.forEach(function(reg) {

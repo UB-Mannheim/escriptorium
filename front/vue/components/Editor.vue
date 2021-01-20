@@ -143,7 +143,7 @@ export default {
         let $alertsContainer = $('#alerts-container');
         $alertsContainer.on('part:mask', function(ev, data) {
             data.lines.forEach(function(lineData) {
-                let line = this.$store.state.lines.lines.find(l=>l.pk == lineData.pk);
+                let line = this.$store.state.lines.all.find(l=>l.pk == lineData.pk);
                 if (line) {  // might have been deleted in the meantime
                     line.mask = lineData.mask;
                 }
@@ -163,7 +163,7 @@ export default {
         },
         async getCurrentContent(transcription) {
             await this.$store.dispatch('transcriptions/fetchContent', transcription);
-            this.$store.commit('lines/updateLinesCurrentTrans', this.selectedTranscription);
+            this.$store.commit('lines/updateCurrentTrans', this.selectedTranscription);
         },
         getComparisonContent() {
             this.comparedTranscriptions.forEach(async function(tr, i) {

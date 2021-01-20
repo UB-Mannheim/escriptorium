@@ -2,7 +2,7 @@ import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
-    lines: [],
+    all: [],
 
     // internal
     masksToRecalc: [],
@@ -12,45 +12,45 @@ export const initialState = () => ({
 
 export const getters = {
     hasMasks: state => {
-        return state.lines.findIndex(l=>l.mask!=null) != -1
+        return state.all.findIndex(l=>l.mask!=null) != -1
     }
 }
 
 export const mutations = {
-    setLines (state, lines) {
-        assign(state.lines, lines.map(l => ({ ...l, loaded: true })))
+    set (state, lines) {
+        assign(state.all, lines.map(l => ({ ...l, loaded: true })))
     },
-    appendLine (state, line) {
-        state.lines.push({ ...line, loaded: false })
+    append (state, line) {
+        state.all.push({ ...line, loaded: false })
     },
-    loadLine (state, pk) {
-        let index = state.lines.findIndex(l => l.pk == pk)
-        state.lines[index].loaded = true 
+    load (state, pk) {
+        let index = state.all.findIndex(l => l.pk == pk)
+        state.all[index].loaded = true 
     },
-    updateLine (state, line) {
-        let index = state.lines.findIndex(l => l.pk == line.pk)
-        state.lines[index].baseline =line.baseline
-        state.lines[index].mask =line.mask
-        state.lines[index].region =line.region
+    update (state, line) {
+        let index = state.all.findIndex(l => l.pk == line.pk)
+        state.all[index].baseline = line.baseline
+        state.all[index].mask = line.mask
+        state.all[index].region = line.region
     },
-    removeLine (state, index) {
-        Vue.delete(state.lines, index)
+    remove (state, index) {
+        Vue.delete(state.all, index)
     },
-    updateLinesOrder (state, { lines, recalculate }) {
+    updateOrder (state, { lines, recalculate }) {
         for (let i=0; i<lines.length; i++) {
             let lineData = lines[i]
-            let index = state.lines.findIndex(l => l.pk == lineData.pk)
+            let index = state.all.findIndex(l => l.pk == lineData.pk)
             if (index != -1) {
                 if (recalculate) {
-                    state.lines[index] = { ...state.lines[index], order: i }
+                    state.all[index] = { ...state.all[index], order: i }
                 } else {
-                    state.lines[index] = { ...state.lines[index], order: lineData.order }
+                    state.all[index] = { ...state.all[index], order: lineData.order }
                 }
             }
         }
     },
-    updateLinesCurrentTrans (state, transcription) {
-        state.lines = state.lines.map(line => {
+    updateCurrentTrans (state, transcription) {
+        state.all = state.all.map(line => {
             if (!line.transcriptions[transcription]) return line
             return { ...line, currentTrans: line.transcriptions[transcription] }
         })
@@ -58,33 +58,33 @@ export const mutations = {
     setMasksToRecalc (state, value) {
         state.masksToRecalc = value
     },
-    setLineTranscriptions (state, { pk, transcription }) {
-        let index = state.lines.findIndex(l => l.pk == pk)
+    setTranscriptions (state, { pk, transcription }) {
+        let index = state.all.findIndex(l => l.pk == pk)
         if (index < 0) return
-        let tr = state.lines[index].transcriptions || {}
+        let tr = state.all[index].transcriptions || {}
         if (transcription) {
             tr[transcription.transcription] = transcription
-            state.lines[index] = { ...state.lines[index], transcriptions: tr }
+            state.all[index] = { ...state.all[index], transcriptions: tr }
         }
-        state.lines[index] = { ...state.lines[index], currentTrans: transcription }
+        state.all[index] = { ...state.all[index], currentTrans: transcription }
     },
-    createLineTranscriptions (state, createdTranscriptions) {
+    createTranscriptions (state, createdTranscriptions) {
         for (let i=0; i<createdTranscriptions.lines.length; i++) {
             let lineTrans = createdTranscriptions.lines[i]
-            let index = state.lines.findIndex(l => l.pk == lineTrans.line)
+            let index = state.all.findIndex(l => l.pk == lineTrans.line)
             if (index < 0) return
-            state.lines[index] = {
-                ...state.lines[index],
-                currentTrans: { ...state.lines[index].currentTrans, pk: lineTrans.pk }
+            state.all[index] = {
+                ...state.all[index],
+                currentTrans: { ...state.all[index].currentTrans, pk: lineTrans.pk }
             }
         }
     },
-    updateLineTranscriptionVersion (state, { pk, content }) {
-        let index = state.lines.findIndex(l=>l.pk == pk)
+    updateTranscriptionVersion (state, { pk, content }) {
+        let index = state.all.findIndex(l=>l.pk == pk)
         if (index < 0) return
-        state.lines[index] = {
-            ...state.lines[index],
-            currentTrans: { ...state.lines[index].currentTrans, content: content }
+        state.all[index] = {
+            ...state.all[index],
+            currentTrans: { ...state.all[index].currentTrans, content: content }
         }
     },
     reset (state) {
@@ -99,7 +99,7 @@ export const mutations = {
 }
 
 export const actions = {
-    async bulkCreateLines({commit, dispatch, getters, rootState}, {lines, transcription}) {
+    async bulkCreate({commit, dispatch, getters, rootState}, {lines, transcription}) {
         lines.forEach(l=>l.document_part = rootState.parts.pk)
 
         const resp = await api.bulkCreateLines(rootState.parts.documentId, rootState.parts.pk, {lines: lines})
@@ -119,7 +119,7 @@ export const actions = {
                 version_updated_at: null
             }
             createdLines.push(newLine)
-            commit('appendLine', newLine)
+            commit('append', newLine)
         }
 
         await dispatch('recalculateOrdering')
@@ -130,7 +130,7 @@ export const actions = {
         return createdLines
     },
 
-    async bulkUpdateLines({state, commit, dispatch, getters, rootState}, lines) {
+    async bulkUpdate({state, commit, dispatch, getters, rootState}, lines) {
         let dataLines = lines.map(function(l) {
             let type  = l.type && rootState.parts.types.lines.find(t=>t.name==l.type)
             return {
@@ -150,14 +150,14 @@ export const actions = {
         let updatedBaselines = []
         for (let i=0; i<data.lines.length; i++) {
             let lineData = data.lines[i]
-            let line = state.lines.find(function(l) {
+            let line = state.all.find(function(l) {
                 return l.pk==lineData.pk
             })
             if (line) {
                 if (!_.isEqual(line.baseline, lineData.baseline)) {
                     updatedBaselines.push(line)
                 }
-                commit('updateLine', lineData)
+                commit('update', lineData)
                 updatedLines.push(line)
             }
         }
@@ -169,15 +169,15 @@ export const actions = {
         return updatedLines
     },
     
-    async bulkDeleteLines({state, dispatch, commit, rootState}, pks) {
+    async bulkDelete({state, dispatch, commit, rootState}, pks) {
         await api.bulkDeleteLines(rootState.parts.documentId, rootState.parts.pk, {lines: pks})
         
         let deletedLines = []
         for (let i=0; i<pks.length; i++) {
-            let index = state.lines.findIndex(l=>l.pk==pks[i])
+            let index = state.all.findIndex(l=>l.pk==pks[i])
             if (index != -1) {
                 deletedLines.push(pks[i])
-                commit('removeLine', index)
+                commit('remove', index)
             }
         }
 
@@ -186,10 +186,10 @@ export const actions = {
         return deletedLines
     },
 
-    async moveLines({commit, rootState}, movedLines) {
+    async move({commit, rootState}, movedLines) {
         const resp = await api.moveLines(rootState.parts.documentId, rootState.parts.pk, {"lines": movedLines})
         let data = resp.data
-        commit('updateLinesOrder', { lines: data, recalculate: false })
+        commit('updateOrder', { lines: data, recalculate: false })
     },
 
     recalculateMasks({state, commit, rootState}, only=[]) {
@@ -217,7 +217,7 @@ export const actions = {
                 try {
                     const resp = await api.recalculateOrdering(rootState.parts.documentId, rootState.parts.pk, {})
                     let data = resp.data
-                    commit('updateLinesOrder', { lines: data.lines, recalculate: true })
+                    commit('updateOrder', { lines: data.lines, recalculate: true })
                 } catch (err) {
                     console.log('couldnt recalculate ordering!', err)
                 }

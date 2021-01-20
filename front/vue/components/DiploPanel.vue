@@ -11,7 +11,7 @@
         </div>
         <div :class="'content-container ' + readDirection">
 
-            <diploline v-for="line in $store.state.lines.lines"
+            <diploline v-for="line in $store.state.lines.all"
                         v-bind:line="line"
                         v-bind:ratio="ratio"
                         v-bind:key="'DL' + line.pk">
@@ -120,7 +120,7 @@ export default BasePanel.extend({
         },
         constrainLineNumber() {
             // add lines untill we have enough of them
-            while (this.editor.childElementCount < this.$store.state.lines.lines.length) {
+            while (this.editor.childElementCount < this.$store.state.lines.all.length) {
                 this.appendLine();
             }
 
@@ -132,10 +132,10 @@ export default BasePanel.extend({
                     continue;
                 }
 
-                if (i<this.$store.state.lines.lines.length) {
+                if (i<this.$store.state.lines.all.length) {
                     line.classList.remove('alert-danger');
                     line.setAttribute('title', '');
-                } else if (i>=this.$store.state.lines.lines.length) {
+                } else if (i>=this.$store.state.lines.all.length) {
                     if (line.textContent == '') { // just remove empty lines
                         line.remove();
                     } else  {
@@ -178,7 +178,7 @@ export default BasePanel.extend({
         async moveLines() {
             if(this.movedLines.length != 0) {
                 try {
-                    await this.$store.dispatch('lines/moveLines', this.movedLines)
+                    await this.$store.dispatch('lines/move', this.movedLines)
                     this.movedLines = []
                 } catch (err) {
                     console.log('couldnt recalculate order of line', err)

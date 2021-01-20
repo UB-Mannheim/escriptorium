@@ -7,7 +7,7 @@
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
                 <svg :class="'w-100 ' + defaultTextDirection">
-                    <visuline v-for="line in $store.state.lines.lines"
+                    <visuline v-for="line in $store.state.lines.all"
                                 ref="visulines"
                                 v-bind:text-direction="defaultTextDirection"
                                 v-bind:line="line"
@@ -53,19 +53,19 @@ export default BasePanel.extend({
     },
     methods: {
         editNext() {
-            let index = this.$store.state.lines.lines.indexOf(this.editLine);
-            if(index < this.$store.state.lines.lines.length - 1) {
-                this.editLine = this.$store.state.lines.lines[index + 1];
+            let index = this.$store.state.lines.all.indexOf(this.editLine);
+            if(index < this.$store.state.lines.all.length - 1) {
+                this.editLine = this.$store.state.lines.all[index + 1];
             }
         },
         editPrevious() {
-            let index = this.$store.state.lines.lines.indexOf(this.editLine);
+            let index = this.$store.state.lines.all.indexOf(this.editLine);
             if(index >= 1) {
-                this.editLine = this.$store.state.lines.lines[index - 1];
+                this.editLine = this.$store.state.lines.all[index - 1];
             }
         },
         resetLines() {
-            if (this.$store.state.lines.lines.length) {
+            if (this.$store.state.lines.all.length) {
                 this.$refs.visulines.forEach(function(line) {
                     line.reset();
                 });

@@ -32,7 +32,7 @@ export const actions = {
         try {
             const resp = await api.bulkCreateLineTranscriptions(rootState.parts.documentId, rootState.parts.pk, {lines: data})
             let createdTrans = resp.data
-            commit('lines/createLineTranscriptions', createdTrans, {root: true})
+            commit('lines/createTranscriptions', createdTrans, {root: true})
         } catch (err) {
             console.log('couldnt create transcription lines', err)
         }
@@ -58,7 +58,7 @@ export const actions = {
 
     async fetchContent({commit, rootState}, transcription) {
         // first create a default transcription for every line
-        rootState.lines.lines.forEach(function(line) {
+        rootState.lines.all.forEach(function(line) {
             const tr = {
                 line: line.pk,
                 transcription: transcription,
@@ -67,7 +67,7 @@ export const actions = {
                 version_source: null,
                 version_updated_at: null
             }
-            commit('lines/setLineTranscriptions', { pk: line.pk, transcription: tr }, {root: true})
+            commit('lines/setTranscriptions', { pk: line.pk, transcription: tr }, {root: true})
         })
 
         //  then fetch all content page by page
@@ -76,8 +76,8 @@ export const actions = {
             
             let data = resp.data
             for (var i=0; i<data.results.length; i++) {
-                let line = rootState.lines.lines.find(l=>l.pk == data.results[i].line)
-                commit('lines/setLineTranscriptions', { pk: line.pk, transcription: data.results[i] }, {root: true})
+                let line = rootState.lines.all.find(l=>l.pk == data.results[i].line)
+                commit('lines/setTranscriptions', { pk: line.pk, transcription: data.results[i] }, {root: true})
             }
             if (data.next) fetchPage(page+1)
         }
@@ -85,9 +85,9 @@ export const actions = {
     },
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
-        commit('lines/updateLineTranscriptionVersion', { pk: line.pk, content: content }, {root: true})
+        commit('lines/updateTranscriptionVersion', { pk: line.pk, content: content }, {root: true})
         
-        const l = rootState.lines.lines.find(li=>li.pk == line.pk)
+        const l = rootState.lines.all.find(li=>li.pk == line.pk)
         let data = {
             content: l.currentTrans.content,
             line: l.currentTrans.line,
@@ -104,7 +104,7 @@ export const actions = {
     async createContent({commit, rootState}, {content, currentTransLine}) {
         try {
             const resp = await api.createContent(rootState.parts.documentId, rootState.parts.pk, content)
-            commit('lines/setLineTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
         } catch (err) {
             console.log('couldnt create transcription!', err);
         }
@@ -113,7 +113,7 @@ export const actions = {
     async updateContent({commit, rootState}, {pk, content, currentTransLine}) {
         try {
             const resp = await api.updateContent(rootState.parts.documentId, rootState.parts.pk, pk, content)
-            commit('lines/setLineTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
         } catch (err) {
             console.log('couldnt update transcription!', err);
         }

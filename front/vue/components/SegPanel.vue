@@ -80,7 +80,7 @@
                         class="btn btn-sm btn-warning fas fa-cut"></button>
             </div>
 
-            <button v-if="!$store.getters['lines/hasMasks'] && $store.state.lines.lines.length > 0"
+            <button v-if="!$store.getters['lines/hasMasks'] && $store.state.lines.all.length > 0"
                     @click="processLines"
                     class="btn btn-sm btn-success fas fa-thumbs-up ml-auto"
                     title="Segmentation is ready for mask calculation!">
@@ -132,7 +132,7 @@
                                 v-bind:region="region"
                                 v-bind:key="'sR' + region.pk">
                     </segregion>
-                    <segline v-for="line in $store.state.lines.lines"
+                    <segline v-for="line in $store.state.lines.all"
                                 v-bind:line="line"
                                 v-bind:key="'sL' + line.pk">
                     </segline>
@@ -449,7 +449,7 @@ export default BasePanel.extend({
       }
       if (data.lines && data.lines.length) {
         try {
-          const newLines = await this.$store.dispatch('lines/bulkCreateLines', {
+          const newLines = await this.$store.dispatch('lines/bulkCreate', {
             lines: data.lines.map((l) => {
               return {
                 pk: l.pk,
@@ -471,7 +471,7 @@ export default BasePanel.extend({
             }
             // update the segmenter pk
             data.lines[i].context.pk = line.pk;
-            this.$store.commit('lines/loadLine', line.pk);
+            this.$store.commit('lines/load', line.pk);
           }
         } catch (err) {
           console.log('couldnt create lines', err)
@@ -501,7 +501,7 @@ export default BasePanel.extend({
       }
       if (data.lines && data.lines.length) {
         try {
-          const updatedLines = await this.$store.dispatch('lines/bulkUpdateLines', data.lines.map((l) => {
+          const updatedLines = await this.$store.dispatch('lines/bulkUpdate', data.lines.map((l) => {
             return {
               pk: l.context.pk,
               baseline: l.baseline,
@@ -548,7 +548,7 @@ export default BasePanel.extend({
       }
       if (data.lines && data.lines.length) {
         try {
-          const deletedLines = await this.$store.dispatch('lines/bulkDeleteLines', data.lines.map((l) => l.context.pk));
+          const deletedLines = await this.$store.dispatch('lines/bulkDelete', data.lines.map((l) => l.context.pk));
           this.segmenter.lines
             .filter((l) => {
               return deletedLines.indexOf(l.context.pk) >= 0;
@@ -581,7 +581,7 @@ export default BasePanel.extend({
       if (data.lines && data.lines.length) {
         data.lines.forEach(
           function (l) {
-            let line = this.$store.state.lines.lines.find((e) => e.pk == l.context.pk);
+            let line = this.$store.state.lines.all.find((e) => e.pk == l.context.pk);
             if (line) {
               l.previous = {
                 context: l.context,

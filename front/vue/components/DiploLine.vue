@@ -8,9 +8,9 @@ export default LineBase.extend({
     props: ['line', 'ratio'],
     computed: {
         showregion() {
-            let idx = this.$store.state.lines.lines.indexOf(this.line);
+            let idx = this.$store.state.lines.all.indexOf(this.line);
             if (idx) {
-                let pr = this.$store.state.lines.lines[idx - 1].region;
+                let pr = this.$store.state.lines.all[idx - 1].region;
                 if (this.line.region == pr)
                     return "";
                 else
