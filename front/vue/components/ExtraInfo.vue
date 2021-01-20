@@ -2,15 +2,15 @@
     <div>
         <div class="nav-div nav-item ml-2">
             <span v-if="object" id="part-name">{{ documentName }}</span>
-            <span id="part-title" v-if="part.loaded">{{ part.title }} - {{ part.filename }} - ({{ imageSize }})</span>
-            <span class="loading" v-if="!part.loaded">Loading&#8230;</span>
+            <span id="part-title" v-if="$store.state.parts.loaded">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }})</span>
+            <span class="loading" v-if="!$store.state.parts.loaded">Loading&#8230;</span>
         </div>
-        <div v-if="part.loaded" class="nav-div nav-item form-inline ml-auto mr-auto">
+        <div v-if="$store.state.parts.loaded" class="nav-div nav-item form-inline ml-auto mr-auto">
             <select v-model="$parent.selectedTranscription"
                     id="document-transcriptions"
                     title="Transcription"
                     class="form-control custom-select">
-                <option v-for="transcription in part.transcriptions"
+                <option v-for="transcription in $store.state.transcriptions.transcriptions"
                         v-bind:key="transcription.pk"
                         v-bind:value="transcription.pk">{{ transcription.name }}</option>
             </select>
@@ -36,7 +36,7 @@
                                 <span>Compare</span>
                                 <span class="float-right">Delete</span>
                             </div>
-                            <div v-for="trans in part.transcriptions"
+                            <div v-for="trans in $store.state.transcriptions.transcriptions"
                                 v-bind="trans"
                                 v-bind:key="trans.pk"
                                 class="inline-form form-check mt-1">
@@ -62,10 +62,10 @@
 
 <script>
 export default {
-    props: ['object', 'documentName', 'part'],
+    props: ['object', 'documentName'],
     computed: {
         imageSize() {
-            return this.part.image.size[0]+'x'+this.part.image.size[1];
+            return this.$store.state.parts.image.size[0]+'x'+this.$store.state.parts.image.size[1];
         },
     },
     methods: {

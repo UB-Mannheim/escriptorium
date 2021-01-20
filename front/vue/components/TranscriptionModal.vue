@@ -142,6 +142,7 @@
                                     v-for="(version, index) in line.currentTrans.versions"
                                     v-bind:previous="line.currentTrans.versions[index+1]"
                                     v-bind:version="version"
+                                    v-bind:line="line"
                                     v-bind:key="version.revision">
                                 </LineVersion>
                             </div>
@@ -166,11 +167,6 @@ export default Vue.extend({
         HelpCompareTranscriptions,
     },
     created() {
-        this.$on('update:transcription:version', function(version) {
-            this.line.currentTrans.content = version.data.content;
-            this.$parent.$parent.$parent.$emit('update:transcription', this.line.currentTrans);
-        }.bind(this));
-
         // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             this.$parent.editLine = null;
@@ -202,7 +198,7 @@ export default Vue.extend({
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
         modalImgSrc() {
-            return this.$parent.$parent.part.image.uri;
+            return this.$store.state.parts.image.uri;
         },
         otherTranscriptions() {
             let a = Object
@@ -211,7 +207,7 @@ export default Vue.extend({
                                 .includes(parseInt(pk)))
                 .map(pk=>{ return {
                     pk: pk,
-                    name: this.$parent.$parent.$parent.part.transcriptions.find(e=>e.pk==pk).name,
+                    name: this.$store.state.transcriptions.transcriptions.find(e=>e.pk==pk).name,
                     content: this.line.transcriptions[pk].content
                 }; });
             return a;
@@ -220,11 +216,8 @@ export default Vue.extend({
             get() {
                 return this.line.currentTrans && this.line.currentTrans.content || '';
             },
-            set(newValue) {
-                this.line.currentTrans.content = newValue;
-                // is this ok ?
-                this.$parent.$parent.$parent.$emit('update:transcription',
-                                           this.line.currentTrans);
+            async set(newValue) {
+                await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
             }
         }
     },
@@ -273,7 +266,7 @@ export default Vue.extend({
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
-            let transformOrigin =  this.$parent.$parent.part.image.size[0]/2+'px '+this.$parent.$parent.part.image.size[1]/2+'px';
+            let transformOrigin =  this.$store.state.parts.image.size[0]/2+'px '+this.$store.state.parts.image.size[1]/2+'px';
             tmppoly.style.transformOrigin = transformOrigin;
             tmppoly.style.transform = 'rotate('+angle+'deg)';
             svg.appendChild(tmppoly);
@@ -299,8 +292,8 @@ export default Vue.extend({
             let left = -(bbox.left*ratio - context);
             // modalImgContainer.style.transform = 'scale('+ratio+')';
 
-            let imgWidth = this.$parent.$parent.part.image.size[0]*ratio +'px';
-            let transformOrigin =  this.$parent.$parent.part.image.size[0]*ratio/2+'px '+this.$parent.$parent.part.image.size[1]*ratio/2+'px';
+            let imgWidth = this.$store.state.parts.image.size[0]*ratio +'px';
+            let transformOrigin =  this.$store.state.parts.image.size[0]*ratio/2+'px '+this.$store.state.parts.image.size[1]*ratio/2+'px';
             let transform = 'translate('+left+'px, '+top+'px) rotate('+bbox.angle+'deg)';
             img.style.width = imgWidth;
             img.style.transformOrigin = transformOrigin;
@@ -315,7 +308,7 @@ export default Vue.extend({
                 let polygon = overlay.querySelector('polygon');
                 polygon.setAttribute('points', maskPoints);
                 overlay.style.width = imgWidth;
-                overlay.style.height = this.$parent.$parent.part.image.size[1]*ratio+'px';
+                overlay.style.height = this.$store.state.parts.image.size[1]*ratio+'px';
                 overlay.style.transformOrigin = transformOrigin;
                 overlay.style.transform = transform;
                 overlay.style.display = 'block';

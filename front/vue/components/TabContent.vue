@@ -2,14 +2,14 @@
     <div class="row">
         <div class="col-sides">
             <a id="next-part"
-               v-if="readDirection == 'rtl' && part.next"
+               v-if="readDirection == 'rtl' && $store.state.parts.next"
                href="#"
                @click="getNext"
                class="nav-btn nav-next"
                title="Next (Page Down or Ctrl+Left Arrow)">
                 <i class="fas fa-angle-left"></i></a>
             <a id="prev-part"
-               v-else-if="readDirection != 'rtl' && part.previous"
+               v-else-if="readDirection != 'rtl' && $store.state.parts.previous"
                href="#"
                @click="getPrevious"
                class="nav-btn nav-prev"
@@ -34,16 +34,14 @@
             </div>
         </div>
 
-        <SourcePanel v-if="show.source && part.loaded"
-                     v-bind:part="part"
+        <SourcePanel v-if="show.source && $store.state.parts.loaded"
                      v-bind:fullsizeimage="fullsizeimage"
                      ref="sourcePanel">
         </SourcePanel>
 
         <keep-alive>
-            <SegPanel v-if="show.segmentation && part.loaded"
+            <SegPanel v-if="show.segmentation && $store.state.parts.loaded"
                                v-bind:fullsizeimage="fullsizeimage"
-                               v-bind:part="part"
                                v-bind:main-text-direction="mainTextDirection"
                                id="segmentation-panel"
                                ref="segPanel">
@@ -51,8 +49,7 @@
         </keep-alive>
 
         <keep-alive>
-            <VisuPanel v-if="show.visualisation && part.loaded"
-                    v-bind:part="part"
+            <VisuPanel v-if="show.visualisation && $store.state.parts.loaded"
                     v-bind:default-text-direction="defaultTextDirection"
                     v-bind:read-direction="readDirection"
                     id="transcription-panel"
@@ -62,15 +59,14 @@
 
         <keep-alive>
             <DiploPanel id="diplo-panel"
-                        v-bind:part="part"
-                        v-if="show.diplomatic && part.loaded"
+                        v-if="show.diplomatic && $store.state.parts.loaded"
                         ref="diploPanel">
             </DiploPanel>
         </keep-alive>
 
         <div class="col-sides">
             <a id="prev-part"
-            v-if="readDirection == 'rtl' && part.previous"
+            v-if="readDirection == 'rtl' && $store.state.parts.previous"
             @click="getPrevious"
             href="#"
             class="nav-btn nav-prev"
@@ -78,7 +74,7 @@
                 <i class="fas fa-angle-right"></i>
             </a>
             <a id="next-part"
-            v-else-if="readDirection != 'rtl' && part.next"
+            v-else-if="readDirection != 'rtl' && $store.state.parts.next"
             @click="getNext"
             href="#"
             class="nav-btn nav-next"
@@ -96,7 +92,7 @@ import VisuPanel from './VisuPanel.vue';
 import DiploPanel from './DiploPanel.vue';
 
 export default {
-    props: ['blockShortcuts', 'openedPanels', 'readDirection', 'defaultTextDirection', 'mainTextDirection', 'part', 'show'],
+    props: ['blockShortcuts', 'openedPanels', 'readDirection', 'defaultTextDirection', 'mainTextDirection', 'show'],
     data: function() {
         return {
             zoom: new WheelZoom(),
@@ -119,10 +115,10 @@ created() {
 
         // load the full size image when we reach a scale > 1
         this.zoom.events.addEventListener('wheelzoom.updated', function(ev) {
-            if (this.part.loaded && !this.fullsizeimage) {
-                let ratio = ev.target.clientWidth / this.part.image.size[0];
+            if (this.$store.state.parts.loaded && !this.fullsizeimage) {
+                let ratio = ev.target.clientWidth / this.$store.state.parts.image.size[0];
                 if (this.zoom.scale  * ratio > 1) {
-                    this.prefetchImage(this.part.image.uri, function() {
+                    this.prefetchImage(this.$store.state.parts.image.uri, function() {
                         this.fullsizeimage = true;
                     }.bind(this));
                 }

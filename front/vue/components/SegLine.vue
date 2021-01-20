@@ -7,18 +7,26 @@ export default Vue.extend({
     data() { return {
         segmenterObject: null,
     };},
-    mounted() {
-        this.segmenter = this.$parent.segmenter;
-        let segmenterObject = this.segmenter.lines.find(l=>l.context.pk==this.line.pk)
-        if (segmenterObject === undefined) {
-            let region = this.line.region && this.segmenter.regions.find(l=>l.context.pk==this.line.region) || null;
-            this.segmenterObject = this.segmenter.loadLine(this.line, region);
-        } else {
-            // drawn in the editor
-            this.segmenterObject = segmenterObject;
+    methods: {
+        load() {
+            this.segmenter = this.$parent.segmenter;
+            let segmenterObject = this.segmenter.lines.find(l=>l.context.pk==this.line.pk)
+            if (segmenterObject === undefined) {
+                let region = this.line.region && this.segmenter.regions.find(l=>l.context.pk==this.line.region) || null;
+                this.segmenterObject = this.segmenter.loadLine(this.line, region);
+            } else {
+                // drawn in the editor
+                this.segmenterObject = segmenterObject;
+            }
         }
     },
     watch: {
+        'line.loaded': {
+            immediate: true,
+            handler: function (n) {
+                if (n) this.load();
+            }
+        },
         'line.mask': function(n, o) {
             if (!_.isEqual(n, o)) {
                 this.segmenterObject.update(undefined, n);

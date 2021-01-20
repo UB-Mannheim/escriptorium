@@ -11,7 +11,7 @@
         </div>
         <div :class="'content-container ' + readDirection">
 
-            <diploline v-for="line in part.lines"
+            <diploline v-for="line in $store.state.lines.lines"
                         v-bind:line="line"
                         v-bind:ratio="ratio"
                         v-bind:key="'DL' + line.pk">
@@ -49,7 +49,7 @@ export default BasePanel.extend({
         'diploline': DiploLine,
     },
     watch: {
-        'part.loaded': function(isLoaded, wasLoaded) {
+        '$store.state.parts.loaded': function(isLoaded, wasLoaded) {
             if (!isLoaded) {
                 // changed page probably
                 this.empty();
@@ -120,7 +120,7 @@ export default BasePanel.extend({
         },
         constrainLineNumber() {
             // add lines untill we have enough of them
-            while (this.editor.childElementCount < this.part.lines.length) {
+            while (this.editor.childElementCount < this.$store.state.lines.lines.length) {
                 this.appendLine();
             }
 
@@ -132,10 +132,10 @@ export default BasePanel.extend({
                     continue;
                 }
 
-                if (i<this.part.lines.length) {
+                if (i<this.$store.state.lines.lines.length) {
                     line.classList.remove('alert-danger');
                     line.setAttribute('title', '');
-                } else if (i>=this.part.lines.length) {
+                } else if (i>=this.$store.state.lines.lines.length) {
                     if (line.textContent == '') { // just remove empty lines
                         line.remove();
                     } else  {
@@ -175,11 +175,14 @@ export default BasePanel.extend({
             }
             this.moveLines();
         },
-        moveLines() {
-            if(this.movedLines.length != 0){
-                this.$parent.$parent.$emit('move:line', this.movedLines, function () {
-                    this.movedLines = [];
-                }.bind(this));
+        async moveLines() {
+            if(this.movedLines.length != 0) {
+                try {
+                    await this.$store.dispatch('lines/moveLines', this.movedLines)
+                    this.movedLines = []
+                } catch (err) {
+                    console.log('couldnt recalculate order of line', err)
+                }
             }
         },
         save() {
@@ -286,24 +289,16 @@ export default BasePanel.extend({
             if (this.$children.length) this.$children[0].hideOverlay();
         },
 
-        bulkUpdate() {
+        async bulkUpdate() {
             if(this.updatedLines.length){
-                this.$parent.$parent.$emit(
-                    'bulk_update:transcriptions',
-                    this.updatedLines,
-                    function () {
-                        this.updatedLines = [];
-                    }.bind(this));
+                await this.$store.dispatch('transcriptions/bulkUpdateLineTranscriptions', this.updatedLines);
+                this.updatedLines = [];
             }
         },
-        bulkCreate() {
+        async bulkCreate() {
             if(this.createdLines.length){
-                this.$parent.$parent.$emit(
-                    'bulk_create:transcriptions',
-                    this.createdLines,
-                    function () {
-                        this.createdLines = [];
-                    }.bind(this));
+                await this.$store.dispatch('transcriptions/bulkCreateLineTranscriptions', this.createdLines);
+                this.createdLines = [];
             }
         },
         addToList() {
@@ -336,7 +331,7 @@ export default BasePanel.extend({
             }
         },
         setHeight() {
-            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
         },
         updateView() {
             this.setHeight();

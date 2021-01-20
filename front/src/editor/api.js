@@ -16,15 +16,9 @@ export const createContent = async (document_id, part_id, data) => (await axios.
 
 export const updateContent = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/${id}/`, data))
 
-export const createLine = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/`, data))
-
 export const bulkCreateLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/bulk_create/`, data))
 
-export const updateLine = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/lines/${id}/`, data))
-
 export const bulkUpdateLines = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/lines/bulk_update/`, data))
-
-export const deleteLine = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/lines/${id}/`))
 
 export const bulkDeleteLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/bulk_delete/`, data))
 

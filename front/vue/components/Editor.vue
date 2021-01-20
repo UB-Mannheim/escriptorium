@@ -5,7 +5,6 @@
                 <slot></slot>
                 <extrainfo :object="object"
                            :document-name="documentName"
-                           :part="part"
                            @delete-transcription="deleteTranscription">
                 </extrainfo>
                 <extranav :show="show"></extranav>
@@ -15,7 +14,6 @@
         <tabcontent :default-text-direction="defautTextDirection"
                     :main-text-direction="mainTextDirection"
                     :read-direction="readDirection"
-                    :part="part"
                     :block-shortcuts="blockShortcuts"
                     :opened-panels="openedPanels"
                     :show="show"
@@ -26,7 +24,6 @@
 </template>
 
 <script>
-import { partStore } from '../../src/editor/store/part.js';
 import ExtraInfo from './ExtraInfo.vue';
 import ExtraNav from './ExtraNav.vue';
 import TabContent from './TabContent.vue';
@@ -43,7 +40,6 @@ export default {
     ],
     data: function() {
         return {
-            part: partStore,
             show: {
                 source: userProfile.get('source-panel'),
                 segmentation: userProfile.get('segmentation-panel'),
@@ -62,22 +58,25 @@ export default {
                     this.show.visualisation].filter(p=>p===true);
         },
         navEditActive() {
-            return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.part.pk + "/edit/";
+            return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
+        },
+        partPk() {
+            return this.$store.state.parts.pk
         }
     },
     watch: {
-        'part.pk': function(n, o) {
+        '$store.state.parts.pk': function(n, o) {
             if (n) {
                 // set the new url
                 window.history.pushState(
                     {}, "",
                     document.location.href.replace(/(part\/)\d+(\/edit)/,
-                                                   '$1'+this.part.pk+'$2'));
+                                                   '$1'+this.$store.state.parts.pk+'$2'));
 
                 // set the 'image' tab btn to select the corresponding image
                 var tabUrl = new URL($('#nav-img-tab').attr('href'),
                                      window.location.origin);
-                tabUrl.searchParams.set('select', this.part.pk);
+                tabUrl.searchParams.set('select', this.$store.state.parts.pk);
                 $('#nav-img-tab').attr('href', tabUrl);
             }
         },
@@ -88,9 +87,9 @@ export default {
             this.getCurrentContent(n);
         },
         comparedTranscriptions: function(n, o) {
-            n.forEach(function(tr, i) {
+            n.forEach(async function(tr, i) {
                 if (!o.find(e=>e==tr)) {
-                    this.part.fetchContent(tr);
+                    await this.$store.dispatch('transcriptions/fetchContent', tr);
                 }
             }.bind(this));
         },
@@ -107,60 +106,17 @@ export default {
         'tabcontent': TabContent,
     },
 
-    created() {
-        this.part.documentId = this.documentId;
-        // this.fetch();
-        this.part.fetchPart(this.partId, function() {
+    async created() {
+        this.$store.commit('parts/setDocumentId', this.documentId);
+        try {
+            await this.$store.dispatch('parts/fetchPart', this.partId);
             let tr = userProfile.get('initialTranscriptions')
-                  && userProfile.get('initialTranscriptions')[this.documentId]
-                  || this.part.transcriptions[0].pk;
+                  && userProfile.get('initialTranscriptions')[this.$store.state.parts.documentId]
+                  || this.$store.state.transcriptions.transcriptions[0].pk;
             this.selectedTranscription = tr;
-        }.bind(this));
-
-        // bind all events emited from panels and such
-        this.$on('update:transcription', function(lineTranscription) {
-            this.part.pushContent(lineTranscription);
-        }.bind(this));
-        this.$on('create:line', function(line, cb) {
-            this.part.createLine(line, this.selectedTranscription, cb);
-        }.bind(this));
-        this.$on('bulk_create:lines', function(line, cb) {
-            this.part.bulkCreateLines(line, this.selectedTranscription, cb);
-        }.bind(this));
-        this.$on('update:line', function(line, cb) {
-            this.part.updateLine(line, cb);
-        }.bind(this));
-        this.$on('bulk_update:lines', function(lines, cb) {
-            this.part.bulkUpdateLines(lines, cb);
-        }.bind(this));
-        this.$on('delete:line', function(linePk, cb) {
-            this.part.deleteLine(linePk, cb);
-        }.bind(this));
-        this.$on('bulk_delete:lines', function(pks, cb) {
-            this.part.bulkDeleteLines(pks, cb);
-        }.bind(this));
-
-        this.$on('create:region', function(region, cb) {
-            this.part.createRegion(region, cb);
-        }.bind(this));
-        this.$on('update:region', function(region, cb) {
-            this.part.updateRegion(region, cb);
-        }.bind(this));
-        this.$on('delete:region', function(regionPk, cb) {
-            this.part.deleteRegion(regionPk, cb);
-        }.bind(this));
-
-        this.$on('bulk_create:transcriptions', function(lines, cb) {
-            this.part.bulkCreateLineTranscriptions(lines, cb);
-        }.bind(this));
-
-        this.$on('bulk_update:transcriptions', function(lines, cb) {
-            this.part.bulkUpdateLineTranscriptions(lines, cb);
-        }.bind(this));
-
-        this.$on('move:line', function(movedLines, cb) {
-            this.part.move(movedLines, cb);
-        }.bind(this));
+        } catch (err) {
+            console.log('couldnt fetch part data!', err);
+        }
 
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
@@ -187,7 +143,7 @@ export default {
         let $alertsContainer = $('#alerts-container');
         $alertsContainer.on('part:mask', function(ev, data) {
             data.lines.forEach(function(lineData) {
-                let line = this.part.lines.find(l=>l.pk == lineData.pk);
+                let line = this.$store.state.lines.lines.find(l=>l.pk == lineData.pk);
                 if (line) {  // might have been deleted in the meantime
                     line.mask = lineData.mask;
                 }
@@ -195,44 +151,60 @@ export default {
         }.bind(this));
     },
     methods: {
-        deleteTranscription(ev) {
+        async deleteTranscription(ev) {
             let transcription = ev.target.dataset.trpk;
             // I lied, it's only archived
             if(confirm("Are you sure you want to delete the transcription?")) {
-                this.part.archiveTranscription(transcription);
+                await this.$store.dispatch('transcriptions/archiveTranscription', transcription)
                 ev.target.parentNode.remove();  // meh
                 let compInd = this.comparedTranscriptions.findIndex(e=>e.pk == transcription);
                 if (compInd != -1) Vue.delete(this.comparedTranscriptions, compInd)
             }
         },
-        getCurrentContent(transcription) {
-            this.part.fetchContent(transcription, function() {
-                this.part.lines.forEach(function(line, i) {
-                    if (line.transcriptions[this.selectedTranscription]) {
-                        Vue.set(line, 'currentTrans',
-                                line.transcriptions[this.selectedTranscription]);
-                    }
-                }.bind(this));
-            }.bind(this));
+        async getCurrentContent(transcription) {
+            await this.$store.dispatch('transcriptions/fetchContent', transcription);
+            this.$store.commit('lines/updateLinesCurrentTrans', this.selectedTranscription);
         },
         getComparisonContent() {
-            this.comparedTranscriptions.forEach(function(tr, i) {
+            this.comparedTranscriptions.forEach(async function(tr, i) {
                 if (tr != this.selectedTranscription) {
-                    this.part.fetchContent(tr);
+                    await this.$store.dispatch('transcriptions/fetchContent', tr);
                 }
             }.bind(this));
         },
-        getPrevious(ev) {
-            return this.part.getPrevious(function() {
-                this.getCurrentContent(this.selectedTranscription);
-                this.getComparisonContent();
-            }.bind(this));
+        async getPrevious(ev) {
+            if (this.$store.state.parts.loaded && this.$store.state.parts.previous) {
+                let documentId = this.$store.state.parts.documentId;
+                let previous = this.$store.state.parts.previous;
+                this.$store.commit('regions/reset');
+                this.$store.commit('lines/reset');
+                this.$store.commit('parts/reset');
+                this.$store.commit('parts/setDocumentId', documentId);
+                try {
+                    await this.$store.dispatch('parts/fetchPart', previous);
+                    this.getCurrentContent(this.selectedTranscription);
+                    this.getComparisonContent();
+                } catch (err) {
+                    console.log('couldnt fetch part data!', err);
+                }
+            }
         },
-        getNext(ev) {
-            return this.part.getNext(function() {
-                this.getCurrentContent(this.selectedTranscription);
-                this.getComparisonContent();
-            }.bind(this));
+        async getNext(ev) {
+            if (this.$store.state.parts.loaded && this.$store.state.parts.next) {
+                let documentId = this.$store.state.parts.documentId;
+                let next = this.$store.state.parts.next;
+                this.$store.commit('regions/reset');
+                this.$store.commit('lines/reset');
+                this.$store.commit('parts/reset');
+                this.$store.commit('parts/setDocumentId', documentId);
+                try {
+                    await this.$store.dispatch('parts/fetchPart', next);
+                    this.getCurrentContent(this.selectedTranscription);
+                    this.getComparisonContent();
+                } catch (err) {
+                    console.log('couldnt fetch part data!', err);
+                }
+            }
         },
     }
 }

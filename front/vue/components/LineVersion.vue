@@ -17,7 +17,7 @@
 window.Vue = require('vue/dist/vue');
 
 export default Vue.extend({
-    props: ['version', 'previous'],
+    props: ['version', 'previous', 'line'],
     created() {
         this.timeZone = this.$parent.timeZone;
     },
@@ -50,8 +50,8 @@ export default Vue.extend({
         }
     },
     methods: {
-        loadState() {
-            this.$parent.$emit('update:transcription:version', this.version);
+        async loadState() {
+            await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: this.version.data.content });
         },
     }
 });

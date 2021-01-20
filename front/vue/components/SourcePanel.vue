@@ -2,7 +2,7 @@
     <div class="col panel">
         <div class="tools">
             <i title="Source Panel" class="panel-icon fas fa-eye"></i>
-            <a v-bind:href="part.image.uri" target="_blank">
+            <a v-bind:href="$store.state.parts.image.uri" target="_blank">
                 <button class="btn btn-sm btn-info ml-3 fas fa-download"
                         title="Download full size image" download></button>
             </a>
@@ -48,12 +48,12 @@
 import BasePanel from './BasePanel.vue';
 
 export default BasePanel.extend({
-    props: ['part', 'fullsizeimage'],
+    props: ['fullsizeimage'],
     computed: {
         imageSrc() {
             let src = !this.fullsizeimage
-                   && this.part.image.thumbnails.large
-                   || this.part.image.uri;
+                   && this.$store.state.parts.image.thumbnails.large
+                   || this.$store.state.parts.image.uri;
             return src;
         }
     },
@@ -63,8 +63,8 @@ export default BasePanel.extend({
             {map: true});
     },
     methods: {
-        rotate(angle) {
-            this.part.rotate(angle);
+        async rotate(angle) {
+            await this.$store.dispatch('parts/rotate', angle);
         }
     }
 });

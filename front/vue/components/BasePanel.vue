@@ -5,22 +5,21 @@
 window.Vue = require('vue/dist/vue');
 
 export default Vue.extend({
-    props: ['part'],
     data() {
         return {
             ratio: 1
         };
     },
     watch: {
-        'part.loaded': function(n, o) {
-            if (this.part.loaded) {
+        '$store.state.parts.loaded': function(n, o) {
+            if (this.$store.state.parts.loaded) {
                 this.refresh();
             }
         }
     },
     methods: {
         setRatio() {
-            this.ratio = this.$el.firstChild.clientWidth / this.part.image.size[0];
+            this.ratio = this.$el.firstChild.clientWidth / this.$store.state.parts.image.size[0];
         },
         refresh() {
             this.setRatio();

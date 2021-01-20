@@ -7,7 +7,7 @@
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
                 <svg :class="'w-100 ' + defaultTextDirection">
-                    <visuline v-for="line in part.lines"
+                    <visuline v-for="line in $store.state.lines.lines"
                                 ref="visulines"
                                 v-bind:text-direction="defaultTextDirection"
                                 v-bind:line="line"
@@ -53,26 +53,26 @@ export default BasePanel.extend({
     },
     methods: {
         editNext() {
-            let index = this.part.lines.indexOf(this.editLine);
-            if(index < this.part.lines.length - 1) {
-                this.editLine = this.part.lines[index + 1];
+            let index = this.$store.state.lines.lines.indexOf(this.editLine);
+            if(index < this.$store.state.lines.lines.length - 1) {
+                this.editLine = this.$store.state.lines.lines[index + 1];
             }
         },
         editPrevious() {
-            let index = this.part.lines.indexOf(this.editLine);
+            let index = this.$store.state.lines.lines.indexOf(this.editLine);
             if(index >= 1) {
-                this.editLine = this.part.lines[index - 1];
+                this.editLine = this.$store.state.lines.lines[index - 1];
             }
         },
         resetLines() {
-            if (this.part.lines.length) {
+            if (this.$store.state.lines.lines.length) {
                 this.$refs.visulines.forEach(function(line) {
                     line.reset();
                 });
             }
         },
         updateView() {
-            this.$el.querySelector('svg').style.height = Math.round(this.part.image.size[1] * this.ratio) + 'px';
+            this.$el.querySelector('svg').style.height = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));

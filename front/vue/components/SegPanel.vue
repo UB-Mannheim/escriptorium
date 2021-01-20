@@ -30,7 +30,7 @@
                         <br>
                         <input  type="color" id="be-dir-color-0" title="None">
                         <input  type="color"
-                                v-for="(type, index) in part.types.lines"
+                                v-for="(type, index) in $store.state.parts.types.lines"
                                 :key="'BT' + type"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
@@ -41,7 +41,7 @@
                         <br>
                         <input  type="color" id="be-reg-color-0" title="None">
                         <input  type="color"
-                                v-for="(type, index) in part.types.regions"
+                                v-for="(type, index) in $store.state.parts.types.regions"
                                 :key="'LT' + type"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
@@ -80,7 +80,7 @@
                         class="btn btn-sm btn-warning fas fa-cut"></button>
             </div>
 
-            <button v-if="!part.hasMasks && part.lines.length > 0"
+            <button v-if="!$store.getters['lines/hasMasks'] && $store.state.lines.lines.length > 0"
                     @click="processLines"
                     class="btn btn-sm btn-success fas fa-thumbs-up ml-auto"
                     title="Segmentation is ready for mask calculation!">
@@ -128,11 +128,11 @@
         <div class="content-container">
             <div id="seg-zoom-container" class="content">
                 <div id="seg-data-binding" v-if="loaded">
-                    <segregion v-for="region in part.regions"
+                    <segregion v-for="region in $store.state.regions.regions"
                                 v-bind:region="region"
                                 v-bind:key="'sR' + region.pk">
                     </segregion>
-                    <segline v-for="line in part.lines"
+                    <segline v-for="line in $store.state.lines.lines"
                                 v-bind:line="line"
                                 v-bind:key="'sL' + line.pk">
                     </segline>
@@ -167,7 +167,7 @@ import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
 
 export default BasePanel.extend({
-  props: ["part", "fullsizeimage", "mainTextDirection"],
+  props: ["fullsizeimage", "mainTextDirection"],
   data() {
     return {
       segmenter: { loaded: false },
@@ -190,15 +190,15 @@ export default BasePanel.extend({
           { map: true }
         );
         let beSettings =
-          userProfile.get("baseline-editor-" + this.part.documentId) || {};
+          userProfile.get("baseline-editor-" + this.$store.state.parts.documentId) || {};
         this.$img = this.$el.querySelector("img");
 
         this.segmenter = new Segmenter(this.$img, {
           delayInit: true,
           idField: "pk",
           defaultTextDirection: this.mainTextDirection.slice(-2),
-          regionTypes: this.part.types.regions.map((t) => t.name),
-          lineTypes: this.part.types.lines.map((t) => t.name),
+          regionTypes: this.$store.state.parts.types.regions.map((t) => t.name),
+          lineTypes: this.$store.state.parts.types.lines.map((t) => t.name),
           baselinesColor: beSettings["color-baselines"] || null,
           regionColors: beSettings["color-regions"] || null,
           directionHintColors: beSettings["color-directions"] || null,
@@ -208,7 +208,7 @@ export default BasePanel.extend({
         canvas.parentNode.parentNode.appendChild(canvas);
 
         // already mounted with a part = opening the panel after page load
-        if (this.part.loaded) {
+        if (this.$store.state.parts.loaded) {
           this.initSegmenter();
         }
 
@@ -224,7 +224,7 @@ export default BasePanel.extend({
         this.segmenter.events.addEventListener(
           "baseline-editor:settings",
           function (ev) {
-            let key = "baseline-editor-" + this.part.documentId;
+            let key = "baseline-editor-" + this.$store.state.parts.documentId;
             let settings = userProfile.get(key) || {};
             settings[event.detail.name] = event.detail.value;
             userProfile.set(key, settings);
@@ -318,7 +318,7 @@ export default BasePanel.extend({
   },
   computed: {
     hasBinaryColor() {
-      return this.part.loaded && this.part.bw_image !== null;
+      return this.$store.state.parts.loaded && this.$store.state.parts.bw_image !== null;
     },
     loaded() {
       // for this panel we need both the image and the segmenter
@@ -327,24 +327,24 @@ export default BasePanel.extend({
     imageSrc() {
       // empty the src to make sure the complete event gets fired
       // this.$img.src = '';
-      if (!this.part.loaded) return "";
+      if (!this.$store.state.parts.loaded) return "";
       // overrides imageSrc to deal with color modes
       // Note: vue.js doesn't have super call wtf we need to copy the code :(
       let src =
-        (!this.fullsizeimage && this.part.image.thumbnails.large) ||
-        this.part.image.uri;
+        (!this.fullsizeimage && this.$store.state.parts.image.thumbnails.large) ||
+        this.$store.state.parts.image.uri;
 
       let bwSrc =
         (this.colorMode == "binary" &&
-          this.part.bw_image &&
-          this.part.bw_image.uri) ||
+          this.$store.state.parts.bw_image &&
+          this.$store.state.parts.bw_image.uri) ||
         src;
 
       return bwSrc;
     },
   },
   watch: {
-    "part.loaded": function (isLoaded, wasLoaded) {
+    "$store.state.parts.loaded": function (isLoaded, wasLoaded) {
       if (isLoaded === true) {
         if (this.colorMode !== "binary" && !this.hasBinaryColor) {
           this.colorMode = "color";
@@ -400,7 +400,7 @@ export default BasePanel.extend({
       Vue.nextTick(
         function () {
           this.segmenter.scale =
-            this.$img.naturalWidth / this.part.image.size[0];
+            this.$img.naturalWidth / this.$store.state.parts.image.size[0];
           if (this.segmenter.loaded) {
             this.segmenter.refresh();
           } else {
@@ -424,79 +424,84 @@ export default BasePanel.extend({
       }
     },
     // undo manager helpers
-    bulkCreate(data, createInEditor) {
+    async bulkCreate(data, createInEditor) {
       if (data.regions && data.regions.length) {
         // note: regions dont get a bulk_create
         for (let i = 0; i < data.regions.length; i++) {
-          this.$parent.$parent.$emit(
-            "create:region",
-            {
-              pk: data.regions[i].pk,
-              box: data.regions[i].box,
-              type: data.regions[i].type,
-            },
-            function (region) {
-              if (createInEditor) {
-                this.segmenter.loadRegion(region);
+          try {
+            const newRegion = await this.$store.dispatch('regions/createRegion',
+              {
+                pk: data.regions[i].id,
+                box: data.regions[i].box,
+                type: data.regions[i].type,
               }
-              // also update pk in the original data for undo/redo
-              data.regions[i].context.pk = region.pk;
-            }.bind(this)
-          );
+            );
+            if (createInEditor) {
+              this.segmenter.loadRegion(newRegion);
+            }
+            // also update pk in the original data for undo/redo
+            data.regions[i].context.pk = newRegion.pk;
+            this.$store.commit('regions/loadRegion', newRegion.pk);
+          } catch (err) {
+            console.log('couldnt create region', err);
+          }
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$parent.$emit(
-          "bulk_create:lines",
-          data.lines.map((l) => {
-            return {
-              pk: l.pk,
-              baseline: l.baseline,
-              mask: l.mask,
-              region: (l.region && l.region.context.pk) || null,
-            };
-          }),
-          function (newLines) {
-            for (let i = 0; i < newLines.length; i++) {
-              let line = newLines[i];
-              // create a new line in case the event didn't come from the editor
-              if (createInEditor) {
-                let region = this.segmenter.regions.find(
-                  (r) => r.context.pk == line.region
-                );
-                this.segmenter.loadLine(line, region);
-              }
-              // update the segmenter pk
-              data.lines[i].context.pk = line.pk;
+        try {
+          const newLines = await this.$store.dispatch('lines/bulkCreateLines', {
+            lines: data.lines.map((l) => {
+              return {
+                pk: l.pk,
+                baseline: l.baseline,
+                mask: l.mask,
+                region: (l.region && l.region.context.pk) || null,
+              };
+            }),
+            transcription: this.$parent.$parent.selectedTranscription
+          })
+          for (let i = 0; i < newLines.length; i++) {
+            let line = newLines[i];
+            // create a new line in case the event didn't come from the editor
+            if (createInEditor) {
+              let region = this.segmenter.regions.find(
+                (r) => r.context.pk == line.region
+              );
+              this.segmenter.loadLine(line, region);
             }
-          }.bind(this)
-        );
+            // update the segmenter pk
+            data.lines[i].context.pk = line.pk;
+            this.$store.commit('lines/loadLine', line.pk);
+          }
+        } catch (err) {
+          console.log('couldnt create lines', err)
+        }
       }
     },
-    bulkUpdate(data) {
+    async bulkUpdate(data) {
       if (data.regions && data.regions.length) {
         for (let i = 0; i < data.regions.length; i++) {
-          let region = data.regions[i];
-          this.$parent.$parent.$emit(
-            "update:region",
-            {
-              pk: region.context.pk,
-              box: region.box,
-              type: region.type,
-            },
-            function (region) {
-              let segmenterRegion = this.segmenter.regions.find(
-                (r) => r.context.pk == region.pk
-              );
-              segmenterRegion.update(region.box);
-            }.bind(this)
-          );
+          try {
+            let region = data.regions[i];
+            const updatedRegion = await this.$store.dispatch('regions/updateRegion',
+              {
+                pk: region.context.pk,
+                box: region.box,
+                type: region.type,
+              }
+            );
+            let segmenterRegion = this.segmenter.regions.find(
+              (r) => r.context.pk == updatedRegion.pk
+            );
+            segmenterRegion.update(updatedRegion.box);
+          } catch (err) {
+            console.log('couldnt update region', err);
+          }
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$parent.$emit(
-          "bulk_update:lines",
-          data.lines.map((l) => {
+        try {
+          const updatedLines = await this.$store.dispatch('lines/bulkUpdateLines', data.lines.map((l) => {
             return {
               pk: l.context.pk,
               baseline: l.baseline,
@@ -504,58 +509,56 @@ export default BasePanel.extend({
               region: l.region && l.region.context.pk,
               type: l.type,
             };
-          }),
-          function (updatedLines) {
-            for (let i = 0; i < updatedLines.length; i++) {
-              let line = updatedLines[i];
-              let region =
-                this.segmenter.regions.find(
-                  (r) => r.context.pk == line.region
-                ) || null;
-              let segmenterLine = this.segmenter.lines.find(
-                (l) => l.context.pk == line.pk
-              );
-              segmenterLine.update(
-                line.baseline,
-                line.mask,
-                region,
-                line.order
-              );
-            }
-          }.bind(this)
-        );
+          }));
+          for (let i = 0; i < updatedLines.length; i++) {
+            let line = updatedLines[i];
+            let region =
+              this.segmenter.regions.find(
+                (r) => r.context.pk == line.region
+              ) || null;
+            let segmenterLine = this.segmenter.lines.find(
+              (l) => l.context.pk == line.pk
+            );
+            segmenterLine.update(
+              line.baseline,
+              line.mask,
+              region,
+              line.order
+            );
+          }
+        } catch (err) {
+          console.log('couldnt update line', err);
+        }
       }
     },
-    bulkDelete(data) {
+    async bulkDelete(data) {
       if (data.regions && data.regions.length) {
         // regions have a bulk delete
         for (let i = 0; i < data.regions.length; i++) {
-          this.$parent.$parent.$emit(
-            "delete:region",
-            data.regions[i].context.pk,
-            function (deletedRegionPk) {
-              let region = this.segmenter.regions.find(
-                (r) => r.context.pk == deletedRegionPk
-              );
-              if (region) region.remove();
-            }.bind(this)
-          );
+          try {
+            await this.$store.dispatch('regions/deleteRegion', data.regions[i].context.pk);
+            let region = this.segmenter.regions.find(
+              (r) => r.context.pk == data.regions[i].context.pk
+            );
+            if (region) region.remove();
+          } catch (err) {
+            console.log('couldnt delete region #', data.regions[i].context.pk, err);
+          }
         }
       }
       if (data.lines && data.lines.length) {
-        this.$parent.$parent.$emit(
-          "bulk_delete:lines",
-          data.lines.map((l) => l.context.pk),
-          function (deletedLines) {
-            this.segmenter.lines
-              .filter((l) => {
-                return deletedLines.indexOf(l.context.pk) >= 0;
-              })
-              .forEach((l) => {
-                l.remove();
-              });
-          }.bind(this)
-        );
+        try {
+          const deletedLines = await this.$store.dispatch('lines/bulkDeleteLines', data.lines.map((l) => l.context.pk));
+          this.segmenter.lines
+            .filter((l) => {
+              return deletedLines.indexOf(l.context.pk) >= 0;
+            })
+            .forEach((l) => {
+              l.remove();
+            });
+        } catch (err) {
+          console.log('couldnt bulk delete lines', err);
+        }
       }
     },
 
@@ -565,7 +568,7 @@ export default BasePanel.extend({
       if (data.regions && data.regions.length) {
         data.regions.forEach(
           function (r) {
-            let region = this.part.regions.find((e) => e.pk == r.context.pk);
+            let region = this.$store.state.regions.regions.find((e) => e.pk == r.context.pk);
             if (region) {
               r.previous = {
                 context: r.context,
@@ -578,7 +581,7 @@ export default BasePanel.extend({
       if (data.lines && data.lines.length) {
         data.lines.forEach(
           function (l) {
-            let line = this.part.lines.find((e) => e.pk == l.context.pk);
+            let line = this.$store.state.lines.lines.find((e) => e.pk == l.context.pk);
             if (line) {
               l.previous = {
                 context: l.context,
@@ -597,9 +600,9 @@ export default BasePanel.extend({
       }
     },
 
-    processLines(ev) {
+    async processLines(ev) {
       ev.target.disabled = true;
-      this.part.recalculateMasks();
+      await this.$store.dispatch('lines/recalculateMasks');
     },
 
     /* History */

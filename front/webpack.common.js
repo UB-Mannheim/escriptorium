@@ -36,5 +36,11 @@ module.exports = {
         use: ['vue-loader'],
       }
     ]
+  }, 
+
+  resolve: {
+    alias: {
+      'vue$': 'vue/dist/vue'
+    }
   }
 };

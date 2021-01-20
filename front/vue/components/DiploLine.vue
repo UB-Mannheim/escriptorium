@@ -8,9 +8,9 @@ export default LineBase.extend({
     props: ['line', 'ratio'],
     computed: {
         showregion() {
-            let idx = this.$parent.part.lines.indexOf(this.line);
+            let idx = this.$store.state.lines.lines.indexOf(this.line);
             if (idx) {
-                let pr = this.$parent.part.lines[idx - 1].region;
+                let pr = this.$store.state.lines.lines[idx - 1].region;
                 if (this.line.region == pr)
                     return "";
                 else
@@ -59,7 +59,7 @@ export default LineBase.extend({
             if (line) line.textContent = content;
         },
         getRegion() {
-            return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
+            return this.$store.state.regions.regions.findIndex(r => r.pk == this.line.region);
         }
     }
 });
