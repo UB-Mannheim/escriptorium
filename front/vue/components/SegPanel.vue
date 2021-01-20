@@ -128,7 +128,7 @@
         <div class="content-container">
             <div id="seg-zoom-container" class="content">
                 <div id="seg-data-binding" v-if="loaded">
-                    <segregion v-for="region in $store.state.regions.regions"
+                    <segregion v-for="region in $store.state.regions.all"
                                 v-bind:region="region"
                                 v-bind:key="'sR' + region.pk">
                     </segregion>
@@ -429,7 +429,7 @@ export default BasePanel.extend({
         // note: regions dont get a bulk_create
         for (let i = 0; i < data.regions.length; i++) {
           try {
-            const newRegion = await this.$store.dispatch('regions/createRegion',
+            const newRegion = await this.$store.dispatch('regions/create',
               {
                 pk: data.regions[i].id,
                 box: data.regions[i].box,
@@ -441,7 +441,7 @@ export default BasePanel.extend({
             }
             // also update pk in the original data for undo/redo
             data.regions[i].context.pk = newRegion.pk;
-            this.$store.commit('regions/loadRegion', newRegion.pk);
+            this.$store.commit('regions/load', newRegion.pk);
           } catch (err) {
             console.log('couldnt create region', err);
           }
@@ -483,7 +483,7 @@ export default BasePanel.extend({
         for (let i = 0; i < data.regions.length; i++) {
           try {
             let region = data.regions[i];
-            const updatedRegion = await this.$store.dispatch('regions/updateRegion',
+            const updatedRegion = await this.$store.dispatch('regions/update',
               {
                 pk: region.context.pk,
                 box: region.box,
@@ -536,7 +536,7 @@ export default BasePanel.extend({
         // regions have a bulk delete
         for (let i = 0; i < data.regions.length; i++) {
           try {
-            await this.$store.dispatch('regions/deleteRegion', data.regions[i].context.pk);
+            await this.$store.dispatch('regions/delete', data.regions[i].context.pk);
             let region = this.segmenter.regions.find(
               (r) => r.context.pk == data.regions[i].context.pk
             );
@@ -568,7 +568,7 @@ export default BasePanel.extend({
       if (data.regions && data.regions.length) {
         data.regions.forEach(
           function (r) {
-            let region = this.$store.state.regions.regions.find((e) => e.pk == r.context.pk);
+            let region = this.$store.state.regions.all.find((e) => e.pk == r.context.pk);
             if (region) {
               r.previous = {
                 context: r.context,

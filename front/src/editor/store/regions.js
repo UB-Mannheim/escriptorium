@@ -2,29 +2,29 @@ import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
-    regions: []
+    all: []
 })
 
 export const mutations = {
-    setRegions (state, regions) {
-        assign(state.regions, regions.map(r => ({ ...r, loaded: true })))
+    set (state, regions) {
+        assign(state.all, regions.map(r => ({ ...r, loaded: true })))
     },
-    appendRegion (state, region) {
-        state.regions.push({ ...region, loaded: false })
+    append (state, region) {
+        state.all.push({ ...region, loaded: false })
     },
-    loadRegion (state, pk) {
-        let index = state.regions.findIndex(l => l.pk == pk)
-        state.regions[index].loaded = true 
+    load (state, pk) {
+        let index = state.all.findIndex(l => l.pk == pk)
+        state.all[index].loaded = true 
     },
-    updateRegion (state, { pk, region }) {
-        let index = state.regions.findIndex(r=>r.pk==pk)
+    update (state, { pk, region }) {
+        let index = state.all.findIndex(r=>r.pk==pk)
         if (index < 0) return
-        state.regions[index].box = region.box
+        state.all[index].box = region.box
     },
-    removeRegion (state, pk) {
-        let index = state.regions.findIndex(r=>r.pk==pk)
+    remove (state, pk) {
+        let index = state.all.findIndex(r=>r.pk==pk)
         if (index < 0) return
-        Vue.delete(state.regions, index)
+        Vue.delete(state.all, index)
     },
     reset (state) {
         assign(state, initialState())
@@ -32,7 +32,7 @@ export const mutations = {
 }
 
 export const actions = {
-    async createRegion({commit, rootState}, region) {
+    async create({commit, rootState}, region) {
         let type = region.type && rootState.parts.types.regions.find(t=>t.name==region.type)
         let data = {
             document_part: rootState.parts.pk,
@@ -43,12 +43,12 @@ export const actions = {
         const resp = await api.createRegion(rootState.parts.documentId, rootState.parts.pk, data)
 
         let newRegion = resp.data
-        commit('appendRegion', newRegion)
+        commit('append', newRegion)
 
         return newRegion
     },
 
-    async updateRegion({commit, rootState}, region) {
+    async update({commit, rootState}, region) {
         let type = region.type && rootState.parts.types.regions.find(t=>t.name==region.type)
         let data = {
             document_part: rootState.parts.pk,
@@ -58,15 +58,15 @@ export const actions = {
 
         const resp = await api.updateRegion(rootState.parts.documentId, rootState.parts.pk, region.pk, data)
         let updatedRegion = resp.data
-        commit('updateRegion', { pk: region.pk, region: updatedRegion })
+        commit('update', { pk: region.pk, region: updatedRegion })
 
         return updatedRegion
     },
 
-    async deleteRegion({commit, rootState}, regionPk) {
+    async delete({commit, rootState}, regionPk) {
         await api.deleteRegion(rootState.parts.documentId, rootState.parts.pk, regionPk)
         
-        commit('removeRegion', regionPk)
+        commit('remove', regionPk)
     }
 }
 

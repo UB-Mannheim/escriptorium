@@ -65,7 +65,7 @@ export const actions = {
             let type_ = reg.typology && state.types.regions.find(t=>t.pk == reg.typology)
             reg.type = type_ && type_.name
         })
-        commit('regions/setRegions', data.regions, {root: true})
+        commit('regions/set', data.regions, {root: true})
         delete data.regions
 
         commit('load', data)

@@ -59,7 +59,7 @@ export default LineBase.extend({
             if (line) line.textContent = content;
         },
         getRegion() {
-            return this.$store.state.regions.regions.findIndex(r => r.pk == this.line.region);
+            return this.$store.state.regions.all.findIndex(r => r.pk == this.line.region);
         }
     }
 });
