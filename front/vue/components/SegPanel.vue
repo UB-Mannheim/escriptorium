@@ -4,10 +4,12 @@
             <i title="Segmentation Panel" class="panel-icon fas fa-align-left"></i>
             <div class="btn-group">
                 <button id="undo"
+                        ref="undo"
                         title="Undo. (Ctrl+Z)"
                         class="btn btn-sm btn-outline-dark ml-3 fas fa-undo"
                         autocomplete="off" disabled></button>
                 <button id="redo"
+                        ref="redo"
                         title="Redo. (Ctrl+Y)"
                         class="btn btn-sm btn-outline-dark fas fa-redo"
                         autocomplete="off" disabled></button>
@@ -126,7 +128,7 @@
         <div id="info-tooltip"></div>
 
         <div class="content-container">
-            <div id="seg-zoom-container" class="content">
+            <div id="seg-zoom-container" ref="segZoomContainer" class="content">
                 <div id="seg-data-binding" v-if="loaded">
                     <segregion v-for="region in $store.state.regions.all"
                                 v-bind:region="region"
@@ -138,7 +140,7 @@
                     </segline>
                 </div>
 
-                <img class="panel-img"/>
+                <img class="panel-img" ref="img"/>
                 <!-- TODO: make line overlay component -->
                 <div id="segmentation-overlay" class="overlay panel-overlay">
                     <svg width="100%" height="100%">
@@ -186,12 +188,12 @@ export default BasePanel.extend({
     Vue.nextTick(
       function () {
         this.$parent.zoom.register(
-          this.$el.querySelector("#seg-zoom-container"),
+          this.$refs.segZoomContainer,
           { map: true }
         );
         let beSettings =
           userProfile.get("baseline-editor-" + this.$store.state.parts.documentId) || {};
-        this.$img = this.$el.querySelector("img");
+        this.$img = this.$refs.img;
 
         this.segmenter = new Segmenter(this.$img, {
           delayInit: true,
@@ -294,13 +296,13 @@ export default BasePanel.extend({
     );
 
     // history
-    this.$el.querySelector("#undo").addEventListener(
+    this.$refs.undo.addEventListener(
       "click",
       function (ev) {
         this.undo();
       }.bind(this)
     );
-    this.$el.querySelector("#redo").addEventListener(
+    this.$refs.redo.addEventListener(
       "click",
       function (ev) {
         this.redo();
@@ -616,11 +618,11 @@ export default BasePanel.extend({
     },
     refreshHistoryBtns() {
       if (this.undoManager.hasUndo())
-        this.$el.querySelector("#undo").disabled = false;
-      else this.$el.querySelector("#undo").disabled = true;
+        this.$refs.undo.disabled = false;
+      else this.$refs.undo.disabled = true;
       if (this.undoManager.hasRedo())
-        this.$el.querySelector("#redo").disabled = false;
-      else this.$el.querySelector("#redo").disabled = true;
+        this.$refs.redo.disabled = false;
+      else this.$refs.redo.disabled = true;
     },
   },
 });
