@@ -214,6 +214,7 @@ export const partStore = {
                 let index = this.lines.findIndex(l=>l.pk==line.pk);
                 this.lines[index].baseline = data.baseline;
                 this.lines[index].mask = data.mask;
+                this.lines[index].region = data.region;
                 callback(this.lines[index]);
             }.bind(this))
             .catch(function(error) {
@@ -240,6 +241,7 @@ export const partStore = {
             .then(function(data) {
                 let updatedLines = [];
                 let updatedBaselines = [];
+                let hasToRecalculateOrdering = false;
                 for (let i=0; i<data.lines.length; i++) {
                     let lineData = data.lines[i];
                     let line = this.lines.find(function(l) {
@@ -251,6 +253,7 @@ export const partStore = {
                         }
                         line.baseline = lineData.baseline;
                         line.mask = lineData.mask;
+                        if (line.region != lineData.region) hasToRecalculateOrdering = true;
                         line.region = lineData.region;
                         updatedLines.push(line);
                     }
@@ -258,6 +261,7 @@ export const partStore = {
                 if (this.hasMasks && updatedBaselines.length) {
                     this.recalculateMasks(updatedBaselines.map(l=>l.pk));
                 }
+                if (hasToRecalculateOrdering) this.recalculateOrdering();
                 if (callback) callback(updatedLines);
             }.bind(this))
             .catch(function(error) {
