@@ -974,7 +974,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.pk, slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.document.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -996,9 +996,9 @@ class OcrModel(Versioned, models.Model):
     training_accuracy = models.FloatField(default=0.0)
     training_total = models.IntegerField(default=0)
     training_errors = models.IntegerField(default=0)
-    document = models.ForeignKey(Document, blank=True, null=True,
+    document = models.ForeignKey(Document,
                                  related_name='ocr_models',
-                                 default=None, on_delete=models.SET_NULL)
+                                 default=None, on_delete=models.CASCADE)
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
     version_ignore_fields = ('name', 'owner', 'document', 'script', 'training')

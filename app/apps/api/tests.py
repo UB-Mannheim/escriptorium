@@ -30,6 +30,42 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(user.onboarding, False)
 
 
+class OcrModelViewSetTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.part = self.factory.make_part()
+        self.user = self.part.document.owner
+        self.model = self.factory.make_model(document=self.part.document)
+
+    def test_list(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
+        with self.assertNumQueries(7):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_detail(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'pk': self.model.pk})
+        with self.assertNumQueries(6):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_create(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
+        with self.assertNumQueries(4):
+            resp = self.client.post(uri, {
+                'name': 'test.mlmodel',
+                'file': self.factory.make_asset_file(name='test.mlmodel',
+                                                     asset_name='fake_seg.mlmodel'),
+                'job': 'Segment'
+            })
+        self.assertEqual(resp.status_code, 201, resp.content)
+
+
 class DocumentViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
@@ -91,11 +127,12 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
                 'parts': [self.part.pk],
-                'segtrain_model': model.pk
+                'model': model.pk
         })
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json()['error'], {'non_field_errors': ['Segmentation training requires at least 2 images.']})
+        self.assertEqual(resp.json()['error'], {'parts': [
+            'Segmentation training requires at least 2 images.']})
 
     def test_segtrain_new_model(self):
         self.client.force_login(self.doc.owner)
@@ -105,8 +142,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 'model_name': 'new model'
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(OcrModel.objects.count(),1)
-        self.assertEqual(OcrModel.objects.first().name,"new model")
+        self.assertEqual(OcrModel.objects.count(), 1)
+        self.assertEqual(OcrModel.objects.first().name, "new model")
 
     def test_segtrain_existing_model(self):
         self.client.force_login(self.doc.owner)
@@ -114,9 +151,9 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],
-            'segtrain_model': model.pk
+            'model': model.pk
         })
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200, resp.content)
         self.assertEqual(OcrModel.objects.count(), 2)
 
     def test_segment(self):
@@ -126,7 +163,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],
             'seg_steps': 'both',
-            'seg_model': model.pk,
+            'model': model.pk,
         })
         self.assertEqual(resp.status_code, 200)
 
@@ -135,7 +172,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:document-train', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],
-            'new_model': 'testing new model',
+            'model_name': 'testing new model',
             'transcription': self.transcription.pk
         })
         self.assertEqual(resp.status_code, 200)

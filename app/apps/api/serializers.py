@@ -275,6 +275,13 @@ class OcrModelSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name', 'file', 'job',
                   'owner', 'training', 'versions')
 
+    def create(self, data):
+        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        data['document'] = document
+        data['owner'] = self.context["view"].request.user
+        obj = super().create(data)
+        return obj
+
 
 class ProcessSerializerMixin():
     def __init__(self, document, user, *args, **kwargs):
@@ -333,8 +340,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
-    model = serializers.PrimaryKeyRelatedField(required=False,
-                                               queryset=OcrModel.objects.all())
+    model = serializers.PrimaryKeyRelatedField(queryset=OcrModel.objects.all())
     model_name = serializers.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
