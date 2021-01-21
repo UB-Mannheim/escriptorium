@@ -33,7 +33,7 @@
                         <input  type="color" id="be-dir-color-0" title="None">
                         <input  type="color"
                                 v-for="(type, index) in $store.state.parts.types.lines"
-                                :key="'BT' + type"
+                                :key="'BT' + type + index"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
                                 v-bind:id="'be-dir-color-'+(index+1)"/>
@@ -44,7 +44,7 @@
                         <input  type="color" id="be-reg-color-0" title="None">
                         <input  type="color"
                                 v-for="(type, index) in $store.state.parts.types.regions"
-                                :key="'LT' + type"
+                                :key="'LT' + type + index"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
                                 v-bind:id="'be-reg-color-'+(index+1)"/>
