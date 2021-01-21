@@ -297,7 +297,7 @@ export const SegPanel = BasePanel.extend({
                         'delete:region',
                         data.regions[i].context.pk,
                         function(deletedRegionPk) {
-                            let region = this.segmenter.regions.find(r=>r.context.pk==deletedRegionPk)
+                            let region = this.segmenter.regions.find(r=>r.context.pk==deletedRegionPk);
                             if (region) region.remove();
                         }.bind(this)
                     );

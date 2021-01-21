@@ -73,7 +73,6 @@ class SegmenterRegion {
         this.polygonPath.selected = false;
         this.segmenter.removeFromSelection(this);
         this.selected = false;
-
     }
 
     toggleSelect() {
@@ -110,6 +109,11 @@ class SegmenterRegion {
         this.unselect();
         this.polygonPath.remove();
         if(this.orderDisplay) this.orderDisplay.remove();
+
+        // unlink all bound lines
+        let lines = this.segmenter.lines.filter(l=>l.region && l.region.id==this.id);
+        lines.forEach(l=>l.update(undefined, undefined, null, undefined));
+
         this.segmenter.regions.splice(this.segmenter.regions.findIndex(e => e.id == this.id), 1);
     }
 
