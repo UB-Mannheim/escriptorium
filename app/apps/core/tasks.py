@@ -114,15 +114,18 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 
 def make_segmentation_training_data(part):
-    return {
+    data = {
         'image': part.image.path,
-        'baselines': [{'script': bl.typology.name or 'default',
-                       'baseline': bl}
-                      for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {typo: regs for typo, regs in groupby(
-            (r.box for r in part.blocks.all().order_by('typology')),
-            key=lambda reg: reg.typology.name)}
+        'baselines': [{'script': line.typology and line.typology.name or 'default',
+                       'baseline': line.baseline}
+                      for line in part.lines.only('baseline', 'typology')
+                      if line.baseline],
+        'regions':  {typo: list(reg.box for reg in regs)
+                     for typo, regs in groupby(
+                        part.blocks.only('box', 'typology').order_by('typology'),
+                        key=lambda reg: reg.typology and reg.typology.name or 'default')}
     }
+    return data
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
