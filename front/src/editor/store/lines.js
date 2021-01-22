@@ -25,7 +25,7 @@ export const mutations = {
     },
     load (state, pk) {
         let index = state.all.findIndex(l => l.pk == pk)
-        state.all[index].loaded = true 
+        state.all[index].loaded = true
     },
     update (state, line) {
         let index = state.all.findIndex(l => l.pk == line.pk)
@@ -148,6 +148,7 @@ export const actions = {
         let data = resp.data
         let updatedLines = []
         let updatedBaselines = []
+        let hasToRecalculateOrdering = false
         for (let i=0; i<data.lines.length; i++) {
             let lineData = data.lines[i]
             let line = state.all.find(function(l) {
@@ -157,6 +158,7 @@ export const actions = {
                 if (!_.isEqual(line.baseline, lineData.baseline)) {
                     updatedBaselines.push(line)
                 }
+                if (line.region != lineData.region) hasToRecalculateOrdering = true
                 commit('update', lineData)
                 updatedLines.push(line)
             }
@@ -165,13 +167,16 @@ export const actions = {
         if (getters.hasMasks && updatedBaselines.length) {
             await dispatch('recalculateMasks', updatedBaselines.map(l=>l.pk))
         }
+        if (hasToRecalculateOrdering) {
+            await dispatch('recalculateOrdering')
+        }
 
         return updatedLines
     },
-    
+
     async bulkDelete({state, dispatch, commit, rootState}, pks) {
         await api.bulkDeleteLines(rootState.parts.documentId, rootState.parts.pk, {lines: pks})
-        
+
         let deletedLines = []
         for (let i=0; i<pks.length; i++) {
             let index = state.all.findIndex(l=>l.pk==pks[i])
