@@ -22,10 +22,11 @@
 </template>
 
 <script>
-import LineBase from './LineBase.vue';
+import { LineBase } from '../../src/editor/mixins.js';
 
-export default LineBase.extend({
-    props: ['textDirection', 'line', 'ratio'],
+export default Vue.extend({
+    mixins: [LineBase],
+    props: ['textDirection'],
     watch: {
         'line.currentTrans.content': function(n, o) {
             this.$nextTick(this.reset);

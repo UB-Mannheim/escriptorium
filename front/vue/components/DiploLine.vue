@@ -2,10 +2,10 @@
 </template>
 
 <script>
-import LineBase from './LineBase.vue';
+import { LineBase } from '../../src/editor/mixins.js';
 
-export default LineBase.extend({
-    props: ['line', 'ratio'],
+export default Vue.extend({
+    mixins: [LineBase],
     computed: {
         showregion() {
             let idx = this.$store.state.lines.all.indexOf(this.line);

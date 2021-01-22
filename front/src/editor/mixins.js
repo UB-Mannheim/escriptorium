@@ -1,18 +1,6 @@
-<template>
-</template>
-
-<script>
-export default Vue.extend({
+export var LineBase = {
     props: ['line', 'ratio'],
     methods: {
-        setRatio() {
-            this.ratio = this.$el.firstChild.clientWidth / this.$store.state.parts.image.size[0];
-        },
-        refresh() {
-            this.setRatio();
-            this.updateView();
-        },
-        updateView() {},
         showOverlay() {
             if (this.line && this.line.mask) {
                 Array.from(document.querySelectorAll('.panel-overlay')).map(
@@ -38,8 +26,4 @@ export default Vue.extend({
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
     }
-});
-</script>
-
-<style scoped>
-</style>
+}
