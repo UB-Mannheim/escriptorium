@@ -2,14 +2,15 @@
     <div class="col panel">
         <div class="tools">
             <i title="Text Panel" class="panel-icon fas fa-list-ol"></i>
-            <i id="save-notif" title="There is content waiting to be saved (don't leave the page)" class="notice fas fa-save hide"></i>
+            <i id="save-notif" ref="saveNotif" title="There is content waiting to be saved (don't leave the page)" class="notice fas fa-save hide"></i>
             <button id="sortMode"
+                    ref="sortMode"
                     title="Toggle sorting mode."
                     class="btn btn-sm ml-3 btn-info fas fa-sort"
                     @click="toggleSort"
                     autocomplete="off"></button>
         </div>
-        <div :class="'content-container ' + readDirection">
+        <div :class="'content-container ' + readDirection" ref="contentContainer">
 
             <diploline v-for="line in $store.state.lines.all"
                         v-bind:line="line"
@@ -18,6 +19,7 @@
             </diploline>
 
             <div id="diplomatic-lines"
+                    ref="diplomaticLines"
                     contenteditable="true"
                     autocomplete="off"
                     @keydown="onKeyPress"
@@ -66,7 +68,7 @@ export default BasePanel.extend({
     mounted() {
         Vue.nextTick(function() {
             var vm = this ;
-            vm.sortable = Sortable.create(this.editor, {
+            vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
                 disabled: true,
                 multiDrag: true,
                 multiDragKey : 'CTRL',
@@ -80,55 +82,52 @@ export default BasePanel.extend({
             });
         }.bind(this));
 
-        this.editor = this.$el.querySelector('#diplomatic-lines');
-        this.sortModeBtn = this.$el.querySelector('#sortMode');
-        this.saveNotif = this.$el.querySelector('.tools #save-notif');
         this.refresh();
     },
     methods: {
         empty() {
-            while (this.editor.hasChildNodes()) {
-                this.editor.removeChild(this.editor.lastChild);
+            while (this.$refs.diplomaticLines.hasChildNodes()) {
+                this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
         },
         toggleSort() {
-            if (this.editor.contentEditable === 'true') {
-                this.editor.contentEditable = 'false';
+            if (this.$refs.diplomaticLines.contentEditable === 'true') {
+                this.$refs.diplomaticLines.contentEditable = 'false';
                 this.sortable.option('disabled', false);
-                this.sortModeBtn.classList.remove('btn-info');
-                this.sortModeBtn.classList.add('btn-success');
+                this.$refs.sortMode.classList.remove('btn-info');
+                this.$refs.sortMode.classList.add('btn-success');
             } else {
-                this.editor.contentEditable = 'true';
+                this.$refs.diplomaticLines.contentEditable = 'true';
                 this.sortable.option('disabled', true);
-                this.sortModeBtn.classList.remove('btn-success');
-                this.sortModeBtn.classList.add('btn-info');
+                this.$refs.sortMode.classList.remove('btn-success');
+                this.$refs.sortMode.classList.add('btn-info');
             }
         },
         changed() {
-            this.saveNotif.classList.remove('hide');
+            this.$refs.saveNotif.classList.remove('hide');
             this.debouncedSave();
         },
         appendLine(pos) {
             let div = document.createElement('div');
             div.appendChild(document.createElement('br'));
             if (pos === undefined) {
-                this.editor.appendChild(div);
+                this.$refs.diplomaticLines.appendChild(div);
             } else {
-                this.editor.insertBefore(div, pos);
+                this.$refs.diplomaticLines.insertBefore(div, pos);
             }
             return div;
         },
         constrainLineNumber() {
             // add lines untill we have enough of them
-            while (this.editor.childElementCount < this.$store.state.lines.all.length) {
+            while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
                 this.appendLine();
             }
 
             // need to add/remove danger indicators
-            for (let i=0; i<this.editor.childElementCount; i++) {
-                let line = this.editor.querySelector('div:nth-child('+parseInt(i+1)+')');
+            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
+                let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
                 if (line === null) {
-                    this.editor.children[i].remove();
+                    this.$refs.diplomaticLines.children[i].remove();
                     continue;
                 }
 
@@ -190,7 +189,7 @@ export default BasePanel.extend({
                if some lines are modified add them to updatedlines,
                new lines add them to createdLines then save
              */
-            this.saveNotif.classList.add('hide');
+            this.$refs.saveNotif.classList.add('hide');
             this.addToList();
             this.bulkUpdate();
             this.bulkCreate();
@@ -203,7 +202,7 @@ export default BasePanel.extend({
                 sel.removeAllRanges();
 
                 if (line.nextSibling.offsetTop >
-                    this.editor.parentNode.scrollTop + this.editor.parentNode.clientHeight) {
+                    this.$refs.contentContainer.scrollTop + this.$refs.contentContainer.clientHeight) {
                     line.nextSibling.scrollIntoView(false);
                 }
 
@@ -216,8 +215,8 @@ export default BasePanel.extend({
                 range.setStart(line.previousSibling, 0);
                 sel.removeAllRanges();
 
-                if (line.previousSibling.offsetTop - this.editor.parentNode.offsetTop <
-                    this.editor.parentNode.scrollTop) {
+                if (line.previousSibling.offsetTop - this.$refs.contentContainer.offsetTop <
+                    this.$refs.contentContainer.scrollTop) {
                     line.previousSibling.scrollIntoView(true);
                 }
 
@@ -258,8 +257,8 @@ export default BasePanel.extend({
                 const selection = window.getSelection();
                 let range = selection.getRangeAt(0);
                 let target = range.startContainer.nodeType==Node.TEXT_NODE?range.startContainer.parentNode:range.startContainer;
-                let start = Array.prototype.indexOf.call(this.editor.children, target);
-                let newDiv, child = this.editor.children[start];
+                let start = Array.prototype.indexOf.call(this.$refs.diplomaticLines.children, target);
+                let newDiv, child = this.$refs.diplomaticLines.children[start];
                 for (let i = 0; i < pasted_data_split.length; i++) {
                     newDiv = this.appendLine(child);
                     newDiv.textContent = this.cleanSource(pasted_data_split[i]);
@@ -331,7 +330,7 @@ export default BasePanel.extend({
             }
         },
         setHeight() {
-            this.$el.querySelector('.content-container').style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
+            this.$refs.contentContainer.style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
         },
         updateView() {
             this.setHeight();

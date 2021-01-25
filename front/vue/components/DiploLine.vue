@@ -52,7 +52,7 @@ export default Vue.extend({
     },
     methods: {
         getEl() {
-            return this.$parent.editor.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
+            return this.$parent.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
         },
         setElContent(content) {
             let line = this.getEl();
