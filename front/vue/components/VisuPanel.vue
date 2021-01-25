@@ -30,11 +30,12 @@
 /*
 Visual transcription panel (or visualisation panel)
 */
-import BasePanel from './BasePanel.vue';
+import { BasePanel } from '../../src/editor/mixins.js';
 import VisuLine from './VisuLine.vue';
 import TranscriptionModal from './TranscriptionModal.vue';
 
-export default BasePanel.extend({
+export default Vue.extend({
+    mixins: [BasePanel],
     props: ['readDirection', 'defaultTextDirection'],
     data() { return  {
       editLine: null

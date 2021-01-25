@@ -45,9 +45,10 @@
 </template>
 
 <script>
-import BasePanel from './BasePanel.vue';
+import { BasePanel } from '../../src/editor/mixins.js';
 
-export default BasePanel.extend({
+export default Vue.extend({
+    mixins: [BasePanel],
     props: ['fullsizeimage'],
     computed: {
         imageSrc() {

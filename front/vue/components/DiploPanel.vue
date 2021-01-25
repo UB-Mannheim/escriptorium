@@ -36,10 +36,11 @@
 </template>
 
 <script>
-import BasePanel from './BasePanel.vue';
+import { BasePanel } from '../../src/editor/mixins.js';
 import DiploLine from './DiploLine.vue';
 
-export default BasePanel.extend({
+export default Vue.extend({
+    mixins: [BasePanel],
     props: ['readDirection'],
     data() { return {
         updatedLines : [],

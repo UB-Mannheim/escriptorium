@@ -162,13 +162,14 @@
 /*
    Baseline editor panel (or segmentation panel)
  */
-import BasePanel from "./BasePanel.vue";
+import { BasePanel } from '../../src/editor/mixins.js';
 import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
 import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
 
-export default BasePanel.extend({
+export default Vue.extend({
+  mixins: [BasePanel],
   props: ["fullsizeimage", "mainTextDirection"],
   data() {
     return {
