@@ -152,11 +152,11 @@ created() {
         resetZoom() {
             this.zoom.reset();
         },
-        getPrevious(ev) {
-            this.$emit('get-previous', ev)
+        async getPrevious(ev) {
+            await this.$store.dispatch('parts/loadPart', 'previous');
         },
-        getNext(ev) {
-            this.$emit('get-next', ev)
+        async getNext(ev) {
+            await this.$store.dispatch('parts/loadPart', 'next');
         },
     }
 }

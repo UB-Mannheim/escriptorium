@@ -461,7 +461,7 @@ export default Vue.extend({
                 region: (l.region && l.region.context.pk) || null,
               };
             }),
-            transcription: this.$parent.$parent.selectedTranscription
+            transcription: this.$store.state.transcriptions.selectedTranscription
           })
           for (let i = 0; i < newLines.length; i++) {
             let line = newLines[i];

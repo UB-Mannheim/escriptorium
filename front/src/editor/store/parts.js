@@ -82,6 +82,23 @@ export const actions = {
         commit('setDocumentId', documentId)
         await dispatch('fetchPart', pk)
     },
+
+    async loadPart({state, commit, dispatch, rootState}, direction) {
+        if (!state.loaded || !state[direction]) return
+        let documentId = state.documentId
+        let part = state[direction]
+        commit('regions/reset', {}, {root: true})
+        commit('lines/reset', {}, {root: true})
+        commit('reset')
+        commit('setDocumentId', documentId)
+        try {
+            await dispatch('fetchPart', part)
+            await dispatch('transcriptions/getCurrentContent', rootState.transcriptions.selectedTranscription, {root: true})
+            await dispatch('transcriptions/getComparisonContent', {}, {root: true})
+        } catch (err) {
+            console.log('couldnt fetch part data!', err)
+        }
+    },
 }
 
 export default {

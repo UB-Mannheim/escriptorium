@@ -2,7 +2,9 @@ import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
-    all: []
+    all: [],
+    selectedTranscription: null,
+    comparedTranscriptions: []
 })
 
 export const mutations = {
@@ -13,6 +15,14 @@ export const mutations = {
         let index = state.all.findIndex(t=>t.pk==pk)
         if (index < 0) return
         Vue.delete(state.all, index)
+    },
+    setSelectedTranscription (state, pk) {
+        state.selectedTranscription = pk
+    },
+    removeComparedTranscription (state, pk) {
+        let index = state.comparedTranscriptions.findIndex(e=>e.pk == pk)
+        if (index < 0) return
+        Vue.delete(state.comparedTranscriptions, index)
     },
     reset (state) {
         assign(state, initialState())
@@ -126,6 +136,19 @@ export const actions = {
         } catch (err) {
             console.log('couldnt archive transcription #', transPk, err)
         }
+    },
+
+    getComparisonContent({state, dispatch}) {
+        state.comparedTranscriptions.forEach(async function(tr, i) {
+            if (tr != state.selectedTranscription) {
+                await dispatch('fetchContent', tr)
+            }
+        })
+    },
+
+    async getCurrentContent({state, commit, dispatch}, transcription) {
+        await dispatch('fetchContent', transcription)
+        commit('lines/updateCurrentTrans', state.selectedTranscription, {root: true})
     },
 }
 

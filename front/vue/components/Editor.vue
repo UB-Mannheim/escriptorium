@@ -16,9 +16,7 @@
                     :read-direction="readDirection"
                     :block-shortcuts="blockShortcuts"
                     :opened-panels="openedPanels"
-                    :show="show"
-                    @get-previous="getPrevious"
-                    @get-next="getNext">
+                    :show="show">
         </tabcontent>
     </div>
 </template>
@@ -47,8 +45,6 @@ export default {
                 diplomatic: userProfile.get('diplomatic-panel')
             },
             blockShortcuts: false,
-            selectedTranscription: null,
-            comparedTranscriptions: [],
         };
     },
     computed: {
@@ -80,13 +76,13 @@ export default {
                 $('#nav-img-tab').attr('href', tabUrl);
             }
         },
-        selectedTranscription: function(n, o) {
+        '$store.state.transcriptions.selectedTranscription': function(n, o) {
             let itrans = userProfile.get('initialTranscriptions') || {};
             itrans[this.documentId] = n;
             userProfile.set('initialTranscriptions', itrans);
-            this.getCurrentContent(n);
+            this.$store.dispatch('transcriptions/getCurrentContent', n);
         },
-        comparedTranscriptions: function(n, o) {
+        '$store.state.transcriptions.comparedTranscriptions': function(n, o) {
             n.forEach(async function(tr, i) {
                 if (!o.find(e=>e==tr)) {
                     await this.$store.dispatch('transcriptions/fetchContent', tr);
@@ -113,21 +109,21 @@ export default {
             let tr = userProfile.get('initialTranscriptions')
                   && userProfile.get('initialTranscriptions')[this.$store.state.parts.documentId]
                   || this.$store.state.transcriptions.all[0].pk;
-            this.selectedTranscription = tr;
+            this.$store.commit('transcriptions/setSelectedTranscription', tr);
         } catch (err) {
             console.log('couldnt fetch part data!', err);
         }
 
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', async function(event) {
             if (this.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
                 (event.keyCode == (this.readDirection == 'rtl'?39:37) && event.ctrlKey)) {  // arrow left
 
-                this.getPrevious();
+                await this.$store.dispatch('parts/loadPart', 'previous');
                 event.preventDefault();
             } else if (event.keyCode == 34 ||   // page down
                        (event.keyCode == (this.readDirection == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
-                this.getNext();
+                await this.$store.dispatch('parts/loadPart', 'next');
                 event.preventDefault();
             }
         }.bind(this));
@@ -157,53 +153,7 @@ export default {
             if(confirm("Are you sure you want to delete the transcription?")) {
                 await this.$store.dispatch('transcriptions/archive', transcription)
                 ev.target.parentNode.remove();  // meh
-                let compInd = this.comparedTranscriptions.findIndex(e=>e.pk == transcription);
-                if (compInd != -1) Vue.delete(this.comparedTranscriptions, compInd)
-            }
-        },
-        async getCurrentContent(transcription) {
-            await this.$store.dispatch('transcriptions/fetchContent', transcription);
-            this.$store.commit('lines/updateCurrentTrans', this.selectedTranscription);
-        },
-        getComparisonContent() {
-            this.comparedTranscriptions.forEach(async function(tr, i) {
-                if (tr != this.selectedTranscription) {
-                    await this.$store.dispatch('transcriptions/fetchContent', tr);
-                }
-            }.bind(this));
-        },
-        async getPrevious(ev) {
-            if (this.$store.state.parts.loaded && this.$store.state.parts.previous) {
-                let documentId = this.$store.state.parts.documentId;
-                let previous = this.$store.state.parts.previous;
-                this.$store.commit('regions/reset');
-                this.$store.commit('lines/reset');
-                this.$store.commit('parts/reset');
-                this.$store.commit('parts/setDocumentId', documentId);
-                try {
-                    await this.$store.dispatch('parts/fetchPart', previous);
-                    this.getCurrentContent(this.selectedTranscription);
-                    this.getComparisonContent();
-                } catch (err) {
-                    console.log('couldnt fetch part data!', err);
-                }
-            }
-        },
-        async getNext(ev) {
-            if (this.$store.state.parts.loaded && this.$store.state.parts.next) {
-                let documentId = this.$store.state.parts.documentId;
-                let next = this.$store.state.parts.next;
-                this.$store.commit('regions/reset');
-                this.$store.commit('lines/reset');
-                this.$store.commit('parts/reset');
-                this.$store.commit('parts/setDocumentId', documentId);
-                try {
-                    await this.$store.dispatch('parts/fetchPart', next);
-                    this.getCurrentContent(this.selectedTranscription);
-                    this.getComparisonContent();
-                } catch (err) {
-                    console.log('couldnt fetch part data!', err);
-                }
+                this.$store.commit('transcriptions/removeComparedTranscription', transcription);
             }
         },
     }

@@ -6,7 +6,7 @@
             <span class="loading" v-if="!$store.state.parts.loaded">Loading&#8230;</span>
         </div>
         <div v-if="$store.state.parts.loaded" class="nav-div nav-item form-inline ml-auto mr-auto">
-            <select v-model="$parent.selectedTranscription"
+            <select v-model="$store.state.transcriptions.selectedTranscription"
                     id="document-transcriptions"
                     title="Transcription"
                     class="form-control custom-select">
@@ -42,11 +42,11 @@
                                 class="inline-form form-check mt-1">
                                 <input type="checkbox" class="form-check-input"
                                     v-bind:id="'opt' + trans.pk"
-                                    v-model="$parent.comparedTranscriptions"
+                                    v-model="$store.state.transcriptions.comparedTranscriptions"
                                     v-bind:value="trans.pk" />
                                 <label v-bind:for="'opt'+trans.pk"
                                     class="form-check-label col">{{ trans.name }}</label>
-                                <button v-bind:disabled="trans.pk == $parent.selectedTranscription"
+                                <button v-bind:disabled="trans.pk == $store.state.transcriptions.selectedTranscription"
                                         v-bind:data-trPk="trans.pk"
                                         @click="deleteTranscription"
                                         class="btn btn-danger fas fa-trash"

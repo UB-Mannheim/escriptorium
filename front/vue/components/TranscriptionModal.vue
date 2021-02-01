@@ -87,7 +87,7 @@
                     </div>
 
                     <!-- transcription comparison -->
-                    <div v-if="$parent.$parent.$parent.comparedTranscriptions.length"
+                    <div v-if="$store.state.transcriptions.comparedTranscriptions.length"
                             class="card history-block mt-2">
                         <div class="card-header">
                             <a href="#"
@@ -112,7 +112,7 @@
                                 <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
                                 <div class="d-table-cell text-muted text-nowrap col" title="Transcription name"><small>
                                     {{ trans.name }}
-                                    <span v-if="trans.pk == $parent.$parent.$parent.selectedTranscription">(current)</span></small>
+                                    <span v-if="trans.pk == $store.state.transcriptions.selectedTranscription">(current)</span></small>
                                 </div>
                             </div>
                         </div>
@@ -205,7 +205,7 @@ export default Vue.extend({
         otherTranscriptions() {
             let a = Object
                 .keys(this.line.transcriptions)
-                .filter(pk=>this.$parent.$parent.$parent.comparedTranscriptions
+                .filter(pk=>this.$store.state.transcriptions.comparedTranscriptions
                                 .includes(parseInt(pk)))
                 .map(pk=>{ return {
                     pk: pk,
