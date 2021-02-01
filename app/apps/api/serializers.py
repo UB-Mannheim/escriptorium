@@ -110,7 +110,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class PartSerializer(serializers.ModelSerializer):
-    image = ImageField(thumbnails=['card', 'large'])
+    image = ImageField(required=False, thumbnails=['card', 'large'])
     filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
@@ -340,7 +340,8 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
-    model = serializers.PrimaryKeyRelatedField(queryset=OcrModel.objects.all())
+    model = serializers.PrimaryKeyRelatedField(required=False,
+                                               queryset=OcrModel.objects.all())
     model_name = serializers.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
@@ -358,14 +359,24 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         data = super().validate(data)
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
-                _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
+                _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
         return data
 
     def process(self):
         model = self.validated_data.get('model')
-        model.segtrain(self.document,
-                       self.document_parts,
-                       user=self.user)
+        if self.validated_data.get('model_name'):
+            file_ = model and model.file or None
+            model = OcrModel.objects.create(
+                document=self.document,
+                owner=self.user,
+                name=self.validated_data['model_name'],
+                job=OcrModel.MODEL_JOB_RECOGNIZE,
+                file=file_
+            )
+
+        segtrain.delay(model.pk if model else None,
+                       [part.pk for part in self.validated_data.get('parts')],
+                       user_pk=self.user.pk)
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -392,9 +403,19 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         model = self.validated_data.get('model')
-        model.train(self.document_parts,
-                    self.validated_data['transcription'],
-                    user=self.user)
+        if self.validated_data.get('model_name'):
+            file_ = model and model.file or None
+            model = OcrModel.objects.create(
+                document=self.document,
+                owner=self.user,
+                name=self.validated_data['model_name'],
+                job=OcrModel.MODEL_JOB_RECOGNIZE,
+                file=file_)
+
+        train.delay([part.pk for part in self.validated_data.get('parts')],
+                    self.validated_data['transcription'].pk,
+                    model.pk if model else None,
+                    self.user.pk)
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):

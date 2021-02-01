@@ -123,7 +123,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+def segtrain(task, model_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -145,6 +145,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     OcrModel = apps.get_model('core', 'OcrModel')
 
     model = OcrModel.objects.get(pk=model_pk)
+
     try:
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
@@ -406,6 +407,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
     OcrModel = apps.get_model('core', 'OcrModel')
+
     try:
         model = OcrModel.objects.get(pk=model_pk)
         model.training = True
