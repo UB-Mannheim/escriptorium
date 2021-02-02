@@ -4,8 +4,7 @@
             <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
                 <slot></slot>
                 <extrainfo :object="object"
-                           :document-name="documentName"
-                           @delete-transcription="deleteTranscription">
+                           :document-name="documentName">
                 </extrainfo>
                 <extranav :show="show"></extranav>
             </div>
@@ -146,17 +145,6 @@ export default {
             }.bind(this));
         }.bind(this));
     },
-    methods: {
-        async deleteTranscription(ev) {
-            let transcription = ev.target.dataset.trpk;
-            // I lied, it's only archived
-            if(confirm("Are you sure you want to delete the transcription?")) {
-                await this.$store.dispatch('transcriptions/archive', transcription)
-                ev.target.parentNode.remove();  // meh
-                this.$store.commit('transcriptions/removeComparedTranscription', transcription);
-            }
-        },
-    }
 }
 </script>
 

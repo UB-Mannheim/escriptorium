@@ -46,8 +46,7 @@
                                     v-bind:value="trans.pk" />
                                 <label v-bind:for="'opt'+trans.pk"
                                     class="form-check-label col">{{ trans.name }}</label>
-                                <button v-bind:disabled="trans.pk == $store.state.transcriptions.selectedTranscription"
-                                        v-bind:data-trPk="trans.pk"
+                                <button v-bind:data-trPk="trans.pk"
                                         @click="deleteTranscription"
                                         class="btn btn-danger fas fa-trash"
                                         title="Completely remove the transcription and all of it's content!&#10;You can not remove the manual or the current transcription."></button>
@@ -69,9 +68,15 @@ export default {
         },
     },
     methods: {
-        deleteTranscription(ev) {
-            this.$emit('delete-transcription', ev)
-        }
+        async deleteTranscription(ev) {
+            let transcription = ev.target.dataset.trpk;
+            // I lied, it's only archived
+            if(confirm("Are you sure you want to delete the transcription?")) {
+                await this.$store.dispatch('transcriptions/archive', transcription);
+                ev.target.parentNode.remove();  // meh
+                this.$store.commit('transcriptions/removeComparedTranscription', transcription);
+            }
+        },
     }
 }
 </script>
