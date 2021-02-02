@@ -421,8 +421,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
-    model = serializers.PrimaryKeyRelatedField(required=False,
-                                               queryset=OcrModel.objects.all())
+    model = serializers.PrimaryKeyRelatedField(queryset=OcrModel.objects.all())
     # transcription = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.all())
 
     def __init__(self, *args, **kwargs):
