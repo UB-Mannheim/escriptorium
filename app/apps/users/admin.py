@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.utils.translation import ngettext
 
 
-from users.models import User, ResearchField, Invitation, ContactUs
+from users.models import User, ResearchField, Invitation, ContactUs, GroupOwner
 
 
 class MyUserChangeForm(UserChangeForm):
@@ -39,7 +39,8 @@ class MyUserAdmin(UserAdmin):
 class InvitationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     list_filter = ('workflow_state', 'group')
-    list_display = ('recipient_email', 'recipient_last_name', 'recipient_first_name', 'sender', 'workflow_state')
+    list_display = ('recipient_email', 'recipient_last_name', 'recipient_first_name',
+                    'sender', 'workflow_state')
     readonly_fields = ('sender', 'recipient', 'token', 'created_at', 'sent_at', 'workflow_state')
     actions = ['resend']
 
@@ -59,8 +60,12 @@ class InvitationAdmin(admin.ModelAdmin):
         ) % count, messages.SUCCESS)
 
 
+class ContactUsAdmin(admin.ModelAdmin):
+    readonly_fields = ('created_at',)
+
+
 admin.site.register(User, MyUserAdmin)
 admin.site.register(ResearchField)
 admin.site.register(Invitation, InvitationAdmin)
-admin.site.register(ContactUs)
-
+admin.site.register(ContactUs, ContactUsAdmin)
+admin.site.register(GroupOwner)

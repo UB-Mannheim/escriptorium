@@ -1,7 +1,6 @@
 import os
 import uuid
 from datetime import datetime
-
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
@@ -95,6 +94,29 @@ class Invitation(models.Model):
         return '%s -> %s' % (self.sender, self.recipient_email)
 
     def send(self, request):
+        if self.recipient and self.group:  # already exists in the system
+            self.send_invitation_to_group(request)
+        elif self.recipient_email:
+            self.send_invitation_to_service(request)
+        else:
+            # shouldn't happen(?)
+            pass
+
+    def send_invitation_to_group(self, request):
+        accept_url = request.build_absolute_uri(
+            reverse("accept-group-invitation", kwargs={"slug": self.token.hex}))
+
+        context = {
+            "sender": self.sender.get_full_name() or self.sender.username,
+            "recipient_first_name": self.recipient.first_name,
+            "recipient_last_name": self.recipient.last_name,
+            "recipient_email": self.recipient.email,
+            "team": self.group.name,
+            "accept_link": accept_url,
+        }
+        self.send_email((self.recipient.email,), context)
+
+    def send_invitation_to_service(self, request):
         accept_url = request.build_absolute_uri(
             reverse("accept-invitation", kwargs={"token": self.token.hex}))
         context = {
@@ -105,11 +127,14 @@ class Invitation(models.Model):
             "team": self.group and self.group.name,
             "accept_link": accept_url,
         }
+        self.send_email((self.recipient_email,), context)
+
+    def send_email(self, to, context):
         send_email(
             'users/email/invitation_subject.txt',
             'users/email/invitation_message.txt',
             'users/email/invitation_html.html',
-            self.recipient_email,
+            to,
             context=context,
             result_interface=('users', 'Invitation', self.id))
 
@@ -124,6 +149,8 @@ class Invitation(models.Model):
         self.save()
 
     def accept(self, user):
+        if self.recipient and self.recipient != user:
+            return False
         self.recipient = user
         self.workflow_state = self.STATE_ACCEPTED
         self.save()
@@ -133,6 +160,7 @@ class Invitation(models.Model):
                           _('{username} accepted your invitation!').format(
                               username=self.recipient.username),
                           level='success')
+        return True
 
 
 class ContactUs(models.Model):
@@ -145,10 +173,11 @@ class ContactUs(models.Model):
         max_length=255,
     )
     message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
-        verbose_name = "message"
-        verbose_name_plural = "messages"
+        verbose_name = "Contact message"
+        verbose_name_plural = "Contact messages"
 
     def __str__(self):
         return "from {}({})".format(self.name, self.email)
@@ -168,5 +197,17 @@ class ContactUs(models.Model):
             context=context,
             result_interface=None
         )
-
         super().save(*args, **kwargs)
+
+
+class GroupOwner(models.Model):
+    """
+    Model for the team to share documents with
+    the group owner is the first user
+    """
+    group = models.OneToOneField(Group, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL,
+                              related_name='owned_groups')
+
+    def __str__(self):
+        return str(self.group)

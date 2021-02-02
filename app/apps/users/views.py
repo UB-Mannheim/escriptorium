@@ -3,17 +3,22 @@ from os.path import isfile, join, relpath
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import Paginator
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.views.generic.edit import CreateView, UpdateView
+from django.urls import reverse
+from django.views.generic import CreateView, UpdateView, TemplateView, DetailView
+from django.core.exceptions import PermissionDenied
 
 from rest_framework.authtoken.models import Token
-
+from django.contrib.auth.models import Group
 from users.models import User, Invitation, ContactUs
-from users.forms import InvitationForm, InvitationAcceptForm, ProfileForm, ContactUsForm
+from users.forms import (InvitationForm, InvitationAcceptForm, ProfileForm,
+                         ContactUsForm, GroupForm, GroupInvitationForm,
+                         RemoveUserFromGroup, TransferGroupOwnershipForm)
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -74,7 +79,75 @@ class AcceptInvitation(CreateView):
         return response
 
 
-class Profile(SuccessMessageMixin, UpdateView):
+class AcceptGroupInvitation(DetailView):
+    model = Invitation
+    slug_field = 'token'
+
+    def get_success_message(self):
+        return _("You are now a member of Team {team_name}!").format(
+            team_name=self.object.group.name)
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        valid = self.object.accept(self.request.user)
+        if not valid:
+            return Http404
+        messages.success(self.request, self.get_success_message())
+        return HttpResponseRedirect(reverse('profile-team-list'))
+
+
+class GroupOwnerMixin():
+    def get_object(self, *args, **kwargs):
+        obj = super().get_object(*args, **kwargs)
+        if obj.groupowner.owner != self.request.user:
+            raise PermissionDenied()  # or Http404
+        return obj
+
+    def get_success_url(self):
+        return reverse('team-detail', kwargs={'pk': self.get_object().pk})
+
+
+class RemoveFromGroup(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Group
+    form_class = RemoveUserFromGroup
+
+    def get_success_message(self, data):
+        return _('User {user} successfully removed from the team {team_name}.').format(
+            user=data.get('user'),
+            team_name=self.get_object())
+
+    def form_invalid(self, forms):
+        return reverse('team-detail', kwargs={'pk': self.get_object().pk})
+
+
+class LeaveGroup(LoginRequiredMixin, SuccessMessageMixin, DetailView):
+    model = Group
+    success_url = '/profile/teams/'
+
+    def get_success_message(self, data):
+        return _('You successfully left {team}.').format(team=self.object)
+
+    def post(self, request, **kwargs):
+        self.get_object().user_set.remove(request.user)
+        return HttpResponseRedirect(reverse('profile-team-list'))
+
+
+class TransferGroupOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Group
+    form_class = TransferGroupOwnershipForm
+
+    def get_success_url(self):
+        return reverse('profile-team-list')
+
+    def get_success_message(self, data):
+        return _('Successfully transfered ownership to {user}.').format(
+            user=data.get('user'))
+
+    def form_invalid(self, forms):
+        return reverse('team-detail', kwargs={'pk': self.get_object().pk})
+
+
+class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
     form_class = ProfileForm
     success_url = '/profile/'
@@ -84,12 +157,24 @@ class Profile(SuccessMessageMixin, UpdateView):
     def get_object(self):
         return self.request.user
 
-    def get_context_data(self):
-        context = super().get_context_data()
-        context['api_auth_token'], created = Token.objects.get_or_create(user=self.object)
+
+class ProfileApiKey(LoginRequiredMixin, TemplateView):
+    template_name = 'users/profile_api_key.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['api_auth_token'], created = Token.objects.get_or_create(user=self.request.user)
+        return context
+
+
+class ProfileFiles(LoginRequiredMixin, TemplateView):
+    template_name = 'users/profile_files.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
 
         # files directory
-        upath = self.object.get_document_store_path() + '/'
+        upath = self.request.user.get_document_store_path() + '/'
         files = listdir(upath)
         files.sort(key=lambda x: stat(join(upath, x)).st_mtime)
         files.reverse()
@@ -104,12 +189,52 @@ class Profile(SuccessMessageMixin, UpdateView):
         return context
 
 
+class ProfileGroupListCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    """
+    Both were we create new groups and list them
+    """
+    model = Group
+    success_url = '/profile/teams/'
+    success_message = _('Team successfully created.')
+    template_name = 'users/profile_group_list.html'
+    form_class = GroupForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['invitations'] = Invitation.objects.filter(
+            recipient=self.request.user,
+            workflow_state__lt=Invitation.STATE_ACCEPTED)
+        return context
+
+
+class GroupDetail(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Group
+    form_class = GroupInvitationForm
+    success_message = _('User successfully invited to the team.')
+    template_name = 'users/group_detail_invite.html'
+
+    def get_form_kwargs(self):
+        # passing instance=None, as the instance would be a group instead of an Invitation
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'instance': None,
+            'request': self.request})
+        return kwargs
+
+    def get_context_data(self, *args,  **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['other_users'] = self.object.user_set.exclude(pk=self.request.user.pk)
+        return context
+
+
 class ContactUsView(SuccessMessageMixin, CreateView):
     model = ContactUs
     form_class = ContactUsForm
-
-    success_message = _('Your message successfully sent.')
-
+    success_message = _('Message successfully sent.')
     template_name = 'users/contactus.html'
-
     success_url = '/contact/'

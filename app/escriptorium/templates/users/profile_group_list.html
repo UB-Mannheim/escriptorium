@@ -1,0 +1,63 @@
+{% extends "users/profile.html" %}
+{% load i18n bootstrap static %}
+
+{% block infos-tab-active %}{% endblock %}
+{% block key-tab-active %}{% endblock %}
+{% block files-tab-active %}{% endblock %}
+{% block team-tab-active %}active{% endblock %}
+
+{% block tab-content %}
+
+<h4>{% trans "Create a new Team" %}</h4>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-row">
+        <div class="col">{% render_field form.name group=True %}</div>
+        <div class="col-auto"><input type="submit" value="{% trans 'Create' %}" class="btn btn-success btn-block col-auto"></div>
+    </div>
+
+</form>
+<br>
+
+{% if invitations %}
+<h4>{% trans "Pending Invitations"  %}</h4>
+<table class="table table-hover">
+    {% for invitation in invitations %}
+    <tr>
+        <td class="col">
+            {% blocktrans with team_name=invitation.group.name sender=invitation.sender.username %}
+            Invited to {{team_name}} by {{sender}}
+            {% endblocktrans %}
+        </td>
+        <td class="col-auto">
+            <a href="{% url 'accept-group-invitation' invitation.token %}">{% trans "Accept" %}</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+{% endif %}
+
+<h4>{% trans "My teams" %}</h4>
+<table class="table table-hover container">
+    {% for team in user.groups.all %}
+    <tr class="row no-margin">
+        {% if team.groupowner.owner == user %}
+        <td class="col"><a href="{% url 'team-detail' team.pk %}">{{ team }} (owner)</a></td>
+        <td></td
+        <td></td>
+        {% else %}
+        <td class="col">{{ team }}</td>
+        <td class="col-auto">{% blocktrans with owner=team.groupowner.owner.username %}Owned by {{owner}}{% endblocktrans %}</td>
+        <td class="col-auto">
+            <form method="post" action="{% url 'team-leave' team.pk %}">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-danger btn-sm" value="{% trans "Leave" %}" />
+            </form></td>
+        {% endif  %}
+    </tr>
+    {% empty %}
+    {% trans "You are not part of any team yet." %}
+    {% endfor %}
+</table>
+{% endblock %}

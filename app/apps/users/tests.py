@@ -4,8 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from users.models import Invitation
-from users.models import User as CustomUser, ResearchField
+from users.models import Invitation, User as CustomUser, ResearchField, GroupOwner
 
 
 User = get_user_model()
@@ -156,3 +155,71 @@ class NotificationTestCase(TestCase):
     todo https://channels.readthedocs.io/en/latest/topics/testing.html
     """
     pass
+
+
+class TeamTestCase(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="test",
+                                              password="test",
+                                              email="test@test.com")
+
+        self.invitee = User.objects.create_user(username="test2",
+                                                password="test2",
+                                                email="test2@test.com")
+
+        self.group = Group.objects.create(name='testgroup')
+        self.group.user_set.add(self.owner)
+        GroupOwner.objects.create(group=self.group, owner=self.owner)
+
+    def test_accept(self):
+        invitation = Invitation.objects.create(
+            sender=self.owner,
+            recipient=self.invitee,
+            group=self.group)
+
+        self.client.force_login(self.invitee)
+        url = reverse('accept-group-invitation', kwargs={'slug': invitation.token})
+        with self.assertNumQueries(9):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.workflow_state, Invitation.STATE_ACCEPTED)
+
+        self.assertEqual(self.group.user_set.count(), 2)
+
+        self.invitee.refresh_from_db()
+        self.assertEqual(self.invitee.groups.count(), 1)
+
+    def test_remove_from_group(self):
+
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.owner)
+        url = reverse('team-remove-user', kwargs={'pk': self.group.pk})
+        with self.assertNumQueries(13):
+            response = self.client.post(url, data={'user': self.invitee.pk})
+        self.assertEqual(response.status_code, 302)
+
+        self.invitee.refresh_from_db()
+        self.assertEqual(self.invitee.groups.count(), 0)
+
+    def test_leave_group(self):
+
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.invitee)
+        url = reverse('team-leave', kwargs={'pk': self.group.pk})
+        with self.assertNumQueries(4):
+            response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.invitee.groups.count(), 0)
+
+    def test_transfer_ownership(self):
+        self.group.user_set.add(self.invitee)
+        self.client.force_login(self.owner)
+        url = reverse('team-transfer-ownership', kwargs={'pk': self.group.pk})
+
+        with self.assertNumQueries(7):
+            response = self.client.post(url, data={'user': self.invitee.pk})
+        self.assertEqual(response.status_code, 302)
+        self.group.groupowner.refresh_from_db()
+        self.assertEqual(self.group.groupowner.owner, self.invitee)

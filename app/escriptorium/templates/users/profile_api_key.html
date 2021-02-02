@@ -1,0 +1,13 @@
+{% extends "users/profile.html" %}
+{% load i18n %}
+
+{% block infos-tab-active %}{% endblock %}
+{% block key-tab-active %}active{% endblock %}
+{% block files-tab-active %}{% endblock %}
+{% block team-tab-active %}{% endblock %}
+
+{% block tab-content %}
+{% trans "API Authentication Token:" %} {{ api_auth_token.key }}
+<button class="btn btn-secondary btn-sm fas fa-clipboard float-right" id="api-key-clipboard" title="{% trans "Copy to clipboard." %}" data-key="{{ api_auth_token.key }}"></button>
+<br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
+{% endblock %}

@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os.path
 import shutil
+from itertools import groupby
 
 from django.apps import apps
 from django.conf import settings
@@ -114,12 +115,18 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 
 def make_segmentation_training_data(part):
-    return {
+    data = {
         'image': part.image.path,
-        'baselines': [{'script': 'default', 'baseline': bl}
-                      for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {'default': [r.box for r in part.blocks.all().only('box')]}
+        'baselines': [{'script': line.typology and line.typology.name or 'default',
+                       'baseline': line.baseline}
+                      for line in part.lines.only('baseline', 'typology')
+                      if line.baseline],
+        'regions':  {typo: list(reg.box for reg in regs)
+                     for typo, regs in groupby(
+                        part.blocks.only('box', 'typology').order_by('typology'),
+                        key=lambda reg: reg.typology and reg.typology.name or 'default')}
     }
+    return data
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -502,7 +509,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
         if (data[sender]['task_id'] == sender.request.id and
             not check_signal_order(data[sender]['status'], signal_name)):
             return
-    except KeyError:
+    except (KeyError, AttributeError):
         pass
 
     data[sender] = {

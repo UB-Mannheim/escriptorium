@@ -1,4 +1,4 @@
-{% load compress %}{% load i18n staticfiles %}<!DOCTYPE html>
+{% load i18n staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8">
@@ -20,16 +20,8 @@
     <![endif]-->
 
     {% block styles %}
-     {% compress css file base %}
-
-    <link href="{% static '/vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static '/vendor/bootstrap/bootstrap-reboot.min.css' %}" rel="stylesheet">
-    <link href="{% static '/vendor/fontawesome/all.min.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static '/css/escriptorium.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static '/css/rtl.css' %}" rel="stylesheet" type="text/css">
-    <link href="{% static 'vendor/introjs/introjs.css' %}" rel="stylesheet" type="text/css">
-    {% endcompress %}
-
+    <link href="{% static 'vendor.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -75,8 +67,10 @@
               </a>
               <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="{% url 'password_change' %}">{% trans "Change password" %}</a>
-              <a class="dropdown-item" href="{% url 'user_profile' %}">{% trans "Profile" %}</a>
+
+              <a class="dropdown-item" href="{% url 'profile' %}">{% trans "Profile" %}</a>
               <a class="dropdown-item" href="{% url 'report-list' %}">{% trans "Task reports" %}</a>
+
               <div class="dropdown-divider"></div>
               {% if perms.users.can_invite %}<a class="dropdown-item" href="{% url 'send-invitation' %}">Invite</a>{% endif %}
               <a class="dropdown-item" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
@@ -98,25 +92,24 @@
     </div>
     </section></main>
 
+    <script src="{% static 'vendor.js' %}" type="text/javascript"></script>
+
     {% block scripts %}
-    {% compress js file base %}
-    <script src="{% static '/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
-    <script src="{% static 'vendor/popper/popper.min.js' %}"></script>
-    <script src="{% static '/vendor/bootstrap/bootstrap.min.js' %}"></script>
-    <script src="{% static '/js/reconnecting-websocket.min.js' %}"></script>
-    <script src="{% static '/js/js.cookie-2.2.0.min.js' %}"></script>
-    <script src="{% static '/js/ajax.js' %}"></script>
-    {% endcompress %}
+    <script src="{% static 'main.js' %}" type="text/javascript"></script>
     <script type="text/javascript">
       const DEBUG = {% if debug %}true{% else %}false{% endif %};
     </script>
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
-      <script src="{% static 'js/messages.js' %}"></script>
+      <script type="text/javascript">
+        $(document).ready(function(){
+          bootWebsocket();
+        });
+      </script>
       {% include 'includes/messages.html' %}
-      <script src="{% static 'js/profile.js' %}"></script>
       {% if user.onboarding %}
-      <script src="{% static 'vendor/introjs/intro.js' %}"></script>
-      <script src="{% static 'js/onboarding.js' %}"></script>
+      <script type="text/javascript">
+        bootOnboarding();
+      </script>
       {% endif %}
       {% endif %}
    {% endblock scripts %}
