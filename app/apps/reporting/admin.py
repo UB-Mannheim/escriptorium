@@ -3,7 +3,8 @@ from django.contrib import admin
 from reporting.models import TaskReport
 
 
-# class TaskReportAdmin():
-#     pass
+class TaskReportAdmin(admin.ModelAdmin):
+    list_display = ['label', 'workflow_state', 'user']
 
-admin.site.register(TaskReport)
+
+admin.site.register(TaskReport, TaskReportAdmin)
