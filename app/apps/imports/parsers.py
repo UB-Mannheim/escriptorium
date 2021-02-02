@@ -408,10 +408,10 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
             except ValueError:
                 logger.warning("Invalid polygon %s" % polygon)
         else:
-            x = int(blockTag.get("HPOS"))
-            y = int(blockTag.get("VPOS"))
-            w = int(blockTag.get("WIDTH"))
-            h = int(blockTag.get("HEIGHT"))
+            x = int(float(blockTag.get("HPOS")))
+            y = int(float(blockTag.get("VPOS")))
+            w = int(float(blockTag.get("WIDTH")))
+            h = int(float(blockTag.get("HEIGHT")))
             block.box = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
 
         try:
@@ -443,7 +443,8 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = "Invalid baseline %s in {filen} line {linen}" % (baseline, self.file.name, lineTag.sourceline)
+                    msg = ("Invalid baseline %s in {filen} line {linen}" %
+                           (baseline, self.file.name, lineTag.sourceline))
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)
@@ -451,9 +452,9 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
             # extract it from <String>s then
             strings = lineTag.findall("String", self.root.nsmap)
             last_segment = strings[-1]
-            line.baseline = [(int(e.get('HPOS')), int(e.get('VPOS'))) for e in strings]
-            line.baseline.append((int(last_segment.get('HPOS'))+int(last_segment.get('WIDTH')),
-                                  int(last_segment.get('VPOS'))))
+            line.baseline = [(int(float(e.get('HPOS'))), int(float(e.get('VPOS')))) for e in strings]
+            line.baseline.append((int(float(last_segment.get('HPOS')))+int(float(last_segment.get('WIDTH'))),
+                                  int(float(last_segment.get('VPOS')))))
 
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
@@ -467,10 +468,10 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     self.report.append(msg)
         else:
             line.box = [
-                int(lineTag.get("HPOS")),
-                int(lineTag.get("VPOS")),
-                int(lineTag.get("HPOS")) + int(lineTag.get("WIDTH")),
-                int(lineTag.get("VPOS")) + int(lineTag.get("HEIGHT")),
+                int(float(lineTag.get("HPOS"))),
+                int(float(lineTag.get("VPOS"))),
+                int(float(lineTag.get("HPOS"))) + int(float(lineTag.get("WIDTH"))),
+                int(float(lineTag.get("VPOS"))) + int(float(lineTag.get("HEIGHT"))),
             ]
 
         try:
