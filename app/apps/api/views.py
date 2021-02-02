@@ -25,7 +25,13 @@ from api.serializers import (UserOnboardingSerializer,
                              DetailedLineSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
-                             LineTranscriptionSerializer)
+                             LineTranscriptionSerializer,
+                             SegmentSerializer,
+                             TrainSerializer,
+                             SegTrainSerializer,
+                             TranscribeSerializer,
+                             OcrModelSerializer)
+
 from core.models import (Document,
                          DocumentPart,
                          Block,
@@ -33,7 +39,10 @@ from core.models import (Document,
                          BlockType,
                          LineType,
                          Transcription,
-                         LineTranscription)
+                         LineTranscription,
+                         OcrModel,
+                         AlreadyProcessingException)
+
 from core.tasks import recalculate_masks
 from users.models import User
 from imports.forms import ImportForm, ExportForm
@@ -50,7 +59,7 @@ class UserViewSet(ModelViewSet):
 
     @action(detail=False, methods=['put'])
     def onboarding(self, request):
-        serializer = UserOnboardingSerializer(self.request.user,data=request.data, partial=True)
+        serializer = UserOnboardingSerializer(self.request.user, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(status=status.HTTP_200_OK)
@@ -119,6 +128,42 @@ class DocumentViewSet(ModelViewSet):
             return Response({'status': 'ok'})
         else:
             return self.form_error(json.dumps(form.errors))
+
+    def get_process_response(self, request, serializer_class):
+        document = self.get_object()
+        serializer = serializer_class(document=document,
+                                      user=request.user,
+                                      data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.process()
+            except AlreadyProcessingException:
+                return Response(status=status.HTTP_400_BAD_REQUEST,
+                                data={'status': 'error',
+                                      'error': 'Already processing.'})
+
+            return Response(status=status.HTTP_200_OK,
+                            data={'status': 'ok'})
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={'status': 'error',
+                                  'error': serializer.errors})
+
+    @action(detail=True, methods=['post'])
+    def segment(self, request, pk=None):
+        return self.get_process_response(request, SegmentSerializer)
+
+    @action(detail=True, methods=['post'])
+    def train(self, request, pk=None):
+        return self.get_process_response(request, TrainSerializer)
+
+    @action(detail=True, methods=['post'])
+    def segtrain(self, request, pk=None):
+        return self.get_process_response(request, SegTrainSerializer)
+
+    @action(detail=True, methods=['post'])
+    def transcribe(self, request, pk=None):
+        return self.get_process_response(request, TranscribeSerializer)
 
 
 class DocumentPermissionMixin():
@@ -390,3 +435,22 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         qs = LineTranscription.objects.filter(pk__in=lines)
         qs.update(content='')
         return Response(status=status.HTTP_204_NO_CONTENT, )
+
+
+class OcrModelViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = OcrModel.objects.all()
+    serializer_class = OcrModelSerializer
+
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(document=self.kwargs['document_pk']))
+
+    @action(detail=True, methods=['post'])
+    def cancel_training(self, request, pk=None):
+        model = self.get_object()
+        try:
+            model.cancel_training()
+        except Exception as e:
+            logger.exception(e)
+            return Response({'status': 'failed'}, status=400)
+        return Response({'status': 'canceled'})

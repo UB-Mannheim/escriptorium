@@ -8,8 +8,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
 
-from core.models import Block, Line, Transcription, LineTranscription
+from core.models import Block, Line, Transcription, LineTranscription, OcrModel
 from core.tests.factory import CoreFactoryTestCase
+
 
 class UserViewSetTestCase(CoreFactoryTestCase):
 
@@ -21,7 +22,7 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(user)
         uri = reverse('api:user-onboarding')
         resp = self.client.put(uri, {
-                'onboarding' : 'False',
+                'onboarding': 'False',
                 }, content_type='application/json')
 
         user.refresh_from_db()
@@ -29,7 +30,40 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(user.onboarding, False)
 
 
+class OcrModelViewSetTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.part = self.factory.make_part()
+        self.user = self.part.document.owner
+        self.model = self.factory.make_model(document=self.part.document)
 
+    def test_list(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
+        with self.assertNumQueries(7):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_detail(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'pk': self.model.pk})
+        with self.assertNumQueries(6):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_create(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
+        with self.assertNumQueries(4):
+            resp = self.client.post(uri, {
+                'name': 'test.mlmodel',
+                'file': self.factory.make_asset_file(name='test.mlmodel',
+                                                     asset_name='fake_seg.mlmodel'),
+                'job': 'Segment'
+            })
+        self.assertEqual(resp.status_code, 201, resp.content)
 
 
 class DocumentViewSetTestCase(CoreFactoryTestCase):
@@ -37,6 +71,31 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         super().setUp()
         self.doc = self.factory.make_document()
         self.doc2 = self.factory.make_document(owner=self.doc.owner)
+        self.part = self.factory.make_part(document=self.doc)
+        self.part2 = self.factory.make_part(document=self.doc)
+
+        self.line = Line.objects.create(
+            baseline=[[10, 25], [50, 25]],
+            mask=[10, 10, 50, 50],
+            document_part=self.part)
+        self.line2 = Line.objects.create(
+            baseline=[[10, 80], [50, 80]],
+            mask=[10, 60, 50, 100],
+            document_part=self.part)
+        self.transcription = Transcription.objects.create(
+            document=self.part.document,
+            name='test')
+        self.transcription2 = Transcription.objects.create(
+            document=self.part.document,
+            name='tr2')
+        self.lt = LineTranscription.objects.create(
+            transcription=self.transcription,
+            line=self.line,
+            content='test')
+        self.lt2 = LineTranscription.objects.create(
+            transcription=self.transcription2,
+            line=self.line2,
+            content='test2')
 
     def test_list(self):
         self.client.force_login(self.doc.owner)
@@ -62,9 +121,81 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         # Note: raises a 404 instead of 403 but its fine
         self.assertEqual(resp.status_code, 404)
 
-    # not used
-    # def test_update
-    # def test_create
+    def test_segtrain_less_two_parts(self):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+                'parts': [self.part.pk],
+                'model': model.pk
+        })
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['error'], {'parts': [
+            'Segmentation training requires at least 2 images.']})
+
+    def test_segtrain_new_model(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+                'parts': [self.part.pk, self.part2.pk],
+                'model_name': 'new model'
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(OcrModel.objects.count(), 1)
+        self.assertEqual(OcrModel.objects.first().name, "new model")
+
+    def test_segtrain_existing_model_rename(self):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'model': model.pk,
+            'model_name': 'test new model'
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(OcrModel.objects.count(), 2)
+
+    def test_segment(self):
+        uri = reverse('api:document-segment', kwargs={'pk': self.doc.pk})
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'seg_steps': 'both',
+            'model': model.pk,
+        })
+        self.assertEqual(resp.status_code, 200)
+
+    def test_train_new_model(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-train', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'model_name': 'testing new model',
+            'transcription': self.transcription.pk
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(OcrModel.objects.filter(
+            document=self.doc,
+            job=OcrModel.MODEL_JOB_RECOGNIZE).count(), 1)
+
+    def test_transcribe(self):
+        trans = Transcription.objects.create(document=self.part.document)
+
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(job=OcrModel.MODEL_JOB_RECOGNIZE, document=self.doc)
+        uri = reverse('api:document-transcribe', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'model': model.pk,
+            'transcription': trans.pk
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content, b'{"status":"ok"}')
+        # won't work with dummy model and image
+        # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
 
 
 class PartViewSetTestCase(CoreFactoryTestCase):
@@ -189,7 +320,7 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
             # 5 insert
             resp = self.client.post(uri, {
                 'document_part': self.part.pk,
-                'box': '[[10,10], [50,50]]'
+                'box': '[[10,10], [20,20], [50,50]]'
             })
         self.assertEqual(resp.status_code, 201, resp.content)
 
@@ -215,15 +346,15 @@ class LineViewSetTestCase(CoreFactoryTestCase):
                 box=[10, 10, 200, 200],
                 document_part=self.part)
         self.line = Line.objects.create(
-                box=[60, 10, 100, 50],
+                mask=[60, 10, 100, 50],
                 document_part=self.part,
                 block=self.block)
         self.line2 = Line.objects.create(
-                box=[90, 10, 70, 50],
+                mask=[90, 10, 70, 50],
                 document_part=self.part,
                 block=self.block)
         self.orphan = Line.objects.create(
-            box=[0, 0, 10, 10],
+            mask=[0, 0, 10, 10],
             document_part=self.part,
             block=None)
 
@@ -294,10 +425,10 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.line = Line.objects.create(
-            box=[10, 10, 50, 50],
+            mask=[10, 10, 50, 50],
             document_part=self.part)
         self.line2 = Line.objects.create(
-            box=[10, 60, 50, 100],
+            mask=[10, 60, 50, 100],
             document_part=self.part)
         self.transcription = Transcription.objects.create(
             document=self.part.document,
@@ -361,7 +492,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:linetranscription-bulk-create',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
         ll = Line.objects.create(
-            box=[10, 10, 50, 50],
+            mask=[10, 10, 50, 50],
             document_part=self.part)
         with self.assertNumQueries(10):
             resp = self.client.post(
