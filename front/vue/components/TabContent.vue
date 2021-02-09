@@ -34,13 +34,13 @@
             </div>
         </div>
 
-        <SourcePanel v-if="show.source && $store.state.parts.loaded"
+        <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
                      v-bind:fullsizeimage="fullsizeimage"
                      ref="sourcePanel">
         </SourcePanel>
 
         <keep-alive>
-            <SegPanel v-if="show.segmentation && $store.state.parts.loaded"
+            <SegPanel v-if="visible_panels.segmentation && $store.state.parts.loaded"
                                v-bind:fullsizeimage="fullsizeimage"
                                v-bind:main-text-direction="mainTextDirection"
                                id="segmentation-panel"
@@ -49,7 +49,7 @@
         </keep-alive>
 
         <keep-alive>
-            <VisuPanel v-if="show.visualisation && $store.state.parts.loaded"
+            <VisuPanel v-if="visible_panels.visualisation && $store.state.parts.loaded"
                     v-bind:default-text-direction="defaultTextDirection"
                     v-bind:read-direction="readDirection"
                     id="transcription-panel"
@@ -59,7 +59,7 @@
 
         <keep-alive>
             <DiploPanel id="diplo-panel"
-                        v-if="show.diplomatic && $store.state.parts.loaded"
+                        v-if="visible_panels.diplomatic && $store.state.parts.loaded"
                         ref="diploPanel">
             </DiploPanel>
         </keep-alive>
@@ -92,7 +92,7 @@ import VisuPanel from './VisuPanel.vue';
 import DiploPanel from './DiploPanel.vue';
 
 export default {
-    props: ['blockShortcuts', 'openedPanels', 'readDirection', 'defaultTextDirection', 'mainTextDirection', 'show'],
+    props: ['blockShortcuts', 'readDirection', 'defaultTextDirection', 'mainTextDirection'],
     data: function() {
         return {
             zoom: new WheelZoom(),
@@ -105,7 +105,7 @@ export default {
         VisuPanel,
         DiploPanel,
     },
-created() {
+    created() {
         document.addEventListener('keydown', function(event) {
             if (this.blockShortcuts) return;
             if (event.keyCode == 8 && event.ctrlKey) {  // backspace
@@ -126,6 +126,14 @@ created() {
         }.bind(this));
     },
     computed: {
+        visible_panels() {
+            return this.$store.state.parts.visible_panels;
+        },
+        openedPanels() {
+            return [this.visible_panels.source,
+                    this.visible_panels.segmentation,
+                    this.visible_panels.visualisation].filter(p=>p===true);
+        },
         zoomScale: {
             get() {
                 return this.zoom.scale || 1;

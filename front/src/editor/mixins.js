@@ -6,9 +6,21 @@ export var BasePanel = {
             ratio: 1
         };
     },
+    created() {
+        // Update ratio on window resize
+        window.addEventListener("resize", this.refresh);
+    },
+    destroyed() {
+        window.removeEventListener("resize", this.refresh);
+    },
     watch: {
         '$store.state.parts.loaded': function(n, o) {
             if (n) {
+                this.refresh();
+            }
+        },
+        '$store.state.parts.visible_panels': function(n, o) {
+            if (this.$store.state.parts.loaded) {
                 this.refresh();
             }
         }

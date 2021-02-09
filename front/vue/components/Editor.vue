@@ -6,16 +6,14 @@
                 <extrainfo :object="object"
                            :document-name="documentName">
                 </extrainfo>
-                <extranav :show="show"></extranav>
+                <extranav></extranav>
             </div>
         </nav>
 
         <tabcontent :default-text-direction="defautTextDirection"
                     :main-text-direction="mainTextDirection"
                     :read-direction="readDirection"
-                    :block-shortcuts="blockShortcuts"
-                    :opened-panels="openedPanels"
-                    :show="show">
+                    :block-shortcuts="blockShortcuts">
         </tabcontent>
     </div>
 </template>
@@ -37,21 +35,10 @@ export default {
     ],
     data: function() {
         return {
-            show: {
-                source: userProfile.get('source-panel'),
-                segmentation: userProfile.get('segmentation-panel'),
-                visualisation: userProfile.get('visualisation-panel'),
-                diplomatic: userProfile.get('diplomatic-panel')
-            },
             blockShortcuts: false,
         };
     },
     computed: {
-        openedPanels() {
-            return [this.show.source,
-                    this.show.segmentation,
-                    this.show.visualisation].filter(p=>p===true);
-        },
         navEditActive() {
             return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
         },

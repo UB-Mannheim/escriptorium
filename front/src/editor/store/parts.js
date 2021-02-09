@@ -17,6 +17,15 @@ export const initialState = () => ({
     transcription_progress: null,
     typology: null,
     workflow: {},
+
+    // Manage panels visibility through booleans
+    // Those values are initially populated by localStorage
+    visible_panels: {
+        source: userProfile.get('source-panel'),
+        segmentation: userProfile.get('segmentation-panel'),
+        visualisation: userProfile.get('visualisation-panel'),
+        diplomatic: userProfile.get('diplomatic-panel')
+    },
 })
 
 export const mutations = {
@@ -32,6 +41,9 @@ export const mutations = {
     load (state, part) {
         assign(state, part)
         state.loaded = true
+    },
+    setVisiblePanels(state, payload) {
+        state.visible_panels = assign({}, state.visible_panels, payload)
     },
     reset (state) {
         assign(state, initialState())
@@ -53,7 +65,7 @@ export const actions = {
         }
         const resp = await api.retrieveDocumentPart(state.documentId, pk)
         let data = resp.data
-        
+
         data.lines.forEach(function(line) {
             let type_ = line.typology && state.types.lines.find(t=>t.pk == line.typology)
             line.type = type_ && type_.name
@@ -99,6 +111,16 @@ export const actions = {
             console.log('couldnt fetch part data!', err)
         }
     },
+
+    async togglePanel ({state, commit, dispatch}, panel) {
+        // Toggle the display of a single panel
+        let update = {}
+        update[panel] = !state.visible_panels[panel]
+        commit('setVisiblePanels', update)
+
+        // Persist final value in user profile
+        userProfile.set(panel + '-panel', state.visible_panels[panel])
+    }
 }
 
 export default {
