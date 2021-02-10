@@ -422,7 +422,12 @@ export default Vue.extend({
       }
     },
     updateView() {
-      if (this.segmenter.loaded) {
+      // We REALLY need to check that SegPanel is opened
+      // (with this.$store.state.parts.visible_panels.segmentation == true)
+      // before trying to refresh the segmenter.
+      // If SegPanel is closed, paper.js will try to transform a null canvas and
+      // will throw multiple errors in the browser console when the mouse is moving.
+      if (this.segmenter.loaded && this.$store.state.parts.visible_panels.segmentation) {
         this.segmenter.refresh();
       }
     },
