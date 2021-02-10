@@ -22,6 +22,10 @@ export const mutations = {
     },
     append (state, line) {
         state.all.push({ ...line, loaded: false })
+
+        // Force reference update on the whole array
+        // so that all components get a full refresh after an update
+        state.all = [...state.all]
     },
     load (state, pk) {
         let index = state.all.findIndex(l => l.pk == pk)
@@ -32,9 +36,17 @@ export const mutations = {
         state.all[index].baseline = line.baseline
         state.all[index].mask = line.mask
         state.all[index].region = line.region
+
+        // Force reference update on the whole array
+        // so that all components get a full refresh after an update
+        state.all = [...state.all]
     },
     remove (state, index) {
         Vue.delete(state.all, index)
+
+        // Force reference update on the whole array
+        // so that all components get a full refresh after an update
+        state.all = [...state.all]
     },
     updateOrder (state, { lines, recalculate }) {
         for (let i=0; i<lines.length; i++) {
