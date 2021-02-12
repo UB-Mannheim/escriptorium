@@ -114,7 +114,7 @@ export const actions = {
     async bulkCreate({commit, dispatch, getters, rootState}, {lines, transcription}) {
         lines.forEach(l=>l.document_part = rootState.parts.pk)
 
-        const resp = await api.bulkCreateLines(rootState.parts.documentId, rootState.parts.pk, {lines: lines})
+        const resp = await api.bulkCreateLines(rootState.document.id, rootState.parts.pk, {lines: lines})
 
         let data = resp.data
         let createdLines = []
@@ -144,7 +144,7 @@ export const actions = {
 
     async bulkUpdate({state, commit, dispatch, getters, rootState}, lines) {
         let dataLines = lines.map(function(l) {
-            let type  = l.type && rootState.parts.types.lines.find(t=>t.name==l.type)
+            let type  = l.type && rootState.document.types.lines.find(t=>t.name==l.type)
             return {
                 pk: l.pk,
                 document_part: rootState.parts.pk,
@@ -155,7 +155,7 @@ export const actions = {
             }
         })
 
-        const resp = await api.bulkUpdateLines(rootState.parts.documentId, rootState.parts.pk, {lines: dataLines})
+        const resp = await api.bulkUpdateLines(rootState.document.id, rootState.parts.pk, {lines: dataLines})
 
         let data = resp.data
         let updatedLines = []
@@ -187,7 +187,7 @@ export const actions = {
     },
 
     async bulkDelete({state, dispatch, commit, rootState}, pks) {
-        await api.bulkDeleteLines(rootState.parts.documentId, rootState.parts.pk, {lines: pks})
+        await api.bulkDeleteLines(rootState.document.id, rootState.parts.pk, {lines: pks})
 
         let deletedLines = []
         for (let i=0; i<pks.length; i++) {
@@ -204,7 +204,7 @@ export const actions = {
     },
 
     async move({commit, rootState}, movedLines) {
-        const resp = await api.moveLines(rootState.parts.documentId, rootState.parts.pk, {"lines": movedLines})
+        const resp = await api.moveLines(rootState.document.id, rootState.parts.pk, {"lines": movedLines})
         let data = resp.data
         commit('updateOrder', { lines: data, recalculate: false })
     },
@@ -218,7 +218,7 @@ export const actions = {
                 if (state.masksToRecalc.length > 0) params.only = state.masksToRecalc.toString()
                 commit('setMasksToRecalc', [])
                 try {
-                    await api.recalculateMasks(rootState.parts.documentId, rootState.parts.pk, {}, params)
+                    await api.recalculateMasks(rootState.document.id, rootState.parts.pk, {}, params)
                 } catch (err) {
                     console.log('couldnt recalculate masks!', err)
                 }
@@ -232,7 +232,7 @@ export const actions = {
             // avoid calling this too often
             state.debouncedRecalculateOrdering = _.debounce(async function() {
                 try {
-                    const resp = await api.recalculateOrdering(rootState.parts.documentId, rootState.parts.pk, {})
+                    const resp = await api.recalculateOrdering(rootState.document.id, rootState.parts.pk, {})
                     let data = resp.data
                     commit('updateOrder', { lines: data.lines, recalculate: true })
                 } catch (err) {

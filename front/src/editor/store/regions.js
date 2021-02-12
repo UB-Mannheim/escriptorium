@@ -33,14 +33,14 @@ export const mutations = {
 
 export const actions = {
     async create({commit, rootState}, region) {
-        let type = region.type && rootState.parts.types.regions.find(t=>t.name==region.type)
+        let type = region.type && rootState.document.types.regions.find(t=>t.name==region.type)
         let data = {
             document_part: rootState.parts.pk,
             typology: type && type.pk || null,
             box: region.box
         }
 
-        const resp = await api.createRegion(rootState.parts.documentId, rootState.parts.pk, data)
+        const resp = await api.createRegion(rootState.document.id, rootState.parts.pk, data)
 
         let newRegion = resp.data
         commit('append', newRegion)
@@ -49,14 +49,14 @@ export const actions = {
     },
 
     async update({commit, rootState}, region) {
-        let type = region.type && rootState.parts.types.regions.find(t=>t.name==region.type)
+        let type = region.type && rootState.document.types.regions.find(t=>t.name==region.type)
         let data = {
             document_part: rootState.parts.pk,
             box: region.box,
             typology: type && type.pk || null
         }
 
-        const resp = await api.updateRegion(rootState.parts.documentId, rootState.parts.pk, region.pk, data)
+        const resp = await api.updateRegion(rootState.document.id, rootState.parts.pk, region.pk, data)
         let updatedRegion = resp.data
         commit('update', { pk: region.pk, region: updatedRegion })
 
@@ -64,7 +64,7 @@ export const actions = {
     },
 
     async delete({commit, rootState}, regionPk) {
-        await api.deleteRegion(rootState.parts.documentId, rootState.parts.pk, regionPk)
+        await api.deleteRegion(rootState.document.id, rootState.parts.pk, regionPk)
         
         commit('remove', regionPk)
     }

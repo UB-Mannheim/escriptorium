@@ -89,11 +89,11 @@ export default {
     },
 
     async created() {
-        this.$store.commit('parts/setDocumentId', this.documentId);
+        this.$store.commit('document/setId', this.documentId);
         try {
             await this.$store.dispatch('parts/fetchPart', this.partId);
             let tr = userProfile.get('initialTranscriptions')
-                  && userProfile.get('initialTranscriptions')[this.$store.state.parts.documentId]
+                  && userProfile.get('initialTranscriptions')[this.$store.state.document.id]
                   || this.$store.state.transcriptions.all[0].pk;
             this.$store.commit('transcriptions/setSelectedTranscription', tr);
         } catch (err) {

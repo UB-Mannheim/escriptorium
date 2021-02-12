@@ -32,7 +32,7 @@
                         <br>
                         <input  type="color" id="be-dir-color-0" title="None">
                         <input  type="color"
-                                v-for="(type, index) in $store.state.parts.types.lines"
+                                v-for="(type, index) in $store.state.document.types.lines"
                                 :key="'BT' + type + index"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
@@ -43,7 +43,7 @@
                         <br>
                         <input  type="color" id="be-reg-color-0" title="None">
                         <input  type="color"
-                                v-for="(type, index) in $store.state.parts.types.regions"
+                                v-for="(type, index) in $store.state.document.types.regions"
                                 :key="'LT' + type + index"
                                 v-bind:data-type="type.name"
                                 v-bind:title="type.name"
@@ -193,15 +193,15 @@ export default Vue.extend({
           { map: true }
         );
         let beSettings =
-          userProfile.get("baseline-editor-" + this.$store.state.parts.documentId) || {};
+          userProfile.get("baseline-editor-" + this.$store.state.document.id) || {};
         this.$img = this.$refs.img;
 
         this.segmenter = new Segmenter(this.$img, {
           delayInit: true,
           idField: "pk",
           defaultTextDirection: this.mainTextDirection.slice(-2),
-          regionTypes: this.$store.state.parts.types.regions.map((t) => t.name),
-          lineTypes: this.$store.state.parts.types.lines.map((t) => t.name),
+          regionTypes: this.$store.state.document.types.regions.map((t) => t.name),
+          lineTypes: this.$store.state.document.types.lines.map((t) => t.name),
           baselinesColor: beSettings["color-baselines"] || null,
           regionColors: beSettings["color-regions"] || null,
           directionHintColors: beSettings["color-directions"] || null,
@@ -227,7 +227,7 @@ export default Vue.extend({
         this.segmenter.events.addEventListener(
           "baseline-editor:settings",
           function (ev) {
-            let key = "baseline-editor-" + this.$store.state.parts.documentId;
+            let key = "baseline-editor-" + this.$store.state.document.id;
             let settings = userProfile.get(key) || {};
             settings[event.detail.name] = event.detail.value;
             userProfile.set(key, settings);
@@ -423,11 +423,11 @@ export default Vue.extend({
     },
     updateView() {
       // We REALLY need to check that SegPanel is opened
-      // (with this.$store.state.parts.visible_panels.segmentation == true)
+      // (with this.$store.state.document.visible_panels.segmentation == true)
       // before trying to refresh the segmenter.
       // If SegPanel is closed, paper.js will try to transform a null canvas and
       // will throw multiple errors in the browser console when the mouse is moving.
-      if (this.segmenter.loaded && this.$store.state.parts.visible_panels.segmentation) {
+      if (this.segmenter.loaded && this.$store.state.document.visible_panels.segmentation) {
         this.segmenter.refresh();
       }
     },

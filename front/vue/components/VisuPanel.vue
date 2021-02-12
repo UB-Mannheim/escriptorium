@@ -66,7 +66,7 @@ export default Vue.extend({
             }
         },
         resetLines() {
-            if (this.$store.state.lines.all.length) {
+            if (this.$store.state.lines.all.length && this.$refs.visulines.length) {
                 this.$refs.visulines.forEach(function(line) {
                     line.reset();
                 });

@@ -127,7 +127,7 @@ export default {
     },
     computed: {
         visible_panels() {
-            return this.$store.state.parts.visible_panels;
+            return this.$store.state.document.visible_panels;
         },
         openedPanels() {
             return [this.visible_panels.source,

@@ -40,7 +40,7 @@ export const actions = {
         })
 
         try {
-            const resp = await api.bulkCreateLineTranscriptions(rootState.parts.documentId, rootState.parts.pk, {lines: data})
+            const resp = await api.bulkCreateLineTranscriptions(rootState.document.id, rootState.parts.pk, {lines: data})
             let createdTrans = resp.data
             commit('lines/createTranscriptions', createdTrans, {root: true})
         } catch (err) {
@@ -59,7 +59,7 @@ export const actions = {
         })
 
         try {
-            await api.bulkUpdateLineTranscriptions(rootState.parts.documentId, rootState.parts.pk, {lines: data})
+            await api.bulkUpdateLineTranscriptions(rootState.document.id, rootState.parts.pk, {lines: data})
             // No store update ????
         } catch (err) {
             console.log('couldnt update transcription lines', err)
@@ -82,7 +82,7 @@ export const actions = {
 
         //  then fetch all content page by page
         let fetchPage = async function(page) {
-            const resp = await api.retrievePage(rootState.parts.documentId, rootState.parts.pk, transcription, page)
+            const resp = await api.retrievePage(rootState.document.id, rootState.parts.pk, transcription, page)
             
             let data = resp.data
             for (var i=0; i<data.results.length; i++) {
@@ -113,7 +113,7 @@ export const actions = {
 
     async createContent({commit, rootState}, {content, currentTransLine}) {
         try {
-            const resp = await api.createContent(rootState.parts.documentId, rootState.parts.pk, content)
+            const resp = await api.createContent(rootState.document.id, rootState.parts.pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
         } catch (err) {
             console.log('couldnt create transcription!', err);
@@ -122,7 +122,7 @@ export const actions = {
 
     async updateContent({commit, rootState}, {pk, content, currentTransLine}) {
         try {
-            const resp = await api.updateContent(rootState.parts.documentId, rootState.parts.pk, pk, content)
+            const resp = await api.updateContent(rootState.document.id, rootState.parts.pk, pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
         } catch (err) {
             console.log('couldnt update transcription!', err);
@@ -131,7 +131,7 @@ export const actions = {
 
     async archive({commit, rootState}, transPk) {
         try {
-            await api.archiveTranscription(rootState.parts.documentId, transPk)
+            await api.archiveTranscription(rootState.document.id, transPk)
             commit('remove', transPk)
         } catch (err) {
             console.log('couldnt archive transcription #', transPk, err)

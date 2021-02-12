@@ -19,7 +19,7 @@ export var BasePanel = {
                 this.refresh();
             }
         },
-        '$store.state.parts.visible_panels': function(n, o) {
+        '$store.state.document.visible_panels': function(n, o) {
             if (this.$store.state.parts.loaded) {
                 this.refresh();
             }

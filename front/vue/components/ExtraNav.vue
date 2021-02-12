@@ -35,12 +35,12 @@
 export default {
     computed: {
         visible_panels() {
-            return this.$store.state.parts.visible_panels;
+            return this.$store.state.document.visible_panels;
         },
     },
     methods: {
         togglePanel(evt)  {
-            this.$store.dispatch('parts/togglePanel', evt.target.getAttribute('data-target'));
+            this.$store.dispatch('document/togglePanel', evt.target.getAttribute('data-target'));
         },
     }
 }
