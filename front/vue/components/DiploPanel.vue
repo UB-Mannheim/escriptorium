@@ -146,10 +146,10 @@ export default Vue.extend({
             }
         },
         startEdit(ev) {
-            this.$parent.$parent.blockShortcuts = true;
+            this.$store.commit('document/setBlockShortcuts', true);
         },
         stopEdit(ev) {
-            this.$parent.$parent.blockShortcuts = false;
+            this.$store.commit('document/setBlockShortcuts', false);
             this.constrainLineNumber();
             this.save();
         },

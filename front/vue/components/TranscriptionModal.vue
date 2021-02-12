@@ -172,11 +172,11 @@ export default Vue.extend({
         // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             this.$parent.editLine = null;
-            this.$parent.$parent.$parent.blockShortcuts = false;
+            this.$store.commit('document/setBlockShortcuts', false);
         }.bind(this));
 
         $(document).on('show.bs.modal', '#trans-modal', function(ev) {
-            this.$parent.$parent.$parent.blockShortcuts = true;
+            this.$store.commit('document/setBlockShortcuts', true);
         }.bind(this));
 
         this.timeZone = moment.tz.guess();

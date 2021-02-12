@@ -10,10 +10,9 @@
             </div>
         </nav>
 
-        <tabcontent :default-text-direction="defautTextDirection"
+        <tabcontent :default-text-direction="defaultTextDirection"
                     :main-text-direction="mainTextDirection"
-                    :read-direction="readDirection"
-                    :block-shortcuts="blockShortcuts">
+                    :read-direction="readDirection">
         </tabcontent>
     </div>
 </template>
@@ -29,15 +28,10 @@ export default {
         'documentId',
         'documentName',
         'partId',
-        'defautTextDirection',
+        'defaultTextDirection',
         'mainTextDirection',
         'readDirection',
     ],
-    data: function() {
-        return {
-            blockShortcuts: false,
-        };
-    },
     computed: {
         navEditActive() {
             return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
@@ -76,7 +70,7 @@ export default {
             }.bind(this));
         },
 
-        blockShortcuts(n, o) {
+        '$store.state.document.blockShortcuts': function(n, o) {
             // make sure the segmenter doesnt trigger keyboard shortcuts either
             if (this.$refs.segPanel) this.$refs.segPanel.segmenter.disableShortcuts = n;
         }
@@ -101,7 +95,7 @@ export default {
         }
 
         document.addEventListener('keydown', async function(event) {
-            if (this.blockShortcuts) return;
+            if (this.$store.state.document.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
                 (event.keyCode == (this.readDirection == 'rtl'?39:37) && event.ctrlKey)) {  // arrow left
 

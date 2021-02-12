@@ -92,7 +92,7 @@ import VisuPanel from './VisuPanel.vue';
 import DiploPanel from './DiploPanel.vue';
 
 export default {
-    props: ['blockShortcuts', 'readDirection', 'defaultTextDirection', 'mainTextDirection'],
+    props: ['readDirection', 'defaultTextDirection', 'mainTextDirection'],
     data: function() {
         return {
             zoom: new WheelZoom(),
@@ -107,7 +107,7 @@ export default {
     },
     created() {
         document.addEventListener('keydown', function(event) {
-            if (this.blockShortcuts) return;
+            if (this.$store.state.document.blockShortcuts) return;
             if (event.keyCode == 8 && event.ctrlKey) {  // backspace
                  this.zoom.reset();
             }

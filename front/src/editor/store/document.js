@@ -4,6 +4,7 @@ import * as api from '../api'
 export const initialState = () => ({
     id: null,
     types: {},
+    blockShortcuts: false,
 
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
@@ -21,6 +22,9 @@ export const mutations = {
     },
     setTypes (state, types) {
         state.types = types
+    },
+    setBlockShortcuts(state, block) {
+        state.blockShortcuts = block
     },
     setVisiblePanels(state, payload) {
         state.visible_panels = assign({}, state.visible_panels, payload)
