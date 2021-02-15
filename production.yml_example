@@ -3,18 +3,42 @@ version: "3.9"
 services:
     web: &web
       restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
     channelserver:
       restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
     db:
       restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == db0
 
     nginx:
       restart: always
       ports:
        - "80:80"
       # - "443:443"
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
       ### To enable SSL, generate keys (eg with letsencrypt/certbot)
       ### copy nginx/ssl_certificates.conf_example and edit it
@@ -28,6 +52,12 @@ services:
 
     flower:
       restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
     # cpus and mem_limit imposes a hard limit on cpus usage,
     # needed to keep some for http/db when working with a single machine
@@ -46,6 +76,11 @@ services:
     celery-main:
       restart: always
       # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute0
       #   resources:
       #     limits:
       #       cpus: '6'
@@ -57,6 +92,11 @@ services:
     celery-low-priority:
       restart: always
       # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute1
       #   resources:
       #     limits:
       #       cpus: '2'
@@ -68,6 +108,11 @@ services:
     celery-gpu:
       restart: always
       # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.labels.type == gpu
       #   resources:
       #     limits:
       #       cpus: '6'
