@@ -1,7 +1,32 @@
-import { LineBase } from './base_line.js';
+<template>
+    <g @mouseover="showOverlay"
+        @mouseleave="hideOverlay"
+        @click="edit">
+        <polygon fill="transparent"
+                    v-bind:stroke="maskStrokeColor"
+                    v-bind:points="maskPoints"/>
+        <path v-bind:id="textPathId"
+                ref="pathElement"
+                fill="none"
+                v-bind:stroke="pathStrokeColor"
+                v-bind:d="baselinePoints"></path>
+        <text :text-anchor="'end' ? textDirection : ''"
+                ref="textElement"
+                lengthAdjust="spacingAndGlyphs">
+            <textPath v-bind:href="'#' + textPathId"
+                        v-if="line.currentTrans">
+                {{ line.currentTrans.content }}
+            </textPath>
+        </text>
+    </g>
+</template>
 
-export const visuLine = LineBase.extend({
-    props: ['line', 'ratio'],
+<script>
+import { LineBase } from '../../src/editor/mixins.js';
+
+export default Vue.extend({
+    mixins: [LineBase],
+    props: ['textDirection'],
     watch: {
         'line.currentTrans.content': function(n, o) {
             this.$nextTick(this.reset);
@@ -22,27 +47,24 @@ export const visuLine = LineBase.extend({
                     area += poly[i][0]*poly[j][1] - poly[j][0]*poly[i][1];
                 }
                 area = Math.abs(area*this.ratio);
-                lineHeight = area / this.pathElement.getTotalLength();
+                lineHeight = area / this.$refs.pathElement.getTotalLength();
             } else {
                 lineHeight = 30;
             }
 
             lineHeight = Math.max(Math.min(Math.round(lineHeight), 100), 5);
-            this.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
+            this.$refs.textElement.style.fontSize =  lineHeight * (1/2) + 'px';
             return 10+'px';
         },
         computeTextLength() {
             if (!this.line.currentTrans) return;
             const content = this.line.currentTrans.content;
             if (content) {
-                /* this.polyElement.setAttribute('stroke', 'none');
-                 * this.pathElement.setAttribute('stroke', 'none');
-                 */
                 // adjust the text length to fit in the box
-                let textLength = this.textElement.getComputedTextLength();
-                let pathLength = this.pathElement.getTotalLength();
+                let textLength = this.$refs.textElement.getComputedTextLength();
+                let pathLength = this.$refs.pathElement.getTotalLength();
                 if (textLength && pathLength) {
-                    this.textElement.setAttribute('textLength', pathLength+'px');
+                    this.$refs.textElement.setAttribute('textLength', pathLength+'px');
                 }
             }
         },
@@ -56,9 +78,6 @@ export const visuLine = LineBase.extend({
         },
     },
     computed: {
-        polyElement() { return this.$el.querySelector('polygon'); },
-        pathElement() { return this.$el.querySelector('path'); },
-        textElement() { return this.$el.querySelector('text'); },
         textPathId() {
             return this.line ? 'textPath'+this.line.pk : '';
         },
@@ -100,3 +119,7 @@ export const visuLine = LineBase.extend({
         },
     }
 });
+</script>
+
+<style scoped>
+</style>

@@ -1,12 +1,16 @@
-import { LineBase } from './base_line.js';
+<template>
+</template>
 
-export var diploLine = LineBase.extend({
-    props: ['line', 'ratio'],
+<script>
+import { LineBase } from '../../src/editor/mixins.js';
+
+export default Vue.extend({
+    mixins: [LineBase],
     computed: {
         showregion() {
-            let idx = this.$parent.part.lines.indexOf(this.line);
+            let idx = this.$store.state.lines.all.indexOf(this.line);
             if (idx) {
-                let pr = this.$parent.part.lines[idx - 1].region;
+                let pr = this.$store.state.lines.all[idx - 1].region;
                 if (this.line.region == pr)
                     return "";
                 else
@@ -48,14 +52,18 @@ export var diploLine = LineBase.extend({
     },
     methods: {
         getEl() {
-            return this.$parent.editor.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
+            return this.$parent.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(this.line.order+1)+')');
         },
         setElContent(content) {
             let line = this.getEl();
             if (line) line.textContent = content;
         },
         getRegion() {
-            return this.$parent.part.regions.findIndex(r => r.pk == this.line.region);
+            return this.$store.state.regions.all.findIndex(r => r.pk == this.line.region);
         }
     }
 });
+</script>
+
+<style scoped>
+</style>

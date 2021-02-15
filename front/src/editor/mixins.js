@@ -1,14 +1,45 @@
-export var LineBase = Vue.extend({
-    props: ['line', 'ratio'],
+window.Vue = require('vue/dist/vue');
+
+export var BasePanel = {
+    data() {
+        return {
+            ratio: 1
+        };
+    },
+    created() {
+        // Update ratio on window resize
+        window.addEventListener("resize", this.refresh);
+    },
+    destroyed() {
+        window.removeEventListener("resize", this.refresh);
+    },
+    watch: {
+        '$store.state.parts.loaded': function(n, o) {
+            if (n) {
+                this.refresh();
+            }
+        },
+        '$store.state.document.visible_panels': function(n, o) {
+            if (this.$store.state.parts.loaded) {
+                this.refresh();
+            }
+        }
+    },
     methods: {
         setRatio() {
-            this.ratio = this.$el.firstChild.clientWidth / this.part.image.size[0];
+            this.ratio = this.$el.firstChild.clientWidth / this.$store.state.parts.image.size[0];
         },
         refresh() {
             this.setRatio();
             this.updateView();
         },
-        updateView() {},
+        updateView() {}
+    }
+}
+
+export var LineBase = {
+    props: ['line', 'ratio'],
+    methods: {
         showOverlay() {
             if (this.line && this.line.mask) {
                 Array.from(document.querySelectorAll('.panel-overlay')).map(
@@ -34,4 +65,4 @@ export var LineBase = Vue.extend({
             return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
     }
-});
+}
