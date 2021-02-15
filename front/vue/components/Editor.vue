@@ -69,11 +69,6 @@ export default {
                 }
             }.bind(this));
         },
-
-        '$store.state.document.blockShortcuts': function(n, o) {
-            // make sure the segmenter doesnt trigger keyboard shortcuts either
-            if (this.$refs.segPanel) this.$refs.segPanel.segmenter.disableShortcuts = n;
-        }
     },
 
     components: {
@@ -108,13 +103,6 @@ export default {
                 event.preventDefault();
             }
         }.bind(this));
-
-        let debounced = _.debounce(function() {  // avoid calling this too often
-            if(this.$refs.segPanel) this.$refs.segPanel.refresh();
-            if(this.$refs.visuPanel) this.$refs.visuPanel.refresh();
-            if(this.$refs.diploPanel) this.$refs.diploPanel.refresh();
-        }.bind(this), 200);
-        window.addEventListener('resize', debounced);
 
         // catch background emited events when masks are recalculated
         let $alertsContainer = $('#alerts-container');
