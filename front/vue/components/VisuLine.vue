@@ -10,7 +10,7 @@
                 fill="none"
                 v-bind:stroke="pathStrokeColor"
                 v-bind:d="baselinePoints"></path>
-        <text :text-anchor="'end' ? $store.state.document.defaultTextDirection : ''"
+        <text :text-anchor="$store.state.document.defaultTextDirection == 'rtl' ? 'end' : ''"
                 ref="textElement"
                 lengthAdjust="spacingAndGlyphs">
             <textPath v-bind:href="'#' + textPathId"

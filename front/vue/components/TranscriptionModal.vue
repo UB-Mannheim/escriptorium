@@ -297,6 +297,14 @@ export default Vue.extend({
 
             let top = -(bbox.top*ratio - context);
             let left = -(bbox.left*ratio - context);
+
+            // if text direction is rtl and the line doesn't take all the space,
+            // align it to the right
+            if (modalImgContainer.clientWidth - 2*context > bbox.width*ratio
+                && this.$store.state.document.defaultTextDirection == 'rtl') {
+                left += modalImgContainer.clientWidth - 2*context - bbox.width*ratio;
+            }
+
             // modalImgContainer.style.transform = 'scale('+ratio+')';
 
             let imgWidth = this.$store.state.parts.image.size[0]*ratio +'px';
