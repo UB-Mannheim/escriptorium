@@ -1,4 +1,4 @@
-version: "2.4"
+version: "3.9"
 
 services:
     web: &web
@@ -45,21 +45,37 @@ services:
 
     celery-main:
       restart: always
-      # cpus: 6
-      # mem_limit: 15g
-      # mem_reservation: 4g
+      # deploy:
+      #   resources:
+      #     limits:
+      #       cpus: '6'
+      #       memory: 15g
+      #     reservations:
+      #       cpus: '6'
+      #       memory: 4g
 
     celery-low-priority:
       restart: always
-      # cpus: 2
-      # mem_limit: 15g
-      # mem_reservation: 1g
+      # deploy:
+      #   resources:
+      #     limits:
+      #       cpus: '2'
+      #       memory: 15g
+      #     reservations:
+      #       cpus: '2'
+      #       memory: 1g
 
     celery-gpu:
       restart: always
-      # cpus: 6
-      # mem_limit: 15g
-      # mem_reservation: 10g
+      # deploy:
+      #   resources:
+      #     limits:
+      #       cpus: '6'
+      #       memory: 15g
+      #     reservations:
+      #       cpus: '2'
+      #       memory: 1g
+
       # shm_size: '3gb'
       # runtime: nvidia
       # environment:

@@ -1,7 +1,8 @@
-version: "2.4"
+version: "3.9"
 
 services:
   app: &app
+    image: registry.gitlab.inria.fr/scripta/escriptorium/app
     build:
       context: .
     env_file: variables.env
@@ -36,6 +37,7 @@ services:
     image: redis:3.0-alpine
 
   nginx:
+    image: registry.gitlab.inria.fr/scripta/escriptorium/nginx
     build: ./nginx
     environment:
       - SERVERNAME=${DOMAIN:-localhost}
