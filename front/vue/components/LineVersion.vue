@@ -49,7 +49,7 @@ export default Vue.extend({
     },
     methods: {
         async loadState() {
-            await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: this.version.data.content });
+            this.$parent.localTranscription = this.version.data.content;
         },
     }
 });

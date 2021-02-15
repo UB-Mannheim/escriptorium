@@ -72,11 +72,11 @@
                     <div id="trans-input-container" ref="transInputContainer">
                         <input v-on:keyup.down="$parent.editNext"
                                 v-on:keyup.up="$parent.editPrevious"
+                                v-on:keyup.enter="$parent.editNext"
                                 id="trans-input"
                                 ref="transInput"
                                 name="content"
                                 class="form-control mb-2"
-                                v-on:keyup.enter="$parent.editNext"
                                 v-model.lazy="localTranscription"
                                 autocomplete="off"
                                 autofocus/>
@@ -215,10 +215,15 @@ export default Vue.extend({
             return a;
         },
         localTranscription: {
-            get() {
+            get: function() {
                 return this.line.currentTrans && this.line.currentTrans.content || '';
             },
-            async set(newValue) {
+            set: async function(newValue) {
+                if (this.$refs.transInput.value != newValue) {
+                   // Note: better way to do that?
+                   this.$refs.transInput.value = newValue;
+                   this.computeStyles();
+                }
                 await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
             }
         }
