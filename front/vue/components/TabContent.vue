@@ -2,14 +2,14 @@
     <div class="row">
         <div class="col-sides">
             <a id="next-part"
-               v-if="readDirection == 'rtl' && $store.state.parts.next"
+               v-if="$store.state.document.readDirection == 'rtl' && $store.state.parts.next"
                href="#"
                @click="getNext"
                class="nav-btn nav-next"
                title="Next (Page Down or Ctrl+Left Arrow)">
                 <i class="fas fa-angle-left"></i></a>
             <a id="prev-part"
-               v-else-if="readDirection != 'rtl' && $store.state.parts.previous"
+               v-else-if="$store.state.document.readDirection != 'rtl' && $store.state.parts.previous"
                href="#"
                @click="getPrevious"
                class="nav-btn nav-prev"
@@ -42,7 +42,6 @@
         <keep-alive>
             <SegPanel v-if="visible_panels.segmentation && $store.state.parts.loaded"
                                v-bind:fullsizeimage="fullsizeimage"
-                               v-bind:main-text-direction="mainTextDirection"
                                id="segmentation-panel"
                                ref="segPanel">
             </SegPanel>
@@ -50,8 +49,6 @@
 
         <keep-alive>
             <VisuPanel v-if="visible_panels.visualisation && $store.state.parts.loaded"
-                    v-bind:default-text-direction="defaultTextDirection"
-                    v-bind:read-direction="readDirection"
                     id="transcription-panel"
                     ref="visuPanel">
             </VisuPanel>
@@ -66,7 +63,7 @@
 
         <div class="col-sides">
             <a id="prev-part"
-            v-if="readDirection == 'rtl' && $store.state.parts.previous"
+            v-if="$store.state.document.readDirection == 'rtl' && $store.state.parts.previous"
             @click="getPrevious"
             href="#"
             class="nav-btn nav-prev"
@@ -74,7 +71,7 @@
                 <i class="fas fa-angle-right"></i>
             </a>
             <a id="next-part"
-            v-else-if="readDirection != 'rtl' && $store.state.parts.next"
+            v-else-if="$store.state.document.readDirection != 'rtl' && $store.state.parts.next"
             @click="getNext"
             href="#"
             class="nav-btn nav-next"
@@ -92,7 +89,6 @@ import VisuPanel from './VisuPanel.vue';
 import DiploPanel from './DiploPanel.vue';
 
 export default {
-    props: ['readDirection', 'defaultTextDirection', 'mainTextDirection'],
     data: function() {
         return {
             zoom: new WheelZoom(),

@@ -3,17 +3,12 @@
         <nav>
             <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
                 <slot></slot>
-                <extrainfo :object="object"
-                           :document-name="documentName">
-                </extrainfo>
+                <extrainfo></extrainfo>
                 <extranav></extranav>
             </div>
         </nav>
 
-        <tabcontent :default-text-direction="defaultTextDirection"
-                    :main-text-direction="mainTextDirection"
-                    :read-direction="readDirection">
-        </tabcontent>
+        <tabcontent></tabcontent>
     </div>
 </template>
 
@@ -24,7 +19,6 @@ import TabContent from './TabContent.vue';
 
 export default {
     props: [
-        'object',
         'documentId',
         'documentName',
         'partId',
@@ -79,6 +73,10 @@ export default {
 
     async created() {
         this.$store.commit('document/setId', this.documentId);
+        this.$store.commit('document/setName', this.documentName);
+        this.$store.commit('document/setDefaultTextDirection', this.defaultTextDirection);
+        this.$store.commit('document/setMainTextDirection', this.mainTextDirection);
+        this.$store.commit('document/setReadDirection', this.readDirection);
         try {
             await this.$store.dispatch('parts/fetchPart', this.partId);
             let tr = userProfile.get('initialTranscriptions')

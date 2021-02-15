@@ -10,7 +10,7 @@
                 fill="none"
                 v-bind:stroke="pathStrokeColor"
                 v-bind:d="baselinePoints"></path>
-        <text :text-anchor="'end' ? textDirection : ''"
+        <text :text-anchor="'end' ? $store.state.document.defaultTextDirection : ''"
                 ref="textElement"
                 lengthAdjust="spacingAndGlyphs">
             <textPath v-bind:href="'#' + textPathId"
@@ -26,7 +26,6 @@ import { LineBase } from '../../src/editor/mixins.js';
 
 export default Vue.extend({
     mixins: [LineBase],
-    props: ['textDirection'],
     watch: {
         'line.currentTrans.content': function(n, o) {
             this.$nextTick(this.reset);
@@ -70,7 +69,7 @@ export default Vue.extend({
         },
 
         edit() {
-            this.$parent.editLine = this.line;
+            this.$store.dispatch('lines/toggleLineEdition', this.line);
         },
         reset() {
             this.computeLineHeight();

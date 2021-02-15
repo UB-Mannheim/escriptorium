@@ -10,7 +10,7 @@
                     @click="toggleSort"
                     autocomplete="off"></button>
         </div>
-        <div :class="'content-container ' + readDirection" ref="contentContainer">
+        <div :class="'content-container ' + $store.state.document.readDirection" ref="contentContainer">
 
             <diploline v-for="line in $store.state.lines.all"
                         v-bind:line="line"
@@ -41,12 +41,10 @@ import DiploLine from './DiploLine.vue';
 
 export default Vue.extend({
     mixins: [BasePanel],
-    props: ['readDirection'],
     data() { return {
         updatedLines : [],
         createdLines : [],
         movedLines:[],
-
     };},
     components: {
         'diploline': DiploLine,

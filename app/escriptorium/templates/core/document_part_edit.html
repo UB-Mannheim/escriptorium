@@ -4,8 +4,7 @@
 
 {% block body %}
 <div id="editor">
-  <editor :object="'{{object}}'"
-          :document-id="'{{document.id}}'"
+  <editor :document-id="'{{document.id}}'"
           :document-name="'{{document.name}}'"
           :part-id="'{{part.id}}'"
           :default-text-direction="'{{ document.default_text_direction }}'"

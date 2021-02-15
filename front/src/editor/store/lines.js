@@ -3,7 +3,7 @@ import * as api from '../api'
 
 export const initialState = () => ({
     all: [],
-
+    editedLine: null,
     // internal
     masksToRecalc: [],
     debouncedRecalculateMasks: null,
@@ -51,18 +51,22 @@ export const mutations = {
         // so that all components get a full refresh after an update
         state.all = [...state.all]
     },
+    setEditedLine (state, line) {
+        state.editedLine = line
+    },
     updateOrder (state, { lines, recalculate }) {
         for (let i=0; i<lines.length; i++) {
             let lineData = lines[i]
             let index = state.all.findIndex(l => l.pk == lineData.pk)
             if (index != -1) {
                 if (recalculate) {
-                    state.all[index] = { ...state.all[index], order: i }
+                    state.all[index].order = i
                 } else {
-                    state.all[index] = { ...state.all[index], order: lineData.order }
+                    state.all[index].order = lineData.order
                 }
             }
         }
+        state.all = [...state.all.sort((a, b) => (a.order > b.order) ? 1 : -1)]
     },
     updateCurrentTrans (state, transcription) {
         state.all = state.all.map(line => {
@@ -82,6 +86,9 @@ export const mutations = {
             state.all[index] = { ...state.all[index], transcriptions: tr }
         }
         state.all[index] = { ...state.all[index], currentTrans: transcription }
+        // Force reference update on the whole array
+        // so that all components get a full refresh after an update
+        state.all = [...state.all]
     },
     createTranscriptions (state, createdTranscriptions) {
         for (let i=0; i<createdTranscriptions.lines.length; i++) {
@@ -93,6 +100,9 @@ export const mutations = {
                 currentTrans: { ...state.all[index].currentTrans, pk: lineTrans.pk }
             }
         }
+        // Force reference update on the whole array
+        // so that all components get a full refresh after an update
+        state.all = [...state.all]
     },
     updateTranscriptionVersion (state, { pk, content }) {
         let index = state.all.findIndex(l=>l.pk == pk)
@@ -245,6 +255,24 @@ export const actions = {
         }
         state.debouncedRecalculateOrdering()
     },
+
+    toggleLineEdition({commit}, line) {
+        commit('setEditedLine', line)
+    },
+
+    editLine({state, commit}, direction) {
+        if (direction == 'next') {
+            let index = state.all.findIndex(l => l.pk == state.editedLine.pk)
+            if (index < state.all.length - 1) {
+                commit('setEditedLine', state.all[index + 1])
+            }
+        } else {
+            let index = state.all.findIndex(l => l.pk == state.editedLine.pk)
+            if (index >= 1) {
+                commit('setEditedLine', state.all[index - 1])
+            }
+        }
+    }
 }
 
 export default {

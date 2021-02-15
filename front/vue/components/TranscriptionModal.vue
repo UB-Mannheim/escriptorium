@@ -7,10 +7,10 @@
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button v-if="readDirection == 'rtl'"
+                    <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="next-btn"
-                            @click="$parent.editNext()"
+                            @click="$store.dispatch('lines/editLine', 'next')"
                             title="Next"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
@@ -18,16 +18,16 @@
                     <button v-else
                             type="button"
                             id="prev-btn"
-                            @click="$parent.editPrevious()"
+                            @click="$store.dispatch('lines/editLine', 'previous')"
                             title="Previous"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
                     </button>
 
-                    <button v-if="readDirection == 'rtl'"
+                    <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="prev-btn"
-                            @click="$parent.editPrevious()"
+                            @click="$store.dispatch('lines/editLine', 'previous')"
                             title="Previous"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
@@ -35,7 +35,7 @@
                     <button v-else
                             type="button"
                             id="next-btn"
-                            @click="$parent.editNext()"
+                            @click="$store.dispatch('lines/editLine', 'next')"
                             title="Next"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
@@ -51,7 +51,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div :class="'modal-body ' + defaultTextDirection">
+                <div :class="'modal-body ' + $store.state.document.defaultTextDirection">
                     <div id="modal-img-container" ref="modalImgContainer" width="80%">
                         <img id="line-img"
                                 v-bind:src="modalImgSrc"
@@ -70,9 +70,9 @@
                     </div>
 
                     <div id="trans-input-container" ref="transInputContainer">
-                        <input v-on:keyup.down="$parent.editNext"
-                                v-on:keyup.up="$parent.editPrevious"
-                                v-on:keyup.enter="$parent.editNext"
+                        <input v-on:keyup.down="$store.dispatch('lines/editLine', 'next')"
+                                v-on:keyup.up="$store.dispatch('lines/editLine', 'previous')"
+                                v-on:keyup.enter="$store.dispatch('lines/editLine', 'next')"
                                 id="trans-input"
                                 ref="transInput"
                                 name="content"
@@ -162,7 +162,7 @@ import HelpVersions from './HelpVersions.vue';
 import HelpCompareTranscriptions from './HelpCompareTranscriptions.vue';
 
 export default Vue.extend({
-    props: ['readDirection', 'defaultTextDirection', 'line'],
+    props: ['line'],
     components: {
         LineVersion,
         HelpVersions,
@@ -171,7 +171,7 @@ export default Vue.extend({
     created() {
         // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
-            this.$parent.editLine = null;
+            this.$store.dispatch('lines/toggleLineEdition', null);
             this.$store.commit('document/setBlockShortcuts', false);
         }.bind(this));
 
@@ -344,7 +344,7 @@ export default Vue.extend({
             input.style.fontSize = fontSize+'px';
             input.style.height = Math.round(fontSize*1.1)+'px';
 
-            if (this.readDirection == 'rtl') {
+            if (this.$store.state.document.readDirection == 'rtl') {
                 container.style.marginRight = context+'px';
             } else {
                 // left to right
