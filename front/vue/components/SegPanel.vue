@@ -170,7 +170,7 @@ import { Segmenter } from "../../src/baseline.editor.js";
 
 export default Vue.extend({
   mixins: [BasePanel],
-  props: ["fullsizeimage", "mainTextDirection"],
+  props: ["fullsizeimage"],
   data() {
     return {
       segmenter: { loaded: false },
@@ -199,7 +199,7 @@ export default Vue.extend({
         this.segmenter = new Segmenter(this.$img, {
           delayInit: true,
           idField: "pk",
-          defaultTextDirection: this.mainTextDirection.slice(-2),
+          defaultTextDirection: this.$store.state.document.mainTextDirection.slice(-2),
           regionTypes: this.$store.state.document.types.regions.map((t) => t.name),
           lineTypes: this.$store.state.document.types.lines.map((t) => t.name),
           baselinesColor: beSettings["color-baselines"] || null,

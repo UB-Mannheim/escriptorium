@@ -3,6 +3,10 @@ import * as api from '../api'
 
 export const initialState = () => ({
     id: null,
+    name: "",
+    defaultTextDirection: null,
+    mainTextDirection: null,
+    readDirection: null,
     types: {},
     blockShortcuts: false,
 
@@ -19,6 +23,18 @@ export const initialState = () => ({
 export const mutations = {
     setId (state, id) {
         state.id = id
+    },
+    setName (state, name) {
+        state.name = name
+    },
+    setDefaultTextDirection (state, direction) {
+        state.defaultTextDirection = direction
+    },
+    setMainTextDirection (state, direction) {
+        state.mainTextDirection = direction
+    },
+    setReadDirection (state, direction) {
+        state.readDirection = direction
     },
     setTypes (state, types) {
         state.types = types

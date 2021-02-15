@@ -6,10 +6,9 @@
         </div>
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
-                <svg :class="'w-100 ' + defaultTextDirection">
+                <svg :class="'w-100 ' + $store.state.document.defaultTextDirection">
                     <visuline v-for="line in $store.state.lines.all"
                                 ref="visulines"
-                                v-bind:text-direction="defaultTextDirection"
                                 v-bind:line="line"
                                 v-bind:ratio="ratio"
                                 v-bind:key="'VL' + line.pk">
@@ -18,10 +17,8 @@
             </div>
         </div>
 
-        <TranscriptionModal v-if="editLine"
-                            v-bind:line="editLine"
-                            v-bind:default-text-direction="defaultTextDirection"
-                            v-bind:read-direction="readDirection">
+        <TranscriptionModal v-if="$store.state.lines.editedLine"
+                            v-bind:line="$store.state.lines.editedLine">
         </TranscriptionModal>
     </div>
 </template>
@@ -36,10 +33,6 @@ import TranscriptionModal from './TranscriptionModal.vue';
 
 export default Vue.extend({
     mixins: [BasePanel],
-    props: ['readDirection', 'defaultTextDirection'],
-    data() { return  {
-      editLine: null
-    };},
     components: {
         'visuline': VisuLine,
         TranscriptionModal,
@@ -53,18 +46,6 @@ export default Vue.extend({
         }.bind(this));
     },
     methods: {
-        editNext() {
-            let index = this.$store.state.lines.all.indexOf(this.editLine);
-            if(index < this.$store.state.lines.all.length - 1) {
-                this.editLine = this.$store.state.lines.all[index + 1];
-            }
-        },
-        editPrevious() {
-            let index = this.$store.state.lines.all.indexOf(this.editLine);
-            if(index >= 1) {
-                this.editLine = this.$store.state.lines.all[index - 1];
-            }
-        },
         resetLines() {
             if (this.$store.state.lines.all.length && this.$refs.visulines.length) {
                 this.$refs.visulines.forEach(function(line) {

@@ -36,13 +36,10 @@ export default Vue.extend({
         'line.order': function(n, o) {
             // make sure it's at the right place,
             // in case it was just created or the ordering got recalculated
-            let index = Array.from(this.$el.parentNode.children).indexOf(this.$el);
-            if (index != this.line.order) {
-                this.$el.parentNode.insertBefore(
-                    this.$el,
-                    this.$el.parentNode.children[this.line.order]);
-                this.setElContent(this.line.currentTrans.content);
-            }
+            this.$el.parentNode.insertBefore(
+                this.$el,
+                this.$el.parentNode.children[this.line.order]);
+            this.setElContent(this.line.currentTrans.content);
         },
         'line.currentTrans': function(n, o) {
             if (n!=undefined) {
