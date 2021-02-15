@@ -102,7 +102,8 @@ export default {
                 await this.$store.dispatch('parts/loadPart', 'previous');
                 event.preventDefault();
             } else if (event.keyCode == 34 ||   // page down
-                       (event.keyCode == (this.readDirection == 'rtl'?37:39) && event.ctrlKey)) {  // arrow right
+                       (event.keyCode == (this.readDirection == 'rtl'?37:39) &&
+                       event.ctrlKey)) {  // arrow right
                 await this.$store.dispatch('parts/loadPart', 'next');
                 event.preventDefault();
             }
@@ -121,7 +122,7 @@ export default {
             data.lines.forEach(function(lineData) {
                 let line = this.$store.state.lines.all.find(l=>l.pk == lineData.pk);
                 if (line) {  // might have been deleted in the meantime
-                    line.mask = lineData.mask;
+                    this.$store.commit('lines/update', lineData)
                 }
             }.bind(this));
         }.bind(this));

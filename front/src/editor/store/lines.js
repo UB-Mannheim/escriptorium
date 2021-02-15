@@ -33,9 +33,12 @@ export const mutations = {
     },
     update (state, line) {
         let index = state.all.findIndex(l => l.pk == line.pk)
-        state.all[index].baseline = line.baseline
-        state.all[index].mask = line.mask
-        state.all[index].region = line.region
+        if (line.baseline !== undefined)
+            state.all[index].baseline = line.baseline
+        if (line.mask !== undefined)
+            state.all[index].mask = line.mask
+        if (line.region !== undefined)
+            state.all[index].region = line.region
 
         // Force reference update on the whole array
         // so that all components get a full refresh after an update
