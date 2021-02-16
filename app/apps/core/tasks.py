@@ -40,6 +40,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
         "data": data or {}
     })
 
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
@@ -114,19 +115,22 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
 
 
 def make_segmentation_training_data(part):
-    return {
+    data = {
         'image': part.image.path,
-        'baselines': [{'script': bl.typology.name or 'default',
-                       'baseline': bl}
-                      for bl in part.lines.values_list('baseline', flat=True) if bl],
-        'regions': {typo: regs for typo, regs in groupby(
-            (r.box for r in part.blocks.all().order_by('typology')),
-            key=lambda reg: reg.typology.name)}
+        'baselines': [{'script': line.typology and line.typology.name or 'default',
+                       'baseline': line.baseline}
+                      for line in part.lines.only('baseline', 'typology')
+                      if line.baseline],
+        'regions':  {typo: list(reg.box for reg in regs)
+                     for typo, regs in groupby(
+                        part.blocks.only('box', 'typology').order_by('typology'),
+                        key=lambda reg: reg.typology and reg.typology.name or 'default')}
     }
+    return data
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+def segtrain(task, model_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -148,6 +152,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     OcrModel = apps.get_model('core', 'OcrModel')
 
     model = OcrModel.objects.get(pk=model_pk)
+
     try:
         load = model.file.path
         upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
@@ -409,6 +414,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
     OcrModel = apps.get_model('core', 'OcrModel')
+
     try:
         model = OcrModel.objects.get(pk=model_pk)
         model.training = True
@@ -448,10 +454,12 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
+
         logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
         return
 
@@ -463,18 +471,10 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
     else:
         user = None
 
-    if model_pk:
-        try:
-            OcrModel = apps.get_model('core', 'OcrModel')
-            model = OcrModel.objects.get(pk=model_pk)
-        except OcrModel.DoesNotExist:
-            # Not sure how we should deal with this case
-            model = None
-    else:
-        model = None
-
     try:
-        part.transcribe(model=model)
+        OcrModel = apps.get_model('core', 'OcrModel')
+        model = OcrModel.objects.get(pk=model_pk)
+        part.transcribe(model)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),

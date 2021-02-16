@@ -677,52 +677,45 @@ class DocumentPart(OrderedModel):
         self.save()
         self.recalculate_ordering(read_direction=read_direction)
 
-    def transcribe(self, model=None, text_direction=None):
-        if model:
-            trans, created = Transcription.objects.get_or_create(
-                name='kraken:' + model.name,
-                document=self.document)
-            model_ = kraken_models.load_any(model.file.path)
-            lines = self.lines.all()
-            text_direction = (text_direction
-                              or (self.document.main_script
-                                  and self.document.main_script.text_direction)
-                              or 'horizontal-lr')
+    def transcribe(self, model, text_direction=None):
+        trans, created = Transcription.objects.get_or_create(
+            name='kraken:' + model.name,
+            document=self.document)
+        model_ = kraken_models.load_any(model.file.path)
+        lines = self.lines.all()
+        text_direction = (text_direction
+                          or (self.document.main_script
+                              and self.document.main_script.text_direction)
+                          or 'horizontal-lr')
 
-            with Image.open(self.image.file.name) as im:
-                for line in lines:
-                    if not line.baseline:
-                        bounds = {
-                            'boxes': [line.box],
-                            'text_direction': text_direction,
-                            'type': 'baselines',
-                            # 'script_detection': True
-                        }
-                    else:
-                        bounds = {
-                            'lines': [{'baseline': line.baseline,
-                                       'boundary': line.mask,
-                                       'text_direction': text_direction,
-                                       'script': 'default'}],  # self.document.main_script.name
-                            'type': 'baselines',
-                            # 'selfcript_detection': True
-                        }
-                    it = rpred.rpred(
-                            model_, im,
-                            bounds=bounds,
-                            pad=16,  # TODO: % of the image?
-                            bidi_reordering=True)
-                    lt, created = LineTranscription.objects.get_or_create(
-                        line=line, transcription=trans)
-                    for pred in it:
-                        lt.content = pred.prediction
-                        lt.graphs = [(char, pred.cuts[i], float(pred.confidences[i]))
-                                     for i, char in enumerate(pred.prediction)]
-                    lt.save()
-        else:
-            Transcription.objects.get_or_create(
-                name='manual',
-                document=self.document)
+        with Image.open(self.image.file.name) as im:
+            for line in lines:
+                if not line.baseline:
+                    bounds = {
+                        'boxes': [line.box],
+                        'text_direction': text_direction,
+                        'type': 'baselines',
+                        # 'script_detection': True
+                    }
+                else:
+                    bounds = {
+                        'lines': [{'baseline': line.baseline,
+                                   'boundary': line.mask,
+                                   'text_direction': text_direction,
+                                   'script': 'default'}],  # self.document.main_script.name
+                        'type': 'baselines',
+                        # 'selfcript_detection': True
+                    }
+                it = rpred.rpred(
+                        model_, im,
+                        bounds=bounds,
+                        pad=16,  # TODO: % of the image?
+                        bidi_reordering=True)
+                lt, created = LineTranscription.objects.get_or_create(
+                    line=line, transcription=trans)
+                for pred in it:
+                    lt.content = pred.prediction
+                lt.save()
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
@@ -1082,7 +1075,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.pk, slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.document.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1104,9 +1097,9 @@ class OcrModel(Versioned, models.Model):
     training_accuracy = models.FloatField(default=0.0)
     training_total = models.IntegerField(default=0)
     training_errors = models.IntegerField(default=0)
-    document = models.ForeignKey(Document, blank=True, null=True,
+    document = models.ForeignKey(Document,
                                  related_name='ocr_models',
-                                 default=None, on_delete=models.SET_NULL)
+                                 default=None, on_delete=models.CASCADE)
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
     version_ignore_fields = ('name', 'owner', 'document', 'script', 'training')
@@ -1124,8 +1117,9 @@ class OcrModel(Versioned, models.Model):
         return self.training_accuracy * 100
 
     def segtrain(self, document, parts_qs, user=None):
-        segtrain.delay(self.pk, document.pk,
-                       list(parts_qs.values_list('pk', flat=True)))
+        segtrain.delay(self.pk,
+                       list(parts_qs.values_list('pk', flat=True)),
+                       user_pk=user and user.pk or None)
 
     def train(self, parts_qs, transcription, user=None):
         train.delay(list(parts_qs.values_list('pk', flat=True)),
@@ -1139,7 +1133,7 @@ class OcrModel(Versioned, models.Model):
                 task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
             elif self.job == self.MODEL_JOB_SEGMENT:
                 task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
-        except (TypeError, KeyError) as e:
+        except (TypeError, KeyError):
             raise ProcessFailureException(_("Couldn't find the training task."))
         else:
             if task_id:

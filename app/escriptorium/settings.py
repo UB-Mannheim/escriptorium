@@ -15,6 +15,7 @@ import sys
 import subprocess
 from kombu import Queue
 from django.utils.translation import gettext_lazy as _
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -61,7 +62,6 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework.authtoken',
-    'compressor',
     'captcha',
 
     'bootstrap',
@@ -102,12 +102,7 @@ TEMPLATES = [
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
-    'compressor.finders.CompressorFinder',
 )
-
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
 
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 
@@ -217,10 +212,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024  # value in bytes (so 150Mb)
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
+FRONTEND_DIR = os.getenv('FRONTEND_DIR', os.path.join(BASE_DIR, '..', 'front', 'dist'))
+
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
+    FRONTEND_DIR
 ]
 
 MEDIA_URL = '/media/'
@@ -313,7 +311,7 @@ IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
 KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
-KRAKEN_DEFAULT_SEGMENTATION_MODEL = os.path.join(STATIC_ROOT, 'cBAD_27.mlmodel')
+KRAKEN_DEFAULT_SEGMENTATION_MODEL = SEGMENTATION_DEFAULT_MODEL
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

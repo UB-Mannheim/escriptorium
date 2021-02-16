@@ -84,17 +84,12 @@ class CoreFactory():
 
     def make_asset_file(self, name='test.png', asset_name='segmentation/default.png'):
         fp = os.path.join(os.path.dirname(__file__), 'assets', asset_name)
-        with Image.open(fp, 'r') as image:
-            file = BytesIO()
-            file.name = name
-            image.save(file, 'png')
-            file.seek(0)
-        return file
+        return open(fp, 'rb')
 
     def make_model(self, job=OcrModel.MODEL_JOB_RECOGNIZE, document=None):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
-        model_name = 'test-model'
+        model_name = 'test-model.mlmodel'
         model = OcrModel.objects.create(name=model_name,
                                         document=document,
                                         job=job)

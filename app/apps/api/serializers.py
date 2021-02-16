@@ -4,10 +4,12 @@ import html
 
 from django.conf import settings
 from django.db.utils import IntegrityError
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
 
+from api.fields import DisplayChoiceField
 from users.models import User
 from core.models import (Document,
                          DocumentPart,
@@ -16,7 +18,9 @@ from core.models import (Document,
                          Transcription,
                          LineTranscription,
                          BlockType,
-                         LineType)
+                         LineType,
+                         OcrModel)
+from core.tasks import (segtrain, train, segment, transcribe)
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +110,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class PartSerializer(serializers.ModelSerializer):
-    image = ImageField(thumbnails=['card', 'large'])
+    image = ImageField(required=False, thumbnails=['card', 'large'])
     filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
@@ -259,3 +263,179 @@ class PartDetailSerializer(PartSerializer):
         nex = DocumentPart.objects.filter(
             document=instance.document, order__gt=instance.order).order_by('order').first()
         return nex and nex.pk or None
+
+
+class OcrModelSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    job = DisplayChoiceField(choices=OcrModel.MODEL_JOB_CHOICES)
+    training = serializers.ReadOnlyField()
+
+    class Meta:
+        model = OcrModel
+        fields = ('pk', 'name', 'file', 'job',
+                  'owner', 'training', 'versions')
+
+    def create(self, data):
+        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        data['document'] = document
+        data['owner'] = self.context["view"].request.user
+        obj = super().create(data)
+        return obj
+
+
+class ProcessSerializerMixin():
+    def __init__(self, document, user, *args, **kwargs):
+        self.document = document
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+
+class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
+    STEPS_CHOICES = (
+        ('both', _('Lines and regions')),
+        ('lines', _('Lines Baselines and Masks')),
+        ('masks', _('Only lines Masks')),
+        ('regions', _('Regions')),
+    )
+    TEXT_DIRECTION_CHOICES = (
+        ('horizontal-lr', _("Horizontal l2r")),
+        ('horizontal-rl', _("Horizontal r2l")),
+        ('vertical-lr', _("Vertical l2r")),
+        ('vertical-rl', _("Vertical r2l"))
+    )
+
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all())
+    steps = serializers.ChoiceField(choices=STEPS_CHOICES,
+                                    required=False,
+                                    default='both')
+    model = serializers.PrimaryKeyRelatedField(required=False,
+                                               allow_null=True,
+                                               queryset=OcrModel.objects.all())
+    override = serializers.BooleanField(required=False, default=True)
+    text_direction = serializers.ChoiceField(default='horizontal-lr',
+                                             required=False,
+                                             choices=TEXT_DIRECTION_CHOICES)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT,
+                                                                document=self.document)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def process(self):
+        model = self.validated_data.get('model')
+        parts = self.validated_data.get('parts')
+        for part in parts:
+            part.chain_tasks(
+                segment.si(part.pk,
+                           user_pk=self.user.pk,
+                           model_pk=model,
+                           steps=self.validated_data.get('steps'),
+                           text_direction=self.validated_data.get('text_direction'),
+                           override=self.validated_data.get('override'))
+            )
+
+
+class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all())
+    model = serializers.PrimaryKeyRelatedField(required=False,
+                                               queryset=OcrModel.objects.all())
+    model_name = serializers.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT,
+                                                                document=self.document)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def validate_parts(self, data):
+        if len(data) < 2:
+            raise serializers.ValidationError("Segmentation training requires at least 2 images.")
+        return data
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not data.get('model') and not data.get('model_name'):
+            raise serializers.ValidationError(
+                _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
+        return data
+
+    def process(self):
+        model = self.validated_data.get('model')
+        if self.validated_data.get('model_name'):
+            file_ = model and model.file or None
+            model = OcrModel.objects.create(
+                document=self.document,
+                owner=self.user,
+                name=self.validated_data['model_name'],
+                job=OcrModel.MODEL_JOB_RECOGNIZE,
+                file=file_
+            )
+
+        segtrain.delay(model.pk if model else None,
+                       [part.pk for part in self.validated_data.get('parts')],
+                       user_pk=self.user.pk)
+
+
+class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all())
+    model = serializers.PrimaryKeyRelatedField(required=False,
+                                               queryset=OcrModel.objects.all())
+    model_name = serializers.CharField(required=False)
+    transcription = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE,
+                                                                document=self.document)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not data.get('model') and not data.get('model_name'):
+            raise serializers.ValidationError(
+                    _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
+        return data
+
+    def process(self):
+        model = self.validated_data.get('model')
+        if self.validated_data.get('model_name'):
+            file_ = model and model.file or None
+            model = OcrModel.objects.create(
+                document=self.document,
+                owner=self.user,
+                name=self.validated_data['model_name'],
+                job=OcrModel.MODEL_JOB_RECOGNIZE,
+                file=file_)
+
+        train.delay([part.pk for part in self.validated_data.get('parts')],
+                    self.validated_data['transcription'].pk,
+                    model.pk if model else None,
+                    self.user.pk)
+
+
+class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all())
+    model = serializers.PrimaryKeyRelatedField(queryset=OcrModel.objects.all())
+    # transcription = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE,
+                                                                document=self.document)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def process(self):
+        model = self.validated_data.get('model')
+        for part in self.validated_data.get('parts'):
+            part.chain_tasks(
+                transcribe.si(part.pk,
+                              model_pk=model.pk,
+                              user_pk=self.user.pk)
+            )

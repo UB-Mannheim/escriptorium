@@ -172,6 +172,10 @@
  {% endif %}
 </script>
 {{ block.super }}
-<script src="{% static 'js/document_form.js' %}"></script>
-<script src="{% static 'js/help.js' %}"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+      bootDocumentForm();
+      bootHelp();
+    });
+</script>
 {% endblock %}

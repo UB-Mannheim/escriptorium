@@ -25,9 +25,6 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('reporting.urls')),
     path('api/', include('api.urls', namespace='api')),
-
-    # sandbox
-    path('baseline-editor/', TemplateView.as_view(template_name='baseline_editor.html')),
     path(r'captcha/', include('captcha.urls')),
 ]
 

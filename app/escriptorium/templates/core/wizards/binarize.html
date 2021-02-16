@@ -2,9 +2,7 @@
 {% load i18n bootstrap %}
 
 {% block wizard_help %}
-<p>{% blocktrans %}Binarization is a mandatory step before automatic segmentation, the output is a black and white image.{% endblocktrans %}</p>
-<hr>
-<p>{% blocktrans %}You can skip this step if you want to proceed with manual segmentation.{% endblocktrans %}</p>
+<p>{% trans "Binarization is NOT a mandatory step any more, and might even decrease quality." %}</p>
 {% endblock %}
 
 {% block wizard_fields %}
