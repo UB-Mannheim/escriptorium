@@ -145,7 +145,7 @@ class ZipParser(ParserDocument):
                     try:
                         file_extension = os.path.splitext(zipedfh.name)[1][1:]
                         # image
-                        if file_extension in get_available_image_extensions():
+                        if file_extension.lower() in get_available_image_extensions():
                             try:
                                 part = DocumentPart.objects.filter(
                                     document=self.document,
