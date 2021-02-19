@@ -116,6 +116,9 @@ services:
       #       memory: 15g
       #     reservations:
       #       memory: 1g
+      #       devices:
+      #         - capabilities:
+      #           - gpu
 
       # shm_size: '3gb'
       # runtime: nvidia
