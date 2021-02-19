@@ -85,7 +85,6 @@ export const mutations = {
             tr[transcription.transcription] = transcription
             state.all[index] = { ...state.all[index], transcriptions: tr }
         }
-        state.all[index] = { ...state.all[index], currentTrans: transcription }
         // Force reference update on the whole array
         // so that all components get a full refresh after an update
         state.all = [...state.all]

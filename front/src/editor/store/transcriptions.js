@@ -115,6 +115,7 @@ export const actions = {
         try {
             const resp = await api.createContent(rootState.document.id, rootState.parts.pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/updateCurrentTrans', resp.data, {root: true})
         } catch (err) {
             console.log('couldnt create transcription!', err);
         }
@@ -124,6 +125,7 @@ export const actions = {
         try {
             const resp = await api.updateContent(rootState.document.id, rootState.parts.pk, pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/updateCurrentTrans', resp.data, {root: true})
         } catch (err) {
             console.log('couldnt update transcription!', err);
         }
