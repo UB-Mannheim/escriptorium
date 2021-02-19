@@ -44,11 +44,9 @@ services:
       ### copy nginx/ssl_certificates.conf_example and edit it
       ## if need be to correspond to the volume below
       ### and uncomment this block and the port 443
-      # build:
-      #   args:
-      #     - NGINX_CONF=ssl.conf
       # volumes:
-      #   - /etc/letsencrypt/live/<mydomain>:/etc/certs
+      #   - ${PWD}/nginx/ssl.conf:/etc/nginx/conf.d/nginx.conf
+      #   - ${PWD}/nginx/certs/:/etc/certs/
 
     flower:
       restart: always
@@ -86,7 +84,6 @@ services:
       #       cpus: '6'
       #       memory: 15g
       #     reservations:
-      #       cpus: '6'
       #       memory: 4g
 
     celery-low-priority:
@@ -102,7 +99,6 @@ services:
       #       cpus: '2'
       #       memory: 15g
       #     reservations:
-      #       cpus: '2'
       #       memory: 1g
 
     celery-gpu:
@@ -118,7 +114,6 @@ services:
       #       cpus: '6'
       #       memory: 15g
       #     reservations:
-      #       cpus: '2'
       #       memory: 1g
 
       # shm_size: '3gb'
