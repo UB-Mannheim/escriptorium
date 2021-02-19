@@ -46,6 +46,7 @@ services:
       ### and uncomment this block and the port 443
       # volumes:
       #   - ${PWD}/nginx/ssl.conf:/etc/nginx/conf.d/nginx.conf
+      #   - ${PWD}/nginx/ssl_certificates.conf:/etc/nginx/conf.d/ssl_certificates.conf
       #   - ${PWD}/nginx/certs/:/etc/certs/
 
     flower:
@@ -115,6 +116,9 @@ services:
       #       memory: 15g
       #     reservations:
       #       memory: 1g
+      #       devices:
+      #         - capabilities:
+      #           - gpu
 
       # shm_size: '3gb'
       # runtime: nvidia
