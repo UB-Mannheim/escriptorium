@@ -96,12 +96,15 @@ export const actions = {
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
         commit('lines/updateTranscriptionVersion', { pk: line.pk, content: content }, {root: true})
-        
+
         const l = rootState.lines.all.find(li=>li.pk == line.pk)
         let data = {
             content: l.currentTrans.content,
             line: l.currentTrans.line,
             transcription: l.currentTrans.transcription
+        }
+        if (rootState.lines.editedLine) {
+            commit('lines/setEditedLine', l, {root: true})
         }
 
         if (l.currentTrans.pk) {
