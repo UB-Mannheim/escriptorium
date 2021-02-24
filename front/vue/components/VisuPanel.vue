@@ -17,8 +17,7 @@
             </div>
         </div>
 
-        <TranscriptionModal v-if="$store.state.lines.editedLine"
-                            v-bind:line="$store.state.lines.editedLine">
+        <TranscriptionModal v-if="$store.state.lines.editedLine">
         </TranscriptionModal>
     </div>
 </template>

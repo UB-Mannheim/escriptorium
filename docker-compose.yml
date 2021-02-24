@@ -10,22 +10,20 @@ services:
       # - ./app/:/usr/src/app/
       - static:/usr/src/app/static
       - media:/usr/src/app/media
-    depends_on:
-      - db
-      - redis
     command: /bin/true
 
   web:
     <<: *app
     command: uwsgi --ini /usr/src/app/uwsgi.ini
+    expose:
+      - 8000
+
 
   channelserver:
     <<: *app
     command: daphne --bind 0.0.0.0 --port 5000 -v 1 escriptorium.asgi:application
     expose:
       - 5000
-    depends_on:
-      - web
 
   db:
     image: postgres:10.5-alpine
@@ -47,9 +45,6 @@ services:
       - media:/usr/src/app/media
     ports:
       - 8080:80
-    depends_on:
-      - web
-      - channelserver
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
@@ -73,14 +68,10 @@ services:
   celery-main:
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
-    depends_on:
-      - web
 
   celery-low-priority:
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CONC:-10} --max-tasks-per-child=10"
-    depends_on:
-      - web
 
   celery-gpu: &celery-gpu
     <<: *app
@@ -88,25 +79,18 @@ services:
       - KRAKEN_TRAINING_DEVICE=cpu
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
     shm_size: '3gb'
-    depends_on:
-      - web
 
   flower:
     image: mher/flower
     command: ["flower", "--broker=redis://redis:6379/0", "--port=5555"]
     ports:
       - 5555:5555
-    depends_on:
-      - redis
 
   # No need while we don't have regular tasks
   # celerybeat:
   #   build:
   #     context: ./app
   #   env_file: variables.env
-  #   depends_on:
-  #     - db
-  #     - redis
   #   volumes:
   #     - ./static/:/usr/src/app/static
   #     - ./media/:/usr/src/app/media
@@ -116,6 +100,7 @@ services:
 
   mail:
     build: ./exim
+    image: registry.gitlab.inria.fr/scripta/escriptorium/mail
     expose:
       - 25
     environment:
