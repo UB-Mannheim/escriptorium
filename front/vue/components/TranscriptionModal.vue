@@ -162,7 +162,6 @@ import HelpVersions from './HelpVersions.vue';
 import HelpCompareTranscriptions from './HelpCompareTranscriptions.vue';
 
 export default Vue.extend({
-    props: ['line'],
     components: {
         LineVersion,
         HelpVersions,
@@ -196,6 +195,9 @@ export default Vue.extend({
         }
     },
     computed: {
+        line () {
+            return this.$store.state.lines.editedLine
+        },
         momentDate() {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },

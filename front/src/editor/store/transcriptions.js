@@ -96,12 +96,15 @@ export const actions = {
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
         commit('lines/updateTranscriptionVersion', { pk: line.pk, content: content }, {root: true})
-        
+
         const l = rootState.lines.all.find(li=>li.pk == line.pk)
         let data = {
             content: l.currentTrans.content,
             line: l.currentTrans.line,
             transcription: l.currentTrans.transcription
+        }
+        if (rootState.lines.editedLine) {
+            commit('lines/setEditedLine', l, {root: true})
         }
 
         if (l.currentTrans.pk) {
@@ -115,6 +118,7 @@ export const actions = {
         try {
             const resp = await api.createContent(rootState.document.id, rootState.parts.pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/updateCurrentTrans', resp.data.transcription, {root: true})
         } catch (err) {
             console.log('couldnt create transcription!', err);
         }
@@ -124,6 +128,7 @@ export const actions = {
         try {
             const resp = await api.updateContent(rootState.document.id, rootState.parts.pk, pk, content)
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
+            commit('lines/updateCurrentTrans', resp.data.transcription, {root: true})
         } catch (err) {
             console.log('couldnt update transcription!', err);
         }
