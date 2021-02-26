@@ -40,7 +40,9 @@ services:
     environment:
       - SERVERNAME=${DOMAIN:-localhost}
     volumes:
-      - ${PWD}/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - type: bind
+        source: $PWD/nginx/nginx.conf
+        target: /etc/nginx/conf.d/nginx.conf
       - static:/usr/src/app/static
       - media:/usr/src/app/media
     ports:

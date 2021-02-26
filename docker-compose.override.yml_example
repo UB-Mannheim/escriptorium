@@ -45,9 +45,13 @@ services:
       ## if need be to correspond to the volume below
       ### and uncomment this block and the port 443
       # volumes:
-      #   - ${PWD}/nginx/ssl.conf:/etc/nginx/conf.d/nginx.conf
-      #   - ${PWD}/nginx/ssl_certificates.conf:/etc/nginx/conf.d/ssl_certificates.conf
-      #   - ${PWD}/nginx/certs/:/etc/certs/
+      # - type: bind
+      #   source: $PWD/nginx/ssl.conf
+      #   target: /etc/nginx/conf.d/nginx.conf
+      # - type: bind
+      #   source: $PWD/nginx/ssl_certificates.conf
+      #   target: /etc/nginx/conf.d/ssl_certificates.conf
+      # - $PWD/nginx/certs/:/etc/certs/
 
     flower:
       restart: always
