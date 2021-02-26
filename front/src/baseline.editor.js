@@ -181,7 +181,8 @@ class SegmenterLine {
         }
 
         this.tooltipText = this.type;
-        this.segmenter.attachTooltip(this, this.baselinePath);
+        let tooltipTarget = this.baseline !== null ? this.baselinePath : this.maskPath;
+        this.segmenter.attachTooltip(this, tooltipTarget);
 
         this.refresh();
     }
