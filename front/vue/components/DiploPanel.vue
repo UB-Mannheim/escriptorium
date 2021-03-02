@@ -270,6 +270,7 @@ export default Vue.extend({
                 }
             }
 
+            this.$refs.saveNotif.classList.remove('hide');
             this.constrainLineNumber();
             e.preventDefault();
         },
