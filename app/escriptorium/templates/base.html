@@ -10,8 +10,8 @@
     {% comment %}
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
     {% endcomment %}
+    <link rel="icon" href="{% static "images/favicon.ico" %}">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -25,20 +25,23 @@
     {% endblock styles %}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="{% url 'home' %}">eScriptorium</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <a class="navbar-brand" href="{% url 'home' %}">
+              <img src="{% static "images/favicon.ico" %}" width="20" height="20" class="mb-1">
+              eScriptorium</a>
 
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item {% block nav-home-class %}{% endblock %}">
-            <a class="nav-link" href="{% url 'home'%}">Home</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                      <li class="nav-item {% block nav-home-class %}{% endblock %}">
+                          <a class="nav-link" href="{% url 'home'%}">Home</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">{% trans 'About' %}</a>
-          </li>
+          <!-- <li class="nav-item">
+               <a class="nav-link" href="#">{% trans 'About' %}</a>
+               </li> -->
           <li class="nav-item">
             <a class="nav-link" href="{% url 'contactus' %}">{% trans 'Contact' %}</a>
           </li>
