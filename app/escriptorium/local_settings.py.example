@@ -39,3 +39,8 @@ DEBUG_TOOLBAR_PANELS = [
 ]
 
 # USE_CELERY = False
+# CELERY_TASK_ALWAYS_EAGER = True
+
+# LOGGING['loggers']['kraken']['level'] = 'DEBUG'
+
+# CUSTOM_HOME = True

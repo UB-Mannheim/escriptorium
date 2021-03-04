@@ -8,6 +8,9 @@
 <div class="jumbotron text-center bg-light">
   <h1 class="jumbotron-heading">eScriptorium</h1>
   <p class="lead text-muted">{% trans "A project providing digital recognition of handwritten documents using machine learning techniques." %}</p>
+  {% if CUSTOM_HOME %}
+  {% include "additional_heading.html" %}
+  {% endif %}
 </div>
 
 <div class="container my-5">
@@ -32,45 +35,56 @@
     <hr/>
 </div>
 
-<div class="my-5 container-fluid text-center">
-    <a href="https://www.ephe.psl.eu">
-        <img src="{% static "images/ephe.png" "%}" alt="EPHE logo" height="100">
-    </a>
-    <a href="https://scripta.psl.eu/en/" class="pl-4">
-        <img src="{% static "images/pslscripta.png" "%}" alt="Scripta PSL logo" height="80">
-    </a>
 
-    <a href="https://ec.europa.eu/programmes/horizon2020/" class="pl-4">
-        <img src="{% static "images/h2020.jpg" "%}" alt="Horizon 2020 logo" height="100">
-    </a>
+<div class="row">
+    <div class="my-5 container-fluid text-center">
+        <a href="https://www.ephe.psl.eu" target="_blank">
+            <img src="{% static "images/ephe.png" "%}" alt="EPHE logo" height="100">
+        </a>
+        <a href="https://scripta.psl.eu/en/" class="pl-4" target="_blank">
+            <img src="{% static "images/pslscripta.png" "%}" alt="Scripta PSL logo" height="60">
+        </a>
 
-    <a href="https://www.openiti.org/" class="pl-4">
-        <img src="{% static "images/openiti.png" "%}" alt="DIM Region ile de france logo" height="100">
-    </a>
+        <a href="https://ec.europa.eu/programmes/horizon2020/" class="pl-4" target="_blank">
+            <img src="{% static "images/h2020.jpg" "%}" alt="Horizon 2020 logo" height="100">
+        </a>
 
-    <a href="https://www.iledefrance.fr/des-aides-la-recherche-pour-13-domaines-dinteret-majeur" class="pl-4">
-        <img src="{% static "images/regionidf.jpg" "%}" alt="DIM Region ile de france logo" height="100">
-    </a>
+        <a href="https://www.openiti.org/" class="pl-4" target="_blank">
+            <img src="{% static "images/openiti.png" "%}" alt="DIM Region ile de france logo" height="90">
+        </a>
 
-    <a href="https://inria.fr/fr" class="pl-4">
-        <img src="{% static "images/inria.png" "%}" alt="INRIA logo" height="100">
-    </a>
+        <a href="https://www.iledefrance.fr/des-aides-la-recherche-pour-13-domaines-dinteret-majeur" class="pl-4" target="_blank">
+            <img src="{% static "images/regionidf.jpg" "%}" alt="DIM Region ile de france logo" height="100">
+        </a>
 
+        <a href="https://inria.fr/fr" class="pl-4" target="_blank">
+            <img src="{% static "images/inria.png" "%}" alt="INRIA logo" height="60">
+        </a>
+    </div>
+
+    {% if CUSTOM_HOME %}
+    {% include "additional_icons.html" %}
+    {% endif %}
 </div>
 
-<footer class="bg-light">
-    <div class="container py-2">
-        <div class="col-6">
-            <h5>{% trans "Resources" %}</h5>
-            <ul class="list-unstyled" %}
-                <li><a href="https://lectaurep.hypotheses.org/documentation/escriptorium-tutorial-en">{% trans "Tutorial" %}</a></li>
-                <li><a href="https://gitlab.inria.fr/scripta/escriptorium">{% trans "eScriptorium open source code" %}</a> Version {{ VERSION_DATE }}</li>
-                <li><a href="https://escripta.hypotheses.org/">{% trans "Scripta Blog" %}</a></li>
-                <li><a href="http://kraken.re/">{{ KRAKEN_VERSION|capfirst }}</a></li>
-                <li><a href="https://gitlab.inria.fr/scripta/escriptorium/-/wikis/home">Wiki</a></li>
-            </ul>
+<footer class="bg-light mt-5 pt-1">
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h5>{% trans "Resources" %}</h5>
+                <ul class="list-unstyled">
+                    <li><a href="https://lectaurep.hypotheses.org/documentation/escriptorium-tutorial-en" target="_blank">{% trans "Tutorial" %}</a></li>
+                    <li><a href="https://gitlab.inria.fr/scripta/escriptorium" target="_blank">{% trans "eScriptorium open source code" %}</a> Version {{ VERSION_DATE }}</li>
+                    <li><a href="https://escripta.hypotheses.org/" target="_blank">{% trans "Scripta Blog" %}</a></li>
+                    <li><a href="http://kraken.re/" target="_blank">{{ KRAKEN_VERSION|capfirst }}</a></li>
+                    <li><a href="https://gitlab.inria.fr/scripta/escriptorium/-/wikis/home" target="_blank">Wiki</a></li>
+                </ul>
+            </div>
+
+            {% if CUSTOM_HOME %}
+            {% include "additional_footer.html" %}
+            {% endif %}
         </div>
     </div>
 </footer>
-
 {% endblock %}
