@@ -4,24 +4,29 @@ Just set ONBOARDING_PAGE in the page before the scripts block.super eg:
 const ONBOARDING_PAGE = 'onboarding_document_form';
 
 */
-
 export function bootOnboarding() {
     if (typeof ONBOARDING_PAGE !== 'undefined') {
         var onboarding_page_done = userProfile.get(ONBOARDING_PAGE) || false;
-    
+
         if (!onboarding_page_done) {
             var intro = introJs().setOptions({'skipLabel': "Skip"});
             intro.oncomplete(function() {
                 userProfile.set(ONBOARDING_PAGE, true);
             })
-            intro.onexit(function(aa) {
-                if (!userProfile.get(ONBOARDING_PAGE, true)) {
-                    if (confirm("Are you sure you want to avoid further help?")) {
-                        exitOnboarding();
+            intro.onbeforeexit(function(aa) {
+                if (intro._currentStep<intro._introItems.length-1) {
+                    if (!userProfile.get(ONBOARDING_PAGE, true)) {
+                        if (confirm("Are you sure you want to avoid further help?")) {
+                            exitOnboarding();
+                        } else {
+                            return false;
+                        }
                     }
+                } else {
+                    userProfile.set(ONBOARDING_PAGE, true);
                 }
             });
-    
+
             //document_form
             if (ONBOARDING_PAGE == 'onboarding_document_form') {
                 intro.setOptions({
@@ -48,7 +53,7 @@ export function bootOnboarding() {
                         },
                     ]
                 });
-    
+
             } else if (ONBOARDING_PAGE == 'onboarding_images') {
                 intro.setOptions({
                     steps: [
@@ -89,7 +94,7 @@ export function bootOnboarding() {
                         }
                     ]
                 });
-    
+
             } else if (ONBOARDING_PAGE == 'onboarding_edit') {
                 intro.setOptions({
                     steps: [
@@ -125,7 +130,7 @@ export function bootOnboarding() {
                     }]
                 });
             }
-    
+
             document.addEventListener('DOMContentLoaded', function() {
                 intro.start();
             });
