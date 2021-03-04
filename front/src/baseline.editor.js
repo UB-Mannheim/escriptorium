@@ -959,6 +959,7 @@ export class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function(event) {
             if (event.event.ctrlKey ||
+                this.spliting ||
                 this.selecting ||
                 isRightClick(event.event) ||
                 this.mode != 'regions') return;
@@ -1002,6 +1003,7 @@ export class Segmenter {
         if (line.baselinePath) {
             line.baselinePath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
+                    this.spliting ||
                     isRightClick(event.event) ||
                     this.mode != 'lines' ||
                     this.selecting) return;
@@ -1070,6 +1072,7 @@ export class Segmenter {
         if (line.maskPath) {
             line.maskPath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
+                    this.spliting ||
                     isRightClick(event.event) ||
                     this.selecting ||
                     this.mode != 'lines') return;
@@ -2049,7 +2052,7 @@ export class Segmenter {
                         }
                     } else {
                         let newMask = null;
-                        // calculate the normals before splitting
+                        // calculate the normals before spliting
                         let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
                         let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
                         let split = line.baselinePath.splitAt(intersections[i+1]);
