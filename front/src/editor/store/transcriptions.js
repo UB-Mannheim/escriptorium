@@ -83,13 +83,13 @@ export const actions = {
         //  then fetch all content page by page
         let fetchPage = async function(page) {
             const resp = await api.retrievePage(rootState.document.id, rootState.parts.pk, transcription, page)
-            
+
             let data = resp.data
             for (var i=0; i<data.results.length; i++) {
                 let line = rootState.lines.all.find(l=>l.pk == data.results[i].line)
                 commit('lines/setTranscriptions', { pk: line.pk, transcription: data.results[i] }, {root: true})
             }
-            if (data.next) fetchPage(page+1)
+            if (data.next) await fetchPage(page+1)
         }
         await fetchPage(1)
     },
