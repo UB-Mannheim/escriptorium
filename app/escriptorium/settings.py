@@ -95,6 +95,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'escriptorium.context_processors.enable_cookie_consent'
             ],
         },
     },
@@ -301,6 +302,9 @@ THUMBNAIL_ALIASES = {
 #     # 'gif': '/usr/bin/optipng {filename}',
 #     'jpeg': '/usr/bin/jpegoptim -S200 {filename}'
 # }
+
+
+ENABLE_COOKIE_CONSENT = os.getenv('ENABLE_COOKIE_CONSENT', True)
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 

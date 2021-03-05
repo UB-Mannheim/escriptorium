@@ -14,10 +14,12 @@ export class Alert {
         if (this.links !== undefined) {
             for (let i=0; i<this.links.length; i++) {
                 let link = $('<div>').html('<a href="'+this.links[i].src+'" >'+this.links[i].text+'</a>');
+                if (this.links[i].cssClass) $('a', link).addClass(this.links[i].cssClass);
                 $('.additional', $new).append(link).css('display', 'block');
             }
         }
         this.$element = $new;
+        this.htmlElement = this.$element.get(0);
         $('#alerts-container').append($new);
         $new.show();
 
@@ -33,6 +35,7 @@ export class Alert {
         } else {
             alerts[id_].incrementCounter();
         }
+        return alerts[id_];
     }
 
     incrementCounter() {
