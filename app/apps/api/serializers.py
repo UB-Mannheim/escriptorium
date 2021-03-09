@@ -102,11 +102,15 @@ class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
+    parts_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
         fields = ('pk', 'name', 'transcriptions',
-                  'valid_block_types', 'valid_line_types')
+                  'valid_block_types', 'valid_line_types', 'parts_count')
+
+    def get_parts_count(self, document):
+        return document.parts.count()
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -127,6 +131,7 @@ class PartSerializer(serializers.ModelSerializer):
             'image',
             'bw_image',
             'workflow',
+            'order',
             'recoverable',
             'transcription_progress'
         )

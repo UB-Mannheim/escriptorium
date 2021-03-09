@@ -15,6 +15,10 @@
                class="nav-btn nav-prev"
                title="Previous (Page Up or Ctrl+Right Arrow)">
                 <i class="fas fa-angle-left"></i></a>
+            <input type="number"
+                   v-if="$store.state.parts.loaded"
+                   v-bind:value="$store.state.parts.order+1"
+                   @change.lazy="goTo"/>
             <div>
                 <button id="zoom-reset"
                         @click="resetZoom"
@@ -155,6 +159,9 @@ export default {
         },
         resetZoom() {
             this.zoom.reset();
+        },
+        async goTo(ev) {
+            await this.$store.dispatch('parts/loadPart', 'previous');
         },
         async getPrevious(ev) {
             await this.$store.dispatch('parts/loadPart', 'previous');
