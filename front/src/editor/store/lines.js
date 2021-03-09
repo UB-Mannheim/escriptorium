@@ -96,7 +96,14 @@ export const mutations = {
             if (index < 0) return
             state.all[index] = {
                 ...state.all[index],
-                currentTrans: { ...state.all[index].currentTrans, pk: lineTrans.pk }
+                currentTrans: { ...state.all[index].currentTrans, pk: lineTrans.pk },
+                transcriptions: {
+                    ...state.all[index].transcriptions,
+                    [lineTrans.transcription]: {
+                        ...state.all[index].transcriptions[lineTrans.transcription],
+                        pk: lineTrans.pk
+                    }
+                }
             }
         }
         // Force reference update on the whole array

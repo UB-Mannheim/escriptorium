@@ -181,7 +181,8 @@ class SegmenterLine {
         }
 
         this.tooltipText = this.type;
-        this.segmenter.attachTooltip(this, this.baselinePath);
+        let tooltipTarget = this.baseline !== null ? this.baselinePath : this.maskPath;
+        this.segmenter.attachTooltip(this, tooltipTarget);
 
         this.refresh();
     }
@@ -874,8 +875,6 @@ export class Segmenter {
         // this.raster.position = view.center;
         // this.img.style.display = 'hidden';
 
-        tool.onMouseDown = this.onMouseDown.bind(this);
-
         // hide the tooltip on leaving the area
         this.canvas.addEventListener('mouseleave', function() {
             this.tooltip.style.display = 'none';
@@ -883,6 +882,8 @@ export class Segmenter {
 
         this.tool = tool;
         this.tool.activate();
+        this.resetToolEvents();
+
         this.loaded = true;
     }
 
@@ -958,14 +959,32 @@ export class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function(event) {
             if (event.event.ctrlKey ||
-                this.selecting ||
+                this.spliting ||
+                // this.selecting ||
                 isRightClick(event.event) ||
                 this.mode != 'regions') return;
-            this.selecting = region;
+
+            // if what we are clicking on is already selected,
+            // check there isn't something below
+            if (region.selected) {
+                let hit;
+                for (let i=0; i<this.regions.length; i++) {
+                    if (this.regions[i] != region) {
+                        hit = this.regions[i].polygonPath.hitTest(event.point);
+                        if (hit) {
+                            this.selecting = this.regions[i];
+                            break;
+                        }
+                    }
+                }
+                if (!hit) this.selecting = region;
+            } else {
+                this.selecting = region;
+            }
 
             var dragging = region.polygonPath.getNearestLocation(event.point).segment;
             this.tool.onMouseDrag = function(event) {
-                this.selecting = false;
+                this.selecting = region;
                 if (!event.event.shiftKey) {
                     this.movePointInView(dragging.point, event.delta);
                 }
@@ -984,6 +1003,7 @@ export class Segmenter {
                 }
             }
             this.tool.onMouseUp = function(event) {
+                this.onMouseUp(event);
                 this.resetToolEvents();
                 this.updateRegionsFromCanvas();
             }.bind(this);
@@ -1001,10 +1021,12 @@ export class Segmenter {
         if (line.baselinePath) {
             line.baselinePath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
+                    this.spliting ||
                     isRightClick(event.event) ||
                     this.mode != 'lines' ||
                     this.selecting) return;
                 this.selecting = line;
+
                 var hit = line.baselinePath.hitTest(event.point, {
 	            segments: true,
 	            tolerance: 20
@@ -1028,6 +1050,7 @@ export class Segmenter {
                 }.bind(this);
 
                 this.tool.onMouseUp = function(event) {
+                    this.onMouseUp(event);
                     this.resetToolEvents();
                     line.updateDataFromCanvas();
                 }.bind(this);
@@ -1069,6 +1092,7 @@ export class Segmenter {
         if (line.maskPath) {
             line.maskPath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
+                    this.spliting ||
                     isRightClick(event.event) ||
                     this.selecting ||
                     this.mode != 'lines') return;
@@ -1095,6 +1119,7 @@ export class Segmenter {
                 }.bind(this);
 
                 this.tool.onMouseUp = function(event) {
+                    this.onMouseUp(event);
                     this.resetToolEvents();
                     line.updateDataFromCanvas();
                 }.bind(this);
@@ -1116,9 +1141,9 @@ export class Segmenter {
 
     resetToolEvents() {
         this.tool.onMouseDown = this.onMouseDown.bind(this);
+        this.tool.onMouseUp = null; //this.onMouseUp.bind(this);
         this.tool.onMouseDrag = this.onMouseDrag.bind(this);
         this.tool.onMouseMove = null;
-        this.tool.onMouseUp = null;
     }
 
     attachTooltip(obj, target) {
@@ -1201,19 +1226,24 @@ export class Segmenter {
 
     onMouseDown(event) {
         if (isRightClick(event.event)) return;
-        if (this.selecting) {
-            if (this.mode == 'regions') {
-                // if what we are selecting is already selected, check there isn't something below
-                for (let i=0; i<this.regions.length; i++) {
-                    if (this.selecting.selected && this.regions[i] != this.selecting) {
-                        let hit = this.regions[i].polygonPath.hitTest(event.point);
-                        if (hit) {
-                            this.selecting = this.regions[i];
-                            break;
-                        }
-                    }
-                }
+        if (!this.selecting) {
+            if (event.event.ctrlKey) return;
+            if (this.spliting) {
+                this.startCuter(event);
+            } else if (event.event.shiftKey) {
+                // lasso selection tool
+                this.startLassoSelection(event);
+            }  else if (this.mode == 'regions') {
+                this.startNewRegion(event);
+            }  else {  // mode = 'lines'
+                // create a new line
+                this.startNewLine(event);
             }
+        }
+    }
+
+    onMouseUp(event) {
+        if (this.selecting) {
             // selection
             if (event.event.shiftKey) {
                 this.selecting.toggleSelect();
@@ -1224,21 +1254,8 @@ export class Segmenter {
             }
             this.trigger('baseline-editor:selection', {target: this.selecting, selection: this.selection});
             this.selecting = null;
-        } else {
-            if (event.event.ctrlKey) return;
-            if (this.spliting) {
-                this.startCuter(event);
-            } else if (event.event.shiftKey) {
-                // lasso selection tool
-                this.startLassoSelection(event);
-            } else if (this.hasSelection()) {
-                this.purgeSelection();
-            } else if (this.mode == 'regions') {
-                this.startNewRegion(event);
-            }  else {  // mode = 'lines'
-                // create a new line
-                this.startNewLine(event);
-            }
+        } else if (this.hasSelection()) {
+            this.purgeSelection();
         }
     }
 
@@ -2048,7 +2065,7 @@ export class Segmenter {
                         }
                     } else {
                         let newMask = null;
-                        // calculate the normals before splitting
+                        // calculate the normals before spliting
                         let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
                         let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
                         let split = line.baselinePath.splitAt(intersections[i+1]);

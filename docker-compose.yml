@@ -40,7 +40,9 @@ services:
     environment:
       - SERVERNAME=${DOMAIN:-localhost}
     volumes:
-      - ${PWD}/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - type: bind
+        source: $PWD/nginx/nginx.conf
+        target: /etc/nginx/conf.d/nginx.conf
       - static:/usr/src/app/static
       - media:/usr/src/app/media
     ports:
@@ -67,6 +69,8 @@ services:
 
   celery-main:
     <<: *app
+    environment:
+      - OMP_NUM_THREADS=1
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
 
   celery-low-priority:

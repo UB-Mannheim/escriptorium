@@ -21,7 +21,7 @@ window.Dropzone = require('dropzone/dist/dropzone');
 
 // Intro.js needs to be explicitly set on window, as it's used at boot time
 // by onboarding.js
-window.introJs = require('intro.js/intro').introJs;
+window.introJs = require('intro.js');
 
 // moment needs to be explicitly set on window, as it's used at boot time
 // by trans_modal.js
