@@ -5,7 +5,6 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib import messages
 from django.utils.translation import ngettext
 
-
 from users.models import User, ResearchField, Invitation, ContactUs, GroupOwner
 
 
@@ -15,8 +14,11 @@ class MyUserChangeForm(UserChangeForm):
 
 
 class MyUserCreationForm(UserCreationForm):
+    email = forms.EmailField()
+
     class Meta(UserCreationForm.Meta):
         model = User
+        fields = UserCreationForm.Meta.fields + ('email',)
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -24,7 +26,7 @@ class MyUserCreationForm(UserCreationForm):
             User.objects.get(username=username)
         except User.DoesNotExist:
             return username
-        raise forms.ValidationError(self.error_messages['duplicate_username'])
+        raise forms.ValidationError('Duplicate username.')
 
 
 class MyUserAdmin(UserAdmin):
@@ -32,9 +34,13 @@ class MyUserAdmin(UserAdmin):
     add_form = MyUserCreationForm
     list_display = UserAdmin.list_display + ('last_login',)
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('fields','onboarding')}),  # second fields refers to research fields
+        (None, {'fields': ('fields', 'onboarding')}),  # second fields refers to research fields
     )
-
+    add_fieldsets = (
+        (None, {
+            'fields': ('username', 'email', 'password1', 'password2')}
+        ),
+    )
 
 class InvitationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
