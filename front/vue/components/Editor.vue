@@ -4,6 +4,7 @@
             <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
                 <slot></slot>
                 <extrainfo></extrainfo>
+                <gotoelement></gotoelement>
                 <transmanagement></transmanagement>
                 <extranav></extranav>
             </div>
@@ -15,6 +16,7 @@
 
 <script>
 import ExtraInfo from './ExtraInfo.vue';
+import GotoElement from './GotoElement.vue';
 import TranscriptionManagement from './TranscriptionManagement.vue';
 import ExtraNav from './ExtraNav.vue';
 import TabContent from './TabContent.vue';
@@ -69,6 +71,7 @@ export default {
 
     components: {
         'extrainfo': ExtraInfo,
+        'gotoelement': GotoElement,
         'transmanagement': TranscriptionManagement,
         'extranav': ExtraNav,
         'tabcontent': TabContent,

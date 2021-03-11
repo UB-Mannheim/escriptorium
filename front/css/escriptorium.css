@@ -192,6 +192,11 @@ form.inline-form {
     border: 0;
 }
 
+.js-card-order {
+    position: absolute;
+    left: 50%;
+}
+
 .process-part-form h5 {
     color: var(--secondary);
     text-align: center;
