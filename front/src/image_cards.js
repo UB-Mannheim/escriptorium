@@ -61,7 +61,6 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
-        this.updateOrder();
         $('img.card-img-top', $new).attr('title', this.title + '\n<' + this.filename +'>');
 
         $new.attr('draggable', true);
@@ -195,10 +194,6 @@ class partCard {
 
         if (img.attr('src')) img.attr('src', uri);
         img.attr('data-src', uri);
-    }
-
-    updateOrder() {
-        $('span.js-card-order', this.$element).html(this.order+1);
     }
 
     updateWorkflowIcons() {

@@ -134,6 +134,7 @@ form.inline-form {
 
 #cards-container {
     overflow: auto;
+    counter-reset: card;
 }
 
 #cards-container .card {
@@ -195,6 +196,11 @@ form.inline-form {
 .js-card-order {
     position: absolute;
     left: 50%;
+}
+
+.js-card-order:after {
+    counter-increment: card;
+    content: counter(card);
 }
 
 .process-part-form h5 {
