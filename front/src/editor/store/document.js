@@ -4,6 +4,7 @@ import * as api from '../api'
 export const initialState = () => ({
     id: null,
     name: "",
+    partsCount: 0,
     defaultTextDirection: null,
     mainTextDirection: null,
     readDirection: null,
@@ -39,6 +40,9 @@ export const mutations = {
     setTypes (state, types) {
         state.types = types
     },
+    setPartsCount(state, count) {
+        state.partsCount = count
+    },
     setBlockShortcuts(state, block) {
         state.blockShortcuts = block
     },
@@ -56,6 +60,7 @@ export const actions = {
         let data = resp.data
         commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
+        commit('setPartsCount', data.parts_count)
     },
 
     async togglePanel ({state, commit}, panel) {

@@ -4,7 +4,9 @@ import logging
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -192,6 +194,22 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             return PartDetailSerializer
         else:  # list & create
             return PartSerializer
+
+    @action(detail=False, methods=['get'])
+    def byorder(self, request, document_pk=None):
+        try:
+            order = int(request.GET.get('order'))
+        except ValueError:
+            return Response({'error': 'invalid order.'})
+        if not order:
+            return Response({'error': 'pass order as an url parameter.'})
+        try:
+            part = self.get_queryset().get(order=order)
+        except DocumentPart.DoesNotExist:
+            return Response({'error': 'Out of bounds.'})
+        return HttpResponseRedirect(reverse('api:part-detail',
+                                            kwargs={'document_pk': self.kwargs.get('document_pk'),
+                                                    'pk': part.pk}))
 
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):

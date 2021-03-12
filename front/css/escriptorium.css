@@ -386,6 +386,10 @@ form.inline-form {
     color: grey;
 }
 
+#gotoModal .modal-dialog {
+    max-width: 355px;
+}
+
 .col-sides {
     width: 30px;
     margin: 0 15px;

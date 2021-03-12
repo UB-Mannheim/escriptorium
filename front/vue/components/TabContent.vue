@@ -156,9 +156,6 @@ export default {
         resetZoom() {
             this.zoom.reset();
         },
-        async goTo(ev) {
-            await this.$store.dispatch('parts/loadPart', 'previous');
-        },
         async getPrevious(ev) {
             await this.$store.dispatch('parts/loadPart', 'previous');
         },
