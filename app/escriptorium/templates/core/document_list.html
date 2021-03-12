@@ -13,11 +13,11 @@
   <div class="col-md-12 col-md-offset-4">
     <a href="{% url 'document-create' %}" class="btn btn-success float-sm-right">{% trans 'Create new' %}</a>
     <h2>{% trans "My Documents" %}</h2>
-    
-    <table class="table table-hover">
+
+    <table id="document-list" class="table table-hover">
       <tbody>
         {% for document in object_list %}
-        <tr>
+        <tr onclick="document.location='{% url 'document-images' pk=document.pk %}'" role="button">
           <td>
             {% with part=document.parts.first %}
             {% if part %}
@@ -47,16 +47,19 @@
           </td>
           {% endcomment %}
           <td class="text-right">
-            {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
-            <a href="{% url 'document-update' pk=document.pk %}" class="btn btn-info" title="{% trans 'Edit' %}"><i class="fas fa-edit"></i></a>
+              {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
+              {# Note that doing one query per row is a lot faster than a subquery for some reason #}
+              <a href="{% url 'document-part-edit' pk=document.pk part_pk=document.parts.last.pk %}"
+                 class="btn btn-info"
+                 title="{% trans 'Edit last updated Element' %}">
+                 <i class="fas fa-edit"></i>
+              </a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
-
 </div>
 {% include 'includes/pagination.html' %}
 {% endblock %}
