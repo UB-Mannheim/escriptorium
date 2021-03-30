@@ -14,7 +14,7 @@
       <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
       {% endwith %}
       {% endif %}
-      {% block extra_nav %}{% endblock %}
+      {% block extra_nav %}<div class="nav-div nav-item ml-5 ">{{document.name}}</div>{% endblock %}
     </div>
   </nav>
 

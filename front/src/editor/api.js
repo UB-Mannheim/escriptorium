@@ -10,6 +10,8 @@ export const retrieveDocument = async document_id => (await axios.get(`/document
 
 export const retrieveDocumentPart = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/`))
 
+export const retrieveDocumentPartByOrder = async (document_id, order) => (await axios.get(`/documents/${document_id}/parts/byorder/?order=${order}`))
+
 export const retrievePage = async (document_id, part_id, transcription, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`))
 
 export const createContent = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/transcriptions/`, data))

@@ -134,6 +134,7 @@ form.inline-form {
 
 #cards-container {
     overflow: auto;
+    counter-reset: card;
 }
 
 #cards-container .card {
@@ -190,6 +191,16 @@ form.inline-form {
     left: 0;
     background-color: transparent;
     border: 0;
+}
+
+.js-card-order {
+    position: absolute;
+    left: 50%;
+}
+
+.js-card-order:after {
+    counter-increment: card;
+    content: counter(card);
 }
 
 .process-part-form h5 {
@@ -379,6 +390,10 @@ form.inline-form {
     display: block;
     font-size: x-small;
     color: grey;
+}
+
+#gotoModal .modal-dialog {
+    max-width: 355px;
 }
 
 .col-sides {

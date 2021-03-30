@@ -81,7 +81,7 @@ export default {
         this.$store.commit('document/setMainTextDirection', this.mainTextDirection);
         this.$store.commit('document/setReadDirection', this.readDirection);
         try {
-            await this.$store.dispatch('parts/fetchPart', this.partId);
+            await this.$store.dispatch('parts/fetchPart', {pk: this.partId});
             let tr = userProfile.get('initialTranscriptions')
                   && userProfile.get('initialTranscriptions')[this.$store.state.document.id]
                   || this.$store.state.transcriptions.all[0].pk;
