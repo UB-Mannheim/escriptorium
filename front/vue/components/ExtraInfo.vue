@@ -2,7 +2,12 @@
     <div>
         <div class="nav-div nav-item ml-2">
             <span v-if="$store.state.document.name" id="part-name">{{ $store.state.document.name }}</span>
-            <span id="part-title" v-if="$store.state.parts.loaded" data-toggle="modal" data-target="#gotoModal" role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }})</span>
+            <span id="part-title"
+                  v-if="$store.state.parts.loaded"
+                  title="Click to go to another Element (Ctrl+Home)."
+                  data-toggle="modal"
+                  data-target="#gotoModal"
+                  role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }})</span>
             <span class="loading" v-if="!$store.state.parts.loaded">Loading&#8230;</span>
         </div>
 
