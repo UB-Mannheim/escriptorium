@@ -50,8 +50,10 @@ export default {
     },
     methods: {
         async goTo(ev) {
-            await this.$store.dispatch('parts/loadPartByOrder', ev.target.value-1);
-            $('#gotoModal').modal('hide');
+            if (ev.target.value > 0 && ev.target.value <= parseInt(ev.target.attributes.max.value)) {
+              await this.$store.dispatch('parts/loadPartByOrder', ev.target.value-1);
+              $('#gotoModal').modal('hide');
+            }
         }
     }
 }
