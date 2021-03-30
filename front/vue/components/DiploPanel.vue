@@ -18,7 +18,9 @@
                         v-bind:key="'DL' + line.pk">
             </diploline>
 
-            <div id="diplomatic-lines"
+            <!--adding a class to get styles for ttb direction:-->
+            <div :class="$store.state.document.mainTextDirection"
+                    id="diplomatic-lines"
                     ref="diplomaticLines"
                     contenteditable="true"
                     autocomplete="off"
@@ -65,6 +67,9 @@ export default Vue.extend({
         }.bind(this), 10000);
     },
     mounted() {
+        // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width wont be bigger than other, especially for ttb text:
+        document.querySelector('#diplo-panel').style.width = document.querySelector('#diplo-panel').clientWidth + 'px';
+
         Vue.nextTick(function() {
             var vm = this ;
             vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
