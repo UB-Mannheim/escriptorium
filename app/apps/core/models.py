@@ -244,6 +244,13 @@ class Document(models.Model):
             else:
                 return 'ltr'
 
+    @cached_property
+    def last_edited_part(self):
+        try:
+            return self.parts.order_by('-updated_at')[0]
+        except IndexError:
+            return None
+
     @property
     def training_model(self):
         return self.ocr_models.filter(training=True).first()
