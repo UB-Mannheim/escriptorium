@@ -1,6 +1,13 @@
 version: "3.9"
 
 services:
+    ### to customize the homepage, uncomment this
+    #app:
+      # environment:
+      #   - CUSTOM_HOME=True
+      # volumes:
+      #   - $PWD/app/homepage
+
     web: &web
       restart: always
       # deploy:
@@ -9,12 +16,6 @@ services:
       #   placement:
       #     constraints:
       #       - node.hostname == frontend0
-
-      ### to customize the homepage, uncomment this
-      # environment:
-      #   - CUSTOM_HOME=True
-      # volumes:
-      #   - $PWD/app/homepage
 
     channelserver:
       restart: always
