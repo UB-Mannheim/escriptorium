@@ -532,6 +532,8 @@ i.panel-icon {
     margin-top: 1rem;
     white-space: nowrap;
     padding: 0 2px;
+    box-sizing: content-box;
+    padding-bottom: 0.1em;
     transform-origin: top left;
     box-shadow: none;
 }
