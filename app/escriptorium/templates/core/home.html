@@ -1,14 +1,87 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n staticfiles %}
 {% block head_title %}{% trans "Homepage" %}{% endblock %}
 
 {% block nav-home-class %}active{% endblock %}
 
 {% block body %}
-<div class="jumbotron">
-  <h1>eScriptorium</h1>
-  <p>{% trans "A project providing digital recognition of handwritten documents using machine learning techniques." %}</p>
-  <p><small>Version {{ VERSION_DATE }}
-    <br/>{{ KRAKEN_VERSION }}</small></p>
+<div class="jumbotron text-center bg-light">
+    {% if CUSTOM_HOME %}
+    {% include "additional_heading.html" %}
+    {% else %}
+    <h1 class="jumbotron-heading">eScriptorium</h1>
+    <p class="lead text-muted">{% trans "A project providing digital recognition of handwritten documents using machine learning techniques." %}</p>
+    {% endif %}
 </div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-4 text-center">
+            <img class="rounded-circle" src="{% static "images/t1.png" %}" alt="" width="140" height="140">
+            <h2>{% trans "Data Interchange" %}</h2>
+            <p class="text-muted">{% trans "Import or Export transcriptions with Alto or Page XML, Import images as zip or IIIF. Access data from any application through a full Rest API." %}</p>
+        </div>
+        <div class="col-lg-4 text-center">
+            <img class="rounded-circle" src="{% static "images/t2.png" %}" alt="Generic placeholder image" width="140" height="140">
+            <h2>{% trans "Manual Edition" %}</h2>
+            <p class="text-muted">{% trans "Make use of an ergonomic user interface leveraging modern browser technology to edit segmentations and transcriptions." %}</p>
+        </div>
+        <div class="col-lg-4 text-center">
+            <img class="rounded-circle" src="{% static "images/t3.png" %}" alt="Generic placeholder image" width="140" height="140">
+            <h2>{% trans "Automatic Transcription" %}</h2>
+            <p class="text-muted">{% trans "Train and apply new neural networks to vastly speed up the transcription process of large corpora." %}</p>
+        </div>
+    </div>
+
+    <hr/>
+</div>
+
+
+<div class="row">
+    <div class="my-5 container-fluid text-center">
+        <a href="https://www.ephe.psl.eu" target="_blank">
+            <img src="{% static "images/ephe.png" "%}" alt="EPHE logo" height="100">
+        </a>
+        <a href="https://www.resilience-ri.eu/" class="pl-4" target="_blank">
+            <img src="{% static "images/resilience.png" "%}" alt="Resilience logo" height="60">
+        </a>
+        <a href="https://scripta.psl.eu/en/" class="pl-4" target="_blank">
+            <img src="{% static "images/pslscripta.png" "%}" alt="Scripta PSL logo" height="50">
+        </a>
+        <a href="https://ec.europa.eu/programmes/horizon2020/" class="pl-4" target="_blank">
+            <img src="{% static "images/h2020.jpg" "%}" alt="Horizon 2020 logo" height="80">
+        </a>
+        <a href="https://inria.fr/fr" class="pl-4" target="_blank">
+            <img src="{% static "images/inria.png" "%}" alt="INRIA logo" height="60">
+        </a>
+        <a href="https://www.openiti.org/" class="pl-4" target="_blank">
+            <img src="{% static "images/openiti.png" "%}" alt="DIM Region ile de france logo" height="90">
+        </a>
+    </div>
+
+    {% if CUSTOM_HOME %}
+    {% include "additional_icons.html" %}
+    {% endif %}
+</div>
+
+<footer class="bg-light mt-5 pt-1">
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h5>{% trans "Resources" %}</h5>
+                <ul class="list-unstyled">
+                    <li><a href="https://lectaurep.hypotheses.org/documentation/escriptorium-tutorial-en" target="_blank">{% trans "Tutorial" %}</a></li>
+                    <li><a href="https://gitlab.inria.fr/scripta/escriptorium" target="_blank">{% trans "eScriptorium open source code" %}</a> Version {{ VERSION_DATE }}</li>
+                    <li><a href="https://escripta.hypotheses.org/" target="_blank">{% trans "Scripta Blog" %}</a></li>
+                    <li><a href="http://kraken.re/" target="_blank">{{ KRAKEN_VERSION|capfirst }}</a></li>
+                    <li><a href="https://gitlab.inria.fr/scripta/escriptorium/-/wikis/home" target="_blank">Wiki</a></li>
+                </ul>
+            </div>
+
+            {% if CUSTOM_HOME %}
+            {% include "additional_footer.html" %}
+            {% endif %}
+        </div>
+    </div>
+</footer>
 {% endblock %}

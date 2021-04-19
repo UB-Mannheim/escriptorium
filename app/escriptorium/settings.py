@@ -41,6 +41,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
+CUSTOM_HOME = os.getenv('CUSTOM_HOME', False)
+
 ALLOWED_HOSTS = ['*']
 
 ASGI_APPLICATION = "escriptorium.routing.application"
@@ -87,7 +89,8 @@ ROOT_URLCONF = 'escriptorium.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(PROJECT_ROOT, 'templates')],
+        'DIRS': [os.path.join(PROJECT_ROOT, 'templates'),
+                 os.path.join(BASE_DIR, 'homepage')],  # custom homepage dir (volume in docker)
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -95,7 +98,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'escriptorium.context_processors.enable_cookie_consent'
+                'escriptorium.context_processors.enable_cookie_consent',
+                'escriptorium.context_processors.custom_homepage'
             ],
         },
     },
@@ -219,6 +223,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
+    os.path.join(BASE_DIR, 'homepage'),  # custom homepage directory
     FRONTEND_DIR
 ]
 
