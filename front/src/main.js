@@ -1,5 +1,6 @@
 import '../css/escriptorium.css';
 import '../css/rtl.css';
+import '../css/ttb.css';
 import './ajax.js';
 import { Alert, bootWebsocket, joinDocumentRoom } from './messages.js';
 window.Alert = Alert;

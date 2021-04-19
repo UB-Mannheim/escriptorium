@@ -31,12 +31,19 @@ export const mutations = {
 }
 
 export const actions = {
-    async fetchPart ({commit, dispatch, rootState}, pk) {
-        commit('setPartPk', pk)
+    async fetchPart ({commit, dispatch, rootState}, {pk, order}) {
         if (!rootState.transcriptions.all.length) {
             await dispatch('document/fetchDocument', rootState.document.id, {root: true})
         }
-        const resp = await api.retrieveDocumentPart(rootState.document.id, pk)
+        var resp
+        if (pk) {
+            commit('setPartPk', pk)
+            resp = await api.retrieveDocumentPart(rootState.document.id, pk)
+        } else {
+            resp = await api.retrieveDocumentPartByOrder(rootState.document.id, order)
+            commit('setPartPk', resp.data.pk)
+        }
+
         let data = resp.data
 
         data.lines.forEach(function(line) {
@@ -63,7 +70,20 @@ export const actions = {
         commit('regions/reset', {}, {root: true})
         commit('lines/reset', {}, {root: true})
         commit('reset')
-        await dispatch('fetchPart', pk)
+        await dispatch('fetchPart', {pk: pk})
+    },
+
+    async loadPartByOrder({state, commit, dispatch, rootState}, order) {
+        commit('regions/reset', {}, {root: true})
+        commit('lines/reset', {}, {root: true})
+        commit('reset')
+        try {
+            await dispatch('fetchPart', {order: order})
+            await dispatch('transcriptions/getCurrentContent', rootState.transcriptions.selectedTranscription, {root: true})
+            await dispatch('transcriptions/getComparisonContent', {}, {root: true})
+        } catch (err) {
+            console.log('couldnt fetch part data!', err)
+        }
     },
 
     async loadPart({state, commit, dispatch, rootState}, direction) {
@@ -73,7 +93,7 @@ export const actions = {
         commit('lines/reset', {}, {root: true})
         commit('reset')
         try {
-            await dispatch('fetchPart', part)
+            await dispatch('fetchPart', {pk: part})
             await dispatch('transcriptions/getCurrentContent', rootState.transcriptions.selectedTranscription, {root: true})
             await dispatch('transcriptions/getComparisonContent', {}, {root: true})
         } catch (err) {

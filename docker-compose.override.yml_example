@@ -10,6 +10,12 @@ services:
       #     constraints:
       #       - node.hostname == frontend0
 
+      ### to customize the homepage, uncomment this
+      # environment:
+      #   - CUSTOM_HOME=True
+      # volumes:
+      #   - $PWD/app/homepage
+
     channelserver:
       restart: always
       # deploy:

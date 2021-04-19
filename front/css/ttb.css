@@ -1,0 +1,57 @@
+/* vertical styles: */
+
+#vertical_text_input{
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    width:auto!important;
+    height: auto;
+    white-space: nowrap!important;
+    margin: .375rem 0;
+}
+#vertical_text_input:focus{
+    outline: none;
+}
+
+#textInputBorderWrapper{
+    box-sizing: content-box;
+    padding: 0 .75rem;
+}
+
+#diplomatic-lines.ttb{
+    writing-mode: vertical-lr;
+    text-orientation: upright;  
+}
+
+#diplomatic-lines.ttb div{
+    text-align: left;  
+    min-width:25px;
+    padding: 0;
+    margin: 0;
+    padding-top: 30px;
+
+    position: relative;
+    white-space: nowrap;
+}
+
+#diplomatic-lines.ttb div::before{
+    writing-mode: horizontal-tb !important;
+    position: absolute;
+    display: block; /*to set size properties*/
+    white-space: nowrap;
+    text-align: left;  
+
+    width: 100%; /*adapt to #diplomatic-lines.ttb div size - set to position:relative*/
+    height: auto;
+    
+    margin-left: 0;
+    margin-right: .5rem;
+    margin-top: -30px;
+    margin-bottom: 20px;
+
+    padding-left: .5rem;
+    padding-right: 0;
+
+    border-bottom: 1px solid #ddd;
+    border-right: none!important;
+    border-right-width:0!important;
+}

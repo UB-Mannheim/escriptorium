@@ -36,6 +36,7 @@ function openWizard(proc) {
 class partCard {
     constructor(part) {
         this.pk = part.pk;
+        this.order = part.order;
         this.name = part.name;
         this.title = part.title;
         this.typology = part.typology;

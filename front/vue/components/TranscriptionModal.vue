@@ -70,7 +70,8 @@
                     </div>
 
                     <div id="trans-input-container" ref="transInputContainer">
-                        <input v-on:keyup.down="$store.dispatch('lines/editLine', 'next')"
+                        <input v-if="$store.state.document.mainTextDirection != 'ttb'"
+                                v-on:keyup.down="$store.dispatch('lines/editLine', 'next')"
                                 v-on:keyup.up="$store.dispatch('lines/editLine', 'previous')"
                                 v-on:keyup.enter="$store.dispatch('lines/editLine', 'next')"
                                 id="trans-input"
@@ -80,6 +81,30 @@
                                 v-model.lazy="localTranscription"
                                 autocomplete="off"
                                 autofocus/>
+                        <!--Hidden input for ttb text: -->
+                        <input v-else
+                                id="trans-input" 
+                                ref="transInput"
+                                name="content" 
+                                type="hidden"
+                                v-model.lazy="localTranscription"
+                                autocomplete="off" />
+                        <!-- in this case, input field is replaced by: -->
+                        <div v-if="$store.state.document.mainTextDirection == 'ttb'"
+                            id="textInputWrapper">
+                            <div id="textInputBorderWrapper" class="form-control mb-2">
+                                <div    v-on:blur="localTranscription = $event.target.textContent"
+                                        v-on:keyup="recomputeInputCharsScaleY()"
+                                        v-on:keyup.right="$store.dispatch('lines/editLine', 'next')"
+                                        v-on:keyup.left="$store.dispatch('lines/editLine', 'previous')"
+                                        v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();$store.dispatch('lines/editLine', 'next')"
+                                        v-html="localTranscription"
+                                        id="vertical_text_input"
+                                            contenteditable="true">
+                                </div>
+                            </div>
+                        </div>
+
                         <small v-if="line.currentTrans && line.currentTrans.version_updated_at" class="form-text text-muted">
                             <span>by {{line.currentTrans.version_author}} ({{line.currentTrans.version_source}})</span>
                             <span>on {{momentDate}}</span>
@@ -185,9 +210,27 @@ export default Vue.extend({
         $(this.$refs.transModal).draggable({handle: '.modal-header'});
         $(this.$refs.transModal).resizable();
         this.computeStyles();
+        let modele = this;
 
         let input = this.$refs.transInput;
-        input.focus();
+
+        // no need to make focus on hiden input with a ttb text
+        if(this.$store.state.document.mainTextDirection != 'ttb'){
+            input.focus();
+        }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input): 
+            // 
+            document.getElementById("vertical_text_input").addEventListener("paste", function(e) {
+
+                // cancel paste to treat its content before inserting it
+                e.preventDefault();
+
+                // get text representation of clipboard
+                var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                this.innerHTML = text;
+                modele.recomputeInputCharsScaleY();
+
+            }, false);
+        }
     },
     watch: {
         line(new_, old_) {
@@ -240,7 +283,19 @@ export default Vue.extend({
         close() {
             $(this.$refs.transModal).modal('hide');
         },
+        cleanHTMLTags(){
+            document.getElementById("vertical_text_input").innerHTML = document.getElementById("vertical_text_input").textContent;
+        },
+        recomputeInputCharsScaleY(){
+            
+            let inputHeight = document.getElementById("vertical_text_input").clientHeight;
+            let wrapperHeight = document.getElementById("textInputBorderWrapper").clientHeight;
+            let textScaleY = wrapperHeight / (inputHeight + 10);
 
+            // to avoid input text outside the border box:
+            if(inputHeight > wrapperHeight)
+                document.getElementById("vertical_text_input").style.transform = "scaleY("+textScaleY+")";
+        },
         comparedContent(content) {
             if (!this.line.currentTrans) return;
             let diff = Diff.diffChars(this.line.currentTrans.content, content);
@@ -286,6 +341,8 @@ export default Vue.extend({
 
             // calculate rotation needed to get the line horizontal
             let target_angle = 0;  // all lines should be topologically ltr
+            if(this.$store.state.document.mainTextDirection == 'ttb') // add a 90 angle for vertical texts
+                target_angle = 90; 
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
@@ -309,8 +366,14 @@ export default Vue.extend({
 
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
-            modalImgContainer.style.height = visuHeight+'px';
 
+            if(this.$store.state.document.mainTextDirection != 'ttb'){
+                modalImgContainer.style.height = visuHeight+'px';
+            }else{
+                modalImgContainer.style.width = visuHeight+'px';
+                modalImgContainer.style.display = 'inline-block';
+                modalImgContainer.style.verticalAlign = 'top';
+            }
             let top = -(bbox.top*ratio - context);
             let left = -(bbox.left*ratio - context);
 
@@ -353,6 +416,8 @@ export default Vue.extend({
             // Content input
             let container = this.$refs.transInputContainer;
             let input = container.querySelector('#trans-input');
+            let verticalTextInput;
+
             // note: input is not up to date yet
             let content = this.line.currentTrans && this.line.currentTrans.content || '';
             let ruler = document.createElement('span');
@@ -360,13 +425,29 @@ export default Vue.extend({
             ruler.style.visibility = 'hidden';
             ruler.textContent = content;
             ruler.style.whiteSpace="nowrap"
+
+            if(this.$store.state.document.mainTextDirection == 'ttb'){
+                // put the container inline for vertical transcription:
+                container.style.display = 'inline-block';
+                verticalTextInput = container.querySelector('#vertical_text_input');
+                // apply vertical writing style to the ruler:
+                ruler.style.writingMode = 'vertical-lr';
+                ruler.style.textOrientation = 'upright';
+            }
+
             container.appendChild(ruler);
 
             let context = hContext*lineHeight;
             let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
             ruler.style.fontSize = fontSize+'px';
-            input.style.fontSize = fontSize+'px';
-            input.style.height = Math.round(fontSize*1.1)+'px';
+
+            if(this.$store.state.document.mainTextDirection != 'ttb'){
+                input.style.fontSize = fontSize+'px';
+                input.style.height = Math.round(fontSize*1.1)+'px';
+            }else{
+                verticalTextInput.style.fontSize = fontSize+'px';
+                verticalTextInput.style.width = Math.round(fontSize*1.1)+'px';
+            }
 
             if (this.$store.state.document.readDirection == 'rtl') {
                 container.style.marginRight = context+'px';
@@ -375,15 +456,40 @@ export default Vue.extend({
                 // TODO: deal with other directions
                 container.style.marginLeft = context+'px';
             }
-            if (content) {
-                let lineWidth = bbox.width*ratio;
-                var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
-                scaleX = Math.max(0.2, scaleX);
-                input.style.transform = 'scaleX('+ scaleX +')';
-                input.style.width = 100/scaleX + '%';
-            } else {
-                input.style.transform = 'none';
-                input.style.width = '100%'; //'calc(100% - '+context+'px)';
+            if(this.$store.state.document.mainTextDirection != 'ttb'){
+                if (content) {
+                    let lineWidth = bbox.width*ratio;
+                    var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
+                    scaleX = Math.max(0.2, scaleX);
+                    input.style.transform = 'scaleX('+ scaleX +')';
+                    input.style.width = 100/scaleX + '%';
+                } else {
+                    input.style.transform = 'none';
+                    input.style.width = '100%'; //'calc(100% - '+context+'px)';
+                }
+            }else{
+                let modalImgContainer = this.$refs.modalImgContainer;
+                let textInputWrapper = container.querySelector('#textInputWrapper');
+                let textInputBorderWrapper = container.querySelector('#textInputBorderWrapper');
+                if (content) {
+                    let lineWidth = bbox.height*ratio;
+                    var scaleY = Math.min(5,  lineWidth / ruler.clientHeight);
+                    //var scaleY = Math.min(5,  lineWidth / modalImgContainer.clientHeight);
+                    //var scaleY = Math.min(5,  modalImgContainer.clientHeight / ruler.clientHeight);
+                    //var scaleY = Math.min(5,  modalImgContainer.clientHeight / textInputWrapper.clientHeight) * 0.7;
+                    scaleY = Math.max(0.2, scaleY);
+                    verticalTextInput.style.transformOrigin = 'top';
+                    verticalTextInput.style.transform = 'scaleY('+ scaleY +')';
+                    //document.getElementById('vertical_text_input').style.height = 100/scaleY + '%'; // not needed here
+                } else {
+                    verticalTextInput.style.transform = 'none';
+                    verticalTextInput.style.height = modalImgContainer.clientHeight + 'px'; 
+                }  
+                textInputWrapper.style.height = modalImgContainer.clientHeight + 'px';
+                // simulate an input field border to fix it to the actual size of the image
+                textInputBorderWrapper.style.width = verticalTextInput.clientWidth+'px';
+                //textInputBorderWrapper.style.width = verticalTextInput.offsetWidth+'px';
+                textInputBorderWrapper.style.height = modalImgContainer.clientHeight+'px';
             }
             container.removeChild(ruler);  // done its job
         },
@@ -397,13 +503,33 @@ export default Vue.extend({
 
             let bbox = this.getRotatedLineBBox();
             let hContext = 0.3; // vertical context added around the line, in percentage
-            let ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
-            let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
-            let lineHeight = Math.max(30, Math.round(bbox.height*ratio));
-            if (lineHeight > MAX_HEIGHT) {
-                // change the ratio so that the image can not get too big
-                ratio = (MAX_HEIGHT/lineHeight)*ratio;
-                lineHeight = MAX_HEIGHT;
+
+            //
+            let ratio = 1;
+            let lineHeight = 150; 
+
+            if(this.$store.state.document.mainTextDirection != 'ttb')
+            {
+                ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
+                let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
+                lineHeight = Math.max(30, Math.round(bbox.height*ratio));
+                if (lineHeight > MAX_HEIGHT) {
+                    // change the ratio so that the image can not get too big
+                    ratio = (MAX_HEIGHT/lineHeight)*ratio;
+                    lineHeight = MAX_HEIGHT;
+                }
+            }else{ // permutation of sizes for ttb text
+
+                modalImgContainer.style.height=String(window.innerHeight-230) + "px";   //   needed to fix height or ratio is nulled
+                ratio = modalImgContainer.clientHeight / (bbox.height + (2*bbox.width*hContext));
+                let MAX_WIDTH = 30;
+                lineHeight = Math.max(30, Math.round(bbox.width*ratio));   
+                
+                if (lineHeight > MAX_WIDTH) {    
+                    // change the ratio so that the image can not get too big
+                    ratio = (MAX_WIDTH/lineHeight)*ratio;
+                    lineHeight = MAX_WIDTH;
+                }
             }
 
             this.computeImgStyles(bbox, ratio, lineHeight, hContext);
