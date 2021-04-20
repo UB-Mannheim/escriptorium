@@ -15,8 +15,6 @@ services:
   web:
     <<: *app
     command: uwsgi --ini /usr/src/app/uwsgi.ini
-    volumes:
-      - logs:/user/src/app/escriptorium/logs
     expose:
       - 8000
 
