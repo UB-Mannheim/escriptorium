@@ -26,7 +26,6 @@
             {% endwith %}
           </td>
           <th>
-            {# <a href="{% url 'document-detail' pk=document.pk %}">{{ document.name }}</a> #}
             {{ document.name }}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
           </th>
@@ -47,20 +46,20 @@
           </td>
           {% endcomment %}
           <td class="text-right">
-              {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
-              {# Note that doing one query per row is a lot faster than a subquery for some reason #}
-              {% if document.last_edited_part %}
-              <a href="{% url 'document-part-edit' pk=document.pk part_pk=document.last_edited_part.pk %}"
-                 class="btn btn-info"
-                 title="{% trans 'Edit last updated Element' %}">
-                  <i class="fas fa-edit"></i>
-              </a>
-              {% endif %}
+            {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
+            {# Note that doing one query per row is a lot faster than a subquery for some reason #}
+            {% if document.last_edited_part %}
+            <a href="{% url 'document-part-edit' pk=document.pk part_pk=document.last_edited_part.pk %}"
+               class="btn btn-info"
+               title="{% trans 'Edit last updated Element' %}">
+              <i class="fas fa-edit"></i>
+            </a>
+            {% endif %}
 
-              <form method="post" class="inline-form" action="{% url 'document-publish' pk=document.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-                  <input type="hidden" name="workflow_state" value="{{ document.WORKFLOW_STATE_ARCHIVED }}">
-                  <button type="submit" value="" class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-              </form>
+            <form method="post" class="inline-form" action="{% url 'document-publish' pk=document.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+              <input type="hidden" name="workflow_state" value="{{ document.WORKFLOW_STATE_ARCHIVED }}">
+              <button type="submit" value="" onclick='event.stopPropagation();'  class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+            </form>
           </td>
         </tr>
         {% endfor %}
