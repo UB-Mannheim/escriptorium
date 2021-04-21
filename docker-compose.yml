@@ -73,6 +73,10 @@ services:
       - OMP_NUM_THREADS=1
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10"
 
+  celery-live:
+    <<: *app
+    command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q live -c ${CELERY_LIVE_CONC:-10} --max-tasks-per-child=10"
+
   celery-low-priority:
     <<: *app
     command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q low-priority -c ${CELERY_LOW_CONC:-10} --max-tasks-per-child=10"
