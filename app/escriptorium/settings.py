@@ -181,19 +181,21 @@ CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERYD_ACKS_LATE = True
+CELERY_ACKS_LATE = True
 
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
 
 CELERY_TASK_QUEUES = (
     Queue('default', routing_key='default'),
+    Queue('live', routing_key='live'),  # for everything that needs to be done on the spot to update the ui
     Queue('low-priority', routing_key='low-priority'),
-    Queue('gpu', routing_key='gpu'),
+    Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     # 'core.tasks.*': {'queue': 'default'},
+    'core.tasks.recalculate_masks': {'queue': 'live'},
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
