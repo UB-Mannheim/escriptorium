@@ -133,7 +133,8 @@ class PartSerializer(serializers.ModelSerializer):
             'workflow',
             'order',
             'recoverable',
-            'transcription_progress'
+            'transcription_progress',
+            'source'
         )
 
     def create(self, data):
