@@ -106,7 +106,8 @@ class LineTypeSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
-    main_script = serializers.CharField(source='main_script.name')
+    main_script = serializers.SlugRelatedField(slug_field='name',
+                                               queryset=Script.objects.all())
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
@@ -125,12 +126,6 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
-
-    def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.main_script = validated_data.get('main_script')['name'] or instance.main_script
-        instance.read_direction = validated_data.get('read_direction', instance.read_direction)
-        return instance
 
 
 class PartSerializer(serializers.ModelSerializer):
