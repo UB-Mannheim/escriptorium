@@ -187,7 +187,8 @@ class Document(models.Model):
     read_direction = models.CharField(
         max_length=3,
         choices=READ_DIRECTION_CHOICES,
-        default=READ_DIRECTION_LTR
+        default=READ_DIRECTION_LTR,
+        help_text=_("The read direction describes the order of the elements in the document, in opposition with the text direction which describes the order of the words in a line and is set by the script.")
     )
     typology = models.ForeignKey(DocumentType, null=True, blank=True, on_delete=models.SET_NULL)
 

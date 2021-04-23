@@ -11,7 +11,7 @@ from django.urls import reverse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.serializers import PrimaryKeyRelatedField
 
@@ -31,6 +31,7 @@ from api.serializers import (UserOnboardingSerializer,
                              SegmentSerializer,
                              TrainSerializer,
                              SegTrainSerializer,
+                             ScriptSerializer,
                              TranscribeSerializer,
                              OcrModelSerializer)
 
@@ -43,6 +44,7 @@ from core.models import (Document,
                          Transcription,
                          LineTranscription,
                          OcrModel,
+                         Script,
                          AlreadyProcessingException)
 
 from core.tasks import recalculate_masks
@@ -65,6 +67,12 @@ class UserViewSet(ModelViewSet):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(status=status.HTTP_200_OK)
+
+
+class ScriptViewSet(ReadOnlyModelViewSet):
+    queryset = Script.objects.all()
+    paginate_by = 20
+    serializer_class = ScriptSerializer
 
 
 class DocumentViewSet(ModelViewSet):

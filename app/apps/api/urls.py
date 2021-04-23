@@ -11,9 +11,11 @@ from api.views import (DocumentViewSet,
                        BlockTypeViewSet,
                        LineTypeViewSet,
                        LineTranscriptionViewSet,
+                       ScriptViewSet,
                        OcrModelViewSet)
 
 router = routers.DefaultRouter()
+router.register(r'scripts', ScriptViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'user', UserViewSet)
 router.register(r'types/block', BlockTypeViewSet)
