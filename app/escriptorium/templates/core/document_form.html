@@ -1,5 +1,5 @@
 {% extends 'core/document_nav.html' %}
-{% load i18n staticfiles bootstrap %}
+{% load i18n staticfiles bootstrap json %}
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block nav-doc-active %}active{% endblock %}
@@ -173,9 +173,11 @@
 </script>
 {{ block.super }}
 <script type="text/javascript">
-    $(document).ready(function(){
-      bootDocumentForm();
-      bootHelp();
-    });
+ $(document).ready(function(){
+     var scripts = { {% for script in form.fields.main_script.queryset %}
+         '{{script.pk}}':'{{script.text_direction}}',{% endfor %} };
+     bootDocumentForm(scripts);
+     bootHelp();
+ });
 </script>
 {% endblock %}

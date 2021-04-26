@@ -14,10 +14,10 @@ export const initialState = () => ({
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
     visible_panels: {
-        source: userProfile.get('source-panel'),
-        segmentation: userProfile.get('segmentation-panel'),
-        visualisation: userProfile.get('visualisation-panel'),
-        diplomatic: userProfile.get('diplomatic-panel')
+        source: userProfile.get('visible-panels')?userProfile.get('visible-panels').source:false,
+        segmentation: userProfile.get('visible-panels')?userProfile.get('visible-panels').segmentation:true,
+        visualisation: userProfile.get('visible-panels')?userProfile.get('visible-panels').visualisation:true,
+        diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
     },
 })
 
@@ -70,7 +70,7 @@ export const actions = {
         commit('setVisiblePanels', update)
 
         // Persist final value in user profile
-        userProfile.set(panel + '-panel', state.visible_panels[panel])
+        userProfile.set('visible-panels', state.visible_panels)
     }
 }
 

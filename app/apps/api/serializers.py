@@ -19,6 +19,7 @@ from core.models import (Document,
                          LineTranscription,
                          BlockType,
                          LineType,
+                         Script,
                          OcrModel)
 from core.tasks import (segtrain, train, segment, transcribe)
 
@@ -49,6 +50,12 @@ class ImageField(serializers.ImageField):
                         except AttributeError:
                             pass
             return data
+
+
+class ScriptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Script
+        fields = '__all__'
 
 
 class PartMoveSerializer(serializers.ModelSerializer):
@@ -99,6 +106,8 @@ class LineTypeSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    main_script = serializers.SlugRelatedField(slug_field='name',
+                                               queryset=Script.objects.all())
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
@@ -106,11 +115,17 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'transcriptions',
+        fields = ('pk', 'name', 'transcriptions', 'main_script', 'read_direction',
                   'valid_block_types', 'valid_line_types', 'parts_count')
 
     def get_parts_count(self, document):
         return document.parts.count()
+
+    def validate_main_script(self, value):
+        try:
+            return Script.objects.get(name=value)
+        except Script.DoesNotExist:
+            raise serializers.ValidationError('This script does not exists in the database.')
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -133,7 +148,8 @@ class PartSerializer(serializers.ModelSerializer):
             'workflow',
             'order',
             'recoverable',
-            'transcription_progress'
+            'transcription_progress',
+            'source'
         )
 
     def create(self, data):

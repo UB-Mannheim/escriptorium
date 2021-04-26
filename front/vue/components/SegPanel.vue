@@ -94,7 +94,7 @@
                     class="btn btn-sm btn-info fas fa-question help nav-item ml-2">
             </button>
             <div id="segmentation-help" class="alert alert-primary help-text collapse">
-                <button type="button" class="close" aria-label="Close">
+                <button type="button" data-toggle="collapse" data-target="#segmentation-help" class="close" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <help></help>

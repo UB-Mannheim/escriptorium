@@ -1,9 +1,10 @@
 {% load export_tags %}<?xml version="1.0" encoding="UTF-8"  standalone="yes"?>
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
-  <Metadata>
+  <Metadata{% if part.source %} externalRef="{{part.source}}"{% endif %}>
 	<Creator>escriptorium</Creator>
 	<Created>{% current_time %}</Created>
-    <LastChange>{% current_time %}</LastChange>
+        <LastChange>{% current_time %}</LastChange>
+
   </Metadata>
   <Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
 

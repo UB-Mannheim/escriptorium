@@ -10,16 +10,16 @@
                     <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="next-btn"
-                            @click="$store.dispatch('lines/editLine', 'next')"
-                            title="Next"
+                            @click="editLine('next')"
+                            title="Next (up arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
                     </button>
                     <button v-else
                             type="button"
                             id="prev-btn"
-                            @click="$store.dispatch('lines/editLine', 'previous')"
-                            title="Previous"
+                            @click="editLine('previous')"
+                            title="Previous (up arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
                     </button>
@@ -27,16 +27,16 @@
                     <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="prev-btn"
-                            @click="$store.dispatch('lines/editLine', 'previous')"
-                            title="Previous"
+                            @click="editLine('previous')"
+                            title="Previous (down arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
                     </button>
                     <button v-else
                             type="button"
                             id="next-btn"
-                            @click="$store.dispatch('lines/editLine', 'next')"
-                            title="Next"
+                            @click="editLine('next')"
+                            title="Next (down arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
                     </button>
@@ -71,9 +71,9 @@
 
                     <div id="trans-input-container" ref="transInputContainer">
                         <input v-if="$store.state.document.mainTextDirection != 'ttb'"
-                                v-on:keyup.down="$store.dispatch('lines/editLine', 'next')"
-                                v-on:keyup.up="$store.dispatch('lines/editLine', 'previous')"
-                                v-on:keyup.enter="$store.dispatch('lines/editLine', 'next')"
+                                v-on:keyup.down="editLine('next')"
+                                v-on:keyup.up="editLine('previous')"
+                                v-on:keyup.enter="editLine('next')"
                                 id="trans-input"
                                 ref="transInput"
                                 name="content"
@@ -83,9 +83,9 @@
                                 autofocus/>
                         <!--Hidden input for ttb text: -->
                         <input v-else
-                                id="trans-input" 
+                                id="trans-input"
                                 ref="transInput"
-                                name="content" 
+                                name="content"
                                 type="hidden"
                                 v-model.lazy="localTranscription"
                                 autocomplete="off" />
@@ -95,9 +95,9 @@
                             <div id="textInputBorderWrapper" class="form-control mb-2">
                                 <div    v-on:blur="localTranscription = $event.target.textContent"
                                         v-on:keyup="recomputeInputCharsScaleY()"
-                                        v-on:keyup.right="$store.dispatch('lines/editLine', 'next')"
-                                        v-on:keyup.left="$store.dispatch('lines/editLine', 'previous')"
-                                        v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();$store.dispatch('lines/editLine', 'next')"
+                                        v-on:keyup.right="editLine('next')"
+                                        v-on:keyup.left="editLine('previous')"
+                                        v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();editLine('next')"
                                         v-html="localTranscription"
                                         id="vertical_text_input"
                                             contenteditable="true">
@@ -217,8 +217,8 @@ export default Vue.extend({
         // no need to make focus on hiden input with a ttb text
         if(this.$store.state.document.mainTextDirection != 'ttb'){
             input.focus();
-        }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input): 
-            // 
+        }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input):
+            //
             document.getElementById("vertical_text_input").addEventListener("paste", function(e) {
 
                 // cancel paste to treat its content before inserting it
@@ -283,11 +283,18 @@ export default Vue.extend({
         close() {
             $(this.$refs.transModal).modal('hide');
         },
+
+        editLine(direction) {
+           // making sure the line is saved (it isn't in case of shortcut usage)
+           this.localTranscription = this.$refs.transInput.value;
+           this.$store.dispatch('lines/editLine', direction);
+        },
+
         cleanHTMLTags(){
             document.getElementById("vertical_text_input").innerHTML = document.getElementById("vertical_text_input").textContent;
         },
         recomputeInputCharsScaleY(){
-            
+
             let inputHeight = document.getElementById("vertical_text_input").clientHeight;
             let wrapperHeight = document.getElementById("textInputBorderWrapper").clientHeight;
             let textScaleY = wrapperHeight / (inputHeight + 10);
@@ -342,7 +349,7 @@ export default Vue.extend({
             // calculate rotation needed to get the line horizontal
             let target_angle = 0;  // all lines should be topologically ltr
             if(this.$store.state.document.mainTextDirection == 'ttb') // add a 90 angle for vertical texts
-                target_angle = 90; 
+                target_angle = 90;
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
@@ -483,8 +490,8 @@ export default Vue.extend({
                     //document.getElementById('vertical_text_input').style.height = 100/scaleY + '%'; // not needed here
                 } else {
                     verticalTextInput.style.transform = 'none';
-                    verticalTextInput.style.height = modalImgContainer.clientHeight + 'px'; 
-                }  
+                    verticalTextInput.style.height = modalImgContainer.clientHeight + 'px';
+                }
                 textInputWrapper.style.height = modalImgContainer.clientHeight + 'px';
                 // simulate an input field border to fix it to the actual size of the image
                 textInputBorderWrapper.style.width = verticalTextInput.clientWidth+'px';
@@ -506,7 +513,7 @@ export default Vue.extend({
 
             //
             let ratio = 1;
-            let lineHeight = 150; 
+            let lineHeight = 150;
 
             if(this.$store.state.document.mainTextDirection != 'ttb')
             {
@@ -523,9 +530,9 @@ export default Vue.extend({
                 modalImgContainer.style.height=String(window.innerHeight-230) + "px";   //   needed to fix height or ratio is nulled
                 ratio = modalImgContainer.clientHeight / (bbox.height + (2*bbox.width*hContext));
                 let MAX_WIDTH = 30;
-                lineHeight = Math.max(30, Math.round(bbox.width*ratio));   
-                
-                if (lineHeight > MAX_WIDTH) {    
+                lineHeight = Math.max(30, Math.round(bbox.width*ratio));
+
+                if (lineHeight > MAX_WIDTH) {
                     // change the ratio so that the image can not get too big
                     ratio = (MAX_WIDTH/lineHeight)*ratio;
                     lineHeight = MAX_WIDTH;
