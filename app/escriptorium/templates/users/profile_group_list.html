@@ -2,12 +2,9 @@
 {% load i18n bootstrap static %}
 
 {% block infos-tab-active %}{% endblock %}
-{% block key-tab-active %}{% endblock %}
-{% block files-tab-active %}{% endblock %}
 {% block team-tab-active %}active{% endblock %}
 
 {% block tab-content %}
-
 <h4>{% trans "Create a new Team" %}</h4>
 <form method="post">
     {% csrf_token %}
