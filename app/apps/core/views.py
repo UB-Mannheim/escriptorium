@@ -13,9 +13,9 @@ from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView
 
-from core.models import (Document, DocumentPart, Metadata,
+from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, AlreadyProcessingException)
-from core.forms import (DocumentForm, MetadataFormSet, DocumentShareForm,
+from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, DocumentShareForm,
                         UploadImageForm, DocumentProcessForm)
 from imports.forms import ImportForm, ExportForm
 
@@ -33,15 +33,58 @@ class Home(TemplateView):
         return context
 
 
+class ProjectList(LoginRequiredMixin, ListView):
+    model = Project
+    paginate_by = 10
+
+    def get_queryset(self):
+        return (Project.objects
+                .for_user(self.request.user)
+                .select_related('owner'))
+
+
+class ProjectDetail(LoginRequiredMixin, DetailView):
+    model = Project
+
+    def get_object(self):
+        obj = super().get_object()
+        try:
+            # we fetched the object already, now we check that the user has perms to edit it
+            Project.objects.for_user(self.request.user).get(pk=obj.pk)
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return obj
+
+
+class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Project
+    form_class = ProjectForm
+    success_message = _("Project created successfully!")
+
+    def get_success_url(self):
+        return reverse('projects-list')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        response = super().form_valid(form)
+        return response
+
+
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
     paginate_by = 10
 
     def get_queryset(self):
-        return (Document.objects
-                .for_user(self.request.user)
+        self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
+        return (Document.objects.filter(project=self.project)
+                # .for_user(self.request.user)
                 .select_related('owner', 'main_script')
                 .annotate(parts_updated_at=Max('parts__updated_at')))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        return context
 
 
 class DocumentMixin():
@@ -90,8 +133,6 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
-            print(form.errors)
-            print(metadata_form.errors)
             return self.form_invalid(form)
 
     def form_valid(self, form, metadata_form):

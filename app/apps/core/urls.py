@@ -2,6 +2,9 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from core.views import (Home,
+                        CreateProject,
+                        ProjectList,
+                        ProjectDetail,
                         DocumentsList,
                         DocumentDetail,
                         CreateDocument,
@@ -17,7 +20,13 @@ from core.views import (Home,
 
 urlpatterns = [
     path('', Home.as_view(), name='home'),
-    path('documents/', DocumentsList.as_view(), name='documents-list'),
+
+    path('projects/create/', CreateProject.as_view(), name='project-create'),
+    path('projects/', ProjectList.as_view(), name='projects-list'),
+    # path('project/<str:slug>/', ProjectDetail.as_view(), name='project-detail'),
+    path('project/<str:slug>/documents/', DocumentsList.as_view(), name='documents-list'),
+
+    # path('documents/', DocumentsList.as_view(), name='documents-list'),
     path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
     path('document/create/', CreateDocument.as_view(), name='document-create'),
     path('document/<int:pk>/edit/', UpdateDocument.as_view(), name='document-update'),

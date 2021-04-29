@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from core.models import (Document,
+from core.models import (Project,
+                         Document,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata,
@@ -44,6 +45,7 @@ class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training']
 
 
+admin.site.register(Project)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)

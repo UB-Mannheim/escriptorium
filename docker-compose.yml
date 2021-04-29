@@ -32,7 +32,7 @@ services:
     env_file: variables.env
 
   redis:
-    image: redis:3.0-alpine
+    image: sickp/alpine-redis:4.0.6
 
   nginx:
     image: registry.gitlab.inria.fr/scripta/escriptorium/nginx
@@ -120,4 +120,3 @@ volumes:
    media:
    postgres:
    esdata:
-   logs:

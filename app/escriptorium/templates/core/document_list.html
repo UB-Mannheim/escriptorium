@@ -2,17 +2,11 @@
 {% load i18n staticfiles thumbnail %}
 {% block head_title %}{% trans "My Documents" %}{% endblock %}
 
-{% block styles %}
-{{ block.super }}
-{% endblock %}
-
-{% block nav-doc-list-class %}active{% endblock %}
-
 {% block body %}
 <div class="row">
-  <div class="col-md-12 col-md-offset-4">
-    <a href="{% url 'document-create' %}" class="btn btn-success float-sm-right">{% trans 'Create new' %}</a>
-    <h2>{% trans "My Documents" %}</h2>
+    <div class="col-md-12 col-md-offset-4">
+    <a href="{% url 'document-create' %}" class="btn btn-success float-sm-right mb-2">{% trans 'Create new Document' %}</a>
+    <h5><a href="{% url 'projects-list'%}">{% trans "Projects" %}</a> > {{ project.name }} > {% trans "Documents" %}</h5>
 
     <table id="document-list" class="table table-hover">
       <tbody>

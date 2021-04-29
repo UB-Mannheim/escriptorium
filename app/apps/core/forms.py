@@ -11,12 +11,18 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import (Document, Metadata, DocumentMetadata,
+from core.models import (Project, Document, Metadata, DocumentMetadata,
                          DocumentPart, OcrModel, Transcription,
                          BlockType, LineType, AlreadyProcessingException)
 from users.models import User
 
 logger = logging.getLogger(__name__)
+
+
+class ProjectForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['name']
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):

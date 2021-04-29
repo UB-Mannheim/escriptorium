@@ -5,6 +5,7 @@ import os
 import json
 import functools
 import subprocess
+import time
 import uuid
 from PIL import Image
 from datetime import datetime
@@ -21,6 +22,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.forms import ValidationError
+from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -134,6 +136,54 @@ class DocumentMetadata(models.Model):
         return '%s:%s' % (self.document.name, self.key.name)
 
 
+class ProjectManager(models.Manager):
+    def for_user(self, user):
+        # return the list of editable projects
+        # Note: Monitor this query
+        return (Project.objects
+                .filter(Q(owner=user)
+                        | (Q(shared_with_users=user)
+                           | Q(shared_with_groups__in=user.groups.all())))
+                .prefetch_related('shared_with_groups')
+                .distinct())
+
+
+class Project(models.Model):
+    name = models.CharField(max_length=512)
+    slug = models.SlugField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    shared_with_users = models.ManyToManyField(User, blank=True,
+                                               verbose_name=_("Share with users"),
+                                               related_name='shared_projects')
+    shared_with_groups = models.ManyToManyField(Group, blank=True,
+                                                verbose_name=_("Share with teams"),
+                                                related_name='shared_projects')
+
+    # strict_ontology =
+
+    objects = ProjectManager()
+
+    class Meta:
+        ordering = ('-updated_at',)
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            slug = slugify(self.name)
+            print(slug)
+            # check unicity
+            exists = Project.objects.filter(slug=slug).count()
+            if not exists:
+                self.slug = slug
+            else:
+                self.slug = slug[:40] + hex(int(time.time()))[2:]
+        super().save(*args, **kwargs)
+
+
 class DocumentManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().select_related('typology')
@@ -200,6 +250,10 @@ class Document(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     metadatas = models.ManyToManyField(Metadata, through=DocumentMetadata, blank=True)
+
+    project = models.ForeignKey(Project, null=True, blank=True,
+                                on_delete=models.CASCADE,
+                                related_name='documents')
 
     objects = DocumentManager()
 
