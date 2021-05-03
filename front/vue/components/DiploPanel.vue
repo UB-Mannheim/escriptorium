@@ -254,125 +254,139 @@ export default Vue.extend({
         },
 
         onPaste(e) {
+            
             let diplomaticLines=document.querySelector("#diplomatic-lines");
-            var types, pastedData, savedContent;
-            
-            // Browsers that support the 'text/html' type in the Clipboard API (Chrome, Firefox 22+)
+            let sel = window.getSelection();
+            let tmpDiv = document.createElement('div');
+
+            let pastedData;
             if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
-                types = e.clipboardData.types;
-                if (((types instanceof DOMStringList) && types.contains("text/html")) || (types.indexOf && types.indexOf('text/html') !== -1)) {      
-                    // Extract data and pass it to callback
-                    pastedData = e.clipboardData.getData('text/html');
-                    //pastedData = e.clipboardData.getData('text/plain');
-                    this.processPaste(diplomaticLines, pastedData);
-
-                    // Stop the data from actually being pasted
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return false;
-                }else  {
-
-                    // Extract data and pass it to callback
+                let types = e.clipboardData.types;
+                if (((types instanceof DOMStringList) && types.contains("text/html")) || (types.indexOf && types.indexOf('text/html') !== -1)) {
+                    let content = e.clipboardData.getData('text/html');
+                    tmpDiv.innerHTML = content;
+                    pastedData = [ ...tmpDiv.childNodes].map(e=>e.textContent).join('\n');
+                } else {
                     pastedData = e.clipboardData.getData('text/plain');
-                    //pastedData = e.clipboardData.getData('text/plain');
-                    this.processPaste(diplomaticLines, pastedData);
-
-                    // Stop the data from actually being pasted
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return false;
                 }
-            }
-            
-            // Everything else: Move existing element contents to a DocumentFragment for safekeeping
-            savedContent = document.createDocumentFragment();
-            while(diplomaticLines.childNodes.length > 0) {
-                savedContent.appendChild(diplomaticLines.childNodes[0]);
-            }
-            
-            // Then wait for browser to paste content into it and cleanup
-            this.waitForPastedData(diplomaticLines, savedContent);
-            return true;
-        },
-        processPaste(diplomaticLines, replacementText)
-        {
-            // store initial number of segemnted lines:
-            let nativeNumberOfLines = diplomaticLines.getElementsByTagName('div').length;
-
-            let sel;
-            if (window.getSelection) {
-                sel = window.getSelection();
-
-                if (sel.rangeCount) 
-                {               
-                    // put the replacementn text into a div element to manage content as tags
-                    let tmpDiv = document.createElement('div');
-                    let textLines = new Array();
-                    tmpDiv.innerHTML = replacementText; //  important sile texte à récupérer est au format html
-
-                    // convert html/plain text CR into a normalized separator ([CR]):
-                    let divs = tmpDiv.getElementsByTagName("div");
-                    if(divs.length > 0) //  some html content, mainly from another transcription panel
-                    {
-                        for(var i=0;i<divs.length;i++)
-                        {
-                            textLines.push(divs[i].textContent + '[CR]');
-                        }
-                    }else{  //  plain text with some included CR chars
-                        var regCR = new RegExp("[\r]{0,1}\n", "g");
-                        var plainTextLines =  replacementText.split(regCR);
-
-                        for(var i=0;i<plainTextLines.length;i++)
-                        {
-                            textLines.push(plainTextLines[i] + '[CR]');
-                        }
-                    }
-                    replacementText = textLines.join('');
-
-                    // place this text as content of a div
-                    var newNode = document.createElement('div'); newNode.innerHTML = replacementText; 
-                    var cursor = sel.getRangeAt(0);  
-                    cursor.deleteContents(); 
-                    // paste text on the selection (cursor position or range):
-                    cursor.insertNode(newNode); 
-                    
-                    // convert the whole html text lines into a single string with normalized separator ([CR])
-                    let content = '';
-                    tmpDiv.innerHTML = diplomaticLines.innerHTML;
-                    divs = tmpDiv.getElementsByTagName("div");
-                    var numberOfLines = divs.length;
-                    var indexLine = 0;
-                    var currentDiv;
-                    while(typeof(divs[0]) != "undefined")
-                    {
-                        currentDiv = divs[0];
-                        var innerContent = currentDiv.textContent;
-                        content += innerContent;
-
-                        // add a CR char for each div/ only if not last line and does not contain a CR char at the end:
-                        if((indexLine < numberOfLines-1)&&(innerContent.substring(innerContent.length - 4) != '[CR]'))
-                            content += '[CR]';
-                        // to avoid doublons, we remove each div tag from tmpDiv:
-                        currentDiv.parentNode.removeChild(currentDiv);
-                        indexLine++;
-                    }
-
-                    // convert each new line into a div element
-                    textLines = content.split('[CR]');
-                    tmpDiv.innerHTML = '';
-                    for(var i=0;i<textLines.length;i++)
-                    {
-                        tmpDiv.innerHTML +='<div title="">'+textLines[i]+'</div>';
-                    }
-
-                    // update panel content! :
-                    diplomaticLines.innerHTML = tmpDiv.innerHTML;   
-                }
-            } else if (document.selection && document.selection.createRange) {
                 
-                range = document.selection.createRange();
-                range.text = replacementText;
+                var cursor = sel.getRangeAt(0);  // specific posiiton or range
+                // for a range, delete content to clean data and to get resulting specific cursor position from it:
+                cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
+
+                // after deleting (for an range), 
+                // check if resulting cursor is in or off a line div or some errors will occur!:
+                let parentEl = sel.getRangeAt(0).commonAncestorContainer; 
+                if (parentEl.nodeType != 1) {
+                    parentEl = parentEl.parentNode;   //  for several different lines, commonAncestorContainer does not exist
+                }
+
+                let pasted_data_split = pastedData.split("\n");
+                let refNode = parentEl;
+
+                let textBeforeCursor = '';
+                let textAfterCursor = '';
+
+                // nodes which will be placed before and after the targetnode - where text is pasted (new node or current node)
+                let prevSibling;
+                let nextSibling;
+
+                if(parentEl.id == 'diplomatic-lines'){  //  if parent node IS the main diplomatic panel div = cursor is offline
+                    // occurs when a selection is made on several lines or all is selected
+
+                    //we create a between node:
+                    refNode = document.createElement('div'); 
+                    refNode.textContent = '';
+
+                    // paste text on the selection (cursor position or range):
+                    cursor.insertNode(refNode);
+
+                    // set caret position/place the cursor into the new node:
+                    cursor.setStart(refNode,0);
+                    cursor.setEnd(refNode,0);
+
+                    // in this case, contents before and after selection will belong to near siblings
+                    if(refNode.previousSibling != null){
+                        prevSibling = refNode.previousSibling;
+                    }
+                    if(refNode.nextSibling != null){
+                        nextSibling = refNode.nextSibling;
+                    }
+                }
+
+                //  get current cursor position withing the line div tag
+                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur             
+
+                // store previous and next text in the line to it / for a selection wihtin on line:
+                textBeforeCursor = refNode.textContent.substring(0, caretPos);
+                textAfterCursor = refNode.textContent.substring(caretPos, refNode.textContent.length);
+
+                // for a selection between several lines, contents before and after will be the contents of siblings
+                // to avoid create new lines before and after, fusion of sibling contents to the current node and removing it
+                if(typeof(prevSibling) != "undefined"){
+                    textBeforeCursor = prevSibling.textContent;
+                    prevSibling.parentNode.removeChild(prevSibling);
+                }
+                if(typeof(nextSibling) != "undefined"){
+                    textAfterCursor = nextSibling.textContent;
+                    nextSibling.parentNode.removeChild(nextSibling);
+                }
+                
+                let endPos = 0; //  will set the new cursor position
+                let lastTargetNode = refNode;   //  last impacted node for a copy-paste (for several lines)
+
+                if(pasted_data_split.length == 1){
+                    refNode.textContent = textBeforeCursor + pasted_data_split[0] + textAfterCursor;
+                    endPos = String(textBeforeCursor + pasted_data_split[0]).length;
+                }
+                else{
+                    // store resulting firstLine & lastLine contents regarding cursor position
+                    let firstLine = textBeforeCursor + pasted_data_split[0];
+                    let lastLine = pasted_data_split[pasted_data_split.length -1] + textAfterCursor; 
+                    let nextNodesContents = new Array();
+
+                    for(var j=0; j < pasted_data_split.length; j++) 
+                    {
+                        var lineContent = pasted_data_split[j];
+                        if(j == 0) 
+                            lineContent = firstLine;
+                        if(j == pasted_data_split.length-1)
+                            lineContent = lastLine;
+                        nextNodesContents.push(lineContent);                                                
+                    }
+                    // get length of last pasted line to set new caret position
+                    endPos = String(pasted_data_split[pasted_data_split.length-1]).length;
+                    
+                    refNode.textContent = nextNodesContents[nextNodesContents.length-1];
+                    lastTargetNode = refNode;
+                    
+                    nextNodesContents = nextNodesContents.reverse();
+
+                    for(var j=1; j < nextNodesContents.length; j++) //  for any other line, we add a div and set this content
+                    {
+                        var prevLineDiv = document.createElement('div');
+                        prevLineDiv.textContent = nextNodesContents[j];
+                        // add the new line as a next neighbor of current div:
+                        refNode = diplomaticLines.insertBefore(prevLineDiv, refNode);
+                    }
+                }
+                // set the caret position right after the pasted content:
+
+                if(typeof(lastTargetNode.childNodes[0]) != "undefined")
+                {
+                    let textNode = lastTargetNode.childNodes[0];
+                    cursor.setStart(textNode, endPos);
+                }
+
+            } else {
+                // not sure if this can actually happen in firefox/chrome?!
+                pastedData = "";
+                // so we do nothing; keeping original content
             }
+
+            // Stop the data from actually being pasted //  without it will paste the native copied text after "content"
+            e.stopPropagation();
+            e.preventDefault();
         },
 
         showOverlay(ev) {
