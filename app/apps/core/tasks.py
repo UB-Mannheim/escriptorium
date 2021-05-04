@@ -3,6 +3,7 @@ import json
 import logging
 import numpy as np
 import os.path
+import pathlib
 import shutil
 from itertools import groupby
 
@@ -352,8 +353,7 @@ def train_(qs, document, transcription, model=None, user=None):
         filename = slugify(model.name) + '.mlmodel'
         upload_to = model.file.field.upload_to(model, filename)
         fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
-        if not os.path.exists(fulldir):
-            os.mkdir(fulldir)
+        pathlib.Path(fulldir).mkdir(parents=True, exist_ok=True)
         modelpath = os.path.join(fulldir, filename)
         model.file = upload_to
         model.save()
