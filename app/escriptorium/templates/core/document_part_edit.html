@@ -4,12 +4,12 @@
 
 {% block body %}
 <div id="editor">
-  <editor :document-id="'{{document.id}}'"
-          :document-name="'{{document.name}}'"
-          :part-id="'{{part.id}}'"
-          :default-text-direction="'{{ document.default_text_direction }}'"
-          :main-text-direction="'{{ document.main_script.text_direction }}'"
-          :read-direction="'{{ document.read_direction }}'">
+    <editor :document-id="'{{document.id}}'"
+            :document-name="'{{ document.name|escapejs }}'"
+            :part-id="'{{part.id}}'"
+            :default-text-direction="'{{ document.default_text_direction }}'"
+            :main-text-direction="'{{ document.main_script.text_direction }}'"
+            :read-direction="'{{ document.read_direction }}'">
     <a href="{% if object %}{% url 'document-update' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
     <a href="{% if object %}{% url 'document-images' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
     <a href="{% if document  %}{% url 'document-part-edit' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link active {% if not object or not document.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
