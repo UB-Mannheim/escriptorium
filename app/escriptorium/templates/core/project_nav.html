@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block body %}
+<nav>
+    <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+        <h5 class="nav-item nav-link disabled">{{project.name|capfirst}}</h5>
+        <a href="{% url 'documents-list' slug=project.slug %}"
+           class="nav-item nav-link {% block nav-docs-active %}{% endblock %}"
+           id="nav-docs-tab"
+           role="tab" aria-controls="nav-docs" aria-selected="true">{% trans "Documents" %}</a>
+
+        {% comment %}
+        <a class="nav-item nav-link {% block nav-onto-active %}{% endblock %}">{% trans "Ontology" %}</a>
+        {% endcomment %}
+
+        {% block extra_nav %}{% endblock %}
+    </div>
+</nav>
+
+{% block tab_content %}{% endblock %}
+{% block modals %}{% endblock %}
+{% endblock %}

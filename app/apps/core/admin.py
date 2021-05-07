@@ -19,7 +19,7 @@ class MetadataInline(admin.TabularInline):
 
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'name', 'owner']
+    list_display = ['pk', 'name', 'owner', 'project']
     inlines = (MetadataInline,)
 
 

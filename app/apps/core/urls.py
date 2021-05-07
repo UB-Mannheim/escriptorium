@@ -4,9 +4,8 @@ from django.views.generic import TemplateView
 from core.views import (Home,
                         CreateProject,
                         ProjectList,
-                        ProjectDetail,
                         DocumentsList,
-                        DocumentDetail,
+                        # DocumentDetail,
                         CreateDocument,
                         UpdateDocument,
                         EditPart,
@@ -15,7 +14,7 @@ from core.views import (Home,
                         ModelDelete,
                         ModelCancelTraining,
                         PublishDocument,
-                        ShareDocument,
+                        ShareProject,
                         DocumentPartsProcessAjax)
 
 urlpatterns = [
@@ -25,10 +24,10 @@ urlpatterns = [
     path('projects/', ProjectList.as_view(), name='projects-list'),
     # path('project/<str:slug>/', ProjectDetail.as_view(), name='project-detail'),
     path('project/<str:slug>/documents/', DocumentsList.as_view(), name='documents-list'),
+    path('project/<str:slug>/document/create/', CreateDocument.as_view(), name='document-create'),
+    path('project/<int:pk>/share/', ShareProject.as_view(), name='project-share'),
 
-    # path('documents/', DocumentsList.as_view(), name='documents-list'),
-    path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
-    path('document/create/', CreateDocument.as_view(), name='document-create'),
+    # path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
     path('document/<int:pk>/edit/', UpdateDocument.as_view(), name='document-update'),
     path('document/<int:pk>/parts/edit/', EditPart.as_view(), name='document-part-edit'),
     path('document/<int:pk>/part/<int:part_pk>/edit/', EditPart.as_view(),
@@ -40,7 +39,6 @@ urlpatterns = [
          name='model-cancel-training'),
     path('document/<int:document_pk>/models/', ModelsList.as_view(), name='document-models'),
     path('document/<int:pk>/publish/', PublishDocument.as_view(), name='document-publish'),
-    path('document/<int:pk>/share/', ShareDocument.as_view(), name='document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(),
          name='document-parts-process'),
 

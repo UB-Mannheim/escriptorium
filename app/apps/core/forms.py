@@ -44,12 +44,14 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
             self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
             self.initial['valid_line_types'] = LineType.objects.filter(default=True)
 
+        qs = Project.objects.for_user(self.request.user)
+        self.fields['project'].queryset = qs
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
     class Meta:
         model = Document
-        fields = ['name', 'read_direction', 'main_script',
+        fields = ['project', 'name', 'read_direction', 'main_script',
                   'valid_block_types', 'valid_line_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,
@@ -57,11 +59,11 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         }
 
 
-class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
+class ProjectShareForm(BootstrapFormMixin, forms.ModelForm):
     username = forms.CharField(required=False)
 
     class Meta:
-        model = Document
+        model = Project
         fields = ['shared_with_groups', 'shared_with_users', 'username']
 
     def __init__(self, *args, **kwargs):
@@ -84,10 +86,10 @@ class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
         return user
 
     def save(self, commit=True):
-        doc = super().save(commit=commit)
+        proj = super().save(commit=commit)
         if self.cleaned_data['username']:
-            doc.shared_with_users.add(self.cleaned_data['username'])
-        return doc
+            proj.shared_with_users.add(self.cleaned_data['username'])
+        return proj
 
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
@@ -145,6 +147,7 @@ class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
 
     def process(self):
         model = self.cleaned_data.get('model')
+
 
 class DocumentSegmentForm(DocumentProcessForm1):
     SEG_STEPS_CHOICES = (
