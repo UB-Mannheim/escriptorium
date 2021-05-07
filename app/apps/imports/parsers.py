@@ -96,7 +96,7 @@ class PdfParser(ParserDocument):
                                                    dpi=300,
                                                    access='sequential')
                 part = DocumentPart(document=self.document)
-                fname = '%s_page_%d.png' % (self.file.name, page_nb+1)
+                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb+1)
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.original_filename = fname
                 part.save()
