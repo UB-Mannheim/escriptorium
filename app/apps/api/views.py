@@ -16,6 +16,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.serializers import PrimaryKeyRelatedField
 
 from api.serializers import (UserOnboardingSerializer,
+                             ProjectSerializer,
                              DocumentSerializer,
                              PartDetailSerializer,
                              PartSerializer,
@@ -35,7 +36,8 @@ from api.serializers import (UserOnboardingSerializer,
                              TranscribeSerializer,
                              OcrModelSerializer)
 
-from core.models import (Document,
+from core.models import (Project,
+                         Document,
                          DocumentPart,
                          Block,
                          Line,
@@ -75,6 +77,12 @@ class ScriptViewSet(ReadOnlyModelViewSet):
     serializer_class = ScriptSerializer
 
 
+class ProjectViewSet(ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    paginate_by = 10
+
+
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
@@ -85,6 +93,11 @@ class DocumentViewSet(ModelViewSet):
             Prefetch('valid_block_types', queryset=BlockType.objects.order_by('name')),
             Prefetch('valid_line_types', queryset=LineType.objects.order_by('name')),
         )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['user'] = self.request.user
+        return context
 
     def form_error(self, msg):
         return Response({'status': 'error', 'error': msg}, status=400)

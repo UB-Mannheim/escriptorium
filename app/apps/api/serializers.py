@@ -11,7 +11,8 @@ from easy_thumbnails.files import get_thumbnailer
 
 from api.fields import DisplayChoiceField
 from users.models import User
-from core.models import (Document,
+from core.models import (Project,
+                         Document,
                          DocumentPart,
                          Block,
                          Line,
@@ -55,6 +56,12 @@ class ImageField(serializers.ImageField):
 class ScriptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Script
+        fields = '__all__'
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
         fields = '__all__'
 
 
@@ -112,11 +119,18 @@ class DocumentSerializer(serializers.ModelSerializer):
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
     parts_count = serializers.SerializerMethodField()
+    project = serializers.SlugRelatedField(slug_field='slug',
+                                           queryset=Project.objects.all())
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'transcriptions', 'main_script', 'read_direction',
-                  'valid_block_types', 'valid_line_types', 'parts_count')
+        fields = ('pk', 'name', 'project', 'transcriptions', 'main_script', 'read_direction',
+                  'valid_block_types', 'valid_line_types', 'parts_count',
+                  'created_at', 'updated_at')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['project'].queryset = Project.objects.for_user(self.context['user'])
 
     def get_parts_count(self, document):
         return document.parts.count()
