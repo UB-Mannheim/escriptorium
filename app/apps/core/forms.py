@@ -45,7 +45,7 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
             self.initial['valid_line_types'] = LineType.objects.filter(default=True)
 
         self.fields['project'].queryset = Project.objects.for_user(self.request.user)
-        if self.instance.owner != self.request.user:
+        if self.instance.pk and self.instance.owner != self.request.user:
             self.fields['project'].disabled = True
 
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
