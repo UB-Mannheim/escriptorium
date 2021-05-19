@@ -35,7 +35,7 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
         super().setUp()
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
-        self.model = self.factory.make_model(document=self.part.document)
+        self.model = self.factory.make_model(self.part.document)
 
     def test_list(self):
         self.client.force_login(self.user)
@@ -123,7 +123,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
 
     def test_segtrain_less_two_parts(self):
         self.client.force_login(self.doc.owner)
-        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
                 'parts': [self.part.pk],
@@ -147,7 +147,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
 
     def test_segtrain_existing_model_rename(self):
         self.client.force_login(self.doc.owner)
-        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],
@@ -160,7 +160,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_segment(self):
         uri = reverse('api:document-segment', kwargs={'pk': self.doc.pk})
         self.client.force_login(self.doc.owner)
-        model = self.factory.make_model(job=OcrModel.MODEL_JOB_SEGMENT, document=self.doc)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],
             'seg_steps': 'both',
@@ -177,15 +177,13 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'transcription': self.transcription.pk
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(OcrModel.objects.filter(
-            document=self.doc,
-            job=OcrModel.MODEL_JOB_RECOGNIZE).count(), 1)
+        self.assertEqual(self.doc.ocr_models.filter(job=OcrModel.MODEL_JOB_RECOGNIZE).count(), 1)
 
     def test_transcribe(self):
         trans = Transcription.objects.create(document=self.part.document)
 
         self.client.force_login(self.doc.owner)
-        model = self.factory.make_model(job=OcrModel.MODEL_JOB_RECOGNIZE, document=self.doc)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_RECOGNIZE)
         uri = reverse('api:document-transcribe', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
             'parts': [self.part.pk, self.part2.pk],

@@ -1083,7 +1083,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.document.pk, slugify(fn), ext)
+    return 'models/%s%s' % (slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1126,6 +1126,7 @@ class OcrModel(Versioned, models.Model):
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
+                       document.pk,
                        list(parts_qs.values_list('pk', flat=True)),
                        user_pk=user and user.pk or None)
 

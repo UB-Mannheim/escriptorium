@@ -86,13 +86,15 @@ class CoreFactory():
         fp = os.path.join(os.path.dirname(__file__), 'assets', asset_name)
         return open(fp, 'rb')
 
-    def make_model(self, job=OcrModel.MODEL_JOB_RECOGNIZE, document=None):
+    def make_model(self, document, job=OcrModel.MODEL_JOB_RECOGNIZE):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
         model_name = 'test-model.mlmodel'
-        model = OcrModel.objects.create(name=model_name,
-                                        document=document,
-                                        job=job)
+        model = document.ocr_models.add(
+            name=model_name,
+            job=job,
+            through_defaults={'trained_on': False, 'executed_on': True}
+        )
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
             model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
         if not os.path.exists(modeldir):
