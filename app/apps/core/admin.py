@@ -18,9 +18,13 @@ class MetadataInline(admin.TabularInline):
     model = DocumentMetadata
 
 
+class OcrModelDocumentInline(admin.TabularInline):
+    model = OcrModelDocument
+
+
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name', 'owner']
-    inlines = (MetadataInline,)
+    inlines = (MetadataInline, OcrModelDocumentInline)
 
 
 class DocumentPartAdmin(admin.ModelAdmin):
@@ -43,6 +47,7 @@ class ScriptAdmin(admin.ModelAdmin):
 
 class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training']
+    inlines = (OcrModelDocumentInline,)
 
 
 class OcrModelDocumentAdmin(admin.ModelAdmin):
