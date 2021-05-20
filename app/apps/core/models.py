@@ -236,7 +236,7 @@ class Document(models.Model):
 
     metadatas = models.ManyToManyField(Metadata, through=DocumentMetadata, blank=True)
 
-    project = models.ForeignKey(Project, null=True, blank=True,
+    project = models.ForeignKey(Project,
                                 on_delete=models.CASCADE,
                                 related_name='documents')
 

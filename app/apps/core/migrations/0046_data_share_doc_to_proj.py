@@ -21,6 +21,7 @@ def make_slug(proj, Project):
 def forwards(apps, schema_editor):
     User = apps.get_model('users', 'User')
     Project = apps.get_model('core', 'Project')
+    Document = apps.get_model('core', 'Document')
     # create user projects
     for user in User.objects.all():
         proj, created = Project.objects.get_or_create(name=user.username+"'s Project",
@@ -38,6 +39,24 @@ def forwards(apps, schema_editor):
 
         # shared to draft
         user.document_set.filter(workflow_state=1).update(workflow_state=0)
+
+    # deal with documents without owner (shouldn't be any but let's be safe)
+    # move them to admin's
+    user = User.objects.filter(is_superuser=True).first()
+    proj, dummy = Project.objects.get_or_create(name=user.username+"'s Project",
+                                                owner=user)
+    if not proj.slug:
+        make_slug(proj, Project)
+    for doc in Document.objects.filter(owner=None):
+        doc.project = proj
+        doc.save()
+        # move share from docs to created projects
+        for doc in user.document_set.all():
+            for share in doc.shared_with_users.all():
+                proj.shared_with_users.add(share)
+            for share in doc.shared_with_groups.all():
+                proj.shared_with_groups.add(share)
+
 
 def backwards(apps, schema_editor):
     Document = apps.get_model('core', 'Document')
