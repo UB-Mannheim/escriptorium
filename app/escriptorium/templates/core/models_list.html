@@ -11,7 +11,7 @@
     <th>{% trans "Errors" %}</th>
     <th>{# buttons #}</th>
   </tr>
-  {% for model in document.ocr_models.all %}
+  {% for model in object_list %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
     <td title="{% trans "Model role" %}">{{ model.get_job_display }}</td>
