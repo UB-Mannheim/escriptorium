@@ -122,6 +122,22 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
                                         extra=1, can_delete=True)
 
 
+class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
+    name = forms.CharField()
+    file = forms.FileField(
+        validators=[FileExtensionValidator(
+        allowed_extensions=['mlmodel', 'pronn', 'clstm'])]
+    )
+    job = forms.ChoiceField(choices=(
+        (OcrModel.MODEL_JOB_SEGMENT, _("Segment")),
+        (OcrModel.MODEL_JOB_RECOGNIZE, _("Recognize")),
+    ))
+
+    class Meta:
+        model = OcrModel
+        fields = ('name', 'file', 'job')
+
+
 class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
     parts = forms.CharField()
 

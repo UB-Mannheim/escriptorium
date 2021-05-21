@@ -16,7 +16,8 @@ from core.views import (Home,
                         ModelCancelTraining,
                         PublishDocument,
                         ShareProject,
-                        DocumentPartsProcessAjax)
+                        DocumentPartsProcessAjax,
+                        ModelUpload)
 
 urlpatterns = [
     path('', Home.as_view(), name='home'),
@@ -35,6 +36,7 @@ urlpatterns = [
          name='document-part-edit'),
     path('document/<int:pk>/images/', DocumentImages.as_view(), name='document-images'),
     path('models/', UserModels.as_view(), name='user-models'),
+    path('models/new/', ModelUpload.as_view(), name='model-upload'),
     path('model/<int:pk>/delete/', ModelDelete.as_view(), name='model-delete'),
     path('model/<int:pk>/cancel_training/', ModelCancelTraining.as_view(),
          name='model-cancel-training'),

@@ -16,7 +16,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, AlreadyProcessingException)
 from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, ProjectShareForm,
-                        UploadImageForm, DocumentProcessForm)
+                        UploadImageForm, DocumentProcessForm, ModelUploadForm)
 from imports.forms import ImportForm, ExportForm
 
 
@@ -322,6 +322,19 @@ class UserModels(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return OcrModel.objects.filter(owner=self.request.user)
+
+
+class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = OcrModel
+    form_class = ModelUploadForm
+    success_message = _("Model uploaded successfully!")
+
+    def get_success_url(self):
+        return reverse('user-models')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

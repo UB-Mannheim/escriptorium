@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block body %}
+<h2>{% trans "Upload a model" %}</h2>
+<form method="post" class="inline-form" enctype="multipart/form-data" action="{% url 'model-upload' %}">{% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" value="" class="nav-item btn btn-success">{% trans 'Upload' %}</button>
+</form>
+{% endblock %}
