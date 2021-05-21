@@ -40,7 +40,7 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -49,14 +49,14 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:model-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.model.pk})
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
     def test_create(self):
         self.client.force_login(self.user)
         uri = reverse('api:model-list', kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {
                 'name': 'test.mlmodel',
                 'file': self.factory.make_asset_file(name='test.mlmodel',
@@ -100,7 +100,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-list')
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(10):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -108,7 +108,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
