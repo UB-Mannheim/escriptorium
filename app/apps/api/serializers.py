@@ -4,6 +4,7 @@ import html
 
 from django.conf import settings
 from django.db.utils import IntegrityError
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
@@ -395,8 +396,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             OcrModelDocument.objects.create(
                 document=self.document,
                 ocr_model=model,
-                trained_on=False,
-                executed_on=True,
+                executed_on=timezone.now(),
             )
 
         segtrain.delay(model.pk if model else None, self.document.pk,
@@ -437,8 +437,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             OcrModelDocument.objects.create(
                 document=self.document,
                 ocr_model=model,
-                trained_on=False,
-                executed_on=True,
+                executed_on=timezone.now(),
             )
 
         train.delay([part.pk for part in self.validated_data.get('parts')],

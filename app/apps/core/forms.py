@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
@@ -178,8 +179,7 @@ class DocumentSegmentForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=False,
-                executed_on=True,
+                executed_on=timezone.now(),
             )
             # Note: needs to save the file in a second step because the path needs the db PK
             model.file = data['upload_model']
@@ -190,10 +190,10 @@ class DocumentSegmentForm(DocumentProcessForm1):
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': False, 'executed_on': True}
+                defaults={'executed_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.executed_on = True
+                ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
         else:
             model = None
@@ -240,10 +240,10 @@ class DocumentTrainForm(DocumentProcessForm1):
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': True, 'executed_on': False}
+                defaults={'trained_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.trained_on = True
+                ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
 
         elif data.get('upload_model'):
@@ -254,8 +254,7 @@ class DocumentTrainForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=True,
-                executed_on=False,
+                trained_on=timezone.now(),
             )
             # Note: needs to save the file in a second step because the path needs the db PK
             model.file = data['upload_model']
@@ -270,8 +269,7 @@ class DocumentTrainForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=True,
-                executed_on=False,
+                trained_on=timezone.now(),
             )
 
         else:
@@ -313,10 +311,10 @@ class DocumentSegtrainForm(DocumentProcessForm1):
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': True, 'executed_on': False}
+                defaults={'trained_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.trained_on = True
+                ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
         elif data.get('upload_model'):
             model = OcrModel.objects.create(
@@ -326,8 +324,7 @@ class DocumentSegtrainForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=True,
-                executed_on=False,
+                trained_on=timezone.now(),
             )
             # Note: needs to save the file in a second step because the path needs the db PK
             model.file = data['upload_model']
@@ -342,8 +339,7 @@ class DocumentSegtrainForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=True,
-                executed_on=False,
+                trained_on=timezone.now(),
             )
 
         else:
@@ -383,8 +379,7 @@ class DocumentTranscribeForm(DocumentProcessForm1):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=False,
-                executed_on=True,
+                executed_on=timezone.now(),
             )
             # Note: needs to save the file in a second step because the path needs the db PK
             model.file = data['upload_model']
@@ -395,10 +390,10 @@ class DocumentTranscribeForm(DocumentProcessForm1):
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': False, 'executed_on': True}
+                defaults={'executed_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.executed_on = True
+                ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
         else:
             raise forms.ValidationError(
@@ -552,20 +547,20 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': True, 'executed_on': False}
+                defaults={'trained_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.trained_on = True
+                ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
         elif task == self.TASK_SEGTRAIN and data.get('segtrain_model'):
             model = data.get('segtrain_model')
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': True, 'executed_on': False}
+                defaults={'trained_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.trained_on = True
+                ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
         elif data.get('upload_model'):
             model = OcrModel.objects.create(
@@ -575,8 +570,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=False,
-                executed_on=True,
+                executed_on=timezone.now(),
             )
             # Note: needs to save the file in a second step because the path needs the db PK
             model.file = data['upload_model']
@@ -591,28 +585,27 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             OcrModelDocument.objects.create(
                 document=self.parts[0].document,
                 ocr_model=model,
-                trained_on=True,
-                executed_on=False,
+                trained_on=timezone.now(),
             )
         elif data.get('ocr_model'):
             model = data.get('ocr_model')
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': False, 'executed_on': True}
+                defaults={'executed_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.executed_on = True
+                ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
         elif data.get('seg_model'):
             model = data.get('seg_model')
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
                 document=self.parts[0].document,
-                defaults={'trained_on': False, 'executed_on': True}
+                defaults={'executed_on': timezone.now()}
             )
             if not created:
-                ocr_model_document.executed_on = True
+                ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
         else:
             if task in (self.TASK_TRAIN, self.TASK_SEGTRAIN):

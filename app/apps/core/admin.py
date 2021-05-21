@@ -51,7 +51,7 @@ class OcrModelAdmin(admin.ModelAdmin):
 
 
 class OcrModelDocumentAdmin(admin.ModelAdmin):
-    list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created']
+    list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created_at']
 
 
 admin.site.register(Document, DocumentAdmin)

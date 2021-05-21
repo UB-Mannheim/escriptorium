@@ -1083,7 +1083,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%s%s' % (slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.owner.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1182,9 +1182,9 @@ class OcrModel(Versioned, models.Model):
 class OcrModelDocument(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='ocr_model_documents')
     ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_documents')
-    created = models.DateTimeField(auto_now_add=True)
-    trained_on = models.BooleanField()
-    executed_on = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    trained_on = models.DateTimeField(null=True)
+    executed_on = models.DateTimeField(null=True)
 
     class Meta:
         unique_together = (('document', 'ocr_model'),)

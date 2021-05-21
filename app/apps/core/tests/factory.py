@@ -6,6 +6,7 @@ import os.path
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 
 from django_redis import get_redis_connection
 from kraken.lib import vgsl
@@ -93,7 +94,7 @@ class CoreFactory():
         model = document.ocr_models.add(
             name=model_name,
             job=job,
-            through_defaults={'trained_on': False, 'executed_on': True}
+            through_defaults={'executed_on': timezone.now()}
         )
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
             model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
