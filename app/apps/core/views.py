@@ -296,28 +296,32 @@ class EditPart(LoginRequiredMixin, DetailView):
             return super().dispatch(*args, **kwargs)
 
 
-class ModelsList(LoginRequiredMixin, ListView):
+class DocumentModels(LoginRequiredMixin, ListView):
     model = OcrModel
-    template_name = "core/models_list.html"
+    template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
 
     def get_queryset(self):
-        if 'document_pk' in self.kwargs:
-            try:
-                self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
-            except Document.DoesNotExist:
-                raise PermissionDenied
-            return self.document.ocr_models.all()
-        else:
-            self.document = None
-            return OcrModel.objects.filter(owner=self.request.user)
+        try:
+            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return self.document.ocr_models.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.document:
-            context['document'] = self.document
-            context['object'] = self.document  # legacy
+        context['document'] = self.document
+        context['object'] = self.document  # legacy
         return context
+
+
+class UserModels(LoginRequiredMixin, ListView):
+    model = OcrModel
+    template_name = "core/models_list/main.html"
+    http_method_names = ('get',)
+
+    def get_queryset(self):
+        return OcrModel.objects.filter(owner=self.request.user)
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

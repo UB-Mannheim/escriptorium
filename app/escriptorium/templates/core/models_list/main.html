@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% block body %}
+    {% include 'core/models_list/table.html' %}
+{% endblock %}
+{% block scripts %}
+    {% include 'core/models_list/scripts.html' %}
+{% endblock %}
