@@ -447,12 +447,18 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['train_model'].queryset &= self.document.ocr_models.all()
-        self.fields['segtrain_model'].queryset &= self.document.ocr_models.all()
-        self.fields['seg_model'].queryset &= self.document.ocr_models.all()
-        self.fields['ocr_model'].queryset &= OcrModel.objects.filter(
+        # Limit qs to models owned by the user or already linked to this document
+        for field in ['train_model', 'segtrain_model', 'seg_model']:
+            self.fields[field].queryset = self.fields[field].queryset.filter(
+                Q(owner=self.user)
+                | Q(documents=self.document)
+            )
+        self.fields['ocr_model'].queryset = self.fields['ocr_model'].queryset.filter(
+            # Include non owned RECOGNIZE models which have the same script that the main document
             Q(documents=None, script=self.document.main_script)
-            | Q(documents=self.document))
+            | Q(owner=self.user)
+            | Q(documents=self.document)
+        )
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
     @cached_property
