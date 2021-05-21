@@ -8,12 +8,7 @@
 {% block wizard_fields %}
 
 <div class="form-group">
-  <h5>{% trans "Upload a model" %}</h5>
-  {% render_field process_form.upload_model class="js-proc-settings" accept=".mlmodel" %}
-</div>
-
-<div class="form-group">
-  <h5>{% trans "Or select an existing one" %}</h5>
+  <h5>{% trans "Select an model" %}</h5>
   {% render_field process_form.seg_model class="js-proc-settings" %}
 </div>
 

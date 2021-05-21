@@ -192,29 +192,12 @@ class DocumentSegmentForm(DocumentProcessForm1):
                               ('vertical-rl', _("Vertical r2l")))
     text_direction = forms.ChoiceField(initial='horizontal-lr', required=False,
                                        choices=TEXT_DIRECTION_CHOICES)
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
 
     def clean(self):
         data = super().clean()
         model_job = OcrModel.MODEL_JOB_SEGMENT
 
-        if data.get('upload_model'):
-            model = OcrModel.objects.create(
-                owner=self.user,
-                name=data['upload_model'].name.rsplit('.', 1)[0],
-                job=model_job)
-            OcrModelDocument.objects.create(
-                document=self.parts[0].document,
-                ocr_model=model,
-                executed_on=timezone.now(),
-            )
-            # Note: needs to save the file in a second step because the path needs the db PK
-            model.file = data['upload_model']
-            model.save()
-
-        elif data.get('seg_model'):
+        if data.get('seg_model'):
             model = data.get('seg_model')
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
                 ocr_model=model,
@@ -247,9 +230,6 @@ class DocumentTrainForm(DocumentProcessForm1):
     train_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                          .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                          label=_("Model"), required=False)
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
 
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
 
@@ -274,20 +254,6 @@ class DocumentTrainForm(DocumentProcessForm1):
             if not created:
                 ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
-
-        elif data.get('upload_model'):
-            model = OcrModel.objects.create(
-                owner=self.user,
-                name=data['upload_model'].name.rsplit('.', 1)[0],
-                job=model_job)
-            OcrModelDocument.objects.create(
-                document=self.parts[0].document,
-                ocr_model=model,
-                trained_on=timezone.now(),
-            )
-            # Note: needs to save the file in a second step because the path needs the db PK
-            model.file = data['upload_model']
-            model.save()
 
         elif data.get('new_model'):
             # file will be created by the training process
@@ -321,10 +287,6 @@ class DocumentSegtrainForm(DocumentProcessForm1):
     segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                             .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                             label=_("Model"), required=False)
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
-
     new_model = forms.CharField(required=False, label=_('Model name'))
 
     def clean(self):
@@ -345,19 +307,6 @@ class DocumentSegtrainForm(DocumentProcessForm1):
             if not created:
                 ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
-        elif data.get('upload_model'):
-            model = OcrModel.objects.create(
-                owner=self.user,
-                name=data['upload_model'].name.rsplit('.', 1)[0],
-                job=model_job)
-            OcrModelDocument.objects.create(
-                document=self.parts[0].document,
-                ocr_model=model,
-                trained_on=timezone.now(),
-            )
-            # Note: needs to save the file in a second step because the path needs the db PK
-            model.file = data['upload_model']
-            model.save()
 
         elif data.get('new_model'):
             # file will be created by the training process
@@ -388,9 +337,6 @@ class DocumentSegtrainForm(DocumentProcessForm1):
 
 class DocumentTranscribeForm(DocumentProcessForm1):
 
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
     ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                        .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                        label=_("Model"), required=False)
@@ -400,33 +346,15 @@ class DocumentTranscribeForm(DocumentProcessForm1):
 
         model_job = OcrModel.MODEL_JOB_RECOGNIZE
 
-        if data.get('upload_model'):
-            model = OcrModel.objects.create(
-                owner=self.user,
-                name=data['upload_model'].name.rsplit('.', 1)[0],
-                job=model_job)
-            OcrModelDocument.objects.create(
-                document=self.parts[0].document,
-                ocr_model=model,
-                executed_on=timezone.now(),
-            )
-            # Note: needs to save the file in a second step because the path needs the db PK
-            model.file = data['upload_model']
-            model.save()
-
-        elif data.get('ocr_model'):
-            model = data.get('ocr_model')
-            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
-                ocr_model=model,
-                document=self.parts[0].document,
-                defaults={'executed_on': timezone.now()}
-            )
-            if not created:
-                ocr_model_document.executed_on = timezone.now()
-                ocr_model_document.save()
-        else:
-            raise forms.ValidationError(
-                    _("Either select a name for your new model or an existing one."))
+        model = data['ocr_model']
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            ocr_model=model,
+            document=self.parts[0].document,
+            defaults={'executed_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.executed_on = timezone.now()
+            ocr_model_document.save()
 
         data['model'] = model
         return data
@@ -490,9 +418,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     text_direction = forms.ChoiceField(initial='horizontal-lr', required=False,
                                        choices=TEXT_DIRECTION_CHOICES)
     # transcribe
-    upload_model = forms.FileField(required=False,
-                                   validators=[FileExtensionValidator(
-                                       allowed_extensions=['mlmodel', 'pronn', 'clstm'])])
     ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                        .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                        label=_("Model"), required=False)
@@ -591,19 +516,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             if not created:
                 ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
-        elif data.get('upload_model'):
-            model = OcrModel.objects.create(
-                owner=self.user,
-                name=data['upload_model'].name.rsplit('.', 1)[0],
-                job=model_job)
-            OcrModelDocument.objects.create(
-                document=self.parts[0].document,
-                ocr_model=model,
-                executed_on=timezone.now(),
-            )
-            # Note: needs to save the file in a second step because the path needs the db PK
-            model.file = data['upload_model']
-            model.save()
 
         elif data.get('new_model'):
             # file will be created by the training process
