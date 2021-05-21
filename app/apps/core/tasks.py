@@ -130,7 +130,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, part_pks, user_pk=None):
+def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -166,8 +166,7 @@ def segtrain(task, model_pk, part_pks, user_pk=None):
     try:
         model.training = True
         model.save()
-        document = model.document
-        send_event('document', document.pk, "training:start", {
+        send_event('document', document_pk, "training:start", {
             "id": model.pk,
         })
         qs = DocumentPart.objects.filter(pk__in=part_pks)
@@ -213,7 +212,7 @@ def segtrain(task, model_pk, part_pks, user_pk=None):
             model.new_version(file=new_version_filename)
             model.save()
 
-            send_event('document', document.pk, "training:eval", {
+            send_event('document', document_pk, "training:eval", {
                 "id": model.pk,
                 'versions': model.versions,
                 'epoch': epoch,
@@ -234,7 +233,7 @@ def segtrain(task, model_pk, part_pks, user_pk=None):
                         id="seg-no-gain-error", level='danger')
 
     except Exception as e:
-        send_event('document', document.pk, "training:error", {
+        send_event('document', document_pk, "training:error", {
             "id": model.pk,
         })
         if user:
@@ -251,7 +250,7 @@ def segtrain(task, model_pk, part_pks, user_pk=None):
         model.training = False
         model.save()
 
-        send_event('document', document.pk, "training:done", {
+        send_event('document', document_pk, "training:done", {
             "id": model.pk,
         })
 

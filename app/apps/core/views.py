@@ -274,7 +274,7 @@ class ModelsList(LoginRequiredMixin, ListView):
                 self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
             except Document.DoesNotExist:
                 raise PermissionDenied
-            return OcrModel.objects.filter(document=self.document)
+            return self.document.ocr_models.all()
         else:
             self.document = None
             return OcrModel.objects.filter(owner=self.request.user)

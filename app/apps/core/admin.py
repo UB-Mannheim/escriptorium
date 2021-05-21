@@ -6,6 +6,7 @@ from core.models import (Document,
                          DocumentMetadata,
                          LineTranscription,
                          OcrModel,
+                         OcrModelDocument,
                          Script,
                          DocumentType,
                          DocumentPartType,
@@ -17,9 +18,13 @@ class MetadataInline(admin.TabularInline):
     model = DocumentMetadata
 
 
+class OcrModelDocumentInline(admin.TabularInline):
+    model = OcrModelDocument
+
+
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name', 'owner']
-    inlines = (MetadataInline,)
+    inlines = (MetadataInline, OcrModelDocumentInline)
 
 
 class DocumentPartAdmin(admin.ModelAdmin):
@@ -42,6 +47,11 @@ class ScriptAdmin(admin.ModelAdmin):
 
 class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training']
+    inlines = (OcrModelDocumentInline,)
+
+
+class OcrModelDocumentAdmin(admin.ModelAdmin):
+    list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created_at']
 
 
 admin.site.register(Document, DocumentAdmin)
@@ -54,3 +64,4 @@ admin.site.register(LineType)
 admin.site.register(Script, ScriptAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
+admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)
