@@ -1117,7 +1117,7 @@ class LineTranscription(Versioned, models.Model):
 
 def models_path(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.document.pk, slugify(fn), ext)
+    return 'models/%d/%s%s' % (instance.owner.pk, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1139,12 +1139,12 @@ class OcrModel(Versioned, models.Model):
     training_accuracy = models.FloatField(default=0.0)
     training_total = models.IntegerField(default=0)
     training_errors = models.IntegerField(default=0)
-    document = models.ForeignKey(Document,
-                                 related_name='ocr_models',
-                                 default=None, on_delete=models.CASCADE)
+    documents = models.ManyToManyField(Document,
+                                       through='core.OcrModelDocument',
+                                       related_name='ocr_models')
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
-    version_ignore_fields = ('name', 'owner', 'document', 'script', 'training')
+    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
     version_history_max_length = None  # keep em all
 
     class Meta:
@@ -1160,6 +1160,7 @@ class OcrModel(Versioned, models.Model):
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
+                       document.pk,
                        list(parts_qs.values_list('pk', flat=True)),
                        user_pk=user and user.pk or None)
 
@@ -1210,6 +1211,17 @@ class OcrModel(Versioned, models.Model):
                 os.remove(os.path.join(settings.MEDIA_ROOT, version['data']['file']))
                 break
         super().delete_revision(revision)
+
+
+class OcrModelDocument(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='ocr_model_documents')
+    ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_documents')
+    created_at = models.DateTimeField(auto_now_add=True)
+    trained_on = models.DateTimeField(null=True)
+    executed_on = models.DateTimeField(null=True)
+
+    class Meta:
+        unique_together = (('document', 'ocr_model'),)
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')

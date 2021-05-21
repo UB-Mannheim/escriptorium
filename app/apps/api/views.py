@@ -482,7 +482,7 @@ class OcrModelViewSet(DocumentPermissionMixin, ModelViewSet):
 
     def get_queryset(self):
         return (super().get_queryset()
-                .filter(document=self.kwargs['document_pk']))
+                .filter(documents=self.kwargs['document_pk']))
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):

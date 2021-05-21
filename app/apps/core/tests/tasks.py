@@ -68,7 +68,7 @@ class TasksTestCase(CoreFactoryTestCase):
     
     def test_train_existing_transcription_model(self):
         self.makeTranscriptionContent()
-        model = self.factory.make_model(document=self.part.document)
+        model = self.factory.make_model(self.part.document)
         self.client.force_login(self.part.document.owner)
         uri = reverse('document-parts-process', kwargs={'pk': self.part.document.pk})
         with self.assertNumQueries(17):

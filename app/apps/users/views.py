@@ -189,6 +189,19 @@ class ProfileFiles(LoginRequiredMixin, TemplateView):
         return context
 
 
+class ProfileInvitations(LoginRequiredMixin, TemplateView):
+    template_name = 'users/profile_invitations.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        invites = self.request.user.invitations_sent.all()
+        paginator = Paginator(invites, 25)
+        context['is_paginated'] = paginator.count != 0
+        page_number = self.request.GET.get('page')
+        context['page_obj'] = paginator.get_page(page_number)
+        return context
+
+
 class ProfileGroupListCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     """
     Both were we create new groups and list them

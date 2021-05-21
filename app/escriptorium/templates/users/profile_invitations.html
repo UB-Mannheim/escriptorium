@@ -1,0 +1,21 @@
+{% extends "users/profile.html" %}
+{% load i18n static %}
+
+{% block infos-tab-active %}{% endblock %}
+{% block invites-tab-active %}active{% endblock %}
+
+{% block tab-content %}
+<table class="table">
+{% for invite in page_obj %}
+    <tr>
+        <td>{{invite.recipient_email|default:invite.recipient}}</td>
+        <td title="Into group">{{invite.group|default:""}}</td>
+        <td>{{invite.get_workflow_state_display}}</td>
+    </tr>
+{% empty %}
+{% trans "You didn't send any invitations yet." %}
+{% endfor %}
+</table>
+
+{% include "includes/pagination.html" %}
+{% endblock %}

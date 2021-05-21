@@ -67,14 +67,16 @@ class ParserDocument:
 
 
 class PdfParser(ParserDocument):
+    def __init__(self, document, file_handler, report):
+        super().__init__(document, file_handler, report)
+        pyvips.voperation.cache_set_max(10) # 0 = no parallelisation at all; default is 1000
+
     def validate(self):
         try:
-            self.doc = pyvips.Image.new_from_buffer(self.file.read(), "",
-                                                    dpi=300, n=-1,
-                                                    access="sequential")
+            self.doc = pyvips.Image.pdfload_buffer(self.file.read(), n=-1, access='sequential')
         except pyvips.error.Error as e:
             logger.exception(e)
-            raise ParseError(_("Invalid pdf file."))
+            raise ParseError(_("Invalid PDF file."))
 
     @property
     def total(self):
@@ -85,17 +87,16 @@ class PdfParser(ParserDocument):
 
     def parse(self, start_at=0, override=False, user=None):
         buff = self.file.read()
-        doc = pyvips.Image.new_from_buffer(buff, "",
-                                           dpi=300, n=-1,
-                                           access="sequential")
+        doc = pyvips.Image.pdfload_buffer(buff, n=-1, access='sequential')
         n_pages = doc.get('n-pages')
         try:
             for page_nb in range(start_at, n_pages):
-                page = pyvips.Image.new_from_buffer(buff, "", dpi=300,
-                                                    access="sequential",
-                                                    page=page_nb)
+                page = pyvips.Image.pdfload_buffer(buff,
+                                                   page=page_nb,
+                                                   dpi=300,
+                                                   access='sequential')
                 part = DocumentPart(document=self.document)
-                fname = '%s_page_%d.png' % (self.file.name, page_nb+1)
+                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb+1)
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.original_filename = fname
                 part.save()

@@ -10,7 +10,7 @@
                     <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="next-btn"
-                            @click="$store.dispatch('lines/editLine', 'next')"
+                            @click="editLine('next')"
                             title="Next (up arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
@@ -18,7 +18,7 @@
                     <button v-else
                             type="button"
                             id="prev-btn"
-                            @click="$store.dispatch('lines/editLine', 'previous')"
+                            @click="editLine('previous')"
                             title="Previous (up arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-left"></i>
@@ -27,7 +27,7 @@
                     <button v-if="$store.state.document.readDirection == 'rtl'"
                             type="button"
                             id="prev-btn"
-                            @click="$store.dispatch('lines/editLine', 'previous')"
+                            @click="editLine('previous')"
                             title="Previous (down arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
@@ -35,7 +35,7 @@
                     <button v-else
                             type="button"
                             id="next-btn"
-                            @click="$store.dispatch('lines/editLine', 'next')"
+                            @click="editLine('next')"
                             title="Next (down arrow)"
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
@@ -71,9 +71,9 @@
 
                     <div id="trans-input-container" ref="transInputContainer">
                         <input v-if="$store.state.document.mainTextDirection != 'ttb'"
-                                v-on:keyup.down="$store.dispatch('lines/editLine', 'next')"
-                                v-on:keyup.up="$store.dispatch('lines/editLine', 'previous')"
-                                v-on:keyup.enter="$store.dispatch('lines/editLine', 'next')"
+                                v-on:keyup.down="editLine('next')"
+                                v-on:keyup.up="editLine('previous')"
+                                v-on:keyup.enter="editLine('next')"
                                 id="trans-input"
                                 ref="transInput"
                                 name="content"
@@ -95,9 +95,9 @@
                             <div id="textInputBorderWrapper" class="form-control mb-2">
                                 <div    v-on:blur="localTranscription = $event.target.textContent"
                                         v-on:keyup="recomputeInputCharsScaleY()"
-                                        v-on:keyup.right="$store.dispatch('lines/editLine', 'next')"
-                                        v-on:keyup.left="$store.dispatch('lines/editLine', 'previous')"
-                                        v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();$store.dispatch('lines/editLine', 'next')"
+                                        v-on:keyup.right="editLine('next')"
+                                        v-on:keyup.left="editLine('previous')"
+                                        v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();editLine('next')"
                                         v-html="localTranscription"
                                         id="vertical_text_input"
                                             contenteditable="true">
@@ -283,6 +283,13 @@ export default Vue.extend({
         close() {
             $(this.$refs.transModal).modal('hide');
         },
+
+        editLine(direction) {
+           // making sure the line is saved (it isn't in case of shortcut usage)
+           this.localTranscription = this.$refs.transInput.value;
+           this.$store.dispatch('lines/editLine', direction);
+        },
+
         cleanHTMLTags(){
             document.getElementById("vertical_text_input").innerHTML = document.getElementById("vertical_text_input").textContent;
         },

@@ -1,7 +1,8 @@
 from django.urls import path, include
 
 from users.views import (SendInvitation, AcceptInvitation, AcceptGroupInvitation, ContactUsView,
-                         ProfileInfos, ProfileGroupListCreate, ProfileApiKey, ProfileFiles,
+                         ProfileInfos, ProfileGroupListCreate, ProfileApiKey,
+                         ProfileFiles, ProfileInvitations,
                          GroupDetail, RemoveFromGroup, LeaveGroup, TransferGroupOwnership)
 from django.contrib.auth.decorators import permission_required
 
@@ -11,6 +12,7 @@ urlpatterns = [
     path('profile/apikey/', ProfileApiKey.as_view(), name='profile-api-key'),
     path('profile/files/', ProfileFiles.as_view(), name='profile-files'),
     path('profile/teams/', ProfileGroupListCreate.as_view(), name='profile-team-list'),
+    path('profile/invitations/', ProfileInvitations.as_view(), name='profile-invites-list'),
     path('teams/<int:pk>/', GroupDetail.as_view(), name='team-detail'),
     path('teams/<int:pk>/remove/', RemoveFromGroup.as_view(), name='team-remove-user'),
     path('teams/<int:pk>/leave/', LeaveGroup.as_view(), name='team-leave'),
