@@ -12,12 +12,19 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import (Document, Metadata, DocumentMetadata,
+from core.models import (Project, Document, Metadata, DocumentMetadata,
                          DocumentPart, OcrModel, OcrModelDocument, Transcription,
+
                          BlockType, LineType, AlreadyProcessingException)
 from users.models import User
 
 logger = logging.getLogger(__name__)
+
+
+class ProjectForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['name']
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -39,12 +46,16 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
             self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
             self.initial['valid_line_types'] = LineType.objects.filter(default=True)
 
+        self.fields['project'].queryset = Project.objects.for_user(self.request.user)
+        if self.instance.pk and self.instance.owner != self.request.user:
+            self.fields['project'].disabled = True
+
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
     class Meta:
         model = Document
-        fields = ['name', 'read_direction', 'main_script',
+        fields = ['project', 'name', 'read_direction', 'main_script',
                   'valid_block_types', 'valid_line_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,
@@ -52,11 +63,11 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         }
 
 
-class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
+class ProjectShareForm(BootstrapFormMixin, forms.ModelForm):
     username = forms.CharField(required=False)
 
     class Meta:
-        model = Document
+        model = Project
         fields = ['shared_with_groups', 'shared_with_users', 'username']
 
     def __init__(self, *args, **kwargs):
@@ -79,10 +90,10 @@ class DocumentShareForm(BootstrapFormMixin, forms.ModelForm):
         return user
 
     def save(self, commit=True):
-        doc = super().save(commit=commit)
+        proj = super().save(commit=commit)
         if self.cleaned_data['username']:
-            doc.shared_with_users.add(self.cleaned_data['username'])
-        return doc
+            proj.shared_with_users.add(self.cleaned_data['username'])
+        return proj
 
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):
@@ -140,6 +151,7 @@ class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
 
     def process(self):
         model = self.cleaned_data.get('model')
+
 
 class DocumentSegmentForm(DocumentProcessForm1):
     SEG_STEPS_CHOICES = (

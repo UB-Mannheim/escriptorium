@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from core.models import (Document,
+from core.models import (Project,
+                         Document,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata,
@@ -23,7 +24,7 @@ class OcrModelDocumentInline(admin.TabularInline):
 
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'name', 'owner']
+    list_display = ['pk', 'name', 'owner', 'project']
     inlines = (MetadataInline, OcrModelDocumentInline)
 
 
@@ -54,6 +55,7 @@ class OcrModelDocumentAdmin(admin.ModelAdmin):
     list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created_at']
 
 
+admin.site.register(Project)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)

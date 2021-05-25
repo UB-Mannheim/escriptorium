@@ -119,4 +119,3 @@ volumes:
    media:
    postgres:
    esdata:
-   logs:

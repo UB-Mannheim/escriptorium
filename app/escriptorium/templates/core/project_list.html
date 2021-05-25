@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% block head_title %}{% trans "My Projects" %}{% endblock %}
+
+{% block nav-proj-list-class %}active{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-12 col-md-offset-4">
+        <a href="{% url 'project-create' %}" class="btn btn-success float-sm-right">{% trans 'Create new Project' %}</a>
+    <h2>{% trans "My Projects" %}</h2>
+
+    <table id="project-list" class="table table-hover">
+        <tbody>
+            {% for project in project_list %}
+            <tr onclick="document.location='{% url 'documents-list' slug=project.slug %}'" role="button">
+                <td><a href="{% url 'documents-list' slug=project.slug %}">{{project.name}}</a></td>
+                <td title="{% trans "Owner" %}">{{project.owner}}</td>
+                <td>{% blocktrans with count=project.documents.count %}{{ count }} document(s).{% endblocktrans %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
