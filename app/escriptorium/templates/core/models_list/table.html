@@ -9,7 +9,7 @@
     <th>{% trans "Errors" %}</th>
     <th>{# buttons #}</th>
   </tr>
-  {% for model in object_list %}
+  {% for model in page_obj %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
     <td title="{% trans "Model role" %}">{{ model.get_job_display }}</td>
@@ -67,3 +67,4 @@
   {% endfor %}
   {% endfor %}
 </table>
+{% include 'includes/pagination.html' %}

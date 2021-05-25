@@ -5,6 +5,7 @@ from PIL import Image
 from django import forms
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils import timezone
@@ -17,6 +18,7 @@ from core.models import (Project, Document, Metadata, DocumentMetadata,
 
                          BlockType, LineType, AlreadyProcessingException)
 from users.models import User
+from kraken.lib import vgsl
 
 logger = logging.getLogger(__name__)
 
@@ -126,16 +128,35 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
     name = forms.CharField()
     file = forms.FileField(
         validators=[FileExtensionValidator(
-        allowed_extensions=['mlmodel', 'pronn', 'clstm'])]
+        allowed_extensions=['mlmodel'])]
     )
-    job = forms.ChoiceField(choices=(
-        (OcrModel.MODEL_JOB_SEGMENT, _("Segment")),
-        (OcrModel.MODEL_JOB_RECOGNIZE, _("Recognize")),
-    ))
+
+    def clean(self):
+        data = super().clean()
+        model = data.get('file')
+        if not model:
+            return
+        # Early validation of the model loading and detection of its job
+        try:
+            assert isinstance(model, TemporaryUploadedFile)
+            loaded_model = vgsl.TorchVGSLModel.load_model(model.file.name)
+            hyper_params = loaded_model.user_metadata.get('hyper_params', {})
+        except Exception as e:
+            raise forms.ValidationError(_(f"The provided model could not be loaded: {e}"))
+
+        # TODO handle hyper_params job detection
+        job = str(hyper_params.get('job', '')).lower()
+        if job == 'segment':
+            self.instance.job = OcrModel.MODEL_JOB_SEGMENT
+        elif job == 'recognize':
+            self.instance.job = OcrModel.MODEL_JOB_RECOGNIZE
+        else:
+            raise forms.ValidationError(_("No job type is defined in model's hyper parameters"))
+        return data
 
     class Meta:
         model = OcrModel
-        fields = ('name', 'file', 'job')
+        fields = ('name', 'file')
 
 
 class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
@@ -447,18 +468,14 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        # Limit qs to models owned by the user or already linked to this document
-        for field in ['train_model', 'segtrain_model', 'seg_model']:
+
+        # Limit querysets to models owned by the user or already linked to this document
+        for field in ['train_model', 'segtrain_model', 'seg_model', 'ocr_model']:
             self.fields[field].queryset = self.fields[field].queryset.filter(
                 Q(owner=self.user)
                 | Q(documents=self.document)
             )
-        self.fields['ocr_model'].queryset = self.fields['ocr_model'].queryset.filter(
-            # Include non owned RECOGNIZE models which have the same script that the main document
-            Q(documents=None, script=self.document.main_script)
-            | Q(owner=self.user)
-            | Q(documents=self.document)
-        )
+
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
     @cached_property

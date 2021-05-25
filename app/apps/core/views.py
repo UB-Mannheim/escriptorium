@@ -300,6 +300,7 @@ class DocumentModels(LoginRequiredMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
+    paginate_by = 20
 
     def get_queryset(self):
         try:
@@ -319,6 +320,7 @@ class UserModels(LoginRequiredMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/main.html"
     http_method_names = ('get',)
+    paginate_by = 20
 
     def get_queryset(self):
         return OcrModel.objects.filter(owner=self.request.user)
