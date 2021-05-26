@@ -140,15 +140,16 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         try:
             assert isinstance(model, TemporaryUploadedFile)
             loaded_model = vgsl.TorchVGSLModel.load_model(model.file.name)
-            hyper_params = loaded_model.user_metadata.get('hyper_params', {})
+            job = loaded_model.model_type
+            # Fall back to seg_type attribute which cannot be set to 'bbox' for recognition jobs
+            if job not in ('recognition', 'segmentation') and loaded_model.seg_type == 'bbox':
+                job = 'segmentation'
         except Exception as e:
             raise forms.ValidationError(_(f"The provided model could not be loaded: {e}"))
 
-        # TODO handle hyper_params job detection
-        job = str(hyper_params.get('job', '')).lower()
-        if job == 'segment':
+        if job == 'segmentation':
             self.instance.job = OcrModel.MODEL_JOB_SEGMENT
-        elif job == 'recognize':
+        elif job == 'recognition':
             self.instance.job = OcrModel.MODEL_JOB_RECOGNIZE
         else:
             raise forms.ValidationError(_("No job type is defined in model's hyper parameters"))
