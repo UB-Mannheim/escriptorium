@@ -7,11 +7,6 @@
     {% csrf_token %}
     {% render_field form.file %}
     {% render_field form.name %}
-    {% if form.non_field_errors %}
-      {% for err in form.non_field_errors %}
-          <p class="error">{{ err }}</p>
-      {% endfor %}
-    {% endif %}
     <button type="submit" value="" class="nav-item btn btn-success">{% trans 'Upload' %}</button>
 </form>
 {% endblock %}

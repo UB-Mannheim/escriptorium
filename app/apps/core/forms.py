@@ -19,6 +19,7 @@ from core.models import (Project, Document, Metadata, DocumentMetadata,
                          BlockType, LineType, AlreadyProcessingException)
 from users.models import User
 from kraken.lib import vgsl
+from kraken.lib.exceptions import KrakenInvalidModelException
 
 logger = logging.getLogger(__name__)
 
@@ -131,29 +132,29 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         allowed_extensions=['mlmodel'])]
     )
 
-    def clean(self):
-        data = super().clean()
-        model = data.get('file')
-        if not model:
-            return
-        # Early validation of the model loading and detection of its job
+    def clean_file(self):
+        # Early validation of the model loading
+        file_field = self.cleaned_data['file']
         try:
-            assert isinstance(model, TemporaryUploadedFile)
-            loaded_model = vgsl.TorchVGSLModel.load_model(model.file.name)
-            job = loaded_model.model_type
-            # Fall back to seg_type attribute which cannot be set to 'bbox' for recognition jobs
-            if job not in ('recognition', 'segmentation') and loaded_model.seg_type == 'bbox':
-                job = 'segmentation'
-        except Exception as e:
-            raise forms.ValidationError(_(f"The provided model could not be loaded: {e}"))
+            model = vgsl.TorchVGSLModel.load_model(file_field.file.name)
+        except KrakenInvalidModelException:
+            raise forms.ValidationError(_("The provided model could not be loaded."))
+        self._model_job = model.model_type
+        if self._model_job not in ('segmentation', 'recognition'):
+            raise forms.ValidationError(_("Invalid model (Couldn't determine whether it's a segmentation or recognition model)."))
+        elif self._model_job == 'recognition' and model.seg_type == "bbox":
+            raise forms.ValidationError(_("eScriptorium is not compatible with bounding box models."))
+        return file_field
 
-        if job == 'segmentation':
+    def clean(self):
+        if not getattr(self, '_model_job', None):
+            return super().clean()
+        # Update the job field on the instantiated model from the cleaned model field
+        if self._model_job == 'segmentation':
             self.instance.job = OcrModel.MODEL_JOB_SEGMENT
-        elif job == 'recognition':
+        elif self._model_job == 'recognition':
             self.instance.job = OcrModel.MODEL_JOB_RECOGNIZE
-        else:
-            raise forms.ValidationError(_("No job type is defined in model's hyper parameters"))
-        return data
+        return super().clean()
 
     class Meta:
         model = OcrModel
@@ -180,12 +181,14 @@ class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
-        self.fields['train_model'].queryset &= self.document.ocr_models.all()
-        self.fields['segtrain_model'].queryset &= self.document.ocr_models.all()
-        self.fields['seg_model'].queryset &= self.document.ocr_models.all()
-        self.fields['ocr_model'].queryset &= OcrModel.objects.filter(
-            Q(documents=None, script=self.document.main_script)
-            | Q(documents=self.document))
+
+        # Limit querysets to models owned by the user or already linked to this document
+        for field in ['train_model', 'segtrain_model', 'seg_model', 'ocr_model']:
+            self.fields[field].queryset = self.fields[field].queryset.filter(
+                Q(owner=self.user)
+                | Q(documents=self.document)
+            )
+
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
     def process(self):
