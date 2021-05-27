@@ -8,15 +8,16 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import (Project, Document, DocumentPart, Metadata,
-                         OcrModel, AlreadyProcessingException)
+                         OcrModel, OcrModelRight, AlreadyProcessingException)
 from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, ProjectShareForm,
-                        UploadImageForm, DocumentProcessForm, ModelUploadForm)
+                        UploadImageForm, DocumentProcessForm, ModelUploadForm, ModelRightsForm)
 from imports.forms import ImportForm, ExportForm
 
 
@@ -379,3 +380,50 @@ class ModelCancelTraining(LoginRequiredMixin, SuccessMessageMixin, DetailView):
                                 content_type="application/json")
         else:
             return HttpResponseRedirect(self.get_success_url())
+
+
+class ModelRights(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = OcrModelRight
+    template_name = "core/models_list/rights/main.html"
+    success_message = _("Right added successfully!")
+    form_class = ModelRightsForm
+
+    def get_context_data(self, **kwargs):
+        model = get_object_or_404(OcrModel, pk=self.kwargs['pk'])
+
+        if self.request.user != model.owner or model.public:
+            raise PermissionDenied
+
+        kwargs['object_list'] = model.ocr_model_rights.all()
+        kwargs['model_name'] = model.name
+
+        return super().get_context_data(**kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'ocr_model_id': self.kwargs['pk']})
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.ocr_model = OcrModel.objects.get(pk=self.kwargs['pk'])
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('model-rights', kwargs={'pk': self.kwargs['pk']})
+
+
+class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = OcrModelRight
+    template_name = 'core/models_list/rights/delete.html'
+    success_message = _("Right deleted successfully!")
+
+    def get_context_data(self, **kwargs):
+        model = get_object_or_404(OcrModel, pk=self.kwargs['modelPk'])
+
+        if self.request.user != model.owner or model.public:
+            raise PermissionDenied
+
+        return super().get_context_data(**kwargs)
+
+    def get_success_url(self):
+        return reverse('model-rights', kwargs={'pk': self.kwargs['modelPk']})

@@ -15,8 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from bootstrap.forms import BootstrapFormMixin
 from core.models import (Project, Document, Metadata, DocumentMetadata,
                          DocumentPart, OcrModel, OcrModelDocument, Transcription,
-
-                         BlockType, LineType, AlreadyProcessingException)
+                         BlockType, LineType, AlreadyProcessingException, OcrModelRight)
 from users.models import User
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
@@ -421,3 +420,32 @@ class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
         if commit:
             part.save()
         return part
+
+
+class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        model = OcrModel.objects.get(id=kwargs.pop('ocr_model_id'))
+        super().__init__(*args, **kwargs)
+
+        self.fields['user'].empty_label = 'Choose an user'
+        self.fields['user'].queryset = self.fields['user'].queryset.exclude(
+            Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
+        )
+        self.fields['group'].empty_label = 'Choose a group'
+        self.fields['group'].queryset = self.fields['group'].queryset.exclude(
+            ocr_model_rights__ocr_model=model
+        )
+
+    class Meta:
+        model = OcrModelRight
+        fields = ('user', 'group')
+        widgets = {
+            'ocr_model': forms.HiddenInput(),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get("user")
+        group = cleaned_data.get("group")
+        if (not user and not group) or (user and group):
+            self.add_error('user', 'You must choose either an user OR a group')

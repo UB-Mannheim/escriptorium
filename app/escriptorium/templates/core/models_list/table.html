@@ -30,11 +30,11 @@
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
     <td>
       {% if model.owner == request.user %}
-      Owner
+      <span class="badge badge-pill badge-danger">Owner</span>
       {% elif model.public %}
-      Public
+      <span class="badge badge-pill badge-success">Public</span>
       {% else %}
-      User
+      <span class="badge badge-pill badge-primary">User</span>
       {% endif %}
     </td>
     <td>
@@ -48,6 +48,18 @@
       <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
         <i class="fas fa-file-download"></i>
       </a>
+      {% endif %}
+
+      {% if model.owner == request.user %}
+      <span {% if model.public %}
+            data-toggle="tooltip" title="{% trans "You can't edit rights on a public model" %}"
+            {% else %}
+            title="{% trans "Edit model rights" %}"
+            {% endif %}>
+        <a href="{% url 'model-rights' model.pk %}" class="btn btn-sm btn-success {% if model.public %} disabled {% endif %}">
+          <i class="fas fa-pencil-alt"></i>
+        </a>
+      </span>
       {% endif %}
 
       {% if model.owner == request.user and not model.training %}
@@ -69,11 +81,11 @@
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
     <td>
       {% if version.owner == request.user %}
-      Owner
+      <span class="badge badge-pill badge-danger">Owner</span>
       {% elif version.public %}
-      Public
+      <span class="badge badge-pill badge-success">Public</span>
       {% else %}
-      User
+      <span class="badge badge-pill badge-primary">User</span>
       {% endif %}
     </td>
     <td>
