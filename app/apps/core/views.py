@@ -16,7 +16,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, AlreadyProcessingException)
 from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, ProjectShareForm,
-                        UploadImageForm, DocumentProcessForm)
+                        UploadImageForm, DocumentProcessForm, ModelUploadForm)
 from imports.forms import ImportForm, ExportForm
 
 
@@ -296,28 +296,47 @@ class EditPart(LoginRequiredMixin, DetailView):
             return super().dispatch(*args, **kwargs)
 
 
-class ModelsList(LoginRequiredMixin, ListView):
+class DocumentModels(LoginRequiredMixin, ListView):
     model = OcrModel
-    template_name = "core/models_list.html"
+    template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
+    paginate_by = 20
 
     def get_queryset(self):
-        if 'document_pk' in self.kwargs:
-            try:
-                self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
-            except Document.DoesNotExist:
-                raise PermissionDenied
-            return self.document.ocr_models.all()
-        else:
-            self.document = None
-            return OcrModel.objects.filter(owner=self.request.user)
+        try:
+            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return self.document.ocr_models.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.document:
-            context['document'] = self.document
-            context['object'] = self.document  # legacy
+        context['document'] = self.document
+        context['object'] = self.document  # legacy
         return context
+
+
+class UserModels(LoginRequiredMixin, ListView):
+    model = OcrModel
+    template_name = "core/models_list/main.html"
+    http_method_names = ('get',)
+    paginate_by = 20
+
+    def get_queryset(self):
+        return OcrModel.objects.filter(owner=self.request.user)
+
+
+class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = OcrModel
+    form_class = ModelUploadForm
+    success_message = _("Model uploaded successfully!")
+
+    def get_success_url(self):
+        return reverse('user-models')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

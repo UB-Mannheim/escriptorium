@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block body %}
+<h2>{% trans "Upload a model" %}</h2>
+<form method="post" class="inline-form" enctype="multipart/form-data" action="{% url 'model-upload' %}">
+    {% csrf_token %}
+    {% render_field form.file %}
+    {% render_field form.name %}
+    <button type="submit" value="" class="nav-item btn btn-success">{% trans 'Upload' %}</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+/* Handle a basic name field auto filling */
+const fileInput = document.getElementById('id_file');
+const nameInput = document.getElementById('id_name');
+let currentFileName = '';
+fileInput.onchange = function() {
+    if (fileInput.files.length && (!nameInput.value || nameInput.value == currentFileName)) {
+        nameInput.value = fileInput.files[0].name;
+        currentFileName = nameInput.value;
+    }
+};
+</script>
+{% endblock %}

@@ -15,12 +15,6 @@
 </div>
 
 <div class="form-group">
-  <h5>{% trans "Or upload a model" %}</h5>
-  {% render_field process_form.upload_model class="js-proc-settings" accept=".mlmodel,.clstm,.pronn" %}
-
-</div>
-
-<div class="form-group">
   <h5>{% trans "Or select an existing one" %}</h5>
   {% render_field process_form.train_model class="js-proc-settings" %}
 </div>

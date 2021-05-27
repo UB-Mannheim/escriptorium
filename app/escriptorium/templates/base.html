@@ -65,6 +65,9 @@
           <li class="nav-item">
             <a class="nav-link {% block nav-proj-list-class %}{% endblock %}" href="{% url 'projects-list' %}">{% trans "My Projects" %}</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'user-models' %}">{% trans "My models" %}</a>
+          </li>
           <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   {% blocktrans with username=user.username %}Hello {{username}}{% endblocktrans %}
