@@ -247,11 +247,17 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
 
-        # Limit querysets to models owned by the user or already linked to this document
-        for field in ['train_model', 'segtrain_model', 'seg_model', 'ocr_model']:
+        # Only the owner of a model can train on an existing model
+        for field in ['train_model', 'segtrain_model']:
+            self.fields[field].queryset = self.fields[field].queryset.filter(owner__id=self.user.id)
+
+        # The user can run public models, models he owns and models he has a right on
+        for field in ['seg_model', 'ocr_model']:
             self.fields[field].queryset = self.fields[field].queryset.filter(
-                Q(owner=self.user)
-                | Q(documents=self.document)
+                Q(public=True) |
+                Q(owner__id=self.user.id) |
+                Q(ocr_model_rights__user=self.user) |
+                Q(ocr_model_rights__group__user=self.user)
             )
 
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)

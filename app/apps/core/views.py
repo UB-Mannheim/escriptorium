@@ -323,7 +323,13 @@ class UserModels(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return OcrModel.objects.filter(owner=self.request.user)
+        user = self.request.user
+        return OcrModel.objects.filter(
+            Q(public=True) |
+            Q(owner__id=user.id) |
+            Q(ocr_model_rights__user=user) |
+            Q(ocr_model_rights__group__user=user)
+        )
 
 
 class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):

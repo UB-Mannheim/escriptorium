@@ -7,6 +7,7 @@
     <th class="w-25">{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
+    <th>{% trans "Right" %}</th>
     <th>{# buttons #}</th>
   </tr>
   {% for model in page_obj %}
@@ -27,6 +28,15 @@
     </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
+    <td>
+      {% if model.owner == request.user %}
+      Owner
+      {% elif model.public %}
+      Public
+      {% else %}
+      User
+      {% endif %}
+    </td>
     <td>
       {% if model.versions %}
       <button type="button" class="btn btn-sm btn-info" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
@@ -57,6 +67,15 @@
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
+    <td>
+      {% if version.owner == request.user %}
+      Owner
+      {% elif version.public %}
+      Public
+      {% else %}
+      User
+      {% endif %}
+    </td>
     <td>
       <a href="{{ version.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
