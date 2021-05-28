@@ -4,7 +4,18 @@
   <tr>
     <th class="w-50"></th>
     <th>{% trans "Role" %}</th>
-    <th class="w-25">{% trans "Training" %}</th>
+    <th class="w-25">
+      {% trans "Script" %}
+      {% if script_filter %}
+      <form method="get" action="{% url 'user-models' %}">
+        <input type="text" value="" name="script_filter" hidden/>
+        <button type="submit" title="Remove filter" class="btn btn-outline-primary badge badge-pill badge-primary">
+          Filter: {{ script_filter }} &times;
+        </button>
+      </form>
+      {% endif %}
+    </th>
+    <th>{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
     <th>{% trans "Right" %}</th>
@@ -14,6 +25,17 @@
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
     <td title="{% trans "Model role" %}">{{ model.get_job_display }}</td>
+    <td title="{% trans "Model script" %}">
+      {{ model.script.name }}
+      {% if model.script.name and script_filter != model.script.name %}
+      <form class="d-inline" method="get" action="{% url 'user-models' %}">
+        <input type="text" value="{{ model.script.name }}" name="script_filter" hidden/>
+        <button type="submit" class="btn btn-sm btn-link" title="{% trans "Filter by script" %}">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+      {% endif %}
+    </td>
     <td>
       <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
       <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
@@ -76,6 +98,7 @@
   <tr id="model-version-{{version.revision}}" class="versions-{{model.pk}} collapse">
 
     <td title="{% trans "Model name" %}" class="pl-5">{{ version.name }} (epoch #{{version.training_epoch}})</td>
+    <td></td>
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>

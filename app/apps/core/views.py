@@ -325,12 +325,23 @@ class UserModels(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        return OcrModel.objects.filter(
+        models = OcrModel.objects.filter(
             Q(public=True) |
             Q(owner__id=user.id) |
             Q(ocr_model_rights__user=user) |
             Q(ocr_model_rights__group__user=user)
-        )
+        ).distinct()
+
+        script_filter = self.request.GET.get('script_filter', '')
+        if script_filter:
+            models = models.filter(script__name=script_filter)
+        
+        return models
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['script_filter'] = self.request.GET.get('script_filter', '')
+        return context
 
 
 class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):

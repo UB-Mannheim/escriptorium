@@ -257,7 +257,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                 Q(owner__id=self.user.id) |
                 Q(ocr_model_rights__user=self.user) |
                 Q(ocr_model_rights__group__user=self.user)
-            )
+            ).distinct()
 
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
