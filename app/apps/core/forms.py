@@ -248,13 +248,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
 
         # Only the owner of a model can train on an existing model
         for field in ['train_model', 'segtrain_model']:
-            self.fields[field].queryset = self.fields[field].queryset.filter(owner__id=self.user.id)
+            self.fields[field].queryset = self.fields[field].queryset.filter(owner_id=self.user.id)
 
         # The user can run public models, models he owns and models he has a right on
         for field in ['seg_model', 'ocr_model']:
             self.fields[field].queryset = self.fields[field].queryset.filter(
                 Q(public=True) |
-                Q(owner__id=self.user.id) |
+                Q(owner_id=self.user.id) |
                 Q(ocr_model_rights__user=self.user) |
                 Q(ocr_model_rights__group__user=self.user)
             ).distinct()

@@ -327,7 +327,7 @@ class UserModels(LoginRequiredMixin, ListView):
         user = self.request.user
         models = OcrModel.objects.filter(
             Q(public=True) |
-            Q(owner__id=user.id) |
+            Q(owner_id=user.id) |
             Q(ocr_model_rights__user=user) |
             Q(ocr_model_rights__group__user=user)
         ).distinct()

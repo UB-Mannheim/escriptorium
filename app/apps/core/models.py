@@ -45,7 +45,6 @@ from users.consumers import send_event
 from users.models import User
 
 redis_ = get_redis_connection()
-User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
