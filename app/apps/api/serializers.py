@@ -366,7 +366,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
             part.chain_tasks(
                 segment.si(part.pk,
                            user_pk=self.user.pk,
-                           model_pk=model,
+                           model_pk=model.pk,
                            steps=self.validated_data.get('steps'),
                            text_direction=self.validated_data.get('text_direction'),
                            override=self.validated_data.get('override'))
