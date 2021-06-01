@@ -1158,11 +1158,12 @@ class OcrModel(Versioned, models.Model):
     def accuracy_percent(self):
         return self.training_accuracy * 100
 
-    def segtrain(self, document, parts_qs, user=None):
+    def segtrain(self, document, parts_qs, user=None, topline=False):
         segtrain.delay(self.pk,
                        document.pk,
                        list(parts_qs.values_list('pk', flat=True)),
-                       user_pk=user and user.pk or None)
+                       user_pk=user and user.pk or None,
+                       topline=topline)
 
     def train(self, parts_qs, transcription, user=None):
         train.delay(list(parts_qs.values_list('pk', flat=True)),
