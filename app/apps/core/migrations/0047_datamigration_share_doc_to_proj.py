@@ -74,6 +74,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('core', '0046_auto_20210521_1444'),
+        ('users', '0004_auto_20181126_1526')  # make sure we created a superuser
     ]
 
     operations = [
