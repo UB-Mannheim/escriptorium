@@ -248,13 +248,13 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
 
         # Only the owner of a model can train on an existing model
         for field in ['train_model', 'segtrain_model']:
-            self.fields[field].queryset = self.fields[field].queryset.filter(owner_id=self.user.id)
+            self.fields[field].queryset = self.fields[field].queryset.filter(owner=self.user)
 
         # The user can run public models, models he owns and models he has a right on
         for field in ['seg_model', 'ocr_model']:
             self.fields[field].queryset = self.fields[field].queryset.filter(
                 Q(public=True) |
-                Q(owner_id=self.user.id) |
+                Q(owner=self.user) |
                 Q(ocr_model_rights__user=self.user) |
                 Q(ocr_model_rights__group__user=self.user)
             ).distinct()
@@ -427,10 +427,12 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         model = OcrModel.objects.get(id=kwargs.pop('ocr_model_id'))
         super().__init__(*args, **kwargs)
 
+        self.fields['user'].label = ''
         self.fields['user'].empty_label = 'Choose an user'
         self.fields['user'].queryset = self.fields['user'].queryset.exclude(
             Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
         )
+        self.fields['group'].label = ''
         self.fields['group'].empty_label = 'Choose a group'
         self.fields['group'].queryset = self.fields['group'].queryset.exclude(
             ocr_model_rights__ocr_model=model
@@ -448,4 +450,5 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         user = cleaned_data.get("user")
         group = cleaned_data.get("group")
         if (not user and not group) or (user and group):
-            self.add_error('user', 'You must choose either an user OR a group')
+            self.add_error('user', 'You must either choose an user OR a group')
+            self.add_error('group', 'You must either choose an user OR a group')
