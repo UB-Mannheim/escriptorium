@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   app: &app
-    image: registry.gitlab.inria.fr/scripta/escriptorium/app
+    image: registry.gitlab.com/scripta/escriptorium/app
     build:
       context: .
     env_file: variables.env
@@ -31,10 +31,10 @@ services:
     env_file: variables.env
 
   redis:
-    image: redis:3.0-alpine
+    image: sickp/alpine-redis:4.0.6
 
   nginx:
-    image: registry.gitlab.inria.fr/scripta/escriptorium/nginx
+    image: registry.gitlab.com/scripta/escriptorium/nginx
     build: ./nginx
     environment:
       - SERVERNAME=${DOMAIN:-localhost}
@@ -107,7 +107,7 @@ services:
 
   mail:
     build: ./exim
-    image: registry.gitlab.inria.fr/scripta/escriptorium/mail
+    image: registry.gitlab.com/scripta/escriptorium/mail
     expose:
       - 25
     environment:
@@ -119,4 +119,3 @@ volumes:
    media:
    postgres:
    esdata:
-   logs:

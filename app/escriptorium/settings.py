@@ -139,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'documents-list'
+LOGIN_REDIRECT_URL = 'projects-list'
 LOGOUT_REDIRECT_URL = '/'
 
 # Internationalization

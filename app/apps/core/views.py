@@ -13,10 +13,10 @@ from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView
 
-from core.models import (Document, DocumentPart, Metadata,
+from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, AlreadyProcessingException)
-from core.forms import (DocumentForm, MetadataFormSet, DocumentShareForm,
-                        UploadImageForm, DocumentProcessForm)
+from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, ProjectShareForm,
+                        UploadImageForm, DocumentProcessForm, ModelUploadForm)
 from imports.forms import ImportForm, ExportForm
 
 
@@ -33,15 +33,46 @@ class Home(TemplateView):
         return context
 
 
+class ProjectList(LoginRequiredMixin, ListView):
+    model = Project
+    paginate_by = 10
+
+    def get_queryset(self):
+        return (Project.objects
+                .for_user(self.request.user)
+                .select_related('owner'))
+
+
+class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Project
+    form_class = ProjectForm
+    success_message = _("Project created successfully!")
+
+    def get_success_url(self):
+        return reverse('projects-list')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        response = super().form_valid(form)
+        return response
+
+
 class DocumentsList(LoginRequiredMixin, ListView):
     model = Document
     paginate_by = 10
 
     def get_queryset(self):
-        return (Document.objects
-                .for_user(self.request.user)
+        self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
+        return (Document.objects.filter(project=self.project)
                 .select_related('owner', 'main_script')
                 .annotate(parts_updated_at=Max('parts__updated_at')))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.project
+        if self.project.owner == self.request.user:
+            context['share_form'] = ProjectShareForm(instance=self.project, request=self.request)
+        return context
 
 
 class DocumentMixin():
@@ -66,7 +97,9 @@ class DocumentMixin():
         obj = super().get_object()
         try:
             # we fetched the object already, now we check that the user has perms to edit it
-            Document.objects.for_user(self.request.user).get(pk=obj.pk)
+            (Document.objects
+             .filter(project__in=Project.objects.for_user(self.request.user))
+             .get(pk=obj.pk))
         except Document.DoesNotExist:
             raise PermissionDenied
         return obj
@@ -77,6 +110,13 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
     form_class = DocumentForm
 
     success_message = _("Document created successfully!")
+
+    def get_form(self, *args, **kwargs):
+
+        form = super().get_form(*args, **kwargs)
+        form.initial = {'project': Project.objects.get(
+            slug=self.request.resolver_match.kwargs['slug'])}
+        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,8 +130,6 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
         else:
-            print(form.errors)
-            print(metadata_form.errors)
             return self.form_invalid(form)
 
     def form_valid(self, form, metadata_form):
@@ -113,7 +151,6 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = self.get_metadata_formset(instance=self.object)
-        context['share_form'] = DocumentShareForm(instance=self.object, request=self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -150,32 +187,28 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         return context
 
 
-class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
-    model = Document
-    form_class = DocumentShareForm
-    success_message = _("Document shared successfully!")
+class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Project
+    form_class = ProjectShareForm
+    success_message = _("Project shared successfully!")
     http_method_names = ('post',)
 
-    def get_redirect_url(self):
-        return reverse('document-update', kwargs={'pk': self.object.pk})
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('documents-list', kwargs={'slug': self.object.slug})
 
     def get_queryset(self):
-        return Document.objects.for_user(self.request.user).select_related('owner')
-
-    def form_valid(self, form):
-        if form.instance.workflow_state == Document.WORKFLOW_STATE_DRAFT:
-            form.instance.workflow_state = Document.WORKFLOW_STATE_SHARED
-        return super().form_valid(form)
+        return Project.objects.for_user(self.request.user).select_related('owner')
 
 
-class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
     model = Document
     fields = ['workflow_state']
     http_method_names = ('post',)
-
-    def get_queryset(self):
-        # will raise a 404 instead of a 403 if user can't edit, but avoids a query
-        return Document.objects.for_user(self.request.user)
 
     def get_success_message(self, form_data):
         if self.object.is_archived:
@@ -263,28 +296,47 @@ class EditPart(LoginRequiredMixin, DetailView):
             return super().dispatch(*args, **kwargs)
 
 
-class ModelsList(LoginRequiredMixin, ListView):
+class DocumentModels(LoginRequiredMixin, ListView):
     model = OcrModel
-    template_name = "core/models_list.html"
+    template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
+    paginate_by = 20
 
     def get_queryset(self):
-        if 'document_pk' in self.kwargs:
-            try:
-                self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
-            except Document.DoesNotExist:
-                raise PermissionDenied
-            return OcrModel.objects.filter(document=self.document)
-        else:
-            self.document = None
-            return OcrModel.objects.filter(owner=self.request.user)
+        try:
+            self.document = Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+        except Document.DoesNotExist:
+            raise PermissionDenied
+        return self.document.ocr_models.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.document:
-            context['document'] = self.document
-            context['object'] = self.document  # legacy
+        context['document'] = self.document
+        context['object'] = self.document  # legacy
         return context
+
+
+class UserModels(LoginRequiredMixin, ListView):
+    model = OcrModel
+    template_name = "core/models_list/main.html"
+    http_method_names = ('get',)
+    paginate_by = 20
+
+    def get_queryset(self):
+        return OcrModel.objects.filter(owner=self.request.user)
+
+
+class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = OcrModel
+    form_class = ModelUploadForm
+    success_message = _("Model uploaded successfully!")
+
+    def get_success_url(self):
+        return reverse('user-models')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

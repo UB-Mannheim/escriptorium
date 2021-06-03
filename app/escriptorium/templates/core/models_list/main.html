@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% block body %}
+<a href="{% url 'model-upload' %}" class="btn btn-success float-sm-right">{% trans "Upload a model" %}</a>
+<h2>{% trans "My Models" %}</h2>
+{% include 'core/models_list/table.html' %}
+{% endblock %}
+{% block scripts %}
+    {% include 'core/models_list/scripts.html' %}
+{% endblock %}

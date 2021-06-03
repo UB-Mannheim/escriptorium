@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap json %}
+
+{% block head_title %}{% if object %}{% trans "Update a Project" %}{% else %}{% trans "Create a new Project" %}{% endif %}{% endblock %}
+
+{% block body %}
+    <form id="project-form" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <div class="form-group">
+                {% for err in form.non_field_errors %}
+                <p class="error">{{ err }}</p>
+                {% endfor %}
+            </div>
+
+            {% render_field form.name %}
+
+            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+        </fieldset>
+    </form>
+{% endblock %}

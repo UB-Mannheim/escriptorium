@@ -1,19 +1,20 @@
-{% extends 'base.html' %}
-{% load i18n staticfiles thumbnail %}
+{% extends 'core/project_nav.html' %}
+{% load i18n staticfiles thumbnail bootstrap %}
 {% block head_title %}{% trans "My Documents" %}{% endblock %}
 
-{% block styles %}
-{{ block.super }}
+{% block nav-docs-active %}active{% endblock %}
+
+{% block extra_nav %}
+<a href="{% url 'document-create' slug=project.slug %}" class="btn btn-success ml-auto mb-2">{% trans 'Create new Document' %}</a>
+
+{% if share_form %}
+<button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share this Project" %}"><i class="fas fa-share"></i></button>
+{% endif %}
 {% endblock %}
 
-{% block nav-doc-list-class %}active{% endblock %}
-
-{% block body %}
+{% block tab_content %}
 <div class="row">
-  <div class="col-md-12 col-md-offset-4">
-    <a href="{% url 'document-create' %}" class="btn btn-success float-sm-right">{% trans 'Create new' %}</a>
-    <h2>{% trans "My Documents" %}</h2>
-
+    <div class="col-md-12 col-md-offset-4">
     <table id="document-list" class="table table-hover">
       <tbody>
         {% for document in object_list %}
@@ -65,7 +66,40 @@
         {% endfor %}
       </tbody>
     </table>
-  </div>
+    </div>
 </div>
 {% include 'includes/pagination.html' %}
+{% endblock %}
+
+{% block modals %}
+{% if share_form %}
+<!-- shareModal -->
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'project-share' pk=project.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>{% trans "Teams" %}</h5>
+                    {% render_field share_form.shared_with_groups %}
+                    <h5>{% trans "Users" %}</h5>
+                    {% render_field share_form.username %}
+                    {% render_field share_form.shared_with_users %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

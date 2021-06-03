@@ -7,7 +7,6 @@
 {% block extra_nav %}
 {% if object and can_publish %}
 <div class="ml-auto">
-    <button type="button" class="nav-item btn btn-primary mr-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share" %}"><i class="fas fa-share"></i></button>
     {% comment %}
     {% if not object.is_published %}
     <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
@@ -42,6 +41,7 @@
             {% else %}
             {% render_field form.name autofocus=1 %}
             {% endif %}
+            {% render_field form.project %}
 
             {% render_field form.main_script %}
             {% render_field form.read_direction %}
@@ -130,39 +130,6 @@
         </fieldset>
     </form>
 </div>
-{% endblock %}
-
-{% block modals %}
-{% if share_form %}
-<!-- shareModal -->
-<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form method="post" action="{% url 'document-share' pk=object.pk %}">
-                {% csrf_token %}
-
-                <div class="modal-header">
-                    <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h5>{% trans "Teams" %}</h5>
-                    {% render_field share_form.shared_with_groups %}
-                    <h5>{% trans "Users" %}</h5>
-                    {% render_field share_form.username %}
-                    {% render_field share_form.shared_with_users %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}

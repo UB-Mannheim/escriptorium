@@ -1,0 +1,9 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles %}
+
+{% block tab_content %}
+    {% include 'core/models_list/table.html' %}
+{% endblock %}
+{% block scripts %}
+    {% include 'core/models_list/scripts.html' %}
+{% endblock %}

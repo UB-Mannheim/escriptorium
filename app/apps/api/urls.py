@@ -2,7 +2,8 @@ from django.urls import include, path
 from rest_framework_nested import routers
 from rest_framework.authtoken import views
 
-from api.views import (DocumentViewSet,
+from api.views import (ProjectViewSet,
+                       DocumentViewSet,
                        UserViewSet,
                        PartViewSet,
                        DocumentTranscriptionViewSet,
@@ -16,6 +17,7 @@ from api.views import (DocumentViewSet,
 
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
+router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'user', UserViewSet)
 router.register(r'types/block', BlockTypeViewSet)

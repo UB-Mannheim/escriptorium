@@ -63,7 +63,10 @@
         <ul class="navbar-nav mr-right">
           {% if user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link {% block nav-doc-list-class %}{% endblock %}" href="{% url 'documents-list' %}">{% trans "My Documents" %}</a>
+            <a class="nav-link {% block nav-proj-list-class %}{% endblock %}" href="{% url 'projects-list' %}">{% trans "My Projects" %}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'user-models' %}">{% trans "My models" %}</a>
           </li>
           <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

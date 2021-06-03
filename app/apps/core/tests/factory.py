@@ -6,6 +6,7 @@ import os.path
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 
 from django_redis import get_redis_connection
 from kraken.lib import vgsl
@@ -86,13 +87,15 @@ class CoreFactory():
         fp = os.path.join(os.path.dirname(__file__), 'assets', asset_name)
         return open(fp, 'rb')
 
-    def make_model(self, job=OcrModel.MODEL_JOB_RECOGNIZE, document=None):
+    def make_model(self, document, job=OcrModel.MODEL_JOB_RECOGNIZE):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
         model_name = 'test-model.mlmodel'
         model = OcrModel.objects.create(name=model_name,
-                                        document=document,
+                                        owner=document.owner,
                                         job=job)
+
+        document.ocr_models.add(model)
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
             model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
         if not os.path.exists(modeldir):
