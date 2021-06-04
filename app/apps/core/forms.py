@@ -231,6 +231,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     LINE_OFFSET_CHOICE_TOP = 2
     line_offset = forms.ChoiceField(choices=((LINE_OFFSET_CHOICE_BOTTOM, 'Bottomline'),
                                              (LINE_OFFSET_CHOICE_TOP, 'Topline')),
+                                    required=False,
                                     help_text=_("Describes wether the baseline is in top bottom part of the polygon(default) or the top part."))
 
     # typology = forms.ModelChoiceField(Typology, required=False,
