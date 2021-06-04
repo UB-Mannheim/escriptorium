@@ -130,7 +130,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, topline=False):
+def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -196,9 +196,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, topline=False)
             augment=True,
             resize='both',
             hyper_params={'epochs': 20},
-            load_hyper_parameters=True,
-            topline=topline
-        )
+            load_hyper_parameters=True)
 
         if not os.path.exists(os.path.split(modelpath)[0]):
             os.makedirs(os.path.split(modelpath)[0])
