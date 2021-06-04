@@ -129,7 +129,7 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
     name = forms.CharField()
     file = forms.FileField(
         validators=[FileExtensionValidator(
-            allowed_extensions=['mlmodel'])]
+        allowed_extensions=['mlmodel'])]
     )
 
     def clean_file(self):
@@ -159,6 +159,237 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = OcrModel
         fields = ('name', 'file')
+
+
+class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
+    parts = forms.CharField()
+
+    @cached_property
+    def parts(self):
+        pks = json.loads(self.data.get('parts'))
+        parts = DocumentPart.objects.filter(
+            document=self.document, pk__in=pks)
+        return parts
+
+    def __init__(self, document, user, *args, **kwargs):
+        self.document = document
+        self.user = user
+        super().__init__(*args, **kwargs)
+        # self.fields['typology'].widget = forms.HiddenInput()  # for now
+        # self.fields['typology'].initial = Typology.objects.get(name="Page")
+        # self.fields['typology'].widget.attrs['title'] = _("Default Typology")
+        if self.document.read_direction == self.document.READ_DIRECTION_RTL:
+            self.initial['text_direction'] = 'horizontal-rl'
+        self.fields['binarizer'].widget.attrs['disabled'] = True
+
+        # Limit querysets to models owned by the user or already linked to this document
+        for field in ['train_model', 'segtrain_model', 'seg_model', 'ocr_model']:
+            self.fields[field].queryset = self.fields[field].queryset.filter(
+                Q(owner=self.user)
+                | Q(documents=self.document)
+            )
+
+        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+
+    def process(self):
+        model = self.cleaned_data.get('model')
+
+
+class DocumentSegmentForm(DocumentProcessForm1):
+    SEG_STEPS_CHOICES = (
+        ('both', _('Lines and regions')),
+        ('lines', _('Lines Baselines and Masks')),
+        ('masks', _('Only lines Masks')),
+        ('regions', _('Regions')),
+    )
+    segmentation_steps = forms.ChoiceField(choices=SEG_STEPS_CHOICES,
+                                           initial='both', required=False)
+    seg_model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                       label=_("Model"), empty_label="default ({name})".format(
+            name=settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL.rsplit('/')[-1]),
+                                       required=False)
+    override = forms.BooleanField(required=False, initial=True,
+                                  help_text=_(
+                                      "If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
+    TEXT_DIRECTION_CHOICES = (('horizontal-lr', _("Horizontal l2r")),
+                              ('horizontal-rl', _("Horizontal r2l")),
+                              ('vertical-lr', _("Vertical l2r")),
+                              ('vertical-rl', _("Vertical r2l")))
+    text_direction = forms.ChoiceField(initial='horizontal-lr', required=False,
+                                       choices=TEXT_DIRECTION_CHOICES)
+
+    def clean(self):
+        data = super().clean()
+        model_job = OcrModel.MODEL_JOB_SEGMENT
+
+        if data.get('seg_model'):
+            model = data.get('seg_model')
+            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+                ocr_model=model,
+                document=self.parts[0].document,
+                defaults={'executed_on': timezone.now()}
+            )
+            if not created:
+                ocr_model_document.executed_on = timezone.now()
+                ocr_model_document.save()
+        else:
+            model = None
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+
+        for part in self.parts:
+            part.task('segment',
+                      user_pk=self.user.pk,
+                      steps=self.cleaned_data.get('segmentation_steps'),
+                      text_direction=self.cleaned_data.get('text_direction'),
+                      model_pk=model and model.pk or None,
+                      override=self.cleaned_data.get('override'))
+
+
+class DocumentTrainForm(DocumentProcessForm1):
+    new_model = forms.CharField(required=False, label=_('Model name'))
+    train_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                         .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                         label=_("Model"), required=False)
+
+    transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+
+    def clean_train_model(self):
+        model = self.cleaned_data['train_model']
+        if model and model.training:
+            raise AlreadyProcessingException
+        return model
+
+    def clean(self):
+        data = super().clean()
+
+        model_job = OcrModel.MODEL_JOB_RECOGNIZE
+
+        if data.get('train_model'):
+            model = data.get('train_model')
+            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+                ocr_model=model,
+                document=self.parts[0].document,
+                defaults={'trained_on': timezone.now()}
+            )
+            if not created:
+                ocr_model_document.trained_on = timezone.now()
+                ocr_model_document.save()
+
+        elif data.get('new_model'):
+            # file will be created by the training process
+            model = OcrModel.objects.create(
+                owner=self.user,
+                name=data['new_model'],
+                job=model_job)
+            OcrModelDocument.objects.create(
+                document=self.parts[0].document,
+                ocr_model=model,
+                trained_on=timezone.now(),
+            )
+
+        else:
+            raise forms.ValidationError(
+                    _("Either select a name for your new model or an existing one."))
+
+        data['model'] = model
+        return data
+
+
+    def process(self):
+        super().process()
+
+        model.train(self.parts,
+                    self.cleaned_data['transcription'],
+                    user=self.user)
+
+
+class DocumentSegtrainForm(DocumentProcessForm1):
+    segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                            .filter(job=OcrModel.MODEL_JOB_SEGMENT),
+                                            label=_("Model"), required=False)
+    new_model = forms.CharField(required=False, label=_('Model name'))
+
+    def clean(self):
+        data = super().clean()
+
+
+        model_job = OcrModel.MODEL_JOB_SEGMENT
+        if len(self.parts) < 2:
+            raise forms.ValidationError("Segmentation training requires at least 2 images.")
+
+        if data.get('segtrain_model'):
+            model = data.get('segtrain_model')
+            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+                ocr_model=model,
+                document=self.parts[0].document,
+                defaults={'trained_on': timezone.now()}
+            )
+            if not created:
+                ocr_model_document.trained_on = timezone.now()
+                ocr_model_document.save()
+
+        elif data.get('new_model'):
+            # file will be created by the training process
+            model = OcrModel.objects.create(
+                owner=self.user,
+                name=data['new_model'],
+                job=model_job)
+            OcrModelDocument.objects.create(
+                document=self.parts[0].document,
+                ocr_model=model,
+                trained_on=timezone.now(),
+            )
+
+        else:
+
+            raise forms.ValidationError(
+                _("Either select a name for your new model or an existing one."))
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+        model.segtrain(self.document,
+                       self.parts,
+                       user=self.user)
+
+
+class DocumentTranscribeForm(DocumentProcessForm1):
+
+    ocr_model = forms.ModelChoiceField(queryset=OcrModel.objects
+                                       .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+                                       label=_("Model"), required=False)
+
+    def clean(self):
+        data = super().clean()
+
+        model_job = OcrModel.MODEL_JOB_RECOGNIZE
+
+        model = data['ocr_model']
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            ocr_model=model,
+            document=self.parts[0].document,
+            defaults={'executed_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.executed_on = timezone.now()
+            ocr_model_document.save()
+
+        data['model'] = model
+        return data
+
+    def process(self):
+        super().process()
+        for part in self.parts:
+            part.task('transcribe',
+                  user_pk=self.user.pk,
+                  model_pk=model and model.pk or None)
 
 
 class DocumentProcessForm(BootstrapFormMixin, forms.Form):
@@ -227,12 +458,6 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     segtrain_model = forms.ModelChoiceField(queryset=OcrModel.objects
                                             .filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                             label=_("Model"), required=False)
-    LINE_OFFSET_CHOICE_BOTTOM = 1
-    LINE_OFFSET_CHOICE_TOP = 2
-    line_offset = forms.ChoiceField(choices=((LINE_OFFSET_CHOICE_BOTTOM, 'Bottomline'),
-                                             (LINE_OFFSET_CHOICE_TOP, 'Topline')),
-                                    required=False,
-                                    help_text=_("Describes wether the baseline is in top bottom part of the polygon(default) or the top part."))
 
     # typology = forms.ModelChoiceField(Typology, required=False,
     #                              limit_choices_to={'target': Typology.TARGET_PART})
@@ -394,11 +619,9 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
                         user=self.user)
 
         elif task == self.TASK_SEGTRAIN:
-            is_topline = self.cleaned_data['line_offset'] == 'topline'
             model.segtrain(self.document,
                            self.parts,
-                           user=self.user,
-                           topline=is_topline)
+                           user=self.user)
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
