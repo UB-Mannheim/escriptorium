@@ -81,7 +81,7 @@ class ProjectShareForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['shared_with_users'].queryset = (User.objects.filter(
             Q(groups__in=self.request.user.groups.all())
             | Q(pk__in=self.instance.shared_with_users.values_list('pk', flat=True))
-        ).exclude(pk=self.request.user.pk))
+        ).exclude(pk=self.request.user.pk)).distinct()
         self.fields['shared_with_groups'].widget = forms.CheckboxSelectMultiple()
         self.fields['shared_with_groups'].queryset = self.request.user.groups
 
