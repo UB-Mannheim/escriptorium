@@ -63,7 +63,9 @@ class DocumentsList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
-        return (Document.objects.filter(project=self.project)
+        return (Document.objects
+                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .filter(project=self.project)
                 .select_related('owner', 'main_script')
                 .annotate(parts_updated_at=Max('parts__updated_at')))
 
@@ -112,7 +114,6 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
     success_message = _("Document created successfully!")
 
     def get_form(self, *args, **kwargs):
-
         form = super().get_form(*args, **kwargs)
         form.initial = {'project': Project.objects.get(
             slug=self.request.resolver_match.kwargs['slug'])}
@@ -205,10 +206,13 @@ class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return Project.objects.for_user(self.request.user).select_related('owner')
 
 
-class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
+class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
     fields = ['workflow_state']
     http_method_names = ('post',)
+
+    def get_queryset(self):
+        return Document.objects.filter(owner=self.request.user)
 
     def get_success_message(self, form_data):
         if self.object.is_archived:
@@ -218,7 +222,7 @@ class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Up
 
     def get_success_url(self):
         if self.object.is_archived:
-            return reverse('documents-list')
+            return reverse('documents-list', kwargs={'slug': self.object.project.slug})
         else:
             return reverse('document-update', kwargs={'pk': self.object.pk})
 
