@@ -45,7 +45,7 @@ services:
       - static:/usr/src/app/static
       - media:/usr/src/app/media
     ports:
-      - 8080:80
+      - 80:80
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
@@ -113,6 +113,46 @@ services:
     environment:
       - PRIMARY_HOST=${DOMAIN:-localhost}
       - ALLOWED_HOSTS=web ; celery-main ; celery-low-priority; docker0
+
+  prometheus:
+    image: prom/prometheus:v2.14.0
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+  grafana:
+      image: grafana/grafana:6.5.2
+      ports:
+        - 3060:3000
+  
+  nodeexporter:
+    image: prom/node-exporter:v0.18.1
+    deploy:
+      replicas: 1
+    #network_mode: "host"
+  
+  dockermetrics:
+    build: ./metrics
+    ports:
+        - "5001:5000"
+    volumes:
+      - /sys/fs/cgroup/memory/docker:/docker/memory
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_API_VERSION=1.23
+    
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - 8081:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
 
 volumes:
    static:
