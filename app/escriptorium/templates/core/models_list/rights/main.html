@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block body %}
+<h2><strong>{{ model_name }}</strong> {% trans "shares" %}</h2>
+<table id="rights-table" class="table table-hover">
+  <thead>
+    <tr>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Name" %}</th>
+      <th>{% trans "Full name or identifier" %}</th>
+      <th>{# buttons #}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for right in object_list %}
+    <tr id="tr-{{right.pk}}" data-id="{{right.pk}}">
+      {% if right.user != None %}
+      <td title="{% trans "Recipient type" %}"><span class="badge badge-pill badge-primary">User</span></td>
+      <td title="{% trans "Username" %}">{{ right.user.username }}</td>
+      <td title="{% trans "User full name" %}">{{ right.user.get_full_name }}</td>
+      {% else %}
+      <td title="{% trans "Recipient type" %}"><span class="badge badge-pill badge-secondary">Group</span></td>
+      <td title="{% trans "Group name" %}">{{ right.group.name }}</td>
+      <td title="{% trans "Group identifier" %}">{{ right.group.pk }}</td>
+      {% endif %}
+      <td>
+        <a href="{% url 'model-right-delete' right.ocr_model.pk right.pk %}" class="btn btn-sm btn-danger" title="{% trans "Stop sharing" %}">
+          <i class="fas fa-trash"></i>
+        </a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4">No shares on this model.</td>
+    </tr>
+    {% endfor %}
+    <form method="post">
+      {% csrf_token %}
+      <tr>
+        <td colspan="3" class="text-right">
+          <div class="d-inline-block">
+            {% render_field form.user %}
+          </div>
+          <strong class="pl-3 pr-3">{% trans "or" %}</strong>
+          <div class="d-inline-block">
+            {% render_field form.group %}
+          </div>
+        </td>
+        <td>
+          <button type="submit" class="mt-4 btn btn-sm btn-success" title="{% trans "Add right" %}">
+            <i class="fas fa-plus"></i>
+          </button>
+        </td>
+      </tr>
+    </form>
+  </tbody>
+</table>
+{% endblock %}

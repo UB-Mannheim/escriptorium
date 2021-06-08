@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles %}
+
+{% block body %}
+<h2>{% trans "Delete right" %}</h2>
+<form method="post">
+  {% csrf_token %}
+    <p>
+    Are you sure you want to stop sharing the model <strong>{{ object.ocr_model.name }}</strong> with
+    {% if object.user %}
+    user <strong>{{ object.user.username }}</strong>
+    {% else %}
+    group <strong>{{ object.group.name }}</strong>
+    {% endif %}
+    ?
+  </p>
+  <input type="submit" class="btn btn-danger" value="Confirm">
+  <a href="{% url 'model-rights' object.ocr_model.pk %}" class="btn btn-default">Cancel</a>
+</form>
+{% endblock body %}

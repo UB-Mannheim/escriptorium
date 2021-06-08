@@ -42,9 +42,9 @@ from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
 from users.consumers import send_event
+from users.models import User
 
 redis_ = get_redis_connection()
-User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -1147,6 +1147,8 @@ class OcrModel(Versioned, models.Model):
     version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
     version_history_max_length = None  # keep em all
 
+    public = models.BooleanField(default=False)
+
     class Meta:
         ordering = ('-version_updated_at',)
         permissions = (('can_train', 'Can train models'),)
@@ -1222,6 +1224,26 @@ class OcrModelDocument(models.Model):
 
     class Meta:
         unique_together = (('document', 'ocr_model'),)
+
+
+class OcrModelRight(models.Model):
+    ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_rights')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ocr_model_rights', null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ocr_model_rights', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'group', 'ocr_model'], name='right_unique_target'),
+            # User XOR Group is the owner of this access right
+            models.CheckConstraint(
+                name='user_xor_group',
+                check=(
+                    models.Q(group_id__isnull=False, user_id__isnull=True)
+                    | models.Q(group_id__isnull=True, user_id__isnull=False)
+                )
+            )
+        ]
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')

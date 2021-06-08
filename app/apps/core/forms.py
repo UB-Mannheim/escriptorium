@@ -15,8 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from bootstrap.forms import BootstrapFormMixin
 from core.models import (Project, Document, Metadata, DocumentMetadata,
                          DocumentPart, OcrModel, OcrModelDocument, Transcription,
-
-                         BlockType, LineType, AlreadyProcessingException)
+                         BlockType, LineType, AlreadyProcessingException, OcrModelRight)
 from users.models import User
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
@@ -473,12 +472,18 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             self.initial['text_direction'] = 'horizontal-rl'
         self.fields['binarizer'].widget.attrs['disabled'] = True
 
-        # Limit querysets to models owned by the user or already linked to this document
-        for field in ['train_model', 'segtrain_model', 'seg_model', 'ocr_model']:
+        # Only the owner of a model can train on an existing model
+        for field in ['train_model', 'segtrain_model']:
+            self.fields[field].queryset = self.fields[field].queryset.filter(owner=self.user)
+
+        # The user can run public models, models he owns and models he has a right on
+        for field in ['seg_model', 'ocr_model']:
             self.fields[field].queryset = self.fields[field].queryset.filter(
-                Q(owner=self.user)
-                | Q(documents=self.document)
-            )
+                Q(public=True) |
+                Q(owner=self.user) |
+                Q(ocr_model_rights__user=self.user) |
+                Q(ocr_model_rights__group__user=self.user)
+            ).distinct()
 
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
@@ -639,3 +644,35 @@ class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
         if commit:
             part.save()
         return part
+
+
+class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        model = OcrModel.objects.get(id=kwargs.pop('ocr_model_id'))
+        super().__init__(*args, **kwargs)
+
+        self.fields['user'].label = ''
+        self.fields['user'].empty_label = 'Choose an user'
+        self.fields['user'].queryset = self.fields['user'].queryset.exclude(
+            Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
+        ).filter(groups__in=model.owner.groups.all()).distinct()
+        self.fields['group'].label = ''
+        self.fields['group'].empty_label = 'Choose a group'
+        self.fields['group'].queryset = self.fields['group'].queryset.exclude(
+            ocr_model_rights__ocr_model=model
+        ).filter(id__in=model.owner.groups.all())
+
+    class Meta:
+        model = OcrModelRight
+        fields = ('user', 'group')
+        widgets = {
+            'ocr_model': forms.HiddenInput(),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get("user")
+        group = cleaned_data.get("group")
+        if (not user and not group) or (user and group):
+            self.add_error('user', 'You must either choose an user OR a group')
+            self.add_error('group', 'You must either choose an user OR a group')
