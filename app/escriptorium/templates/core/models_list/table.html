@@ -60,37 +60,39 @@
       {% endif %}
     </td>
     <td>
-      {% if model.versions %}
-      <button type="button" class="btn btn-sm btn-info" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
-        <i class="fas fa-save"></i>
-      </button>
-      {% endif %}
+        {% if model.versions %}
+        <span class="ml-auto" title="{% trans "Toggle versions" %}">
+            <button type="button" class="btn btn-sm btn-info" data-toggle="collapse" data-target=".versions-{{model.pk}}">
+                <i class="fas fa-save"></i>
+            </button>
+        </span>
+        {% endif %}
 
-      {% if model.file %}
-      <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
-        <i class="fas fa-file-download"></i>
-      </a>
-      {% endif %}
+        {% if model.file %}
+        <span title="{% trans "Download" %}">
+          <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" role="button">
+            <i class="fas fa-file-download"></i>
+          </a>
+        </span>
+        {% endif %}
 
-      {% if model.owner == request.user %}
-      <span {% if model.public %}
-            data-toggle="tooltip" title="{% trans "You can't edit shares on a public model" %}"
-            {% else %}
-            title="{% trans "Edit model shares" %}"
-            {% endif %}>
-        <a href="{% url 'model-rights' model.pk %}" class="btn btn-sm btn-success {% if model.public %} disabled {% endif %}">
-          <i class="fas fa-pencil-alt"></i>
-        </a>
-      </span>
-      {% endif %}
+        {% if model.owner == request.user and not model.public %}
+        <span title="{% trans "Share model" %}">
+          <a href="{% url 'model-rights' model.pk %}" class="btn btn-sm btn-success">
+            <i class="fas fa-pencil-alt"></i>
+          </a>
+        </span>
+        {% endif %}
 
-      {% if model.owner == request.user and not model.training %}
-      <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-danger" title="{% trans "Delete model." %}">
-          <i class="fas fa-trash"></i>
-        </button>
-      </form>
+        {% if model.owner == request.user and not model.training %}
+        <span title="{% trans "Delete model" %}">
+          <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger" ">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </span>
       {% endif %}
     </td>
   </tr>
