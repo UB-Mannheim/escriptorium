@@ -2,9 +2,9 @@
 
 <table id="models-table" class="table table-hover">
   <tr>
-    <th class="w-50"></th>
+    <th></th>
     <th>{% trans "Role" %}</th>
-    <th class="w-25">
+    <th>
       {% trans "Script" %}
       {% if script_filter %}
       <form method="get" action="{% url 'user-models' %}">
@@ -74,9 +74,9 @@
 
       {% if model.owner == request.user %}
       <span {% if model.public %}
-            data-toggle="tooltip" title="{% trans "You can't edit rights on a public model" %}"
+            data-toggle="tooltip" title="{% trans "You can't edit shares on a public model" %}"
             {% else %}
-            title="{% trans "Edit model rights" %}"
+            title="{% trans "Edit model shares" %}"
             {% endif %}>
         <a href="{% url 'model-rights' model.pk %}" class="btn btn-sm btn-success {% if model.public %} disabled {% endif %}">
           <i class="fas fa-pencil-alt"></i>

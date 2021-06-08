@@ -431,12 +431,12 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['user'].empty_label = 'Choose an user'
         self.fields['user'].queryset = self.fields['user'].queryset.exclude(
             Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
-        )
+        ).filter(groups__in=model.owner.groups.all())
         self.fields['group'].label = ''
         self.fields['group'].empty_label = 'Choose a group'
         self.fields['group'].queryset = self.fields['group'].queryset.exclude(
             ocr_model_rights__ocr_model=model
-        )
+        ).filter(id__in=model.owner.groups.all())
 
     class Meta:
         model = OcrModelRight

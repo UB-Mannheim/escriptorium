@@ -325,7 +325,7 @@ class UserModels(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        models = OcrModel.objects.filter(
+        models = OcrModel.objects.exclude(file="").filter(
             Q(public=True) |
             Q(owner=user) |
             Q(ocr_model_rights__user=user) |
