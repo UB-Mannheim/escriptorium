@@ -15,6 +15,7 @@
       </form>
       {% endif %}
     </th>
+    <th>{% trans "Trained from" %}</th>
     <th>{% trans "Training" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
@@ -35,6 +36,9 @@
         </button>
       </form>
       {% endif %}
+    </td>
+    <td title="{% trans "Parent from which the model was trained" %}">
+      <small>{{ model.parent.name }}</small>
     </td>
     <td>
       <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
