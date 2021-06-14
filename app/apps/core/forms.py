@@ -66,12 +66,9 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         }
 
 
-class ProjectShareForm(BootstrapFormMixin, forms.ModelForm):
+class ShareForm(BootstrapFormMixin, forms.ModelForm):
+    # abstract form
     username = forms.CharField(required=False)
-
-    class Meta:
-        model = Project
-        fields = ['shared_with_groups', 'shared_with_users', 'username']
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -92,11 +89,29 @@ class ProjectShareForm(BootstrapFormMixin, forms.ModelForm):
             user = None
         return user
 
+
+class ProjectShareForm(ShareForm):
+    class Meta:
+        model = Project
+        fields = ['shared_with_groups', 'shared_with_users', 'username']
+
     def save(self, commit=True):
         proj = super().save(commit=commit)
         if self.cleaned_data['username']:
             proj.shared_with_users.add(self.cleaned_data['username'])
         return proj
+
+
+class DocumentShareForm(ShareForm):
+    class Meta:
+        model = Document
+        fields = ['shared_with_groups', 'shared_with_users', 'username']
+
+    def save(self, commit=True):
+        doc = super().save(commit=commit)
+        if self.cleaned_data['username']:
+            doc.shared_with_users.add(self.cleaned_data['username'])
+        return doc
 
 
 class MetadataForm(BootstrapFormMixin, forms.ModelForm):

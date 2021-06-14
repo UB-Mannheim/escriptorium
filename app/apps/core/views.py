@@ -16,7 +16,8 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, OcrModelRight, AlreadyProcessingException)
-from core.forms import (ProjectForm, DocumentForm, MetadataFormSet, ProjectShareForm,
+from core.forms import (ProjectForm, DocumentForm, MetadataFormSet,
+                        ProjectShareForm, DocumentShareForm,
                         UploadImageForm, DocumentProcessForm, ModelUploadForm, ModelRightsForm)
 from imports.forms import ImportForm, ExportForm
 
@@ -65,16 +66,17 @@ class DocumentsList(LoginRequiredMixin, ListView):
     def get_queryset(self):
         self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
         return (Document.objects
-                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .for_user(self.request.user)
                 .filter(project=self.project)
-                .select_related('owner', 'main_script')
-                .annotate(parts_updated_at=Max('parts__updated_at')))
+                .annotate(parts_updated_at=Max('parts__updated_at'))
+                )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
         if self.project.owner == self.request.user:
-            context['share_form'] = ProjectShareForm(instance=self.project, request=self.request)
+            context['share_form'] = ProjectShareForm(instance=self.project,
+                                                     request=self.request)
         return context
 
 
@@ -153,6 +155,11 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = self.get_metadata_formset(instance=self.object)
+
+        if self.object.owner == self.request.user:
+            context['share_form'] = DocumentShareForm(instance=self.object,
+                                                      request=self.request)
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -189,6 +196,24 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         return context
 
 
+class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Document
+    form_class = DocumentShareForm
+    success_message = _("Document shared successfully!")
+    http_method_names = ('post',)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('document-update', kwargs={'pk': self.object.pk})
+
+    def get_queryset(self):
+        return Document.objects.filter(owner=self.request.user)
+
+
 class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Project
     form_class = ProjectShareForm
@@ -204,7 +229,7 @@ class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return reverse('documents-list', kwargs={'slug': self.object.slug})
 
     def get_queryset(self):
-        return Project.objects.for_user(self.request.user).select_related('owner')
+        return Project.objects.filter(owner=self.request.user)
 
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
@@ -339,7 +364,7 @@ class UserModels(LoginRequiredMixin, ListView):
         script_filter = self.request.GET.get('script_filter', '')
         if script_filter:
             models = models.filter(script__name=script_filter)
-        
+
         return models
 
     def get_context_data(self, **kwargs):

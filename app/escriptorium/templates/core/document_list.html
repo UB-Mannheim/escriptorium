@@ -57,10 +57,12 @@
             </a>
             {% endif %}
 
+            {% if document.owner == request.user %}
             <form method="post" class="inline-form" action="{% url 'document-publish' pk=document.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
               <input type="hidden" name="workflow_state" value="{{ document.WORKFLOW_STATE_ARCHIVED }}">
               <button type="submit" value="" onclick='event.stopPropagation();'  class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
             </form>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -73,33 +75,6 @@
 
 {% block modals %}
 {% if share_form %}
-<!-- shareModal -->
-<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form method="post" action="{% url 'project-share' pk=project.pk %}">
-                {% csrf_token %}
-
-                <div class="modal-header">
-                    <h3 class="modal-title" id="exampleModalLabel">{% trans "Share with" %}</h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h5>{% trans "Teams" %}</h5>
-                    {% render_field share_form.shared_with_groups %}
-                    <h5>{% trans "Users" %}</h5>
-                    {% render_field share_form.username %}
-                    {% render_field share_form.shared_with_users %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <input type="submit" value="{% trans 'Share' %}" class="btn btn-primary">
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{% include 'core/share/share_project.html' %}
 {% endif %}
 {% endblock %}
