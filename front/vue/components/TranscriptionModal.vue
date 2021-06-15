@@ -214,7 +214,7 @@ export default Vue.extend({
 
         let input = this.$refs.transInput;
 
-        // no need to make focus on hiden input with a ttb text
+        // no need to make focus on hidden input with a ttb text
         if(this.$store.state.document.mainTextDirection != 'ttb'){
             input.focus();
         }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input):
