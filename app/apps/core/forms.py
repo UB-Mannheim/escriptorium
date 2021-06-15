@@ -131,6 +131,10 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         allowed_extensions=['mlmodel'])]
     )
 
+    class Meta:
+        model = OcrModel
+        fields = ('name', 'file')
+
     def clean_file(self):
         # Early validation of the model loading
         file_field = self.cleaned_data['file']
@@ -143,6 +147,12 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
             raise forms.ValidationError(_("Invalid model (Couldn't determine whether it's a segmentation or recognition model)."))
         elif self._model_job == 'recognition' and model.seg_type == "bbox":
             raise forms.ValidationError(_("eScriptorium is not compatible with bounding box models."))
+
+        try:
+            self.model_metadata = model.user_metadata
+        except ValueError:
+            self.model_metadata = None
+
         return file_field
 
     def clean(self):
@@ -155,9 +165,22 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
             self.instance.job = OcrModel.MODEL_JOB_RECOGNIZE
         return super().clean()
 
-    class Meta:
-        model = OcrModel
-        fields = ('name', 'file')
+    def save(self, commit=True):
+        model = super().save(commit=False)
+        if self.model_metadata:
+            try:
+                model.training_accuracy = self.model_metadata.get('accuracy')[-1][1]
+            except (IndexError, AttributeError, TypeError):
+                pass
+
+            try:
+                model.training_epoch = (self.model_metadata
+                                        .get('hyper_params')
+                                        .get('completed_epochs'))
+            except AttributeError:
+                pass
+
+        model.save()
 
 
 class DocumentProcessForm1(BootstrapFormMixin, forms.Form):
@@ -538,6 +561,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
             if not created:
                 ocr_model_document.trained_on = timezone.now()
                 ocr_model_document.save()
+
         elif task == self.TASK_SEGTRAIN and data.get('segtrain_model'):
             model = data.get('segtrain_model')
             ocr_model_document, created = OcrModelDocument.objects.get_or_create(
@@ -593,6 +617,7 @@ class DocumentProcessForm(BootstrapFormMixin, forms.Form):
     def process(self):
         task = self.cleaned_data.get('task')
         model = self.cleaned_data.get('model')
+
         if task == self.TASK_BINARIZE:
             if len(self.parts) == 1 and self.cleaned_data.get('bw_image'):
                 self.parts[0].bw_image = self.cleaned_data['bw_image']
