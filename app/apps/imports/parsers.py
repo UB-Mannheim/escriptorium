@@ -28,7 +28,7 @@ from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
-OWN_RISK = "the validity of the data can not be automaatically checked, use at your own risks."
+OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
 
 class ParseError(Exception):

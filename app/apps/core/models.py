@@ -620,7 +620,7 @@ class DocumentPart(OrderedModel):
 
     def binarize(self, threshold=None):
         fname = os.path.basename(self.image.file.name)
-        # should be formated to png already by by lossless_compression but better safe than sorry
+        # should be formatted to png already by lossless_compression but better safe than sorry
         form = None
         f_, ext = os.path.splitext(self.image.file.name)
         if ext[1] in ['.jpg', '.jpeg', '.JPG', '.JPEG', '']:
@@ -889,7 +889,7 @@ class DocumentPart(OrderedModel):
 
     def crop(self, x1, y1, x2, y2):
         """
-        Crops the image ouside the rectangle defined
+        Crops the image outside the rectangle defined
         by top left (x1, y1) and bottom right (x2, y2) points.
         Moves the lines and regions accordingly.
         """
@@ -1193,7 +1193,7 @@ class OcrModel(Versioned, models.Model):
         return super().pack(**kwargs)
 
     def revert(self, revision):
-        # we want the file to be swaped but the filename to stay the same
+        # we want the file to be swapped but the filename to stay the same
         for version in self.versions:
             if version['revision'] == revision:
                 current_filename = self.file.path

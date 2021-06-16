@@ -272,7 +272,7 @@ class partCard {
         this.previousIndex = this.index;
         var target = $('#cards-container .js-drop')[index];
         this.$element.insertAfter(target);
-        this.dropAfter.insertAfter(this.$element);  // drag the dropable zone with it
+        this.dropAfter.insertAfter(this.$element);  // drag the droppable zone with it
         if (this.previousIndex < index) { index--; }; // because the dragged card takes a room
         if (upload) {
             $.post(this.api + 'move/', {
