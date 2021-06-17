@@ -132,7 +132,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['project'].queryset = Project.objects.for_user(self.context['user'])
+        self.fields['project'].queryset = Project.objects.for_user_write(self.context['user'])
 
     def get_parts_count(self, document):
         return document.parts.count()
