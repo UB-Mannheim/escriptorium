@@ -5,7 +5,9 @@
 {% block nav-docs-active %}active{% endblock %}
 
 {% block extra_nav %}
+{% if can_create_document %}
 <a href="{% url 'document-create' slug=project.slug %}" class="btn btn-success ml-auto mb-2">{% trans 'Create new Document' %}</a>
+{% endif %}
 
 {% if share_form %}
 <button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share this Project" %}"><i class="fas fa-share"></i></button>
@@ -19,13 +21,13 @@
       <tbody>
         {% for document in object_list %}
         <tr onclick="document.location='{% url 'document-images' pk=document.pk %}'" role="button">
-          <td>
-            {% with part=document.parts.first %}
-            {% if part %}
-            <img src="{{ part.image|thumbnail_url:'list' }}" />
-            {% endif %}
-            {% endwith %}
-          </td>
+            <td>
+                {% with part=document.parts.first %}
+                {% if part %}
+                <img src="{{ part.image|thumbnail_url:'list' }}" />
+                {% endif %}
+                {% endwith %}
+            </td>
           <th>
             {{ document.name }}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
@@ -37,7 +39,7 @@
             {% endwith %}</td>
           <td title="{% trans 'Last modified on' %}"><span class="text-muted"><small>{{ document.parts_updated_at|date }}</small></span></td>
           <td>
-            {% blocktrans with count=document.parts.count %}{{ count }} image(s).{% endblocktrans %}
+            {% blocktrans with count=document.parts_count %}{{ count }} image(s).{% endblocktrans %}
           </td>
           {% comment %}
           <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>

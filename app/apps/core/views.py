@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Max, Q, Count
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
@@ -41,7 +41,8 @@ class ProjectList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return (Project.objects
-                .for_user(self.request.user)
+                .for_user_read(self.request.user)
+                .annotate(documents_count=Count('documents'))
                 .select_related('owner'))
 
 
@@ -64,11 +65,17 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
+        self.project = (Project.objects
+                        .for_user_read(self.request.user)
+                        .get(slug=self.kwargs['slug']))
+
+        # Note: using subqueries for last edited part and first part (thumbnail)
+        # to lower the amount of queries will make the sql time sky rocket!
         return (Document.objects
                 .for_user(self.request.user)
                 .filter(project=self.project)
                 .annotate(parts_updated_at=Max('parts__updated_at'))
+                .annotate(parts_count=Count('parts'))
                 )
 
     def get_context_data(self, **kwargs):
@@ -77,6 +84,18 @@ class DocumentsList(LoginRequiredMixin, ListView):
         if self.project.owner == self.request.user:
             context['share_form'] = ProjectShareForm(instance=self.project,
                                                      request=self.request)
+
+            context['can_create_document'] = True
+        else:
+            # can only create a new document if the whole project as been shared
+            # not if some specific documents
+            try:
+                context['can_create_document'] = (Project.objects
+                                                  .for_user_write(self.request.user)
+                                                  .get(slug=self.kwargs['slug']))
+            except Project.DoesNotExist:
+                context['can_create_document'] = False
+
         return context
 
 
@@ -102,9 +121,7 @@ class DocumentMixin():
         obj = super().get_object()
         try:
             # we fetched the object already, now we check that the user has perms to edit it
-            (Document.objects
-             .filter(project__in=Project.objects.for_user(self.request.user))
-             .get(pk=obj.pk))
+            Document.objects.for_user(self.request.user).get(pk=obj.pk)
         except Document.DoesNotExist:
             raise PermissionDenied
         return obj
@@ -118,14 +135,24 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        form.initial = {'project': Project.objects.get(
-            slug=self.request.resolver_match.kwargs['slug'])}
+        form.initial = {'project': self.project}
         return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['metadata_form'] = self.get_metadata_formset()
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.project = (Project.objects
+                            .filter(Q(owner=request.user)
+                                    | (Q(shared_with_users=request.user)
+                                       | Q(shared_with_groups__in=request.user.groups.all())))
+                            .get(slug=self.request.resolver_match.kwargs['slug']))
+        except Project.DoesNotExist:
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
