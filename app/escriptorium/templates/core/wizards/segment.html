@@ -6,16 +6,15 @@
 {% endblock %}
 
 {% block wizard_fields %}
-
 <div class="form-group">
   <h5>{% trans "Select a model" %}</h5>
-  {% render_field process_form.seg_model class="js-proc-settings" %}
+  {% render_field segment_form.model class="js-proc-settings" %}
 </div>
 
 <div class="form-group">
-  {% render_field process_form.segmentation_steps %}
-  {% render_field process_form.text_direction %}
-  {% render_field process_form.override %}
+  {% render_field segment_form.segmentation_steps %}
+  {% render_field segment_form.text_direction %}
+  {% render_field segment_form.override %}
 </div>
 {% endblock %}
 

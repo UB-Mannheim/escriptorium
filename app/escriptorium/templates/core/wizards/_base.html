@@ -25,8 +25,6 @@
             </button>
             {% block wizard_help %}{% endblock %}
           </div>
-          <input type="hidden" name="document" value="{{ object.pk }}"/>
-          <input type="hidden" name="parts" value=""/>
           <input type="hidden" name="task" value="{{ proc }}"/>
           {% block wizard_fields %}{% endblock %}
         </div>
