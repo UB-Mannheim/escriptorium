@@ -79,7 +79,7 @@ services:
 
     # !!!!
     # example values here are given for 16 cores and 16g of memory keeping 2 cores and 1g of memory at all time
-    # for http & db assuming a low amount of concurent users <50
+    # for http & db assuming a low amount of concurrent users <50
 
     celery-main:
       restart: always

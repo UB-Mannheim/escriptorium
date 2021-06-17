@@ -339,7 +339,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_pagexml.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(413):  # theres a lot of lines in there
+            with self.assertNumQueries(413):  # there's a lot of lines in there
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })

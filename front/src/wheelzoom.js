@@ -139,7 +139,7 @@ export class WheelZoom {
 
             function scroll(event) {
                 // looks like it breaks on some configurations?
-                // if (event.altKey) return;  // suposed to move in history
+                // if (event.altKey) return;  // supposed to move in history
                 // if (event.ctrlKey) return;  // browser zoom
                 this.scrolling = target;
                 this.scrolled.bind(this)(event);
