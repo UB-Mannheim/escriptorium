@@ -319,12 +319,17 @@ class TrainMixin():
         self.fields['model'].queryset = (self.fields['model'].queryset
                                          .filter(owner=self.user))
 
+
+    @property
+    def model_job(self):
+        raise NotImplementedError
+
     def clean_model(self):
         model = self.cleaned_data['model']
         if model and model.training:
             raise AlreadyProcessingException
 
-        # TODO: should be created by the task too to prevent creating empty OcrModel instances
+        # TODO: Should be created by the task too to prevent creating empty OcrModel instances ?!
         if not model:
             model = OcrModel.objects.create(
                 owner=self.user,
@@ -334,7 +339,7 @@ class TrainMixin():
 
     def process(self):
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
-            document=self.parts[0].document,
+            document=self.document,
             ocr_model=self.cleaned_data.get('model'),
             defaults={'trained_on': timezone.now()}
         )
@@ -348,14 +353,19 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                    required=False)
 
+    @property
+    def model_job(self):
+        return OcrModel.MODEL_JOB_SEGMENT
+
     def clean(self):
         if len(self.cleaned_data.get('parts')) < 2:
             raise forms.ValidationError("Segmentation training requires at least 2 images.")
+        # check that we have lines
 
     def process(self):
         model = self.cleaned_data.get('model')
         model.segtrain(self.document,
-                       self.parts,
+                       self.cleaned_data.get('parts'),
                        user=self.user)
         super().process()
 
@@ -370,9 +380,18 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
+
+    def clean(self):
+        # check that we have data
+        pass
+
+    @property
+    def model_job(self):
+        return OcrModel.MODEL_JOB_RECOGNIZE
+
     def process(self):
         model = self.cleaned_data.get('model')
-        model.train(self.parts,
+        model.train(self.cleaned_data.get('parts'),
                     self.cleaned_data['transcription'],
                     user=self.user)
         super().process()
