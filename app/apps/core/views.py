@@ -27,7 +27,6 @@ from core.forms import (ProjectForm,
                         SegTrainForm,
                         RecTrainForm,
 
-                        DocumentProcessForm,
                         UploadImageForm,
                         ModelUploadForm,
                         ModelRightsForm)
@@ -203,9 +202,6 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['transcribe_form'] = TranscribeForm(self.object, self.request.user)
         context['segtrain_form'] = SegTrainForm(self.object, self.request.user)
         context['rectrain_form'] = RecTrainForm(self.object, self.request.user)
-
-        # todo get rid of dat
-        context['process_form'] = DocumentProcessForm(self.object, self.request.user)
 
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
