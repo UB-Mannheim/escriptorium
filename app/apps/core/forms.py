@@ -328,12 +328,16 @@ class TrainMixin():
         if model and model.training:
             raise AlreadyProcessingException
 
+        override = self.cleaned_data['override']
         # TODO: Should be created by the task too to prevent creating empty OcrModel instances ?!
         if not model:
             model = OcrModel.objects.create(
                 owner=self.user,
                 name=self.cleaned_data.get('model_name'),
                 job=self.model_job)
+        elif not override:
+            model = model.clone_for_training()
+
         return model
 
     def process(self):
@@ -351,6 +355,7 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model_name = forms.CharField(required=False)
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                    required=False)
+    override = forms.BooleanField(required=False, label="Overwrite existing model file")
 
     @property
     def model_job(self):
@@ -374,6 +379,7 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                    required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+    override = forms.BooleanField(required=False, label="Overwrite existing model file")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
