@@ -18,7 +18,7 @@ const nameInput = document.getElementById('id_name');
 let currentFileName = '';
 fileInput.onchange = function() {
     if (fileInput.files.length && (!nameInput.value || nameInput.value == currentFileName)) {
-        nameInput.value = fileInput.files[0].name;
+        nameInput.value = fileInput.files[0].name.split('.').slice(0, -1).join('.');
         currentFileName = nameInput.value;
     }
 };

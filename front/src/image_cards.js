@@ -563,15 +563,19 @@ export function bootImageCards(documentId) {
     });
 
     $('.process-part-form').submit(function(ev) {
-        $('input[name=parts]', $form).val(JSON.stringify(partCard.getSelectedPks()));
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');
         $('#'+proc+'-wizard').modal('hide');
+
+        let data = new FormData($form.get(0));
+        data.set('document', DOCUMENT_ID);
+        partCard.getSelectedPks().forEach(v => data.append('parts', v));
+
         $.ajax({
             url : $form.attr('action'),
             type: $form.attr('method'),
-            data : new FormData($form.get(0)),
+            data : data,
             processData: false,
             contentType: false
         }).done(function(data) {
