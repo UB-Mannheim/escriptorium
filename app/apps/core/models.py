@@ -16,7 +16,6 @@ from django.db import models, transaction
 from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import FileExtensionValidator
@@ -1116,8 +1115,11 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
+    # Note: we want a separate directory by model because
+    # kraken stores epochs file version as a fixed filename and we don't want to override them.
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.pk, slugify(fn), ext)
+    hash = str(uuid.uuid4())[:8]
+    return 'models/%s/%s%s' % (hash, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
