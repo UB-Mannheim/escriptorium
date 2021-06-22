@@ -346,11 +346,13 @@ class TrainMixin():
         raise NotImplementedError
 
     def clean(self):
-        model = self.cleaned_data['model']
+        cleaned_data = super().clean()
+
+        model = cleaned_data['model']
         if model and model.training:
             raise AlreadyProcessingException
 
-        override = self.cleaned_data['override']
+        override = cleaned_data['override']
         if model and model.owner != self.user and override:
             raise forms.ValidationError(
                 "You can't overwrite the existing file of a model you don't own."
@@ -358,12 +360,14 @@ class TrainMixin():
 
         # TODO: Should be created by the task too to prevent creating empty OcrModel instances ?!
         if not model:
-            self.cleaned_data['model'] = OcrModel.objects.create(
+            cleaned_data['model'] = OcrModel.objects.create(
                 owner=self.user,
                 name=self.cleaned_data.get('model_name'),
                 job=self.model_job)
         elif not override:
-            self.cleaned_data['model'] = model.clone_for_training(owner=self.user)
+            cleaned_data['model'] = model.clone_for_training(owner=self.user, name=self.cleaned_data.get('model_name'))
+
+        return cleaned_data
 
     def process(self):
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
@@ -391,6 +395,7 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
         if len(cleaned_data.get('parts')) < 2:
             raise forms.ValidationError("Segmentation training requires at least 2 images.")
         # check that we have lines
+        return cleaned_data
 
     def process(self):
         model = self.cleaned_data.get('model')
@@ -474,3 +479,4 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         if (not user and not group) or (user and group):
             self.add_error('user', 'You must either choose an user OR a group')
             self.add_error('group', 'You must either choose an user OR a group')
+        return cleaned_data

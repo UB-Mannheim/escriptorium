@@ -1145,7 +1145,7 @@ class OcrModel(Versioned, models.Model):
                                        related_name='ocr_models')
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
-    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
+    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training', 'parent')
     version_history_max_length = None  # keep em all
 
     public = models.BooleanField(default=False)
@@ -1163,11 +1163,11 @@ class OcrModel(Versioned, models.Model):
     def accuracy_percent(self):
         return self.training_accuracy * 100
 
-    def clone_for_training(self, owner):
+    def clone_for_training(self, owner=None, name=None):
         children_count = OcrModel.objects.filter(parent=self).count() + 2
         model = OcrModel.objects.create(
-            owner=owner,
-            name=self.name.split('.mlmodel')[0] + f'_v{children_count}.mlmodel',
+            owner=self.owner or owner,
+            name=name or self.name.split('.mlmodel')[0] + f'_v{children_count}',
             job=self.job,
             public=self.public,
             script=self.script,
