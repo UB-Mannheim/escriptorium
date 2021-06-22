@@ -16,7 +16,7 @@
       {% endif %}
     </th>
     <th>{% trans "Trained from" %}</th>
-    <th>{% trans "Training" %}</th>
+    <th>{% trans "Training Status" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
     <th>{% trans "Right" %}</th>
@@ -52,8 +52,8 @@
         <button type="submit" class="cancel-training btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
       </form>
     </td>
-    <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
-    <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
+    <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{% if model.accuracy_percent %}{{ model.accuracy_percent|floatformat:1 }}%{% else %}-{% endif %}</td>
+    <td title="{% trans "Number of errors/Total number of characters" %}">{% if model.training_total %}{{ model.training_errors }}/{{model.training_total}}{% else %}-{% endif %}</td>
     <td>
       {% if model.owner == request.user %}
       <span class="badge badge-pill badge-danger">Owner</span>
