@@ -26,4 +26,4 @@ Cf [Contributing to eScriptorium](https://gitlab.inria.fr/scripta/escriptorium/-
 - [Resilience](https://www.resilience-ri.eu/)
 - [Scripta](https://scripta.psl.eu/en/)
 - [Institut national de recherche en sciences et technologies du numérique (INRIA)](https://inria.fr/en)
-- [open Islamic Text Initiative (openITI)](https://www.openiti.org/)
+- [Open Islamicate Texts Initiative (OpenITI)](https://www.openiti.org/)
