@@ -278,8 +278,19 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
         ).distinct()
 
     def process(self):
+        model = self.cleaned_data.get('model')
+
+        if model:
+            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+                document=self.document,
+                ocr_model=model,
+                defaults={'executed_on': timezone.now()}
+            )
+            if not created:
+                ocr_model_document.executed_on = timezone.now()
+                ocr_model_document.save()
+
         for part in self.cleaned_data.get('parts'):
-            model = self.cleaned_data.get('model')
             part.task('segment',
                       user_pk=self.user.pk,
                       steps=self.cleaned_data.get('segmentation_steps'),
@@ -304,10 +315,21 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         ).distinct()
 
     def process(self):
+        model = self.cleaned_data.get('model')
+
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            document=self.document,
+            ocr_model=model,
+            defaults={'executed_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.executed_on = timezone.now()
+            ocr_model_document.save()
+
         for part in self.cleaned_data.get('parts'):
             part.task('transcribe',
                       user_pk=self.user.pk,
-                      model_pk=self.cleaned_data.get('model').pk)
+                      model_pk=model.pk)
 
 
 class TrainMixin():
@@ -315,26 +337,37 @@ class TrainMixin():
         super().__init__(*args, **kwargs)
 
         # Note: Only a owner should be able to train on top of an existing model
-        # but if a new name is chosen we can duplicate it so it's fine
+        # if the model is public, the user can only clone it (override=False)
         self.fields['model'].queryset = (self.fields['model'].queryset
-                                         .filter(owner=self.user))
+                                         .filter(Q(public=True) | Q(owner=self.user)))
 
     @property
     def model_job(self):
         raise NotImplementedError
 
-    def clean_model(self):
-        model = self.cleaned_data['model']
+    def clean(self):
+        cleaned_data = super().clean()
+
+        model = cleaned_data['model']
         if model and model.training:
             raise AlreadyProcessingException
 
+        override = cleaned_data['override']
+        if model and model.owner != self.user and override:
+            raise forms.ValidationError(
+                "You can't overwrite the existing file of a model you don't own."
+            )
+
         # TODO: Should be created by the task too to prevent creating empty OcrModel instances ?!
         if not model:
-            model = OcrModel.objects.create(
+            cleaned_data['model'] = OcrModel.objects.create(
                 owner=self.user,
                 name=self.cleaned_data.get('model_name'),
                 job=self.model_job)
-        return model
+        elif not override:
+            cleaned_data['model'] = model.clone_for_training(owner=self.user, name=self.cleaned_data.get('model_name'))
+
+        return cleaned_data
 
     def process(self):
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
@@ -351,15 +384,18 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model_name = forms.CharField(required=False)
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                    required=False)
+    override = forms.BooleanField(required=False, label="Overwrite existing model file")
 
     @property
     def model_job(self):
         return OcrModel.MODEL_JOB_SEGMENT
 
     def clean(self):
-        if len(self.cleaned_data.get('parts')) < 2:
+        cleaned_data = super().clean()
+        if len(cleaned_data.get('parts')) < 2:
             raise forms.ValidationError("Segmentation training requires at least 2 images.")
         # check that we have lines
+        return cleaned_data
 
     def process(self):
         model = self.cleaned_data.get('model')
@@ -374,6 +410,7 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                    required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
+    override = forms.BooleanField(required=False, label="Overwrite existing model file")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -442,3 +479,4 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         if (not user and not group) or (user and group):
             self.add_error('user', 'You must either choose an user OR a group')
             self.add_error('group', 'You must either choose an user OR a group')
+        return cleaned_data

@@ -18,6 +18,7 @@ from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
+from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -1146,10 +1147,12 @@ class OcrModel(Versioned, models.Model):
                                        related_name='ocr_models')
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
-    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
+    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training', 'parent')
     version_history_max_length = None  # keep em all
 
     public = models.BooleanField(default=False)
+
+    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('-version_updated_at',)
@@ -1161,6 +1164,28 @@ class OcrModel(Versioned, models.Model):
     @cached_property
     def accuracy_percent(self):
         return self.training_accuracy * 100
+
+    def clone_for_training(self, owner=None, name=None):
+        children_count = OcrModel.objects.filter(parent=self).count() + 2
+        model = OcrModel.objects.create(
+            owner=self.owner or owner,
+            name=name or self.name.split('.mlmodel')[0] + f'_v{children_count}',
+            job=self.job,
+            public=self.public,
+            script=self.script,
+            parent=self,
+        )
+        model.file = File(self.file, name=os.path.basename(self.file.name))
+        model.save()
+
+        if not model.public:
+            # Cloning rights to the new model
+            OcrModelRight.objects.bulk_create([
+                OcrModelRight(ocr_model=model, user=right.user, group=right.group)
+                for right in self.ocr_model_rights.all()
+            ])
+
+        return model
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
