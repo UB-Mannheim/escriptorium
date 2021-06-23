@@ -128,21 +128,6 @@ services:
       - 9090:9090
     links:
       - alertmanager:alertmanager
-
-  # cadvisor:
-  #   image: google/cadvisor:v0.24.1
-  #   command:
-  #     - '-port=8081'
-  #   ports:
-  #     - 8081:8081
-  #   volumes:
-  #     - /:/rootfs:ro
-  #     - /var/run:/var/run:rw
-  #     - /sys:/sys:ro
-  #     - /var/lib/docker/:/var/lib/docker:ro
-  #   restart: always
-  #   deploy:
-  #     mode: global
   
   alertmanager:
     image: prom/alertmanager:v0.18.0
