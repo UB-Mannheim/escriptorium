@@ -23,7 +23,7 @@ function generateUniqueId() { return lastId++; };
 
 function polyEq(poly1, poly2) {
     // compares polygons point by point
-    let noPoly = (poly1 == null && poly2 == null);  // note: null is a singleton.. so we have to compare them separatly
+    let noPoly = (poly1 == null && poly2 == null);  // note: null is a singleton.. so we have to compare them separately
     let samePoly = (poly1 && poly2 &&
                     poly1.length != undefined && poly1.length === poly2.length &&
                     poly1.every((pt, index) => pt[0] === poly2[index][0] && pt[1] === poly2[index][1]));
@@ -82,7 +82,7 @@ class SegmenterRegion {
 
     updateDataFromCanvas() {
         let previous = {polygon: this.polygon};
-        this.polygonPath.reduce();  // removes unecessary segments
+        this.polygonPath.reduce();  // removes unnecessary segments
         this.polygon = this.polygonPath.segments.map(s => [Math.round(s.point.x),
                                                            Math.round(s.point.y)]);
         if (!polyEq(previous.polygon, this.polygon)) {
@@ -318,7 +318,7 @@ class SegmenterLine {
     updateDataFromCanvas() {
         let previous = {baseline: this.baseline, mask: this.mask};
         if (this.baselinePath) {
-            this.baselinePath.reduce();  // removes unecessary segments
+            this.baselinePath.reduce();  // removes unnecessary segments
             this.baseline = this.baselinePath.segments.map(s => [Math.round(s.point.x), Math.round(s.point.y)]);
         }
         if (this.maskPath) {
@@ -1478,7 +1478,7 @@ export class Segmenter {
             return this.createLine(null, line.baseline, line.mask,
                                    region, line.type, context);
         } else {
-            console.log('EDITOR SKIPING invalid line: ', line);
+            console.log('EDITOR SKIPPING invalid line: ', line);
             return null;
         }
     }
@@ -2019,16 +2019,16 @@ export class Segmenter {
                 newPath.segments.forEach(s=>region.polygonPath.add(s));
                 newPath.remove();
             } else if (intersections.length > 2) {
-                let coumpound = region.polygonPath.subtract(path, {insert: true});
+                let compound = region.polygonPath.subtract(path, {insert: true});
                 region.polygonPath.removeSegments();
-                coumpound.children[0].segments.forEach(s=>region.polygonPath.add(s));
-                for (let i=1;i<coumpound.children.length;i++) {
-                    let newRegion = this.createRegion(null, coumpound.children[i].segments,
+                compound.children[0].segments.forEach(s=>region.polygonPath.add(s));
+                for (let i=1;i<compound.children.length;i++) {
+                    let newRegion = this.createRegion(null, compound.children[i].segments,
                                                       region.type, null, false);
                     newRegion.updateDataFromCanvas();
-                    coumpound.children[i].remove();
+                    compound.children[i].remove();
                 }
-                coumpound.remove();
+                compound.remove();
             }
             region.refresh();
             region.updateDataFromCanvas();
@@ -2065,7 +2065,7 @@ export class Segmenter {
                         }
                     } else {
                         let newMask = null;
-                        // calculate the normals before spliting
+                        // calculate the normals before splitting
                         let normal1 = line.baselinePath.getNormalAt(intersections[i].offset);
                         let normal2 = line.baselinePath.getNormalAt(intersections[i+1].offset);
                         let split = line.baselinePath.splitAt(intersections[i+1]);
@@ -2212,7 +2212,7 @@ export class Segmenter {
     }
 
     consumeUpdateQueue() {
-        // make copys to void race conditions
+        // make copies to void race conditions
         let lines = this.updateQueue.lines.map(l=>l.get());
         let regions = this.updateQueue.regions.map(r=>r.get());
 

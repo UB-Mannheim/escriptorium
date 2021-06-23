@@ -16,9 +16,9 @@ from django.db import models, transaction
 from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
+from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -652,7 +652,7 @@ class DocumentPart(OrderedModel):
 
     def binarize(self, threshold=None):
         fname = os.path.basename(self.image.file.name)
-        # should be formated to png already by by lossless_compression but better safe than sorry
+        # should be formatted to png already by lossless_compression but better safe than sorry
         form = None
         f_, ext = os.path.splitext(self.image.file.name)
         if ext[1] in ['.jpg', '.jpeg', '.JPG', '.JPEG', '']:
@@ -921,7 +921,7 @@ class DocumentPart(OrderedModel):
 
     def crop(self, x1, y1, x2, y2):
         """
-        Crops the image ouside the rectangle defined
+        Crops the image outside the rectangle defined
         by top left (x1, y1) and bottom right (x2, y2) points.
         Moves the lines and regions accordingly.
         """
@@ -1148,8 +1148,11 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
+    # Note: we want a separate directory by model because
+    # kraken stores epochs file version as a fixed filename and we don't want to override them.
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.owner.pk, slugify(fn), ext)
+    hash = str(uuid.uuid4())[:8]
+    return 'models/%s/%s%s' % (hash, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1176,10 +1179,12 @@ class OcrModel(Versioned, models.Model):
                                        related_name='ocr_models')
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
-    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
+    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training', 'parent')
     version_history_max_length = None  # keep em all
 
     public = models.BooleanField(default=False)
+
+    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('-version_updated_at',)
@@ -1191,6 +1196,28 @@ class OcrModel(Versioned, models.Model):
     @cached_property
     def accuracy_percent(self):
         return self.training_accuracy * 100
+
+    def clone_for_training(self, owner=None, name=None):
+        children_count = OcrModel.objects.filter(parent=self).count() + 2
+        model = OcrModel.objects.create(
+            owner=self.owner or owner,
+            name=name or self.name.split('.mlmodel')[0] + f'_v{children_count}',
+            job=self.job,
+            public=self.public,
+            script=self.script,
+            parent=self,
+        )
+        model.file = File(self.file, name=os.path.basename(self.file.name))
+        model.save()
+
+        if not model.public:
+            # Cloning rights to the new model
+            OcrModelRight.objects.bulk_create([
+                OcrModelRight(ocr_model=model, user=right.user, group=right.group)
+                for right in self.ocr_model_rights.all()
+            ])
+
+        return model
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
@@ -1225,7 +1252,7 @@ class OcrModel(Versioned, models.Model):
         return super().pack(**kwargs)
 
     def revert(self, revision):
-        # we want the file to be swaped but the filename to stay the same
+        # we want the file to be swapped but the filename to stay the same
         for version in self.versions:
             if version['revision'] == revision:
                 current_filename = self.file.path

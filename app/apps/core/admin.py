@@ -52,7 +52,7 @@ class ScriptAdmin(admin.ModelAdmin):
 
 
 class OcrModelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'job', 'owner', 'script', 'training', 'public']
+    list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
     inlines = (OcrModelDocumentInline, OcrModelRightInline)
 
 

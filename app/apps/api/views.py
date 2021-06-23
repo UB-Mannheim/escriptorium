@@ -115,7 +115,7 @@ class DocumentViewSet(ModelViewSet):
             try:
                 form.process()
             except ParseError:
-                return self.form_error("Incorrectly formated file, couldn't parse it.")
+                return self.form_error("Incorrectly formatted file, couldn't parse it.")
             return Response({'status': 'ok'})
         else:
             return self.form_error(json.dumps(form.errors))

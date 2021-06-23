@@ -60,14 +60,14 @@ export default Vue.extend({
         }
     },
     created() {
-        // vue.js quirck, have to dinamically create the event handler
+        // vue.js quirck, have to dynamically create the event handler
         // call save every 10 seconds after last change
         this.debouncedSave = _.debounce(function() {
             this.save();
         }.bind(this), 10000);
     },
     mounted() {
-        // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width wont be bigger than other, especially for ttb text:
+        // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width won't be bigger than other, especially for ttb text:
         document.querySelector('#diplo-panel').style.width = document.querySelector('#diplo-panel').clientWidth + 'px';
 
         Vue.nextTick(function() {
@@ -124,7 +124,7 @@ export default Vue.extend({
             return div;
         },
         constrainLineNumber() {
-            // add lines untill we have enough of them
+            // add lines until we have enough of them
             while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
                 this.appendLine();
             }
@@ -314,10 +314,10 @@ export default Vue.extend({
                     }
                 }
 
-                //  get current cursor position withing the line div tag
+                //  get current cursor position within the line div tag
                 let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur             
 
-                // store previous and next text in the line to it / for a selection wihtin on line:
+                // store previous and next text in the line to it / for a selection within on line:
                 textBeforeCursor = refNode.textContent.substring(0, caretPos);
                 textAfterCursor = refNode.textContent.substring(caretPos, refNode.textContent.length);
 

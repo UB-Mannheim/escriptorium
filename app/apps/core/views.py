@@ -16,9 +16,22 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, OcrModelRight, AlreadyProcessingException)
-from core.forms import (ProjectForm, DocumentForm, MetadataFormSet,
-                        ProjectShareForm, DocumentShareForm,
-                        UploadImageForm, DocumentProcessForm, ModelUploadForm, ModelRightsForm)
+
+from core.forms import (ProjectForm,
+                        DocumentForm,
+                        MetadataFormSet,
+                        ProjectShareForm,
+                        DocumentShareForm,
+
+                        BinarizeForm,
+                        SegmentForm,
+                        TranscribeForm,
+                        SegTrainForm,
+                        RecTrainForm,
+
+                        UploadImageForm,
+                        ModelUploadForm,
+                        ModelRightsForm)
 from imports.forms import ImportForm, ExportForm
 
 
@@ -217,7 +230,14 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['upload_form'] = UploadImageForm(document=self.object)
-        context['process_form'] = DocumentProcessForm(self.object, self.request.user)
+
+        # process forms
+        context['binarize_form'] = BinarizeForm(self.object, self.request.user)
+        context['segment_form'] = SegmentForm(self.object, self.request.user)
+        context['transcribe_form'] = TranscribeForm(self.object, self.request.user)
+        context['segtrain_form'] = SegTrainForm(self.object, self.request.user)
+        context['rectrain_form'] = RecTrainForm(self.object, self.request.user)
+
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
         return context
@@ -290,12 +310,27 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             document = self.get_document()
-        except (Document.DoesNotExist, DocumentPart.DoesNotExist):
+        except Document.DoesNotExist:
             return HttpResponse(json.dumps({'status': 'Not Found'}),
                                 status=404, content_type="application/json")
 
-        form = DocumentProcessForm(document, self.request.user,
-                                   self.request.POST, self.request.FILES)
+        task = self.request.POST.get('task')
+        if task == 'binarize':
+            form_class = BinarizeForm
+        elif task == 'segment':
+            form_class = SegmentForm
+        elif task == 'transcribe':
+            form_class = TranscribeForm
+        elif task == 'segtrain':
+            form_class = SegTrainForm
+        elif task == 'train':
+            form_class = RecTrainForm
+
+        form = form_class(document,
+                          self.request.user,
+                          self.request.POST,
+                          self.request.FILES)
+
         if form.is_valid():
             try:
                 form.process()

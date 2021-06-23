@@ -140,7 +140,7 @@ class TransferGroupOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessage
         return reverse('profile-team-list')
 
     def get_success_message(self, data):
-        return _('Successfully transfered ownership to {user}.').format(
+        return _('Successfully transferred ownership to {user}.').format(
             user=data.get('user'))
 
     def form_invalid(self, forms):

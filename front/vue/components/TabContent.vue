@@ -145,7 +145,7 @@ export default {
     },
     methods: {
         prefetchImage(src, callback) {
-            // this is the panel's responsability to call this!
+            // this is the panel's responsibility to call this!
             let img = new Image();
             img.addEventListener('load', function() {
                 if (callback) callback(src);
