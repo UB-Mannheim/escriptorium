@@ -365,7 +365,8 @@ class TrainMixin():
                 name=self.cleaned_data.get('model_name'),
                 job=self.model_job)
         elif not override:
-            cleaned_data['model'] = model.clone_for_training(owner=self.user, name=self.cleaned_data.get('model_name'))
+            cleaned_data['model'] = model.clone_for_training(
+                self.user, name=self.cleaned_data.get('model_name'))
 
         return cleaned_data
 

@@ -1165,15 +1165,16 @@ class OcrModel(Versioned, models.Model):
     def accuracy_percent(self):
         return self.training_accuracy * 100
 
-    def clone_for_training(self, owner=None, name=None):
+    def clone_for_training(self, owner, name=None):
         children_count = OcrModel.objects.filter(parent=self).count() + 2
         model = OcrModel.objects.create(
             owner=self.owner or owner,
             name=name or self.name.split('.mlmodel')[0] + f'_v{children_count}',
             job=self.job,
-            public=self.public,
+            public=False,
             script=self.script,
             parent=self,
+            versions=[]
         )
         model.file = File(self.file, name=os.path.basename(self.file.name))
         model.save()

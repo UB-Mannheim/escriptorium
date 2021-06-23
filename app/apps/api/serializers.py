@@ -411,7 +411,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
-        
+
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):
             raise serializers.ValidationError(
@@ -433,7 +433,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 file=file_
             )
         elif not override:
-            model = model.clone_for_training(owner=self.user)
+            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -494,7 +494,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
                 file=file_)
         elif not override:
-            model = model.clone_for_training(owner=self.user)
+            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
