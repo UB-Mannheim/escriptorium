@@ -6,8 +6,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Max, Q
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.db.models import Max, Q, Count
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from django.urls import reverse
@@ -16,10 +16,12 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 
 from core.models import (Project, Document, DocumentPart, Metadata,
                          OcrModel, OcrModelRight, AlreadyProcessingException)
+
 from core.forms import (ProjectForm,
                         DocumentForm,
                         MetadataFormSet,
                         ProjectShareForm,
+                        DocumentShareForm,
 
                         BinarizeForm,
                         SegmentForm,
@@ -52,7 +54,8 @@ class ProjectList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return (Project.objects
-                .for_user(self.request.user)
+                .for_user_read(self.request.user)
+                .annotate(documents_count=Count('documents'))
                 .select_related('owner'))
 
 
@@ -75,18 +78,40 @@ class DocumentsList(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        self.project = Project.objects.for_user(self.request.user).get(slug=self.kwargs['slug'])
+        self.project = (Project.objects
+                        .get(slug=self.kwargs['slug']))
+        try:
+            Project.objects.for_user_read(self.request.user).get(pk=self.project.pk)
+        except Project.DoesNotExist:
+            raise PermissionDenied
+
+        # Note: using subqueries for last edited part and first part (thumbnail)
+        # to lower the amount of queries will make the sql time sky rocket!
         return (Document.objects
-                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .for_user(self.request.user)
                 .filter(project=self.project)
-                .select_related('owner', 'main_script')
-                .annotate(parts_updated_at=Max('parts__updated_at')))
+                .annotate(parts_updated_at=Max('parts__updated_at'))
+                .annotate(parts_count=Count('parts'))
+                )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
         if self.project.owner == self.request.user:
-            context['share_form'] = ProjectShareForm(instance=self.project, request=self.request)
+            context['share_form'] = ProjectShareForm(instance=self.project,
+                                                     request=self.request)
+
+            context['can_create_document'] = True
+        else:
+            # can only create a new document if the whole project as been shared
+            # not if some specific documents
+            try:
+                context['can_create_document'] = (Project.objects
+                                                  .for_user_write(self.request.user)
+                                                  .get(slug=self.kwargs['slug']))
+            except Project.DoesNotExist:
+                context['can_create_document'] = False
+
         return context
 
 
@@ -112,9 +137,7 @@ class DocumentMixin():
         obj = super().get_object()
         try:
             # we fetched the object already, now we check that the user has perms to edit it
-            (Document.objects
-             .filter(project__in=Project.objects.for_user(self.request.user))
-             .get(pk=obj.pk))
+            Document.objects.for_user(self.request.user).get(pk=obj.pk)
         except Document.DoesNotExist:
             raise PermissionDenied
         return obj
@@ -128,14 +151,24 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        form.initial = {'project': Project.objects.get(
-            slug=self.request.resolver_match.kwargs['slug'])}
+        form.initial = {'project': self.project}
         return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['metadata_form'] = self.get_metadata_formset()
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.project = (Project.objects
+                            .filter(Q(owner=request.user)
+                                    | (Q(shared_with_users=request.user)
+                                       | Q(shared_with_groups__in=request.user.groups.all())))
+                            .get(slug=self.request.resolver_match.kwargs['slug']))
+        except Project.DoesNotExist:
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -165,6 +198,11 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         context['can_publish'] = self.object.owner == self.request.user
         if 'metadata_form' not in kwargs:
             context['metadata_form'] = self.get_metadata_formset(instance=self.object)
+
+        if self.object.owner == self.request.user:
+            context['share_form'] = DocumentShareForm(instance=self.object,
+                                                      request=self.request)
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -208,6 +246,43 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         return context
 
 
+class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Document
+    form_class = DocumentShareForm
+    success_message = _("Document shared successfully!")
+    http_method_names = ('post',)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('document-update', kwargs={'pk': self.object.pk})
+
+    def get_queryset(self):
+        return Document.objects.filter(owner=self.request.user)
+
+
+class DeleteDocumentUserShare(LoginRequiredMixin, View):
+    http_method_names = ('post',)
+
+    def post(self, *args, **kwargs):
+        try:
+            document = Document.objects.get(pk=self.request.POST['document'])
+        except KeyError:
+            raise HttpResponseBadRequest
+
+        document.shared_with_users.remove(self.request.user)
+        return HttpResponseRedirect(self.get_success_url(document))
+
+    def get_success_url(self, document):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('documents-list', kwargs={'slug': document.project.slug})
+
+
 class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Project
     form_class = ProjectShareForm
@@ -223,7 +298,26 @@ class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return reverse('documents-list', kwargs={'slug': self.object.slug})
 
     def get_queryset(self):
-        return Project.objects.for_user(self.request.user).select_related('owner')
+        return Project.objects.filter(owner=self.request.user)
+
+
+class DeleteProjectUserShare(LoginRequiredMixin, View):
+    http_method_names = ('post',)
+
+    def post(self, *args, **kwargs):
+        try:
+            project = Project.objects.get(pk=self.request.POST['project'])
+        except KeyError:
+            raise HttpResponseBadRequest
+
+        project.shared_with_users.remove(self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('projects-list')
 
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

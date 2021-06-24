@@ -291,6 +291,9 @@ LOGGING = {
             'handlers': ['django.server'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['django.server'],
         }
     },
 }

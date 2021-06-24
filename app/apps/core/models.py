@@ -136,13 +136,29 @@ class DocumentMetadata(models.Model):
 
 
 class ProjectManager(models.Manager):
-    def for_user(self, user):
-        # return the list of editable projects
-        # Note: Monitor this query
-        return (Project.objects
+    def for_user_write(self, user):
+        # return the list of EDITABLE projects
+        # allows to add documents to it
+        return (self
                 .filter(Q(owner=user)
                         | (Q(shared_with_users=user)
-                           | Q(shared_with_groups__in=user.groups.all())))
+                           | Q(shared_with_groups__user=user)))
+                .prefetch_related('shared_with_users')
+                .prefetch_related('shared_with_groups')
+                .distinct())
+
+    def for_user_read(self, user):
+        # return the list of VIEWABLE projects
+        # Note: Monitor this query
+        return (self
+                .filter(Q(owner=user)
+                        | (Q(shared_with_users=user)
+                           | Q(shared_with_groups__user=user))
+                        | (Q(documents__shared_with_users=user)
+                           | Q(documents__shared_with_groups__user=user))
+
+                        )
+                .prefetch_related('shared_with_users')
                 .prefetch_related('shared_with_groups')
                 .distinct())
 
@@ -193,7 +209,17 @@ class DocumentManager(models.Manager):
         return super().get_queryset().select_related('typology')
 
     def for_user(self, user):
-        return Document.objects.filter(project__in=Project.objects.for_user(user))
+        return (Document.objects
+                .filter(Q(owner=user)
+                        | (Q(project__shared_with_users=user)
+                           | Q(project__shared_with_groups__user=user))
+                        | (Q(shared_with_users=user)
+                           | Q(shared_with_groups__user=user)))
+                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .prefetch_related('shared_with_groups', 'shared_with_users',
+                                  'transcriptions')
+                .select_related('typology', 'owner')
+                .distinct())
 
 
 class Document(models.Model):
@@ -239,6 +265,13 @@ class Document(models.Model):
     project = models.ForeignKey(Project,
                                 on_delete=models.CASCADE,
                                 related_name='documents')
+
+    shared_with_users = models.ManyToManyField(User, blank=True,
+                                               verbose_name=_("Share with users"),
+                                               related_name='shared_documents')
+    shared_with_groups = models.ManyToManyField(Group, blank=True,
+                                                verbose_name=_("Share with teams"),
+                                                related_name='shared_documents')
 
     objects = DocumentManager()
 
