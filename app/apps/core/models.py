@@ -216,7 +216,8 @@ class DocumentManager(models.Manager):
                         | (Q(shared_with_users=user)
                            | Q(shared_with_groups__user=user)))
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
-                .prefetch_related('shared_with_groups', 'transcriptions')
+                .prefetch_related('shared_with_groups', 'shared_with_users',
+                                  'transcriptions')
                 .select_related('typology', 'owner')
                 .distinct())
 

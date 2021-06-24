@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, Q, Count
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from django.urls import reverse
@@ -79,8 +79,11 @@ class DocumentsList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         self.project = (Project.objects
-                        .for_user_read(self.request.user)
                         .get(slug=self.kwargs['slug']))
+        try:
+            Project.objects.for_user_read(self.request.user).get(pk=self.project.pk)
+        except Project.DoesNotExist:
+            raise PermissionDenied
 
         # Note: using subqueries for last edited part and first part (thumbnail)
         # to lower the amount of queries will make the sql time sky rocket!
@@ -261,6 +264,25 @@ class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return Document.objects.filter(owner=self.request.user)
 
 
+class DeleteDocumentUserShare(LoginRequiredMixin, View):
+    http_method_names = ('post',)
+
+    def post(self, *args, **kwargs):
+        try:
+            document = Document.objects.get(pk=self.request.POST['document'])
+        except KeyError:
+            raise HttpResponseBadRequest
+
+        document.shared_with_users.remove(self.request.user)
+        return HttpResponseRedirect(self.get_success_url(document))
+
+    def get_success_url(self, document):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('documents-list', kwargs={'slug': document.project.slug})
+
+
 class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Project
     form_class = ProjectShareForm
@@ -277,6 +299,25 @@ class ShareProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user)
+
+
+class DeleteProjectUserShare(LoginRequiredMixin, View):
+    http_method_names = ('post',)
+
+    def post(self, *args, **kwargs):
+        try:
+            project = Project.objects.get(pk=self.request.POST['project'])
+        except KeyError:
+            raise HttpResponseBadRequest
+
+        project.shared_with_users.remove(self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('projects-list')
 
 
 class PublishDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

@@ -18,7 +18,9 @@ from core.views import (Home,
                         ModelRightDelete,
                         PublishDocument,
                         ShareProject,
+                        DeleteProjectUserShare,
                         ShareDocument,
+                        DeleteDocumentUserShare,
                         DocumentPartsProcessAjax,
                         ModelUpload)
 
@@ -31,6 +33,7 @@ urlpatterns = [
     path('project/<str:slug>/documents/', DocumentsList.as_view(), name='documents-list'),
     path('project/<str:slug>/document/create/', CreateDocument.as_view(), name='document-create'),
     path('project/<int:pk>/share/', ShareProject.as_view(), name='project-share'),
+    path('project/delete_share/', DeleteProjectUserShare.as_view(), name='delete-project-share'),
 
     # path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
     path('document/<int:pk>/edit/', UpdateDocument.as_view(), name='document-update'),
@@ -48,6 +51,7 @@ urlpatterns = [
     path('document/<int:document_pk>/models/', DocumentModels.as_view(), name='document-models'),
     path('document/<int:pk>/publish/', PublishDocument.as_view(), name='document-publish'),
     path('document/<int:pk>/share/', ShareDocument.as_view(), name='document-share'),
+    path('document/delete_share/', DeleteDocumentUserShare.as_view(), name='delete-document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(),
          name='document-parts-process'),
 
