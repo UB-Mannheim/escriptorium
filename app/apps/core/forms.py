@@ -57,7 +57,7 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = Document
-        fields = ['project', 'name', 'read_direction', 'main_script',
+        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
                   'valid_block_types', 'valid_line_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,

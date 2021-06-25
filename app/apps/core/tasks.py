@@ -148,6 +148,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
+    Document = apps.get_model('core', 'Document')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
@@ -167,9 +168,10 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         send_event('document', document_pk, "training:start", {
             "id": model.pk,
         })
-        qs = DocumentPart.objects.filter(pk__in=part_pks)
+        qs = DocumentPart.objects.filter(pk__in=part_pks).prefetch_related('lines')
 
-        ground_truth = list(qs.prefetch_related('lines'))
+        ground_truth = list(qs)
+        topline = ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
@@ -194,7 +196,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             augment=True,
             resize='both',
             hyper_params={'epochs': 20},
-            load_hyper_parameters=True)
+            load_hyper_parameters=True,
+            topline=topline
+        )
 
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)

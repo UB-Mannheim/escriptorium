@@ -237,6 +237,12 @@ class Document(models.Model):
         (READ_DIRECTION_LTR, _("Left to right")),
         (READ_DIRECTION_RTL, _("Right to left")),
     )
+    LINE_OFFSET_BASELINE = 0
+    LINE_OFFSET_TOPLINE = 1
+    LINE_OFFSET_CHOICES = (
+        (LINE_OFFSET_BASELINE, _('Baseline')),
+        (LINE_OFFSET_TOPLINE, _('Topline'))
+    )
 
     name = models.CharField(max_length=512)
 
@@ -251,11 +257,17 @@ class Document(models.Model):
         default=READ_DIRECTION_LTR,
         help_text=_("The read direction describes the order of the elements in the document, in opposition with the text direction which describes the order of the words in a line and is set by the script.")
     )
-    typology = models.ForeignKey(DocumentType, null=True, blank=True, on_delete=models.SET_NULL)
+    line_offset = models.PositiveSmallIntegerField(choices=LINE_OFFSET_CHOICES,
+                                                   default=LINE_OFFSET_BASELINE,
+                                                   help_text=_("The position of the line relative to the polygon."))
+    typology = models.ForeignKey(DocumentType, null=True,
+                                 blank=True, on_delete=models.SET_NULL)
 
     # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
-    valid_block_types = models.ManyToManyField(BlockType, blank=True, related_name='valid_in')
-    valid_line_types = models.ManyToManyField(LineType, blank=True, related_name='valid_in')
+    valid_block_types = models.ManyToManyField(BlockType, blank=True,
+                                               related_name='valid_in')
+    valid_line_types = models.ManyToManyField(LineType, blank=True,
+                                              related_name='valid_in')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -845,7 +857,9 @@ class DocumentPart(OrderedModel):
                 im,
                 [line.baseline],
                 suppl_obj=context,
-                scale=(1200, 0))
+                scale=(1200, 0),
+                topline=self.document.line_offset == Document.LINE_OFFSET_TOPLINE
+            )
             if mask[0]:
                 line.mask = mask[0]
                 line.save()
