@@ -22,7 +22,7 @@ fi
 IMAGE_TAG="$CI_REGISTRY_IMAGE:$VERSION"
 
 cd $CI_PROJECT_DIR
-docker build . -f Dockerfile -t "$IMAGE_TAG"
+docker build . -f Dockerfile -t "$IMAGE_TAG" --build-arg VERSION_DATE=$(git tag | sort -V | tail -1)
 
 if [ -n "$CI_REGISTRY" ] && [ "$CI_COMMIT_BRANCH" = "master" -o -n "$CI_COMMIT_TAG" ]; then
 	docker push "$IMAGE_TAG"
