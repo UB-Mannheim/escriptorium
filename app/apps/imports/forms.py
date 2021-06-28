@@ -7,7 +7,8 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
 from bootstrap.forms import BootstrapFormMixin
-from core.models import Transcription
+
+from core.models import Transcription, DocumentPart
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
@@ -127,7 +128,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         (TEXT_FORMAT, 'Text'),
         (PAGEXML_FORMAT, 'Pagexml')
     )
-    parts = forms.CharField()
+    parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
     include_images = forms.BooleanField(
@@ -140,12 +141,13 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         self.user = user
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def clean_parts(self):
-        pks = json.loads(self.data.get('parts'))
-        if len(pks) < 1:
+        parts = self.cleaned_data['parts']
+        if len(parts) < 1:
             raise forms.ValidationError(_("Select at least one image to export."))
-        return pks
+        return parts
 
     def process(self):
         parts = self.cleaned_data['parts']
@@ -156,6 +158,8 @@ class ExportForm(BootstrapFormMixin, forms.Form):
             user=self.user,
             label=_('Export %(document_name)s') % {
                 'document_name': self.document.name})
+
         document_export.delay(file_format, self.user.pk, self.document.pk,
-                              parts, transcription.pk, report.pk,
+                              list(parts.values_list('pk', flat=True)),
+                              transcription.pk, report.pk,
                               include_images=self.cleaned_data['include_images'])
