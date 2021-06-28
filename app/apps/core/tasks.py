@@ -10,7 +10,7 @@ from itertools import groupby
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
@@ -397,6 +397,7 @@ def train_(qs, document, transcription, model=None, user=None):
     best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
     shutil.copy(best_version, model.file.path)
 
+
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
     if user_pk:
@@ -426,7 +427,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
         qs = (LineTranscription.objects
               .filter(transcription=transcription,
                       line__document_part__pk__in=part_pks)
-              .exclude(content__isnull=True))
+              .exclude(Q(content='') | Q(content=None)))
         train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
         send_event('document', document.pk, "training:error", {

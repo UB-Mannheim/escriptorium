@@ -264,6 +264,10 @@ LOGGING = {
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
+        'console': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
