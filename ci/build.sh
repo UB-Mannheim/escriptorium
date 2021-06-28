@@ -24,9 +24,9 @@ IMAGE_TAG="$CI_REGISTRY_IMAGE:$VERSION"
 cd $CI_PROJECT_DIR
 
 # Best strategy for building those 3 images? Is letting Docker use cache ok?!
-docker build . -f app/Dockerfile -t "$CI_REGISTRY_IMAGE/base_escriptorium:$VERSION"
-docker build . -f nginx/Dockerfile -t "$CI_REGISTRY_IMAGE/nginx:$VERSION"
-docker build . -f exim/Dockerfile -t "$CI_REGISTRY_IMAGE/mail:$VERSION"
+docker build app/ -t "$CI_REGISTRY_IMAGE/base_escriptorium:$VERSION"
+docker build nginx/ -t "$CI_REGISTRY_IMAGE/nginx:$VERSION"
+docker build exim/ -t "$CI_REGISTRY_IMAGE/mail:$VERSION"
 
 docker build . -f Dockerfile -t "$IMAGE_TAG" --build-arg VERSION_DATE=$(git tag | sort -V | tail -1)
 
