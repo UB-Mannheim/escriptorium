@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('auth', '0011_update_proxy_permissions'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0049_auto_20210526_1517'),
+        ('core', '0050_ocrmodel_parent'),
     ]
 
     operations = [
