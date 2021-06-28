@@ -30,12 +30,6 @@ def forwards(apps, schema_editor):
             make_slug(proj, Project)
         # move documents into projects
         user.document_set.update(project=proj)
-        # move share from docs to created projects
-        for doc in user.document_set.all():
-            for share in doc.shared_with_users.all():
-                proj.shared_with_users.add(share)
-            for share in doc.shared_with_groups.all():
-                proj.shared_with_groups.add(share)
 
         # shared to draft
         user.document_set.filter(workflow_state=1).update(workflow_state=0)
@@ -50,12 +44,6 @@ def forwards(apps, schema_editor):
     for doc in Document.objects.filter(owner=None):
         doc.project = proj
         doc.save()
-        # move share from docs to created projects
-        for doc in user.document_set.all():
-            for share in doc.shared_with_users.all():
-                proj.shared_with_users.add(share)
-            for share in doc.shared_with_groups.all():
-                proj.shared_with_groups.add(share)
 
 
 def backwards(apps, schema_editor):
