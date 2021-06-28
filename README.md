@@ -20,3 +20,10 @@ Two options, [install with Docker](https://gitlab.inria.fr/scripta/escriptorium/
 
 ## Contributing
 Cf [Contributing to eScriptorium](https://gitlab.inria.fr/scripta/escriptorium/-/wikis/contributing).
+
+## Current contributors includes:
+- [École Pratique des Hautes Études (EPHE)](https://www.ephe.psl.eu)
+- [Resilience](https://www.resilience-ri.eu/)
+- [Scripta](https://scripta.psl.eu/en/)
+- [Institut national de recherche en sciences et technologies du numérique (INRIA)](https://inria.fr/en)
+- [Open Islamicate Texts Initiative (OpenITI)](https://www.openiti.org/)

@@ -105,7 +105,7 @@ export default {
             }
         }.bind(this));
 
-        // catch background emited events when masks are recalculated
+        // catch background emitted events when masks are recalculated
         let $alertsContainer = $('#alerts-container');
         $alertsContainer.on('part:mask', function(ev, data) {
             data.lines.forEach(function(lineData) {

@@ -16,9 +16,9 @@ from django.db import models, transaction
 from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
+from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -42,9 +42,9 @@ from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
 from users.consumers import send_event
+from users.models import User
 
 redis_ = get_redis_connection()
-User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -136,13 +136,29 @@ class DocumentMetadata(models.Model):
 
 
 class ProjectManager(models.Manager):
-    def for_user(self, user):
-        # return the list of editable projects
-        # Note: Monitor this query
-        return (Project.objects
+    def for_user_write(self, user):
+        # return the list of EDITABLE projects
+        # allows to add documents to it
+        return (self
                 .filter(Q(owner=user)
                         | (Q(shared_with_users=user)
-                           | Q(shared_with_groups__in=user.groups.all())))
+                           | Q(shared_with_groups__user=user)))
+                .prefetch_related('shared_with_users')
+                .prefetch_related('shared_with_groups')
+                .distinct())
+
+    def for_user_read(self, user):
+        # return the list of VIEWABLE projects
+        # Note: Monitor this query
+        return (self
+                .filter(Q(owner=user)
+                        | (Q(shared_with_users=user)
+                           | Q(shared_with_groups__user=user))
+                        | (Q(documents__shared_with_users=user)
+                           | Q(documents__shared_with_groups__user=user))
+
+                        )
+                .prefetch_related('shared_with_users')
                 .prefetch_related('shared_with_groups')
                 .distinct())
 
@@ -193,7 +209,17 @@ class DocumentManager(models.Manager):
         return super().get_queryset().select_related('typology')
 
     def for_user(self, user):
-        return Document.objects.filter(project__in=Project.objects.for_user(user))
+        return (Document.objects
+                .filter(Q(owner=user)
+                        | (Q(project__shared_with_users=user)
+                           | Q(project__shared_with_groups__user=user))
+                        | (Q(shared_with_users=user)
+                           | Q(shared_with_groups__user=user)))
+                .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+                .prefetch_related('shared_with_groups', 'shared_with_users',
+                                  'transcriptions')
+                .select_related('typology', 'owner')
+                .distinct())
 
 
 class Document(models.Model):
@@ -211,6 +237,12 @@ class Document(models.Model):
         (READ_DIRECTION_LTR, _("Left to right")),
         (READ_DIRECTION_RTL, _("Right to left")),
     )
+    LINE_OFFSET_BASELINE = 0
+    LINE_OFFSET_TOPLINE = 1
+    LINE_OFFSET_CHOICES = (
+        (LINE_OFFSET_BASELINE, _('Baseline')),
+        (LINE_OFFSET_TOPLINE, _('Topline'))
+    )
 
     name = models.CharField(max_length=512)
 
@@ -225,11 +257,17 @@ class Document(models.Model):
         default=READ_DIRECTION_LTR,
         help_text=_("The read direction describes the order of the elements in the document, in opposition with the text direction which describes the order of the words in a line and is set by the script.")
     )
-    typology = models.ForeignKey(DocumentType, null=True, blank=True, on_delete=models.SET_NULL)
+    line_offset = models.PositiveSmallIntegerField(choices=LINE_OFFSET_CHOICES,
+                                                   default=LINE_OFFSET_BASELINE,
+                                                   help_text=_("The position of the line relative to the polygon."))
+    typology = models.ForeignKey(DocumentType, null=True,
+                                 blank=True, on_delete=models.SET_NULL)
 
     # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
-    valid_block_types = models.ManyToManyField(BlockType, blank=True, related_name='valid_in')
-    valid_line_types = models.ManyToManyField(LineType, blank=True, related_name='valid_in')
+    valid_block_types = models.ManyToManyField(BlockType, blank=True,
+                                               related_name='valid_in')
+    valid_line_types = models.ManyToManyField(LineType, blank=True,
+                                              related_name='valid_in')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -239,6 +277,13 @@ class Document(models.Model):
     project = models.ForeignKey(Project,
                                 on_delete=models.CASCADE,
                                 related_name='documents')
+
+    shared_with_users = models.ManyToManyField(User, blank=True,
+                                               verbose_name=_("Share with users"),
+                                               related_name='shared_documents')
+    shared_with_groups = models.ManyToManyField(Group, blank=True,
+                                                verbose_name=_("Share with teams"),
+                                                related_name='shared_documents')
 
     objects = DocumentManager()
 
@@ -620,7 +665,7 @@ class DocumentPart(OrderedModel):
 
     def binarize(self, threshold=None):
         fname = os.path.basename(self.image.file.name)
-        # should be formated to png already by by lossless_compression but better safe than sorry
+        # should be formatted to png already by lossless_compression but better safe than sorry
         form = None
         f_, ext = os.path.splitext(self.image.file.name)
         if ext[1] in ['.jpg', '.jpeg', '.JPG', '.JPEG', '']:
@@ -812,7 +857,9 @@ class DocumentPart(OrderedModel):
                 im,
                 [line.baseline],
                 suppl_obj=context,
-                scale=(1200, 0))
+                scale=(1200, 0),
+                topline=self.document.line_offset == Document.LINE_OFFSET_TOPLINE
+            )
             if mask[0]:
                 line.mask = mask[0]
                 line.save()
@@ -889,7 +936,7 @@ class DocumentPart(OrderedModel):
 
     def crop(self, x1, y1, x2, y2):
         """
-        Crops the image ouside the rectangle defined
+        Crops the image outside the rectangle defined
         by top left (x1, y1) and bottom right (x2, y2) points.
         Moves the lines and regions accordingly.
         """
@@ -1116,8 +1163,11 @@ class LineTranscription(Versioned, models.Model):
 
 
 def models_path(instance, filename):
+    # Note: we want a separate directory by model because
+    # kraken stores epochs file version as a fixed filename and we don't want to override them.
     fn, ext = os.path.splitext(filename)
-    return 'models/%d/%s%s' % (instance.owner.pk, slugify(fn), ext)
+    hash = str(uuid.uuid4())[:8]
+    return 'models/%s/%s%s' % (hash, slugify(fn), ext)
 
 
 class OcrModel(Versioned, models.Model):
@@ -1144,8 +1194,12 @@ class OcrModel(Versioned, models.Model):
                                        related_name='ocr_models')
     script = models.ForeignKey(Script, blank=True, null=True, on_delete=models.SET_NULL)
 
-    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training')
+    version_ignore_fields = ('name', 'owner', 'documents', 'script', 'training', 'parent')
     version_history_max_length = None  # keep em all
+
+    public = models.BooleanField(default=False)
+
+    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('-version_updated_at',)
@@ -1157,6 +1211,29 @@ class OcrModel(Versioned, models.Model):
     @cached_property
     def accuracy_percent(self):
         return self.training_accuracy * 100
+
+    def clone_for_training(self, owner, name=None):
+        children_count = OcrModel.objects.filter(parent=self).count() + 2
+        model = OcrModel.objects.create(
+            owner=self.owner or owner,
+            name=name or self.name.split('.mlmodel')[0] + f'_v{children_count}',
+            job=self.job,
+            public=False,
+            script=self.script,
+            parent=self,
+            versions=[]
+        )
+        model.file = File(self.file, name=os.path.basename(self.file.name))
+        model.save()
+
+        if not model.public:
+            # Cloning rights to the new model
+            OcrModelRight.objects.bulk_create([
+                OcrModelRight(ocr_model=model, user=right.user, group=right.group)
+                for right in self.ocr_model_rights.all()
+            ])
+
+        return model
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
@@ -1191,7 +1268,7 @@ class OcrModel(Versioned, models.Model):
         return super().pack(**kwargs)
 
     def revert(self, revision):
-        # we want the file to be swaped but the filename to stay the same
+        # we want the file to be swapped but the filename to stay the same
         for version in self.versions:
             if version['revision'] == revision:
                 current_filename = self.file.path
@@ -1222,6 +1299,26 @@ class OcrModelDocument(models.Model):
 
     class Meta:
         unique_together = (('document', 'ocr_model'),)
+
+
+class OcrModelRight(models.Model):
+    ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_rights')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ocr_model_rights', null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='ocr_model_rights', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'group', 'ocr_model'], name='right_unique_target'),
+            # User XOR Group is the owner of this access right
+            models.CheckConstraint(
+                name='user_xor_group',
+                check=(
+                    models.Q(group_id__isnull=False, user_id__isnull=True)
+                    | models.Q(group_id__isnull=True, user_id__isnull=False)
+                )
+            )
+        ]
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid='thumbnails_delete_signal')

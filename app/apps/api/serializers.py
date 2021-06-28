@@ -3,6 +3,7 @@ import logging
 import html
 
 from django.conf import settings
+from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -126,13 +127,14 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'project', 'transcriptions', 'main_script', 'read_direction',
+        fields = ('pk', 'name', 'project', 'transcriptions',
+                  'main_script', 'read_direction', 'line_offset',
                   'valid_block_types', 'valid_line_types', 'parts_count',
                   'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['project'].queryset = Project.objects.for_user(self.context['user'])
+        self.fields['project'].queryset = Project.objects.for_user_write(self.context['user'])
 
     def get_parts_count(self, document):
         return document.parts.count()
@@ -362,6 +364,16 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     def process(self):
         model = self.validated_data.get('model')
         parts = self.validated_data.get('parts')
+
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            document=self.document,
+            ocr_model=model,
+            defaults={'executed_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.executed_on = timezone.now()
+            ocr_model_document.save()
+
         for part in parts:
             part.chain_tasks(
                 segment.si(part.pk,
@@ -379,10 +391,15 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
     model = serializers.PrimaryKeyRelatedField(required=False,
                                                queryset=OcrModel.objects.all())
     model_name = serializers.CharField(required=False)
+    override = serializers.BooleanField(required=False, default=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_SEGMENT)
+        self.fields['model'].queryset = self.document.ocr_models.filter(
+            job=OcrModel.MODEL_JOB_SEGMENT
+        ).filter(
+            Q(public=True) | Q(owner=self.user)
+        )
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate_parts(self, data):
@@ -395,10 +412,19 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
+
+        model = data.get('model')
+        if not data.get('model_name') and model.owner != self.user and data.get('override'):
+            raise serializers.ValidationError(
+                "You can't overwrite the existing file of a public model you don't own."
+            )
+
         return data
 
     def process(self):
         model = self.validated_data.get('model')
+        override = self.validated_data.get('override')
+
         if self.validated_data.get('model_name'):
             file_ = model and model.file or None
             model = OcrModel.objects.create(
@@ -407,11 +433,17 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
                 file=file_
             )
-            OcrModelDocument.objects.create(
-                document=self.document,
-                ocr_model=model,
-                executed_on=timezone.now(),
-            )
+        elif not override:
+            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
+
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            document=self.document,
+            ocr_model=model,
+            defaults={'trained_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.trained_on = timezone.now()
+            ocr_model_document.save()
 
         segtrain.delay(model.pk if model else None, self.document.pk,
                        [part.pk for part in self.validated_data.get('parts')],
@@ -425,11 +457,16 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                                                queryset=OcrModel.objects.all())
     model_name = serializers.CharField(required=False)
     transcription = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.all())
+    override = serializers.BooleanField(required=False, default=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+        self.fields['model'].queryset = self.document.ocr_models.filter(
+            job=OcrModel.MODEL_JOB_RECOGNIZE
+        ).filter(
+            Q(public=True) | Q(owner=self.user)
+        )
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
@@ -437,10 +474,19 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                     _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
+
+        model = data.get('model')
+        if not data.get('model_name') and model.owner != self.user and data.get('override'):
+            raise serializers.ValidationError(
+                "You can't overwrite the existing file of a model you don't own."
+            )
+
         return data
 
     def process(self):
         model = self.validated_data.get('model')
+        override = self.validated_data.get('override')
+
         if self.validated_data.get('model_name'):
             file_ = model and model.file or None
             model = OcrModel.objects.create(
@@ -448,11 +494,17 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 name=self.validated_data['model_name'],
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
                 file=file_)
-            OcrModelDocument.objects.create(
-                document=self.document,
-                ocr_model=model,
-                executed_on=timezone.now(),
-            )
+        elif not override:
+            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
+
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            document=self.document,
+            ocr_model=model,
+            defaults={'trained_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.trained_on = timezone.now()
+            ocr_model_document.save()
 
         train.delay([part.pk for part in self.validated_data.get('parts')],
                     self.validated_data['transcription'].pk,
@@ -474,6 +526,16 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         model = self.validated_data.get('model')
+
+        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+            document=self.document,
+            ocr_model=model,
+            defaults={'executed_on': timezone.now()}
+        )
+        if not created:
+            ocr_model_document.executed_on = timezone.now()
+            ocr_model_document.save()
+
         for part in self.validated_data.get('parts'):
             part.chain_tasks(
                 transcribe.si(part.pk,

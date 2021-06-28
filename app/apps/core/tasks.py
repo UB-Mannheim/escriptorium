@@ -10,7 +10,7 @@ from itertools import groupby
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
@@ -148,6 +148,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
+    Document = apps.get_model('core', 'Document')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
 
@@ -155,13 +156,11 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     try:
         load = model.file.path
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
     except ValueError:  # model is empty
         load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
-        upload_to = model.file.field.upload_to(model, model.name + '.mlmodel')
-        model.file = upload_to
+        model.file = model.file.field.upload_to(model, slugify(model.name) + '.mlmodel')
 
-    modelpath = os.path.join(settings.MEDIA_ROOT, upload_to)
+    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(load)[0])
 
     try:
         model.training = True
@@ -169,9 +168,10 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         send_event('document', document_pk, "training:start", {
             "id": model.pk,
         })
-        qs = DocumentPart.objects.filter(pk__in=part_pks)
+        qs = DocumentPart.objects.filter(pk__in=part_pks).prefetch_related('lines')
 
-        ground_truth = list(qs.prefetch_related('lines'))
+        ground_truth = list(qs)
+        topline = ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
@@ -186,7 +186,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
         trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
             message=msg,
-            output=os.path.join(os.path.split(modelpath)[0], 'version'),
+            output=os.path.join(model_dir, 'version'),
             format_type=None,
             device=DEVICE,
             load=load,
@@ -196,10 +196,12 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             augment=True,
             resize='both',
             hyper_params={'epochs': 20},
-            load_hyper_parameters=True)
+            load_hyper_parameters=True,
+            topline=topline
+        )
 
-        if not os.path.exists(os.path.split(modelpath)[0]):
-            os.makedirs(os.path.split(modelpath)[0])
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
 
         def _print_eval(epoch=0, accuracy=0, mean_acc=0, mean_iu=0, freq_iu=0,
                         val_metric=0):
@@ -208,7 +210,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             model.training_accuracy = float(val_metric)
             # model.training_total = chars
             # model.training_errors = error
-            new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
+            new_version_filename = f'{model_dir}/version_{epoch}.mlmodel'
             model.new_version(file=new_version_filename)
             model.save()
 
@@ -223,11 +225,11 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
         trainer.run(_print_eval)
 
-        best_version = os.path.join(os.path.dirname(modelpath),
+        best_version = os.path.join(model_dir,
                                     f'version_{trainer.stopper.best_epoch}.mlmodel')
 
         try:
-            shutil.copy(best_version, modelpath)
+            shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
         except FileNotFoundError:
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='danger')
@@ -348,27 +350,22 @@ def train_(qs, document, transcription, model=None, user=None):
     load = None
     try:
         load = model.file.path
-    except ValueError:
+    except ValueError:  # model is empty
         filename = slugify(model.name) + '.mlmodel'
-        upload_to = model.file.field.upload_to(model, filename)
-        fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
-        pathlib.Path(fulldir).mkdir(parents=True, exist_ok=True)
-        modelpath = os.path.join(fulldir, filename)
-        model.file = upload_to
+        model.file = model.file.field.upload_to(model, filename)
         model.save()
-    else:
-        upload_to = model.file.name
-        fulldir = os.path.join(settings.MEDIA_ROOT, os.path.split(upload_to)[0], '')
-        modelpath = os.path.join(settings.MEDIA_ROOT, model.file.name)
 
-    temp_file_prefix = os.path.join(fulldir, 'version')
+    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
+
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
     trainer = (kraken_train.KrakenTrainer
                .recognition_train_gen(device=DEVICE,
                                       load=load,
-                                      output=temp_file_prefix,
+                                      output=os.path.join(model_dir, 'version'),
                                       format_type=None,
                                       training_data=training_data,
                                       evaluation_data=evaluation_data,
@@ -384,7 +381,7 @@ def train_(qs, document, transcription, model=None, user=None):
         model.training_accuracy = accuracy
         model.training_total = int(chars)
         model.training_errors = error
-        new_version_filename = '%s/version_%d.mlmodel' % (os.path.split(upload_to)[0], epoch)
+        new_version_filename = '%s/version_%d.mlmodel' % (model_dir, epoch)
         model.new_version(file=new_version_filename)
         model.save()
 
@@ -397,8 +394,8 @@ def train_(qs, document, transcription, model=None, user=None):
             'error': error})
 
     trainer.run(_print_eval)
-    best_version = os.path.join(fulldir, f'version_{trainer.stopper.best_epoch}.mlmodel')
-    shutil.copy(best_version, modelpath)
+    best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
+    shutil.copy(best_version, model.file.path)
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -430,7 +427,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
         qs = (LineTranscription.objects
               .filter(transcription=transcription,
                       line__document_part__pk__in=part_pks)
-              .exclude(content__isnull=True))
+              .exclude(Q(content='') | Q(content=None)))
         train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
         send_event('document', document.pk, "training:error", {

@@ -8,7 +8,7 @@
 {% block wizard_fields %}
 <div class="form-group">
   <h5>{% trans "Select a model" %}</h5>
-  {% render_field process_form.ocr_model class="js-proc-settings" data_document=document.pk %}
+  {% render_field transcribe_form.model class="js-proc-settings" data_document=document.pk %}
 </div>
 {% endblock %}
 

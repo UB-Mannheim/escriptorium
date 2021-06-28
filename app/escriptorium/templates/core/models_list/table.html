@@ -2,17 +2,44 @@
 
 <table id="models-table" class="table table-hover">
   <tr>
-    <th class="w-50"></th>
+    <th></th>
     <th>{% trans "Role" %}</th>
-    <th class="w-25">{% trans "Training" %}</th>
+    <th>
+      {% trans "Script" %}
+      {% if script_filter %}
+      <form method="get" action="{% url 'user-models' %}">
+        <input type="text" value="" name="script_filter" hidden/>
+        <button type="submit" title="Remove filter" class="btn btn-outline-primary badge badge-pill badge-primary">
+          Filter: {{ script_filter }} &times;
+        </button>
+      </form>
+      {% endif %}
+    </th>
+    <th>{% trans "Trained from" %}</th>
+    <th>{% trans "Training Status" %}</th>
     <th>{% trans "Accuracy" %}</th>
     <th>{% trans "Errors" %}</th>
+    <th>{% trans "Right" %}</th>
     <th>{# buttons #}</th>
   </tr>
   {% for model in page_obj %}
   <tr id="tr-{{model.pk}}" class="model-head" data-id="{{model.pk}}">
     <td title="{% trans "Model name" %}">{{ model.name }}</td>
     <td title="{% trans "Model role" %}">{{ model.get_job_display }}</td>
+    <td title="{% trans "Model script" %}">
+      {{ model.script.name }}
+      {% if model.script.name and script_filter != model.script.name %}
+      <form class="d-inline" method="get" action="{% url 'user-models' %}">
+        <input type="text" value="{{ model.script.name }}" name="script_filter" hidden/>
+        <button type="submit" class="btn btn-sm btn-link" title="{% trans "Filter by script" %}">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+      {% endif %}
+    </td>
+    <td title="{% trans "Parent from which the model was trained" %}">
+      <small>{{ model.parent.name }}</small>
+    </td>
     <td>
       <i class="training-ongoing fas fa-subway blink {% if not model.training %}hide{% endif %}" title="{% trans "Is currently training" %}"></i>
       <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
@@ -25,28 +52,51 @@
         <button type="submit" class="cancel-training btn btn-sm btn-warning {% if not model.training %}hide{% endif %}" title="{% trans "Cancel training" %}"><i class="fas fa-ban"></i></button>
       </form>
     </td>
-    <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{{ model.accuracy_percent|floatformat:1 }}%</td>
-    <td title="{% trans "Number of errors/Total number of characters" %}">{{ model.training_errors }}/{{model.training_total}}</td>
+    <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{% if model.accuracy_percent %}{{ model.accuracy_percent|floatformat:1 }}%{% else %}-{% endif %}</td>
+    <td title="{% trans "Number of errors/Total number of characters" %}">{% if model.training_total %}{{ model.training_errors }}/{{model.training_total}}{% else %}-{% endif %}</td>
     <td>
-      {% if model.versions %}
-      <button type="button" class="btn btn-sm btn-info" title="{% trans "Toggle versions" %}" data-toggle="collapse" data-target=".versions-{{model.pk}}">
-        <i class="fas fa-save"></i>
-      </button>
+      {% if model.owner == request.user %}
+      <span class="badge badge-pill badge-danger">Owner</span>
+      {% elif model.public %}
+      <span class="badge badge-pill badge-success">Public</span>
+      {% else %}
+      <span class="badge badge-pill badge-primary">User</span>
       {% endif %}
+    </td>
+    <td>
+        {% if model.versions %}
+        <span class="ml-auto" title="{% trans "Toggle versions" %}">
+            <button type="button" class="btn btn-sm btn-info" data-toggle="collapse" data-target=".versions-{{model.pk}}">
+                <i class="fas fa-save"></i>
+            </button>
+        </span>
+        {% endif %}
 
-      {% if model.file %}
-      <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}" role="button">
-        <i class="fas fa-file-download"></i>
-      </a>
-      {% endif %}
+        {% if model.file %}
+        <span title="{% trans "Download" %}">
+          <a href="{{ model.file.url }}" class="btn btn-sm btn-primary" role="button">
+            <i class="fas fa-file-download"></i>
+          </a>
+        </span>
+        {% endif %}
 
-      {% if model.owner == request.user and not model.training %}
-      <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-danger" title="{% trans "Delete model." %}">
-          <i class="fas fa-trash"></i>
-        </button>
-      </form>
+        {% if model.owner == request.user and not model.public %}
+        <span title="{% trans "Share model" %}">
+          <a href="{% url 'model-rights' model.pk %}" class="btn btn-sm btn-success">
+            <i class="fas fa-pencil-alt"></i>
+          </a>
+        </span>
+        {% endif %}
+
+        {% if model.owner == request.user and not model.training %}
+        <span title="{% trans "Delete model" %}">
+          <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger" ">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </span>
       {% endif %}
     </td>
   </tr>
@@ -55,8 +105,18 @@
 
     <td title="{% trans "Model name" %}" class="pl-5">{{ version.name }} (epoch #{{version.training_epoch}})</td>
     <td></td>
+    <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
     <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
+    <td>
+      {% if version.owner == request.user %}
+      <span class="badge badge-pill badge-danger">Owner</span>
+      {% elif version.public %}
+      <span class="badge badge-pill badge-success">Public</span>
+      {% else %}
+      <span class="badge badge-pill badge-primary">User</span>
+      {% endif %}
+    </td>
     <td>
       <a href="{{ version.file.url }}">
         <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">

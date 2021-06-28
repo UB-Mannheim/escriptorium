@@ -9,14 +9,15 @@
 
 {% block wizard_fields %}
 <div class="form-group">
-  {% render_field process_form.transcription class="js-proc-settings" required="true" %}
+  {% render_field rectrain_form.transcription class="js-proc-settings" required="true" %}
   <h5>{% trans "New model" %}</h5>
-  {% render_field process_form.new_model class="js-proc-settings" %}
+  {% render_field rectrain_form.model_name class="js-proc-settings" %}
 </div>
 
 <div class="form-group">
   <h5>{% trans "Or select an existing one" %}</h5>
-  {% render_field process_form.train_model class="js-proc-settings" %}
+  {% render_field rectrain_form.model class="js-proc-settings" %}
+  {% render_field segtrain_form.override class="js-proc-settings" %}
 </div>
 {% endblock %}
 

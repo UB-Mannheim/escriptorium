@@ -13,7 +13,7 @@ export class Alert {
         $('.message', $new).html(message);
         if (this.links !== undefined) {
             for (let i=0; i<this.links.length; i++) {
-                let link = $('<div>').html('<a href="'+this.links[i].src+'" >'+this.links[i].text+'</a>');
+                let link = $('<div>').html('<a href="'+this.links[i].src+'" target="_blank">'+this.links[i].text+'</a>');
                 if (this.links[i].cssClass) $('a', link).addClass(this.links[i].cssClass);
                 $('.additional', $new).append(link).css('display', 'block');
             }

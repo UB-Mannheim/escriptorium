@@ -41,7 +41,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-CUSTOM_HOME = os.getenv('CUSTOM_HOME', False)
+CUSTOM_HOME = os.getenv('CUSTOM_HOME', False) == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -225,9 +225,12 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
-    os.path.join(BASE_DIR, 'homepage'),  # custom homepage directory
     FRONTEND_DIR
 ]
+
+if CUSTOM_HOME:
+    # custom homepage directory
+    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'homepage'))
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -261,6 +264,10 @@ LOGGING = {
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
+        'console': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -288,6 +295,9 @@ LOGGING = {
             'handlers': ['django.server'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['django.server'],
         }
     },
 }

@@ -17,7 +17,16 @@
             <tr onclick="document.location='{% url 'documents-list' slug=project.slug %}'" role="button">
                 <td><a href="{% url 'documents-list' slug=project.slug %}">{{project.name}}</a></td>
                 <td title="{% trans "Owner" %}">{{project.owner}}</td>
-                <td>{% blocktrans with count=project.documents.count %}{{ count }} document(s).{% endblocktrans %}</td>
+                <td>{% blocktrans with count=project.documents_count %}{{ count }} document(s).{% endblocktrans %}</td>
+
+                <td>
+                {% if request.user in project.shared_with_users.all %}
+                <form method="post" class="text-right" action="{% url "delete-project-share" %}" onsubmit="return confirm('{% trans "Do you really want to remove the project from your list?" %}');">{% csrf_token %}
+                    <input type="hidden" name="project" value="{{project.pk}}" />
+                    <button type="submit" value="" onclick='event.stopPropagation();'  class="nav-item btn btn-warning" title="{% trans 'Remove from list' %}"><i class="fas fa-trash"></i></button>
+                </form>
+                {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

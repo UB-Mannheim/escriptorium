@@ -11,14 +11,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='document',
-            name='shared_with_groups',
-        ),
-        migrations.RemoveField(
-            model_name='document',
-            name='shared_with_users',
-        ),
+        # migrations.RemoveField(
+        #     model_name='document',
+        #     name='shared_with_groups',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='document',
+        #     name='shared_with_users',
+        # ),
         migrations.AlterField(
             model_name='document',
             name='project',

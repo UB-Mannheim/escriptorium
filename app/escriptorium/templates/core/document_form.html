@@ -7,6 +7,15 @@
 {% block extra_nav %}
 {% if object and can_publish %}
 <div class="ml-auto">
+    {% if share_form %}
+    <button type="button"
+            class="nav-item btn btn-primary mr-1"
+            data-toggle="modal"
+            data-target="#shareModal"
+            title="{% trans "Share this Document" %}">
+        <i class="fas fa-share"></i></button>
+    {% endif %}
+
     {% comment %}
     {% if not object.is_published %}
     <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
@@ -45,6 +54,7 @@
 
             {% render_field form.main_script %}
             {% render_field form.read_direction %}
+            {% render_field form.line_offset %}
             {# render_field form.typology #}
 
             <div class="row">
@@ -130,6 +140,12 @@
         </fieldset>
     </form>
 </div>
+{% endblock %}
+
+{% block modals %}
+{% if share_form %}
+{% include "core/share/share_doc.html" %}
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

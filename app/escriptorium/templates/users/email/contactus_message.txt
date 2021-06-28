@@ -1,5 +1,5 @@
 Dear escriptorium Admin,
-{{sender_name}} wants to send you a message, you will find it bellow.
+{{sender_name}} wants to send you a message, you will find it below.
 {{message}}
 You can contact him on this email : {{ sender_email }}
 Sincerely, the eScriptorium team.

@@ -81,10 +81,14 @@ def document_export(task, file_format, user_pk, document_pk, part_pks,
 
     transcription = Transcription.objects.get(document=document, pk=transcription_pk)
 
+    base_filename = "export_doc%d_%s_%s_%s" % (
+        document.pk,
+        slugify(document.name).replace('-', '_')[:32],
+        file_format,
+        datetime.now().strftime('%Y%m%d%H%M'))
+
     if file_format == TEXT_FORMAT:
-        filename = "export_%s_%s_%s.txt" % (slugify(document.name).replace('-', '_'),
-                                            file_format,
-                                            datetime.now().strftime('%Y%m%d%H%M'))
+        filename = "%s.txt" % base_filename
         filepath = os.path.join(user.get_document_store_path(), filename)
         # content_type = 'text/plain'
         lines = (LineTranscription.objects
@@ -98,9 +102,7 @@ def document_export(task, file_format, user_pk, document_pk, part_pks,
         fh.close()
 
     elif file_format == ALTO_FORMAT or file_format == PAGEXML_FORMAT:
-        filename = "export_%s_%s_%s.zip" % (slugify(document.name).replace('-', '_'),
-                                            file_format,
-                                            datetime.now().strftime('%Y%m%d%H%M'))
+        filename = "%s.zip" % base_filename
         filepath = os.path.join(user.get_document_store_path(), filename)
         # buff = io.BytesIO()
         if file_format == ALTO_FORMAT:
