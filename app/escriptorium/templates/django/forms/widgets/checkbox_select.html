@@ -2,7 +2,7 @@
 {% for choice in options %}
 <div class="form-check form-check-inline">
     <input type="checkbox" name="{{ choice.name }}" value="{{choice.value}}" class="form-check-input" id="{{choice.name}}-{{forloop.counter0}}" {% if choice.selected %}checked{% endif %}>
-    <label class="form-check-label" for="{{choice.name}}-{{forloop.counter0}}">{{ choice.label|capfirst }}</label>
+    <label class="form-check-label" for="{{choice.name}}-{{forloop.counter0}}">{{ choice.label }}</label>
 </div>
 {% endfor %}
 {% endfor %}
