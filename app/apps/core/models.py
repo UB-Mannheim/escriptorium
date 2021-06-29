@@ -141,8 +141,8 @@ class ProjectManager(models.Manager):
         # allows to add documents to it
         return (self
                 .filter(Q(owner=user)
-                        | (Q(shared_with_users=user)
-                           | Q(shared_with_groups__user=user)))
+                        | Q(shared_with_users=user))
+                        #   | Q(shared_with_groups__user=user))
                 .distinct())
 
     def for_user_read(self, user):
@@ -150,10 +150,10 @@ class ProjectManager(models.Manager):
         # Note: Monitor this query
         return (self
                 .filter(Q(owner=user)
-                        | (Q(shared_with_users=user)
-                           | Q(shared_with_groups__user=user))
-                        | Q(documents__shared_with_users=user)
-                        #   | Q(documents__shared_with_groups__user=user))
+                        | Q(shared_with_users=user)
+                        #   | Q(shared_with_groups__user=user))
+                        | (Q(documents__shared_with_users=user)
+                           | Q(documents__shared_with_groups__user=user))
                         )
                 .distinct())
 
