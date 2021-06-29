@@ -55,6 +55,7 @@ class ProjectList(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return (Project.objects
                 .for_user_read(self.request.user)
+                .annotate(documents_count=Count('documents'))
                 .select_related('owner'))
 
 
@@ -89,7 +90,6 @@ class DocumentsList(LoginRequiredMixin, ListView):
         return (Document.objects
                 .for_user(self.request.user)
                 .filter(project=self.project)
-                .annotate(parts_updated_at=Max('parts__updated_at'))
                 )
 
     def get_context_data(self, **kwargs):

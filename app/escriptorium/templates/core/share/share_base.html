@@ -13,8 +13,10 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    {% block share-teams %}
                     <h5>{% trans "Teams" %}</h5>
                     {% render_field share_form.shared_with_groups %}
+                    {% endblock %}
                     <h5>{% trans "Users" %}</h5>
                     {% render_field share_form.username %}
                     {% render_field share_form.shared_with_users %}

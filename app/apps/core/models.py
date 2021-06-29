@@ -143,8 +143,6 @@ class ProjectManager(models.Manager):
                 .filter(Q(owner=user)
                         | (Q(shared_with_users=user)
                            | Q(shared_with_groups__user=user)))
-                .prefetch_related('shared_with_users')
-                .prefetch_related('shared_with_groups')
                 .distinct())
 
     def for_user_read(self, user):
@@ -154,12 +152,9 @@ class ProjectManager(models.Manager):
                 .filter(Q(owner=user)
                         | (Q(shared_with_users=user)
                            | Q(shared_with_groups__user=user))
-                        | (Q(documents__shared_with_users=user)
-                           | Q(documents__shared_with_groups__user=user))
-
+                        | Q(documents__shared_with_users=user)
+                        #   | Q(documents__shared_with_groups__user=user))
                         )
-                .prefetch_related('shared_with_users')
-                .prefetch_related('shared_with_groups')
                 .distinct())
 
 
@@ -206,19 +201,18 @@ class Project(models.Model):
 
 class DocumentManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().select_related('typology')
+        return super().get_queryset()
 
     def for_user(self, user):
         return (Document.objects
                 .filter(Q(owner=user)
-                        | (Q(project__shared_with_users=user)
-                           | Q(project__shared_with_groups__user=user))
+                        | Q(project__owner=user)
+                        | Q(project__shared_with_users=user)
+                        #   | Q(project__shared_with_groups__user=user))
                         | (Q(shared_with_users=user)
                            | Q(shared_with_groups__user=user)))
                 .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
-                .prefetch_related('shared_with_groups', 'shared_with_users',
-                                  'transcriptions')
-                .select_related('typology', 'owner')
+                .select_related('owner')
                 .distinct())
 
 

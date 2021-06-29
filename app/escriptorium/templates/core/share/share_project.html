@@ -1,3 +1,6 @@
 {% extends 'core/share/share_base.html' %}
 
 {% block form-action %}{% url 'project-share' pk=project.pk %}{% endblock %}
+
+{# disallow sharing with teams as it blows up querying time #}
+{% block share-teams %}{% endblock %}
