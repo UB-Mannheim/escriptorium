@@ -160,7 +160,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         model.file = model.file.field.upload_to(model, slugify(model.name) + '.mlmodel')
 
-    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(load)[0])
+    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
 
     try:
         model.training = True
@@ -230,9 +230,10 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             user.notify(_("Training didn't get better results than base model!"),
-                        id="seg-no-gain-error", level='danger')
+                        id="seg-no-gain-error", level='warning')
+            shutil.copy(load, model.file.path)
 
     except Exception as e:
         send_event('document', document_pk, "training:error", {
