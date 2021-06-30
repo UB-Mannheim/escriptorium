@@ -160,9 +160,7 @@ class CreateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Cre
     def dispatch(self, request, *args, **kwargs):
         try:
             self.project = (Project.objects
-                            .filter(Q(owner=request.user)
-                                    | (Q(shared_with_users=request.user)
-                                       | Q(shared_with_groups__in=request.user.groups.all())))
+                            .for_user_write(self.request.user)
                             .get(slug=self.request.resolver_match.kwargs['slug']))
         except Project.DoesNotExist:
             raise PermissionDenied
