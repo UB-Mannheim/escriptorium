@@ -476,13 +476,13 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT, )
 
 
-class OcrModelViewSet(DocumentPermissionMixin, ModelViewSet):
+class OcrModelViewSet(ModelViewSet):
     queryset = OcrModel.objects.all()
     serializer_class = OcrModelSerializer
 
     def get_queryset(self):
         return (super().get_queryset()
-                .filter(documents=self.kwargs['document_pk']))
+                .filter(owner=self.request.user))
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):

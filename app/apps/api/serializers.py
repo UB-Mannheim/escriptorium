@@ -318,7 +318,6 @@ class OcrModelSerializer(serializers.ModelSerializer):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['owner'] = self.context["view"].request.user
         obj = super().create(data)
-        document.ocr_models.add(obj)
         return obj
 
 
