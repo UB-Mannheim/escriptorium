@@ -4,6 +4,7 @@ import math
 import os
 import json
 import functools
+import random
 import subprocess
 import time
 import uuid
@@ -13,7 +14,7 @@ from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Value
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -38,6 +39,7 @@ from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
 
 from versioning.models import Versioned
+from core.utils import ColorField
 from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
@@ -88,6 +90,31 @@ class BlockType(Typology):
 class LineType(Typology):
     pass
 
+def random_color():
+    return "#%06x" % random.randint(0, 0xFFFFFF)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=100)
+    color = ColorField(default=random_color)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+
+class DocumentTag(Tag):
+    project = models.ForeignKey('core.Project', blank=True,
+                                related_name='document_tags',
+                                on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('project', 'name')
+
+
+# class DocumentPartTag(Tag):
+#     pass
 
 class Metadata(ExportModelOperationsMixin('Metadata'), models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -282,6 +309,8 @@ class Document(ExportModelOperationsMixin('Document'), models.Model):
     shared_with_groups = models.ManyToManyField(Group, blank=True,
                                                 verbose_name=_("Share with teams"),
                                                 related_name='shared_documents')
+
+    tags = models.ManyToManyField(DocumentTag, blank=True)
 
     objects = DocumentManager()
 
@@ -1305,8 +1334,8 @@ class OcrModelDocument(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='ocr_model_documents')
     ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_documents')
     created_at = models.DateTimeField(auto_now_add=True)
-    trained_on = models.DateTimeField(null=True)
-    executed_on = models.DateTimeField(null=True)
+    trained_on = models.DateTimeField(null=True, blank=True)
+    executed_on = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = (('document', 'ocr_model'),)
