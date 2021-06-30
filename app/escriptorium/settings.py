@@ -104,6 +104,10 @@ TEMPLATES = [
         },
     },
 ]
+
+# Allow to use the ColorField in the admin
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
