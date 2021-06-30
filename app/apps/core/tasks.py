@@ -162,6 +162,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
 
     model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
 
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
     try:
         model.training = True
         model.save()
@@ -200,9 +203,6 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             topline=topline
         )
 
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-
         def _print_eval(epoch=0, accuracy=0, mean_acc=0, mean_iu=0, freq_iu=0,
                         val_metric=0):
             model.refresh_from_db()
@@ -210,8 +210,8 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             model.training_accuracy = float(val_metric)
             # model.training_total = chars
             # model.training_errors = error
-            new_version_filename = f'{model_dir}/version_{epoch}.mlmodel'
-            model.new_version(file=new_version_filename)
+            relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
+            model.new_version(file=f'{relpath}/version_{epoch}.mlmodel')
             model.save()
 
             send_event('document', document_pk, "training:eval", {
@@ -382,8 +382,8 @@ def train_(qs, document, transcription, model=None, user=None):
         model.training_accuracy = accuracy
         model.training_total = int(chars)
         model.training_errors = error
-        new_version_filename = '%s/version_%d.mlmodel' % (model_dir, epoch)
-        model.new_version(file=new_version_filename)
+        relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
+        model.new_version(file=f'{relpath}/version_{epoch}.mlmodel')
         model.save()
 
         send_event('document', document.pk, "training:eval", {
@@ -421,7 +421,6 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
         model.save()
         transcription = Transcription.objects.get(pk=transcription_pk)
         document = transcription.document
-
         send_event('document', document.pk, "training:start", {
             "id": model.pk,
         })
