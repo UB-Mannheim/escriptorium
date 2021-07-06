@@ -348,6 +348,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
 if 'test' in sys.argv:
     try:
         from .test_settings import *
