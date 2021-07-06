@@ -15,3 +15,5 @@ front/dist
 variables.env
 .vscode
 .venv
+WARNING_*
+.nfs*
