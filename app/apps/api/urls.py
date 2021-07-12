@@ -11,7 +11,11 @@ from api.views import (ProjectViewSet,
                        LineViewSet,
                        BlockTypeViewSet,
                        LineTypeViewSet,
+                       AnnotationTypeViewSet,
+                       AnnotationTaxonomyViewSet,
                        LineTranscriptionViewSet,
+                       ImageAnnotationViewSet,
+                       TextAnnotationViewSet,
                        ScriptViewSet,
                        OcrModelViewSet)
 
@@ -23,14 +27,18 @@ router.register(r'models', OcrModelViewSet)
 router.register(r'user', UserViewSet)
 router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
+router.register(r'types/annotations', AnnotationTypeViewSet)
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')
+documents_router.register(r'taxonomies/annotations', AnnotationTaxonomyViewSet)
 
 parts_router = routers.NestedSimpleRouter(documents_router, r'parts', lookup='part')
 parts_router.register(r'blocks', BlockViewSet)
 parts_router.register(r'lines', LineViewSet)
 parts_router.register(r'transcriptions', LineTranscriptionViewSet)
+parts_router.register(r'annotations/image', ImageAnnotationViewSet)
+parts_router.register(r'annotations/text', TextAnnotationViewSet)
 
 app_name = 'api'
 urlpatterns = [

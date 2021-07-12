@@ -26,9 +26,14 @@ def render_field(field, group=False, **kwargs):
     if 'help_text' in kwargs:
         field.help_text = kwargs.pop('help_text')
 
-    field.field.widget.attrs.update(**{k.replace('_', '-'): v
-                                       for k, v in kwargs.items()
-                                       if isinstance(k, str)})
+    try:
+        field.field
+    except AttributeError:
+        raise ValueError(f'Unknown field {field}')
+    else:
+        field.field.widget.attrs.update(**{k.replace('_', '-'): v
+                                           for k, v in kwargs.items()
+                                           if isinstance(k, str)})
 
     context = {'field': field, 'group': group}
     return tplt.render(context)  # .mark_safe()

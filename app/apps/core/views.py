@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Max, Q, Count
+from django.db.models import Q, Count
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
@@ -20,6 +20,7 @@ from core.models import (Project, Document, DocumentPart, Metadata,
 from core.forms import (ProjectForm,
                         DocumentForm,
                         MetadataFormSet,
+                        DocumentOntologyForm,
                         ProjectShareForm,
                         DocumentShareForm,
 
@@ -220,6 +221,31 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             # at this point the document is saved
             metadata_form.save()
         return response
+
+
+class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
+    model = Document
+    form_class = DocumentOntologyForm
+    template_name = "core/document_ontology.html"
+    success_message = _("Ontology saved successfully!")
+
+    def get_success_url(self):
+        return reverse('document-ontology', kwargs={'pk': self.object.pk})
+
+    # def post(self, request, *args, **kwargs):
+    #     self.object = self.get_object()
+    #     form = self.get_form()
+    #     if form.is_valid() and self.img_anno_form.is_valid():
+    #         return self.form_valid(form)
+    #     else:
+    #         return self.form_invalid(form)
+
+    # def form_valid(self, form, metadata_form):
+    #     with transaction.atomic():
+    #         response = super().form_valid(form)
+    #         # at this point the document is saved
+    #         self.img_anno_form.save()
+    #     return response
 
 
 class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):

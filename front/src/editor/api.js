@@ -14,6 +14,12 @@ export const retrieveDocumentPartByOrder = async (document_id, order) => (await 
 
 export const retrievePage = async (document_id, part_id, transcription, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`))
 
+export const retrieveAnnotationTaxonomies = async (document_id, target) => (await axios.get(`/documents/${document_id}/taxonomies/annotations/?target=${target}`))
+
+export const retrieveImageAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/`))
+
+export const retrieveTextAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/`))
+
 export const createContent = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/transcriptions/`, data))
 
 export const updateContent = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/${id}/`, data))
@@ -43,3 +49,9 @@ export const bulkCreateLineTranscriptions = async (document_id, part_id, data) =
 export const bulkUpdateLineTranscriptions = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/bulk_update/`, data))
 
 export const moveLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/move/`, data))
+
+export const createImageAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/image/`, data))
+
+export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
+
+export const deleteImageAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`))

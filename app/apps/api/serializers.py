@@ -22,6 +22,13 @@ from core.models import (Project,
                          LineTranscription,
                          BlockType,
                          LineType,
+                         AnnotationType,
+                         AnnotationTaxonomy,
+                         AnnotationComponent,
+                         ImageAnnotation,
+                         TextAnnotation,
+                         ImageAnnotationComponentValue,
+                         TextAnnotationComponentValue,
                          Script,
                          OcrModel,
                          OcrModelDocument)
@@ -115,6 +122,101 @@ class LineTypeSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
+class AnnotationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnnotationType
+        fields = ('pk', 'name')
+
+
+class AnnotationComponentTaxonomySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnnotationComponent
+        fields = ('pk', 'name', 'allowed_values')
+
+
+class AnnotationTaxonomySerializer(serializers.ModelSerializer):
+    typology = AnnotationTypeSerializer()
+    components = AnnotationComponentTaxonomySerializer(many=True)
+    marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES)
+
+    class Meta:
+        model = AnnotationTaxonomy
+        fields = ('pk', 'document', 'name', 'typology',
+                  'marker_type', 'marker_detail', 'has_comments', 'components')
+
+
+class ImageAnnotationComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageAnnotationComponentValue
+        fields = '__all__'
+        # read_only_fields = ['annotation']
+
+
+class TextAnnotationComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TextAnnotationComponentValue
+        fields = '__all__'
+        # read_only_fields = ['annotation']
+
+
+class ImageAnnotationSerializer(serializers.ModelSerializer):
+    components = ImageAnnotationComponentSerializer(many=True, required=False)
+    as_w3c = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ImageAnnotation
+        fields = ('pk', 'part', 'comments', 'coordinates', 'taxonomy', 'components',
+                  'as_w3c')
+
+    def create(self, data):
+        from IPython import embed; embed()
+        components_data = data.pop('components')
+        anno = ImageAnnotation.objects.create(**data)
+        for component in components_data:
+            print(component)
+            ImageAnnotationComponentValue.objects.create(annotation=anno, **component)
+        return anno
+
+    def get_as_w3c(self, annotation):
+        if annotation.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_RECTANGLE:
+            selector = {
+                'conformsTo': "http://www.w3.org/TR/media-frags/",
+                'type': "FragmentSelector",
+                'value': "xywh=pixel:{x},{y},{w},{h}".format(
+                    x=annotation.coordinates[0][0],
+                    y=annotation.coordinates[0][1],
+                    w=annotation.coordinates[1][0]-annotation.coordinates[0][0],
+                    h=annotation.coordinates[1][1]-annotation.coordinates[0][1],
+                )
+            }
+        elif annotation.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
+            selector = {
+                'type': 'SvgSelector',
+                'value': '<svg><polygon points="{pts}"></polygon></svg>'.format(
+                    pts=' '.join(['%d,%d' % (pt[0], pt[1]) for pt in annotation.coordinates])
+                )
+            }
+
+        return {
+            'id': annotation.id,
+            '@context': "http://www.w3.org/ns/anno.jsonld",
+            'type': "Annotation",
+            'body': [{'type': "TextualBody", 'value': comment, 'purpose': "commenting"}
+                     for comment in annotation.comments],
+            'target': {
+                'selector': selector
+            }
+        }
+
+
+class TextAnnotationSerializer(serializers.ModelSerializer):
+    components = TextAnnotationComponentSerializer()
+
+    class Meta:
+        model = TextAnnotation
+        fields = '__all__'
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
                                                queryset=Script.objects.all())
@@ -129,8 +231,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset',
-                  'valid_block_types', 'valid_line_types', 'parts_count',
-                  'created_at', 'updated_at')
+                  'valid_block_types', 'valid_line_types',
+                  'parts_count', 'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

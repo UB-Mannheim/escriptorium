@@ -94,9 +94,11 @@ form.inline-form {
     display: block;
 }
 
-.js-metadata-row:last-of-type .js-metadata-delete {
+.js-metadata-row:last-of-type .js-metadata-delete,
+.js-formset-row:last-of-type .js-formset-delete {
     display: none;
 }
+
 
 .dropzone {
     border: 2px dashed #0087F7;

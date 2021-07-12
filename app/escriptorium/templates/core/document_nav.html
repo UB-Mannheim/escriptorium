@@ -16,9 +16,14 @@
         </a>
         {% endif %}
 
-      <a href="{% if object %}{% url 'document-update' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
-      <a href="{% if object %}{% url 'document-images' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
-      <a href="{% if document  %}{% url 'document-part-edit' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-edit-active %}{% endblock %}{% if not object or not document.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
+        <a href="{% if object %}{% url 'document-update' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
+
+        <a href="{% if object %}{% url 'document-ontology' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-onto-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Ontology" %}</a>
+
+        <a href="{% if object %}{% url 'document-images' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
+
+        <a href="{% if document  %}{% url 'document-part-edit' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-edit-active %}{% endblock %}{% if not object or not document.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
+
       {% with models_count=document.ocr_models.count %}
       <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
       {% endwith %}

@@ -6,13 +6,15 @@ from django import forms
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db.models import Q
-from django.forms.models import inlineformset_factory
+from django.forms.models import inlineformset_factory, BaseInlineFormSet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
 from core.models import (Project, Document, Metadata, DocumentMetadata,
+                         AnnotationType, AnnotationComponent,
+                         ImageAnnotation, TextAnnotation, AnnotationTaxonomy,
                          DocumentPart, OcrModel, OcrModelDocument, Transcription,
                          BlockType, LineType, AlreadyProcessingException, OcrModelRight)
 from users.models import User
@@ -29,40 +31,18 @@ class ProjectForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script']
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        if self.request.method == "POST":
-            # we need to accept all types when posting for added ones
-            block_qs = BlockType.objects.all()
-            line_qs = LineType.objects.all()
-        elif self.instance.pk:
-            block_qs = BlockType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-            line_qs = LineType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-        else:
-            block_qs = BlockType.objects.filter(public=True)
-            line_qs = LineType.objects.filter(public=True)
-            self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
-            self.initial['valid_line_types'] = LineType.objects.filter(default=True)
 
         self.fields['project'].queryset = Project.objects.for_user_read(self.request.user)
         self.fields['project'].empty_label = None
         if self.instance.pk and self.instance.owner != self.request.user:
             self.fields['project'].disabled = True
-
-        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
-        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
-
-    class Meta:
-        model = Document
-        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
-                  'valid_block_types', 'valid_line_types']
-        widgets = {
-            'valid_block_types': forms.CheckboxSelectMultiple,
-            'valid_line_types': forms.CheckboxSelectMultiple
-        }
 
 
 class ShareForm(BootstrapFormMixin, forms.ModelForm):
@@ -136,6 +116,151 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
 MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
                                         form=MetadataForm,
                                         extra=1, can_delete=True)
+
+
+class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['valid_block_types', 'valid_line_types']
+        widgets = {
+            'valid_block_types': forms.CheckboxSelectMultiple,
+            'valid_line_types': forms.CheckboxSelectMultiple
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+
+        if self.request.method == "POST":
+            # we need to accept all types when posting for added ones
+            block_qs = BlockType.objects.all()
+            line_qs = LineType.objects.all()
+        elif self.instance.pk:
+            block_qs = BlockType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+            line_qs = LineType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+        else:
+            block_qs = BlockType.objects.filter(public=True)
+            line_qs = LineType.objects.filter(public=True)
+            self.initial['valid_block_types'] = block_qs
+            self.initial['valid_line_types'] = line_qs
+
+        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
+        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
+
+        img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
+        self.img_anno_form = ImageAnnotationTaxonomyFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            queryset=AnnotationTaxonomy.objects.filter(
+                marker_type__in=img_choices),
+            prefix='img_anno_form',
+            instance=self.instance)
+        text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
+        self.text_anno_form = TextAnnotationTaxonomyFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            queryset=AnnotationTaxonomy.objects.filter(
+                marker_type__in=text_choices),
+            prefix='text_anno_form',
+            instance=self.instance)
+
+    def is_valid(self):
+        return super().is_valid() and self.img_anno_form.is_valid()
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        self.img_anno_form.save()
+        return instance
+
+
+class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
+    prefix = 'allo'
+    typo = forms.CharField(label=_('Type'), required=False)
+
+    class Meta:
+        model = AnnotationTaxonomy
+        exclude = ['typology']
+        #widgets = {'marker_detail': ColorWidget}
+        labels = {
+            'marker_detail': _('Color'),
+            'has_comments': _('Comment')
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.typology:
+            self.fields['typo'].initial = self.instance.typology.name
+
+    def save(self, commit=True):
+        typo = self.cleaned_data.get('typo')
+        instance = super().save(commit=False)
+        if typo:
+            typology, created = AnnotationType.objects.get_or_create(name=typo)
+            instance.typology = typology
+        instance.save()
+        return instance
+
+
+class ImageAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['marker_type'].choices = AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
+
+
+class TextAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['marker_type'].choices = AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
+
+
+class AnnotationComponentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = AnnotationComponent
+        fields = '__all__'
+        labels = {
+            'name': _('Component Name')
+        }
+
+
+class AnnotationTaxonomyFormset(BaseInlineFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+
+        form.compo_form = ComponentFormSet(
+            instance=form.instance,
+            data=form.data if form.is_bound else None,
+            files=form.files if form.is_bound else None,
+            prefix='component-%s-%s' % (
+                form.prefix,
+                ComponentFormSet.get_default_prefix()))
+
+    def is_valid(self):
+        result = super().is_valid()
+        if self.is_bound:
+            for form in self.forms:
+                result = result and form.compo_form.is_valid()
+        return result
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        for form in self.forms:
+            if not self._should_delete_form(form):
+                form.compo_form.save(commit=commit)
+        return instance
+
+
+ImageAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
+                                                       form=ImageAnnotationTaxonomyForm,
+                                                       formset=AnnotationTaxonomyFormset,
+                                                       can_order=True,
+                                                       can_delete=True, extra=1)
+TextAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
+                                                      form=TextAnnotationTaxonomyForm,
+                                                      formset=AnnotationTaxonomyFormset,
+                                                      can_delete=True, extra=1)
+ComponentFormSet = inlineformset_factory(AnnotationTaxonomy, AnnotationComponent,
+                                         form=AnnotationComponentForm,
+                                         can_delete=True, extra=1)
 
 
 class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):

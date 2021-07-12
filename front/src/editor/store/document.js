@@ -1,4 +1,3 @@
-import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
@@ -10,6 +9,8 @@ export const initialState = () => ({
     readDirection: null,
     types: {},
     blockShortcuts: false,
+
+    annotationTaxonomies: {},
 
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
@@ -49,6 +50,9 @@ export const mutations = {
     setVisiblePanels(state, payload) {
         state.visible_panels = assign({}, state.visible_panels, payload)
     },
+    setAnnotationTaxonomies(state, payload) {
+        state.annotationTaxonomies[payload[0]] = payload[1]
+    },
     reset (state) {
         assign(state, initialState())
     }
@@ -61,6 +65,13 @@ export const actions = {
         commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
+
+        // pagination?!
+        // commit can not pass parameters as is?!?
+        const img_taxos = await api.retrieveAnnotationTaxonomies(data.pk, 'image')
+        commit('setAnnotationTaxonomies', ['image', img_taxos.data.results])
+        const text_taxos = await api.retrieveAnnotationTaxonomies(data.pk, 'text')
+        commit('setAnnotationTaxonomies', ['text', text_taxos.data.results])
     },
 
     async togglePanel ({state, commit}, panel) {

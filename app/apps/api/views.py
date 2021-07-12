@@ -25,6 +25,10 @@ from api.serializers import (UserOnboardingSerializer,
                              LineSerializer,
                              BlockTypeSerializer,
                              LineTypeSerializer,
+                             AnnotationTypeSerializer,
+                             AnnotationTaxonomySerializer,
+                             ImageAnnotationSerializer,
+                             TextAnnotationSerializer,
                              DetailedLineSerializer,
                              LineOrderSerializer,
                              TranscriptionSerializer,
@@ -43,6 +47,10 @@ from core.models import (Project,
                          Line,
                          BlockType,
                          LineType,
+                         AnnotationType,
+                         AnnotationTaxonomy,
+                         ImageAnnotation,
+                         TextAnnotation,
                          Transcription,
                          LineTranscription,
                          OcrModel,
@@ -192,7 +200,9 @@ class DocumentViewSet(ModelViewSet):
 class DocumentPermissionMixin():
     def get_queryset(self):
         try:
-            Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            self.document = (Document.objects
+                             .for_user(self.request.user)
+                             .get(pk=self.kwargs.get('document_pk')))
         except Document.DoesNotExist:
             raise PermissionDenied
         return super().get_queryset()
@@ -317,6 +327,38 @@ class BlockTypeViewSet(ModelViewSet):
 class LineTypeViewSet(ModelViewSet):
     queryset = LineType.objects.filter(public=True)
     serializer_class = LineTypeSerializer
+
+
+class AnnotationTypeViewSet(ModelViewSet):
+    queryset = AnnotationType.objects.filter(public=True)
+    serializer_class = AnnotationTypeSerializer
+
+
+class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationTaxonomy.objects.all()
+    serializer_class = AnnotationTaxonomySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(document=self.document)
+        target = self.request.query_params.get('target')
+        if target == 'image':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES])
+        elif target == 'text':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES])
+        else:
+            return qs
+
+
+class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = ImageAnnotation.objects.all()
+    serializer_class = ImageAnnotationSerializer
+
+
+class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = TextAnnotation.objects.all()
+    serializer_class = TextAnnotationSerializer
 
 
 class BlockViewSet(DocumentPermissionMixin, ModelViewSet):

@@ -17,7 +17,7 @@ from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.dispatch import receiver
@@ -85,6 +85,107 @@ class BlockType(Typology):
 
 class LineType(Typology):
     pass
+
+
+class AnnotationType(Typology):
+    """
+    Represents a set of annotations
+    for example for image annotations it could be 'pictures' or 'paleographical',
+    for textual it could be 'Stylistic, Named Entity..'
+    """
+    pass
+
+
+class AnnotationTaxonomy(OrderedModel):
+    MARKER_TYPE_RECTANGLE = 1
+    MARKER_TYPE_POLYGON = 2
+    IMG_MARKER_TYPE_CHOICES = (
+        (MARKER_TYPE_RECTANGLE, _('Rectangle')),
+        (MARKER_TYPE_POLYGON, _('Polygon')))
+    TEXT_MARKER_TYPE_CHOICES = (
+        (3, _('Background Color')),
+        (4, _('Text Color')),
+        (5, _('Bold')),
+        (6, _('Italic')),
+        # (7, _('Underline'))
+    )
+    MARKER_TYPE_CHOICES = IMG_MARKER_TYPE_CHOICES + TEXT_MARKER_TYPE_CHOICES
+
+    typology = models.ForeignKey(AnnotationType,
+                                 null=True, blank=True,
+                                 on_delete=models.CASCADE)
+    has_comments = models.BooleanField(default=False)
+
+    name = models.CharField(max_length=64)
+    marker_type = models.PositiveSmallIntegerField(choices=MARKER_TYPE_CHOICES, default=1)
+    marker_detail = models.CharField(null=True, blank=True, max_length=64)
+
+    document = models.ForeignKey('core.Document',
+                                 null=True, blank=True,
+                                 on_delete=models.CASCADE)
+
+    class Meta(OrderedModel.Meta):
+        pass
+
+    def __str__(self):
+        return self.name
+
+
+class AnnotationComponent(models.Model):
+    name = models.CharField(max_length=128, )
+    allowed_values = ArrayField(
+        models.CharField(max_length=128),
+        null=True, blank=True,
+        help_text=_("Comma separated list of possible value, leave it empty for free input."))
+    taxonomy = models.ForeignKey(
+        AnnotationTaxonomy,
+        on_delete=models.CASCADE,
+        related_name='components')
+
+
+class Annotation(models.Model):
+    taxonomy = models.ForeignKey(AnnotationTaxonomy, on_delete=models.CASCADE)
+    comments = ArrayField(models.TextField(), null=True, blank=True)
+
+    part = models.ForeignKey('core.DocumentPart', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class ImageAnnotation(Annotation):
+    components = models.ManyToManyField(AnnotationComponent,
+                                        blank=True,
+                                        through='ImageAnnotationComponentValue')
+    # array of points
+    coordinates = ArrayField(ArrayField(models.IntegerField(), size=2))
+
+
+class TextAnnotation(Annotation):
+    components = models.ManyToManyField(AnnotationComponent,
+                                        blank=True,
+                                        through='TextAnnotationComponentValue')
+    start_line = models.ForeignKey('core.Line',
+                                   on_delete=models.CASCADE,
+                                   related_name='annotation_starts')
+    start_offset = models.PositiveIntegerField()
+    end_line = models.ForeignKey('core.Line',
+                                 on_delete=models.CASCADE,
+                                 related_name='annotations_ends')
+    end_offset = models.PositiveIntegerField()
+    transcription = models.ForeignKey('core.Transcription', on_delete=models.CASCADE)
+
+
+class TextAnnotationComponentValue(models.Model):
+    component = models.ForeignKey(AnnotationComponent, on_delete=models.CASCADE)
+    annotation = models.ForeignKey('TextAnnotation', on_delete=models.CASCADE)
+    value = models.CharField(max_length=256)
+
+
+class ImageAnnotationComponentValue(models.Model):
+    component = models.ForeignKey(AnnotationComponent, on_delete=models.CASCADE)
+    annotation = models.ForeignKey('ImageAnnotation', on_delete=models.CASCADE)
+    value = models.CharField(max_length=256)
 
 
 class Metadata(models.Model):
