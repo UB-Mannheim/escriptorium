@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.0",
+    "@teklia/virtual-keyboard": "^0.2.0",
     "axios": "^0.21.1",
     "bootstrap": "^4.2.1",
     "css-loader": "^5.0.1",

@@ -24,7 +24,7 @@
     <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
-  <body class="{% block bodyclass %}{% endblock %}">
+  <body id="escriptorium" class="{% block bodyclass %}{% endblock %}">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <a class="navbar-brand" href="{% url 'home' %}">
               <img src="{% static "images/escriptorium_hd.png" %}" width="30" height="30" class="mb-1">
@@ -124,6 +124,13 @@
       </script>
       {% endif %}
       {% endif %}
+    <script type="text/javascript">
+      window.addEventListener('load', function () {
+        // Open the keyboard on html elements holding "display-virtual-keyboard" class
+        for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+          enableVirtualKeyboard(input);
+      });
+    </script>
    {% endblock scripts %}
   </body>
 </html>

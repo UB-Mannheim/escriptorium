@@ -10,6 +10,7 @@ import 'intro.js/introjs.css';
 import 'lodash';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'moment-timezone/builds/moment-timezone-with-data-2012-2022.min.js';
+import '@teklia/virtual-keyboard/dist-lib/content.js';
 
 // JQuery needs to be explicitly set on window, as it's used at boot time
 // by various scripts
