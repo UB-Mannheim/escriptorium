@@ -77,7 +77,7 @@
                                 id="trans-input"
                                 ref="transInput"
                                 name="content"
-                                class="form-control mb-2"
+                                class="form-control mb-2 display-virtual-keyboard"
                                 v-model.lazy="localTranscription"
                                 autocomplete="off"
                                 autofocus/>
@@ -100,7 +100,8 @@
                                         v-on:keyup.enter="cleanHTMLTags();recomputeInputCharsScaleY();editLine('next')"
                                         v-html="localTranscription"
                                         id="vertical_text_input"
-                                            contenteditable="true">
+                                        contenteditable="true"
+                                        class="display-virtual-keyboard">
                                 </div>
                             </div>
                         </div>
@@ -231,6 +232,9 @@ export default Vue.extend({
 
             }, false);
         }
+
+        for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+            enableVirtualKeyboard(input);
     },
     watch: {
         line(new_, old_) {

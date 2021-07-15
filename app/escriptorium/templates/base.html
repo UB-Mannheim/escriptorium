@@ -124,13 +124,6 @@
       </script>
       {% endif %}
       {% endif %}
-    <script type="text/javascript">
-      window.addEventListener('load', function () {
-        // Open the keyboard on html elements holding "display-virtual-keyboard" class
-        for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
-          enableVirtualKeyboard(input);
-      });
-    </script>
    {% endblock scripts %}
   </body>
 </html>
