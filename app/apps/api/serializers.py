@@ -188,7 +188,7 @@ class BlockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ('pk', 'document_part', 'order', 'box', 'typology')
+        fields = ('pk', 'document_part', 'external_id', 'order', 'box', 'typology')
 
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):
@@ -234,7 +234,7 @@ class LineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Line
-        fields = ('pk', 'document_part', 'order', 'region', 'baseline', 'mask', 'typology')
+        fields = ('pk', 'document_part', 'external_id', 'order', 'region', 'baseline', 'mask', 'typology')
         list_serializer_class = LineListSerializer
 
 
