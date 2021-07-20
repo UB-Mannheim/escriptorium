@@ -233,9 +233,11 @@ class Document(models.Model):
     )
     LINE_OFFSET_BASELINE = 0
     LINE_OFFSET_TOPLINE = 1
+    LINE_OFFSET_CENTERLINE = 2
     LINE_OFFSET_CHOICES = (
         (LINE_OFFSET_BASELINE, _('Baseline')),
-        (LINE_OFFSET_TOPLINE, _('Topline'))
+        (LINE_OFFSET_TOPLINE, _('Topline')),
+        (LINE_OFFSET_CENTERLINE, _('Centered'))
     )
 
     name = models.CharField(max_length=512)
@@ -847,12 +849,19 @@ class DocumentPart(OrderedModel):
                 poly.append(line.block.box[0])  # close it
                 context.append(poly)
 
+            if self.document.line_offset == Document.LINE_OFFSET_TOPLINE:
+                topline = True
+            elif self.document.line_offset == Document.LINE_OFFSET_CENTERLINE:
+                topline = None
+            else:
+                topline = False
+
             mask = calculate_polygonal_environment(
                 im,
                 [line.baseline],
                 suppl_obj=context,
                 scale=(1200, 0),
-                topline=self.document.line_offset == Document.LINE_OFFSET_TOPLINE
+                topline=topline
             )
             if mask[0]:
                 line.mask = mask[0]

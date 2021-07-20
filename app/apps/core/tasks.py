@@ -174,7 +174,13 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         qs = DocumentPart.objects.filter(pk__in=part_pks).prefetch_related('lines')
 
         ground_truth = list(qs)
-        topline = ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE
+        if ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE:
+            topline = True
+        elif ground_truth[0].document.line_offset == Document.LINE_OFFSET_CENTERLINE:
+            topline = None
+        else:
+            topline = False
+
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 

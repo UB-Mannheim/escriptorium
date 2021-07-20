@@ -17,7 +17,9 @@ window.jQuery = window.$ = require('jquery');
 
 // Dropzone needs to be explicitly set on window, as it's modified at boot time
 // by image-cards.js
-window.Dropzone = require('dropzone/dist/dropzone');
+// window.Dropzone = require('dropzone/dist/dropzone');
+import Dropzone from "dropzone";
+window.Dropzone = Dropzone;
 
 // Intro.js needs to be explicitly set on window, as it's used at boot time
 // by onboarding.js
