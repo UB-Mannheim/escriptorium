@@ -42,7 +42,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def generate_part_thumbnails(instance_pk):
+def generate_part_thumbnails(instance_pk, user_pk=None):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
     try:

@@ -498,7 +498,7 @@ class DocumentPart(OrderedModel):
         new = self.pk is None
         instance = super().save(*args, **kwargs)
         if new:
-            self.task('convert')
+            self.task('convert', user_pk=self.document.owner and self.document.owner.pk or None)
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
         else:
             self.calculate_progress()
@@ -808,18 +808,18 @@ class DocumentPart(OrderedModel):
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
         chain(*tasks).delay()
 
-    def task(self, task_name, commit=True, **kwargs):
+    def task(self, task_name, commit=True, user_pk=None, **kwargs):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
-            sig = convert.si(self.pk)
+            sig = convert.si(self.pk, user_pk=user_pk)
 
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(chain(lossless_compression.si(self.pk),
-                               generate_part_thumbnails.si(self.pk)))
+                sig.link(chain(lossless_compression.si(self.pk, user_pk=user_pk),
+                               generate_part_thumbnails.si(self.pk, user_pk=user_pk)))
             else:
-                sig.link(lossless_compression.si(self.pk))
+                sig.link(lossless_compression.si(self.pk, user_pk=user_pk))
             tasks.append(sig)
 
         if task_name == 'binarize':

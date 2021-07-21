@@ -28,7 +28,7 @@ def email_result(result_interface, success=True):
 
 
 @shared_task
-def async_email(subject, message, recipients, html=None, result_interface=None):
+def async_email(subject, message, recipients, html=None, result_interface=None, disable_reporting=True):
     """
     Task used by celery to send an email,
     if in doubt use the higher level function in escriptorium.utils
