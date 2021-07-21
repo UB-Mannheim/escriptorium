@@ -11,7 +11,6 @@ from imports.models import DocumentImport
 from imports.parsers import AltoParser, IIIFManifestParser
 from core.models import Block, Line, Transcription, LineTranscription, BlockType, LineType
 from core.tests.factory import CoreFactoryTestCase
-from reporting.models import TaskReport
 
 
 class XmlImportTestCase(CoreFactoryTestCase):

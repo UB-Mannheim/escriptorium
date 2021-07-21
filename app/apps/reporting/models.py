@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
@@ -36,6 +37,9 @@ class TaskReport(models.Model):
     # celery task id
     task_id = models.CharField(max_length=64, blank=True, null=True)
 
+    # shared_task method name
+    method = models.CharField(max_length=512, blank=True, null=True)
+
     def append(self, text):
         self.messages += text + '\n'
 
@@ -43,8 +47,9 @@ class TaskReport(models.Model):
     def uri(self):
         return reverse('report-detail', kwargs={'pk': self.pk})
 
-    def start(self, task_id):
+    def start(self, task_id, method):
         self.task_id = task_id
+        self.method = method
         self.workflow_state = self.WORKFLOW_STATE_STARTED
         self.started_at = datetime.now(timezone.utc)
         self.save()
@@ -52,21 +57,11 @@ class TaskReport(models.Model):
     def error(self, message):
         # unrecoverable error
         self.workflow_state = self.WORKFLOW_STATE_ERROR
+        self.done_at = datetime.now(timezone.utc)
         self.append(message)
         self.save()
-
-        self.user.notify(_('%(task_label)s error!') % {'task_label': self.label},
-                         level='danger',
-                         links=[{'text': 'Report', 'src': self.uri}])
 
     def end(self, extra_links=None):
         self.workflow_state = self.WORKFLOW_STATE_DONE
         self.done_at = datetime.now(timezone.utc)
         self.save()
-
-        links = extra_links or []
-        if self.messages != '':
-            links.append({'text': 'Report', 'src': self.uri})
-        self.user.notify(_('%(task_label)s done!') % {'task_label': self.label},
-                         level='success',
-                         links=links)

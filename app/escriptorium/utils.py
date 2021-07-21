@@ -25,4 +25,4 @@ def send_email(subject_template, txt_template, html_template,
     msg = txt_tmplt.render(context=context)
     html = html_tmplt.render(context=context)
 
-    async_email.delay(subject, msg, recipients, html=html, result_interface=result_interface)
+    async_email.delay(subject, msg, recipients, html=html, result_interface=result_interface, disable_reporting=True)
