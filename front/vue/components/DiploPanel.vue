@@ -21,7 +21,6 @@
             <!--adding a class to get styles for ttb direction:-->
             <div :class="$store.state.document.mainTextDirection"
                     id="diplomatic-lines"
-                    class="display-virtual-keyboard"
                     ref="diplomaticLines"
                     contenteditable="true"
                     autocomplete="off"
@@ -88,9 +87,6 @@ export default Vue.extend({
         }.bind(this));
 
         this.refresh();
-
-        for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
-            enableVirtualKeyboard(input);
     },
     methods: {
         empty() {
