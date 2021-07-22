@@ -1,0 +1,35 @@
+groups:
+    - name: alert_rules
+      rules:
+        - alert: ContainerMemoryUsage
+          expr: (sum(container_memory_working_set_bytes) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 90
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: Container Memory usage (instance {{ $labels.instance }})
+            description: "Container Memory usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: ContainerCpuUsage
+          expr: (sum(rate(container_cpu_usage_seconds_total[3m])) BY (instance, name) * 100) > 90
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: Container CPU usage (instance {{ $labels.instance }})
+            description: "Container CPU usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: RedisDown
+          expr: absent(container_memory_usage_bytes{name=~"escriptorium_redis_1"})
+          for: 30s
+          labels:
+            severity: critical
+          annotations:
+            summary: Redis down (instance {{ $labels.instance }})
+            description: "Redis instance is down rules expression value {{ $value }}"
+        - alert: WebDown
+          expr: absent(container_memory_usage_bytes{name=~"escriptorium_web_1"})
+          for: 30s
+          labels:
+            severity: critical
+          annotations:
+            summary: Web down over 1 minute
+            description: "eScriptorium service is down rules expression value {{ $value }}"

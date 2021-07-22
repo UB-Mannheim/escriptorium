@@ -44,6 +44,8 @@ from core.tasks import (segtrain, train, binarize,
 from users.consumers import send_event
 from users.models import User
 
+from django_prometheus.models import ExportModelOperationsMixin
+
 redis_ = get_redis_connection()
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ class AlreadyProcessingException(Exception):
     pass
 
 
-class Typology(models.Model):
+class Typology(ExportModelOperationsMixin('Typology'), models.Model):
     name = models.CharField(max_length=128)
 
     # if True, is visible as a choice in the ontology edition in a new document
@@ -87,7 +89,7 @@ class LineType(Typology):
     pass
 
 
-class Metadata(models.Model):
+class Metadata(ExportModelOperationsMixin('Metadata'), models.Model):
     name = models.CharField(max_length=128, unique=True)
     cidoc_id = models.CharField(max_length=8, null=True, blank=True)
     public = models.BooleanField(default=False)
@@ -99,7 +101,7 @@ class Metadata(models.Model):
         return self.name
 
 
-class Script(models.Model):
+class Script(ExportModelOperationsMixin('Script'), models.Model):
     TEXT_DIRECTION_HORIZONTAL_LTR = 'horizontal-lr'
     TEXT_DIRECTION_HORIZONTAL_RTL = 'horizontal-rl'
     TEXT_DIRECTION_VERTICAL_LTR = 'vertical-lr'
@@ -126,7 +128,7 @@ class Script(models.Model):
         return self.name
 
 
-class DocumentMetadata(models.Model):
+class DocumentMetadata(ExportModelOperationsMixin('DocumentMetadata'), models.Model):
     document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
     key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
     value = models.CharField(max_length=512)
@@ -158,7 +160,7 @@ class ProjectManager(models.Manager):
                 .distinct())
 
 
-class Project(models.Model):
+class Project(ExportModelOperationsMixin('Project'), models.Model):
     name = models.CharField(max_length=512)
     slug = models.SlugField(unique=True)
 
@@ -216,7 +218,7 @@ class DocumentManager(models.Manager):
                 .distinct())
 
 
-class Document(models.Model):
+class Document(ExportModelOperationsMixin('Document'), models.Model):
     WORKFLOW_STATE_DRAFT = 0
     WORKFLOW_STATE_PUBLISHED = 2  # viewable by the world
     WORKFLOW_STATE_ARCHIVED = 3  #
@@ -336,7 +338,7 @@ def document_images_path(instance, filename):
     return 'documents/{0}/{1}'.format(instance.document.pk, filename)
 
 
-class DocumentPart(OrderedModel):
+class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
     """
@@ -1004,7 +1006,7 @@ def validate_3_points(value):
             params={'length': len(value), 'value': value})
 
 
-class Block(OrderedModel, models.Model):
+class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
@@ -1119,7 +1121,7 @@ class Line(OrderedModel):  # Versioned,
         return super().save(*args, **kwargs)
 
 
-class Transcription(models.Model):
+class Transcription(ExportModelOperationsMixin('Transcription'), models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(Document, on_delete=models.CASCADE,
                                  related_name='transcriptions')
@@ -1141,7 +1143,7 @@ class Transcription(models.Model):
         self.save()
 
 
-class LineTranscription(Versioned, models.Model):
+class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Versioned, models.Model):
     """
     Represents a transcribded line of a document part in a given transcription
     """
@@ -1173,7 +1175,7 @@ def models_path(instance, filename):
     return 'models/%s/%s%s' % (hash, slugify(fn), ext)
 
 
-class OcrModel(Versioned, models.Model):
+class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     name = models.CharField(max_length=256)
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
