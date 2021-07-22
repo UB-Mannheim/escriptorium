@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n static timedelta %}
+
+{% block body %}
+<div>
+  <table class="table table-hover">
+    <tr>
+      <th colspan="2"></th>
+      <th colspan="2" class="text-center">
+        <span class="badge badge-pill badge-primary">Total</span>
+      </th>
+      <th colspan="2" class="text-center">
+        <span class="badge badge-pill badge-info">Last week</span>
+      </th>
+      <th colspan="2" class="text-center">
+        <span class="badge badge-pill badge-success">Last day</span>
+      </th>
+    </tr>
+    <tr>
+      <th>{% trans "User ID" %}</th>
+      <th>{% trans "Username" %}</th>
+      <th>{% trans "No. of tasks" %}</th>
+      <th>{% trans "Runtime" %}</th>
+      <th>{% trans "No. of tasks" %}</th>
+      <th>{% trans "Runtime" %}</th>
+      <th>{% trans "No. of tasks" %}</th>
+      <th>{% trans "Runtime" %}</th>
+    </tr>
+    {% for user in object_list %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.total_tasks }}</td>
+      <td>{{ user.total_runtime|format_timedelta }}</td>
+      <td>{{ user.last_week_tasks }}</td>
+      <td>{{ user.last_week_runtime|format_timedelta }}</td>
+      <td>{{ user.last_day_tasks }}</td>
+      <td>{{ user.last_day_runtime|format_timedelta }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}
