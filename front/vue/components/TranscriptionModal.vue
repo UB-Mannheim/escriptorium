@@ -39,6 +39,11 @@
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
                     </button>
+                    <button class="btn btn-sm ml-2 mr-1" :class="VKButtonClass"
+                            title="Toggle Virtual Keyboard for this document."
+                            @click="toggleVK">
+                        <i class="fas fa-keyboard"></i>
+                    </button>
 
                     <h5 class="modal-title ml-3" id="modal-label">
                         Line #{{line.order + 1}}
@@ -68,7 +73,7 @@
                         </div>
                     </div>
 
-                    <div id="trans-input-container" ref="transInputContainer">
+                      <div id="trans-input-container" ref="transInputContainer">
                         <input v-if="$store.state.document.mainTextDirection != 'ttb'"
                                 v-on:keyup.down="editLine('next')"
                                 v-on:keyup.up="editLine('previous')"
@@ -187,6 +192,11 @@ import HelpVersions from './HelpVersions.vue';
 import HelpCompareTranscriptions from './HelpCompareTranscriptions.vue';
 
 export default Vue.extend({
+    data() {
+      return {
+        isVKEnabled: false
+      }
+    },
     components: {
         LineVersion,
         HelpVersions,
@@ -232,8 +242,11 @@ export default Vue.extend({
             }, false);
         }
 
-        for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
-            enableVirtualKeyboard(input);
+
+        this.isVKEnabled = userProfile.get("VK-enabled", []).indexOf(this.$store.state.document.id) != -1 || false;
+        if (this.isVKEnabled)
+            for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                enableVirtualKeyboard(input);
     },
     watch: {
         line(new_, old_) {
@@ -279,6 +292,12 @@ export default Vue.extend({
                    this.computeStyles();
                 }
                 await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
+            }
+        },
+        VKButtonClass: function () {
+            return {
+                'btn-info': this.isVKEnabled,
+                'btn-outline-info': !this.isVKEnabled
             }
         }
     },
@@ -545,6 +564,22 @@ export default Vue.extend({
             this.computeImgStyles(bbox, ratio, lineHeight, hContext);
             this.computeInputStyles(bbox, ratio, lineHeight, hContext);
         },
+
+        toggleVK() {
+            this.isVKEnabled = !this.isVKEnabled;
+            let vks = userProfile.get("VK-enabled", []);
+            if (this.isVKEnabled) {
+                vks.push(this.$store.state.document.id);
+                userProfile.set("VK-enabled", vks);
+                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                    enableVirtualKeyboard(input);
+            } else {
+                vks.splice(vks.indexOf(this.$store.state.document.id), 1);
+                userProfile.set("VK-enabled", vks);
+            //     for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+            //         disableVirtualKeyboard(input);
+            }
+        }
     },
 });
 </script>

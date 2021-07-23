@@ -19,8 +19,13 @@ class Profile {
         this.saveProfile();
     }
 
-    get(key) {
-        return this.settings[key];
+    get(key, default_) {
+        return this.settings[key] || default_;
+    }
+
+    delete(key) {
+        delete this.settings[key];
+        this.saveProfile();
     }
 
     getCookieConsent() {
