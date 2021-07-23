@@ -39,7 +39,8 @@
                             class="btn btn-sm mr-1 btn-secondary">
                         <i class="fas fa-arrow-circle-right"></i>
                     </button>
-                    <button class="btn btn-sm ml-2 mr-1" :class="VKButtonClass"
+                    <button class="btn btn-sm ml-2 mr-1"
+                            :class="{'btn-info': this.isVKEnabled, 'btn-outline-info': !this.isVKEnabled}"
                             title="Toggle Virtual Keyboard for this document."
                             @click="toggleVK">
                         <i class="fas fa-keyboard"></i>
@@ -294,12 +295,6 @@ export default Vue.extend({
                 await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
             }
         },
-        VKButtonClass: function () {
-            return {
-                'btn-info': this.isVKEnabled,
-                'btn-outline-info': !this.isVKEnabled
-            }
-        }
     },
     methods: {
         close() {
@@ -574,10 +569,12 @@ export default Vue.extend({
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                     enableVirtualKeyboard(input);
             } else {
+                // Make sure we save changes made before we remove the VK
+                this.localTranscription = this.$refs.transInput.value;
                 vks.splice(vks.indexOf(this.$store.state.document.id), 1);
                 userProfile.set("VK-enabled", vks);
-            //     for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
-            //         disableVirtualKeyboard(input);
+                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                    input.onfocus = (e) => { e.preventDefault() };
             }
         }
     },
