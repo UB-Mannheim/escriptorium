@@ -42,7 +42,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def generate_part_thumbnails(instance_pk, user_pk=None):
+def generate_part_thumbnails(instance_pk, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
     try:
@@ -130,7 +130,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -315,7 +315,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def recalculate_masks(instance_pk, user_pk=None, only=None):
+def recalculate_masks(instance_pk, user_pk=None, only=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -406,7 +406,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
+def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)

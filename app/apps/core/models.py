@@ -810,29 +810,35 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         redis_.set('process-%d' % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}}))
         chain(*tasks).delay()
 
-    def task(self, task_name, commit=True, user_pk=None, **kwargs):
+    def task(self, task_name, commit=True, **kwargs):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
-            sig = convert.si(self.pk, user_pk=user_pk)
+            sig = convert.si(self.pk, **kwargs)
 
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(chain(lossless_compression.si(self.pk, user_pk=user_pk),
-                               generate_part_thumbnails.si(self.pk, user_pk=user_pk)))
+                sig.link(chain(lossless_compression.si(self.pk, **kwargs),
+                               generate_part_thumbnails.si(self.pk, **kwargs)))
             else:
-                sig.link(lossless_compression.si(self.pk, user_pk=user_pk))
+                sig.link(lossless_compression.si(self.pk, **kwargs))
             tasks.append(sig)
 
         if task_name == 'binarize':
-            tasks.append(binarize.si(self.pk, **kwargs))
+            tasks.append(binarize.si(self.pk,
+                                     report_label='Binarize in %s' % self.document.name,
+                                     **kwargs))
 
         if (task_name == 'segment' or (task_name == 'transcribe'
                                        and not self.segmented)):
-            tasks.append(segment.si(self.pk, **kwargs))
+            tasks.append(segment.si(self.pk,
+                                    report_label='Segment in %s' % self.document.name,
+                                    **kwargs))
 
         if task_name == 'transcribe':
-            tasks.append(transcribe.si(self.pk, **kwargs))
+            tasks.append(transcribe.si(self.pk,
+                                       report_label='Transcribe in %s' % self.document.name,
+                                       **kwargs))
 
         if commit:
             self.chain_tasks(*tasks)
