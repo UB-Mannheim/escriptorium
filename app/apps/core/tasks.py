@@ -204,7 +204,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
             threads=LOAD_THREADS,
             augment=True,
             resize='both',
-            hyper_params={'epochs': 20},
+            hyper_params={'epochs': 30},
             load_hyper_parameters=True,
             topline=topline
         )
