@@ -44,6 +44,8 @@ from core.tasks import (segtrain, train, binarize,
 from users.consumers import send_event
 from users.models import User
 
+from django_prometheus.models import ExportModelOperationsMixin
+
 redis_ = get_redis_connection()
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ class AlreadyProcessingException(Exception):
     pass
 
 
-class Typology(models.Model):
+class Typology(ExportModelOperationsMixin('Typology'), models.Model):
     name = models.CharField(max_length=128)
 
     # if True, is visible as a choice in the ontology edition in a new document
@@ -87,7 +89,7 @@ class LineType(Typology):
     pass
 
 
-class Metadata(models.Model):
+class Metadata(ExportModelOperationsMixin('Metadata'), models.Model):
     name = models.CharField(max_length=128, unique=True)
     cidoc_id = models.CharField(max_length=8, null=True, blank=True)
     public = models.BooleanField(default=False)
@@ -99,7 +101,7 @@ class Metadata(models.Model):
         return self.name
 
 
-class Script(models.Model):
+class Script(ExportModelOperationsMixin('Script'), models.Model):
     TEXT_DIRECTION_HORIZONTAL_LTR = 'horizontal-lr'
     TEXT_DIRECTION_HORIZONTAL_RTL = 'horizontal-rl'
     TEXT_DIRECTION_VERTICAL_LTR = 'vertical-lr'
@@ -126,7 +128,7 @@ class Script(models.Model):
         return self.name
 
 
-class DocumentMetadata(models.Model):
+class DocumentMetadata(ExportModelOperationsMixin('DocumentMetadata'), models.Model):
     document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
     key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
     value = models.CharField(max_length=512)
@@ -158,7 +160,7 @@ class ProjectManager(models.Manager):
                 .distinct())
 
 
-class Project(models.Model):
+class Project(ExportModelOperationsMixin('Project'), models.Model):
     name = models.CharField(max_length=512)
     slug = models.SlugField(unique=True)
 
@@ -216,7 +218,7 @@ class DocumentManager(models.Manager):
                 .distinct())
 
 
-class Document(models.Model):
+class Document(ExportModelOperationsMixin('Document'), models.Model):
     WORKFLOW_STATE_DRAFT = 0
     WORKFLOW_STATE_PUBLISHED = 2  # viewable by the world
     WORKFLOW_STATE_ARCHIVED = 3  #
@@ -233,9 +235,11 @@ class Document(models.Model):
     )
     LINE_OFFSET_BASELINE = 0
     LINE_OFFSET_TOPLINE = 1
+    LINE_OFFSET_CENTERLINE = 2
     LINE_OFFSET_CHOICES = (
         (LINE_OFFSET_BASELINE, _('Baseline')),
-        (LINE_OFFSET_TOPLINE, _('Topline'))
+        (LINE_OFFSET_TOPLINE, _('Topline')),
+        (LINE_OFFSET_CENTERLINE, _('Centered'))
     )
 
     name = models.CharField(max_length=512)
@@ -334,7 +338,7 @@ def document_images_path(instance, filename):
     return 'documents/{0}/{1}'.format(instance.document.pk, filename)
 
 
-class DocumentPart(OrderedModel):
+class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     """
     Represents a physical part of a larger document that is usually a page
     """
@@ -496,7 +500,7 @@ class DocumentPart(OrderedModel):
         new = self.pk is None
         instance = super().save(*args, **kwargs)
         if new:
-            self.task('convert')
+            self.task('convert', user_pk=self.document.owner and self.document.owner.pk or None)
             send_event('document', self.document.pk, "part:new", {"id": self.pk})
         else:
             self.calculate_progress()
@@ -811,24 +815,30 @@ class DocumentPart(OrderedModel):
             raise AlreadyProcessingException
         tasks = []
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
-            sig = convert.si(self.pk)
+            sig = convert.si(self.pk, **kwargs)
 
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(chain(lossless_compression.si(self.pk),
-                               generate_part_thumbnails.si(self.pk)))
+                sig.link(chain(lossless_compression.si(self.pk, **kwargs),
+                               generate_part_thumbnails.si(self.pk, **kwargs)))
             else:
-                sig.link(lossless_compression.si(self.pk))
+                sig.link(lossless_compression.si(self.pk, **kwargs))
             tasks.append(sig)
 
         if task_name == 'binarize':
-            tasks.append(binarize.si(self.pk, **kwargs))
+            tasks.append(binarize.si(self.pk,
+                                     report_label='Binarize in %s' % self.document.name,
+                                     **kwargs))
 
         if (task_name == 'segment' or (task_name == 'transcribe'
                                        and not self.segmented)):
-            tasks.append(segment.si(self.pk, **kwargs))
+            tasks.append(segment.si(self.pk,
+                                    report_label='Segment in %s' % self.document.name,
+                                    **kwargs))
 
         if task_name == 'transcribe':
-            tasks.append(transcribe.si(self.pk, **kwargs))
+            tasks.append(transcribe.si(self.pk,
+                                       report_label='Transcribe in %s' % self.document.name,
+                                       **kwargs))
 
         if commit:
             self.chain_tasks(*tasks)
@@ -847,12 +857,19 @@ class DocumentPart(OrderedModel):
                 poly.append(line.block.box[0])  # close it
                 context.append(poly)
 
+            if self.document.line_offset == Document.LINE_OFFSET_TOPLINE:
+                topline = True
+            elif self.document.line_offset == Document.LINE_OFFSET_CENTERLINE:
+                topline = None
+            else:
+                topline = False
+
             mask = calculate_polygonal_environment(
                 im,
                 [line.baseline],
                 suppl_obj=context,
                 scale=(1200, 0),
-                topline=self.document.line_offset == Document.LINE_OFFSET_TOPLINE
+                topline=topline
             )
             if mask[0]:
                 line.mask = mask[0]
@@ -995,7 +1012,7 @@ def validate_3_points(value):
             params={'length': len(value), 'value': value})
 
 
-class Block(OrderedModel, models.Model):
+class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
     """
     Represents a visualy close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
@@ -1110,7 +1127,7 @@ class Line(OrderedModel):  # Versioned,
         return super().save(*args, **kwargs)
 
 
-class Transcription(models.Model):
+class Transcription(ExportModelOperationsMixin('Transcription'), models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(Document, on_delete=models.CASCADE,
                                  related_name='transcriptions')
@@ -1132,7 +1149,7 @@ class Transcription(models.Model):
         self.save()
 
 
-class LineTranscription(Versioned, models.Model):
+class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Versioned, models.Model):
     """
     Represents a transcribded line of a document part in a given transcription
     """
@@ -1164,7 +1181,7 @@ def models_path(instance, filename):
     return 'models/%s/%s%s' % (hash, slugify(fn), ext)
 
 
-class OcrModel(Versioned, models.Model):
+class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     name = models.CharField(max_length=256)
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(

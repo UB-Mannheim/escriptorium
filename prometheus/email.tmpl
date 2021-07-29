@@ -1,0 +1,28 @@
+{{ define "email" }}
+
+<html>
+   <head>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+   </head>
+   <body>
+    Hi Admin,
+
+    <div class="container">
+      <div class="row">
+            <div class="alert alert-danger fade in">
+                <h4>You have the following firing alerts:</h4>
+                <p>
+                  <ul>
+                    {{ range .Alerts }}
+                    <li>{{ .Annotations.summary }} : {{ .Annotations.description }}</li>
+                    {{ end }}
+                  </ul>
+                  <button type="button" class="btn btn-danger">Check services health status </button>
+                </p>
+            </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+{{end}}

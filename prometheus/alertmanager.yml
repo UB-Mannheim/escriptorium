@@ -1,0 +1,29 @@
+global:
+    resolve_timeout: 5m
+  
+route:
+  group_by: ['alertname', 'job']
+  group_wait: 45s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: 'email'
+
+receivers:
+- name: 'email'
+  email_configs:
+  - to: 'yves.tadjo-takianpi@inria.fr' # Admin email
+    from: 'sender@gmail.com'
+    smarthost: smtp.gmail.com:587 # Port 
+    auth_username: 'sender@gmail.com'
+    auth_identity: 'sender@gmail.com'
+    auth_password: 'XXXXXXXX'
+    headers: { Subject: "[WARN] You have {{ .Alerts.Firing | len }} firing alerts" }
+    html: '{{ template "email" .}}'
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+templates:
+  - 'email.tmpl'

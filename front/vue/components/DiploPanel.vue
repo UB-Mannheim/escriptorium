@@ -87,8 +87,6 @@ export default Vue.extend({
         }.bind(this));
 
         this.refresh();
-
-
     },
     methods: {
         empty() {

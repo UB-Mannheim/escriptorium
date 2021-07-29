@@ -67,6 +67,7 @@ class InvitationAdmin(admin.ModelAdmin):
 
 
 class ContactUsAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'created_at')
     readonly_fields = ('created_at',)
 
 
