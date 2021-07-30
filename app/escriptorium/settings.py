@@ -187,7 +187,6 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACKS_LATE = True
-CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', False)
 
 # time in seconds a user has to wait after a task is started before being able to recover
 TASK_RECOVER_DELAY = 60 * 60 * 24  # 1 day
