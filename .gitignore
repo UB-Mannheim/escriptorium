@@ -16,5 +16,6 @@ variables.env
 .vscode
 .idea
 .venv
+.python-version
 WARNING_*
 .nfs*
