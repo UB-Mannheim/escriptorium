@@ -9,9 +9,6 @@ import jsonschema
 schema = {'items': [{'properties': {'bbox': {'items': [{'contains': {'type': 'number'}, 'maxItems': 2, 'minItems': 2, 'type': 'array'}], 'maxItems': 2, 'minItems': 2, 'type': 'array'}, 'c': {'maxLength': 1, 'minLength': 1, 'type': 'string'}, 'confidence': {'maximum': 1, 'minimum': 0, 'type': 'number'}}, 'type': 'object'}], 'type': 'array'}
 
 def forward(apps, se):
-    """
-    Link default typologies with all existing documents
-    """
     LineTranscription = apps.get_model('core', 'LineTranscription')
 
     for line_transcription in LineTranscription.objects.all():
