@@ -24,7 +24,8 @@ from core.models import (Project,
                          LineType,
                          Script,
                          OcrModel,
-                         OcrModelDocument)
+                         OcrModelDocument,
+                         DocumentTag)
 from core.tasks import (segtrain, train, segment, transcribe)
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,11 @@ class LineTypeSerializer(serializers.ModelSerializer):
         model = LineType
         fields = ('pk', 'name')
 
+class TagDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentTag
+        fields = ("pk","name", "color")
+
 
 class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
@@ -124,12 +130,13 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
+    tags = TagDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset',
-                  'valid_block_types', 'valid_line_types', 'parts_count',
+                  'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
                   'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):

@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-free": "^5.7.0",
     "axios": "^0.21.1",
     "bootstrap": "^4.2.1",
+    "bootstrap-select": "^1.13.18",
     "css-loader": "^5.0.1",
     "diff": "^4.0.1",
     "dropzone": "^5.5.1",

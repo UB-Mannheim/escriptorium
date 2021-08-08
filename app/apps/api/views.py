@@ -34,7 +34,8 @@ from api.serializers import (UserOnboardingSerializer,
                              SegTrainSerializer,
                              ScriptSerializer,
                              TranscribeSerializer,
-                             OcrModelSerializer)
+                             OcrModelSerializer,
+                             TagDocumentSerializer)
 
 from core.models import (Project,
                          Document,
@@ -47,14 +48,16 @@ from core.models import (Project,
                          LineTranscription,
                          OcrModel,
                          Script,
-                         AlreadyProcessingException)
+                         AlreadyProcessingException,
+                         DocumentTag)
 
 from core.tasks import recalculate_masks
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
-
+from django.http import JsonResponse
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +190,44 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
+    
+    @action(detail=True, methods=['get'])
+    def get_unlinked_tags(self, request, pk=None):
+        tags = Project.objects.get(documents__pk=pk).document_tags.all()
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 'selectedtags': list(self.get_object().tags.values_list('id', flat=True)), 'status': status.HTTP_200_OK})
+    
+    @action(detail=True, methods=['get'])
+    def get_project_tags(self, request, pk=None):
+        tags = Project.objects.get(pk=pk).document_tags.all()
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 'status': status.HTTP_200_OK})
+
+    @action(detail=True, methods=['post'])
+    def update_tags(self, request, pk=None):
+        document = self.get_object()
+        with transaction.atomic():
+            tags = Project.objects.get(documents__pk=pk).document_tags.all()
+            dict_data = json.loads(list(self.request.data)[0])
+            selcted_tags = []
+            if len(dict_data['selctedtags'].strip()) != 0:
+                selcted_tags = tags.filter(pk__in=dict_data['selctedtags'].split(","))
+                tags = tags.exclude(pk__in=list(selcted_tags.values_list('pk', flat=True)))
+            document.tags.remove(*tags)
+            document.tags.add(*selcted_tags)
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selcted_tags, many=True).data), 'status': status.HTTP_200_OK})
+    
+    @action(detail=True, methods=['post'])
+    def update_document_tag(self, request, pk=None):
+        tags = Project.objects.get(pk=pk).document_tags.all()
+        dict_data = json.loads(list(self.request.data)[0])
+        selcted_tags = []
+        if len(dict_data['checkboxlist'].strip()) != 0:
+            documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project__pk=pk)
+            if len(dict_data['selctedtags'].strip()) != 0:
+                selcted_tags = tags.filter(pk__in=dict_data['selctedtags'].split(","))
+            with transaction.atomic():
+                for document in documents:
+                    document.tags.add(*selcted_tags)
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selcted_tags, many=True).data), 'status': status.HTTP_200_OK})
 
 
 class DocumentPermissionMixin():
