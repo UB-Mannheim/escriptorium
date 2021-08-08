@@ -77,6 +77,10 @@ class OcrModelRightAdmin(admin.ModelAdmin):
     list_display = ['ocr_model', 'user', 'group', 'created_at']
 
 
+class DocumentTagAdmin(admin.ModelAdmin):
+    list_display = ['name', 'color', 'project']
+
+
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
@@ -90,3 +94,4 @@ admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
 admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)
 admin.site.register(OcrModelRight, OcrModelRightAdmin)
+admin.site.register(DocumentTag, DocumentTagAdmin)

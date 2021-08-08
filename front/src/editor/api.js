@@ -43,3 +43,11 @@ export const bulkCreateLineTranscriptions = async (document_id, part_id, data) =
 export const bulkUpdateLineTranscriptions = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/bulk_update/`, data))
 
 export const moveLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/move/`, data))
+
+export const retriveUnlinkTagByDocument = async document_id => (await axios.get(`/documents/${document_id}/get_unlinked_tags/`))
+
+export const retriveTagOnProject = async project_id => (await axios.get(`/documents/${project_id}/get_project_tags/`))
+
+export const assignTagOnDocument = async (document_id, data) => (await axios.post(`/documents/${document_id}/update_tags/`, data))
+
+export const assignTagOnDocumentList = async (project_id, data) => (await axios.post(`/documents/${project_id}/update_document_tag/`, data))
