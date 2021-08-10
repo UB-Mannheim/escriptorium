@@ -6,7 +6,6 @@ export const initialState = () => ({
     checkedtags: [],
     maptags: [],
     filters: "",
-    status_request: 0,
     documentID: 0,
     projectID: 0,
     field_errors: '',
@@ -25,9 +24,6 @@ export const mutations = {
     },
     setFilters (state, filters) {
         state.filters = filters
-    },
-    setStatusRequest (state, status) {
-        state.status_request = status;
     },
     setDocumentID (state, idd) {
         state.documentID = idd
@@ -51,24 +47,19 @@ export const mutations = {
 
 export const actions = {
     async getunlinktagbydocument ({state, commit}, idd) {
-        commit('setStatusRequest', 0);
         const resp = await api.retriveUnlinkTagByDocument(idd);
         commit('setCheckedTags', resp.data.selectedtags);
         commit('setUnlinkedTags', JSON.parse(resp.data.tags));
-        commit('setStatusRequest', resp.data.status);
     },
     async getalltagsproject ({state, commit}) {
         const resp = await api.retriveTagOnProject(state.projectID);
         commit('setCheckedTags', resp.data.selectedtags);
         commit('setUnlinkedTags', JSON.parse(resp.data.tags));
-        commit('setStatusRequest', resp.data.status);
     },
     async updatedocumenttags ({state, commit}, data) {
-        commit('setStatusRequest', 0);
         let resp = null;
         if(state.documentID != 0) resp = await api.assignTagOnDocument(state.documentID, data);
         else resp = await api.assignTagOnDocumentList(state.projectID, data);
-        commit('setStatusRequest', resp.data.status);
     }
 }
 
