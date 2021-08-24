@@ -4,7 +4,7 @@
             <li v-for="tag in tags" :key="tag.pk">
                 <input type="checkbox" onchange="this.form.submit()" name="tags" v-bind:value="tag.name" v-if="setchecked(tag.name)" checked>
                 <input type="checkbox" onchange="this.form.submit()" name="tags" v-bind:value="tag.name" v-else >
-                <span class="badge" v-bind:style="{'background-color': tag.color}">{{tag.name}}</span>
+                <span class="badge" v-bind:style="{'background-color': tag.color}">{{ tag.name | truncate(4) }}</span>
             </li>
         </ul>
     </form>
@@ -24,6 +24,19 @@
      setchecked(tag){ 
          return this.filters.includes(tag)
      }
+  },
+  filters: {
+    truncate(value, num) {
+        let truncateString = '';
+        if(value.trim().length <= num) truncateString = value.trim();
+        else{
+            for(let i=0; i<num; i++) {
+                truncateString += value[i]
+            }
+            truncateString += '...'
+        }
+        return truncateString;
+    }
   }
 }
 
