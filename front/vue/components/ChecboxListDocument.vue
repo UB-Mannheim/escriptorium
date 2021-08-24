@@ -1,5 +1,5 @@
 <template>
-    <input type="checkbox" @click="appendDoccument" ref="checkbox">
+    <input type="checkbox" class="checkbox-document-list" @click="appendDoccument" ref="checkbox">
 </template>
 
 <script>

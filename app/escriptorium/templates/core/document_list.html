@@ -26,6 +26,13 @@
     </div>
     <div class="col-md-11 col-md-offset-4">
     <table id="document-list" class="table table-hover">
+      <thead>
+          <tr>
+              <th colspan=7>
+                <input type="checkbox" class="checkbox-document-list-all" onchange="selectAllDocuments(this)" ref="checkboxall">
+              </th>
+          </tr>
+      </thead>
       <tbody>
         {% for document in object_list %}
         <tr>
@@ -66,7 +73,7 @@
             </simpletagedit>
 
             {% for tag in  document.tags.all %}
-              <span class="badge" style="background-color: {{tag.color}}">{{tag.name}}</span>
+              <span class="badge" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:4 }}</span>
             {% endfor %}
                         
           </td>

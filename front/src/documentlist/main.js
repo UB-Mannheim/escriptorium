@@ -13,5 +13,15 @@ export var doclistVM = new Vue({
         'simpletagedit': SimpleTagEdit,
         'tagsmodal': TagsModal,
         'checboxlistdocument': ChecboxListDocument,
-    }
+    },
+    methods: {
+        selectAllDocuments(element){
+            let checked = element.checked;
+            //if(checked){
+                $('.checkbox-document-list').each(function(i, obj) {
+                    $(this).prop('checked', checked);
+                });
+            //}
+        }
+    },
 });
