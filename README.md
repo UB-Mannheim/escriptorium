@@ -15,7 +15,7 @@ The eScriptorium app itself is at the 'center'. It is a work in progress but wil
   
   
 ## Install
-Two options, [install with Docker](https://gitlab.inria.fr/scripta/escriptorium/-/wikis/docker-install), or a [full local install](https://gitlab.inria.fr/scripta/escriptorium/-/wikis/full-install).  
+Two options, [install with Docker](https://gitlab.com/scripta/escriptorium/-/wikis/docker-install), or a [full local install](https://gitlab.com/scripta/escriptorium/-/wikis/full-install).  
 
 
 ## Contributing
