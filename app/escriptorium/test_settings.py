@@ -1,6 +1,7 @@
 import os.path
 
 CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
 REDIS_DB = 1
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

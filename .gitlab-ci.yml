@@ -3,6 +3,41 @@ stages:
   - build
   - deploy
 
+tests:
+  stage: test
+  image: python:3.7
+
+  services:
+    - postgres:13-alpine
+    - redis:alpine
+
+  variables:
+    # Databases settings
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    SQL_HOST: postgres
+    POSTGRES_DB: escriptorium
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+
+    # Pip cache
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+  cache:
+    paths:
+      - .cache/pip
+
+  except:
+    - schedules
+
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends libvips
+    - pip install -r app/requirements.txt
+
+  script:
+    - python app/manage.py test -v 2 users api versioning imports core
+
 build:
   stage: build
   image: node:12-alpine
