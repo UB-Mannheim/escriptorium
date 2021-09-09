@@ -5,11 +5,7 @@ COPY ./front /build
 RUN npm ci && npm run production
 
 # pull official base image
-FROM escriptorium_base:latest
-
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+FROM registry.gitlab.com/scripta/escriptorium/base:latest
 
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto

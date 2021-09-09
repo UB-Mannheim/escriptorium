@@ -6,7 +6,14 @@
 # Will only push an image if $CI_REGISTRY is set.
 
 if [ -z "$VERSION" ]; then
-	VERSION=${CI_COMMIT_TAG:-latest}
+	# Ensure this is a base tag, then tell sh to remove the base- prefix.
+	case $CI_COMMIT_TAG in
+		base-*)
+			VERSION=${CI_COMMIT_TAG#base-};;
+		*)
+			echo build-base can only be used with 'base-*' tags.
+			exit 1;;
+	esac
 fi
 
 if [ -z "$VERSION" -o -z "$CI_PROJECT_DIR" -o -z "$CI_REGISTRY_IMAGE" ]; then
@@ -21,12 +28,6 @@ fi
 
 cd $CI_PROJECT_DIR
 
-docker build nginx/ -t "$CI_REGISTRY_IMAGE/nginx:$VERSION"
-docker build exim/ -t "$CI_REGISTRY_IMAGE/mail:$VERSION"
-docker build . -t "$CI_REGISTRY_IMAGE:$VERSION" --build-arg VERSION_DATE=$(git tag | sort -V | tail -1)
-
-if [ -n "$CI_REGISTRY" ] && [ "$CI_COMMIT_BRANCH" = "master" -o -n "$CI_COMMIT_TAG" ]; then
-	docker push "$CI_REGISTRY_IMAGE/nginx:$VERSION"
-	docker push "$CI_REGISTRY_IMAGE/email:$VERSION"
-	docker push "$CI_REGISTRY_IMAGE:$VERSION"
-fi
+# Directly build and push as we always are on a base tag
+docker build app/ -t "$CI_REGISTRY_IMAGE/base:$VERSION"
+docker push "$CI_REGISTRY_IMAGE/base:$VERSION"

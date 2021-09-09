@@ -63,8 +63,31 @@ docker-build:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375/
 
-  except:
-    - schedules
+  # Run this on master and tags except base tags
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: on_success
+    - if: '$CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^base-.*/'
+      when: on_success
+    - when: never
 
   script:
     - ci/build.sh
+
+docker-build-base:
+  stage: build
+  image: docker:19.03.1
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375/
+
+  # Run this only on base tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^base-.*/'
+      when: on_success
+    - when: never
+
+  script:
+    - ci/build-base.sh
