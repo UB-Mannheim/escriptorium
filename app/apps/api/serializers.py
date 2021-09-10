@@ -350,7 +350,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     model = serializers.PrimaryKeyRelatedField(required=False,
                                                allow_null=True,
                                                queryset=OcrModel.objects.all())
-    override = serializers.BooleanField(required=False, default=True)
+    override = serializers.BooleanField(required=False, default=False)
     text_direction = serializers.ChoiceField(default='horizontal-lr',
                                              required=False,
                                              choices=TEXT_DIRECTION_CHOICES)

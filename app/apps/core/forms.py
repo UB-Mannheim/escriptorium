@@ -276,7 +276,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
         choices=TEXT_DIRECTION_CHOICES)
 
     override = forms.BooleanField(
-        required=False, initial=True,
+        required=False, initial=False,
         help_text=_("If checked, deletes existing segmentation <b>and bound transcriptions</b> first!"))
 
     def __init__(self, *args, **kwargs):
