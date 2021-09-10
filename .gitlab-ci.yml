@@ -29,6 +29,8 @@ tests:
 
   except:
     - schedules
+    # TRASHME
+    - tags
 
   before_script:
     - apt-get update
