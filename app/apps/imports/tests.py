@@ -461,6 +461,10 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
 
+        self.region_types_choices = list(
+            self.trans.document.valid_block_types.values_list('id', flat=True)
+        ) + ['Undefined', 'Orphan']
+
     def test_simple(self):
         self.client.force_login(self.user)
         with self.assertNumQueries(18):
@@ -468,7 +472,8 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
                                          'file_format': 'text',
-                                         'parts': [str(p.pk) for p in self.parts]})
+                                         'parts': [str(p.pk) for p in self.parts],
+                                         'region_types': self.region_types_choices})
             self.assertEqual(response.status_code, 200)
 
         # self.assertEqual(''.join([c.decode() for c in response.streaming_content]),
@@ -481,7 +486,8 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
                                          'file_format': 'alto',
-                                         'parts': [str(p.pk) for p in self.parts]})
+                                         'parts': [str(p.pk) for p in self.parts],
+                                         'region_types': self.region_types_choices})
             self.assertEqual(response.status_code, 200)
         # self.assertEqual(response.content, '')
 
@@ -505,7 +511,8 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
                                          'file_format': 'text',
-                                         'parts': [str(p.pk) for p in self.parts]})
+                                         'parts': [str(p.pk) for p in self.parts],
+                                         'region_types': self.region_types_choices})
             self.assertEqual(response.status_code, 200)
 
     def test_invalid(self):
@@ -515,7 +522,8 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                             kwargs={'pk': self.trans.document.pk}),
                                     {'transcription': self.trans.pk,
                                      'file_format': 'pouet',
-                                     'parts': [str(p.pk) for p in self.parts]})
+                                     'parts': [str(p.pk) for p in self.parts],
+                                     'region_types': self.region_types_choices})
         self.assertEqual(response.status_code, 400)
 
         # no img
@@ -523,5 +531,6 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                             kwargs={'pk': self.trans.document.pk}),
                                     {'transcription': self.trans.pk,
                                      'file_format': 'text',
-                                     'parts': []})
+                                     'parts': [],
+                                     'region_types': self.region_types_choices})
         self.assertEqual(response.status_code, 400)
