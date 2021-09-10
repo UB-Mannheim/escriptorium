@@ -70,7 +70,7 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
 
 @shared_task(bind=True)
 def document_export(task, file_format, document_pk, part_pks,
-                    transcription_pk, include_images=False,
+                    transcription_pk, region_types, include_images=False,
                     user_pk=None, report_label=None):
     ALTO_FORMAT = "alto"
     PAGEXML_FORMAT = "pagexml"
@@ -92,6 +92,18 @@ def document_export(task, file_format, document_pk, part_pks,
             "id": document.pk
         })
 
+        # Check if we have to include orphan lines
+        include_orphans = False
+        if 'Orphan' in region_types:
+            include_orphans = True
+            region_types.remove('Orphan')
+
+        # Check if we have to include lines with an undefined region type
+        include_undefined = False
+        if 'Undefined' in region_types:
+            include_undefined = True
+            region_types.remove('Undefined')
+
         transcription = Transcription.objects.get(document=document, pk=transcription_pk)
 
         base_filename = "export_doc%d_%s_%s_%s" % (
@@ -104,8 +116,16 @@ def document_export(task, file_format, document_pk, part_pks,
             filename = "%s.txt" % base_filename
             filepath = os.path.join(user.get_document_store_path(), filename)
             # content_type = 'text/plain'
+
+            region_filters = Q(line__block__typology_id__in=region_types)
+            if include_orphans:
+                region_filters |= Q(line__block__isnull=True)
+            if include_undefined:
+                region_filters |= Q(line__block__isnull=False, line__block__typology_id__isnull=True)
+
             lines = (LineTranscription.objects
                      .filter(transcription=transcription, line__document_part__pk__in=part_pks)
+                     .filter(region_filters)
                      .exclude(content="")
                      .order_by('line__document_part', 'line__document_part__order', 'line__order'))
             # return StreamingHttpResponse(['%s\n' % line.content for line in lines],
@@ -123,8 +143,17 @@ def document_export(task, file_format, document_pk, part_pks,
             elif file_format == PAGEXML_FORMAT:
                 tplt = loader.get_template('export/pagexml.xml')
             parts = DocumentPart.objects.filter(document=document, pk__in=part_pks)
+            
+            region_filters = Q(typology_id__in=region_types)
+            if include_undefined:
+                region_filters |= Q(typology_id__isnull=True)
+
             with ZipFile(filepath, 'w') as zip_:
                 for part in parts:
+                    render_orphans = {} if not include_orphans else {
+                        'orphan_lines': part.lines.prefetch_transcription(transcription).filter(block=None)
+                    }
+
                     if include_images:
                         # Note adds image before the xml file
                         zip_.write(part.image.path, part.filename)
@@ -133,15 +162,13 @@ def document_export(task, file_format, document_pk, part_pks,
                             'valid_block_types': document.valid_block_types.all(),
                             'valid_line_types': document.valid_line_types.all(),
                             'part': part,
-                            'blocks': (part.blocks.order_by('order')
+                            'blocks': (part.blocks.filter(region_filters).order_by('order')
                                        .prefetch_related(
                                            Prefetch(
                                                'lines',
                                                queryset=Line.objects.prefetch_transcription(
                                                    transcription)))),
-
-                            'orphan_lines': (part.lines.prefetch_transcription(transcription)
-                                             .filter(block=None))
+                            **render_orphans
                         })
                     except Exception as e:
                         report.append("Skipped {element}({image}) because '{reason}'.".format(
