@@ -8,16 +8,19 @@ ENV DEBIAN_FRONTEND=non-interactive
 # set work directory
 WORKDIR /usr/src/app
 
-# update apk
-RUN apt-get update -q
+# Install base Debian packages
+# and cleanup afterwards to reduce image size
+RUN apt-get update -q && \
+    apt-get -y -qq install netcat-traditional jpegoptim pngcrush libvips git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Add non privileged user to run the app
 RUN addgroup --system uwsgi
 RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
-RUN apt-get -y -qq install netcat-traditional jpegoptim pngcrush libvips
-
 RUN pip install -q --upgrade pip
 
-RUN apt-get -y -qq install git
+# Install Python packages
 COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -q -r requirements.txt
