@@ -58,13 +58,11 @@ docker-build:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375/
 
-  # Run this on master and tags except base tags
+  # Run this on everything except base tags
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      when: on_success
-    - if: '$CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^base-.*/'
-      when: on_success
-    - when: never
+    - if: '$CI_COMMIT_TAG =~ /^base-.*/'
+      when: never
+    - when: on_success
 
   script:
     - ci/build.sh
