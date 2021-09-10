@@ -5,7 +5,7 @@ stages:
 
 tests:
   stage: test
-  image: python:3.7
+  image: registry.gitlab.com/scripta/escriptorium/base:0.10.0
 
   services:
     - postgres:13-alpine
@@ -29,8 +29,6 @@ tests:
 
   except:
     - schedules
-    # TRASHME
-    - tags
 
   before_script:
     - apt-get update
