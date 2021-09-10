@@ -21,6 +21,6 @@ RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
 RUN pip install -q --upgrade pip
 
-# Install Python packages
+# Install Python packages and remove cache
 COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN pip install -q -r requirements.txt
+RUN pip --no-cache-dir install -q -r requirements.txt
