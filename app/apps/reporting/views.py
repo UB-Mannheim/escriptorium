@@ -13,9 +13,20 @@ class ReportList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
+
+        blacklist = [
+            'core.tasks.lossless_compression',
+            'core.tasks.convert',
+            'core.tasks.generate_part_thumbnails',
+            'users.tasks.async_email',
+            'core.tasks.recalculate_masks'
+        ]
+
         return (qs.filter(user=self.request.user)
-                .exclude(messages='')
-                .order_by('-queued_at'))
+                  .exclude(method__in=blacklist)
+                  .annotate(duration=ExpressionWrapper(F('done_at') - F('started_at'),
+                                                       output_field=DurationField()))
+                  .order_by('-queued_at'))
 
 
 class ReportDetail(LoginRequiredMixin, DetailView):
