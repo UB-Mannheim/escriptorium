@@ -30,11 +30,6 @@ tests:
   except:
     - schedules
 
-  before_script:
-    - apt-get update
-    - apt-get install -y --no-install-recommends libvips
-    - pip install -r app/requirements.txt
-
   script:
     - python app/manage.py test -v 2 users api versioning imports core
 
