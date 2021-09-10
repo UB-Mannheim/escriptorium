@@ -209,6 +209,10 @@ CELERY_TASK_ROUTES = {
     'users.tasks.async_email': {'queue': 'low-priority'},
 }
 
+REPORTING_TASKS_BLACKLIST = [
+    'users.tasks.async_email',
+]
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

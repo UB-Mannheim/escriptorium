@@ -1,6 +1,7 @@
 import logging
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from celery import states
@@ -14,7 +15,7 @@ User = get_user_model()
 def start_task_reporting(task_id, task, *args, **kwargs):
     task_kwargs = kwargs.get("kwargs", {})
     # If the reporting is disabled for this task we don't need to execute following code
-    if task_kwargs.get("disable_reporting"):
+    if task.name in settings.REPORTING_TASKS_BLACKLIST:
         return
 
     TaskReport = apps.get_model('reporting', 'TaskReport')
@@ -40,7 +41,7 @@ def start_task_reporting(task_id, task, *args, **kwargs):
 @task_postrun.connect
 def end_task_reporting(task_id, task, *args, **kwargs):
     # If the reporting is disabled for this task we don't need to execute following code
-    if kwargs.get("kwargs", {}).get("disable_reporting"):
+    if task.name in settings.REPORTING_TASKS_BLACKLIST:
         return
 
     TaskReport = apps.get_model('reporting', 'TaskReport')
