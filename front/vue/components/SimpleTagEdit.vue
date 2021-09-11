@@ -15,7 +15,6 @@ export default {
     ],
     methods: {
         async launchModal(event){
-            event.preventDefault();
             this.$store.commit('documentslist/setDocumentID', this.documentId);
             await this.$store.dispatch('documentslist/getUnlinkTagByDocument', this.documentId);
         },
