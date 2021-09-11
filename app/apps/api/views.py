@@ -206,28 +206,28 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
         tags = Project.objects.get(documents__pk=pk).document_tags.all()
         dict_data = json.loads(list(self.request.data)[0])
-        selcted_tags = []
-        if len(dict_data['selctedtags'].strip()) != 0:
-            selcted_tags = tags.filter(pk__in=dict_data['selctedtags'].split(","))
-            tags = tags.exclude(pk__in=list(selcted_tags.values_list('pk', flat=True)))
+        selected_tags = []
+        if len(dict_data['selectedtags'].strip()) != 0:
+            selected_tags = tags.filter(pk__in=dict_data['selectedtags'].split(","))
+            tags = tags.exclude(pk__in=list(selected_tags.values_list('pk', flat=True)))
         with transaction.atomic():
             document.tags.remove(*tags)
-            document.tags.add(*selcted_tags)
-        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selcted_tags, many=True).data), 'status': status.HTTP_200_OK})
+            document.tags.add(*selected_tags)
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selected_tags, many=True).data), 'status': status.HTTP_200_OK})
     
     @action(detail=True, methods=['post'])
     def update_document_tag(self, request, pk=None):
         tags = Project.objects.get(pk=pk).document_tags.all()
         dict_data = json.loads(list(self.request.data)[0])
-        selcted_tags = []
+        selected_tags = []
         if len(dict_data['checkboxlist'].strip()) != 0:
             documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project__pk=pk)
-            if len(dict_data['selctedtags'].strip()) != 0:
-                selcted_tags = tags.filter(pk__in=dict_data['selctedtags'].split(","))
+            if len(dict_data['selectedtags'].strip()) != 0:
+                selected_tags = tags.filter(pk__in=dict_data['selectedtags'].split(","))
             with transaction.atomic():
                 for document in documents:
-                    document.tags.add(*selcted_tags)
-        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selcted_tags, many=True).data), 'status': status.HTTP_200_OK})
+                    document.tags.add(*selected_tags)
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selected_tags, many=True).data), 'status': status.HTTP_200_OK})
 
 
 class DocumentPermissionMixin():

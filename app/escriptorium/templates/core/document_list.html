@@ -17,6 +17,7 @@
 
 {% block tab_content %}
 <div class="row" id="document_list">
+  {% if document_tags %}
     <div class="col-1">
         <span>{% trans 'Filters' %}</span>
         <tagsselector 
@@ -25,12 +26,16 @@
         </tagsselector>
     </div>
     <div class="col-md-11 col-md-offset-4">
+  {% else %}
+    <div class="col-md-12 col-md-offset-4">
+  {% endif %}
+
     <table id="document-list" class="table table-hover">
       <thead>
           <tr>
-              <th colspan=7>
-                <input type="checkbox" class="checkbox-document-list-all" onchange="selectAllDocuments(this)" ref="checkboxall">
-              </th>
+              <td colspan="8">
+                <selectalldocumentcheckbox></selectalldocumentcheckbox>
+              </td>
           </tr>
       </thead>
       <tbody>
@@ -38,7 +43,8 @@
         <tr>
           <td>
             <checboxlistdocument 
-                :document_id="{{document.pk}}">
+                :document-id="{{document.pk}}"
+                value="{{document.pk}}">
             </checboxlistdocument>
           </td>
           <td>
@@ -50,11 +56,6 @@
           </td>
           <th>
             {{ document.name }}
-            {% comment %}
-            {% for tag in document.tags.all %}
-              <span class="badge" style="background-color: {{tag.color}}">{{tag.name}}</span>
-            {% endfor %}
-            {% endcomment %}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
           </th>
           <td>
@@ -69,11 +70,11 @@
 
           <td>
             <simpletagedit 
-                :document_id="{{document.pk}}">
+                :document-id="{{document.pk}}">
             </simpletagedit>
 
             {% for tag in  document.tags.all %}
-              <span class="badge" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:4 }}</span>
+              <span class="badge" title="{{tag.name}}" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:4 }}</span>
             {% endfor %}
                         
           </td>
@@ -113,7 +114,7 @@
       </tbody>
     </table>
     <tagsmodal 
-        :project_id="{{project.pk}}">
+        :project-id="{{project.pk}}">
     </tagsmodal>
     </div>
 </div>

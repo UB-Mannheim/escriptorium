@@ -1,13 +1,10 @@
 <template>
-    <a href="#"
-        v-on:click="launchmodal"
-        title="Manage tags"
-        class="btn btn-info set-tag-meta btn-primary"
-        data-toggle="modal"
-        data-target="#tagsModal" 
-        ref="tagedit">
-        <i @click="launchmodal" class="fas fa fa-tags"></i>
-    </a>
+    <button type="button" 
+            v-on:click="launchModal" 
+            data-toggle="modal" 
+            data-target="#tagsModal" 
+            title="Manage tags" 
+            class="nav-item btn btn-primary"><i class="fas fa fa-tags"></i></button>
 </template>
 
 <script>
@@ -17,11 +14,10 @@ export default {
         'documentId',
     ],
     methods: {
-        async launchmodal(event){
+        async launchModal(event){
             event.preventDefault();
-            let document_id = $(this.$refs.tagedit).attr('document_id');
-            this.$store.commit('documentslist/setDocumentID', document_id);
-            await this.$store.dispatch('documentslist/getunlinktagbydocument', document_id);
+            this.$store.commit('documentslist/setDocumentID', this.documentId);
+            await this.$store.dispatch('documentslist/getUnlinkTagByDocument', this.documentId);
         },
     }
 }

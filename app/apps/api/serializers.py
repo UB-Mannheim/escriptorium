@@ -118,7 +118,7 @@ class LineTypeSerializer(serializers.ModelSerializer):
 class TagDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentTag
-        fields = ("pk","name", "color")
+        fields = ("pk", "name", "color")
 
 
 class DocumentSerializer(serializers.ModelSerializer):
