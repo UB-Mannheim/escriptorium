@@ -40,7 +40,7 @@
                         <i class="fas fa-arrow-circle-right"></i>
                     </button>
                     <button class="btn btn-sm ml-2 mr-1"
-                            :class="{'btn-info': this.isVKEnabled, 'btn-outline-info': !this.isVKEnabled}"
+                            :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
                             title="Toggle Virtual Keyboard for this document."
                             @click="toggleVK">
                         <i class="fas fa-keyboard"></i>
@@ -244,7 +244,7 @@ export default Vue.extend({
         }
 
 
-        this.isVKEnabled = userProfile.get("VK-enabled", []).indexOf(this.$store.state.document.id) != -1 || false;
+        this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         if (this.isVKEnabled)
             for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                 enableVirtualKeyboard(input);
@@ -252,6 +252,9 @@ export default Vue.extend({
     watch: {
         line(new_, old_) {
             this.computeStyles();
+        },
+        '$store.state.document.enabledVKs'() {
+            this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         }
     },
     computed: {
@@ -562,9 +565,10 @@ export default Vue.extend({
 
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
-            let vks = userProfile.get("VK-enabled", []);
+            let vks = this.$store.state.document.enabledVKs;
             if (this.isVKEnabled) {
                 vks.push(this.$store.state.document.id);
+                this.$store.commit('document/setEnabledVKs', vks);
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                     enableVirtualKeyboard(input);
@@ -572,6 +576,7 @@ export default Vue.extend({
                 // Make sure we save changes made before we remove the VK
                 this.localTranscription = this.$refs.transInput.value;
                 vks.splice(vks.indexOf(this.$store.state.document.id), 1);
+                this.$store.commit('document/setEnabledVKs', vks);
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                     input.onfocus = (e) => { e.preventDefault() };
