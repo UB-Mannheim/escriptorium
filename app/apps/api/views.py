@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 
 from rest_framework.decorators import action
@@ -174,6 +174,9 @@ class DocumentViewSet(ModelViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data={'status': 'error',
                                   'error': serializer.errors})
+    
+    def get_success_url(self, project):
+        return reverse('documents-list', kwargs={'slug': project.slug})
 
     @action(detail=True, methods=['post'])
     def segment(self, request, pk=None):
@@ -204,12 +207,15 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def update_tags(self, request, pk=None):
         document = self.get_object()
-        tags = Project.objects.get(documents__pk=pk).document_tags.all()
+        project = Project.objects.get(documents__pk=pk)
+        tags = project.document_tags.all()
         dict_data = json.loads(list(self.request.data)[0])
-        selected_tags = []
-        if len(dict_data['selectedtags'].strip()) != 0:
-            selected_tags = tags.filter(pk__in=dict_data['selectedtags'].split(","))
-            tags = tags.exclude(pk__in=list(selected_tags.values_list('pk', flat=True)))
+        selected_id = dict_data['selectedtags'].split(",")
+        if len(dict_data['name'].strip()) != 0:
+            _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
+            selected_id.append(_tag.pk)
+        selected_tags = tags.filter(pk__in=set(selected_id))
+        tags = tags.exclude(pk__in=selected_tags)
         with transaction.atomic():
             document.tags.remove(*tags)
             document.tags.add(*selected_tags)
@@ -217,13 +223,16 @@ class DocumentViewSet(ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def update_document_tag(self, request, pk=None):
-        tags = Project.objects.get(pk=pk).document_tags.all()
+        project = Project.objects.get(pk=pk)
+        tags = project.document_tags.all()
         dict_data = json.loads(list(self.request.data)[0])
-        selected_tags = []
+        selected_id = dict_data['selectedtags'].split(",")
+        if len(dict_data['name'].strip()) != 0:
+            _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
+            selected_id.append(_tag.pk)
         if len(dict_data['checkboxlist'].strip()) != 0:
-            documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project__pk=pk)
-            if len(dict_data['selectedtags'].strip()) != 0:
-                selected_tags = tags.filter(pk__in=dict_data['selectedtags'].split(","))
+            documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project=project)
+            selected_tags = tags.filter(pk__in=set(selected_id))
             with transaction.atomic():
                 for document in documents:
                     document.tags.add(*selected_tags)

@@ -42,10 +42,10 @@
         {% for document in object_list %}
         <tr>
           <td>
-            <checboxlistdocument 
+            <checkboxlistdocument 
                 :document-id="{{document.pk}}"
                 value="{{document.pk}}">
-            </checboxlistdocument>
+            </checkboxlistdocument>
           </td>
           <td>
               {% with part=document.parts.first %}
@@ -56,11 +56,6 @@
           </td>
           <th>
             {{ document.name }}
-            {% comment %}
-            {% for tag in document.tags.all %}
-              <span class="badge" style="background-color: {{tag.color}}">{{tag.name}}</span>
-            {% endfor %}
-            {% endcomment %}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
           </th>
           <td>

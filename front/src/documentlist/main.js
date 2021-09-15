@@ -3,7 +3,7 @@ import store from '../editor/index';
 import TagsSelector from '../../vue/components/TagsSelector.vue';
 import SimpleTagEdit from '../../vue/components/SimpleTagEdit.vue';
 import TagsModal from '../../vue/components/TagsModal.vue';
-import ChecboxListDocument from '../../vue/components/CheckboxListDocument.vue';
+import CheckboxListDocument from '../../vue/components/CheckboxListDocument.vue';
 import SelectAllDocumentCheckbox from '../../vue/components/SelectAllDocumentCheckbox.vue';
 
 export var doclistVM = new Vue({
@@ -13,7 +13,7 @@ export var doclistVM = new Vue({
         'tagsselector': TagsSelector,
         'simpletagedit': SimpleTagEdit,
         'tagsmodal': TagsModal,
-        'checboxlistdocument': ChecboxListDocument,
+        'checkboxlistdocument': CheckboxListDocument,
         'selectalldocumentcheckbox': SelectAllDocumentCheckbox
     }
 });

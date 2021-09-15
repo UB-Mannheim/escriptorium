@@ -21,6 +21,9 @@
                                 </option>
                             </select>
                         </div>
+                        <div class="form-row form-group justify-content-center">
+                            <input type="text" class="form-control" name="name" placeholder="Add a new tag">
+                        </div>
 
                     </div>
                     <div class="modal-footer">
@@ -82,7 +85,7 @@ export default {
             let element = {};
             let tabindex = [];
             for(let i = 0; i < el.length; i++){
-                if((el[i].value.toLowerCase() != "button") && (el[i].value.toLowerCase() != "submit") /*&& (el[i].value != "")*/){
+                if((el[i].value.toLowerCase() != "button") && (el[i].value.toLowerCase() != "submit")){
                     if(!tabindex.includes(el[i].name.toString())){
                         Object.defineProperty(element, el[i].name, { value: el[i].value });
                     }
@@ -106,6 +109,7 @@ export default {
             handler: function(nv) {
                 this.tags = nv;
                 this.$nextTick(function(){ 
+                    this.valuesSelected = this.listCheckedTags;
                     $(this.$refs.mselectTags).selectpicker('val', this.listCheckedTags); 
                     $(this.$refs.mselectTags).selectpicker('refresh'); 
                 });
