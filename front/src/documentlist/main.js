@@ -4,7 +4,6 @@ import TagsSelector from '../../vue/components/TagsSelector.vue';
 import SimpleTagEdit from '../../vue/components/SimpleTagEdit.vue';
 import TagsModal from '../../vue/components/TagsModal.vue';
 import CheckboxListDocument from '../../vue/components/CheckboxListDocument.vue';
-import SelectAllDocumentCheckbox from '../../vue/components/SelectAllDocumentCheckbox.vue';
 
 export var doclistVM = new Vue({
     el: "#document_list",
@@ -13,7 +12,6 @@ export var doclistVM = new Vue({
         'tagsselector': TagsSelector,
         'simpletagedit': SimpleTagEdit,
         'tagsmodal': TagsModal,
-        'checkboxlistdocument': CheckboxListDocument,
-        'selectalldocumentcheckbox': SelectAllDocumentCheckbox
+        'checkboxlistdocument': CheckboxListDocument
     }
 });

@@ -6,7 +6,8 @@ export const initialState = () => ({
     mapTags: [],
     documentID: null,
     projectID: null,
-    checkboxList: []
+    checkboxList: [],
+    lastChecked: null
 })
 
 export const mutations = {
@@ -30,6 +31,9 @@ export const mutations = {
                 state.checkboxList.splice(index, 1);
             }
         }
+    },
+    setLastChecked (state, value) {
+        state.lastChecked = value
     },
 }
 

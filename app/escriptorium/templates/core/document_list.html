@@ -31,20 +31,14 @@
   {% endif %}
 
     <table id="document-list" class="table table-hover">
-      <thead>
-          <tr>
-              <td colspan="8">
-                <selectalldocumentcheckbox></selectalldocumentcheckbox>
-              </td>
-          </tr>
-      </thead>
       <tbody>
         {% for document in object_list %}
         <tr>
           <td>
             <checkboxlistdocument 
                 :document-id="{{document.pk}}"
-                value="{{document.pk}}">
+                value="{{document.pk}}"
+                id="{{ forloop.counter }}">
             </checkboxlistdocument>
           </td>
           <td>

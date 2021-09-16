@@ -10,7 +10,7 @@
                 </div>
                 <form method="post" action="#" id="formTag" ref="formTag">
                     <div class="modal-body">
-                        <input type="hidden" class="form-control" id="project-id" name="project" v-model="project_id">
+                        <input type="hidden" class="form-control" id="project-id" name="project" v-model="projectIdComputed">
                         <input type="hidden" class="form-control" id="document-id" name="document" v-model="documentId">
                         <input type="hidden" class="form-control" id="valuesSelected" name="selectedtags" v-model="valuesSelected">
                         <input type="hidden" class="form-control" id="checkboxlist" name="checkboxlist" v-model="checkboxListData">
@@ -54,8 +54,8 @@ export default {
         listCheckedTags() {
             return this.$store.state.documentslist.checkedTags;
         },
-        project_id() {
-            return this.$store.state.documentslist.projectID;
+        projectIdComputed() {
+            return this.projectId
         },
         checkboxListData() {
             return this.$store.state.documentslist.checkboxList;
@@ -96,7 +96,6 @@ export default {
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);
-            this.$store.commit('documentslist/setProjectID', null);
         },
         async populateItems(){
             this.$store.commit('documentslist/setProjectID', this.projectId);

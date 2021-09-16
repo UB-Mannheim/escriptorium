@@ -214,7 +214,7 @@ class DocumentViewSet(ModelViewSet):
         if len(dict_data['name'].strip()) != 0:
             _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
             selected_id.append(_tag.pk)
-        selected_tags = tags.filter(pk__in=set(selected_id))
+        selected_tags = tags.filter(pk__in=set([id for id in selected_id if id]))
         tags = tags.exclude(pk__in=selected_tags)
         with transaction.atomic():
             document.tags.remove(*tags)
@@ -232,7 +232,7 @@ class DocumentViewSet(ModelViewSet):
             selected_id.append(_tag.pk)
         if len(dict_data['checkboxlist'].strip()) != 0:
             documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project=project)
-            selected_tags = tags.filter(pk__in=set(selected_id))
+            selected_tags = tags.filter(pk__in=set([id for id in selected_id if id]))
             with transaction.atomic():
                 for document in documents:
                     document.tags.add(*selected_tags)
