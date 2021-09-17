@@ -1187,6 +1187,7 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
+    file_size = models.BigIntegerField()
 
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
@@ -1233,7 +1234,8 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
             public=False,
             script=self.script,
             parent=self,
-            versions=[]
+            versions=[],
+            file_size=self.file.size
         )
         model.file = File(self.file, name=os.path.basename(self.file.name))
         model.save()
