@@ -42,11 +42,11 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
 
         self.line = Line.objects.create(
             baseline=[[10, 25], [50, 25]],
-            mask=[10, 10, 50, 50],
+            mask=[[10, 10], [50, 10], [50, 50], [10, 50]],
             document_part=self.part)
         self.line2 = Line.objects.create(
             baseline=[[10, 80], [50, 80]],
-            mask=[10, 60, 50, 100],
+            mask=[[10, 60], [50, 60], [50, 100], [10, 100]],
             document_part=self.part)
         self.transcription = Transcription.objects.create(
             document=self.part.document,
