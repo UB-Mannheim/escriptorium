@@ -257,6 +257,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
                         level='success')
     finally:
         model.training = False
+        model.file_size = model.file.size
         model.save()
 
         send_event('document', document_pk, "training:done", {
@@ -450,6 +451,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
                         level='success')
     finally:
         model.training = False
+        model.file_size = model.file.size
         model.save()
 
         send_event('document', document.pk, "training:done", {
