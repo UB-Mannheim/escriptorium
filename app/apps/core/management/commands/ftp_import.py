@@ -32,7 +32,7 @@ class Command(BaseCommand):
         with open(fullpath, 'wb+') as fh:
             ftp.retrbinary('RETR ' + filename, fh.write, 1024)
 
-        part = DocumentPart.objects.create(image=fpath, document=self.document)
+        part = DocumentPart.objects.create(image=fpath, image_file_size=os.path.getsize(fpath), document=self.document)
         return part
         
     def handle(self, *args, **options):

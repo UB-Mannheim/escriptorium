@@ -72,6 +72,7 @@ class CoreFactory():
             name=img.name,
             content=img.read(),
             content_type='image/png'))
+        attrs.setdefault('image_file_size', os.path.getsize(img.name))
 
         part = DocumentPart.objects.create(**attrs)
         self.cleanup_registry.append(part)

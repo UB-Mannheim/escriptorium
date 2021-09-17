@@ -345,6 +345,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
     original_filename = models.CharField(max_length=1024, blank=True)
+    image_file_size = models.BigIntegerField()
     source = models.CharField(max_length=1024, blank=True)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path,

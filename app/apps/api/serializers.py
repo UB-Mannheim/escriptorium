@@ -148,6 +148,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class PartSerializer(serializers.ModelSerializer):
     image = ImageField(required=False, thumbnails=['card', 'large'])
+    image_file_size = serializers.IntegerField(required=False)
     filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
@@ -162,6 +163,7 @@ class PartSerializer(serializers.ModelSerializer):
             'title',
             'typology',
             'image',
+            'image_file_size',
             'bw_image',
             'workflow',
             'order',
@@ -174,6 +176,7 @@ class PartSerializer(serializers.ModelSerializer):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
+        data['image_file_size'] = data['image'].size
         obj = super().create(data)
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
