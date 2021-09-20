@@ -13,6 +13,16 @@ class ReportList(LoginRequiredMixin, ListView):
     model = TaskReport
     paginate_by = 20
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        today = date.today()
+        qs = self.request.user.taskreport_set.filter(
+            started_at__gte=today - timedelta(days=30)
+        ).aggregate(Sum('cpu_cost'), Sum('gpu_cost'))
+        context['cpu_cost_last_month'] = qs['cpu_cost__sum'] or 0
+        context['gpu_cost_last_month'] = qs['gpu_cost__sum'] or 0
+        return context
+
     def get_queryset(self):
         qs = super().get_queryset()
 

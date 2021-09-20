@@ -15,11 +15,27 @@
                 </div>
             </div>
         </div>
-        <!-- For CPU usage, will be used later on -->
         <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    CPU usage
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ cpu_cost_last_month }} CPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">CPU usage over the last month</h6>
+                </div>
+            </div>
         </div>
-        <!-- For GPU usage, will be used later on -->
         <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    GPU usage
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ gpu_cost_last_month }} GPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">GPU usage over the last month</h6>
+                </div>
+            </div>
         </div>
     </div>
     <table class="table table-hover">
@@ -29,6 +45,8 @@
             <th>{% trans "Done at" %}</th>
             <th>{% trans "Duration" %}</th>
             <th>{% trans "State" %}</th>
+            <th>{% trans "CPU cost" %}</th>
+            <th>{% trans "GPU cost" %}</th>
             <th></th>
         </tr>
         {% for report in object_list %}
@@ -49,6 +67,22 @@
                     <span class="badge badge-pill badge-secondary">{{ state }}</span>
                     {% endif %}
                 {% endwith %}
+            </td>
+            <td>
+                {% if report.cpu_cost %}
+                {{ report.cpu_cost }}
+                {% else %}
+                0
+                {% endif %}
+                CPU-min
+            </td>
+            <td>
+                {% if report.gpu_cost %}
+                {{ report.gpu_cost }}
+                {% else %}
+                0
+                {% endif %}
+                GPU-min
             </td>
             <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
         </tr>
