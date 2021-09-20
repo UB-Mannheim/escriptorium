@@ -64,3 +64,4 @@ def end_task_reporting(task_id, task, *args, **kwargs):
             report.error(str(kwargs.get("retval")))
 
     report.calc_cpu_cost(os.cpu_count())
+    report.calc_gpu_cost()
