@@ -5,7 +5,7 @@
 <div>
   <table class="table table-hover">
     <tr>
-      <th colspan="3"></th>
+      <th colspan="5"></th>
       <th colspan="2" class="text-center">
         <span class="badge badge-pill badge-primary">Total</span>
       </th>
@@ -20,6 +20,8 @@
       <th>{% trans "User ID" %}</th>
       <th>{% trans "Username" %}</th>
       <th>{% trans "Disk usage" %}</th>
+      <th>{% trans "CPU usage" %}</th>
+      <th>{% trans "GPU usage" %}</th>
       <th>{% trans "No. of tasks" %}</th>
       <th>{% trans "Runtime" %}</th>
       <th>{% trans "No. of tasks" %}</th>
@@ -32,6 +34,16 @@
       <td>{{ user.id }}</td>
       <td>{{ user.username }}</td>
       <td>{{ user.disk_usage|filesizeformat }}</td>
+      <td>
+        {{ user.last_month_cpu_usage|default_if_none:"0" }} CPU/min
+        <br>
+        <small>(total {{ user.total_cpu_usage|default_if_none:"0" }} CPU/min)</small>
+      </td>
+      <td>
+        {{ user.last_month_gpu_usage|default_if_none:"0" }} GPU/min
+        <br>
+        <small>(total {{ user.total_gpu_usage|default_if_none:"0" }} GPU/min)</small>
+      </td>
       <td>{{ user.total_tasks }}</td>
       <td>{{ user.total_runtime|format_timedelta }}</td>
       <td>{{ user.last_week_tasks }}</td>
