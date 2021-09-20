@@ -85,6 +85,29 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     paginate_by = 10
 
+    @action(detail=True, methods=['get'])
+    def get_project_tags(self, request, pk=None):
+        tags = Project.objects.get(pk=pk).document_tags.all()
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 'status': status.HTTP_200_OK})
+    
+    @action(detail=True, methods=['post'])
+    def update_document_tag(self, request, pk=None):
+        project = self.get_object()
+        tags = project.document_tags.all()
+        dict_data = json.loads(list(self.request.data)[0])
+        selected_id = dict_data['selectedtags'].split(",")
+        selected_tags = []
+        if len(dict_data['name'].strip()) != 0:
+            _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
+            selected_id.append(_tag.pk)
+        if len(dict_data['checkboxlist'].strip()) != 0:
+            documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project=project)
+            selected_tags = tags.filter(pk__in=set([id for id in selected_id if id]))
+            with transaction.atomic():
+                for document in documents:
+                    document.tags.add(*selected_tags)
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selected_tags, many=True).data), 'status': status.HTTP_200_OK})
+
 
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
@@ -196,13 +219,10 @@ class DocumentViewSet(ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def get_unlinked_tags(self, request, pk=None):
-        tags = Project.objects.get(documents__pk=pk).document_tags.all()
-        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 'selectedtags': list(self.get_object().tags.values_list('id', flat=True)), 'status': status.HTTP_200_OK})
-    
-    @action(detail=True, methods=['get'])
-    def get_project_tags(self, request, pk=None):
-        tags = Project.objects.get(pk=pk).document_tags.all()
-        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 'status': status.HTTP_200_OK})
+        tags = Project.objects.get(documents=self.get_object()).document_tags.all()
+        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(tags, many=True).data), 
+                            'selectedtags': list(self.get_object().tags.values_list('id', flat=True)), 
+                            'status': status.HTTP_200_OK})
 
     @action(detail=True, methods=['post'])
     def update_tags(self, request, pk=None):
@@ -211,6 +231,7 @@ class DocumentViewSet(ModelViewSet):
         tags = project.document_tags.all()
         dict_data = json.loads(list(self.request.data)[0])
         selected_id = dict_data['selectedtags'].split(",")
+        selected_tags = []
         if len(dict_data['name'].strip()) != 0:
             _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
             selected_id.append(_tag.pk)
@@ -219,23 +240,6 @@ class DocumentViewSet(ModelViewSet):
         with transaction.atomic():
             document.tags.remove(*tags)
             document.tags.add(*selected_tags)
-        return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selected_tags, many=True).data), 'status': status.HTTP_200_OK})
-    
-    @action(detail=True, methods=['post'])
-    def update_document_tag(self, request, pk=None):
-        project = Project.objects.get(pk=pk)
-        tags = project.document_tags.all()
-        dict_data = json.loads(list(self.request.data)[0])
-        selected_id = dict_data['selectedtags'].split(",")
-        if len(dict_data['name'].strip()) != 0:
-            _tag, created = DocumentTag.objects.get_or_create(name=dict_data['name'], project=project)
-            selected_id.append(_tag.pk)
-        if len(dict_data['checkboxlist'].strip()) != 0:
-            documents = Document.objects.filter(pk__in=dict_data['checkboxlist'].split(","), project=project)
-            selected_tags = tags.filter(pk__in=set([id for id in selected_id if id]))
-            with transaction.atomic():
-                for document in documents:
-                    document.tags.add(*selected_tags)
         return JsonResponse({'tags': json.dumps(TagDocumentSerializer(selected_tags, many=True).data), 'status': status.HTTP_200_OK})
 
 

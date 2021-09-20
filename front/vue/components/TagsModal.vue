@@ -22,7 +22,7 @@
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control" name="name" placeholder="Add a new tag">
+                            <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 75%;">
                         </div>
 
                     </div>
