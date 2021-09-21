@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block head_title %}
+{% trans "Search in document" %}
+{% endblock %}
+
+{% block body %}
+<div>
+    <h2>{% trans "Search text in document" %}</h2>
+    <form method="get">
+        <div>{% render_field form.search_type %}</div>
+        <div class="form-row">
+            <div class="col">{% render_field form.query group=True %}</div>
+            <div class="col-auto">
+                <input type="submit" value="{% trans 'Search' %}" class="btn btn-primary"></input>
+            </div>
+        </div>
+    </form>
+
+    <br/>
+    <hr>
+    <br/>
+    <h4>Results ({{ page_obj.paginator.count }})</h4>
+    <br/>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>{% trans "Content" %}</th>
+                <th>{% trans "Transcription" %}</th>
+                <th>{% trans "Document part" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in object_list %}
+            <tr>
+                <td title="{% trans 'Transcription content' %}">{{ result.content }}</td>
+                <td title="{% trans 'Transcription name' %}">
+                    {% if result.transcription != None %}
+                        {{ result.transcription.name }}
+                    {% endif %}
+                </td>
+                <td title="{% trans 'Line document part name' %}">
+                    {% if result.line != None and result.line.document_part != None %}
+                        {{ result.line.document_part.title }} - {{ result.line.document_part.filename }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No results matched your search.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

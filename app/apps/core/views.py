@@ -3,6 +3,7 @@ import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -12,13 +13,14 @@ from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView, FormView
 
 from core.models import (Project, Document, DocumentPart, Metadata,
-                         OcrModel, OcrModelRight, AlreadyProcessingException)
+                         OcrModel, OcrModelRight, AlreadyProcessingException, LineTranscription)
 
 from core.forms import (ProjectForm,
                         DocumentForm,
+                        DocumentSearchForm,
                         MetadataFormSet,
                         ProjectShareForm,
                         DocumentShareForm,
@@ -240,6 +242,38 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['import_form'] = ImportForm(self.object, self.request.user)
         context['export_form'] = ExportForm(self.object, self.request.user)
         return context
+
+
+class DocumentSearch(LoginRequiredMixin, FormView, ListView):
+    model = Document
+    form_class = DocumentSearchForm
+    template_name = "core/document_search.html"
+    paginate_by = 10
+
+    def get_queryset(self):
+        search = self.request.GET.get('query')
+        search_type = self.request.GET.get('search_type', 'plain')
+
+        if not search:
+            return LineTranscription.objects.none()
+
+        return LineTranscription.objects.select_related(
+            'line', 'line__document_part', 'transcription'
+        ).annotate(
+            search=SearchVector('content', 'transcription__name', 'line__document_part__name')
+        ).filter(
+            line__document_part__document=self.kwargs.get('pk'),
+            search=SearchQuery(search, search_type=search_type)
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['search'] = self.request.GET.get('query')
+        kwargs['search_type'] = self.request.GET.get('search_type', 'plain')
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('document-search', kwargs={'pk': self.kwargs.get('pk')})
 
 
 class ShareDocument(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
