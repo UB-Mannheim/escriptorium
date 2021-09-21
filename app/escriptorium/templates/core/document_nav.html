@@ -26,7 +26,12 @@
       {% endblock nav %}
 
       {% block extra_nav %}
-      <div class="nav-div nav-item ml-5">{{document.name}}</div>
+      <div class="nav-div nav-item ml-5">
+        {{document.name}}
+        <a href="{% url 'document-search' pk=document.pk %}" class="btn btn-sm btn-link">
+          <i class="fa fa-search"></i>
+        </a>
+      </div>
       {% endblock %}
     </div>
   </nav>
