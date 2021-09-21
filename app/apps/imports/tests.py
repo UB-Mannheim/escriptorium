@@ -481,7 +481,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(29):
+        with self.assertNumQueries(28):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
