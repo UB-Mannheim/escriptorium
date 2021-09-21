@@ -3,6 +3,25 @@
 
 {% block body %}
 <div>
+    <div class="row mt-4 mb-4">
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    Disk usage
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ user.calc_disk_usage|filesizeformat }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Calculated from your images and models</h6>
+                </div>
+            </div>
+        </div>
+        <!-- For CPU usage, will be used later on -->
+        <div class="col">
+        </div>
+        <!-- For GPU usage, will be used later on -->
+        <div class="col">
+        </div>
+    </div>
     <table class="table table-hover">
         <tr>
             <th>{% trans "Task report" %}</th>

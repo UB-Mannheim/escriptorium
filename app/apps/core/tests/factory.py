@@ -72,6 +72,7 @@ class CoreFactory():
             name=img.name,
             content=img.read(),
             content_type='image/png'))
+        attrs.setdefault('image_file_size', os.path.getsize(img.name))
 
         part = DocumentPart.objects.create(**attrs)
         self.cleanup_registry.append(part)
@@ -105,7 +106,8 @@ class CoreFactory():
         model_name = 'test.mlmodel'
         model = OcrModel.objects.create(name=model_name,
                                         owner=document.owner,
-                                        job=job)
+                                        job=job,
+                                        file_size=0)
 
         document.ocr_models.add(model)
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
@@ -115,6 +117,7 @@ class CoreFactory():
         modelpath = os.path.join(modeldir, model_name)
         nn.save_model(path=modelpath)
         model.file = modelpath
+        model.file_size = model.file.size
         model.save()
         return model
 

@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
+from django.db.models.expressions import OuterRef, Subquery
+from django.db.models.fields import IntegerField
 from django.views.generic import ListView, DetailView
 
 from reporting.models import TaskReport
@@ -53,11 +55,19 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             output_field=DurationField()
         )
 
-        return qs.annotate(
-            total_tasks=Count('taskreport'),
-            total_runtime=Sum(runtime),
-            last_week_tasks=Count('taskreport', filter=filter_last_week),
-            last_week_runtime=Sum(runtime, filter=filter_last_week),
-            last_day_tasks=Count('taskreport', filter=filter_last_day),
-            last_day_runtime=Sum(runtime, filter=filter_last_day)
-        ).order_by(F('total_runtime').desc(nulls_last=True))
+        results = list(
+            qs.annotate(
+                total_tasks=Count('taskreport'),
+                total_runtime=Sum(runtime),
+                last_week_tasks=Count('taskreport', filter=filter_last_week),
+                last_week_runtime=Sum(runtime, filter=filter_last_week),
+                last_day_tasks=Count('taskreport', filter=filter_last_day),
+            ).order_by(F('total_runtime').desc(nulls_last=True))
+        )
+        disk_usages_left = dict(qs.values('id').annotate(disk_usage=Sum('ocrmodel__file_size')).values_list('id', 'disk_usage'))
+        disk_usages_right = dict(qs.values('id').annotate(disk_usage=Sum('document__parts__image_file_size')).values_list('id', 'disk_usage'))
+
+        for user in results:
+            user.disk_usage = (disk_usages_left[user.id] or 0) + (disk_usages_right[user.id] or 0)
+
+        return results
