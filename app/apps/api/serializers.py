@@ -115,6 +115,7 @@ class LineTypeSerializer(serializers.ModelSerializer):
         model = LineType
         fields = ('pk', 'name')
 
+
 class TagDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentTag
@@ -130,7 +131,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
-    tags = TagDocumentSerializer(many=True, read_only=True)
+    # tags = TagDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
