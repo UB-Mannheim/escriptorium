@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.apps import apps
 from django.conf import settings
@@ -61,3 +62,5 @@ def end_task_reporting(task_id, task, *args, **kwargs):
             report.end()
         else:
             report.error(str(kwargs.get("retval")))
+
+    report.calc_cpu_cost(os.cpu_count())

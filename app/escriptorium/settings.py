@@ -364,3 +364,5 @@ if 'test' in sys.argv:
         from .test_settings import *
     except (ModuleNotFoundError, ImportError):
         pass
+
+CPU_COST_FACTOR = 1.0
