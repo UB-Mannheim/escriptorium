@@ -24,7 +24,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         help_text=_("A single AltoXML, PageXML file, or a zip file."))
     override = forms.BooleanField(
-        initial=True, required=False,
+        initial=False, required=False,
         label=_("Override existing segmentation."),
         help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
