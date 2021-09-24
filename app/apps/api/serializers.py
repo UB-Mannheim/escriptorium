@@ -131,7 +131,6 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
-    # tags = TagDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document

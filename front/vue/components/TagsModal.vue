@@ -22,7 +22,8 @@
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 75%;">
+                            <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 50%;">
+                            <input type="color" class="form-control" name="color" placeholder="Add a new tag" style="width: 10%;">
                         </div>
 
                     </div>
@@ -92,7 +93,7 @@ export default {
                     tabindex.push(el[i].name.toString());
                 }
             }
-            return JSON.stringify(element, tabindex);
+            return element
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);

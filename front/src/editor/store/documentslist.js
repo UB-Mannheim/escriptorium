@@ -39,17 +39,45 @@ export const mutations = {
 
 export const actions = {
     async getUnlinkTagByDocument ({state, commit}, id) {
-        const resp = await api.retrieveUnlinkTagByDocument(id);
-        commit('setCheckedTags', resp.data.selectedtags);
-        commit('setUnlinkedTags', JSON.parse(resp.data.tags));
+        const _document = await api.retrieveUnlinkTagByDocument(id);
+        const projectTags = await api.retrieveTagOnProject(state.projectID);
+        commit('setCheckedTags', _document.data.tags);
+        commit('setUnlinkedTags', projectTags.data.results);
     },
     async getAllTagsProject ({state, commit}) {
         const resp = await api.retrieveTagOnProject(state.projectID);
-        commit('setUnlinkedTags', JSON.parse(resp.data.tags));
+        commit('setUnlinkedTags', resp.data.results);
     },
     async updateDocumentTags ({state, commit}, data) {
-        if(state.documentID) await api.assignTagOnDocument(state.documentID, data);
-        else await api.assignTagOnDocumentList(state.projectID, data);
+        var selectedId = data.selectedtags.split(',');
+        var name = data.name;
+        if(name) {
+            const projectTags = await api.retrieveTagOnProject(state.projectID);
+            var listProjectTagsId = projectTags.data.results;
+            let tagsNames = listProjectTagsId.map((obj) => obj.name);
+            if(!tagsNames.includes(name)){
+                const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});
+                selectedId.push(tag.data.pk);
+            }
+            else{
+                let _name = listProjectTagsId.filter((obj) => obj = name);
+                selectedId.push(_name[0].pk);
+            }
+        }
+        if(state.documentID) {
+            await api.updateDocumentTag(state.documentID, {"tags": selectedId});
+        }
+        else {
+            if(state.checkboxList.length > 0){
+                for (let i = 0; i < state.checkboxList.length; i++) {
+                    const _document = await api.retrieveUnlinkTagByDocument(state.checkboxList[i]);
+                    let _tagsId = _document.data.tags;
+                    let tags = _tagsId.concat(selectedId.filter(item => !_tagsId.includes(item)));
+                    await api.updateDocumentTag(state.checkboxList[i], {"tags": tags});
+                }
+            }
+            
+        }
     }
 }
 
