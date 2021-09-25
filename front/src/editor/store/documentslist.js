@@ -39,7 +39,7 @@ export const mutations = {
 
 export const actions = {
     async getUnlinkTagByDocument ({state, commit}, id) {
-        const _document = await api.retrieveUnlinkTagByDocument(id);
+        const _document = await api.retrieveDocument(id);
         const projectTags = await api.retrieveTagOnProject(state.projectID);
         commit('setCheckedTags', _document.data.tags);
         commit('setUnlinkedTags', projectTags.data.results);
@@ -65,15 +65,15 @@ export const actions = {
             }
         }
         if(state.documentID) {
-            await api.updateDocumentTag(state.documentID, {"tags": selectedId});
+            await api.updateDocument(state.documentID, {"tags": selectedId});
         }
         else {
             if(state.checkboxList.length > 0){
                 for (let i = 0; i < state.checkboxList.length; i++) {
-                    const _document = await api.retrieveUnlinkTagByDocument(state.checkboxList[i]);
+                    const _document = await api.retrieveDocument(state.checkboxList[i]);
                     let _tagsId = _document.data.tags;
                     let tags = _tagsId.concat(selectedId.filter(item => !_tagsId.includes(item)));
-                    await api.updateDocumentTag(state.checkboxList[i], {"tags": tags});
+                    await api.updateDocument(state.checkboxList[i], {"tags": tags});
                 }
             }
             

@@ -56,8 +56,6 @@ from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
-from django.http import JsonResponse
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
