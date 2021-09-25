@@ -49,7 +49,7 @@ export const actions = {
         commit('setUnlinkedTags', resp.data.results);
     },
     async updateDocumentTags ({state, commit}, data) {
-        var selectedId = data.selectedtags.split(',');
+        var selectedId = (data.selectedtags) ? data.selectedtags.split(',') : [];
         var name = data.name;
         if(name) {
             const projectTags = await api.retrieveTagOnProject(state.projectID);
@@ -57,11 +57,11 @@ export const actions = {
             let tagsNames = listProjectTagsId.map((obj) => obj.name);
             if(!tagsNames.includes(name)){
                 const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});
-                selectedId.push(tag.data.pk);
+                selectedId.push(tag.data.pk.toString());
             }
             else{
-                let _name = listProjectTagsId.filter((obj) => obj = name);
-                selectedId.push(_name[0].pk);
+                let _name = listProjectTagsId.filter(obj => obj.name == name);
+                selectedId.push(_name[0].pk.toString());
             }
         }
         if(state.documentID) {
