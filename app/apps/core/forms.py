@@ -305,6 +305,7 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         model = super().save(commit=False)
+        model.file_size = model.file.size
         if self.model_metadata:
             try:
                 model.training_accuracy = self.model_metadata.get('accuracy')[-1][1]
@@ -503,7 +504,8 @@ class TrainMixin():
             cleaned_data['model'] = OcrModel.objects.create(
                 owner=self.user,
                 name=self.cleaned_data.get('model_name'),
-                job=self.model_job)
+                job=self.model_job,
+                file_size=0)
         elif not override:
             cleaned_data['model'] = model.clone_for_training(
                 self.user, name=self.cleaned_data.get('model_name'))

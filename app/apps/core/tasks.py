@@ -42,7 +42,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def generate_part_thumbnails(instance_pk):
+def generate_part_thumbnails(instance_pk, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
     try:
@@ -130,7 +130,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
+def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -174,7 +174,13 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
         qs = DocumentPart.objects.filter(pk__in=part_pks).prefetch_related('lines')
 
         ground_truth = list(qs)
-        topline = ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE
+        if ground_truth[0].document.line_offset == Document.LINE_OFFSET_TOPLINE:
+            topline = True
+        elif ground_truth[0].document.line_offset == Document.LINE_OFFSET_CENTERLINE:
+            topline = None
+        else:
+            topline = False
+
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
@@ -198,7 +204,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
             threads=LOAD_THREADS,
             augment=True,
             resize='both',
-            hyper_params={'epochs': 20},
+            hyper_params={'epochs': 30},
             load_hyper_parameters=True,
             topline=topline
         )
@@ -251,6 +257,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None):
                         level='success')
     finally:
         model.training = False
+        model.file_size = model.file.size
         model.save()
 
         send_event('document', document_pk, "training:done", {
@@ -309,7 +316,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def recalculate_masks(instance_pk, user_pk=None, only=None):
+def recalculate_masks(instance_pk, user_pk=None, only=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -400,7 +407,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
+def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -444,6 +451,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None):
                         level='success')
     finally:
         model.training = False
+        model.file_size = model.file.size
         model.save()
 
         send_event('document', document.pk, "training:done", {

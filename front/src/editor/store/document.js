@@ -20,6 +20,8 @@ export const initialState = () => ({
         visualisation: userProfile.get('visible-panels')?userProfile.get('visible-panels').visualisation:true,
         diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
     },
+
+    enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })
 
 export const mutations = {
@@ -52,6 +54,9 @@ export const mutations = {
     },
     setAnnotationTaxonomies(state, payload) {
         state.annotationTaxonomies[payload[0]] = payload[1]
+    },
+    setEnabledVKs(state, vks) {
+        state.enabledVKs = assign([], state.enabledVKs, vks)
     },
     reset (state) {
         assign(state, initialState())

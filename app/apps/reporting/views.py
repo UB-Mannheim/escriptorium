@@ -1,7 +1,12 @@
+from datetime import date, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
+from django.db.models.expressions import OuterRef, Subquery
+from django.db.models.fields import IntegerField
 from django.views.generic import ListView, DetailView
 
 from reporting.models import TaskReport
+from users.models import User
 
 
 class ReportList(LoginRequiredMixin, ListView):
@@ -10,9 +15,20 @@ class ReportList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
+
+        blacklist = [
+            'core.tasks.lossless_compression',
+            'core.tasks.convert',
+            'core.tasks.generate_part_thumbnails',
+            'users.tasks.async_email',
+            'core.tasks.recalculate_masks'
+        ]
+
         return (qs.filter(user=self.request.user)
-                .exclude(messages='')
-                .order_by('-queued_at'))
+                  .exclude(method__in=blacklist)
+                  .annotate(duration=ExpressionWrapper(F('done_at') - F('started_at'),
+                                                       output_field=DurationField()))
+                  .order_by('-queued_at'))
 
 
 class ReportDetail(LoginRequiredMixin, DetailView):
@@ -22,3 +38,36 @@ class ReportDetail(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(user=self.request.user)
+
+
+class QuotasLeaderboard(LoginRequiredMixin, ListView):
+    model = User
+    template_name = "reporting/quotas_leaderboard.html"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        today = date.today()
+        filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
+        filter_last_day = Q(taskreport__started_at__gte=today - timedelta(days=1))
+        runtime = ExpressionWrapper(
+            F('taskreport__done_at') - F('taskreport__started_at'),
+            output_field=DurationField()
+        )
+
+        results = list(
+            qs.annotate(
+                total_tasks=Count('taskreport'),
+                total_runtime=Sum(runtime),
+                last_week_tasks=Count('taskreport', filter=filter_last_week),
+                last_week_runtime=Sum(runtime, filter=filter_last_week),
+                last_day_tasks=Count('taskreport', filter=filter_last_day),
+            ).order_by(F('total_runtime').desc(nulls_last=True))
+        )
+        disk_usages_left = dict(qs.values('id').annotate(disk_usage=Sum('ocrmodel__file_size')).values_list('id', 'disk_usage'))
+        disk_usages_right = dict(qs.values('id').annotate(disk_usage=Sum('document__parts__image_file_size')).values_list('id', 'disk_usage'))
+
+        for user in results:
+            user.disk_usage = (disk_usages_left[user.id] or 0) + (disk_usages_right[user.id] or 0)
+
+        return results

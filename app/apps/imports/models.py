@@ -72,16 +72,6 @@ class DocumentImport(models.Model):
         if self.report and self.report.task_id:
             app.control.revoke(self.report.task_id, terminate=True)
 
-    def save(self, *args, **kwargs):
-        if not self.report:
-            # create a report and link to it
-            report = TaskReport.objects.create(
-                label=_('Import in %(document_name)s') % {'document_name': self.document.name},
-                user=self.started_by or self.document.owner)
-            self.report = report
-
-        super().save(*args, **kwargs)
-
     def process(self, resume=True):
         try:
             self.workflow_state = self.WORKFLOW_STATE_STARTED

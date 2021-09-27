@@ -6,17 +6,18 @@ import os.path
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from django.utils import timezone
 
 from django_redis import get_redis_connection
 from kraken.lib import vgsl
 
-from core.models import (Document,
+from core.models import (Block,
+                         Document,
                          DocumentPart,
                          Transcription,
                          Line,
                          LineTranscription,
-                         OcrModel)
+                         OcrModel,
+                         Project)
 from users.models import User
 
 
@@ -42,9 +43,20 @@ class CoreFactory():
             email='%s@test.com' % name
         )
 
+    def make_project(self, **kwargs):
+        project, _ = Project.objects.get_or_create(
+            slug="test",
+            defaults={
+                "owner": kwargs.get('owner') or self.make_user(),
+                "name": "Unit test"
+            }
+        )
+        return project
+
     def make_document(self, **kwargs):
         attrs = kwargs.copy()
         attrs['owner'] = attrs.get('owner') or self.make_user()
+        attrs['project'] = attrs.get('project') or self.make_project(owner=attrs['owner'])
         attrs.setdefault('name', 'test doc')
         return Document.objects.create(**attrs)
 
@@ -60,6 +72,7 @@ class CoreFactory():
             name=img.name,
             content=img.read(),
             content_type='image/png'))
+        attrs.setdefault('image_file_size', os.path.getsize(img.name))
 
         part = DocumentPart.objects.create(**attrs)
         self.cleanup_registry.append(part)
@@ -90,19 +103,21 @@ class CoreFactory():
     def make_model(self, document, job=OcrModel.MODEL_JOB_RECOGNIZE):
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
         nn = vgsl.TorchVGSLModel(spec)
-        model_name = 'test-model.mlmodel'
+        model_name = 'test.mlmodel'
         model = OcrModel.objects.create(name=model_name,
                                         owner=document.owner,
-                                        job=job)
+                                        job=job,
+                                        file_size=0)
 
         document.ocr_models.add(model)
         modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
-            model.file.field.upload_to(model, 'test-model.mlmodel'))[0])
+            model.file.field.upload_to(model, 'test.mlmodel'))[0])
         if not os.path.exists(modeldir):
             os.makedirs(modeldir)
         modelpath = os.path.join(modeldir, model_name)
         nn.save_model(path=modelpath)
         model.file = modelpath
+        model.file_size = model.file.size
         model.save()
         return model
 
@@ -114,6 +129,10 @@ class CoreFactory():
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
         for i in range(amount):
+            block = Block.objects.create(document_part=part, box=[
+                line_margin, i*line_height-line_margin,
+                line_margin+line_width, i*line_height-line_margin
+            ])
             line = Line.objects.create(document_part=part,
                                        baseline=[
                                            [line_margin, i*line_height],
@@ -124,10 +143,7 @@ class CoreFactory():
                                            [line_margin+line_width, i*line_height-line_margin],
                                            [line_margin, i*line_height-line_margin],
                                        ],
-                                       box=[
-                                           line_margin, i*line_height-line_margin,
-                                           line_margin+line_width, i*line_height-line_margin
-                                       ])
+                                       block=block)
             LineTranscription.objects.create(transcription=transcription,
                                              line=line,
                                              content='test %d' % i)

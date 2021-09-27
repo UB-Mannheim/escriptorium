@@ -265,7 +265,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
-        recalculate_masks.delay(part.pk, only=only)
+        recalculate_masks.delay(part.pk, user_pk=request.user.pk, only=only)
         return Response({'status': 'ok'})
 
     @action(detail=True, methods=['post'])

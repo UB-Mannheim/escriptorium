@@ -72,9 +72,11 @@ INSTALLED_APPS = [
     'core',
     'imports',
     'reporting',
+    'django_prometheus',
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -82,7 +84,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
+
+PROMETHEUS_EXPORT_MIGRATIONS = False
 
 ROOT_URLCONF = 'escriptorium.urls'
 
@@ -203,6 +208,10 @@ CELERY_TASK_ROUTES = {
     'imports.tasks.*': {'queue': 'low-priority'},
     'users.tasks.async_email': {'queue': 'low-priority'},
 }
+
+REPORTING_TASKS_BLACKLIST = [
+    'users.tasks.async_email',
+]
 
 CHANNEL_LAYERS = {
     "default": {
@@ -347,6 +356,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
 }
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 if 'test' in sys.argv:
     try:

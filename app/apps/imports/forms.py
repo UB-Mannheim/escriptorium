@@ -12,7 +12,6 @@ from core.models import Transcription, DocumentPart
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
-from reporting.models import TaskReport
 from users.consumers import send_event
 
 
@@ -25,7 +24,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         help_text=_("A single AltoXML, PageXML file, or a zip file."))
     override = forms.BooleanField(
-        initial=True, required=False,
+        initial=False, required=False,
         label=_("Override existing segmentation."),
         help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
@@ -112,7 +111,11 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         return self.instance
 
     def process(self):
-        document_import.delay(self.instance.pk)
+        document_import.delay(
+            self.instance.pk,
+            user_pk=self.user.pk,
+            report_label=_('Import in %(document_name)s') % {'document_name': self.document.name}
+        )
         send_event('document', self.document.pk, "import:queued", {
             "id": self.document.pk
         })
@@ -135,6 +138,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         initial=False, required=False,
         label=_('Include images'),
         help_text=_("Will significantly increase the time to produce and download the export."))
+    region_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -142,6 +146,12 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        choices = [
+            (rt.id, rt.name)
+            for rt in self.document.valid_block_types.all()
+        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+        self.fields['region_types'].choices = choices
+        self.fields['region_types'].initial = [c[0] for c in choices]
 
     def clean_parts(self):
         parts = self.cleaned_data['parts']
@@ -154,12 +164,10 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 
-        report = TaskReport.objects.create(
-            user=self.user,
-            label=_('Export %(document_name)s') % {
-                'document_name': self.document.name})
-
-        document_export.delay(file_format, self.user.pk, self.document.pk,
+        document_export.delay(file_format, self.document.pk,
                               list(parts.values_list('pk', flat=True)),
-                              transcription.pk, report.pk,
-                              include_images=self.cleaned_data['include_images'])
+                              transcription.pk,
+                              self.cleaned_data['region_types'],
+                              include_images=self.cleaned_data['include_images'],
+                              user_pk=self.user.pk,
+                              report_label=_('Export %(document_name)s') % {'document_name': self.document.name})

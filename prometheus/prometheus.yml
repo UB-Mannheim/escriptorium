@@ -1,0 +1,24 @@
+global:
+    scrape_interval: 30s
+    evaluation_interval: 5s
+    scrape_timeout: 30s
+
+rule_files:
+  - "prometheus_rules.yml"
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+
+scrape_configs:
+    - job_name: monitoring
+      static_configs:
+        - targets:
+            - host.docker.internal:8080
+    - job_name: container-exporter
+      scrape_interval: 5s
+      static_configs:
+        - targets:
+            - container-exporter:9104

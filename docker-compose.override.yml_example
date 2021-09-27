@@ -144,6 +144,41 @@ services:
 
   # celerybeat:
      #   restart: always
+  
+  prometheus:
+    image: prom/prometheus:v2.1.0
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+  #  links:
+  #    - alertmanager:alertmanager
+  
+  alertmanager:
+    image: prom/alertmanager:v0.18.0
+    deploy:
+      replicas: 1
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./prometheus/email.tmpl:/etc/alertmanager/email.tmpl
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--log.level=debug'
+  
+  container-exporter:
+    image: prom/container-exporter
+    volumes:
+      - /sys/fs/cgroup:/cgroup
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9104:9104
 
 #volumes:
 #   static:
@@ -152,6 +187,7 @@ services:
 #      type: none
 #      o: 'bind'
 #      device: $PWD/static/
+#   prometheus_data: {}
 #
 #   media:
 #    driver: local
