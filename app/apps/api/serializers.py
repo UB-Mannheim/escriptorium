@@ -146,16 +146,22 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
 
 class ImageAnnotationComponentSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(allow_null=True)
+    taxonomy = AnnotationComponentTaxonomySerializer()
+
     class Meta:
         model = ImageAnnotationComponentValue
-        fields = '__all__'
+        fields = ('pk', 'taxonomy', 'value')
         # read_only_fields = ['annotation']
 
 
 class TextAnnotationComponentSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(allow_null=True)
+    taxonomy = AnnotationComponentTaxonomySerializer()
+
     class Meta:
         model = TextAnnotationComponentValue
-        fields = '__all__'
+        fields = ('pk', 'taxonomy', 'value')
         # read_only_fields = ['annotation']
 
 
@@ -169,12 +175,11 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
                   'as_w3c')
 
     def create(self, data):
-        from IPython import embed; embed()
         components_data = data.pop('components')
         anno = ImageAnnotation.objects.create(**data)
         for component in components_data:
-            print(component)
-            ImageAnnotationComponentValue.objects.create(annotation=anno, **component)
+            ImageAnnotationComponentValue.objects.create(annotation=anno,
+                                                         **component)
         return anno
 
     def get_as_w3c(self, annotation):
@@ -201,7 +206,9 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
             'id': annotation.id,
             '@context': "http://www.w3.org/ns/anno.jsonld",
             'type': "Annotation",
-            'body': [{'type': "TextualBody", 'value': comment, 'purpose': "commenting"}
+            'body': [{'type': "TextualBody",
+                      'value': comment,
+                      'purpose': "commenting"}
                      for comment in annotation.comments],
             'target': {
                 'selector': selector

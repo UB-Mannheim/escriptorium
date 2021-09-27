@@ -184,7 +184,7 @@ export default Vue.extend({
                     comments: [...annotation.body.filter(e => e.purpose == 'commenting')].map(b => b.value),
                     components: [...annotation.body.filter(e=> e.purpose.startsWith('attribute'))].map(b => {
                         return {
-                            'component': annotation.taxonomy.components.find(c => 'attribute-'+c.name == b.purpose).pk,
+                            'taxonomy': annotation.taxonomy.components.find(c => 'attribute-'+c.name == b.purpose).pk,
                             'value': b.value
                         }
                     }),
@@ -250,7 +250,8 @@ export default Vue.extend({
                               name: compo.name,
                               values: compo.allowed_values});
             })
-            this.anno.setWidgets(widgets);
+
+            this.anno.widgets = widgets;
         }
     }
 });
