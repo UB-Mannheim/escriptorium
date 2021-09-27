@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 from api.fields import DisplayChoiceField
 from users.models import User
@@ -135,14 +136,34 @@ class AnnotationComponentSerializer(serializers.ModelSerializer):
 
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
-    typology = AnnotationTypeSerializer()
-    components = AnnotationComponentSerializer(many=True)
-    marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES)
+    typology = AnnotationTypeSerializer(required=False)
+    components = AnnotationComponentSerializer(many=True, required=False)
+    marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=False)
 
     class Meta:
         model = AnnotationTaxonomy
-        fields = ('pk', 'document', 'name', 'typology',
-                  'marker_type', 'marker_detail', 'has_comments', 'components')
+        fields = ('pk', 'document', 'name',
+                  'marker_type', 'marker_detail', 'has_comments',
+                  'typology', 'components')
+
+    def create(self, data):
+        try:
+            components_data = data.pop('components')
+        except KeyError:
+            components_data = []
+        try:
+            typo_data = data.pop('typology')
+        except KeyError:
+            typo_data = None
+        if typo_data:
+            typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+        taxo = AnnotationTaxonomy.objects.create(
+            typology=typo, **data)
+        for compo in components_data:
+            AnnotationComponent.objects.create(
+                taxonomy=taxo,
+                **compo)
+        return taxo
 
 
 class ImageAnnotationComponentSerializer(serializers.ModelSerializer):

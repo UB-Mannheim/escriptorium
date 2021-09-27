@@ -350,6 +350,10 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
         else:
             return qs
 
+    # def perform_create(self, serializer):
+    #     from IPython import embed; embed()
+    #     return super().perform_create(serializer)
+
 
 class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = ImageAnnotation.objects.all()
