@@ -359,10 +359,20 @@ class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = ImageAnnotation.objects.all()
     serializer_class = ImageAnnotationSerializer
 
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(part=self.kwargs['part_pk'])
+                .filter(part__document=self.kwargs['document_pk']))
+
 
 class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = TextAnnotation.objects.all()
     serializer_class = TextAnnotationSerializer
+
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(part=self.kwargs['part_pk'])
+                .filter(part__document=self.kwargs['document_pk']))
 
 
 class BlockViewSet(DocumentPermissionMixin, ModelViewSet):
