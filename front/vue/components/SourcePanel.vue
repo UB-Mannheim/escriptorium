@@ -143,6 +143,41 @@ export default Vue.extend({
         async rotate(angle) {
             await this.$store.dispatch('parts/rotate', angle);
         },
+
+        getCoordinatesFromW3C(annotation) {
+            var coordinates = [];
+            if (annotation.taxonomy.marker_type == 'Rectangle') {
+                // looks like xywh=pixel:133.98072814941406,144.94607543945312,169.30674743652344,141.2919921875"
+                let m = annotation.target.selector.value.match(
+                    new RegExp(/(?<x>\d+)(.\d+)?,(?<y>\d+)(\.\d+)?,(?<w>\d+)(\.\d+)?,(?<h>\d+)(\.\d+)?/)).groups;
+                coordinates = [[parseInt(m.x), parseInt(m.y)],
+                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)]];
+            } else if (annotation.taxonomy.marker_type == 'Polygon') {
+                // looks like <svg><polygon points=\"168.08567810058594,230.20848083496094 422.65484619140625,242.38882446289062 198.5365447998047,361.75616455078125\"></polygon></svg>
+                let matches = annotation.target.selector.value.matchAll(
+                    /(?<x>\d+)(.\d+)?,(?<y>\d+)(.\d+)?/g);
+                for (let m of matches) {
+                    coordinates.push([m.groups.x, m.groups.y])
+                }
+            }
+            return coordinates;
+        },
+
+        getAPIAnnotationBody(annotation) {
+            return {
+                part: this.$store.state.parts.pk,
+                taxonomy: annotation.taxonomy.pk,
+                comments: [...annotation.body.filter(e => e.purpose == 'commenting')].map(b => b.value),
+                components: [...annotation.body.filter(e=> e.purpose.startsWith('attribute'))].map(b => {
+                    return {
+                        'component': annotation.taxonomy.components.find(c => 'attribute-'+c.name == b.purpose).pk,
+                        'value': b.value
+                    }
+                }),
+                coordinates: this.getCoordinatesFromW3C(annotation)
+            };
+        },
+
         async initAnnotations() {
             this.anno = new Annotorious({
                 image: document.getElementById('source-panel-img'),
@@ -162,41 +197,16 @@ export default Vue.extend({
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
-                let coordinates = [];
-                if (annotation.taxonomy.marker_type == 'Rectangle') {
-                    // looks like xywh=pixel:133.98072814941406,144.94607543945312,169.30674743652344,141.2919921875"
-                    let m = annotation.target.selector.value.match(
-                        new RegExp(/(?<x>\d+)(.\d+)?,(?<y>\d+)(\.\d+)?,(?<w>\d+)(\.\d+)?,(?<h>\d+)(\.\d+)?/)).groups;
-                    coordinates = [[parseInt(m.x), parseInt(m.y)],
-                                   [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)]];
-                } else if (annotation.taxonomy.marker_type == 'Polygon') {
-                    // looks like <svg><polygon points=\"168.08567810058594,230.20848083496094 422.65484619140625,242.38882446289062 198.5365447998047,361.75616455078125\"></polygon></svg>
-                    let matches = annotation.target.selector.value.matchAll(
-                        /(?<x>\d+)(.\d+)?,(?<y>\d+)(.\d+)?/g);
-                    for (let m of matches) {
-                        coordinates.push([m.groups.x, m.groups.y])
-                    }
-                }
-
-                const newAnno = await this.$store.dispatch('imageAnnotations/create', {
-                    part: this.$store.state.parts.pk,
-                    taxonomy: annotation.taxonomy.pk,
-                    comments: [...annotation.body.filter(e => e.purpose == 'commenting')].map(b => b.value),
-                    components: [...annotation.body.filter(e=> e.purpose.startsWith('attribute'))].map(b => {
-                        return {
-                            'taxonomy': annotation.taxonomy.components.find(c => 'attribute-'+c.name == b.purpose).pk,
-                            'value': b.value
-                        }
-                    }),
-
-                    coordinates: coordinates
-                });
+                let body = this.getAPIAnnotationBody(annotation);
+                const newAnno = await this.$store.dispatch('imageAnnotations/create', body);
                 annotation.pk = newAnno.pk;
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                // TODO
-                console.log('update', annotation);
+                annotation.taxonomy = this.currentTaxonomy;
+                let body = this.getAPIAnnotationBody(annotation);
+                body.id = annotation.id;
+                this.$store.dispatch('imageAnnotations/update', body);
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {

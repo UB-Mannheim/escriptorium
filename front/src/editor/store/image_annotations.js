@@ -50,7 +50,13 @@ export const actions = {
     },
 
     async update({commit, rootState}, annotation) {
-
+        const resp = await api.updateImageAnnotation(rootState.document.id,
+                                                     rootState.parts.pk,
+                                                     annotation.id,
+                                                     annotation)
+        let updatedAnnotation = resp.data
+        commit('update', updatedAnnotation)
+        return updatedAnnotation
     },
 
     async delete({commit, rootState}, annotationPk) {

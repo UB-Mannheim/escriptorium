@@ -128,7 +128,7 @@ class AnnotationTypeSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
-class AnnotationComponentTaxonomySerializer(serializers.ModelSerializer):
+class AnnotationComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnotationComponent
         fields = ('pk', 'name', 'allowed_values')
@@ -136,7 +136,7 @@ class AnnotationComponentTaxonomySerializer(serializers.ModelSerializer):
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
     typology = AnnotationTypeSerializer()
-    components = AnnotationComponentTaxonomySerializer(many=True)
+    components = AnnotationComponentSerializer(many=True)
     marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES)
 
     class Meta:
@@ -147,26 +147,27 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
 class ImageAnnotationComponentSerializer(serializers.ModelSerializer):
     value = serializers.CharField(allow_null=True)
-    taxonomy = AnnotationComponentTaxonomySerializer()
 
     class Meta:
         model = ImageAnnotationComponentValue
-        fields = ('pk', 'taxonomy', 'value')
-        # read_only_fields = ['annotation']
+        fields = ('pk', 'component', 'value')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['component'] = AnnotationComponentSerializer(instance.component).data
+        return representation
 
 
 class TextAnnotationComponentSerializer(serializers.ModelSerializer):
     value = serializers.CharField(allow_null=True)
-    taxonomy = AnnotationComponentTaxonomySerializer()
 
     class Meta:
         model = TextAnnotationComponentValue
-        fields = ('pk', 'taxonomy', 'value')
-        # read_only_fields = ['annotation']
+        fields = ('pk', 'component', 'value')
 
 
 class ImageAnnotationSerializer(serializers.ModelSerializer):
-    components = ImageAnnotationComponentSerializer(many=True, required=False)
+    components = ImageAnnotationComponentSerializer(many=True)
     as_w3c = serializers.SerializerMethodField()
 
     class Meta:
@@ -180,6 +181,18 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
         for component in components_data:
             ImageAnnotationComponentValue.objects.create(annotation=anno,
                                                          **component)
+        return anno
+
+    def update(self, instance, data):
+        components_data = data.pop('components')
+        anno = super().update(instance, data)
+        for component_value in components_data:
+            # for some reason this is an instance of AnnotationComponent
+            component, created = ImageAnnotationComponentValue.objects.get_or_create(
+                component=component_value['component'],
+                annotation=anno)
+            component.value = component_value['value']
+            component.save()
         return anno
 
     def get_as_w3c(self, annotation):
@@ -209,7 +222,11 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
             'body': [{'type': "TextualBody",
                       'value': comment,
                       'purpose': "commenting"}
-                     for comment in annotation.comments],
+                     for comment in annotation.comments] +
+                    [{'type': "TextualBody",
+                      'value': component.value,
+                      'purpose': 'attribute-'+component.component.name}
+                     for component in annotation.components.all()],
             'target': {
                 'selector': selector
             }
@@ -217,7 +234,7 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
 
 
 class TextAnnotationSerializer(serializers.ModelSerializer):
-    components = TextAnnotationComponentSerializer()
+    components = TextAnnotationComponentSerializer(many=True, source='text_components')
 
     class Meta:
         model = TextAnnotation

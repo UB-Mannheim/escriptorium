@@ -154,17 +154,11 @@ class Annotation(models.Model):
 
 
 class ImageAnnotation(Annotation):
-    components = models.ManyToManyField(AnnotationComponent,
-                                        blank=True,
-                                        through='ImageAnnotationComponentValue')
     # array of points
     coordinates = ArrayField(ArrayField(models.IntegerField(), size=2))
 
 
 class TextAnnotation(Annotation):
-    components = models.ManyToManyField(AnnotationComponent,
-                                        blank=True,
-                                        through='TextAnnotationComponentValue')
     start_line = models.ForeignKey('core.Line',
                                    on_delete=models.CASCADE,
                                    related_name='annotation_starts')
@@ -177,15 +171,27 @@ class TextAnnotation(Annotation):
 
 
 class TextAnnotationComponentValue(models.Model):
-    component = models.ForeignKey(AnnotationComponent, on_delete=models.CASCADE)
-    annotation = models.ForeignKey('TextAnnotation', on_delete=models.CASCADE)
+    component = models.ForeignKey(AnnotationComponent,
+                                  on_delete=models.CASCADE)
+    annotation = models.ForeignKey('TextAnnotation',
+                                   related_name='components',
+                                   on_delete=models.CASCADE)
     value = models.CharField(max_length=256)
+
+    class Meta:
+        unique_together = ('component', 'annotation')
 
 
 class ImageAnnotationComponentValue(models.Model):
-    component = models.ForeignKey(AnnotationComponent, on_delete=models.CASCADE)
-    annotation = models.ForeignKey('ImageAnnotation', on_delete=models.CASCADE)
+    component = models.ForeignKey(AnnotationComponent,
+                                  on_delete=models.CASCADE)
+    annotation = models.ForeignKey('ImageAnnotation',
+                                   related_name='components',
+                                   on_delete=models.CASCADE)
     value = models.CharField(max_length=256)
+
+    class Meta:
+        unique_together = ('component', 'annotation')
 
 
 class Metadata(models.Model):
