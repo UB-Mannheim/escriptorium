@@ -7,7 +7,8 @@ export const initialState = () => ({
     documentID: null,
     projectID: null,
     checkboxList: [],
-    lastChecked: null
+    lastChecked: null,
+    allProjectTags: null
 })
 
 export const mutations = {
@@ -35,25 +36,28 @@ export const mutations = {
     setLastChecked (state, value) {
         state.lastChecked = value
     },
+    setAllProjectTags (state, value) {
+        state.allProjectTags = value.map( function(obj) {
+            var item = { "pk": obj.id, "name": obj.name, "color": obj.color };
+            return item;
+        });
+    },
 }
 
 export const actions = {
     async getUnlinkTagByDocument ({state, commit}, id) {
         const _document = await api.retrieveDocument(id);
-        const projectTags = await api.retrieveTagOnProject(state.projectID);
         commit('setCheckedTags', _document.data.tags);
-        commit('setUnlinkedTags', projectTags.data.results);
+        commit('setUnlinkedTags', state.allProjectTags);
     },
     async getAllTagsProject ({state, commit}) {
-        const resp = await api.retrieveTagOnProject(state.projectID);
-        commit('setUnlinkedTags', resp.data.results);
+        commit('setUnlinkedTags', state.allProjectTags);
     },
     async updateDocumentTags ({state, commit}, data) {
         var selectedId = (data.selectedtags) ? data.selectedtags.split(',') : [];
         var name = data.name;
         if(name) {
-            const projectTags = await api.retrieveTagOnProject(state.projectID);
-            var listProjectTagsId = projectTags.data.results;
+            var listProjectTagsId = state.allProjectTags;
             let tagsNames = listProjectTagsId.map((obj) => obj.name);
             if(!tagsNames.includes(name)){
                 const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});

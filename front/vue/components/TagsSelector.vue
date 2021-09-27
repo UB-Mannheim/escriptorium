@@ -15,10 +15,13 @@
      'tags',
      'filters',
   ],
+  created(){
+    this.$store.commit('documentslist/setAllProjectTags', this.tags);
+  },
   methods: {
-     isChecked(tag){ 
-         return this.filters.includes(tag)
-     }
+    isChecked(tag){ 
+        return this.filters.includes(tag)
+    }
   },
   filters: {
     truncate(value, num) {

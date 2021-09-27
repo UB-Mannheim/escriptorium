@@ -15,7 +15,7 @@
                         <input type="hidden" class="form-control" id="valuesSelected" name="selectedtags" v-model="valuesSelected">
                         <input type="hidden" class="form-control" id="checkboxlist" name="checkboxlist" v-model="checkboxListData">
                         <div class="form-row form-group justify-content-center">
-                            <select name="tags" id="mselect-tags" ref="mselectTags" v-model="valuesSelected" data-live-search="true" multiple>
+                            <select name="tags" id="mselect-tags" ref="mselectTags" v-model="valuesSelected" data-live-search="true" data-live-search-placeholder="filters" multiple>
                                 <option v-for="tag in tags" :key="tag.pk" v-bind:value="tag.pk" >
                                     {{ tag.name }}
                                 </option>
@@ -23,7 +23,7 @@
                         </div>
                         <div class="form-row form-group justify-content-center">
                             <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 50%;">
-                            <input type="color" class="form-control" name="color" placeholder="Add a new tag" style="width: 10%;">
+                            <input type="color" class="form-control" name="color" style="width: 10%;">
                         </div>
 
                     </div>
