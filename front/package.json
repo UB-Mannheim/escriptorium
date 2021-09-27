@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.0",
-    "@recogito/annotorious": "../../annotorious/",
-    "@recogito/recogito-js": "^1.4.0",
+    "@recogito/annotorious": "^2.5.6",
+    "@recogito/recogito-js": "^1.4.2",
     "axios": "^0.21.1",
     "bootstrap": "^4.2.1",
     "css-loader": "^5.0.1",
