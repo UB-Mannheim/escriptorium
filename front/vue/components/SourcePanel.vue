@@ -20,14 +20,29 @@
             </div>
 
             <div class="btn-group taxo-group ml-2"
-                 v-for="typo in groupedTaxonomies">
-                <button v-for="taxo in typo"
-                        :data-taxo="taxo"
-                        :id="'anno-taxo-' + taxo.pk"
-                        @click="setAnnoTaxonomy(taxo, $event)"
-                        title=""
-                        class="btn btn-sm btn-outline-info"
-                        autocomplete="off">{{ taxo.name }}</button>
+                 v-for="typo,group in groupedTaxonomies">
+            <div v-if="typo.length > 4" class="dropdown">
+              <button class="btn btn-sm btn-info dropdown-toggle"
+                      type="button"
+                      id="dropdownMenuButton1"
+                      data-toggle="dropdown">
+                {{ group }}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                <li v-for="taxo in typo">
+                  <a class="dropdown-item"
+                     :id="'anno-taxo-' + taxo.pk"
+                     @click="setAnnoTaxonomy(taxo, $event)">
+                    {{ taxo.name }}</a>
+                </li>
+              </ul>
+            </div>
+            <button v-else
+                    v-for="taxo in typo"
+                    :id="'anno-taxo-' + taxo.pk"
+                    @click="setAnnoTaxonomy(taxo, $event)"
+                    class="btn btn-sm btn-outline-info"
+                    autocomplete="off">{{ taxo.name }}</button>
             </div>
         </div>
         <div ref="content" class="content-container">

@@ -71,12 +71,26 @@ export const actions = {
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
 
-        // pagination?!
         // commit can not pass parameters as is?!?
-        const img_taxos = await api.retrieveAnnotationTaxonomies(data.pk, 'image')
-        commit('setAnnotationTaxonomies', ['image', img_taxos.data.results])
-        const text_taxos = await api.retrieveAnnotationTaxonomies(data.pk, 'text')
-        commit('setAnnotationTaxonomies', ['text', text_taxos.data.results])
+        let page=1;
+        var img_taxos = [];
+        while(page) {
+            let resp = await api.retrieveAnnotationTaxonomies(data.pk, 'image', page)
+            img_taxos = img_taxos.concat(resp.data.results)
+            if (resp.data.next) page++
+            else page=null
+        }
+        commit('setAnnotationTaxonomies', ['image', img_taxos])
+
+        page=1;
+        var text_taxos = [];
+        while(page) {
+            let resp = await api.retrieveAnnotationTaxonomies(data.pk, 'text', page)
+            text_taxos = text_taxos.concat(resp.data.results)
+            if (resp.data.next) page++
+            else page=null
+        }
+        commit('setAnnotationTaxonomies', ['text', text_taxos])
     },
 
     async togglePanel ({state, commit}, panel) {

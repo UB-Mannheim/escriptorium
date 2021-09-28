@@ -81,20 +81,17 @@ class UserViewSet(ModelViewSet):
 
 class ScriptViewSet(ReadOnlyModelViewSet):
     queryset = Script.objects.all()
-    paginate_by = 20
     serializer_class = ScriptSerializer
 
 
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    paginate_by = 10
 
 
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    paginate_by = 10
 
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).prefetch_related(
@@ -339,7 +336,9 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = AnnotationTaxonomySerializer
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(document=self.document)
+        qs = (super().get_queryset()
+              .filter(document=self.document)
+              .prefetch_related('typology', 'components'))
         target = self.request.query_params.get('target')
         if target == 'image':
             return qs.filter(
@@ -349,10 +348,6 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
                 marker_type__in=[c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES])
         else:
             return qs
-
-    # def perform_create(self, serializer):
-    #     from IPython import embed; embed()
-    #     return super().perform_create(serializer)
 
 
 class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):

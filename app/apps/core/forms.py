@@ -153,14 +153,14 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.img_anno_form = ImageAnnotationTaxonomyFormSet(
             self.request.POST if self.request.method == 'POST' else None,
             queryset=AnnotationTaxonomy.objects.filter(
-                marker_type__in=img_choices),
+                marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
             prefix='img_anno_form',
             instance=self.instance)
         text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
         self.text_anno_form = TextAnnotationTaxonomyFormSet(
             self.request.POST if self.request.method == 'POST' else None,
             queryset=AnnotationTaxonomy.objects.filter(
-                marker_type__in=text_choices),
+                marker_type__in=text_choices).select_related('typology').prefetch_related('components'),
             prefix='text_anno_form',
             instance=self.instance)
 
@@ -174,7 +174,6 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
-    prefix = 'allo'
     typo = forms.CharField(label=_('Type'), required=False)
 
     class Meta:

@@ -14,7 +14,7 @@ export const retrieveDocumentPartByOrder = async (document_id, order) => (await 
 
 export const retrievePage = async (document_id, part_id, transcription, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`))
 
-export const retrieveAnnotationTaxonomies = async (document_id, target) => (await axios.get(`/documents/${document_id}/taxonomies/annotations/?target=${target}`))
+export const retrieveAnnotationTaxonomies = async (document_id, target, page) => (await axios.get(`/documents/${document_id}/taxonomies/annotations/?target=${target}&page=${page}&paginate_by=50`))
 
 export const retrieveImageAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/`))
 
