@@ -1,10 +1,10 @@
 <template>
-    <button type="button" 
-            v-on:click="launchModal" 
-            data-toggle="modal" 
-            data-target="#tagsModal" 
-            title="Manage tags" 
-            class="nav-item btn btn-primary"><i class="fas fa fa-tags"></i></button>
+    <button type="button"
+            v-on:click="launchModal"
+            data-toggle="modal"
+            data-target="#tagsModal"
+            title="Manage tags"
+            class="nav-item btn btn-sm btn-primary"><i class="fas fa fa-tags"></i></button>
 </template>
 
 <script>

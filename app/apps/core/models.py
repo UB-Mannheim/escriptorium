@@ -110,6 +110,7 @@ class DocumentTag(Tag):
     project = models.ForeignKey('core.Project', blank=True,
                                 related_name='document_tags',
                                 on_delete=models.CASCADE)
+
     class Meta:
         unique_together = ('project', 'name')
 
