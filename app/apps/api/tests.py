@@ -74,7 +74,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
