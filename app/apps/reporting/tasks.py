@@ -64,4 +64,6 @@ def end_task_reporting(task_id, task, *args, **kwargs):
             report.error(str(kwargs.get("retval")))
 
     report.calc_cpu_cost(os.cpu_count())
-    report.calc_gpu_cost()
+    # Listing tasks parametrized to run on 'gpu' Celery queue
+    if task.name in [route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}]:
+        report.calc_gpu_cost()
