@@ -4,7 +4,7 @@ from reporting.models import TaskReport
 
 
 class TaskReportAdmin(admin.ModelAdmin):
-    list_display = ['label', 'method', 'workflow_state', 'user']
+    list_display = ['label', 'method', 'workflow_state', 'user', 'cpu_cost']
 
 
 admin.site.register(TaskReport, TaskReportAdmin)

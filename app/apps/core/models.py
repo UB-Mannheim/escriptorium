@@ -375,6 +375,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
     original_filename = models.CharField(max_length=1024, blank=True)
+    image_file_size = models.BigIntegerField()
     source = models.CharField(max_length=1024, blank=True)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path,
@@ -1216,6 +1217,7 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
+    file_size = models.BigIntegerField()
 
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
@@ -1262,7 +1264,8 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
             public=False,
             script=self.script,
             parent=self,
-            versions=[]
+            versions=[],
+            file_size=self.file.size
         )
         model.file = File(self.file, name=os.path.basename(self.file.name))
         model.save()

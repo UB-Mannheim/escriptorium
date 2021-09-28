@@ -17,5 +17,7 @@ class DisableMigrations(object):
 
 MIGRATION_MODULES = DisableMigrations()
 
+KRAKEN_TRAINING_LOAD_THREADS = 0
+
 # Disables easy-thumbnail spamming
 THUMBNAIL_OPTIMIZE_COMMAND = {}

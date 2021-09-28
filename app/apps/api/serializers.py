@@ -155,6 +155,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class PartSerializer(serializers.ModelSerializer):
     image = ImageField(required=False, thumbnails=['card', 'large'])
+    image_file_size = serializers.IntegerField(required=False)
     filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
@@ -169,6 +170,7 @@ class PartSerializer(serializers.ModelSerializer):
             'title',
             'typology',
             'image',
+            'image_file_size',
             'bw_image',
             'workflow',
             'order',
@@ -181,6 +183,7 @@ class PartSerializer(serializers.ModelSerializer):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
+        data['image_file_size'] = data['image'].size
         obj = super().create(data)
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
@@ -315,15 +318,17 @@ class OcrModelSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     job = DisplayChoiceField(choices=OcrModel.MODEL_JOB_CHOICES)
     training = serializers.ReadOnlyField()
+    file_size = serializers.IntegerField(required=False)
 
     class Meta:
         model = OcrModel
-        fields = ('pk', 'name', 'file', 'job',
+        fields = ('pk', 'name', 'file', 'file_size', 'job',
                   'owner', 'training', 'versions')
 
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['owner'] = self.context["view"].request.user
+        data['file_size'] = data['file'].size
         obj = super().create(data)
         return obj
 
@@ -437,7 +442,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 owner=self.user,
                 name=self.validated_data['model_name'],
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
-                file=file_
+                file=file_,
+                file_size=file_.size if file_ else 0
             )
         elif not override:
             model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
@@ -499,7 +505,9 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 owner=self.user,
                 name=self.validated_data['model_name'],
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
-                file=file_)
+                file=file_,
+                file_size=file_.size if file_ else 0
+            )
         elif not override:
             model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
 

@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   app: &app
-    image: registry.gitlab.com/scripta/escriptorium/app
+    image: registry.gitlab.com/scripta/escriptorium:latest
     build:
       context: .
     env_file: variables.env
