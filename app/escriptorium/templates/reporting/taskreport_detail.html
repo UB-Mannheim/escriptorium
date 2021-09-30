@@ -8,6 +8,8 @@
     <div>{% trans "Queued at:" %} {{ report.queued_at }}</div>
     {% if report.workflow_state > 0 %}<div>{% trans "Started at:" %} {{ report.queued_at }}</div>{% endif %}
     {% if report.workflow_state > 1 %}<div>{% trans "Ended at:" %} {{ report.done_at }}</div>{% endif %}
+    <div>{% trans "CPU usage" %}: {{ report.cpu_cost }}</div>
+    <div>{% trans "GPU usage" %}: {{ report.gpu_cost }}</div>
     {% if report.messages %}<div class="jumbotron">{{ report.messages|linebreaks }}</div>{% endif %}
 </div>
 {% endblock %}

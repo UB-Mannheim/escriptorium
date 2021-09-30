@@ -7,33 +7,33 @@
         <div class="col">
             <div class="card text-center">
                 <div class="card-header">
-                    Disk usage
+                    {% trans "Disk usage" %}
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">{{ user.calc_disk_usage|filesizeformat }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Calculated from your images and models</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "Calculated from your images and models" %}</h6>
                 </div>
             </div>
         </div>
         <div class="col">
             <div class="card text-center">
                 <div class="card-header">
-                    CPU usage
+                    {% trans "CPU usage" %}
                 </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ cpu_cost_last_month }} CPU-min</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">CPU usage over the last month</h6>
+                    <h5 class="card-title">{{ cpu_cost_last_month|floatformat:3 }} CPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "CPU usage over the last month" %}</h6>
                 </div>
             </div>
         </div>
         <div class="col">
             <div class="card text-center">
                 <div class="card-header">
-                    GPU usage
+                    {% trans "GPU usage" %}
                 </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ gpu_cost_last_month }} GPU-min</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">GPU usage over the last month</h6>
+                    <h5 class="card-title">{{ gpu_cost_last_month|floatformat:3 }} GPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "GPU usage over the last month" %}</h6>
                 </div>
             </div>
         </div>
@@ -57,20 +57,20 @@
             <td>{{ report.duration|format_timedelta }}</td>
             <td>
                 {% with state=report.get_workflow_state_display %}
-                    {% if state == "Finished" %}
-                    <span class="badge badge-pill badge-success">{{ state }}</span>
-                    {% elif state == "Crashed" %}
-                    <span class="badge badge-pill badge-danger">{{ state }}</span>
-                    {% elif state == "Running" %}
-                    <span class="badge badge-pill badge-primary">{{ state }}</span>
-                    {% else %}
-                    <span class="badge badge-pill badge-secondary">{{ state }}</span>
-                    {% endif %}
+                {% if state == "Finished" %}
+                <span class="badge badge-pill badge-success">{{ state }}</span>
+                {% elif state == "Crashed" %}
+                <span class="badge badge-pill badge-danger">{{ state }}</span>
+                {% elif state == "Running" %}
+                <span class="badge badge-pill badge-primary">{{ state }}</span>
+                {% else %}
+                <span class="badge badge-pill badge-secondary">{{ state }}</span>
+                {% endif %}
                 {% endwith %}
             </td>
             <td>
                 {% if report.cpu_cost %}
-                {{ report.cpu_cost }}
+                {{ report.cpu_cost|floatformat:2 }}
                 {% else %}
                 0
                 {% endif %}
@@ -78,7 +78,7 @@
             </td>
             <td>
                 {% if report.gpu_cost %}
-                {{ report.gpu_cost }}
+                {{ report.gpu_cost|floatformat:2 }}
                 {% else %}
                 0
                 {% endif %}
