@@ -5,6 +5,7 @@ import parts from './store/parts'
 import lines from './store/lines'
 import regions from './store/regions'
 import transcriptions from './store/transcriptions'
+import documentslist from './store/documentslist'
 
 Vue.use(Vuex)
 
@@ -14,6 +15,7 @@ export default new Vuex.Store({
         parts,
         lines,
         regions,
-        transcriptions
+        transcriptions,
+        documentslist,
     }
 })

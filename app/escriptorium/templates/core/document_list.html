@@ -7,6 +7,7 @@
 {% block extra_nav %}
 {% if can_create_document %}
 <a href="{% url 'document-create' slug=project.slug %}" class="btn btn-success ml-auto mb-2">{% trans 'Create new Document' %}</a>
+<button type="button" class="btn btn-info mb-2 ml-1" data-toggle="modal" data-target="#tagsModal" title="{% trans "Manage tags" %}"><i class="fas fa-tags"></i></button>
 {% endif %}
 
 {% if share_form %}
@@ -15,19 +16,38 @@
 {% endblock %}
 
 {% block tab_content %}
-<div class="row">
+<div class="row" id="document_list">
+  {% if document_tags %}
+    <div class="col-1">
+        <span>{% trans 'Filters' %}</span>
+        <tagsselector
+            :tags="{{document_tags}}"
+            :filters="{{filters}}">
+        </tagsselector>
+    </div>
+    <div class="col-md-11 col-md-offset-4">
+  {% else %}
     <div class="col-md-12 col-md-offset-4">
+  {% endif %}
+
     <table id="document-list" class="table table-hover">
       <tbody>
         {% for document in object_list %}
-        <tr onclick="document.location='{% url 'document-images' pk=document.pk %}'" role="button">
-            <td>
-                {% with part=document.parts.first %}
-                {% if part %}
-                <img src="{{ part.image|thumbnail_url:'list' }}" />
-                {% endif %}
-                {% endwith %}
-            </td>
+        <tr>
+          <td>
+            <checkboxlistdocument
+                :document-id="{{document.pk}}"
+                value="{{document.pk}}"
+                id="{{ forloop.counter }}">
+            </checkboxlistdocument>
+          </td>
+          <td>
+              {% with part=document.parts.first %}
+              {% if part %}
+              <img src="{{ part.image|thumbnail_url:'list' }}" />
+              {% endif %}
+              {% endwith %}
+          </td>
           <th>
             {{ document.name }}
             {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
@@ -41,6 +61,17 @@
           <td>
             {% blocktrans with count=document.parts.count %}{{ count }} image(s).{% endblocktrans %}
           </td>
+
+          <td>
+            <simpletagedit
+                :document-id="{{document.pk}}">
+            </simpletagedit>
+
+            {% for tag in  document.tags.all %}
+              <span class="badge" title="{{tag.name}}" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:10 }}</span>
+            {% endfor %}
+
+          </td>
           {% comment %}
           <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>
             <big>
@@ -48,34 +79,41 @@
             </big>
           </td>
           {% endcomment %}
-          <td class="text-right">
-            {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
+          <td class="btn-group text-right">
+            {# <a href="{% url 'document-detail' pk=document.pk %}" class="btn btn-sm btn-info disabled" title="{% trans 'View' %}"><i class="fas fa-eye"></i></a> #}
             {# Note that doing one query per row is a lot faster than a subquery for some reason #}
               {% if document.last_edited_part %}
               <span title="{% trans 'Edit last updated Element' %}">
                   <a href="{% url 'document-part-edit' pk=document.pk part_pk=document.last_edited_part.pk %}"
-                     class="btn btn-info">
+                     class="btn btn-sm btn-info">
                       <i class="fas fa-edit"></i>
                   </a>
               </span>
               {% endif %}
 
-            {% if document.owner == request.user %}
-            <form method="post" class="inline-form" action="{% url 'document-publish' pk=document.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
-              <input type="hidden" name="workflow_state" value="{{ document.WORKFLOW_STATE_ARCHIVED }}">
-              <button type="submit" value="" onclick='event.stopPropagation();'  class="nav-item btn btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
-            </form>
-            {% elif request.user in document.shared_with_users.all %}
-            <form method="post" class="inline-form" action="{% url "delete-document-share" %}" onsubmit="return confirm('{% trans "Do you really want to remove the document from your list?" %}');">{% csrf_token %}
-                <input type="hidden" name="document" value="{{document.pk}}" />
-                <button type="submit" value="" onclick='event.stopPropagation();'  class="nav-item btn btn-warning" title="{% trans 'Remove from list' %}"><i class="fas fa-trash"></i></button>
-            </form>
+              {% if document.owner == request.user %}
+              <span>
+                <form method="post" class="inline-form" action="{% url 'document-publish' pk=document.pk %}" onsubmit="return confirm('{% trans "Do you really want to delete the document?" %}');">{% csrf_token %}
+                  <input type="hidden" name="workflow_state" value="{{ document.WORKFLOW_STATE_ARCHIVED }}">
+                  <button type="submit" onclick='event.stopPropagation();'  class="ml-1 btn btn-sm btn-danger" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+                </form>
+              </span>
+              {% elif request.user in document.shared_with_users.all %}
+              <span>
+                <form method="post" class="inline-form" action="{% url "delete-document-share" %}" onsubmit="return confirm('{% trans "Do you really want to remove the document from your list?" %}');">{% csrf_token %}
+                  <input type="hidden" name="document" value="{{document.pk}}" />
+                  <button type="submit" onclick='event.stopPropagation();'  class="ml-1 btn btn-sm btn-warning" title="{% trans 'Remove from list' %}"><i class="fas fa-trash"></i></button>
+                </form>
+              </span>
             {% endif %}
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    <tagsmodal
+        :project-id="{{project.pk}}">
+    </tagsmodal>
     </div>
 </div>
 {% include 'includes/pagination.html' %}
@@ -85,4 +123,9 @@
 {% if share_form %}
 {% include 'core/share/share_project.html' %}
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script src="{% static 'doclist.js' %}" type="text/javascript"></script>
 {% endblock %}

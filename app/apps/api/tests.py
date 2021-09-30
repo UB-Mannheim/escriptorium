@@ -66,7 +66,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-list')
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(14):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -74,7 +74,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
