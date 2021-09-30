@@ -370,3 +370,4 @@ if 'test' in sys.argv:
         pass
 
 CPU_COST_FACTOR = 1.0
+GPU_COST = 1.0
