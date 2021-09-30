@@ -7,13 +7,13 @@
     <tr>
       <th colspan="5"></th>
       <th colspan="2" class="text-center">
-        <span class="badge badge-pill badge-primary">Total</span>
+        <span class="badge badge-pill badge-primary">{% trans "Total" %}</span>
       </th>
       <th colspan="2" class="text-center">
-        <span class="badge badge-pill badge-info">Last week</span>
+        <span class="badge badge-pill badge-info">{% trans "Last week" %}</span>
       </th>
       <th colspan="2" class="text-center">
-        <span class="badge badge-pill badge-success">Last day</span>
+        <span class="badge badge-pill badge-success">{% trans "Last day" %}</span>
       </th>
     </tr>
     <tr>
@@ -35,14 +35,14 @@
       <td>{{ user.username }}</td>
       <td>{{ user.disk_usage|filesizeformat }}</td>
       <td>
-        {{ user.last_month_cpu_usage|default_if_none:"0" }} CPU/min
-        <br>
-        <small>(total {{ user.total_cpu_usage|default_if_none:"0" }} CPU/min)</small>
+          <span title="{% trans "Last month" %}">{{ user.last_month_cpu_usage|default_if_none:0|floatformat:2 }} CPU/min</span>
+          <br>
+          <small title="{% trans "All time" %}">(total {{ user.total_cpu_usage|default_if_none:0|floatformat:2 }} CPU/min)</small>
       </td>
       <td>
-        {{ user.last_month_gpu_usage|default_if_none:"0" }} GPU/min
-        <br>
-        <small>(total {{ user.total_gpu_usage|default_if_none:"0" }} GPU/min)</small>
+          <span title="{% trans "Last month" %}">{{ user.last_month_gpu_usage|default_if_none:0|floatformat:2 }} GPU/min</span>
+          <br>
+          <small title="{% trans "All time" %}">(total {{ user.total_gpu_usage|default_if_none:0|floatformat:2 }} GPU/min)</small>
       </td>
       <td>{{ user.total_tasks }}</td>
       <td>{{ user.total_runtime|format_timedelta }}</td>
