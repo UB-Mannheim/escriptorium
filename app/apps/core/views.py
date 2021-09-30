@@ -87,14 +87,18 @@ class DocumentsList(LoginRequiredMixin, ListView):
 
         # Note: using subqueries for last edited part and first part (thumbnail)
         # to lower the amount of queries will make the sql time sky rocket!
-        return (Document.objects
-                .for_user(self.request.user)
-                .filter(project=self.project)
-                )
+        qs = (Document.objects
+              .for_user(self.request.user)
+              .filter(project=self.project))
+        for tag in self.request.GET.getlist('tags'):
+            qs = qs.filter(tags__name=tag)
+
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
+        context['document_tags'] = list(self.project.document_tags.values())
         if self.project.owner == self.request.user:
             context['share_form'] = ProjectShareForm(instance=self.project,
                                                      request=self.request)
@@ -109,6 +113,8 @@ class DocumentsList(LoginRequiredMixin, ListView):
                                                   .get(slug=self.kwargs['slug']))
             except Project.DoesNotExist:
                 context['can_create_document'] = False
+
+        context['filters'] = self.request.GET.getlist('tags')
 
         return context
 

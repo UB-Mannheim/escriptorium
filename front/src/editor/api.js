@@ -43,3 +43,7 @@ export const bulkCreateLineTranscriptions = async (document_id, part_id, data) =
 export const bulkUpdateLineTranscriptions = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/bulk_update/`, data))
 
 export const moveLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/move/`, data))
+
+export const createProjectTag = async (project_id, data) => (await axios.post(`/projects/${project_id}/tags/`, data))
+
+export const updateDocument = async (document_id, data) => (await axios.patch(`/documents/${document_id}/`, data))
