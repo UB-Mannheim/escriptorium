@@ -69,8 +69,7 @@ class DocumentSearchForm(BootstrapFormMixin, forms.ModelForm):
     SEARCH_TYPE_CHOICES = (
         ('plain', 'Plain - Terms treated as separate keywords'),
         ('phrase', 'Phrase - Terms treated as a single phrase'),
-        ('raw', 'Raw - Formatted search query allowing terms and operators'),
-        ('websearch', 'Websearch - Formatted search query similar to the one used by web search engines')
+        ('raw', 'Raw - Formatted search query allowing terms and operators')
     )
     query = forms.CharField(label="Text to search in your document", required=True)
     search_type = forms.ChoiceField(choices=SEARCH_TYPE_CHOICES)
