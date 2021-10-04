@@ -1,19 +1,97 @@
 {% extends "base.html" %}
-{% load i18n static %}
+{% load i18n static timedelta %}
 
 {% block body %}
-<div class="container">
+<div>
+    <div class="row mt-4 mb-4">
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "Disk usage" %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ user.calc_disk_usage|filesizeformat }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "Calculated from your images and models" %}</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "CPU usage" %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ cpu_cost_last_month|floatformat:3 }} CPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "CPU usage over the last month" %}</h6>
+
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "GPU usage" %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ gpu_cost_last_month|floatformat:3 }} GPU-min</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "GPU usage over the last month" %}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
     <table class="table table-hover">
-    {% for report in object_list %}
-    <tr>
-        <td>{{ report.label }}</td>
-        <td>{{ report.get_workflow_state_display }}</td>
-        <td>{{ report.queued_at }}</td>
-        <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
-    </tr>
-    {% empty %}
-    <tr><td>{% trans "You don't have any task report yet." %}</td></tr>
-    {% endfor %}
+        <tr>
+            <th>{% trans "Task report" %}</th>
+            <th>{% trans "Started at" %}</th>
+            <th>{% trans "Done at" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "State" %}</th>
+            <th>{% trans "CPU cost" %}</th>
+            <th>{% trans "GPU cost" %}</th>
+            <th></th>
+        </tr>
+        {% for report in object_list %}
+        <tr>
+            <td>{{ report.label }}</td>
+            <td>{{ report.started_at }}</td>
+            <td>{{ report.done_at }}</td>
+            <td>{{ report.duration|format_timedelta }}</td>
+            <td>
+                {% with state=report.get_workflow_state_display %}
+                {% if state == "Finished" %}
+                <span class="badge badge-pill badge-success">{{ state }}</span>
+                {% elif state == "Crashed" %}
+                <span class="badge badge-pill badge-danger">{{ state }}</span>
+                {% elif state == "Running" %}
+                <span class="badge badge-pill badge-primary">{{ state }}</span>
+                {% else %}
+                <span class="badge badge-pill badge-secondary">{{ state }}</span>
+                {% endif %}
+                {% endwith %}
+            </td>
+            <td>
+                {% if report.cpu_cost %}
+                {{ report.cpu_cost|floatformat:2 }}
+                {% else %}
+                0
+                {% endif %}
+                CPU-min
+            </td>
+            <td>
+                {% if report.gpu_cost %}
+                {{ report.gpu_cost|floatformat:2 }}
+                {% else %}
+                0
+                {% endif %}
+                GPU-min
+            </td>
+            <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td>{% trans "You don't have any task report yet." %}</td></tr>
+        {% endfor %}
     </table>
+
+    {% include 'includes/pagination.html' %}
 </div>
 {% endblock %}

@@ -3,6 +3,36 @@ stages:
   - build
   - deploy
 
+tests:
+  stage: test
+  image: registry.gitlab.com/scripta/escriptorium/base:0.10.0
+
+  services:
+    - postgres:13-alpine
+    - redis:alpine
+
+  variables:
+    # Databases settings
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    SQL_HOST: postgres
+    POSTGRES_DB: escriptorium
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+
+    # Pip cache
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+  cache:
+    paths:
+      - .cache/pip
+
+  except:
+    - schedules
+
+  script:
+    - python app/manage.py test -v 2 users api versioning imports core
+
 build:
   stage: build
   image: node:12-alpine
@@ -19,7 +49,7 @@ build:
   script:
     - npm run production
 
-docker-build:
+.docker-build:
   stage: build
   image: docker:19.03.1
   services:
@@ -28,8 +58,32 @@ docker-build:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375/
 
-  except:
-    - schedules
+docker-build-app:
+  extends: .docker-build
 
   script:
-    - ci/build.sh
+    - ci/build.sh app
+
+docker-build-exim:
+  extends: .docker-build
+
+  script:
+    - ci/build.sh exim
+
+docker-build-nginx:
+  extends: .docker-build
+
+  script:
+    - ci/build.sh nginx
+
+docker-build-base:
+  extends: .docker-build
+
+  # Run this only on base tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^base-.*/'
+      when: on_success
+    - when: never
+
+  script:
+    - ci/build-base.sh
