@@ -89,7 +89,9 @@ class DocumentsList(LoginRequiredMixin, ListView):
         # to lower the amount of queries will make the sql time sky rocket!
         qs = (Document.objects
               .for_user(self.request.user)
-              .filter(project=self.project))
+              .filter(project=self.project)
+              .prefetch_related('tags', 'parts', 'shared_with_groups', 'shared_with_users')
+              )
         for tag in self.request.GET.getlist('tags'):
             qs = qs.filter(tags__name=tag)
 

@@ -27,7 +27,7 @@ class DocumentTestCase(TestCase):
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('documents-list', kwargs={'slug': self.project.slug})
-        with self.assertNumQueries(36):   # Note: can be improved
+        with self.assertNumQueries(21):
             resp = self.client.get(uri)
             self.assertEqual(resp.status_code, 200)
 
