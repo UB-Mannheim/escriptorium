@@ -9,7 +9,14 @@
 <div>
     <h2>{% trans "Search text in document" %}</h2>
     <form method="get">
-        <div>{% render_field form.search_type %}</div>
+        <div>
+            {% render_field form.search_type group=True %}
+            <div class="small text-right mt-1 mb-3">
+                <a href="https://docs.djangoproject.com/en/3.2/ref/contrib/postgres/search/#searchquery" target="_blank">{% trans "See documentation about search types" %}</a>
+                <span>{% trans "and" %}</span>
+                <a href="https://www.postgresql.org/docs/current/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES" target="_blank">{% trans "search syntax" %}</a>
+            </div>
+        </div>
         <div class="form-row">
             <div class="col">{% render_field form.query group=True %}</div>
             <div class="col-auto">
