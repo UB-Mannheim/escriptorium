@@ -8,6 +8,7 @@ import transcriptions from './store/transcriptions'
 import taxonomies from './store/taxonomies'
 import imageAnnotations from './store/image_annotations'
 import textAnnotations from './store/image_annotations'
+import documentslist from './store/documentslist'
 
 Vue.use(Vuex)
 
@@ -20,6 +21,7 @@ export default new Vuex.Store({
         transcriptions,
         taxonomies,
         imageAnnotations,
-        textAnnotations
+        textAnnotations,
+        documentslist,
     }
 })

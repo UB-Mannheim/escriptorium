@@ -13,21 +13,21 @@ class DocumentTestCase(TestCase):
         self.project = factory.make_project()
         doc = factory.make_document(project=self.project)
         factory.make_document(owner=self.project.owner, project=self.project)
-        
+
         self.user = self.project.owner
         group = Group.objects.create(name='test group')
         self.user.groups.add(group)
-        
+
         doc = factory.make_document(project=self.project)  # another owner
         doc.shared_with_users.add(doc.owner)
-        
+
         doc = factory.make_document(project=self.project)
         doc.shared_with_groups.add(group)
-    
+
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('documents-list', kwargs={'slug': self.project.slug})
-        with self.assertNumQueries(31):   # Note: can be improved
+        with self.assertNumQueries(21):
             resp = self.client.get(uri)
             self.assertEqual(resp.status_code, 200)
 
@@ -65,4 +65,3 @@ class DocumentTestCase(TestCase):
             })
             self.assertEqual(resp.status_code, 302)
         self.assertEqual(Document.objects.count(), 5)
-        

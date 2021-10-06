@@ -13,6 +13,16 @@ class ReportList(LoginRequiredMixin, ListView):
     model = TaskReport
     paginate_by = 20
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        today = date.today()
+        qs = self.request.user.taskreport_set.filter(
+            started_at__gte=today - timedelta(days=30)
+        ).aggregate(Sum('cpu_cost'), Sum('gpu_cost'))
+        context['cpu_cost_last_month'] = qs['cpu_cost__sum'] or 0
+        context['gpu_cost_last_month'] = qs['gpu_cost__sum'] or 0
+        return context
+
     def get_queryset(self):
         qs = super().get_queryset()
 
@@ -48,6 +58,7 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         today = date.today()
+        filter_last_month = Q(taskreport__started_at__gte=today - timedelta(days=30))
         filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
         filter_last_day = Q(taskreport__started_at__gte=today - timedelta(days=1))
         runtime = ExpressionWrapper(
@@ -57,11 +68,16 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
 
         results = list(
             qs.annotate(
+                total_cpu_usage=Sum('taskreport__cpu_cost'),
+                total_gpu_usage=Sum('taskreport__gpu_cost'),
+                last_month_cpu_usage=Sum('taskreport__cpu_cost', filter=filter_last_month),
+                last_month_gpu_usage=Sum('taskreport__gpu_cost', filter=filter_last_month),
                 total_tasks=Count('taskreport'),
                 total_runtime=Sum(runtime),
                 last_week_tasks=Count('taskreport', filter=filter_last_week),
                 last_week_runtime=Sum(runtime, filter=filter_last_week),
                 last_day_tasks=Count('taskreport', filter=filter_last_day),
+                last_day_runtime=Sum(runtime, filter=filter_last_day)
             ).order_by(F('total_runtime').desc(nulls_last=True))
         )
         disk_usages_left = dict(qs.values('id').annotate(disk_usage=Sum('ocrmodel__file_size')).values_list('id', 'disk_usage'))

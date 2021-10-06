@@ -17,7 +17,8 @@ from api.views import (ProjectViewSet,
                        ImageAnnotationViewSet,
                        TextAnnotationViewSet,
                        ScriptViewSet,
-                       OcrModelViewSet)
+                       OcrModelViewSet,
+                       TagViewSet)
 
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
@@ -28,6 +29,10 @@ router.register(r'user', UserViewSet)
 router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 router.register(r'types/annotations', AnnotationTypeViewSet)
+
+projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
+projects_router.register(r'tags', TagViewSet, basename='tag')
+
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')
@@ -45,6 +50,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(documents_router.urls)),
     path('', include(parts_router.urls)),
+    path('', include(projects_router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('token-auth/', views.obtain_auth_token)
 ]

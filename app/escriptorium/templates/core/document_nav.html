@@ -9,10 +9,10 @@
         {% block nav %}
 
         {% if object %}
-        <a class="mt-2 center"
+        <a class="mt-2 center px-3"
            title="{% trans "Back to document list" %}"
            href="{% url 'documents-list' slug=document.project.slug %}">
-            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-left fa-lg"></i>
         </a>
         {% endif %}
 

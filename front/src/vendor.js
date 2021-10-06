@@ -12,6 +12,7 @@ import 'lodash';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'moment-timezone/builds/moment-timezone-with-data-2012-2022.min.js';
 import '@teklia/virtual-keyboard/dist-lib/content.js';
+import 'bootstrap-select/dist/css/bootstrap-select.css';
 
 // JQuery needs to be explicitly set on window, as it's used at boot time
 // by various scripts
@@ -58,3 +59,6 @@ window.Diff = require('diff');
 // Mathjs needs to be explicitly set on window, as it's used at boot time
 // by baseline.editor.js
 window.math = require('mathjs/dist/math.min');
+
+//Bootstrap select
+window.BootstrapSelect = require('bootstrap-select/dist/js/bootstrap-select');

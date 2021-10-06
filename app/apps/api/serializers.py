@@ -32,7 +32,8 @@ from core.models import (Project,
                          TextAnnotationComponentValue,
                          Script,
                          OcrModel,
-                         OcrModelDocument)
+                         OcrModelDocument,
+                         DocumentTag)
 from core.tasks import (segtrain, train, segment, transcribe)
 
 logger = logging.getLogger(__name__)
@@ -262,6 +263,12 @@ class TextAnnotationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class TagDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentTag
+        fields = ("pk", "name", "color")
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
                                                queryset=Script.objects.all())
@@ -276,8 +283,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset',
-                  'valid_block_types', 'valid_line_types',
-                  'parts_count', 'created_at', 'updated_at')
+                  'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
+                  'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -109,6 +109,10 @@ TEMPLATES = [
         },
     },
 ]
+
+# Allow to use the ColorField in the admin
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -364,3 +368,6 @@ if 'test' in sys.argv:
         from .test_settings import *
     except (ModuleNotFoundError, ImportError):
         pass
+
+CPU_COST_FACTOR = 1.0
+GPU_COST = 1.0

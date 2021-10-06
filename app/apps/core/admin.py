@@ -5,6 +5,7 @@ from core.models import (Project,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata,
+                         DocumentTag,
                          LineTranscription,
                          OcrModel,
                          OcrModelDocument,
@@ -31,9 +32,21 @@ class OcrModelRightInline(admin.TabularInline):
     model = OcrModelRight
 
 
+class TagInline(admin.TabularInline):
+    model = DocumentTag
+
+
+class DocumentTagInline(admin.TabularInline):
+    model = Document.tags.through
+
+
+class ProjectAdmin(admin.ModelAdmin):
+    inlines = (TagInline,)
+
+
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name', 'owner', 'project']
-    inlines = (MetadataInline, OcrModelDocumentInline)
+    inlines = (MetadataInline, OcrModelDocumentInline, DocumentTagInline)
 
 
 class DocumentPartAdmin(admin.ModelAdmin):
@@ -67,7 +80,11 @@ class OcrModelRightAdmin(admin.ModelAdmin):
     list_display = ['ocr_model', 'user', 'group', 'created_at']
 
 
-admin.site.register(Project)
+class DocumentTagAdmin(admin.ModelAdmin):
+    list_display = ['name', 'color', 'project']
+
+
+admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
@@ -83,3 +100,4 @@ admin.site.register(OcrModelRight, OcrModelRightAdmin)
 admin.site.register(AnnotationType)
 admin.site.register(AnnotationTaxonomy)
 admin.site.register(AnnotationComponent)
+admin.site.register(DocumentTag, DocumentTagAdmin)

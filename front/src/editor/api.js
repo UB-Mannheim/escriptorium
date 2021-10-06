@@ -55,3 +55,7 @@ export const createImageAnnotation = async(document_id, part_id, data) => (await
 export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
 
 export const deleteImageAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`))
+
+export const createProjectTag = async (project_id, data) => (await axios.post(`/projects/${project_id}/tags/`, data))
+
+export const updateDocument = async (document_id, data) => (await axios.patch(`/documents/${document_id}/`, data))
