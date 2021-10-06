@@ -7,6 +7,7 @@ from core.views import (Home,
                         DocumentsList,
                         # DocumentDetail,
                         CreateDocument,
+                        RetrieveLineCrop,
                         UpdateDocument,
                         EditPart,
                         DocumentSearch,
@@ -56,6 +57,7 @@ urlpatterns = [
     path('document/delete_share/', DeleteDocumentUserShare.as_view(), name='delete-document-share'),
     path('document/<int:pk>/process/', DocumentPartsProcessAjax.as_view(),
          name='document-parts-process'),
+    path('document/<int:pk>/line/<int:line_pk>.jpg', RetrieveLineCrop.as_view(), name="retrieve-line-crop"),
 
     path('test/', TemplateView.as_view(template_name='core/test.html')),
 ]

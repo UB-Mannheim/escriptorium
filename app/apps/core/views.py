@@ -10,12 +10,14 @@ from django.db import transaction
 from django.db.models import Max, Q, Count
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from django.utils.cache import patch_cache_control
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView, FormView
+from PIL import Image, ImageDraw
 
-from core.models import (Project, Document, DocumentPart, Metadata,
+from core.models import (Line, Project, Document, DocumentPart, Metadata,
                          OcrModel, OcrModelRight, AlreadyProcessingException, LineTranscription)
 
 from core.forms import (ProjectForm,
@@ -600,3 +602,30 @@ class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('model-rights', kwargs={'pk': self.kwargs['modelPk']})
+
+
+class RetrieveLineCrop(LoginRequiredMixin, View):
+    model = Line
+    pk_url_kwarg = 'line_pk'
+    http_method_names = ('get',)
+
+    def get(self, request, **kwargs):
+        line = Line.objects.get(document_part__document=self.kwargs.get('pk'), pk=self.kwargs.get('line_pk'))
+        full_image = Image.open(line.document_part.image)
+
+        # Converting image if necessary
+        if full_image.mode != "RGB":
+            full_image = full_image.convert("RGB")
+
+        # Croping the mask bounding box
+        bbox = line.get_box()
+        crop = full_image.crop([bbox[0] - 15, bbox[1] - 15, bbox[2] + 15, bbox[3] + 15])
+
+        # Drawing the mask on the cropped image
+        canvas = ImageDraw.Draw(crop, "RGBA")
+        canvas.polygon([(x - bbox[0] + 15, y - bbox[1] + 15) for x,y in (line.mask or line.baseline)], outline="red", fill="#ff000022")
+
+        response = HttpResponse(content_type="image/jpeg")
+        crop.save(response, "JPEG")
+        patch_cache_control(response, max_age=10*60)
+        return response
