@@ -1,5 +1,11 @@
+import random
+
 from django.forms.widgets import Input
 from django.db.models import CharField
+
+
+def random_color():
+    return "#%06x" % random.randint(0, 0xFFFFFF)
 
 
 class ColorWidget(Input):
@@ -10,6 +16,7 @@ class ColorWidget(Input):
 class ColorField(CharField):
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 7
+        kwargs['default'] = random_color
         super(ColorField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):

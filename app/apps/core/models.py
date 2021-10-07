@@ -4,7 +4,6 @@ import math
 import os
 import json
 import functools
-import random
 import subprocess
 import time
 import uuid
@@ -14,7 +13,7 @@ from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
-from django.db.models import Q, Prefetch, Value
+from django.db.models import Q, Prefetch
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -91,13 +90,9 @@ class LineType(Typology):
     pass
 
 
-def random_color():
-    return "#%06x" % random.randint(0, 0xFFFFFF)
-
-
 class Tag(models.Model):
     name = models.CharField(max_length=100)
-    color = ColorField(default=random_color)
+    color = ColorField()
 
     class Meta:
         abstract = True
@@ -128,6 +123,19 @@ class AnnotationType(Typology):
     pass
 
 
+class AnnotationComponent(models.Model):
+    name = models.CharField(max_length=128, blank=True)
+    allowed_values = ArrayField(
+        models.CharField(max_length=128),
+        null=True, blank=True,
+        help_text=_("Comma separated list of possible value, leave it empty for free input."))
+    document = models.ForeignKey('core.Document',
+                                 on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
 class AnnotationTaxonomy(OrderedModel):
     MARKER_TYPE_RECTANGLE = 1
     MARKER_TYPE_POLYGON = 2
@@ -149,8 +157,11 @@ class AnnotationTaxonomy(OrderedModel):
     has_comments = models.BooleanField(default=False)
 
     name = models.CharField(max_length=64)
-    marker_type = models.PositiveSmallIntegerField(choices=MARKER_TYPE_CHOICES, default=1)
+    marker_type = models.PositiveSmallIntegerField(choices=MARKER_TYPE_CHOICES)
     marker_detail = ColorField(null=True, blank=True)
+
+    components = models.ManyToManyField(AnnotationComponent, blank=True,
+                                        related_name='taxonomy')
 
     document = models.ForeignKey('core.Document',
                                  null=True, blank=True,
@@ -163,23 +174,14 @@ class AnnotationTaxonomy(OrderedModel):
         return self.name
 
 
-class AnnotationComponent(models.Model):
-    name = models.CharField(max_length=128, )
-    allowed_values = ArrayField(
-        models.CharField(max_length=128),
-        null=True, blank=True,
-        help_text=_("Comma separated list of possible value, leave it empty for free input."))
-    taxonomy = models.ForeignKey(
-        AnnotationTaxonomy,
-        on_delete=models.CASCADE,
-        related_name='components')
-
-
 class Annotation(models.Model):
     taxonomy = models.ForeignKey(AnnotationTaxonomy, on_delete=models.CASCADE)
     comments = ArrayField(models.TextField(), null=True, blank=True)
 
     part = models.ForeignKey('core.DocumentPart', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
 
 
 class ImageAnnotation(Annotation):
@@ -206,9 +208,6 @@ class TextAnnotationComponentValue(models.Model):
                                    related_name='components',
                                    on_delete=models.CASCADE)
     value = models.CharField(max_length=256)
-
-    class Meta:
-        unique_together = ('component', 'annotation')
 
 
 class ImageAnnotationComponentValue(models.Model):

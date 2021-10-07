@@ -60,6 +60,29 @@
                 </div>
               </div>
 
+              <div id="components" class="js-compos-form">
+                  <div class="mt-4">{% trans "Annotations components" %}</div>
+                  {{ form.compo_form.management_form}}
+                  {% for subform in form.compo_form.forms %}
+                  <div class="input-group input-group-sm mt-2 js-formset-row">
+                      {{ subform.id }}
+                      {% render_field subform.name group=True %}
+                      {% render_field subform.allowed_values group=True %}
+                      <div class="input-group-prepend">
+                          <input type="hidden"
+                                 name="compo_form-{{forloop.counter0}}-DELETE"
+                                 id="compo_form-{{forloop.counter0}}-DELETE">
+                          <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                  for="compo_form-{{forloop.counter0}}-DELETE">✗</button>
+                      </div>
+
+                      {% for field, errors in subform.errors.items %}{% for error in errors %}
+                      <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                      {% endfor %}{% endfor %}
+                  </div>
+                  {% endfor %}
+              </div>
+
               <div id="image-annotations" class="js-img-anno-form">
                 <div class="mt-4">{% trans "Image Annotations" %}</div>
                 {{ form.img_anno_form.management_form }}
@@ -73,46 +96,44 @@
                     {% render_field subform.typo group=True %}
                     {# TODO: add dataset for typo #}
                     {% render_field subform.marker_type group=True %}
-                    {% render_field subform.marker_detail group=True %}
+                    {# render_field subform.marker_detail group=True #}
                     {% render_field subform.has_comments group=True %}
+                    <div class="input-group-prepend">
+                        <input type="hidden"
+                               name="img_anno_form-{{forloop.counter0}}-DELETE"
+                               id="id_img_anno_form-{{forloop.counter0}}-DELETE">
+                        <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                for="id_img_anno_form-{{forloop.counter0}}-DELETE">✗</button>
+                    </div>
 
-                <div class="input-group-prepend">
-                  <input type="hidden"
-                         name="annotationtaxonomy_set-{{forloop.counter0}}-DELETE"
-                         id="id_annotationtaxonomy_set-{{forloop.counter0}}-DELETE">
-                  <button class="btn btn-outline-secondary js-formset-delete" type="button"
-                          for="id_annotationtaxonomy_set-{{forloop.counter0}}-DELETE">✗</button>
-                </div>
+                    {% for field, errors in subform.errors.items %}{% for error in errors %}
+                    <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                    {% endfor %}{% endfor %}
 
-                {% for field, errors in subform.errors.items %}{% for error in errors %}
-                <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
-                {% endfor %}{% endfor %}
-
-                {% if subform.compo_form %}
-                {{ subform.compo_form.management_form }}
-                {% for nested in subform.compo_form.forms %}
-                <div class="input-group input-group-sm mt-2 js-formset-row pl-3">
-                  {{ nested.id }}
-                  {% render_field nested.name group=True %}
-                  {% render_field nested.allowed_values group=True %}
-
-                  <div class="input-group-prepend">
-                    <input type="hidden"
-                           name="component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE"
-                           id="id_component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE">
-                    <button class="btn btn-outline-secondary js-formset-delete" type="button"
-                            for="id_component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE">✗</button>
-                  </div>
-                </div>
-                {% for field, errors in nested.errors.items %}{% for error in errors %}
-                <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
-                {% endfor %}{% endfor %}
-                {% endfor %}
-                {% endif %}
+                    {% if subform.compo_form %}
+                    {{ subform.compo_form.management_form }}
+                    {% for nested in subform.compo_form.forms %}
+                    <div class="input-group input-group-sm mt-2 js-formset-row pl-3">
+                        {{ nested.id }}
+                        {% render_field nested.annotationcomponent group=True %}
+                        <div class="input-group-prepend">
+                            <input type="hidden"
+                                   name="component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE"
+                                   id="id_component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">
+                            <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                    for="id_component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">✗</button>
+                        </div>
+                    </div>
+                    {% for field, errors in nested.errors.items %}{% for error in errors %}
+                    <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                    {% endfor %}{% endfor %}
+                    {% endfor %}
+                    {% endif %}
 
                 </div>
                 {% endfor %}
               </div>
+
 
               <div id="text-annotations" class="js-text-anno-form">
                   <div class="mt-4">{% trans "Text Annotations" %}</div>
@@ -127,14 +148,14 @@
                       {% render_field subform.typo group=True %}
                       {# TODO: add dataset for typo #}
                       {% render_field subform.marker_type group=True %}
-                      {% render_field subform.marker_detail group=True %}
+                      {# render_field subform.marker_detail group=True #}
                       {% render_field subform.has_comments group=True %}
                       <div class="input-group-prepend">
                           <input type="hidden"
-                                 name="annotationtaxonomy_set-{{forloop.counter0}}-DELETE"
-                                 id="id_annotationtaxonomy_set-{{forloop.counter0}}-DELETE">
+                                 name="text_anno_form-{{forloop.counter0}}-DELETE"
+                                 id="id_text_anno_form-{{forloop.counter0}}-DELETE">
                           <button class="btn btn-outline-secondary js-formset-delete" type="button"
-                                  for="id_annotationtaxonomy_set-{{forloop.counter0}}-DELETE">✗</button>
+                                  for="id_text_anno_form-{{forloop.counter0}}-DELETE">✗</button>
                       </div>
 
                       {% for field, errors in subform.errors.items %}{% for error in errors %}
@@ -146,15 +167,13 @@
                       {% for nested in subform.compo_form.forms %}
                       <div class="input-group input-group-sm mt-2 js-formset-row pl-3">
                           {{ nested.id }}
-                          {% render_field nested.name group=True %}
-                          {% render_field nested.allowed_values group=True %}
-
+                          {% render_field nested.annotationcomponent group=True %}
                           <div class="input-group-prepend">
                               <input type="hidden"
-                                     name="component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE"
-                                     id="id_component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE">
+                                     name="component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE"
+                                     id="id_component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">
                               <button class="btn btn-outline-secondary js-formset-delete" type="button"
-                                      for="id_component-annotationtaxonomy_set-{{forloop.counter0}}-DELETE">✗</button>
+                                      for="id_component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">✗</button>
                           </div>
                       </div>
                       {% for field, errors in nested.errors.items %}{% for error in errors %}
@@ -167,7 +186,6 @@
                   {% endfor %}
 
               </div>
-
             </div>
             <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
         </fieldset>

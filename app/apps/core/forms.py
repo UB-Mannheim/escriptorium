@@ -133,6 +133,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
         if self.request.method == "POST":
             # we need to accept all types when posting for added ones
+            # TODO: if the form has errors it show everything.. need to find a better solution
             block_qs = BlockType.objects.all()
             line_qs = LineType.objects.all()
         elif self.instance.pk:
@@ -149,6 +150,11 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
+        self.compo_form = ComponentFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            prefix='compo_form',
+            instance=self.instance)
+
         img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
         self.img_anno_form = ImageAnnotationTaxonomyFormSet(
             self.request.POST if self.request.method == 'POST' else None,
@@ -156,6 +162,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
                 marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
             prefix='img_anno_form',
             instance=self.instance)
+
         text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
         self.text_anno_form = TextAnnotationTaxonomyFormSet(
             self.request.POST if self.request.method == 'POST' else None,
@@ -165,11 +172,16 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
             instance=self.instance)
 
     def is_valid(self):
-        return super().is_valid() and self.img_anno_form.is_valid()
+        return (super().is_valid()
+                and (self.compo_form.is_valid())
+                and (self.img_anno_form.is_valid())
+                and (self.text_anno_form.is_valid()))
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
+        self.compo_form.save()
         self.img_anno_form.save()
+        self.text_anno_form.save()
         return instance
 
 
@@ -178,15 +190,14 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = AnnotationTaxonomy
-        exclude = ['typology']
-        #widgets = {'marker_detail': ColorWidget}
+        exclude = ['typology', 'marker_detail']
         labels = {
             'marker_detail': _('Color'),
             'has_comments': _('Comment')
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, data=None, **kwargs):
+        super().__init__(*args, data=data, **kwargs)
         if self.instance and self.instance.typology:
             self.fields['typo'].initial = self.instance.typology.name
 
@@ -203,41 +214,45 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
 class ImageAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['marker_type'].choices = AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
+        blank = (('', '---------'),)
+        self.fields['marker_type'].choices = blank + AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
 
 
 class TextAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['marker_type'].choices = AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
+        blank = (('', '---------'),)
+        self.fields['marker_type'].choices = blank + AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
+
+
+class ComponentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        fields = '__all__'
 
 
 class AnnotationComponentForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
-        model = AnnotationComponent
         fields = '__all__'
-        labels = {
-            'name': _('Component Name')
-        }
 
 
 class AnnotationTaxonomyFormset(BaseInlineFormSet):
     def add_fields(self, form, index):
         super().add_fields(form, index)
 
-        form.compo_form = ComponentFormSet(
+        form.compo_form = AnnotationComponentFormSet(
             instance=form.instance,
             data=form.data if form.is_bound else None,
             files=form.files if form.is_bound else None,
             prefix='component-%s-%s' % (
                 form.prefix,
-                ComponentFormSet.get_default_prefix()))
+                AnnotationComponentFormSet.get_default_prefix()))
 
     def is_valid(self):
         result = super().is_valid()
         if self.is_bound:
             for form in self.forms:
-                result = result and form.compo_form.is_valid()
+                if form.is_bound:
+                    result = form.compo_form.is_valid() and result
         return result
 
     def save(self, commit=True):
@@ -248,6 +263,11 @@ class AnnotationTaxonomyFormset(BaseInlineFormSet):
         return instance
 
 
+ComponentFormSet = inlineformset_factory(Document,
+                                         AnnotationComponent,
+                                         form=ComponentForm,
+                                         can_delete=True, extra=1)
+
 ImageAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
                                                        form=ImageAnnotationTaxonomyForm,
                                                        formset=AnnotationTaxonomyFormset,
@@ -256,10 +276,12 @@ ImageAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxon
 TextAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
                                                       form=TextAnnotationTaxonomyForm,
                                                       formset=AnnotationTaxonomyFormset,
+                                                      can_order=True,
                                                       can_delete=True, extra=1)
-ComponentFormSet = inlineformset_factory(AnnotationTaxonomy, AnnotationComponent,
-                                         form=AnnotationComponentForm,
-                                         can_delete=True, extra=1)
+AnnotationComponentFormSet = inlineformset_factory(AnnotationTaxonomy,
+                                                   AnnotationComponent.taxonomy.through,
+                                                   form=AnnotationComponentForm,
+                                                   can_delete=True, extra=1)
 
 
 class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
