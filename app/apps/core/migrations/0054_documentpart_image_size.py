@@ -25,7 +25,7 @@ def set_image_file_size(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0053_auto_20210720_0932'),
+        ('core', '0053_auto_20210630_1829'),
     ]
 
     operations = [
