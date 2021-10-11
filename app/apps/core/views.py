@@ -250,9 +250,17 @@ class DocumentSearch(LoginRequiredMixin, FormView, ListView):
     model = Document
     form_class = DocumentSearchForm
     template_name = "core/document_search.html"
-    paginate_by = 10
 
     def get_queryset(self):
+        # Prevent from entering string values, eg: paginate_by=twenty
+        try:
+            paginate_by = int(self.request.GET.get('paginate_by', 100))
+        except ValueError:
+            paginate_by = 100
+
+        # Force to paginate between 20 (min) and 250 (max) entries
+        self.paginate_by = min(max(paginate_by, 20), 250)
+
         search = self.request.GET.get('query')
         search_type = self.request.GET.get('search_type', 'plain')
 
@@ -273,6 +281,11 @@ class DocumentSearch(LoginRequiredMixin, FormView, ListView):
         kwargs['search'] = self.request.GET.get('query')
         kwargs['search_type'] = self.request.GET.get('search_type', 'plain')
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['pagination_values'] = [20, 50, 100, 250]
+        return context
 
     def get_success_url(self):
         return reverse('document-search', kwargs={'pk': self.kwargs.get('pk')})
