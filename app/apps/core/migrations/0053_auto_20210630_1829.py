@@ -13,16 +13,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='ocrmodeldocument',
-            name='executed_on',
-            field=models.DateTimeField(blank=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='ocrmodeldocument',
-            name='trained_on',
-            field=models.DateTimeField(blank=True, null=True),
-        ),
+
         migrations.CreateModel(
             name='DocumentTag',
             fields=[

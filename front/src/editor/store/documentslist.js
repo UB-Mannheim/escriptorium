@@ -8,7 +8,7 @@ export const initialState = () => ({
     projectID: null,
     checkboxList: [],
     lastChecked: null,
-    allProjectTags: null
+    allProjectTags: []
 })
 
 export const mutations = {
@@ -80,7 +80,7 @@ export const actions = {
                     await api.updateDocument(state.checkboxList[i], {"tags": tags});
                 }
             }
-            
+
         }
     }
 }
