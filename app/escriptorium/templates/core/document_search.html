@@ -23,13 +23,27 @@
                 <input type="submit" value="{% trans 'Search' %}" class="btn btn-primary"></input>
             </div>
         </div>
+        <br/>
+        <hr>
+        <div class="row mt-4 mb-3">
+            <div class="col">
+                <h4>{% trans "Results" %} ({{ page_obj.paginator.count }})</h4>
+            </div>
+            <div class="text-right col-3">
+                <span class="control-label d-inline col-8" for="paginate_by">{% trans "Paginate by" %}</span>
+                <select name="paginate_by" onchange="this.form.submit()" class="form-control d-inline col-4">
+                    <option value="{{ page_obj.paginator.per_page }}" selected="">{{ page_obj.paginator.per_page }}</option>
+                    <option disabled data-divider="true">----------</option>
+                    {% for val in pagination_values %}
+                        {% if val != page_obj.paginator.per_page %}
+                        <option value="{{ val }}">{{ val }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
     </form>
 
-    <br/>
-    <hr>
-    <br/>
-    <h4>Results ({{ page_obj.paginator.count }})</h4>
-    <br/>
     <table class="table table-hover">
         <thead>
             <tr>
@@ -64,7 +78,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No results matched your search.</td>
+                <td colspan="4">{% trans "No results matched your search." %}</td>
             </tr>
             {% endfor %}
         </tbody>
