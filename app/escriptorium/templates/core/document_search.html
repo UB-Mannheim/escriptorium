@@ -17,6 +17,8 @@
                 <a href="https://www.postgresql.org/docs/current/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES" target="_blank">{% trans "search syntax" %}</a>
             </div>
         </div>
+        <div>{% render_field form.trigram_threshold %}</div>
+        <div>{% render_field form.trigram_mode %}</div>
         <div class="form-row">
             <div class="col">{% render_field form.query group=True %}</div>
             <div class="col-auto">
@@ -51,6 +53,9 @@
                 <th>{% trans "Transcription" %}</th>
                 <th>{% trans "Document part" %}</th>
                 <th>{% trans "Image crop" %}</th>
+                {% if 'trigram_mode' in request.GET and request.GET.trigram_mode == 'on' %}
+                <th>{% trans "Similarity" %}</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -75,6 +80,9 @@
                     {% endif %}
                     <img width="100%" height="auto" src="{% url 'retrieve-line-crop' pk=result.line.document_part.document.pk line_pk=result.line.pk %}"/>
                 </td>
+                {% if 'trigram_mode' in request.GET and request.GET.trigram_mode == 'on' %}
+                <td>{{ result.similarity }}</td>
+                {% endif %}
             </tr>
             {% empty %}
             <tr>

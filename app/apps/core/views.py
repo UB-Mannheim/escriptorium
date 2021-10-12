@@ -3,11 +3,12 @@ import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.postgres.search import SearchQuery, SearchVector
+from django.contrib.postgres.search import SearchQuery, SearchVector, TrigramBase
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, Q, Count
+from django.db.models.functions import Greatest
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.cache import patch_cache_control
@@ -246,6 +247,10 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         return context
 
 
+class TrigramWordSimilarity(TrigramBase):
+    function = 'WORD_SIMILARITY'
+
+
 class DocumentSearch(LoginRequiredMixin, FormView, ListView):
     model = Document
     form_class = DocumentSearchForm
@@ -263,23 +268,43 @@ class DocumentSearch(LoginRequiredMixin, FormView, ListView):
 
         search = self.request.GET.get('query')
         search_type = self.request.GET.get('search_type', 'plain')
+        trigram_mode = self.request.GET.get('trigram_mode', False)
+        trigram_threshold = self.request.GET.get('trigram_threshold', 0.3)
 
         if not search:
             return LineTranscription.objects.none()
 
+        # Using SearchVector
+        if not trigram_mode:
+            return LineTranscription.objects.select_related(
+                'line', 'line__document_part', 'transcription'
+            ).annotate(
+                search=SearchVector('content', 'transcription__name', 'line__document_part__name')
+            ).filter(
+                line__document_part__document=self.kwargs.get('pk'),
+                search=SearchQuery(search, search_type=search_type)
+            )
+
+        # Using Trigram Similarity
         return LineTranscription.objects.select_related(
             'line', 'line__document_part', 'transcription'
         ).annotate(
-            search=SearchVector('content', 'transcription__name', 'line__document_part__name')
+            similarity=Greatest(
+                TrigramWordSimilarity('content', search),
+                TrigramWordSimilarity('transcription__name', search),
+                TrigramWordSimilarity('line__document_part__name', search)
+            )
         ).filter(
             line__document_part__document=self.kwargs.get('pk'),
-            search=SearchQuery(search, search_type=search_type)
-        )
+            similarity__gt=trigram_threshold
+        ).order_by('-similarity')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['search'] = self.request.GET.get('query')
         kwargs['search_type'] = self.request.GET.get('search_type', 'plain')
+        kwargs['trigram_mode'] = self.request.GET.get('trigram_mode', False)
+        kwargs['trigram_threshold'] = self.request.GET.get('trigram_threshold', 0.3)
         return kwargs
 
     def get_context_data(self, **kwargs):
