@@ -71,19 +71,36 @@ class DocumentSearchForm(BootstrapFormMixin, forms.ModelForm):
         ('phrase', 'Phrase - Terms treated as a single phrase'),
         ('raw', 'Raw - Formatted search query allowing terms and operators')
     )
+    TRIGRAM_THRESHOLD_CHOICES = (
+        (0.1, '0.1'),
+        (0.2, '0.2'),
+        (0.3, '0.3'),
+        (0.4, '0.4'),
+        (0.5, '0.5'),
+        (0.6, '0.6'),
+        (0.7, '0.7'),
+        (0.8, '0.8'),
+        (0.9, '0.9')
+    )
     query = forms.CharField(label="Text to search in your document", required=True)
-    search_type = forms.ChoiceField(choices=SEARCH_TYPE_CHOICES)
+    search_type = forms.ChoiceField(label="Search type (only used for vector search)", choices=SEARCH_TYPE_CHOICES)
+    trigram_mode = forms.BooleanField(label="Use trigram similarity", required=False)
+    trigram_threshold = forms.ChoiceField(label="Similarity threshold (only used for trigram similarity)", choices=TRIGRAM_THRESHOLD_CHOICES)
 
     def __init__(self, *args, **kwargs):
         search = kwargs.pop('search')
         search_type = kwargs.pop('search_type')
+        trigram_mode = kwargs.pop('trigram_mode')
+        trigram_threshold = kwargs.pop('trigram_threshold')
         super().__init__(*args, **kwargs)
         self.fields['query'].initial = search
         self.fields['search_type'].initial = search_type
+        self.fields['trigram_mode'].initial = trigram_mode
+        self.fields['trigram_threshold'].initial = trigram_threshold
 
     class Meta:
         model = Document
-        fields = ['query', 'search_type']
+        fields = ['query', 'search_type', 'trigram_mode', 'trigram_threshold']
 
 
 class ShareForm(BootstrapFormMixin, forms.ModelForm):
