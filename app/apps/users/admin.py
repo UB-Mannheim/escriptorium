@@ -32,14 +32,16 @@ class MyUserCreationForm(UserCreationForm):
 class MyUserAdmin(UserAdmin):
     form = MyUserChangeForm
     add_form = MyUserCreationForm
-    list_display = UserAdmin.list_display + ('last_login',)
+    list_display = UserAdmin.list_display + ('last_login', 'quota_disk_storage', 'quota_cpu', 'quota_gpu')
     fieldsets = UserAdmin.fieldsets + (
         (None, {'fields': ('fields', 'onboarding')}),  # second fields refers to research fields
+        ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
     add_fieldsets = (
         (None, {
             'fields': ('username', 'email', 'password1', 'password2')}
         ),
+        ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
 
 class InvitationAdmin(admin.ModelAdmin):

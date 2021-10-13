@@ -25,6 +25,14 @@ class User(AbstractUser):
         default=True
     )
 
+    # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
+    # quota_disk_storage is to be defined in Mb
+    quota_disk_storage = models.PositiveIntegerField(null=True, blank=True)
+    # quota_cpu is to be defined in CPU-min (spread over a week)
+    quota_cpu = models.PositiveIntegerField(null=True, blank=True)
+    # quota_gpu is to be defined in GPU-min (spread over a week)
+    quota_gpu = models.PositiveIntegerField(null=True, blank=True)
+
     class Meta:
         permissions = (('can_invite', 'Can invite users'),)
 
