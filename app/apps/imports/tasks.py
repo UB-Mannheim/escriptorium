@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Avg
 from django.template import loader
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
@@ -143,7 +143,7 @@ def document_export(task, file_format, document_pk, part_pks,
             elif file_format == PAGEXML_FORMAT:
                 tplt = loader.get_template('export/pagexml.xml')
             parts = DocumentPart.objects.filter(document=document, pk__in=part_pks)
-            
+
             region_filters = Q(typology_id__in=region_types)
             if include_undefined:
                 region_filters |= Q(typology_id__isnull=True)
@@ -162,7 +162,9 @@ def document_export(task, file_format, document_pk, part_pks,
                             'valid_block_types': document.valid_block_types.all(),
                             'valid_line_types': document.valid_line_types.all(),
                             'part': part,
-                            'blocks': (part.blocks.filter(region_filters).order_by('order')
+                            'blocks': (part.blocks.filter(region_filters)
+                                       .annotate(avglo=Avg('lines__order'))
+                                       .order_by('avglo')
                                        .prefetch_related(
                                            Prefetch(
                                                'lines',
