@@ -15,6 +15,7 @@
       </form>
       {% endif %}
     </th>
+    <th>{% trans "Size" %}</th>
     <th>{% trans "Trained from" %}</th>
     <th>{% trans "Training Status" %}</th>
     <th>{% trans "Accuracy" %}</th>
@@ -37,6 +38,7 @@
       </form>
       {% endif %}
     </td>
+    <td>{{ model.file_size|filesizeformat }}</td>
     <td title="{% trans "Parent from which the model was trained" %}">
       <small>{{ model.parent.name }}</small>
     </td>

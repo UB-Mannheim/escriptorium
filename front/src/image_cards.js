@@ -42,6 +42,7 @@ class partCard {
         this.typology = part.typology;
         this.image = part.image;
         this.filename = part.filename;
+        this.image_file_size = part.image_file_size;
         this.bw_image = part.bw_image;
         this.workflow = part.workflow;
         this.task_ids = {};  // helps preventing card status race conditions
@@ -61,7 +62,7 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
-        $('img.card-img-top', $new).attr('title', this.title + '\n<' + this.filename +'>');
+        $('img.card-img-top', $new).attr('title', this.title + ' (' + this.image_file_size + ' bytes)' + '\n<' + this.filename +'>');
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
