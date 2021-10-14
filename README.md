@@ -1,5 +1,5 @@
-eScriptorium is part of the [scripta](https://www.psl.eu/en/scripta) project, its goal is provide researchers in the humanity field with an integrated set of tools to transcribe, annotate, translate and publish historical documents.  
-The eScriptorium app itself is at the 'center'. It is a work in progress but will implement at least automatic transcriptions through kraken, indexation for complex search and filtering, annotation and some simple form of collaborative working (sharing, versioning)
+eScriptorium is part of the [Scripta](https://www.psl.eu/en/scripta) and [RESILIENCE](https://www.resilience-ri.eu) projects, and has received funding from Université PSL and from The European Union's [Horizon 2020 Research and Innovation Programme](https://ec.europa.eu/programmes/horizon2020/en/what-horizon-2020) under Grant Agreement no. 871127, as well as from other contributors listed below. Its goal is provide researchers in the humanities with an integrated set of tools to transcribe, annotate, translate and publish historical documents.  
+The eScriptorium app itself is at the 'center'. It is a work in progress but will implement at least automatic transcriptions through kraken, indexation for complex search and filtering, annotation and some simple form of collaborative working (sharing, versioning).
   
 ## The stack
 - nginx
@@ -21,9 +21,10 @@ Two options, [install with Docker](https://gitlab.com/scripta/escriptorium/-/wik
 ## Contributing
 Cf [Contributing to eScriptorium](https://gitlab.inria.fr/scripta/escriptorium/-/wikis/contributing).
 
-## Current contributors includes:
+## Current financial and technical contributors include:
 - [École Pratique des Hautes Études (EPHE)](https://www.ephe.psl.eu)
 - [Resilience](https://www.resilience-ri.eu/)
 - [Scripta](https://scripta.psl.eu/en/)
 - [Institut national de recherche en sciences et technologies du numérique (INRIA)](https://inria.fr/en)
 - [Open Islamicate Texts Initiative (OpenITI)](https://www.openiti.org/)
+- [L’Institut de recherche et d’histoire des textes](https://www.irht.cnrs.fr/)
