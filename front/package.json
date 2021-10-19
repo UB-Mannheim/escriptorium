@@ -1,7 +1,7 @@
 {
   "name": "escriptorium",
   "version": "0.1.0",
-  "description": "Escriptorium Frontend project",
+  "description": "eScriptorium Frontend project",
   "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.dev.js",
