@@ -11,6 +11,8 @@ from django.urls import reverse
 from escriptorium.utils import send_email
 from users.consumers import send_notification
 
+MEGABYTES_TO_BYTES = 1048576
+
 
 class User(AbstractUser):
     email = models.EmailField(
@@ -58,6 +60,18 @@ class User(AbstractUser):
         images_size = self.document_set.aggregate(Sum('parts__image_file_size'))['parts__image_file_size__sum'] or 0
         return models_size + images_size
 
+    def disk_storage_limit(self):
+        if self.quota_disk_storage != None:
+            return self.quota_disk_storage*MEGABYTES_TO_BYTES
+        if settings.QUOTA_DISK_STORAGE != None:
+            return settings.QUOTA_DISK_STORAGE*MEGABYTES_TO_BYTES
+        return None
+
+    def has_free_disk_storage(self):
+        quota = self.disk_storage_limit()
+        if quota != None:
+            return quota > self.calc_disk_usage()
+        return True   # Unlimited disk storage
 
 class ResearchField(models.Model):
     name = models.CharField(max_length=128)

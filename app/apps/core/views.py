@@ -236,7 +236,9 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['upload_form'] = UploadImageForm(document=self.object)
+        context['has_disk_storage_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_disk_storage()
+
+        context['upload_form'] = UploadImageForm(document=self.object, user=self.request.user)
 
         # process forms
         context['binarize_form'] = BinarizeForm(self.object, self.request.user)
@@ -491,6 +493,16 @@ class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['has_disk_storage_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_disk_storage()
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'user': self.request.user})
+        return kwargs
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
