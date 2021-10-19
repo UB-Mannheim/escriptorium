@@ -1,5 +1,6 @@
 import json
 import io
+from django.conf import settings
 import requests
 
 from django import forms
@@ -42,6 +43,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         self.current_import = self.document.documentimport_set.order_by('started_on').last()
         super().__init__(*args, **kwargs)
 
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
+            self.fields['upload_file'].help_text = _("A single AltoXML or a PageXML file.")
+
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
         if uri:
@@ -68,7 +72,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         upload_file = self.cleaned_data.get('upload_file')
         if upload_file:
             try:
-                parser = make_parser(self.document, upload_file)
+                # If quotas are enforced, define if the user can upload ZIP and PDF files
+                allowed = settings.DISABLE_QUOTAS or self.user.has_free_disk_storage()
+                parser = make_parser(self.document, upload_file, zip_allowed=allowed, pdf_allowed=allowed)
                 parser.validate()
                 self.cleaned_data['total'] = parser.total
             except ParseError as e:
@@ -76,10 +82,18 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 if len(e.args):
                     msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
+            except ValueError as e:
+                raise forms.ValidationError(e)
             return upload_file
 
     def clean(self):
         cleaned_data = super().clean()
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage() and (
+            cleaned_data.get('iiif_uri') or cleaned_data['resume_import']
+        ):
+            raise forms.ValidationError(_("You don't have any disk storage left."))
+
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
             and not cleaned_data.get('iiif_uri')):

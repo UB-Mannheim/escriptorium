@@ -751,7 +751,7 @@ class TranskribusPageXmlParser(PagexmlParser):
             ]
 
 
-def make_parser(document, file_handler, name=None, report=None):
+def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -787,9 +787,9 @@ def make_parser(document, file_handler, name=None, report=None):
             )
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
-    elif ext == "zip":
+    elif zip_allowed and ext == "zip":
         return ZipParser(document, file_handler, report, transcription_name=name)
-    elif ext == "pdf":
+    elif pdf_allowed and ext == "pdf":
         return PdfParser(document, file_handler, report)
     else:
         raise ValueError(

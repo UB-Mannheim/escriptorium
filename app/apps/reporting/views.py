@@ -1,8 +1,7 @@
 from datetime import date, timedelta
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
-from django.db.models.expressions import OuterRef, Subquery
-from django.db.models.fields import IntegerField
 from django.views.generic import ListView, DetailView
 
 from reporting.models import TaskReport
@@ -21,6 +20,10 @@ class ReportList(LoginRequiredMixin, ListView):
         ).aggregate(Sum('cpu_cost'), Sum('gpu_cost'))
         context['cpu_cost_last_month'] = qs['cpu_cost__sum'] or 0
         context['gpu_cost_last_month'] = qs['gpu_cost__sum'] or 0
+        disk_storage_limit = self.request.user.disk_storage_limit()
+        context['enforce_disk_storage'] = not settings.DISABLE_QUOTAS and disk_storage_limit != None
+        if context['enforce_disk_storage']:
+            context['disk_storage_used_percentage'] = min(round((self.request.user.calc_disk_usage()*100)/disk_storage_limit, 2) if disk_storage_limit else 100, 100)
         return context
 
     def get_queryset(self):

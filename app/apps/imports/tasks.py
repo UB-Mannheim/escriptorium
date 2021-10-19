@@ -27,6 +27,10 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
     User = apps.get_model('users', 'User')
 
     user = User.objects.get(pk=user_pk)
+    # If quotas are enforced, assert that the user still has free disk storage
+    if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
+        assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+
     imp = DocumentImport.objects.get(
         Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED) |
         Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),

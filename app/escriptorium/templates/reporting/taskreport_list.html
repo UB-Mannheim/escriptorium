@@ -10,8 +10,20 @@
                     {% trans "Disk usage" %}
                 </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ user.calc_disk_usage|filesizeformat }}</h5>
+                    {% if enforce_disk_storage and not user.has_free_disk_storage %}
+                    <div class="alert alert-danger small mb-2" role="alert">{% trans "You don't have any disk storage left" %}</div>
+                    {% endif %}
+                    <h5 class="card-title">
+                        {{ user.calc_disk_usage|filesizeformat }}{% if enforce_disk_storage %}/{{ user.disk_storage_limit|filesizeformat }}{% endif %}
+                    </h5>
                     <h6 class="card-subtitle mb-2 text-muted">{% trans "Calculated from your images and models" %}</h6>
+                    {% if enforce_disk_storage %}
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{disk_storage_used_percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{disk_storage_used_percentage}}%;">
+                            {{ disk_storage_used_percentage }}% used
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

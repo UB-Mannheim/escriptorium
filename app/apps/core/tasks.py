@@ -138,6 +138,9 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free disk storage
+            if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
+                assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
     else:
@@ -411,6 +414,9 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free disk storage
+            if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
+                assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
     else:
