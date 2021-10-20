@@ -120,7 +120,7 @@ class PdfParser(ParserDocument):
 
 class ZipParser(ParserDocument):
     """
-    For now only deals with a flat list of Alto files
+    For now only deals with a flat list of ALTO files
     """
 
     DEFAULT_NAME = _("Zip Import")
@@ -369,7 +369,7 @@ class XMLParser(ParserDocument):
 
 
 class AltoParser(XMLParser):
-    DEFAULT_NAME = _("Default Alto Import")
+    DEFAULT_NAME = _("Default ALTO Import")
     escriptorium_alto = "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
 
     ACCEPTED_SCHEMAS = (
@@ -392,7 +392,7 @@ class AltoParser(XMLParser):
             ).text
         except (IndexError, AttributeError) as e:
             raise ParseError("""
-The alto file should contain a Description/sourceImageInformation/fileName tag for matching.
+The ALTO file should contain a Description/sourceImageInformation/fileName tag for matching.
             """)
         else:
             return filename

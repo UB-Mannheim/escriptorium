@@ -59,12 +59,12 @@ export function bootOnboarding() {
                     steps: [
                         {
                             element: '#import-selected',
-                            intro: 'Import images, segmentation and/or transcriptions. <br> accepted formats : IIIF, Pagexml, Alto.',
+                            intro: 'Import images, segmentation and/or transcriptions. <br> accepted formats : IIIF, Pagexml, ALTO.',
                             position: 'bottom'
                         },
                         {
                             element: '#document-export',
-                            intro: 'Export segmentation and/or transcriptions. <br> accepted formats : Text, Pagexml, Alto.',
+                            intro: 'Export segmentation and/or transcriptions. <br> accepted formats : Text, Pagexml, ALTO.',
                             position: 'bottom'
                         },
                         {

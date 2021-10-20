@@ -1066,7 +1066,7 @@ class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
     def coordinates_box(self):
         """
         Cast the box field to the format [xmin, ymin, xmax, ymax]
-        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for Alto
+        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for ALTO
         """
         return [*map(min, *self.box), *map(max, *self.box)]
 
