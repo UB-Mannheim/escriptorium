@@ -505,7 +505,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
 
 
 class PagexmlParser(XMLParser):
-    DEFAULT_NAME = _("Default PageXML Import")
+    DEFAULT_NAME = _("Default PAGE Import")
     ACCEPTED_SCHEMAS = (
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd",
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd",
@@ -516,7 +516,7 @@ class PagexmlParser(XMLParser):
 
     @property
     def total(self):
-        # pagexml file can contain multiple parts
+        # PAGE file can contain multiple parts
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         return len(self.root.findall("Page", self.root.nsmap))
@@ -526,7 +526,7 @@ class PagexmlParser(XMLParser):
             filename = pageTag.get("imageFilename")
         except (IndexError, AttributeError) as e:
             raise ParseError("""
-The PageXml file should contain an attribute imageFilename in Page tag for matching.
+The PAGE file should contain an attribute imageFilename in Page tag for matching.
             """)
         else:
             return filename
@@ -544,7 +544,7 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
 
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
-        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
+        #  for PAGE file a box is multiple points x1,y1 x2,y2 x3,y3 ...
         block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
 
         type_ = blockTag.get("type")
@@ -599,7 +599,7 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
 
     def get_transcription_content(self, lineTag):
         words = lineTag.findall("Word", self.root.nsmap)
-        # pagexml can have content for each word inside a word tag or the whole line in textline tag
+        # PAGE XML can have content for each word inside a word tag or the whole line in textline tag
         if len(words) > 0:
             return " ".join(
                 [
@@ -734,7 +734,7 @@ class IIIFManifestParser(ParserDocument):
 
 class TranskribusPageXmlParser(PagexmlParser):
     """
-    A Pagexml Parser for documents exported from Transkribus to handle data
+    A PAGE XML Parser for documents exported from Transkribus to handle data
     """
 
     # def validate(self):

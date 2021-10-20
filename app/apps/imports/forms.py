@@ -23,7 +23,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         help_text=_("The name of the target transcription. Will default to '{format} Import'."))
     upload_file = forms.FileField(
         required=False,
-        help_text=_("A single ALTO XML, PageXML file, or a zip file."))
+        help_text=_("A single ALTO or PAGE XML file, or a zip file."))
     override = forms.BooleanField(
         initial=False, required=False,
         label=_("Override existing segmentation."),
@@ -44,7 +44,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
         if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
-            self.fields['upload_file'].help_text = _("A single ALTO XML or a PageXML file.")
+            self.fields['upload_file'].help_text = _("A single ALTO or PAGE XML file.")
 
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
@@ -146,7 +146,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     FORMAT_CHOICES = (
         (ALTO_FORMAT, 'ALTO'),
         (TEXT_FORMAT, 'Text'),
-        (PAGEXML_FORMAT, 'Pagexml')
+        (PAGEXML_FORMAT, 'PAGE')
     )
     parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
