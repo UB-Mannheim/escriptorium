@@ -161,12 +161,12 @@ USE_L10N = True
 USE_TZ = True
 LANGUAGES = [
   ('en', _('English')),
-  ('de', _('French')),
+  ('de', _('German')),
 ]
 
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
-DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@escriptorium.fr')
+DEFAULT_FROM_EMAIL = os.getenv('DJANGO_FROM_EMAIL', 'noreply@example.com')
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
@@ -273,7 +273,7 @@ LOGGING = {
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
