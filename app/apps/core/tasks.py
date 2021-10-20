@@ -42,9 +42,19 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def generate_part_thumbnails(instance_pk, **kwargs):
+def generate_part_thumbnails(instance_pk, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -60,7 +70,16 @@ def generate_part_thumbnails(instance_pk, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=3 * 60)
-def convert(instance_pk, **kwargs):
+def convert(instance_pk, user_pk=None, **kwargs):
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -71,7 +90,16 @@ def convert(instance_pk, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
-def lossless_compression(instance_pk, **kwargs):
+def lossless_compression(instance_pk, user_pk=None, **kwargs):
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -93,6 +121,9 @@ def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
     else:
@@ -138,9 +169,12 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
-            # If quotas are enforced, assert that the user still has free disk storage
-            if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
-                assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+            # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+            if not settings.DISABLE_QUOTAS:
+                if user.cpu_minutes_limit() != None:
+                    assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+                if user.disk_storage_limit() != None:
+                    assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
     else:
@@ -291,6 +325,9 @@ def segment(instance_pk, user_pk=None, model_pk=None,
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
     else:
@@ -320,6 +357,15 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def recalculate_masks(instance_pk, user_pk=None, only=None, **kwargs):
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -414,9 +460,12 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
-            # If quotas are enforced, assert that the user still has free disk storage
-            if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
-                assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+            # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+            if not settings.DISABLE_QUOTAS:
+                if user.cpu_minutes_limit() != None:
+                    assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+                if user.disk_storage_limit() != None:
+                    assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
     else:
@@ -479,6 +528,9 @@ def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
     else:

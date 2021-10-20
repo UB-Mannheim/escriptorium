@@ -27,9 +27,12 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
     User = apps.get_model('users', 'User')
 
     user = User.objects.get(pk=user_pk)
-    # If quotas are enforced, assert that the user still has free disk storage
-    if not settings.DISABLE_QUOTAS and user.disk_storage_limit() != None:
-        assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+    # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+    if not settings.DISABLE_QUOTAS:
+        if user.cpu_minutes_limit() != None:
+            assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        if user.disk_storage_limit() != None:
+            assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
 
     imp = DocumentImport.objects.get(
         Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED) |
@@ -88,6 +91,11 @@ def document_export(task, file_format, document_pk, part_pks,
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
     user = User.objects.get(pk=user_pk)
+
+    # If quotas are enforced, assert that the user still has free CPU minutes
+    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+        assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+
     document = Document.objects.get(pk=document_pk)
     report = TaskReport.objects.get(task_id=task.request.id)
 

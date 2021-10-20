@@ -1,6 +1,7 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date, timedelta
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
@@ -72,6 +73,22 @@ class User(AbstractUser):
         if quota != None:
             return quota > self.calc_disk_usage()
         return True   # Unlimited disk storage
+
+    def calc_cpu_usage(self):
+        return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('cpu_cost'))['cpu_cost__sum'] or 0
+
+    def cpu_minutes_limit(self):
+        if self.quota_cpu != None:
+            return self.quota_cpu
+        if settings.QUOTA_CPU_MINUTES != None:
+            return settings.QUOTA_CPU_MINUTES
+        return None
+
+    def has_free_cpu_minutes(self):
+        quota = self.cpu_minutes_limit()
+        if quota != None:
+            return quota > self.calc_cpu_usage()
+        return True   # Unlimited CPU usage
 
 class ResearchField(models.Model):
     name = models.CharField(max_length=128)
