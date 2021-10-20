@@ -206,6 +206,8 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentProcessFormBase(forms.Form):
+    CHECK_DISK_QUOTA = False
+
     parts = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, document, user, *args, **kwargs):
@@ -214,6 +216,16 @@ class DocumentProcessFormBase(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def clean(self):
+        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise forms.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise forms.ValidationError(_("You don't have any disk storage left."))
+
+        return super().clean()
 
 
 class BinarizeForm(BootstrapFormMixin, DocumentProcessFormBase):
@@ -357,6 +369,8 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TrainMixin():
+    CHECK_DISK_QUOTA = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -371,10 +385,6 @@ class TrainMixin():
 
     def clean(self):
         cleaned_data = super().clean()
-
-        # If quotas are enforced, assert that the user still has free disk storage
-        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
-            raise forms.ValidationError(_("You don't have any disk storage left."))
 
         model = cleaned_data['model']
         if model and model.training:

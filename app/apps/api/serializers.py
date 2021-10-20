@@ -342,10 +342,22 @@ class OcrModelSerializer(serializers.ModelSerializer):
 
 
 class ProcessSerializerMixin():
+    CHECK_DISK_QUOTA = False
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
+
+    def validate(self, data):
+        data = super().validate(data)
+        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise serializers.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise serializers.ValidationError(_("You don't have any disk storage left."))
+        return data
 
 
 class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -428,9 +440,6 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
-        # If quotas are enforced, assert that the user still has free disk storage
-        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
-            raise serializers.ValidationError(_("You don't have any disk storage left."))
 
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
@@ -475,6 +484,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    CHECK_DISK_QUOTA = True
+
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
     model = serializers.PrimaryKeyRelatedField(required=False,
@@ -495,9 +506,6 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
-        # If quotas are enforced, assert that the user still has free disk storage
-        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
-            raise serializers.ValidationError(_("You don't have any disk storage left."))
 
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(

@@ -34,7 +34,7 @@ function openWizard(proc) {
 }
 
 class partCard {
-    constructor(part) {
+    constructor(part, cpuMinutesLeft) {
         this.pk = part.pk;
         this.order = part.order;
         this.name = part.name;
@@ -97,21 +97,23 @@ class partCard {
             this.cancelTasks();
         }, this));
 
-        this.binarizedButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('binarize');
-        }, this));
-        this.segmentedButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('segment');
-        }, this));
-        this.transcribeButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('transcribe');
-        }, this));
+        if (cpuMinutesLeft !== "False") {
+            this.binarizedButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('binarize');
+            }, this));
+            this.segmentedButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('segment');
+            }, this));
+            this.transcribeButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('transcribe');
+            }, this));
+        }
 
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
@@ -333,7 +335,7 @@ class partCard {
 }
 
 
-export function bootImageCards(documentId, diskStorageLeft) {
+export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     DOCUMENT_ID = documentId;
     API = {
         'document': '/api/documents/' + DOCUMENT_ID,
@@ -402,7 +404,7 @@ export function bootImageCards(documentId, diskStorageLeft) {
             if (!card) {
                 var uri = API.part.replace('{part_pk}', data.id);
                 $.get(uri, function(data) {
-                    new partCard(data);
+                    new partCard(data, cpuMinutesLeft);
                     partCard.refreshSelectedCount();
                 });
             }
@@ -527,7 +529,7 @@ export function bootImageCards(documentId, diskStorageLeft) {
 
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
-        var card = new partCard(data);
+        var card = new partCard(data, cpuMinutesLeft);
         card.domElement.scrollIntoView(false);
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
@@ -607,7 +609,7 @@ export function bootImageCards(documentId, diskStorageLeft) {
             counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
-                var pc = new partCard(data.results[i]);
+                var pc = new partCard(data.results[i], cpuMinutesLeft);
                 if (select == pc.pk) pc.select();
             }
             if (data.next) {

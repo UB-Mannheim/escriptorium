@@ -88,11 +88,14 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # If quotas are enforced, assert that the user still has free disk storage
-        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage() and (
-            cleaned_data.get('iiif_uri') or cleaned_data['resume_import']
-        ):
-            raise forms.ValidationError(_("You don't have any disk storage left."))
+        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise forms.ValidationError(_("You don't have any CPU minutes left."))
+            if not self.user.has_free_disk_storage() and (
+                cleaned_data.get('iiif_uri') or cleaned_data['resume_import']
+            ):
+                raise forms.ValidationError(_("You don't have any disk storage left."))
 
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
@@ -172,6 +175,13 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         if len(parts) < 1:
             raise forms.ValidationError(_("Select at least one image to export."))
         return parts
+
+    def clean(self):
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
+            raise forms.ValidationError(_("You don't have any CPU minutes left."))
+
+        return super().clean()
 
     def process(self):
         parts = self.cleaned_data['parts']
