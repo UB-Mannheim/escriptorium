@@ -14,7 +14,7 @@ ADMINS = [
 # ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Settings for running from a subpath behind a proxy.
-FORCE_SCRIPT_NAME = '/escriptorium'
+FORCE_SCRIPT_NAME = '/escriptorium2'
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -43,8 +43,8 @@ LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
 ]
 
-# Workaround for buggy CPU cost calculation (factor is 1 / number of threads = 1 / 64).
-CPU_COST_FACTOR = 0.015625
+# Workaround for buggy CPU cost calculation (factor is 1 / number of threads = 1 / 48).
+CPU_COST_FACTOR = 0.02083333
 
 DEBUG = True
 
