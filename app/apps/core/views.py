@@ -415,7 +415,7 @@ class EditPart(LoginRequiredMixin, DetailView):
             document=self.kwargs.get('pk')).select_related('document')
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data()
+        context = super().get_context_data(**kwargs)
         # Note: a bit confusing but this view uses the same base template than UpdateDocument
         # so we need context['object'] = document
         context['object'] = self.object.document
@@ -495,8 +495,8 @@ class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
-    def get_context_data(self):
-        context = super().get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context['has_disk_storage_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_disk_storage()
         return context
 
