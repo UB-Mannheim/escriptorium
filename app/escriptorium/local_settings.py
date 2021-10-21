@@ -14,7 +14,7 @@ ADMINS = [
 # ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Settings for running from a subpath behind a proxy.
-FORCE_SCRIPT_NAME = '/escriptorium2'
+FORCE_SCRIPT_NAME = '/escriptorium'
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -37,7 +37,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2023-03-03'
+VERSION_DATE = 'UBMA-2023-05-01'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -68,6 +68,7 @@ INTERNAL_IPS = ['127.0.0.1']
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
 KRAKEN_TRAINING_DEVICE = 'cuda:0'
+#KRAKEN_TRAINING_DEVICE = 'cpu'
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda r: False,  # disables it
