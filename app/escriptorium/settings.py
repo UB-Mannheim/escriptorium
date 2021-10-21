@@ -290,12 +290,12 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
         'console': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
         'console_info': {
@@ -308,7 +308,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
         'django.server': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'django.server',
         },
