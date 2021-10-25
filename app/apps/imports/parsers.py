@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
+class DiskQuotaReachedError(Exception):
+    pass
 
 class ParseError(Exception):
     pass
@@ -96,6 +98,12 @@ class PdfParser(ParserDocument):
         n_pages = doc.get('n-pages')
         try:
             for page_nb in range(start_at, n_pages):
+                # If quotas are enforced, assert that the user still has free disk storage
+                if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                    raise DiskQuotaReachedError(
+                        _(f"You ran out of disk storage. {n_pages - page_nb} pages were left to import (over {n_pages - start_at})")
+                    )
+
                 page = pyvips.Image.pdfload_buffer(buff,
                                                    page=page_nb,
                                                    dpi=300,
@@ -146,6 +154,7 @@ class ZipParser(ParserDocument):
 
     def parse(self, start_at=0, override=False, user=None):
         with zipfile.ZipFile(self.file) as zfh:
+            total = len(zfh.infolist())
             for index, finfo in enumerate(zfh.infolist()):
                 if index < start_at:
                     continue
@@ -154,6 +163,11 @@ class ZipParser(ParserDocument):
                         file_extension = os.path.splitext(zipedfh.name)[1][1:]
                         # image
                         if file_extension.lower() in get_available_image_extensions():
+                            # If quotas are enforced, assert that the user still has free disk storage
+                            if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                                raise DiskQuotaReachedError(
+                                    _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
+                                )
                             try:
                                 part = DocumentPart.objects.filter(
                                     document=self.document,
@@ -174,7 +188,7 @@ class ZipParser(ParserDocument):
                             parser = make_parser(self.document, zipedfh,
                                                  name=self.name, report=self.report)
 
-                            for part in parser.parse(override=override):
+                            for part in parser.parse(override=override, user=user):
                                 yield part
                     except IndexError:
                         # no file extension!?
@@ -690,9 +704,17 @@ class IIIFManifestParser(ParserDocument):
         except KeyError:
             pass
 
+        total = len(self.canvases)
         for i, canvas in enumerate(self.canvases):
             if i < start_at:
                 continue
+
+            # If quotas are enforced, assert that the user still has free disk storage
+            if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                raise DiskQuotaReachedError(
+                    _(f"You ran out of disk storage. {total - i} canvases were left to import (over {total - start_at})")
+                )
+
             try:
                 resource = canvas["images"][0]["resource"]
                 url = resource["@id"]
