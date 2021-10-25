@@ -71,7 +71,6 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         today = date.today()
-        filter_last_month = Q(taskreport__started_at__gte=today - timedelta(days=30))
         filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
         filter_last_day = Q(taskreport__started_at__gte=today - timedelta(days=1))
         runtime = ExpressionWrapper(
@@ -83,8 +82,8 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             qs.annotate(
                 total_cpu_usage=Sum('taskreport__cpu_cost'),
                 total_gpu_usage=Sum('taskreport__gpu_cost'),
-                last_month_cpu_usage=Sum('taskreport__cpu_cost', filter=filter_last_month),
-                last_month_gpu_usage=Sum('taskreport__gpu_cost', filter=filter_last_month),
+                last_week_cpu_usage=Sum('taskreport__cpu_cost', filter=filter_last_week),
+                last_week_gpu_usage=Sum('taskreport__gpu_cost', filter=filter_last_week),
                 total_tasks=Count('taskreport'),
                 total_runtime=Sum(runtime),
                 last_week_tasks=Count('taskreport', filter=filter_last_week),
@@ -100,3 +99,8 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             user.disk_usage = (disk_usages_left[user.id] or 0) + (disk_usages_right[user.id] or 0)
 
         return results
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['enforce_quotas'] = not settings.DISABLE_QUOTAS
+        return context
