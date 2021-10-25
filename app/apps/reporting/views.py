@@ -16,11 +16,8 @@ class ReportList(LoginRequiredMixin, ListView):
         context = super().get_context_data(*args, **kwargs)
         cpu_usage = self.request.user.calc_cpu_usage()
         context['cpu_cost_last_week'] = cpu_usage
-        today = date.today()
-        qs = self.request.user.taskreport_set.filter(
-            started_at__gte=today - timedelta(days=7)
-        ).aggregate(Sum('gpu_cost'))
-        context['gpu_cost_last_month'] = qs['gpu_cost__sum'] or 0
+        gpu_usage = self.request.user.calc_gpu_usage()
+        context['gpu_cost_last_week'] = gpu_usage
         
         disk_storage_limit = self.request.user.disk_storage_limit()
         context['enforce_disk_storage'] = not settings.DISABLE_QUOTAS and disk_storage_limit != None
@@ -32,6 +29,11 @@ class ReportList(LoginRequiredMixin, ListView):
         if context['enforce_cpu']:
             context['cpu_minutes_used_percentage'] = min(round((cpu_usage*100)/cpu_minutes_limit, 2) if cpu_minutes_limit else 100, 100)
         
+        gpu_minutes_limit = self.request.user.gpu_minutes_limit()
+        context['enforce_gpu'] = not settings.DISABLE_QUOTAS and gpu_minutes_limit != None
+        if context['enforce_gpu']:
+            context['gpu_minutes_used_percentage'] = min(round((gpu_usage*100)/gpu_minutes_limit, 2) if gpu_minutes_limit else 100, 100)
+
         return context
 
     def get_queryset(self):

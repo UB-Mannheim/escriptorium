@@ -82,11 +82,14 @@
     <button
       id="train-selected"
       type="button"
-      class="btn btn-sm btn-primary dropdown-toggle {% if has_cpu_minutes_left and has_disk_storage_left and training_model %}blink{% endif %}"
+      class="btn btn-sm btn-primary dropdown-toggle {% if has_cpu_minutes_left and has_gpu_minutes_left and has_disk_storage_left and training_model %}blink{% endif %}"
       data-toggle="dropdown"
       {% if not has_cpu_minutes_left %}
         disabled
         title="{% trans 'You don\'t have any CPU minutes left' %}"
+      {% elif not has_gpu_minutes_left %}
+        disabled
+        title="{% trans 'You don\'t have any GPU minutes left' %}"
       {% elif not has_disk_storage_left %}
         disabled
         title="{% trans 'You don\'t have any disk storage left' %}"
