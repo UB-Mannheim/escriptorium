@@ -238,6 +238,7 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['has_disk_storage_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_disk_storage()
         context['has_cpu_minutes_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_cpu_minutes()
+        context['has_gpu_minutes_left'] = settings.DISABLE_QUOTAS or self.request.user.has_free_gpu_minutes()
 
         context['upload_form'] = UploadImageForm(document=self.object, user=self.request.user)
 

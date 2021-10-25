@@ -206,6 +206,7 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentProcessFormBase(forms.Form):
+    CHECK_GPU_QUOTA = False
     CHECK_DISK_QUOTA = False
 
     parts = forms.ModelMultipleChoiceField(queryset=None)
@@ -218,10 +219,12 @@ class DocumentProcessFormBase(forms.Form):
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def clean(self):
-        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
         if not settings.DISABLE_QUOTAS:
             if not self.user.has_free_cpu_minutes():
                 raise forms.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise forms.ValidationError(_("You don't have any GPU minutes left."))
             if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
                 raise forms.ValidationError(_("You don't have any disk storage left."))
 
@@ -369,6 +372,7 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TrainMixin():
+    CHECK_GPU_QUOTA = True
     CHECK_DISK_QUOTA = True
 
     def __init__(self, *args, **kwargs):

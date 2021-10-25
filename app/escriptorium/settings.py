@@ -202,6 +202,7 @@ CELERY_TASK_QUEUES = (
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
+# When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
 CELERY_TASK_ROUTES = {
     # 'core.tasks.*': {'queue': 'default'},
     'core.tasks.recalculate_masks': {'queue': 'live'},
@@ -382,3 +383,7 @@ QUOTA_DISK_STORAGE = int(os.environ['QUOTA_DISK_STORAGE']) if os.environ.get('QU
 # Limitation of CPU minutes usage per user over a week, should be defined as a positive integer in CPU-min
 # If set to None, users have unlimited CPU minutes capacity
 QUOTA_CPU_MINUTES = int(os.environ['QUOTA_CPU_MINUTES']) if os.environ.get('QUOTA_CPU_MINUTES') else None
+
+# Limitation of GPU minutes usage per user over a week, should be defined as a positive integer in GPU-min
+# If set to None, users have unlimited GPU minutes capacity
+QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOTA_GPU_MINUTES') else None

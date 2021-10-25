@@ -56,8 +56,20 @@
                     {% trans "GPU usage" %}
                 </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ gpu_cost_last_month|floatformat:3 }} GPU-min</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{% trans "GPU usage over the last month" %}</h6>
+                    {% if enforce_gpu and not user.has_free_gpu_minutes %}
+                    <div class="alert alert-danger small mb-2" role="alert">{% trans "You don't have any GPU minutes left" %}</div>
+                    {% endif %}
+                    <h5 class="card-title">
+                        {{ gpu_cost_last_week|floatformat:3 }}{% if enforce_gpu %}/{{ user.gpu_minutes_limit }}{% endif %} GPU-min
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "GPU usage over the last week" %}</h6>
+                    {% if enforce_gpu %}
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{gpu_minutes_used_percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{gpu_minutes_used_percentage}}%;">
+                            {{ gpu_minutes_used_percentage }}% used
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

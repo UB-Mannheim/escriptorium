@@ -342,6 +342,7 @@ class OcrModelSerializer(serializers.ModelSerializer):
 
 
 class ProcessSerializerMixin():
+    CHECK_GPU_QUOTA = False
     CHECK_DISK_QUOTA = False
 
     def __init__(self, document, user, *args, **kwargs):
@@ -351,10 +352,12 @@ class ProcessSerializerMixin():
 
     def validate(self, data):
         data = super().validate(data)
-        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
         if not settings.DISABLE_QUOTAS:
             if not self.user.has_free_cpu_minutes():
                 raise serializers.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise serializers.ValidationError(_("You don't have any GPU minutes left."))
             if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
                 raise serializers.ValidationError(_("You don't have any disk storage left."))
         return data
@@ -484,6 +487,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    CHECK_GPU_QUOTA = True
     CHECK_DISK_QUOTA = True
 
     parts = serializers.PrimaryKeyRelatedField(many=True,

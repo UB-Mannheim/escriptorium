@@ -90,6 +90,23 @@ class User(AbstractUser):
             return quota > self.calc_cpu_usage()
         return True   # Unlimited CPU usage
 
+    def calc_gpu_usage(self):
+        return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('gpu_cost'))['gpu_cost__sum'] or 0
+
+    def gpu_minutes_limit(self):
+        if self.quota_gpu != None:
+            return self.quota_gpu
+        if settings.QUOTA_GPU_MINUTES != None:
+            return settings.QUOTA_GPU_MINUTES
+        return None
+
+    def has_free_gpu_minutes(self):
+        quota = self.gpu_minutes_limit()
+        if quota != None:
+            return quota > self.calc_gpu_usage()
+        return True   # Unlimited GPU usage
+
+
 class ResearchField(models.Model):
     name = models.CharField(max_length=128)
 
