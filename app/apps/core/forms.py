@@ -431,6 +431,15 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
             model = vgsl.TorchVGSLModel.load_model(file_field.file.name)
         except KrakenInvalidModelException:
             raise forms.ValidationError(_("The provided model could not be loaded."))
+        if not model.model_type:
+            # Assume recognition for old models
+            model.model_type = 'recognition'
+        if not model.seg_type:
+            # Assume baselines for old models
+            model.seg_type = 'baselines'
+        if not model.hyper_params:
+            # Assume 0 epochs for old models
+            model.hyper_params = {'completed_epochs': 0}
         self._model_job = model.model_type
         if self._model_job not in ('segmentation', 'recognition'):
             raise forms.ValidationError(_("Invalid model (Couldn't determine whether it's a segmentation or recognition model)."))
