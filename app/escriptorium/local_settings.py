@@ -22,8 +22,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = False
-VERSION_DATE = 'v0.7.0d-221 (2021-10-18)'
-VERSION_DATE = 'v0.7.0 (2021-10-20)'
+VERSION_DATE = 'develop (2021-10-26)'
 
 DEBUG=True
 
