@@ -1153,6 +1153,11 @@ class Line(OrderedModel):  # Versioned,
     def make_external_id(self):
         self.external_id = 'eSc_line_%s' % str(uuid.uuid4())[:8]
 
+    def clean(self):
+        super().clean()
+        if self.baseline is None and self.mask is None:
+            raise ValidationError(_('Both baseline and mask are empty.'))
+
     def save(self, *args, **kwargs):
         if self.external_id is None:
             self.make_external_id()

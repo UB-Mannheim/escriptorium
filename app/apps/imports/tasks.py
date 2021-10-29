@@ -67,11 +67,13 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
         imp.report.error(str(e))
     else:
         if user:
-            user.notify(_("Import done!"), level='success')
-
-        send_event('document', imp.document.pk, "import:done", {
-            "id": imp.document.pk
-        })
+            if imp.report.messages:
+                user.notify(_("Import finished with warnings!"),
+                            links=[{'text': _('Details'), 'src': imp.report.uri}],
+                            level='warning')
+            else:
+                user.notify(_("Import done!"), level='success')
+        send_event('document', imp.document.pk, "import:done", {"id": imp.document.pk})
         imp.report.end()
 
 
