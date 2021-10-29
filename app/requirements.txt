@@ -26,3 +26,4 @@ pyvips==2.1.12
 scikit-image==0.17.2
 scipy==1.5.2
 django-prometheus
+elasticsearch==7.15.1
