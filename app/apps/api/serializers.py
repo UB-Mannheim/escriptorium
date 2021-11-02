@@ -190,7 +190,7 @@ class TextAnnotationComponentSerializer(serializers.ModelSerializer):
 
 class ImageAnnotationSerializer(serializers.ModelSerializer):
     components = ImageAnnotationComponentSerializer(many=True)
-    as_w3c = serializers.SerializerMethodField()
+    as_w3c = serializers.ReadOnlyField()
 
     class Meta:
         model = ImageAnnotation
@@ -217,50 +217,25 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
             component.save()
         return anno
 
-    def get_as_w3c(self, annotation):
-        if annotation.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_RECTANGLE:
-            selector = {
-                'conformsTo': "http://www.w3.org/TR/media-frags/",
-                'type': "FragmentSelector",
-                'value': "xywh=pixel:{x},{y},{w},{h}".format(
-                    x=annotation.coordinates[0][0],
-                    y=annotation.coordinates[0][1],
-                    w=annotation.coordinates[1][0]-annotation.coordinates[0][0],
-                    h=annotation.coordinates[1][1]-annotation.coordinates[0][1],
-                )
-            }
-        elif annotation.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
-            selector = {
-                'type': 'SvgSelector',
-                'value': '<svg><polygon points="{pts}"></polygon></svg>'.format(
-                    pts=' '.join(['%d,%d' % (pt[0], pt[1]) for pt in annotation.coordinates])
-                )
-            }
-
-        return {
-            'id': annotation.id,
-            '@context': "http://www.w3.org/ns/anno.jsonld",
-            'type': "Annotation",
-            'body': [{'type': "TextualBody",
-                      'value': comment,
-                      'purpose': "commenting"}
-                     for comment in annotation.comments] +
-                    [{'type': "TextualBody",
-                      'value': component.value,
-                      'purpose': 'attribute-'+component.component.name}
-                     for component in annotation.components.all()],
-            'target': {
-                'selector': selector
-            }
-        }
-
 
 class TextAnnotationSerializer(serializers.ModelSerializer):
     components = TextAnnotationComponentSerializer(many=True, source='text_components')
+    as_w3c = serializers.ReadOnlyField()
 
     class Meta:
         model = TextAnnotation
-        fields = '__all__'
+        fields = ('pk', 'part', 'comments',
+                  'taxonomy', 'components',
+                  'start_line', 'start_offset', 'end_line', 'end_offset',
+                  'as_w3c')
+
+    def create(self, data):
+        components_data = data.pop('components')
+        anno = TextAnnotation.objects.create(**data)
+        for component in components_data:
+            TextAnnotationComponentValue.objects.create(annotation=anno,
+                                                        **component)
+        return anno
 
 
 class TagDocumentSerializer(serializers.ModelSerializer):

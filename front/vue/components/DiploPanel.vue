@@ -11,23 +11,23 @@
                     autocomplete="off"
                     :disabled="isVKEnabled"></button>
 
-            <div class="btn-group taxo-group ml-2"
-                 v-for="typo in groupedTaxonomies">
-                <button v-for="taxo in typo"
-                        :data-taxo="taxo"
-                        :id="'anno-taxo-' + taxo.pk"
-                        @click="setAnnoTaxonomy(taxo, $event)"
-                        title=""
-                        class="btn btn-sm btn-outline-info"
-                        autocomplete="off">{{ taxo.name }}</button>
-            </div>
-
-            <button class="btn btn-sm ml-2 mr-1"
+            <button class="btn btn-sm ml-2"
                     :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
                     title="Toggle Virtual Keyboard for this document."
                     @click="toggleVK">
                 <i class="fas fa-keyboard"></i>
             </button>
+
+            <div class="btn-group taxo-group ml-2 mr-1"
+                 v-for="typo in groupedTaxonomies">
+                <button v-for="taxo in typo"
+                        :data-taxo="taxo"
+                        :id="'anno-taxo-' + taxo.pk"
+                        @click="toggleTaxonomy(taxo, $event)"
+                        title=""
+                        class="btn btn-sm btn-outline-info"
+                        autocomplete="off">{{ taxo.name }}</button>
+            </div>
         </div>
         <div :class="'content-container ' + $store.state.document.readDirection" ref="contentContainer">
 
@@ -58,11 +58,12 @@
 
 <script>
 import { BasePanel } from '../../src/editor/mixins.js';
+import { AnnoPanel } from '../../src/editor/mixins.js';
 import DiploLine from './DiploLine.vue';
 import { Recogito } from '@recogito/recogito-js';
 
 export default Vue.extend({
-    mixins: [BasePanel],
+    mixins: [BasePanel, AnnoPanel],
     data() { return {
         updatedLines : [],
         createdLines : [],
@@ -120,7 +121,6 @@ export default Vue.extend({
 
         this.initAnnotations();
 
-
         this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
     },
     methods: {
@@ -129,27 +129,54 @@ export default Vue.extend({
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
         },
+
+        getAPITextAnnotationBody(annotation) {
+            var body = this.getAPIAnnotationBody(annotation);
+            body.offsets = {};
+            return body
+        },
+
         async initAnnotations() {
             this.anno = new Recogito({
                 content: this.$refs.contentContainer,
                 allowEmpty: true,
-                readOnly: false, // true,
+                readOnly: false,  // true
                 widgets: [],
-                disableEditor: false
+                disableEditor: true
             });
+            // !! readOnly doesn't seem to work for recogito as it does for annororious :/
 
             let annos = await this.$store.dispatch('textAnnotations/fetch');
+            annos.forEach(function(annotation) {
+                let data = annotation.as_w3c;
+                data.pk = annotation.pk;
+                data.taxonomy = this.$store.state.document.annotationTaxonomies.text.find(e => e.pk == annotation.taxonomy);
+                this.anno.addAnnotation(data);
+            }.bind(this));
 
             this.anno.on('createAnnotation', async function(annotation) {
-                console.log('create', annotation);
-            });
+                annotation.taxonomy = this.currentTaxonomy;
+                let body = this.getAPIAnnotationBody(annotation);
+                // body.start_line
+                // body.start_offset
+                // body.end_line
+                // body.end_offset
+                const newAnno = await this.$store.dispatch('textAnnotations/create', body);
+                annotation.pk = newAnno.pk;
+            }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                console.log('update', annotation);
+                let body = this.getAPIAnnotationBody(annotation);
+                body.id = annotation.id;
+                // body.start_line
+                // body.start_offset
+                // body.end_line
+                // body.end_offset
+                this.$store.dispatch('imageAnnotations/update', body);
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                this.setAnnoTaxonomy(annotation.taxonomy);
+                this.setTextAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
@@ -514,8 +541,30 @@ export default Vue.extend({
         updateView() {
             this.setHeight();
         },
-        setAnnoTaxonomy(taxo, ev) {
-            // TODO
+
+        setThisAnnoTaxonomy(taxo) {
+            this.setTextAnnoTaxonomy(taxo);
+        },
+
+        setTextAnnoTaxonomy(taxo) {
+            var colorFormatter = function(annotation) {
+                // todo: find a way to pass the marker_detail..
+                return "colored-text";
+            };
+            var boldFormatter = function(annotation) {
+                return "strong";
+            };
+            var italicFormatter = function(annotation) {
+                return "italic";
+            };
+            let marker_map = {
+                'Background Color': null,
+                'Text Color': colorFormatter,
+                'Bold' : boldFormatter,
+                'Italic': italicFormatter
+            };
+            this.anno.formatter = marker_map[taxo.marker_type];
+            this.setAnnoTaxonomy(taxo);
         },
         activateVK(div) {
             div.contentEditable = 'true';

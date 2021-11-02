@@ -32,7 +32,7 @@
                 <li v-for="taxo in typo">
                   <a class="dropdown-item"
                      :id="'anno-taxo-' + taxo.pk"
-                     @click="setAnnoTaxonomy(taxo, $event)">
+                     @click="toggleTaxonomy(taxo, $event)">
                     {{ taxo.name }}</a>
                 </li>
               </ul>
@@ -40,7 +40,7 @@
             <button v-else
                     v-for="taxo in typo"
                     :id="'anno-taxo-' + taxo.pk"
-                    @click="setAnnoTaxonomy(taxo, $event)"
+                    @click="toggleTaxonomy(taxo, $event)"
                     class="btn btn-sm btn-outline-info"
                     autocomplete="off">{{ taxo.name }}</button>
             </div>
@@ -73,63 +73,13 @@
 <script>
 import { assign } from 'lodash'
 import { BasePanel } from '../../src/editor/mixins.js';
+import { AnnoPanel } from '../../src/editor/mixins.js';
 import { Annotorious } from '@recogito/annotorious';
 
-var KeyValueWidget = function(args) {
-    var purpose = 'attribute-'+args.name;
-    var currentValue = args.annotation ?
-        args.annotation.bodies.find(b => b.purpose == purpose)
-        : null;
-
-    var addTag = function(evt) {
-        if (currentValue) {
-            args.onUpdateBody(currentValue, {
-                type: 'TextualBody',
-                purpose: purpose,
-                value: evt.target.value
-            });
-        } else {
-            args.onAppendBody({
-                type: 'TextualBody',
-                purpose: purpose,
-                value: evt.target.value
-            });
-        }
-    };
-
-    var container = document.createElement('div');
-    container.className = 'r6o-widget keyvalue-widget r6o-nodrag';
-    var wid = "anno-widget-"+args.name;
-    var label = document.createElement('label');
-    label.htmlFor = wid;
-    label.innerText = args.name;
-    container.append(label);
-    if (args.values.length) {
-        var input = document.createElement('select');
-        args.values.forEach(v => {
-            let opt = document.createElement('option');
-            opt.value = v;
-            opt.text = v;
-            if (currentValue && currentValue.value == v) opt.selected = true;
-            input.append(opt);
-        });
-    } else {
-        var input = document.createElement('input');
-        if (currentValue) input.value = currentValue.value;
-    }
-
-    input.id = wid;
-    container.append(input);
-    input.addEventListener('change', addTag);
-    return container;
-}
 
 export default Vue.extend({
-    mixins: [BasePanel],
+    mixins: [BasePanel, AnnoPanel],
     props: ['fullsizeimage'],
-    data() { return {
-        currentTaxonomy: null,
-    };},
     computed: {
         imageSrc() {
             let src = !this.fullsizeimage
@@ -178,21 +128,6 @@ export default Vue.extend({
             return coordinates;
         },
 
-        getAPIAnnotationBody(annotation) {
-            return {
-                part: this.$store.state.parts.pk,
-                taxonomy: annotation.taxonomy.pk,
-                comments: [...annotation.body.filter(e => e.purpose == 'commenting')].map(b => b.value),
-                components: [...annotation.body.filter(e=> e.purpose.startsWith('attribute'))].map(b => {
-                    return {
-                        'component': annotation.taxonomy.components.find(c => 'attribute-'+c.name == b.purpose).pk,
-                        'value': b.value
-                    }
-                }),
-                coordinates: this.getCoordinatesFromW3C(annotation)
-            };
-        },
-
         async initAnnotations() {
             this.anno = new Annotorious({
                 image: document.getElementById('source-panel-img'),
@@ -201,8 +136,8 @@ export default Vue.extend({
                 widgets: [],
                 disableEditor: false
             });
-
             let annos = await this.$store.dispatch('imageAnnotations/fetch');
+
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
                 data.pk = annotation.pk;
@@ -213,19 +148,22 @@ export default Vue.extend({
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
                 let body = this.getAPIAnnotationBody(annotation);
+                body.coordinates = this.getCoordinatesFromW3C(annotation);
                 const newAnno = await this.$store.dispatch('imageAnnotations/create', body);
                 annotation.pk = newAnno.pk;
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                annotation.taxonomy = this.currentTaxonomy;
+                // TODO: change annotation type?!
+                // annotation.taxonomy = this.currentTaxonomy;
                 let body = this.getAPIAnnotationBody(annotation);
                 body.id = annotation.id;
+                body.coordinates = this.getCoordinatesFromW3C(annotation);
                 this.$store.dispatch('imageAnnotations/update', body);
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                this.setAnnoTaxonomy(annotation.taxonomy);
+                this.setImageAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
@@ -233,50 +171,17 @@ export default Vue.extend({
             }.bind(this));
         },
 
-        setAnnoTaxonomy(taxo, ev) {
-            if (ev) var btn = ev.target;
-            if (this.currentTaxonomy == taxo) {
-                if (btn) {
-                    // toggle annotations off
-                    this.anno.readOnly = true;
-                    this.currentTaxonomy = null;
-                    btn.classList.add('btn-outline-info');
-                    btn.classList.remove('btn-info');
-                }
-            } else {
-                document.querySelectorAll('.taxo-group .btn-info').forEach(
-                    e => {e.classList.remove('btn-info');
-                          e.classList.add('btn-outline-info') });
-                this.anno.readOnly = false;
-                this.currentTaxonomy = taxo;
-                if (btn) {
-                    btn.classList.remove('btn-outline-info');
-                    btn.classList.add('btn-info');
-                }
-            }
+        setThisAnnoTaxonomy(taxo) {
+            return this.setImageAnnoTaxonomy(taxo);
+        },
 
+        setImageAnnoTaxonomy(taxo) {
+            this.setAnnoTaxonomy(taxo);
             let marker_map = {
                 'Rectangle': 'rect',
                 'Polygon': 'polygon'
-            }
+            };
             this.anno.setDrawingTool(marker_map[taxo.marker_type]);
-
-            if (taxo.has_comments || taxo.components.length) {
-                this.anno.disableEditor = false;
-            } else {
-                this.anno.disableEditor = true;
-            }
-            let widgets = [];
-            if (taxo.has_comments) {
-                widgets.push('COMMENT');
-            }
-            taxo.components.forEach(compo => {
-                widgets.push({widget: KeyValueWidget,
-                              name: compo.name,
-                              values: compo.allowed_values});
-            })
-
-            this.anno.widgets = widgets;
         }
     }
 });

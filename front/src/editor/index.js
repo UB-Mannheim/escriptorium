@@ -7,7 +7,7 @@ import regions from './store/regions'
 import transcriptions from './store/transcriptions'
 import taxonomies from './store/taxonomies'
 import imageAnnotations from './store/image_annotations'
-import textAnnotations from './store/image_annotations'
+import textAnnotations from './store/text_annotations'
 import documentslist from './store/documentslist'
 
 Vue.use(Vuex)

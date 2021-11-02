@@ -13,7 +13,8 @@ from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 from django.db import models, transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Sum
+from django.db.models.functions import Length
 from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -139,14 +140,18 @@ class AnnotationComponent(models.Model):
 class AnnotationTaxonomy(OrderedModel):
     MARKER_TYPE_RECTANGLE = 1
     MARKER_TYPE_POLYGON = 2
+    MARKER_TYPE_BG_COLOR = 3
+    MARKER_TYPE_TXT_COLOR = 4
+    MARKER_TYPE_BOLD = 5
+    MARKER_TYPE_ITALIC = 6
     IMG_MARKER_TYPE_CHOICES = (
         (MARKER_TYPE_RECTANGLE, _('Rectangle')),
         (MARKER_TYPE_POLYGON, _('Polygon')))
     TEXT_MARKER_TYPE_CHOICES = (
-        (3, _('Background Color')),
-        (4, _('Text Color')),
-        (5, _('Bold')),
-        (6, _('Italic')),
+        (MARKER_TYPE_BG_COLOR, _('Background Color')),
+        (MARKER_TYPE_TXT_COLOR, _('Text Color')),
+        (MARKER_TYPE_BOLD, _('Bold')),
+        (MARKER_TYPE_ITALIC, _('Italic')),
         # (7, _('Underline'))
     )
     MARKER_TYPE_CHOICES = IMG_MARKER_TYPE_CHOICES + TEXT_MARKER_TYPE_CHOICES
@@ -182,6 +187,60 @@ class Annotation(models.Model):
 
     class Meta:
         abstract = True
+
+    def as_w3c(self):
+        if self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_RECTANGLE:
+            selector = {
+                'conformsTo': "http://www.w3.org/TR/media-frags/",
+                'type': "FragmentSelector",
+                'value': "xywh=pixel:{x},{y},{w},{h}".format(
+                    x=self.coordinates[0][0],
+                    y=self.coordinates[0][1],
+                    w=self.coordinates[1][0]-self.coordinates[0][0],
+                    h=self.coordinates[1][1]-self.coordinates[0][1],
+                )
+            }
+        elif self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
+            selector = {
+                'type': 'SvgSelector',
+                'value': '<svg><polygon points="{pts}"></polygon></svg>'.format(
+                    pts=' '.join(['%d,%d' % (pt[0], pt[1]) for pt in self.coordinates])
+                )
+            }
+        elif self.taxonomy.marker_type in [AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
+                                           AnnotationTaxonomy.MARKER_TYPE_TXT_COLOR,
+                                           AnnotationTaxonomy.MARKER_TYPE_BOLD,
+                                           AnnotationTaxonomy.MARKER_TYPE_ITALIC]:
+
+            start = (LineTranscription.objects
+                     .filter(line__order__lt=self.start_line.order, line__document_part=self.part)
+                     .aggregate(res=Sum(Length('content')))['res'] + self.start_offset)
+            end = (LineTranscription.objects
+                   .filter(line__order__lt=self.end_line.order, line__document_part=self.part)
+                   .aggregate(res=Sum(Length('content')))['res'] + self.end_offset)
+
+            return {
+                "type": "TextPositionSelector",
+                "start": start,
+                "end": end
+            }
+
+        return {
+            'id': self.id,
+            '@context': "http://www.w3.org/ns/anno.jsonld",
+            'type': "Annotation",
+            'body': [{'type': "TextualBody",
+                      'value': comment,
+                      'purpose': "commenting"}
+                     for comment in self.comments] +
+                    [{'type': "TextualBody",
+                      'value': component.value,
+                      'purpose': 'attribute-'+component.component.name}
+                     for component in self.components.all()],
+            'target': {
+                'selector': selector
+            }
+        }
 
 
 class ImageAnnotation(Annotation):

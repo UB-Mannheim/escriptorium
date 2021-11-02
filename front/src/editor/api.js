@@ -52,9 +52,15 @@ export const moveLines = async (document_id, part_id, data) => (await axios.post
 
 export const createImageAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/image/`, data))
 
+export const createTextAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/text/`, data))
+
 export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
 
+export const updateTextAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`, data))
+
 export const deleteImageAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`))
+
+export const deleteTextAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`))
 
 export const createProjectTag = async (project_id, data) => (await axios.post(`/projects/${project_id}/tags/`, data))
 
