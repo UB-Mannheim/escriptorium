@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-05 09:01+0100\n"
+"POT-Creation-Date: 2021-11-05 09:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -580,11 +580,11 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
-#: escriptorium/settings.py:163
+#: escriptorium/settings.py:164
 msgid "English"
 msgstr ""
 
-#: escriptorium/settings.py:164
+#: escriptorium/settings.py:165
 msgid "German"
 msgstr ""
 
@@ -1407,25 +1407,25 @@ msgstr ""
 
 #: escriptorium/templates/registration/password_change_form.html:36
 msgid "Old password:"
-msgstr ""
+msgstr "Altes Passwort:"
 
 #: escriptorium/templates/registration/password_change_form.html:42
 #: escriptorium/templates/registration/password_reset_confirm.html:26
 msgid "New password:"
-msgstr ""
+msgstr "Neues Passwort:"
 
 #: escriptorium/templates/registration/password_change_form.html:48
 msgid "New password confirmation:"
-msgstr ""
+msgstr "Bestätigung für neues Passwort:"
 
 #: escriptorium/templates/registration/password_change_form.html:54
 #: escriptorium/templates/registration/password_reset_confirm.html:34
 msgid "Change my password"
-msgstr ""
+msgstr "Ändere mein Passwort"
 
 #: escriptorium/templates/registration/password_change_form.html:60
 msgid "Lost your password?"
-msgstr ""
+msgstr "Passwort verloren?"
 
 #: escriptorium/templates/registration/password_reset_complete.html:13
 msgid "Your password has been set.  You may go ahead and "
@@ -1447,7 +1447,7 @@ msgstr ""
 
 #: escriptorium/templates/registration/password_reset_confirm.html:31
 msgid "Confirm password:"
-msgstr ""
+msgstr "Bestätige Passwort:"
 
 #: escriptorium/templates/registration/password_reset_confirm.html:39
 msgid ""
@@ -1475,44 +1475,44 @@ msgstr ""
 
 #: escriptorium/templates/registration/password_reset_form.html:25
 msgid "Email address:"
-msgstr ""
+msgstr "E-Mail-Adresse"
 
 #: escriptorium/templates/registration/password_reset_form.html:28
 msgid "Reset my password"
-msgstr ""
+msgstr "Setze mein Passwort zurück"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:10
 msgid "Total"
-msgstr ""
+msgstr "Insgesamt"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:13
 msgid "Last week"
-msgstr ""
+msgstr "Letzte Woche"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:16
 msgid "Last day"
-msgstr ""
+msgstr "Letzter Tag"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:20
 msgid "User ID"
-msgstr ""
+msgstr "Benutzerkennung"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:22
 #: escriptorium/templates/reporting/taskreport_list.html:10
 msgid "Disk usage"
-msgstr ""
+msgstr "Speicherplatznutzung"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:23
 #: escriptorium/templates/reporting/taskreport_detail.html:11
 #: escriptorium/templates/reporting/taskreport_list.html:33
 msgid "CPU usage"
-msgstr ""
+msgstr "CPU-Nutzung"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:24
 #: escriptorium/templates/reporting/taskreport_detail.html:12
 #: escriptorium/templates/reporting/taskreport_list.html:56
 msgid "GPU usage"
-msgstr ""
+msgstr "GPU-Nutzung"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:25
 #: escriptorium/templates/reporting/quotas_leaderboard.html:27
@@ -1538,7 +1538,7 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_detail.html:7
 msgid "Status:"
-msgstr ""
+msgstr "Status:"
 
 #: escriptorium/templates/reporting/taskreport_detail.html:8
 msgid "Queued at:"
@@ -1546,15 +1546,15 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_detail.html:9
 msgid "Started at:"
-msgstr ""
+msgstr "Begonnen um:"
 
 #: escriptorium/templates/reporting/taskreport_detail.html:10
 msgid "Ended at:"
-msgstr ""
+msgstr "Beendet um:"
 
 #: escriptorium/templates/reporting/taskreport_list.html:14
 msgid "You don't have any disk storage left"
-msgstr ""
+msgstr "Du hast keinen Speicherplatz mehr übrig"
 
 #: escriptorium/templates/reporting/taskreport_list.html:19
 msgid "Calculated from your images and models"
@@ -1562,15 +1562,15 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html:37
 msgid "You don't have any CPU minutes left"
-msgstr ""
+msgstr "Du hast keine CPU-Minuten mehr übrig"
 
 #: escriptorium/templates/reporting/taskreport_list.html:42
 msgid "CPU usage over the last week"
-msgstr ""
+msgstr "CPU-Nutzung in der letzten Woche"
 
 #: escriptorium/templates/reporting/taskreport_list.html:60
 msgid "GPU usage over the last month"
-msgstr ""
+msgstr "GPU-Nutzung im letzten Monat"
 
 #: escriptorium/templates/reporting/taskreport_list.html:67
 msgid ""
@@ -1580,48 +1580,48 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html:72
 msgid "Task report"
-msgstr ""
+msgstr "Aufgabenberichte"
 
 #: escriptorium/templates/reporting/taskreport_list.html:73
 msgid "Started at"
-msgstr ""
+msgstr "Gestartet am"
 
 #: escriptorium/templates/reporting/taskreport_list.html:74
 msgid "Done at"
-msgstr ""
+msgstr "Abgeschlossen zum"
 
 #: escriptorium/templates/reporting/taskreport_list.html:75
 msgid "Duration"
-msgstr ""
+msgstr "Dauer"
 
 #: escriptorium/templates/reporting/taskreport_list.html:76
 msgid "State"
-msgstr ""
+msgstr "Status"
 
 #: escriptorium/templates/reporting/taskreport_list.html:77
 msgid "CPU cost"
-msgstr ""
+msgstr "CPU-Kosten"
 
 #: escriptorium/templates/reporting/taskreport_list.html:78
 msgid "GPU cost"
-msgstr ""
+msgstr "GPU-Kosten"
 
 #: escriptorium/templates/reporting/taskreport_list.html:116
 msgid "Details"
-msgstr ""
+msgstr "Einzelheiten"
 
 #: escriptorium/templates/reporting/taskreport_list.html:119
 msgid "You don't have any task report yet."
-msgstr ""
+msgstr "Du hast noch keinen Aufgabenbericht."
 
 #: escriptorium/templates/users/contactus.html:19
 #: escriptorium/templates/users/invitation_form.html:17
 msgid "Send"
-msgstr ""
+msgstr "Absenden"
 
 #: escriptorium/templates/users/group_detail_invite.html:5
 msgid "Back to profile"
-msgstr ""
+msgstr "Zurück zum Profil"
 
 #: escriptorium/templates/users/group_detail_invite.html:7
 msgid "Team:"
@@ -1638,7 +1638,7 @@ msgstr "Versende Einladung"
 #: escriptorium/templates/users/group_detail_invite.html:34
 #: escriptorium/templates/users/group_detail_invite.html:35
 msgid "Transfer ownership"
-msgstr ""
+msgstr "Übertrage Besitzrecht"
 
 #: escriptorium/templates/users/group_detail_invite.html:42
 msgid "Remove"
@@ -1654,7 +1654,7 @@ msgstr "Keine anderen Benutzer in diesem Team."
 
 #: escriptorium/templates/users/invitation_accept_register.html:6
 msgid "Register to eScriptorium"
-msgstr ""
+msgstr "Registriere Dich für eScriptorium"
 
 #: escriptorium/templates/users/invitation_accept_register.html:7
 #, python-format
@@ -1675,23 +1675,23 @@ msgstr ""
 
 #: escriptorium/templates/users/profile.html:8
 msgid "Informations"
-msgstr ""
+msgstr "Information"
 
 #: escriptorium/templates/users/profile.html:9
-msgid "Api key"
-msgstr ""
+msgid "API key"
+msgstr "API-Schlüssel"
 
 #: escriptorium/templates/users/profile.html:10
 msgid "Files"
-msgstr ""
+msgstr "Dateien"
 
 #: escriptorium/templates/users/profile.html:12
 msgid "Invitations"
-msgstr ""
+msgstr "Einladungen"
 
 #: escriptorium/templates/users/profile.html:25
 msgid "Save"
-msgstr ""
+msgstr "Sichere"
 
 #: escriptorium/templates/users/profile_api_key.html:8
 msgid "API Authentication Token:"
@@ -1699,23 +1699,23 @@ msgstr ""
 
 #: escriptorium/templates/users/profile_api_key.html:9
 msgid "Copy to clipboard."
-msgstr ""
+msgstr "Kopiere in die Zwischenablage."
 
 #: escriptorium/templates/users/profile_api_key.html:10
 msgid "example: "
-msgstr ""
+msgstr "Beispiel: "
 
 #: escriptorium/templates/users/profile_files.html:11
 msgid "You don't have any saved files yet."
-msgstr ""
+msgstr "Du hast noch keine gespeicherten Dateien."
 
 #: escriptorium/templates/users/profile_group_list.html:8
 msgid "Create a new Team"
-msgstr ""
+msgstr "Lege ein neues Team an"
 
 #: escriptorium/templates/users/profile_group_list.html:20
 msgid "Pending Invitations"
-msgstr ""
+msgstr "Noch offene Einladungen"
 
 #: escriptorium/templates/users/profile_group_list.html:25
 #, python-format
@@ -1727,11 +1727,11 @@ msgstr ""
 
 #: escriptorium/templates/users/profile_group_list.html:30
 msgid "Accept"
-msgstr ""
+msgstr "Akzeptieren"
 
 #: escriptorium/templates/users/profile_group_list.html:38
 msgid "My Teams"
-msgstr ""
+msgstr "Meine Teams"
 
 #: escriptorium/templates/users/profile_group_list.html:48
 #, python-format
@@ -1740,16 +1740,20 @@ msgstr ""
 
 #: escriptorium/templates/users/profile_group_list.html:52
 msgid "Leave"
-msgstr ""
+msgstr "Verlassen"
 
 #: escriptorium/templates/users/profile_group_list.html:57
 msgid "You are not part of any team yet."
-msgstr ""
+msgstr "Du bist noch in keinem Team."
 
 #: escriptorium/templates/users/profile_invitations.html:16
 msgid "You didn't send any invitations yet."
-msgstr ""
+msgstr "Du hast noch keine Einladungen verschickt."
 
 #: homepage/additional_footer.html:3 homepage_example/additional_footer.html:3
 msgid "Powered by"
-msgstr ""
+msgstr "Mit Hilfe von"
+
+#: homepage/additional_heading.html:2
+msgid "eScriptorium for OCR-BW"
+msgstr "eScriptorium für OCR-BW"
