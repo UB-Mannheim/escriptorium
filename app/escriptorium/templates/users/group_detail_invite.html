@@ -7,7 +7,7 @@
 <h4>{% trans "Team:" %} {{object}}</h4>
 
 <form method="post">
-    {% trans "Invite a user to this Team." %}
+    {% trans "Invite a user to this team." %}
         <div class="form-row">
             <div class="col">
                 {% csrf_token %}
@@ -44,7 +44,7 @@
         </td>
     </tr>
     {% empty %}
-    {% trans "No other user in this Team." %}
+    {% trans "No other user in this team." %}
     {% endfor %}
 </table>
 {% endblock %}
