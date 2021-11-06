@@ -24,6 +24,10 @@ TIME_ZONE = 'Europe/Berlin'
 USE_TZ = False
 VERSION_DATE = 'develop (2021-10-26)'
 
+LOCALE_PATHS = [
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
+]
+
 DEBUG=True
 
 # https://stackoverflow.com/questions/62047354/build-absolute-uri-with-https-behind-reverse-proxy
