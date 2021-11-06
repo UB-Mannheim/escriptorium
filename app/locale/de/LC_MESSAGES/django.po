@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-05 09:34+0100\n"
+"POT-Creation-Date: 2021-11-06 09:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -496,12 +496,14 @@ msgstr[1] ""
 
 #: apps/users/forms.py:36
 msgid "Email or username."
-msgstr ""
+msgstr "E-Mail oder Benutzerkennung"
 
 #: apps/users/forms.py:145
 msgid ""
 "Message : Please precise your institution or research center if applicable"
 msgstr ""
+"Nachricht: Bitte geben Sie Ihre Einrichtung oder Ihr Forschungszentrum an "
+"(falls zutreffend)"
 
 #: apps/users/models.py:20 apps/users/models.py:217
 msgid "email address"
@@ -580,13 +582,13 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
-#: escriptorium/settings.py:164
-msgid "English"
-msgstr ""
-
 #: escriptorium/settings.py:165
+msgid "English"
+msgstr "Englisch"
+
+#: escriptorium/settings.py:166
 msgid "German"
-msgstr ""
+msgstr "Deutsch"
 
 #: escriptorium/templates/403.html:6
 msgid "You don't have permission to view or edit this document."
@@ -630,11 +632,11 @@ msgstr "Profil"
 
 #: escriptorium/templates/base.html:81
 msgid "Task reports"
-msgstr ""
+msgstr "Aufgabenbericht"
 
 #: escriptorium/templates/base.html:83
 msgid "Leaderboard"
-msgstr ""
+msgstr "Spitzenreiter"
 
 #: escriptorium/templates/base.html:88
 msgid "Logout"
@@ -710,7 +712,7 @@ msgstr ""
 #: escriptorium/templates/core/project_form.html:18
 #: escriptorium/templates/users/profile_group_list.html:13
 msgid "Create"
-msgstr ""
+msgstr "Erzeugen"
 
 #: escriptorium/templates/core/document_images.html:17
 msgid "Drop images here or click to upload."
@@ -820,7 +822,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_list.html:9
 msgid "Create new Document"
-msgstr ""
+msgstr "Lege ein neues Dokument an"
 
 #: escriptorium/templates/core/document_list.html:10
 msgid "Manage tags"
@@ -837,7 +839,7 @@ msgstr ""
 #: escriptorium/templates/core/document_list.html:56
 #: escriptorium/templates/core/project_list.html:19
 msgid "Owner"
-msgstr ""
+msgstr "Besitzer"
 
 #: escriptorium/templates/core/document_list.html:58
 msgid "Shared with"
@@ -940,7 +942,7 @@ msgstr ""
 #: escriptorium/templates/core/models_list/main.html:5
 #: escriptorium/templates/core/ocrmodel_form.html:5
 msgid "Upload a model"
-msgstr ""
+msgstr "Modell hochladen"
 
 #: escriptorium/templates/core/models_list/rights/delete.html:5
 msgid "Delete right"
@@ -956,11 +958,11 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html:10
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: escriptorium/templates/core/models_list/rights/main.html:11
 msgid "Full name or identifier"
-msgstr ""
+msgstr "Vollständiger Name oder Kennung"
 
 #: escriptorium/templates/core/models_list/rights/main.html:19
 #: escriptorium/templates/core/models_list/rights/main.html:23
@@ -978,11 +980,11 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html:24
 msgid "Group name"
-msgstr ""
+msgstr "Gruppenname"
 
 #: escriptorium/templates/core/models_list/rights/main.html:25
 msgid "Group identifier"
-msgstr ""
+msgstr "Gruppenkennung"
 
 #: escriptorium/templates/core/models_list/rights/main.html:28
 msgid "Stop sharing"
@@ -998,42 +1000,42 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html:6
 msgid "Role"
-msgstr ""
+msgstr "Rolle"
 
 #: escriptorium/templates/core/models_list/table.html:8
 msgid "Script"
-msgstr ""
+msgstr "Schriftart"
 
 #: escriptorium/templates/core/models_list/table.html:18
 msgid "Size"
-msgstr ""
+msgstr "Größe"
 
 #: escriptorium/templates/core/models_list/table.html:19
 msgid "Trained from"
-msgstr ""
+msgstr "Trainiert von"
 
 #: escriptorium/templates/core/models_list/table.html:20
 msgid "Training Status"
-msgstr ""
+msgstr "Trainingsstatus"
 
 #: escriptorium/templates/core/models_list/table.html:21
 #: escriptorium/templates/core/models_list/table.html:57
 #: escriptorium/templates/core/models_list/table.html:111
 msgid "Accuracy"
-msgstr ""
+msgstr "Genauigkeit"
 
 #: escriptorium/templates/core/models_list/table.html:22
 msgid "Errors"
-msgstr ""
+msgstr "Fehler"
 
 #: escriptorium/templates/core/models_list/table.html:23
 msgid "Right"
-msgstr ""
+msgstr "Rechte"
 
 #: escriptorium/templates/core/models_list/table.html:28
 #: escriptorium/templates/core/models_list/table.html:108
 msgid "Model name"
-msgstr ""
+msgstr "Modellbezeichnung"
 
 #: escriptorium/templates/core/models_list/table.html:29
 msgid "Model role"
@@ -1074,11 +1076,11 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html:86
 msgid "Share model"
-msgstr ""
+msgstr "Modell teilen"
 
 #: escriptorium/templates/core/models_list/table.html:94
 msgid "Delete model"
-msgstr ""
+msgstr "Modell löschen"
 
 #: escriptorium/templates/core/ocrmodel_form.html:11
 msgid "Upload"
@@ -1090,11 +1092,11 @@ msgstr ""
 
 #: escriptorium/templates/core/project_form.html:4
 msgid "Create a new Project"
-msgstr ""
+msgstr "Lege ein neues Projekt an"
 
 #: escriptorium/templates/core/project_list.html:11
 msgid "Create new Project"
-msgstr ""
+msgstr "Erzeuge neues Projekt"
 
 #: escriptorium/templates/core/project_list.html:20
 #, python-format
@@ -1107,25 +1109,25 @@ msgstr ""
 
 #: escriptorium/templates/core/project_nav.html:11
 msgid "Documents"
-msgstr ""
+msgstr "Dokumente"
 
 #: escriptorium/templates/core/share/share_base.html:10
 msgid "Share with"
-msgstr ""
+msgstr "Teile mit"
 
 #: escriptorium/templates/core/share/share_base.html:17
 #: escriptorium/templates/users/profile.html:11
 msgid "Teams"
-msgstr ""
+msgstr "Teams"
 
 #: escriptorium/templates/core/share/share_base.html:20
 #: escriptorium/templates/users/group_detail_invite.html:23
 msgid "Users"
-msgstr ""
+msgstr "Anwender"
 
 #: escriptorium/templates/core/share/share_base.html:26
 msgid "Share"
-msgstr ""
+msgstr "Teile"
 
 #: escriptorium/templates/core/wizards/_base.html:21
 msgid "image(s) selected."
