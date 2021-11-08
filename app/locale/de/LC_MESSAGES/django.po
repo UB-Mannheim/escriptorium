@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-06 09:32+0100\n"
+"POT-Creation-Date: 2021-11-08 12:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -582,11 +582,11 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
-#: escriptorium/settings.py:165
+#: escriptorium/settings.py:164
 msgid "English"
 msgstr "Englisch"
 
-#: escriptorium/settings.py:166
+#: escriptorium/settings.py:165
 msgid "German"
 msgstr "Deutsch"
 
@@ -852,7 +852,7 @@ msgstr ""
 #: escriptorium/templates/core/document_list.html:62
 #, python-format
 msgid "%(count)s image(s)."
-msgstr ""
+msgstr "%(count)s Bild(er)"
 
 #: escriptorium/templates/core/document_list.html:86
 msgid "Edit last updated Element"
@@ -1099,9 +1099,10 @@ msgid "Create new Project"
 msgstr "Erzeuge neues Projekt"
 
 #: escriptorium/templates/core/project_list.html:20
-#, python-format
-msgid "%(count)s document(s)."
-msgstr ""
+msgid "1 document."
+msgid_plural "%(n)s documents."
+msgstr[0] "1 Dokument."
+msgstr[1] "%(n)s Dokumente."
 
 #: escriptorium/templates/core/project_list.html:24
 msgid "Do you really want to remove the project from your list?"
