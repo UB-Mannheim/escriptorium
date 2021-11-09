@@ -22,6 +22,28 @@ from kraken.lib.exceptions import KrakenInvalidModelException
 logger = logging.getLogger(__name__)
 
 
+class SearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(label="Text to search in all of your projects", required=True)
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        label="",
+        empty_label="All projects",
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        search = kwargs.pop('search')
+        user = kwargs.pop('user')
+        project = kwargs.pop('project')
+        super().__init__(*args, **kwargs)
+        self.fields['query'].initial = search
+        self.fields['project'].queryset = Project.objects.for_user_read(user)
+        self.fields['project'].initial = project
+
+    class Meta:
+        fields = ['query', 'project']
+
+
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Project

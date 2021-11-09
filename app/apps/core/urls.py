@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from core.views import (Home,
+                        Search,
                         CreateProject,
                         ProjectList,
                         DocumentsList,
@@ -28,6 +29,8 @@ from core.views import (Home,
 
 urlpatterns = [
     path('', Home.as_view(), name='home'),
+
+    path('search/', Search.as_view(), name='search'),
 
     path('projects/create/', CreateProject.as_view(), name='project-create'),
     path('projects/', ProjectList.as_view(), name='projects-list'),

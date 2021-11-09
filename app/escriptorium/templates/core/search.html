@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+
+{% block head_title %}
+{% trans "Search in projects" %}
+{% endblock %}
+
+{% block body %}
+<div>
+    <h2>{% trans "Search text in projects" %}</h2>
+    <form method="get">
+        <div class="form-row">
+            <div class="col-auto">{% render_field form.project group=True %}</div>
+            <div class="col mt-4">{% render_field form.query group=True %}</div>
+            <div class="col-auto mt-4">
+                <input type="submit" value="{% trans 'Search' %}" class="btn btn-primary"></input>
+            </div>
+        </div>
+    </form>
+
+    <hr>
+
+    {% if es_error %}
+        <div class="alert alert-danger" role="alert">
+            {% trans "Couldn't connect to ElasticSearch, please contact your instance administrator." %}
+            <p class="mt-2 mb-0"><strong>{% trans "Reason:" %}</strong> {{ es_error }}</p>
+        </div>
+    {% elif 'query' not in request.GET %}
+        <!-- No need to display anything, user must search terms -->
+    {% else %}
+        {% if display_right_warning %}
+        <div class="alert alert-warning" role="alert">
+            {% trans "You requested to search text in a project you don't have access to. Falling back to searching entered text in all of your projects." %}
+        </div>
+        {% endif %}
+
+        <div class="mt-4 mb-3">
+            <h4>{% trans "Results" %} ({{ page_obj.paginator.count }})</h4>
+        </div>
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Content" %}</th>
+                    <th>{% trans "Document part" %}</th>
+                    <th>{% trans "Document" %}</th>
+                    <th>{% trans "Project" %}</th>
+                    <th>{% trans "Score" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for content, part, document, project, score in page_obj %}
+                <tr>
+                    <td title="{% trans 'Transcription content' %}">{{ content|safe }}</td>
+                    <td title="{% trans 'Document part' %}">
+                        <a href="{% url 'document-part-edit' pk=document.pk part_pk=part.pk %}">
+                            {{ part }}
+                        </a>
+                    </td>
+                    <td title="{% trans 'Document' %}">
+                        <a href="{% url 'document-images' pk=document.pk %}">
+                            {{ document }}
+                        </a>
+                    </td>
+                    <td title="{% trans 'Project' %}">
+                        <a href="{% url 'documents-list' slug=project.slug %}">
+                            {{ project }}
+                        </a>
+                    </td>
+                    <td title="{% trans 'Search score' %}">{{ score }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">{% trans "No results matched your search." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% include 'includes/pagination.html' %}
+    {% endif %}
+</div>
+{% endblock %}
