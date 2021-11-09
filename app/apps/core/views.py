@@ -6,22 +6,27 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.postgres.search import SearchQuery, SearchVector, TrigramBase
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Page, Paginator
 from django.db import transaction
 from django.db.models import Max, Q, Count
 from django.db.models.functions import Greatest
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.cache import patch_cache_control
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.urls import reverse
 from django.views.generic import View, TemplateView, ListView, DetailView
 from django.views.generic import CreateView, UpdateView, DeleteView, FormView
+from elasticsearch import exceptions, Elasticsearch
 from PIL import Image, ImageDraw
+from urllib.parse import unquote_plus
 
 from core.models import (Line, Project, Document, DocumentPart, Metadata,
                          OcrModel, OcrModelRight, AlreadyProcessingException, LineTranscription)
 
-from core.forms import (ProjectForm,
+from core.forms import (SearchForm,
+                        ProjectForm,
                         DocumentForm,
                         DocumentSearchForm,
                         MetadataFormSet,
@@ -37,6 +42,7 @@ from core.forms import (ProjectForm,
                         UploadImageForm,
                         ModelUploadForm,
                         ModelRightsForm)
+from core.search import ES_HOST
 from imports.forms import ImportForm, ExportForm
 
 
@@ -51,6 +57,120 @@ class Home(TemplateView):
         context['VERSION_DATE'] = settings.VERSION_DATE
         context['KRAKEN_VERSION'] = settings.KRAKEN_VERSION
         return context
+
+
+class ESPaginator(Paginator):
+
+    def __init__(self, *args, **kwargs):
+        self._count = kwargs.pop('total')
+        super(ESPaginator, self).__init__(*args, **kwargs)
+
+    @cached_property
+    def count(self):
+        return self._count
+
+    def page(self, number):
+        number = self.validate_number(number)
+        return Page(self.object_list, number, self)
+
+
+class Search(LoginRequiredMixin, FormView, TemplateView):
+    template_name = 'core/search.html'
+    form_class = SearchForm
+    paginate_by = 100
+
+    def get_context_data(self, **kwargs):
+        context = super(Search, self).get_context_data(**kwargs)
+        context['display_right_warning'] = False
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # Search
+        search = self.request.GET.get('query', '')
+        projects = self.request.GET.get('project')
+
+        user_projects = Project.objects.for_user_read(self.request.user).values_list('id', flat=True)
+        if projects is None or projects == '':
+            projects = user_projects
+        elif projects not in user_projects:
+            projects = user_projects
+            context['display_right_warning'] = True
+
+        es_client = Elasticsearch(hosts=[ES_HOST])
+        body = {
+            'from': (page-1) * self.paginate_by,
+            'size': self.paginate_by,
+            'sort' : ['_score'],
+            'query': {
+                'bool': {
+                    'must': [
+                        {
+                            'terms': {
+                                'project_id': list(projects),
+                            }
+                        },
+                        {
+                            'match': {
+                                'transcription': {
+                                    'query': unquote_plus(search),
+                                    'fuzziness': 'AUTO'
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            'highlight': {
+                "pre_tags" : ["<strong class='text-success'>"],
+                "post_tags" : ["</strong>"],
+                "fields": {
+                    "transcription": {}
+                }
+            }
+        }
+
+        try:
+            es_results = es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)
+        except exceptions.ConnectionError as e:
+            context['es_error'] = str(e)
+            return context
+
+        template_results = [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']]
+        results = [result.values() for result in template_results]
+
+        # Pagination
+        paginator = ESPaginator(results, self.paginate_by, total=int(es_results['hits']['total']['value']))
+
+        if page > paginator.num_pages:
+            page = paginator.num_pages
+
+        context['page_obj'] = paginator.page(page)
+        context['is_paginated'] = paginator.num_pages > 1
+
+        return context
+
+    def convert_hit_to_template(self, hit):
+        hit_source = hit['_source']
+        return {
+            'content': hit.get('highlight', {}).get('transcription', [])[0],
+            'part': DocumentPart.objects.get(pk=hit['_id']),
+            'document': Document.objects.get(pk=hit_source['document_id']),
+            'project': Project.objects.get(pk=hit_source['project_id']),
+            'score': hit['_score'],
+        }
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['search'] = self.request.GET.get('query')
+        kwargs['project'] = self.request.GET.get('project')
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('search')
 
 
 class ProjectList(LoginRequiredMixin, ListView):
