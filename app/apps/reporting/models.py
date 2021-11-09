@@ -40,6 +40,9 @@ class TaskReport(models.Model):
     # shared_task method name
     method = models.CharField(max_length=512, blank=True, null=True)
 
+    cpu_cost = models.FloatField(blank=True, null=True)
+    gpu_cost = models.FloatField(blank=True, null=True)
+
     def append(self, text):
         self.messages += text + '\n'
 
@@ -64,4 +67,14 @@ class TaskReport(models.Model):
     def end(self, extra_links=None):
         self.workflow_state = self.WORKFLOW_STATE_DONE
         self.done_at = datetime.now(timezone.utc)
+        self.save()
+
+    def calc_cpu_cost(self, nb_cores):
+        task_duration = (self.done_at - self.started_at).total_seconds()
+        self.cpu_cost = (task_duration * nb_cores * settings.CPU_COST_FACTOR) / 60
+        self.save()
+
+    def calc_gpu_cost(self):
+        task_duration = (self.done_at - self.started_at).total_seconds()
+        self.gpu_cost = (task_duration * settings.GPU_COST) / 60
         self.save()

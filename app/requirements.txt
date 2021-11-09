@@ -4,7 +4,7 @@ git+https://github.com/celery/celery.git@4.4.0rc4#egg=celery
 Pillow>=5.4.1
 Django>=2.2,<3
 redis==3.2.1
-uwsgi==2.0.17
+uwsgi==2.0.18
 daphne==2.5.0
 channels==2.4.0
 channels-redis>=2.4.1,<3

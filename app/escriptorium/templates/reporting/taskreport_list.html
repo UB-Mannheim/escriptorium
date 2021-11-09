@@ -1,19 +1,137 @@
 {% extends "base.html" %}
-{% load i18n static %}
+{% load i18n static timedelta %}
 
 {% block body %}
-<div class="container">
+<div>
+    <div class="row mt-4 mb-3">
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "Disk usage" %}
+                </div>
+                <div class="card-body">
+                    {% if enforce_disk_storage and not user.has_free_disk_storage %}
+                    <div class="alert alert-danger small mb-2" role="alert">{% trans "You don't have any disk storage left" %}</div>
+                    {% endif %}
+                    <h5 class="card-title">
+                        {{ user.calc_disk_usage|filesizeformat }}{% if enforce_disk_storage %}/{{ user.disk_storage_limit|filesizeformat }}{% endif %}
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "Calculated from your images and models" %}</h6>
+                    {% if enforce_disk_storage %}
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{disk_storage_used_percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{disk_storage_used_percentage}}%;">
+                            {{ disk_storage_used_percentage }}% used
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "CPU usage" %}
+                </div>
+                <div class="card-body">
+                    {% if enforce_cpu and not user.has_free_cpu_minutes %}
+                    <div class="alert alert-danger small mb-2" role="alert">{% trans "You don't have any CPU minutes left" %}</div>
+                    {% endif %}
+                    <h5 class="card-title">
+                        {{ cpu_cost_last_week|floatformat:3 }}{% if enforce_cpu %}/{{ user.cpu_minutes_limit }}{% endif %} CPU-min
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "CPU usage over the last week" %}</h6>
+                    {% if enforce_cpu %}
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{cpu_minutes_used_percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{cpu_minutes_used_percentage}}%;">
+                            {{ cpu_minutes_used_percentage }}% used
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-header">
+                    {% trans "GPU usage" %}
+                </div>
+                <div class="card-body">
+                    {% if enforce_gpu and not user.has_free_gpu_minutes %}
+                    <div class="alert alert-danger small mb-2" role="alert">{% trans "You don't have any GPU minutes left" %}</div>
+                    {% endif %}
+                    <h5 class="card-title">
+                        {{ gpu_cost_last_week|floatformat:3 }}{% if enforce_gpu %}/{{ user.gpu_minutes_limit }}{% endif %} GPU-min
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{% trans "GPU usage over the last week" %}</h6>
+                    {% if enforce_gpu %}
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{gpu_minutes_used_percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{gpu_minutes_used_percentage}}%;">
+                            {{ gpu_minutes_used_percentage }}% used
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mb-4 text-center">
+        <div class="alert alert-warning mb-2" role="alert">
+            {% trans "CPU/GPU usage values also include automatic processing of the images on upload, those tasks aren't listed below." %}
+        </div>
+    </div>
     <table class="table table-hover">
-    {% for report in object_list %}
-    <tr>
-        <td>{{ report.label }}</td>
-        <td>{{ report.get_workflow_state_display }}</td>
-        <td>{{ report.queued_at }}</td>
-        <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
-    </tr>
-    {% empty %}
-    <tr><td>{% trans "You don't have any task report yet." %}</td></tr>
-    {% endfor %}
+        <tr>
+            <th>{% trans "Task report" %}</th>
+            <th>{% trans "Started at" %}</th>
+            <th>{% trans "Done at" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "State" %}</th>
+            <th>{% trans "CPU cost" %}</th>
+            <th>{% trans "GPU cost" %}</th>
+            <th></th>
+        </tr>
+        {% for report in object_list %}
+        <tr>
+            <td>{{ report.label }}</td>
+            <td>{{ report.started_at }}</td>
+            <td>{{ report.done_at }}</td>
+            <td>{{ report.duration|format_timedelta }}</td>
+            <td>
+                {% with state=report.get_workflow_state_display %}
+                {% if state == "Finished" %}
+                <span class="badge badge-pill badge-success">{{ state }}</span>
+                {% elif state == "Crashed" %}
+                <span class="badge badge-pill badge-danger">{{ state }}</span>
+                {% elif state == "Running" %}
+                <span class="badge badge-pill badge-primary">{{ state }}</span>
+                {% else %}
+                <span class="badge badge-pill badge-secondary">{{ state }}</span>
+                {% endif %}
+                {% endwith %}
+            </td>
+            <td>
+                {% if report.cpu_cost %}
+                {{ report.cpu_cost|floatformat:2 }}
+                {% else %}
+                0
+                {% endif %}
+                CPU-min
+            </td>
+            <td>
+                {% if report.gpu_cost %}
+                {{ report.gpu_cost|floatformat:2 }}
+                {% else %}
+                0
+                {% endif %}
+                GPU-min
+            </td>
+            <td><a href="{% url 'report-detail' report.pk %}">{% trans "Details" %}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td>{% trans "You don't have any task report yet." %}</td></tr>
+        {% endfor %}
     </table>
+
+    {% include 'includes/pagination.html' %}
 </div>
 {% endblock %}

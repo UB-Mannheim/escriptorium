@@ -5,7 +5,7 @@ from reporting.views import ReportList, ReportDetail, QuotasLeaderboard
 
 
 urlpatterns = [
-    path('reports/', ReportList.as_view(), name='report-list'),
-    path('reports/<int:pk>/', ReportDetail.as_view(), name='report-detail'),
+    path('quotas/', ReportList.as_view(), name='report-list'),
+    path('quotas/<int:pk>/', ReportDetail.as_view(), name='report-detail'),
     path('quotas/instance/', staff_member_required(QuotasLeaderboard.as_view()), name='quotas-leaderboard'),
 ]

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 
 from rest_framework.decorators import action
@@ -34,7 +34,8 @@ from api.serializers import (UserOnboardingSerializer,
                              SegTrainSerializer,
                              ScriptSerializer,
                              TranscribeSerializer,
-                             OcrModelSerializer)
+                             OcrModelSerializer,
+                             TagDocumentSerializer)
 
 from core.models import (Project,
                          Document,
@@ -47,14 +48,14 @@ from core.models import (Project,
                          LineTranscription,
                          OcrModel,
                          Script,
-                         AlreadyProcessingException)
+                         AlreadyProcessingException,
+                         DocumentTag)
 
 from core.tasks import recalculate_masks
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
-
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,19 @@ class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     paginate_by = 10
+
+
+class TagViewSet(ModelViewSet):
+    queryset = DocumentTag.objects.all()
+    serializer_class = TagDocumentSerializer
+    paginate_by = 10
+
+    def perform_create(self, serializer):
+        project = Project.objects.get(pk=self.kwargs.get('project_pk'))
+        return serializer.save(project=project)
+    
+    def get_queryset(self):
+        return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
 
 
 class DocumentViewSet(ModelViewSet):
@@ -252,6 +266,9 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reset_masks(self, request, document_pk=None, pk=None):
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not request.user.has_free_cpu_minutes():
+            return Response({'error': "You don't have any CPU minutes left."}, status=status.HTTP_400_BAD_REQUEST)
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))

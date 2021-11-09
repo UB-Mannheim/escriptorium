@@ -1,5 +1,6 @@
 import json
 import io
+from django.conf import settings
 import requests
 
 from django import forms
@@ -22,9 +23,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         help_text=_("The name of the target transcription. Will default to '{format} Import'."))
     upload_file = forms.FileField(
         required=False,
-        help_text=_("A single AltoXML, PageXML file, or a zip file."))
+        help_text=_("A single ALTO or PAGE XML file, or a zip file."))
     override = forms.BooleanField(
-        initial=True, required=False,
+        initial=False, required=False,
         label=_("Override existing segmentation."),
         help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
@@ -41,6 +42,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         self.user = user
         self.current_import = self.document.documentimport_set.order_by('started_on').last()
         super().__init__(*args, **kwargs)
+
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
+            self.fields['upload_file'].help_text = _("A single ALTO or PAGE XML file.")
 
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
@@ -68,7 +72,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         upload_file = self.cleaned_data.get('upload_file')
         if upload_file:
             try:
-                parser = make_parser(self.document, upload_file)
+                # If quotas are enforced, define if the user can upload ZIP and PDF files
+                allowed = settings.DISABLE_QUOTAS or self.user.has_free_disk_storage()
+                parser = make_parser(self.document, upload_file, zip_allowed=allowed, pdf_allowed=allowed)
                 parser.validate()
                 self.cleaned_data['total'] = parser.total
             except ParseError as e:
@@ -76,10 +82,21 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 if len(e.args):
                     msg += ": %s" % e.args[0]
                 raise forms.ValidationError(msg)
+            except ValueError as e:
+                raise forms.ValidationError(e)
             return upload_file
 
     def clean(self):
         cleaned_data = super().clean()
+        # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise forms.ValidationError(_("You don't have any CPU minutes left."))
+            if not self.user.has_free_disk_storage() and (
+                cleaned_data.get('iiif_uri') or cleaned_data['resume_import']
+            ):
+                raise forms.ValidationError(_("You don't have any disk storage left."))
+
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
             and not cleaned_data.get('iiif_uri')):
@@ -127,9 +144,9 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     TEXT_FORMAT = "text"
 
     FORMAT_CHOICES = (
-        (ALTO_FORMAT, 'Alto'),
+        (ALTO_FORMAT, 'ALTO'),
         (TEXT_FORMAT, 'Text'),
-        (PAGEXML_FORMAT, 'Pagexml')
+        (PAGEXML_FORMAT, 'PAGE')
     )
     parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
@@ -138,6 +155,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         initial=False, required=False,
         label=_('Include images'),
         help_text=_("Will significantly increase the time to produce and download the export."))
+    region_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -145,12 +163,25 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        choices = [
+            (rt.id, rt.name)
+            for rt in self.document.valid_block_types.all()
+        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+        self.fields['region_types'].choices = choices
+        self.fields['region_types'].initial = [c[0] for c in choices]
 
     def clean_parts(self):
         parts = self.cleaned_data['parts']
         if len(parts) < 1:
             raise forms.ValidationError(_("Select at least one image to export."))
         return parts
+
+    def clean(self):
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
+            raise forms.ValidationError(_("You don't have any CPU minutes left."))
+
+        return super().clean()
 
     def process(self):
         parts = self.cleaned_data['parts']
@@ -160,6 +191,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         document_export.delay(file_format, self.document.pk,
                               list(parts.values_list('pk', flat=True)),
                               transcription.pk,
+                              self.cleaned_data['region_types'],
                               include_images=self.cleaned_data['include_images'],
                               user_pk=self.user.pk,
                               report_label=_('Export %(document_name)s') % {'document_name': self.document.name})
