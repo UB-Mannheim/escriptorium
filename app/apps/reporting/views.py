@@ -8,8 +8,9 @@ from django.utils.functional import cached_property
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
-from reporting.models import TaskReport
+from reporting.models import TaskReport, ProjectReport as ModelProjectReport
 from users.models import User
+from core.models import Project
 
 
 class ReportList(LoginRequiredMixin, ListView):
