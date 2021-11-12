@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-08 12:08+0100\n"
+"POT-Creation-Date: 2021-11-08 13:48+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -895,45 +895,52 @@ msgstr ""
 
 #: escriptorium/templates/core/home.html:21
 msgid "Data Interchange"
-msgstr ""
+msgstr "Datenaustausch"
 
 #: escriptorium/templates/core/home.html:22
 msgid ""
 "Import or export transcriptions with ALTO or PAGE XML, import images as zip "
 "or IIIF. Access data from any application through a full REST API."
 msgstr ""
+"Importiere oder exportiere Transkriptionen mit ALTO oder PAGE XML, "
+"importiere Bilder als ZIP oder IIIF. Greife mit anderen Applikationen auf "
+"Daten zu per RESTful API."
 
 #: escriptorium/templates/core/home.html:26
 msgid "Manual Edition"
-msgstr ""
+msgstr "Manuelle Bearbeitung"
 
 #: escriptorium/templates/core/home.html:27
 msgid ""
 "Make use of an ergonomic user interface leveraging modern browser technology "
 "to edit segmentations and transcriptions."
 msgstr ""
+"Bearbeite Segmentierungen und Transkriptionen in der ergonomischen "
+"Benutzeroberfläche, die moderne Browsertechnologie nutzt."
 
 #: escriptorium/templates/core/home.html:31
 msgid "Automatic Transcription"
-msgstr ""
+msgstr "Automatische Transkription"
 
 #: escriptorium/templates/core/home.html:32
 msgid ""
 "Train and apply new neural networks to vastly speed up the transcription "
 "process of large corpora."
 msgstr ""
+"Trainiere neue neuronale Netze und wende sie an, um den "
+"Transkriptionsprozess von großen Korpora erheblich zu beschleunigen."
 
 #: escriptorium/templates/core/home.html:71
 msgid "Resources"
-msgstr ""
+msgstr "Ressourcen"
 
 #: escriptorium/templates/core/home.html:73
 msgid "Tutorial"
-msgstr ""
+msgstr "Anleitung (englisch)"
 
 #: escriptorium/templates/core/home.html:74
 msgid "eScriptorium open source code"
-msgstr ""
+msgstr "eScriptorium Open-Source-Code"
 
 #: escriptorium/templates/core/home.html:75
 msgid "Scripta Blog"
@@ -1099,6 +1106,7 @@ msgid "Create new Project"
 msgstr "Erzeuge neues Projekt"
 
 #: escriptorium/templates/core/project_list.html:20
+#, python-format
 msgid "1 document."
 msgid_plural "%(n)s documents."
 msgstr[0] "1 Dokument."
