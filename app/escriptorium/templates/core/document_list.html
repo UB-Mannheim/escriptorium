@@ -59,7 +59,7 @@
               {% endwith %}</td>
             <td title="{% trans 'Last modified on' %}"><span class="text-muted"><small>{{ document.last_edited_part.updated_at|date }}</small></span></td>
             <td>
-              {% blocktrans with count=document.parts.count %}{{ count }} image(s).{% endblocktrans %}
+              {% blocktrans count n=document.parts.count %}1 image.{% plural %}{{ n }} images.{% endblocktrans %}
             </td>
 
             <td>
