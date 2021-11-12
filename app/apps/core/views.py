@@ -90,14 +90,18 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
 
         # Search
         search = self.request.GET.get('query', '')
-        projects = self.request.GET.get('project')
 
-        user_projects = Project.objects.for_user_read(self.request.user).values_list('id', flat=True)
-        if projects is None or projects == '':
+        user_projects = list(Project.objects.for_user_read(self.request.user).values_list('id', flat=True))
+        try:
+            project = int(self.request.GET.get('project', ''))
+
+            if project in user_projects:
+                projects = [project]
+            else:
+                projects = user_projects
+                context['display_right_warning'] = True
+        except ValueError:
             projects = user_projects
-        elif projects not in user_projects:
-            projects = user_projects
-            context['display_right_warning'] = True
 
         es_client = Elasticsearch(hosts=[ES_HOST])
         body = {
@@ -107,11 +111,8 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
             'query': {
                 'bool': {
                     'must': [
-                        {
-                            'terms': {
-                                'project_id': list(projects),
-                            }
-                        },
+                        { 'term': { 'have_access': self.request.user.id } },
+                        { 'terms': { 'project_id': projects } },
                         {
                             'match': {
                                 'transcription': {
@@ -124,10 +125,10 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
                 }
             },
             'highlight': {
-                "pre_tags" : ["<strong class='text-success'>"],
-                "post_tags" : ["</strong>"],
-                "fields": {
-                    "transcription": {}
+                'pre_tags' : ['<strong class="text-success">'],
+                'post_tags' : ['</strong>'],
+                'fields': {
+                    'transcription': {}
                 }
             }
         }
