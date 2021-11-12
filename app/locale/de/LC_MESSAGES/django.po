@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-08 13:48+0100\n"
+"POT-Creation-Date: 2021-11-12 17:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -31,12 +31,12 @@ msgstr ""
 #: apps/core/forms.py:497 apps/imports/forms.py:98
 #: escriptorium/templates/core/document_images.html:19
 msgid "You don't have any disk storage left."
-msgstr ""
+msgstr "Sie haben keinen Speicherplatz mehr übrig."
 
 #: apps/api/serializers.py:357 apps/core/forms.py:233 apps/imports/forms.py:94
 #: apps/imports/forms.py:182
 msgid "You don't have any CPU minutes left."
-msgstr ""
+msgstr "Sie haben keine CPU-Minuten mehr übrig."
 
 #: apps/api/serializers.py:365 apps/core/forms.py:290
 msgid "Lines and regions"
@@ -104,20 +104,21 @@ msgstr ""
 
 #: apps/core/forms.py:259
 msgid "Uploaded image with more than one selected image."
-msgstr ""
+msgstr "Hochgeladenes Bild mit mehr als einem ausgewählten Bild."
 
 #: apps/core/forms.py:263
 msgid "Uploaded image should be black and white."
-msgstr ""
+msgstr "Hochgeladenes Bild sollte schwarz-weiß sein."
 
 #: apps/core/forms.py:266
 #, python-brace-format
 msgid "Uploaded image should be the same size as original image {size}."
 msgstr ""
+"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}"
 
 #: apps/core/forms.py:284
 msgid "Model"
-msgstr ""
+msgstr "Modell"
 
 #: apps/core/forms.py:310
 msgid ""
@@ -131,31 +132,31 @@ msgstr ""
 
 #: apps/core/models.py:202 apps/core/models.py:309
 msgid "Share with users"
-msgstr ""
+msgstr "Mit Benutzern teilen"
 
 #: apps/core/models.py:205 apps/core/models.py:312
 msgid "Share with teams"
-msgstr ""
+msgstr "Mit Teams teilen"
 
 #: apps/core/models.py:255
 msgid "Draft"
-msgstr ""
+msgstr "Entwurf"
 
 #: apps/core/models.py:256
 msgid "Published"
-msgstr ""
+msgstr "Veröffentlicht"
 
 #: apps/core/models.py:257
 msgid "Archived"
-msgstr ""
+msgstr "Archiviert"
 
 #: apps/core/models.py:262
 msgid "Left to right"
-msgstr ""
+msgstr "Links nach rechts"
 
 #: apps/core/models.py:263
 msgid "Right to left"
-msgstr ""
+msgstr "Rechts nach links"
 
 #: apps/core/models.py:269
 msgid "Baseline"
@@ -167,7 +168,7 @@ msgstr ""
 
 #: apps/core/models.py:271
 msgid "Centered"
-msgstr ""
+msgstr "Zentriert"
 
 #: apps/core/models.py:285
 msgid ""
@@ -175,6 +176,9 @@ msgid ""
 "opposition with the text direction which describes the order of the words in "
 "a line and is set by the script."
 msgstr ""
+"Die Lese-Richtung beschreibt die Anordnung der Elemente im Dokument. Im "
+"Unterschied dazu beschreibt die Text-Richtung die Anordnung der Wörter in "
+"einer Zeile und ist durch die Schriftart vorgegeben."
 
 #: apps/core/models.py:289
 msgid "The position of the line relative to the polygon."
@@ -190,27 +194,27 @@ msgstr ""
 
 #: apps/core/models.py:403
 msgid "Converting"
-msgstr ""
+msgstr "Konvertiere"
 
 #: apps/core/models.py:404
 msgid "Converted"
-msgstr ""
+msgstr "Konvertiert"
 
 #: apps/core/models.py:405
 msgid "Segmenting"
-msgstr ""
+msgstr "Segmentiere"
 
 #: apps/core/models.py:406
 msgid "Segmented"
-msgstr ""
+msgstr "Segmentiert"
 
 #: apps/core/models.py:407
 msgid "Transcribing"
-msgstr ""
+msgstr "Transkribiere"
 
 #: apps/core/models.py:422
 msgid "Element"
-msgstr ""
+msgstr "Element"
 
 #: apps/core/models.py:1025
 #, python-format
@@ -232,7 +236,7 @@ msgstr ""
 #: escriptorium/templates/core/document_images.html:183
 #: escriptorium/templates/core/wizards/segment.html:21
 msgid "Segment"
-msgstr ""
+msgstr "Segment"
 
 #: apps/core/models.py:1227
 msgid "Recognize"
@@ -240,7 +244,7 @@ msgstr ""
 
 #: apps/core/models.py:1302
 msgid "Couldn't find the training task."
-msgstr ""
+msgstr "Konnte die Trainings-Aufgabe nicht finden."
 
 #: apps/core/tasks.py:136
 msgid "Something went wrong during the binarization!"
@@ -253,6 +257,7 @@ msgstr ""
 #: apps/core/tasks.py:277
 msgid "Training didn't get better results than base model!"
 msgstr ""
+"Das Training hat keine besseren Ergebnisse als das Basis-Modell erzielt!"
 
 #: apps/core/tasks.py:286
 msgid "Something went wrong during the segmenter training process!"
@@ -260,81 +265,81 @@ msgstr ""
 
 #: apps/core/tasks.py:292 apps/core/tasks.py:504
 msgid "Training finished!"
-msgstr ""
+msgstr "Training abgeschlossen!"
 
 #: apps/core/tasks.py:346
 msgid "Something went wrong during the segmentation!"
-msgstr ""
+msgstr "Während der Segmentierung ist etwas schiefgegangen!"
 
 #: apps/core/tasks.py:354
 msgid "Segmentation done!"
-msgstr ""
+msgstr "Segmentierung abgeschlossen!"
 
 #: apps/core/tasks.py:499
 msgid "Something went wrong during the training process!"
-msgstr ""
+msgstr "Während des Trainingsprozesses ist etwas schiefgegangen!"
 
 #: apps/core/tasks.py:545
 msgid "Something went wrong during the transcription!"
-msgstr ""
+msgstr "Während der Transkription ist etwas schiefgegangen!"
 
 #: apps/core/tasks.py:553
 msgid "Transcription done!"
-msgstr ""
+msgstr "Transkription abgeschlossen!"
 
 #: apps/core/views.py:65
 msgid "Project created successfully!"
-msgstr ""
+msgstr "Projekt erfolgreich angelegt!"
 
 #: apps/core/views.py:156
 msgid "Document created successfully!"
-msgstr ""
+msgstr "Dokument erfolgreich angelegt!"
 
 #: apps/core/views.py:198
 msgid "Document saved successfully!"
-msgstr ""
+msgstr "Dokument erfolgreich gespeichert!"
 
 #: apps/core/views.py:259
 msgid "Document shared successfully!"
-msgstr ""
+msgstr "Dokument erfolgreich geteilt!"
 
 #: apps/core/views.py:296
 msgid "Project shared successfully!"
-msgstr ""
+msgstr "Projekt erfolgreich geteilt!"
 
 #: apps/core/views.py:340
 msgid "Document archived successfully!"
-msgstr ""
+msgstr "Dokument erfolgreich archiviert!"
 
 #: apps/core/views.py:342
 msgid "Document published successfully!"
-msgstr ""
+msgstr "Dokument erfolgreich veröffentlicht!"
 
 #: apps/core/views.py:489
 msgid "Model uploaded successfully!"
-msgstr ""
+msgstr "Modell erfolgreich hochgeladen!"
 
 #: apps/core/views.py:511
 msgid "Model deleted successfully!"
-msgstr ""
+msgstr "Modell erfolgreich gelöscht!"
 
 #: apps/core/views.py:548
 msgid "Right added successfully!"
-msgstr ""
+msgstr "Recht erfolgreich hinzugefügt!"
 
 #: apps/core/views.py:578
 msgid "Right deleted successfully!"
-msgstr ""
+msgstr "Recht erfolgreich gelöscht!"
 
 #: apps/imports/forms.py:23
 #, python-brace-format
 msgid ""
 "The name of the target transcription. Will default to '{format} Import'."
-msgstr ""
+msgstr "Der Name der Ziel-Transkription. Default ist '{format} Import'."
 
 #: apps/imports/forms.py:26
 msgid "A single ALTO or PAGE XML file, or a zip file."
-msgstr ""
+msgstr "Eine einzelne ALTO oder PAGE XML Datei, oder eine ZIP-Datei."
 
 #: apps/imports/forms.py:29
 msgid "Override existing segmentation."
@@ -357,27 +362,33 @@ msgstr ""
 
 #: apps/imports/forms.py:37
 msgid "Resume previous import"
-msgstr ""
+msgstr "Früheren Import fortsetzen"
 
 #: apps/imports/forms.py:47
 msgid "A single ALTO or PAGE XML file."
-msgstr ""
+msgstr "Eine einzelne ALTO oder PAGE XML Datei."
 
 #: apps/imports/forms.py:62
 msgid "The document is unreachable, unreadable or the host timed out."
 msgstr ""
+"Das Dokument ist nicht erreichbar, unlesbar, oder der Host meldet einen Time-"
+"out."
 
 #: apps/imports/forms.py:64
 msgid "The document pointed to by the given uri doesn't seem to be valid json."
 msgstr ""
+"Das Dokument, auf das die angegebene uri verweist, scheint kein gültiges "
+"json zu sein."
 
 #: apps/imports/forms.py:66 apps/imports/forms.py:81
 msgid "Couldn't parse the given file or its validation failed"
 msgstr ""
+"Konnte die angegebene Datei nicht parsen, oder die Validierung ist "
+"fehlgeschlagen"
 
 #: apps/imports/forms.py:103
 msgid "Choose one type of import."
-msgstr ""
+msgstr "Wählen Sie einen Import-Typ."
 
 #: apps/imports/forms.py:134
 #, python-format
@@ -386,16 +397,18 @@ msgstr ""
 
 #: apps/imports/forms.py:156
 msgid "Include images"
-msgstr ""
+msgstr "Bilder einbeziehen"
 
 #: apps/imports/forms.py:157
 msgid ""
 "Will significantly increase the time to produce and download the export."
 msgstr ""
+"Wird die Zeit deutlich erhöhen, die für die Produktion und den Download des "
+"Exports benötigt wird."
 
 #: apps/imports/forms.py:176
 msgid "Select at least one image to export."
-msgstr ""
+msgstr "Wählen Sie mindestens ein Bild für den Export aus."
 
 #: apps/imports/forms.py:197
 #, python-format
@@ -404,7 +417,7 @@ msgstr ""
 
 #: apps/imports/parsers.py:84
 msgid "Invalid PDF file."
-msgstr ""
+msgstr "Ungültige PDF Datei."
 
 #: apps/imports/parsers.py:113 apps/imports/parsers.py:184
 #, python-brace-format
@@ -417,11 +430,11 @@ msgstr ""
 
 #: apps/imports/parsers.py:132
 msgid "File appears to not be a valid zip."
-msgstr ""
+msgstr "Datei scheint kein gültiges zip-Format zu sein."
 
 #: apps/imports/parsers.py:139
 msgid "Zip file appears to be corrupted."
-msgstr ""
+msgstr "Zip-Datei scheint korrupt zu sein."
 
 #: apps/imports/parsers.py:301
 msgid "No match found for file {} with filename \"{}\"."
@@ -451,33 +464,33 @@ msgstr ""
 
 #: apps/imports/tasks.py:58
 msgid "Something went wrong during the import!"
-msgstr ""
+msgstr "Etwas ist während des Imports schiefgegangen!"
 
 #: apps/imports/tasks.py:70
 msgid "Import done!"
-msgstr ""
+msgstr "Import abgeschlossen!"
 
 #: apps/imports/tasks.py:198
 msgid "Something went wrong during the export!"
-msgstr ""
+msgstr "Etwas ist während des Exports schiefgegangen!"
 
 #: apps/imports/tasks.py:214
 msgid "Export done!"
-msgstr ""
+msgstr "Export abgeschlossen!"
 
 #: apps/imports/tasks.py:216
 #: escriptorium/templates/core/models_list/table.html:78
 #: escriptorium/templates/core/models_list/table.html:124
 msgid "Download"
-msgstr ""
+msgstr "Download"
 
 #: apps/reporting/models.py:18
 msgid "Queued"
-msgstr ""
+msgstr "In der Warteschlange"
 
 #: apps/reporting/models.py:19
 msgid "Running"
-msgstr ""
+msgstr "Läuft"
 
 #: apps/reporting/models.py:20
 msgid "Crashed"
@@ -485,18 +498,18 @@ msgstr ""
 
 #: apps/reporting/models.py:21
 msgid "Finished"
-msgstr ""
+msgstr "Abgeschlossen"
 
 #: apps/users/admin.py:65
 #, python-format
 msgid "%d invitation was resent."
 msgid_plural "%d invitations were resent."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Einladung wurde noch einmal verschickt."
+msgstr[1] "%d Einladungen wurden noch einmal verschickt."
 
 #: apps/users/forms.py:36
 msgid "Email or username."
-msgstr "E-Mail oder Benutzerkennung"
+msgstr "E-Mail oder Benutzerkennung."
 
 #: apps/users/forms.py:145
 msgid ""
@@ -507,7 +520,7 @@ msgstr ""
 
 #: apps/users/models.py:20 apps/users/models.py:217
 msgid "email address"
-msgstr ""
+msgstr "Mail-Adresse"
 
 #: apps/users/models.py:27
 msgid "Show onboarding"
@@ -515,51 +528,51 @@ msgstr ""
 
 #: apps/users/models.py:110
 msgid "Error"
-msgstr ""
+msgstr "Fehler"
 
 #: apps/users/models.py:112
 msgid "Sent"
-msgstr ""
+msgstr "Verschickt"
 
 #: apps/users/models.py:113
 msgid "Received"
-msgstr ""
+msgstr "Empfangen"
 
 #: apps/users/models.py:114
 msgid "Accepted"
-msgstr ""
+msgstr "Akzeptiert"
 
 #: apps/users/models.py:129
 msgid "Team"
-msgstr ""
+msgstr "Team"
 
 #: apps/users/models.py:205
 #, python-brace-format
 msgid "{username} accepted your invitation!"
-msgstr ""
+msgstr "{username} hat Ihre Einladung angenommen!"
 
 #: apps/users/views.py:32
 msgid "Invitation sent successfully!"
-msgstr ""
+msgstr "Einladung erfolgreich verschickt!"
 
 #: apps/users/views.py:44
 msgid "Successfully registered, you can now log in!"
-msgstr ""
+msgstr "Registrierung erfolgreich, Sie können sich jetzt einloggen!"
 
 #: apps/users/views.py:87
 #, python-brace-format
 msgid "You are now a member of Team {team_name}!"
-msgstr ""
+msgstr "Sie sind jetzt Mitglied im Team {team_name}!"
 
 #: apps/users/views.py:115
 #, python-brace-format
 msgid "User {user} successfully removed from the team {team_name}."
-msgstr ""
+msgstr "Benutzer {user} erfolgreich aus Team {team_name} entfernt!"
 
 #: apps/users/views.py:128
 #, python-brace-format
 msgid "You successfully left {team}."
-msgstr ""
+msgstr "Sie haben das Team {team} erfolgreich verlassen."
 
 #: apps/users/views.py:143
 #, python-brace-format
@@ -568,19 +581,19 @@ msgstr ""
 
 #: apps/users/views.py:154
 msgid "Profile successfully saved."
-msgstr ""
+msgstr "Profil erfolgreich gespeichert."
 
 #: apps/users/views.py:211
 msgid "Team successfully created."
-msgstr ""
+msgstr "Team erfolgreich angelegt."
 
 #: apps/users/views.py:231
 msgid "User successfully invited to the team."
-msgstr ""
+msgstr "Benutzer erfolgreich in das Team eingeladen."
 
 #: apps/users/views.py:251
 msgid "Message successfully sent."
-msgstr ""
+msgstr "Nachricht erfolgreich verschickt."
 
 #: escriptorium/settings.py:164
 msgid "English"
@@ -593,6 +606,7 @@ msgstr "Deutsch"
 #: escriptorium/templates/403.html:6
 msgid "You don't have permission to view or edit this document."
 msgstr ""
+"Sie haben keine Berechtigung, dieses Dokument anzusehen oder zu bearbeiten."
 
 #: escriptorium/templates/404.html:6
 msgid "Page not found."
@@ -624,7 +638,7 @@ msgstr "Hallo %(username)s"
 
 #: escriptorium/templates/base.html:78
 msgid "Change password"
-msgstr ""
+msgstr "Passwort ändern"
 
 #: escriptorium/templates/base.html:80
 msgid "Profile"
@@ -665,7 +679,7 @@ msgstr "Teile dieses Dokument"
 #: escriptorium/templates/core/document_form.html:30
 #: escriptorium/templates/core/document_list.html:96
 msgid "Do you really want to delete the document?"
-msgstr ""
+msgstr "Wollen Sie das Dokument wirklich löschen?"
 
 #: escriptorium/templates/core/document_form.html:32
 #: escriptorium/templates/core/document_list.html:98
@@ -674,11 +688,11 @@ msgstr "Löschen"
 
 #: escriptorium/templates/core/document_form.html:63
 msgid "Metadata"
-msgstr ""
+msgstr "Metadaten"
 
 #: escriptorium/templates/core/document_form.html:92
 msgid "Ontology"
-msgstr ""
+msgstr "Ontologie"
 
 #: escriptorium/templates/core/document_form.html:101
 msgid ""
@@ -720,19 +734,19 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html:26
 msgid "Select all"
-msgstr ""
+msgstr "Alle auswählen"
 
 #: escriptorium/templates/core/document_images.html:27
 msgid "Unselect all"
-msgstr ""
+msgstr "Alle abwählen"
 
 #: escriptorium/templates/core/document_images.html:28
 msgid "Loading"
-msgstr ""
+msgstr "Lade"
 
 #: escriptorium/templates/core/document_images.html:29
 msgid "Selected"
-msgstr ""
+msgstr "Ausgewählt"
 
 #: escriptorium/templates/core/document_images.html:38
 #: escriptorium/templates/core/document_images.html:69
@@ -749,17 +763,17 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html:41
 msgid "Import"
-msgstr ""
+msgstr "Import"
 
 #: escriptorium/templates/core/document_images.html:56
 msgid "Importing"
-msgstr ""
+msgstr "Importiere"
 
 #: escriptorium/templates/core/document_images.html:71
 #: escriptorium/templates/core/document_images.html:75
 #: escriptorium/templates/core/wizards/export.html:19
 msgid "Export"
-msgstr ""
+msgstr "Export"
 
 #: escriptorium/templates/core/document_images.html:94
 msgid "Train a segmenter/recognizer model."
@@ -769,12 +783,12 @@ msgstr ""
 #: escriptorium/templates/core/wizards/segtrain.html:20
 #: escriptorium/templates/core/wizards/train.html:24
 msgid "Train"
-msgstr ""
+msgstr "Trainiere"
 
 #: escriptorium/templates/core/document_images.html:107
 #: escriptorium/templates/core/models_list/table.html:54
 msgid "Cancel training"
-msgstr ""
+msgstr "Training abbrechen"
 
 #: escriptorium/templates/core/document_images.html:119
 msgid "Binarize selected images."
@@ -787,30 +801,32 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html:130
 msgid "Segment selected images."
-msgstr ""
+msgstr "Segmentiere ausgewählte Bilder"
 
 #: escriptorium/templates/core/document_images.html:141
 msgid "Start transcribing selected images."
-msgstr ""
+msgstr "Beginne die Transkription der ausgewählten Bilder"
 
 #: escriptorium/templates/core/document_images.html:143
 #: escriptorium/templates/core/document_images.html:191
 #: escriptorium/templates/core/wizards/transcribe.html:15
 msgid "Transcribe"
-msgstr ""
+msgstr "Transkribiere"
 
 #: escriptorium/templates/core/document_images.html:160
 msgid "Delete this image and all its data (segmentation, transcriptions)"
 msgstr ""
+"Dieses Bild und alle zugehörigen Daten (Segmentierung, Transkriptionen) "
+"löschen"
 
 #: escriptorium/templates/core/document_images.html:163
 msgid "Cancel tasks"
-msgstr ""
+msgstr "Aufgaben abbrechen"
 
 #: escriptorium/templates/core/document_images.html:164
 #: escriptorium/templates/core/document_nav.html:21
 msgid "Edit"
-msgstr ""
+msgstr "Bearbeiten"
 
 #: escriptorium/templates/core/document_images.html:169
 msgid "Compressing"
@@ -818,7 +834,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_list.html:3
 msgid "My Documents"
-msgstr ""
+msgstr "Meine Dokumente"
 
 #: escriptorium/templates/core/document_list.html:9
 msgid "Create new Document"
@@ -826,15 +842,15 @@ msgstr "Lege ein neues Dokument an"
 
 #: escriptorium/templates/core/document_list.html:10
 msgid "Manage tags"
-msgstr ""
+msgstr "Tags verwalten"
 
 #: escriptorium/templates/core/document_list.html:14
 msgid "Share this Project"
-msgstr ""
+msgstr "Dieses Projekt teilen"
 
 #: escriptorium/templates/core/document_list.html:22
 msgid "Filters"
-msgstr ""
+msgstr "Filter"
 
 #: escriptorium/templates/core/document_list.html:56
 #: escriptorium/templates/core/project_list.html:19
@@ -843,11 +859,11 @@ msgstr "Besitzer"
 
 #: escriptorium/templates/core/document_list.html:58
 msgid "Shared with"
-msgstr ""
+msgstr "Geteilt mit"
 
 #: escriptorium/templates/core/document_list.html:60
 msgid "Last modified on"
-msgstr ""
+msgstr "Letzte Änderung am"
 
 #: escriptorium/templates/core/document_list.html:62
 #, python-format
@@ -856,32 +872,32 @@ msgstr "%(count)s Bild(er)"
 
 #: escriptorium/templates/core/document_list.html:86
 msgid "Edit last updated Element"
-msgstr ""
+msgstr "Zuletzt aktualisiertes Element bearbeiten"
 
 #: escriptorium/templates/core/document_list.html:103
 msgid "Do you really want to remove the document from your list?"
-msgstr ""
+msgstr "Wollen Sie das Dokument wirklich von Ihrer Liste entfernen?"
 
 #: escriptorium/templates/core/document_list.html:105
 #: escriptorium/templates/core/project_list.html:26
 msgid "Remove from list"
-msgstr ""
+msgstr "Von der Liste entfernen"
 
 #: escriptorium/templates/core/document_nav.html:13
 msgid "Back to document list"
-msgstr ""
+msgstr "Zurück zur Liste der Dokumente"
 
 #: escriptorium/templates/core/document_nav.html:19
 msgid "Description"
-msgstr ""
+msgstr "Beschreibung"
 
 #: escriptorium/templates/core/document_nav.html:20
 msgid "Images"
-msgstr ""
+msgstr "Bilder"
 
 #: escriptorium/templates/core/document_nav.html:23
 msgid "Models"
-msgstr ""
+msgstr "Modelle"
 
 #: escriptorium/templates/core/home.html:3
 msgid "Homepage"
@@ -915,7 +931,7 @@ msgid ""
 "Make use of an ergonomic user interface leveraging modern browser technology "
 "to edit segmentations and transcriptions."
 msgstr ""
-"Bearbeite Segmentierungen und Transkriptionen in der ergonomischen "
+"Bearbeiten Sie Segmentierungen und Transkriptionen in der ergonomischen "
 "Benutzeroberfläche, die moderne Browsertechnologie nutzt."
 
 #: escriptorium/templates/core/home.html:31
@@ -927,7 +943,7 @@ msgid ""
 "Train and apply new neural networks to vastly speed up the transcription "
 "process of large corpora."
 msgstr ""
-"Trainiere neue neuronale Netze und wende sie an, um den "
+"Trainieren Sie neue neuronale Netze und wenden Sie sie an, um den "
 "Transkriptionsprozess von großen Korpora erheblich zu beschleunigen."
 
 #: escriptorium/templates/core/home.html:71
@@ -979,7 +995,7 @@ msgstr ""
 #: escriptorium/templates/core/models_list/rights/main.html:20
 #: escriptorium/templates/reporting/quotas_leaderboard.html:21
 msgid "Username"
-msgstr ""
+msgstr "Benutzername"
 
 #: escriptorium/templates/core/models_list/rights/main.html:21
 msgid "User full name"
@@ -995,15 +1011,15 @@ msgstr "Gruppenkennung"
 
 #: escriptorium/templates/core/models_list/rights/main.html:28
 msgid "Stop sharing"
-msgstr ""
+msgstr "Teilen einstellen"
 
 #: escriptorium/templates/core/models_list/rights/main.html:45
 msgid "or"
-msgstr ""
+msgstr "oder"
 
 #: escriptorium/templates/core/models_list/rights/main.html:51
 msgid "Add right"
-msgstr ""
+msgstr "Recht hinzufügen"
 
 #: escriptorium/templates/core/models_list/table.html:6
 msgid "Role"
@@ -1062,20 +1078,20 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html:46
 msgid "Is currently training"
-msgstr ""
+msgstr "Trainiert gerade"
 
 #: escriptorium/templates/core/models_list/table.html:47
 msgid "Is done training"
-msgstr ""
+msgstr "Training ist abgeschlossen"
 
 #: escriptorium/templates/core/models_list/table.html:49
 msgid "Gathering data"
-msgstr ""
+msgstr "Sammele Daten"
 
 #: escriptorium/templates/core/models_list/table.html:58
 #: escriptorium/templates/core/models_list/table.html:112
 msgid "Number of errors/Total number of characters"
-msgstr ""
+msgstr "Anzahl der Fehler/Gesamtzahl der Zeichen"
 
 #: escriptorium/templates/core/models_list/table.html:70
 msgid "Toggle versions"
@@ -1091,11 +1107,11 @@ msgstr "Modell löschen"
 
 #: escriptorium/templates/core/ocrmodel_form.html:11
 msgid "Upload"
-msgstr ""
+msgstr "Hochladen"
 
 #: escriptorium/templates/core/project_form.html:4
 msgid "Update a Project"
-msgstr ""
+msgstr "Aktualisiere ein Projekt"
 
 #: escriptorium/templates/core/project_form.html:4
 msgid "Create a new Project"
@@ -1114,7 +1130,7 @@ msgstr[1] "%(n)s Dokumente."
 
 #: escriptorium/templates/core/project_list.html:24
 msgid "Do you really want to remove the project from your list?"
-msgstr ""
+msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
 
 #: escriptorium/templates/core/project_nav.html:11
 msgid "Documents"
@@ -1140,7 +1156,7 @@ msgstr "Teile"
 
 #: escriptorium/templates/core/wizards/_base.html:21
 msgid "image(s) selected."
-msgstr ""
+msgstr "ausgewählte(s) Bild(er)"
 
 #: escriptorium/templates/core/wizards/binarize.html:5
 msgid ""
@@ -1150,15 +1166,15 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/binarize.html:10
 msgid "Manually"
-msgstr ""
+msgstr "Manuell"
 
 #: escriptorium/templates/core/wizards/binarize.html:14
 msgid "Or automatically"
-msgstr ""
+msgstr "Oder automatisch"
 
 #: escriptorium/templates/core/wizards/binarize.html:17
 msgid "Contrast"
-msgstr ""
+msgstr "Kontrast"
 
 #: escriptorium/templates/core/wizards/binarize.html:22
 msgid "Upload or Binarize"
@@ -1173,10 +1189,12 @@ msgstr ""
 msgid ""
 "Import is already ongoing, please wait for it to be finished or cancel it."
 msgstr ""
+"Der Import läuft bereits, bitte warten Sie auf den Abschluss oder brechen "
+"Sie ihn ab."
 
 #: escriptorium/templates/core/wizards/import.html:15
 msgid "Resume previous import."
-msgstr ""
+msgstr "Vorherigen Import fortsetzen"
 
 #: escriptorium/templates/core/wizards/import.html:17
 #, python-format
@@ -1185,17 +1203,17 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/import.html:19
 msgid "Reason:"
-msgstr ""
+msgstr "Grund:"
 
 #: escriptorium/templates/core/wizards/import.html:23
 msgid "Or"
-msgstr ""
+msgstr "Oder"
 
 #: escriptorium/templates/core/wizards/import.html:28
 #: escriptorium/templates/core/wizards/import_file.html:24
 #: escriptorium/templates/core/wizards/import_pdf.html:19
 msgid "Start importing"
-msgstr ""
+msgstr "Beginne Import"
 
 #: escriptorium/templates/core/wizards/import_file.html:11
 msgid "Import segmentation & transcriptions from XML."
@@ -1211,46 +1229,52 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/import_pdf.html:13
 msgid "A single pdf with one image per page."
-msgstr ""
+msgstr "Ein einzelnes PDF mit einem Bild pro Seite."
 
 #: escriptorium/templates/core/wizards/segment.html:5
 msgid "Beware that re-segmenting will delete any existing transcriptions!"
 msgstr ""
+"Achtung - eine Re-Segmentierung wird alle bestehenden Transkriptionen "
+"löschen!"
 
 #: escriptorium/templates/core/wizards/segment.html:10
 #: escriptorium/templates/core/wizards/transcribe.html:10
 msgid "Select a model"
-msgstr ""
+msgstr "Wählen Sie ein Modell aus"
 
 #: escriptorium/templates/core/wizards/segtrain.html:5
 msgid "(PLACEHOLDER)"
-msgstr ""
+msgstr "(PLATZHALTER)"
 
 #: escriptorium/templates/core/wizards/segtrain.html:10
 #: escriptorium/templates/core/wizards/train.html:13
 msgid "New model"
-msgstr ""
+msgstr "Neues Modell"
 
 #: escriptorium/templates/core/wizards/segtrain.html:14
 #: escriptorium/templates/core/wizards/train.html:18
 msgid "Or select an existing one"
-msgstr ""
+msgstr "Oder wählen Sie ein bestehendes aus"
 
 #: escriptorium/templates/core/wizards/train.html:5
 msgid ""
 "The training data will be generated from the selected images and "
 "transcription."
 msgstr ""
+"Die Trainingsdaten werden aus den ausgewählten Bildern undder Transkription "
+"erzeugt."
 
 #: escriptorium/templates/core/wizards/train.html:6
 msgid "Empty lines will be ignored."
-msgstr ""
+msgstr "Leere Zeilen werden ignoriert."
 
 #: escriptorium/templates/core/wizards/train.html:7
 msgid ""
 "Gathering data can take time and the model won't be available in the models "
 "tab until then."
 msgstr ""
+"Die Datensammlung kann Zeit in Anspruch nehmen und das Modell wird "
+"währenddessen nicht im Modelle-Tab verfügbar sein."
 
 #: escriptorium/templates/core/wizards/transcribe.html:5
 msgid ""
@@ -1363,40 +1387,42 @@ msgstr ""
 
 #: escriptorium/templates/includes/pagination.html:12
 msgid "First page"
-msgstr ""
+msgstr "Erste Seite"
 
 #: escriptorium/templates/includes/pagination.html:22
 msgid "Last page"
-msgstr ""
+msgstr "Letzte Seite"
 
 #: escriptorium/templates/includes/pagination.html:27
 msgid "Next"
-msgstr ""
+msgstr "Nächste"
 
 #: escriptorium/templates/registration/login.html:13
 msgid "Please Sign In"
-msgstr ""
+msgstr "Bitte melden Sie sich an"
 
 #: escriptorium/templates/registration/login.html:18
 msgid "Your username and password didn't match. Please try again."
 msgstr ""
+"Ihr Username und das Passwort passen nicht zueinander. Bitte versuchen Sie "
+"es noch einmal."
 
 #: escriptorium/templates/registration/login.html:26
 msgid "Please login to see this page."
-msgstr ""
+msgstr "Bitte melden Sie sich an, um diese Seite zu sehen."
 
 #: escriptorium/templates/registration/login.html:45
 msgid "Lost password?"
-msgstr ""
+msgstr "Passwort vergessen?"
 
 #: escriptorium/templates/registration/password_change_done.html:13
 msgid "Your password has successfully been changed."
-msgstr ""
+msgstr "Ihr Passwort wurde erfolgreich geändert."
 
 #: escriptorium/templates/registration/password_change_form.html:13
 #: escriptorium/templates/registration/password_reset_form.html:13
 msgid "Change your password"
-msgstr ""
+msgstr "Ändern Sie Ihr Passwort"
 
 #: escriptorium/templates/registration/password_change_form.html:22
 msgid ""
@@ -1415,6 +1441,9 @@ msgid ""
 "Please enter your old password, for security's sake, and then enter your new "
 "password twice so we can verify you typed it in correctly."
 msgstr ""
+"Bitte geben Sie zur Sicherheit Ihr altes Passwort ein, und geben Sie danach "
+"Ihr neues Passwort zweimal ein, damit wir sicherstellen können, dass die "
+"Schreibweise korrekt ist."
 
 #: escriptorium/templates/registration/password_change_form.html:36
 msgid "Old password:"
@@ -1440,21 +1469,23 @@ msgstr "Passwort verloren?"
 
 #: escriptorium/templates/registration/password_reset_complete.html:13
 msgid "Your password has been set.  You may go ahead and "
-msgstr ""
+msgstr "Ihr Passwort wurde gesetzt. Sie können fortfahren und "
 
 #: escriptorium/templates/registration/password_reset_complete.html:13
 msgid "log in"
-msgstr ""
+msgstr "sich anmelden"
 
 #: escriptorium/templates/registration/password_reset_confirm.html:13
 msgid "Reset your password"
-msgstr ""
+msgstr "Setzen Sie Ihr Passwort zurück"
 
 #: escriptorium/templates/registration/password_reset_confirm.html:19
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
 msgstr ""
+"Bitte geben Sie Ihr neues Passwort zweimal ein, damit wir sicherstellen "
+"können, dass die Schreibweise korrekt ist."
 
 #: escriptorium/templates/registration/password_reset_confirm.html:31
 msgid "Confirm password:"
@@ -1465,28 +1496,38 @@ msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
 msgstr ""
+"Der Link zum Passwort-Reset war ungültig, möglicherweise, weil er bereits "
+"benutzt wurde. Bitte fordern Sie das Passwort-Reset erneut an."
 
 #: escriptorium/templates/registration/password_reset_done.html:13
 msgid ""
 "We’ve emailed you instructions for setting your password, if an account "
 "exists with the email you entered. You should receive them shortly."
 msgstr ""
+"Wir haben Ihnen die Anleitung zum Setzen Ihres Passworts per Mail geschickt, "
+"falls es ein Konto mit der von Ihnen angegebenen Mail-Adresse gibt. Sie "
+"sollten sie in Kürze erhalten."
 
 #: escriptorium/templates/registration/password_reset_done.html:14
 msgid ""
 "If you don’t receive an email, please make sure you’ve entered the address "
 "you registered with, and check your spam folder."
 msgstr ""
+"Falls Sie keine Mail erhalten, stellen Sie sicher, dass Sie die Adresse "
+"eingegeben haben, mit der Sie sich registriert haben. Prüfen Sie auch Ihren "
+"Spam-Ordner."
 
 #: escriptorium/templates/registration/password_reset_form.html:17
 msgid ""
 "Forgotten your password? Enter your email address below, and we’ll email "
 "instructions for setting a new one."
 msgstr ""
+"Passwort vergessen? Geben Sie unten Ihre Mail-Adresse an, und wir werden "
+"Ihnen die Anleitung zum Setzen eines neuen Passworts mailen."
 
 #: escriptorium/templates/registration/password_reset_form.html:25
 msgid "Email address:"
-msgstr "E-Mail-Adresse"
+msgstr "Mail-Adresse"
 
 #: escriptorium/templates/registration/password_reset_form.html:28
 msgid "Reset my password"
@@ -1529,18 +1570,18 @@ msgstr "GPU-Nutzung"
 #: escriptorium/templates/reporting/quotas_leaderboard.html:27
 #: escriptorium/templates/reporting/quotas_leaderboard.html:29
 msgid "No. of tasks"
-msgstr ""
+msgstr "Anzahl der Aufgaben"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:26
 #: escriptorium/templates/reporting/quotas_leaderboard.html:28
 #: escriptorium/templates/reporting/quotas_leaderboard.html:30
 msgid "Runtime"
-msgstr ""
+msgstr "Laufzeit"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:38
 #: escriptorium/templates/reporting/quotas_leaderboard.html:43
 msgid "Last month"
-msgstr ""
+msgstr "Letzter Monat"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:40
 #: escriptorium/templates/reporting/quotas_leaderboard.html:45
@@ -1553,7 +1594,7 @@ msgstr "Status:"
 
 #: escriptorium/templates/reporting/taskreport_detail.html:8
 msgid "Queued at:"
-msgstr ""
+msgstr "In die Warteschlange um:"
 
 #: escriptorium/templates/reporting/taskreport_detail.html:9
 msgid "Started at:"
@@ -1565,15 +1606,15 @@ msgstr "Beendet um:"
 
 #: escriptorium/templates/reporting/taskreport_list.html:14
 msgid "You don't have any disk storage left"
-msgstr "Du hast keinen Speicherplatz mehr übrig"
+msgstr "Sie haben keinen Speicherplatz mehr übrig"
 
 #: escriptorium/templates/reporting/taskreport_list.html:19
 msgid "Calculated from your images and models"
-msgstr ""
+msgstr "Berechnet aus Ihren Bildern und Modellen"
 
 #: escriptorium/templates/reporting/taskreport_list.html:37
 msgid "You don't have any CPU minutes left"
-msgstr "Du hast keine CPU-Minuten mehr übrig"
+msgstr "Sie haben keine CPU-Minuten mehr übrig"
 
 #: escriptorium/templates/reporting/taskreport_list.html:42
 msgid "CPU usage over the last week"
@@ -1623,7 +1664,7 @@ msgstr "Einzelheiten"
 
 #: escriptorium/templates/reporting/taskreport_list.html:119
 msgid "You don't have any task report yet."
-msgstr "Du hast noch keinen Aufgabenbericht."
+msgstr "Sie haben noch keinen Aufgabenbericht."
 
 #: escriptorium/templates/users/contactus.html:19
 #: escriptorium/templates/users/invitation_form.html:17
@@ -1636,7 +1677,7 @@ msgstr "Zurück zum Profil"
 
 #: escriptorium/templates/users/group_detail_invite.html:7
 msgid "Team:"
-msgstr "Team"
+msgstr "Team:"
 
 #: escriptorium/templates/users/group_detail_invite.html:10
 msgid "Invite a user to this team."
@@ -1661,11 +1702,11 @@ msgstr "Entferne Benutzer aus Team"
 
 #: escriptorium/templates/users/group_detail_invite.html:47
 msgid "No other user in this team."
-msgstr "Keine anderen Benutzer in diesem Team."
+msgstr "Kein anderer Benutzer in diesem Team."
 
 #: escriptorium/templates/users/invitation_accept_register.html:6
 msgid "Register to eScriptorium"
-msgstr "Registriere Dich für eScriptorium"
+msgstr "Registrieren Sie sich für eScriptorium"
 
 #: escriptorium/templates/users/invitation_accept_register.html:7
 #, python-format
@@ -1686,7 +1727,7 @@ msgstr ""
 
 #: escriptorium/templates/users/profile.html:8
 msgid "Informations"
-msgstr "Information"
+msgstr "Informationen"
 
 #: escriptorium/templates/users/profile.html:9
 msgid "API key"
@@ -1718,7 +1759,7 @@ msgstr "Beispiel: "
 
 #: escriptorium/templates/users/profile_files.html:11
 msgid "You don't have any saved files yet."
-msgstr "Du hast noch keine gespeicherten Dateien."
+msgstr "Sie haben noch keine gespeicherten Dateien."
 
 #: escriptorium/templates/users/profile_group_list.html:8
 msgid "Create a new Team"
@@ -1735,6 +1776,9 @@ msgid ""
 "            Invited to %(team_name)s by %(sender)s\n"
 "            "
 msgstr ""
+"\n"
+"            Zu Team %(team_name)s von %(sender)s eingeladen\n"
+"            "
 
 #: escriptorium/templates/users/profile_group_list.html:30
 msgid "Accept"
@@ -1747,7 +1791,7 @@ msgstr "Meine Teams"
 #: escriptorium/templates/users/profile_group_list.html:48
 #, python-format
 msgid "Owned by %(owner)s"
-msgstr ""
+msgstr "Besitzer: %(owner)s"
 
 #: escriptorium/templates/users/profile_group_list.html:52
 msgid "Leave"
@@ -1755,11 +1799,11 @@ msgstr "Verlassen"
 
 #: escriptorium/templates/users/profile_group_list.html:57
 msgid "You are not part of any team yet."
-msgstr "Du bist noch in keinem Team."
+msgstr "Sie sind noch in keinem Team."
 
 #: escriptorium/templates/users/profile_invitations.html:16
 msgid "You didn't send any invitations yet."
-msgstr "Du hast noch keine Einladungen verschickt."
+msgstr "Sie haben noch keine Einladungen verschickt."
 
 #: homepage/additional_footer.html:3 homepage_example/additional_footer.html:3
 msgid "Powered by"
