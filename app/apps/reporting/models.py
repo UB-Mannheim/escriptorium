@@ -124,7 +124,7 @@ class ProjectReport:
         self.project_document_group_shared_total = project_document.filter(shared_with_groups__isnull=False).count()
         self.project_document_user_shared_total = project_document.filter(shared_with_users__isnull=False).count()
         self.project_documentpart_rows_words_total = re.sub(r'[^\w\s]','', raw_transcription_content)
-        self.project_documentpart_vocabulary = dict(Counter(raw_transcription_content))
+        self.project_documentpart_vocabulary = dict(sorted(Counter(raw_transcription_content).items()))
         self.project_documenttag_list = set(project_document.values_list('_document_per_tag', flat=True))
         self.project_lines_type = dict(Counter(project_document.values_list('_part_lines_count_typology', flat=True)))
         self.project_regions_type = dict(Counter(project_document.values_list('_part_lines_block_typology', flat=True)))
