@@ -33,7 +33,7 @@
                             <i class="far fa-file-image card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of document parts' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_documentpart_total|default_value  }}</h2>
+                                <h2 class="card-title">{{ ProjectStats.project_documentpart_total|default_if_none:0  }}</h2>
                                 <p class="card-text">A document part corresponds to one image loaded within a document.</p>
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                             <i class="fas fa-th card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of regions' %}</h5>
-                                <h2 class="card-title"> {{ ProjectStats.project_documentpart_region_total|default_value }} </h2>
+                                <h2 class="card-title"> {{ ProjectStats.project_documentpart_region_total|default_if_none:0 }} </h2>
                                 <p class="card-text">A region is a polygon drawn on a document part, grouping one, several or no line(s)
 </p>
                             </div>
@@ -54,7 +54,7 @@
                             <i class="fas fa-stream card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of lines' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_documentpart_rows_total|default_value  }}</h2>
+                                <h2 class="card-title">{{ ProjectStats.project_documentpart_rows_total|default_if_none:0  }}</h2>
                                 <p class="card-text">A line is a segment of text identified on a document part, usually associated with a polygon (mask) and a transcription.</p>
                             </div>
                         </div>
@@ -164,11 +164,7 @@
                                         {% for key, value in ProjectStats.project_regions_type.items %}
                                             <tr>
                                                 <td>
-                                                    {% if key == '' %}
-                                                        None
-                                                    {% else %}
-                                                        {{ key }}
-                                                    {% endif %}
+                                                    {{ key|default_if_none:"No type assigned" }}
                                                 </td>
                                                 <td>{{ value }}</td>
                                             </tr>
@@ -188,11 +184,7 @@
                                         {% for key, value in ProjectStats.project_lines_type.items %}
                                             <tr>
                                                 <td>
-                                                    {% if key == '' %}
-                                                        None
-                                                    {% else %}
-                                                        {{ key }}
-                                                    {% endif %}
+                                                    {{ key|default_if_none:"No type assigned" }}
                                                 </td>
                                                 <td>{{ value }}</td>
                                             </tr>

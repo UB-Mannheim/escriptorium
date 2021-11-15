@@ -140,10 +140,10 @@ class ProjectReport:
             .annotate(_part_lines_count=Count('parts__lines'))
             .annotate(_part_lines_transcriptions=F('parts__lines__transcriptions__content'))
             .annotate(_part_lines_block=Count('parts__lines__block', distinct=True))
-            .annotate(_part_lines_count_typology=Concat('parts__lines__typology__name', V(''), V(''), output_field=CharField()))
-            .annotate(_part_lines_block_typology=Concat('parts__lines__block__typology__name', V(''), V(''), output_field=CharField()))
+            .annotate(_part_lines_count_typology=F('parts__lines__typology__name'))
+            .annotate(_part_lines_block_typology=F('parts__lines__block__typology__name'))
             .annotate(_document_per_tag=Concat('project__document_tags__name', V('∂'), Count('project__document_tags__tags_document', distinct=True), output_field=CharField()))
-            .values('shared_with_groups', 'shared_with_users', '_part_count', '_part_lines_count', '_part_lines_transcriptions', '_part_lines_block', '_document_per_tag','_part_lines_count_typology', '_part_lines_block_typology'))
+            .only('shared_with_groups', 'shared_with_users', '_part_count', '_part_lines_count', '_part_lines_transcriptions', '_part_lines_block', '_document_per_tag','_part_lines_count_typology', '_part_lines_block_typology'))
         
         for tag in tags:
             qs = qs.filter(tags__name=tag)

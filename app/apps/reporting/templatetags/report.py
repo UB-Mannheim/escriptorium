@@ -6,10 +6,6 @@ from math import ceil
 register = template.Library()
 
 @register.filter
-def default_value(data):
-    return (0 if data is None else data)
-
-@register.filter
 def split(value, char=None):
     return value.split(char)
 
