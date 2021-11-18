@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Avg
 from django.template import loader
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
@@ -27,6 +27,13 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
     User = apps.get_model('users', 'User')
 
     user = User.objects.get(pk=user_pk)
+    # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
+    if not settings.DISABLE_QUOTAS:
+        if user.cpu_minutes_limit() != None:
+            assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        if user.disk_storage_limit() != None:
+            assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+
     imp = DocumentImport.objects.get(
         Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED) |
         Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),
@@ -60,11 +67,13 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
         imp.report.error(str(e))
     else:
         if user:
-            user.notify(_("Import done!"), level='success')
-
-        send_event('document', imp.document.pk, "import:done", {
-            "id": imp.document.pk
-        })
+            if imp.report.messages:
+                user.notify(_("Import finished with warnings!"),
+                            links=[{'text': _('Details'), 'src': imp.report.uri}],
+                            level='warning')
+            else:
+                user.notify(_("Import done!"), level='success')
+        send_event('document', imp.document.pk, "import:done", {"id": imp.document.pk})
         imp.report.end()
 
 
@@ -84,6 +93,11 @@ def document_export(task, file_format, document_pk, part_pks,
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
     user = User.objects.get(pk=user_pk)
+
+    # If quotas are enforced, assert that the user still has free CPU minutes
+    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+        assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+
     document = Document.objects.get(pk=document_pk)
     report = TaskReport.objects.get(task_id=task.request.id)
 
@@ -143,7 +157,7 @@ def document_export(task, file_format, document_pk, part_pks,
             elif file_format == PAGEXML_FORMAT:
                 tplt = loader.get_template('export/pagexml.xml')
             parts = DocumentPart.objects.filter(document=document, pk__in=part_pks)
-            
+
             region_filters = Q(typology_id__in=region_types)
             if include_undefined:
                 region_filters |= Q(typology_id__isnull=True)
@@ -162,7 +176,9 @@ def document_export(task, file_format, document_pk, part_pks,
                             'valid_block_types': document.valid_block_types.all(),
                             'valid_line_types': document.valid_line_types.all(),
                             'part': part,
-                            'blocks': (part.blocks.filter(region_filters).order_by('order')
+                            'blocks': (part.blocks.filter(region_filters)
+                                       .annotate(avglo=Avg('lines__order'))
+                                       .order_by('avglo')
                                        .prefetch_related(
                                            Prefetch(
                                                'lines',

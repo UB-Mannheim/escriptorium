@@ -294,6 +294,10 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         model = OcrModel
         fields = ('name', 'file')
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super().__init__(*args, **kwargs)
+
     def clean_file(self):
         # Early validation of the model loading
         file_field = self.cleaned_data['file']
@@ -315,6 +319,10 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         return file_field
 
     def clean(self):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
+            raise forms.ValidationError(_("You don't have any disk storage left."))
+
         if not getattr(self, '_model_job', None):
             return super().clean()
         # Update the job field on the instantiated model from the cleaned model field
@@ -344,6 +352,9 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentProcessFormBase(forms.Form):
+    CHECK_GPU_QUOTA = False
+    CHECK_DISK_QUOTA = False
+
     parts = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, document, user, *args, **kwargs):
@@ -352,6 +363,18 @@ class DocumentProcessFormBase(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+
+    def clean(self):
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise forms.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise forms.ValidationError(_("You don't have any GPU minutes left."))
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise forms.ValidationError(_("You don't have any disk storage left."))
+
+        return super().clean()
 
 
 class BinarizeForm(BootstrapFormMixin, DocumentProcessFormBase):
@@ -495,6 +518,9 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TrainMixin():
+    CHECK_GPU_QUOTA = True
+    CHECK_DISK_QUOTA = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -603,7 +629,15 @@ class UploadImageForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.document = kwargs.pop('document')
+        self.user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
+
+    def clean(self):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
+            raise forms.ValidationError(_("You don't have any disk storage left."))
+
+        return super().clean()
 
     def save(self, commit=True):
         part = super().save(commit=False)

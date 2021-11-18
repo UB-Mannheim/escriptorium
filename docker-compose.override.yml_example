@@ -33,6 +33,17 @@ services:
       #     constraints:
       #       - node.hostname == db0
 
+      # For development purposes, expose db on localhost
+      # ports:
+      #   - 127.0.0.1:5432:5432
+
+    redis:
+      restart: always
+
+      # For development purposes, expose redis on localhost
+      # ports:
+      #   - 127.0.0.1:6379:6379
+
     nginx:
       restart: always
       ports:

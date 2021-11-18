@@ -7,7 +7,7 @@
                   title="Click to go to another Element (Ctrl+Home)."
                   data-toggle="modal"
                   data-target="#gotoModal"
-                  role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }})</span>
+                  role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }}) - {{ $store.state.parts.image_file_size | prettyBytes }}</span>
             <span class="loading" v-if="!$store.state.parts.loaded">Loading&#8230;</span>
         </div>
 

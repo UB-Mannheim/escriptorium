@@ -1,8 +1,7 @@
 from datetime import date, timedelta
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
-from django.db.models.expressions import OuterRef, Subquery
-from django.db.models.fields import IntegerField
 from django.views.generic import ListView, DetailView
 
 from reporting.models import TaskReport
@@ -15,12 +14,26 @@ class ReportList(LoginRequiredMixin, ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        today = date.today()
-        qs = self.request.user.taskreport_set.filter(
-            started_at__gte=today - timedelta(days=30)
-        ).aggregate(Sum('cpu_cost'), Sum('gpu_cost'))
-        context['cpu_cost_last_month'] = qs['cpu_cost__sum'] or 0
-        context['gpu_cost_last_month'] = qs['gpu_cost__sum'] or 0
+        cpu_usage = self.request.user.calc_cpu_usage()
+        context['cpu_cost_last_week'] = cpu_usage
+        gpu_usage = self.request.user.calc_gpu_usage()
+        context['gpu_cost_last_week'] = gpu_usage
+        
+        disk_storage_limit = self.request.user.disk_storage_limit()
+        context['enforce_disk_storage'] = not settings.DISABLE_QUOTAS and disk_storage_limit != None
+        if context['enforce_disk_storage']:
+            context['disk_storage_used_percentage'] = min(round((self.request.user.calc_disk_usage()*100)/disk_storage_limit, 2) if disk_storage_limit else 100, 100)
+        
+        cpu_minutes_limit = self.request.user.cpu_minutes_limit()
+        context['enforce_cpu'] = not settings.DISABLE_QUOTAS and cpu_minutes_limit != None
+        if context['enforce_cpu']:
+            context['cpu_minutes_used_percentage'] = min(round((cpu_usage*100)/cpu_minutes_limit, 2) if cpu_minutes_limit else 100, 100)
+        
+        gpu_minutes_limit = self.request.user.gpu_minutes_limit()
+        context['enforce_gpu'] = not settings.DISABLE_QUOTAS and gpu_minutes_limit != None
+        if context['enforce_gpu']:
+            context['gpu_minutes_used_percentage'] = min(round((gpu_usage*100)/gpu_minutes_limit, 2) if gpu_minutes_limit else 100, 100)
+
         return context
 
     def get_queryset(self):
@@ -58,7 +71,6 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         today = date.today()
-        filter_last_month = Q(taskreport__started_at__gte=today - timedelta(days=30))
         filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
         filter_last_day = Q(taskreport__started_at__gte=today - timedelta(days=1))
         runtime = ExpressionWrapper(
@@ -70,8 +82,8 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             qs.annotate(
                 total_cpu_usage=Sum('taskreport__cpu_cost'),
                 total_gpu_usage=Sum('taskreport__gpu_cost'),
-                last_month_cpu_usage=Sum('taskreport__cpu_cost', filter=filter_last_month),
-                last_month_gpu_usage=Sum('taskreport__gpu_cost', filter=filter_last_month),
+                last_week_cpu_usage=Sum('taskreport__cpu_cost', filter=filter_last_week),
+                last_week_gpu_usage=Sum('taskreport__gpu_cost', filter=filter_last_week),
                 total_tasks=Count('taskreport'),
                 total_runtime=Sum(runtime),
                 last_week_tasks=Count('taskreport', filter=filter_last_week),
@@ -87,3 +99,8 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             user.disk_usage = (disk_usages_left[user.id] or 0) + (disk_usages_right[user.id] or 0)
 
         return results
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['enforce_quotas'] = not settings.DISABLE_QUOTAS
+        return context

@@ -1,7 +1,8 @@
 {
   "name": "escriptorium",
   "version": "0.1.0",
-  "description": "Escriptorium Frontend project",
+  "description": "eScriptorium Frontend project",
+  "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.dev.js",
     "start": "webpack --config webpack.dev.js --watch",
@@ -34,6 +35,7 @@
     "style-loader": "^2.0.0",
     "undo-manager": "^1.0.5",
     "vue": "^2.6.11",
+    "vue-filter-pretty-bytes": "^0.1.6",
     "vue-loader": "^15.9.6",
     "vue-template-compiler": "^2.6.11",
     "vuex": "^3.6.0"

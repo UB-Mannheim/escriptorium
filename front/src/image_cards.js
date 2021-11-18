@@ -34,7 +34,7 @@ function openWizard(proc) {
 }
 
 class partCard {
-    constructor(part) {
+    constructor(part, cpuMinutesLeft) {
         this.pk = part.pk;
         this.order = part.order;
         this.name = part.name;
@@ -42,6 +42,7 @@ class partCard {
         this.typology = part.typology;
         this.image = part.image;
         this.filename = part.filename;
+        this.image_file_size = part.image_file_size;
         this.bw_image = part.bw_image;
         this.workflow = part.workflow;
         this.task_ids = {};  // helps preventing card status race conditions
@@ -61,7 +62,7 @@ class partCard {
         // fill template
         $new.attr('id', $new.attr('id').replace('{pk}', this.pk));
         this.updateThumbnail();
-        $('img.card-img-top', $new).attr('title', this.title + '\n<' + this.filename +'>');
+        $('img.card-img-top', $new).attr('title', this.title + ' (' + this.image_file_size + ' bytes)' + '\n<' + this.filename +'>');
 
         $new.attr('draggable', true);
         $('img', $new).attr('draggable', false);
@@ -96,21 +97,23 @@ class partCard {
             this.cancelTasks();
         }, this));
 
-        this.binarizedButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('binarize');
-        }, this));
-        this.segmentedButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('segment');
-        }, this));
-        this.transcribeButton.click($.proxy(function(ev) {
-            this.select();
-            partCard.refreshSelectedCount();
-            openWizard('transcribe');
-        }, this));
+        if (cpuMinutesLeft !== "False") {
+            this.binarizedButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('binarize');
+            }, this));
+            this.segmentedButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('segment');
+            }, this));
+            this.transcribeButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('transcribe');
+            }, this));
+        }
 
         this.index = $('.card', '#cards-container').index(this.$element);
         // save a reference to this object in the card dom element
@@ -332,7 +335,7 @@ class partCard {
 }
 
 
-export function bootImageCards(documentId) {
+export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     DOCUMENT_ID = documentId;
     API = {
         'document': '/api/documents/' + DOCUMENT_ID,
@@ -401,7 +404,7 @@ export function bootImageCards(documentId) {
             if (!card) {
                 var uri = API.part.replace('{part_pk}', data.id);
                 $.get(uri, function(data) {
-                    new partCard(data);
+                    new partCard(data, cpuMinutesLeft);
                     partCard.refreshSelectedCount();
                 });
             }
@@ -526,7 +529,7 @@ export function bootImageCards(documentId) {
 
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
-        var card = new partCard(data);
+        var card = new partCard(data, cpuMinutesLeft);
         card.domElement.scrollIntoView(false);
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
@@ -537,6 +540,8 @@ export function bootImageCards(documentId) {
             }
         }
     });
+
+    if (diskStorageLeft === "False") imageDropzone.disable();
 
     // processor buttons
     $('#select-all').click(function(ev) {
@@ -604,7 +609,7 @@ export function bootImageCards(documentId) {
             counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
-                var pc = new partCard(data.results[i]);
+                var pc = new partCard(data.results[i], cpuMinutesLeft);
                 if (select == pc.pk) pc.select();
             }
             if (data.next) {

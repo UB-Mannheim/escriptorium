@@ -302,6 +302,10 @@ class PartSerializer(serializers.ModelSerializer):
         )
 
     def create(self, data):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
+            raise serializers.ValidationError(_("You don't have any disk storage left."))
+
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
@@ -448,6 +452,10 @@ class OcrModelSerializer(serializers.ModelSerializer):
                   'owner', 'training', 'versions')
 
     def create(self, data):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
+            raise serializers.ValidationError(_("You don't have any disk storage left."))
+
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['owner'] = self.context["view"].request.user
         data['file_size'] = data['file'].size
@@ -456,10 +464,25 @@ class OcrModelSerializer(serializers.ModelSerializer):
 
 
 class ProcessSerializerMixin():
+    CHECK_GPU_QUOTA = False
+    CHECK_DISK_QUOTA = False
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
+
+    def validate(self, data):
+        data = super().validate(data)
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise serializers.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise serializers.ValidationError(_("You don't have any GPU minutes left."))
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise serializers.ValidationError(_("You don't have any disk storage left."))
+        return data
 
 
 class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -542,6 +565,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
@@ -585,6 +609,9 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    CHECK_GPU_QUOTA = True
+    CHECK_DISK_QUOTA = True
+
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
     model = serializers.PrimaryKeyRelatedField(required=False,
@@ -605,6 +632,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                     _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
