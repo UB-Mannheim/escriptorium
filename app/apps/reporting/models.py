@@ -6,9 +6,8 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from core.models import Document, DocumentPart
-from django.db.models import Count, Sum, F, CharField, Value as V
-from django.db.models.functions import Concat
+from core.models import Document
+from django.db.models import Count, Sum, F
 import re
 from collections import Counter
 
@@ -111,21 +110,20 @@ class TaskReport(models.Model):
 
 
 class ProjectReport:
-    def __init__(self, project, tags=None):
+    def __init__(self, project, tags):
         project_document = self.get_queryset(project, tags)
         raw_transcription_content = ' '.join(list(filter(None, project_document.values_list('_part_lines_transcriptions', flat=True))))
         self.project_documentpart_total = self.aggregate_value(project_document, '_part_count')
         self.project_documentpart_rows_total = self.aggregate_value(project_document, '_part_lines_count')
-        self.project_documentpart_region_total = self.aggregate_value(project_document, '_part_lines_block')
-        self.project_create_at = project.created_at
-        self.project_update_at = project.updated_at
-        self.project_shared_group_total = project.shared_with_groups.all().count()
-        self.project_shared_users_total = project.shared_with_users.all().count()
+        self.project_documentpart_regions_total = self.aggregate_value(project_document, '_part_lines_block')
+        self.project_created_at = project.created_at
+        self.project_updated_at = project.updated_at
+        self.project_shared_group_total = project.shared_with_groups.count()
+        self.project_shared_users_total = project.shared_with_users.count()
         self.project_document_group_shared_total = project_document.filter(shared_with_groups__isnull=False).count()
         self.project_document_user_shared_total = project_document.filter(shared_with_users__isnull=False).count()
         self.project_documentpart_rows_words_total = re.sub(r'[^\w\s]','', raw_transcription_content)
         self.project_documentpart_vocabulary = dict(sorted(Counter(raw_transcription_content).items()))
-        self.project_documenttag_list = set(project_document.values_list('_document_per_tag', flat=True))
         self.project_lines_type = dict(Counter(project_document.values_list('_part_lines_count_typology', flat=True)))
         self.project_regions_type = dict(Counter(project_document.values_list('_part_lines_block_typology', flat=True)))
 
@@ -142,8 +140,7 @@ class ProjectReport:
             .annotate(_part_lines_block=Count('parts__lines__block', distinct=True))
             .annotate(_part_lines_count_typology=F('parts__lines__typology__name'))
             .annotate(_part_lines_block_typology=F('parts__lines__block__typology__name'))
-            .annotate(_document_per_tag=Concat('project__document_tags__name', V('∂'), Count('project__document_tags__tags_document', distinct=True), output_field=CharField()))
-            .only('shared_with_groups', 'shared_with_users', '_part_count', '_part_lines_count', '_part_lines_transcriptions', '_part_lines_block', '_document_per_tag','_part_lines_count_typology', '_part_lines_block_typology'))
+            .only('shared_with_groups', 'shared_with_users', '_part_count', '_part_lines_count', '_part_lines_transcriptions', '_part_lines_block', '_part_lines_count_typology', '_part_lines_block_typology'))
         
         for tag in tags:
             qs = qs.filter(tags__name=tag)

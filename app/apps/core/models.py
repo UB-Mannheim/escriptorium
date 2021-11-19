@@ -324,7 +324,7 @@ class Document(ExportModelOperationsMixin('Document'), models.Model):
                                                 verbose_name=_("Share with teams"),
                                                 related_name='shared_documents')
 
-    tags = models.ManyToManyField(DocumentTag, blank=True, related_name='tags_document')
+    tags = models.ManyToManyField(DocumentTag, blank=True)
 
     objects = DocumentManager()
 

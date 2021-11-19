@@ -18,6 +18,7 @@ def chunk_data(data):
 
 @register.filter
 def chunk_dict(data):
+    data.pop(" ")
     raw_data = list(data.items())
     val_dict = {str(i): {raw_data[i]} for i in range(len(raw_data))}
     return list(chunk_data(val_dict))

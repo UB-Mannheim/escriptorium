@@ -1,17 +1,10 @@
 {% extends 'core/project_nav.html' %}
-{% load i18n staticfiles thumbnail bootstrap report %}
-{% block head_title %}{% trans "My Documents" %}{% endblock %}
+{% load i18n staticfiles bootstrap report %}
+{% block head_title %}{% trans "Project reports" %}{% endblock %}
 
 {% block nav-reports-active %}active{% endblock %}
 
 {% block extra_nav %}
-{% if can_create_document %}
-<a href="{% url 'document-create' slug=project.slug %}" class="btn btn-success ml-auto mb-2">{% trans 'Create new Document' %}</a>
-{% endif %}
-
-{% if share_form %}
-<button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share this Project" %}"><i class="fas fa-share"></i></button>
-{% endif %}
 {% endblock %}
 
 {% block tab_content %}
@@ -26,15 +19,15 @@
     <div class="col-10">
         <div class="row d-flex justify-content-center">
             <div>
-                <div class="mb-4 row justify-content-center"><h4>Data metrics</h4></div>
+                <div class="mb-4 row justify-content-center"><h4>{% trans 'Data metrics' %}</h4></div>
                 <div class="mb-4 row">
                     <div class="col">
                         <div class="card border-primary text-center">
                             <i class="far fa-file-image card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of document parts' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_documentpart_total|default_if_none:0  }}</h2>
-                                <p class="card-text">A document part corresponds to one image loaded within a document.</p>
+                                <h2 class="card-title">{{ project_stats.project_documentpart_total|default_if_none:0  }}</h2>
+                                <p class="card-text">{% trans 'A document part corresponds to one image loaded within a document.' %}</p>
                             </div>
                         </div>
                     </div>
@@ -43,8 +36,8 @@
                             <i class="fas fa-th card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of regions' %}</h5>
-                                <h2 class="card-title"> {{ ProjectStats.project_documentpart_region_total|default_if_none:0 }} </h2>
-                                <p class="card-text">A region is a polygon drawn on a document part, grouping one, several or no line(s)
+                                <h2 class="card-title"> {{ project_stats.project_documentpart_regions_total|default_if_none:0 }} </h2>
+                                <p class="card-text">{% trans 'A region is a polygon drawn on a document part, grouping one, several or no line(s).' %}
 </p>
                             </div>
                         </div>
@@ -54,8 +47,8 @@
                             <i class="fas fa-stream card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of lines' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_documentpart_rows_total|default_if_none:0  }}</h2>
-                                <p class="card-text">A line is a segment of text identified on a document part, usually associated with a polygon (mask) and a transcription.</p>
+                                <h2 class="card-title">{{ project_stats.project_documentpart_rows_total|default_if_none:0  }}</h2>
+                                <p class="card-text">{% trans 'A line is a segment of text identified on a document part, usually associated with a polygon (mask) and a transcription.' %}</p>
                             </div>
                         </div>
                     </div>
@@ -64,8 +57,8 @@
                             <i class="far fa-file-word card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of words' %}</h5>
-                                <h2 class="card-title"> {{ ProjectStats.project_documentpart_rows_words_total|wordcount }} </h2>
-                                <p class="card-text">A word is any series of one or more characters, excepted punctuation signs and white spaces</p>
+                                <h2 class="card-title"> {{ project_stats.project_documentpart_rows_words_total|wordcount }} </h2>
+                                <p class="card-text">{% trans 'A word is any series of one or more characters, excepted punctuation signs and white spaces.' %}</p>
                             </div>
                         </div>
                     </div>
@@ -74,8 +67,8 @@
                             <i class="far fa-file-word card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of characters' %}</h5>
-                                <h2 class="card-title"> {{ ProjectStats.project_documentpart_rows_words_total|length }} </h2>
-                                <p class="card-text">A character is any symbol used in the transcription, including punctuation, excepted white spaces.</p>
+                                <h2 class="card-title"> {{ project_stats.project_documentpart_rows_words_total|length }} </h2>
+                                <p class="card-text">{% trans 'A character is any symbol used in the transcription, including punctuation, excepted white spaces.' %}</p>
                             </div>
                         </div>
                     </div>
@@ -90,18 +83,18 @@
                                 <table class="table">
                                     <tbody>
                                         <tr>
-                                        {% for item_v in ProjectStats.project_documentpart_vocabulary|chunk_dict %}
+                                        {% for item_v in project_stats.project_documentpart_vocabulary|chunk_dict %}
                                             <td>
                                             {% for key, value in item_v.items %}
-                                                {% for k, v in value %}
+                                                {% for char, frequency in value %}
                                                     <table>
                                                         <tr>
-                                                            <td>{{ k }}</td>
+                                                            <td>{{ char }}</td>
                                                             <td>
-                                                            {% if v < 50 %}
-                                                                <span style="color: red;">{{ v }}</span>
+                                                            {% if frequency < 50 %}
+                                                                <span style="color: red;">{{ frequency }}</span>
                                                             {% else %}
-                                                                <span>{{ v }}</span>
+                                                                <span>{{ frequency }}</span>
                                                             {% endif %}
                                                             </td>
                                                         </tr>
@@ -113,7 +106,7 @@
                                         </tr>
                                     <tbody>
                                 </table>
-                                <p class="card-text">The vocabulary is the list of all the characters currently used in the transcription of the document along with their frequency.</p>
+                                <p class="card-text">{% trans 'The vocabulary is the list of all the characters currently used in the transcription of the document along with their frequency.' %}</p>
                             </div>
                         </div>
                     </div>
@@ -128,14 +121,11 @@
                                 <h5 class="card-title">{% trans 'Current use of document tags' %}</h5>
                                 <table class="table">
                                     <tbody>
-                                        {% for tag in ProjectStats.project_documenttag_list %}
-                                            {% with tag|split:"∂" as tag_list %}
-                                                <tr>
-                                                    {% for t in tag_list %}
-                                                        <td>{{ t }}</td>
-                                                    {% endfor %}
-                                                </tr>
-                                            {% endwith %}
+                                        {% for tag in project.document_tags.all %}
+                                            <tr>
+                                                <td>{{ tag.name }}</td>
+                                                <td>{{ tag.tags_document.count }}</td>
+                                            </tr>
                                         {% endfor %}
                                     <tbody>
                                 </table>
@@ -161,7 +151,7 @@
                                 <h5 class="card-title">{% trans 'Current use of regions type' %}</h5>
                                 <table class="table">
                                     <tbody>
-                                        {% for key, value in ProjectStats.project_regions_type.items %}
+                                        {% for key, value in project_stats.project_regions_type.items %}
                                             <tr>
                                                 <td>
                                                     {{ key|default_if_none:"No type assigned" }}
@@ -181,7 +171,7 @@
                                 <h5 class="card-title">{% trans 'Current use of lines type' %}</h5>
                                 <table class="table">
                                     <tbody>
-                                        {% for key, value in ProjectStats.project_lines_type.items %}
+                                        {% for key, value in project_stats.project_lines_type.items %}
                                             <tr>
                                                 <td>
                                                     {{ key|default_if_none:"No type assigned" }}
@@ -203,7 +193,7 @@
                             <i class="fas fa-calendar-alt card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Created on' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_create_at|date }}</h2>
+                                <h2 class="card-title">{{ project_stats.project_created_at|date }}</h2>
                             </div>
                         </div>
                     </div>
@@ -212,7 +202,7 @@
                             <i class="fas fa-calendar-alt card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Last update on' %}</h5>
-                                <h2 class="card-title">{{ ProjectStats.project_update_at|date }}</h2>
+                                <h2 class="card-title">{{ project_stats.project_updated_at|date }}</h2>
                                 
                             </div>
                         </div>
@@ -221,7 +211,7 @@
                         <div class="card border-primary text-center">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title">{% trans 'Project shared with '%}  {{ProjectStats.project_shared_users_total}}  {% trans ' user(s)' %}</h5>
+                                <h5 class="card-title">{% trans 'Project shared with '%}  {{project_stats.project_shared_users_total}}  {% trans ' user(s)' %}</h5>
                             </div>
                         </div>
                     </div>
@@ -231,7 +221,7 @@
                         <div class="card border-primary text-center">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title">{% trans 'Project shared with '%}  {{ProjectStats.project_shared_group_total}}  {% trans ' group(s)' %}</h5>
+                                <h5 class="card-title">{% trans 'Project shared with '%}  {{project_stats.project_shared_group_total}}  {% trans ' group(s)' %}</h5>
                                 
                             </div>
                         </div>
@@ -240,7 +230,7 @@
                         <div class="card border-primary text-center">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title">{% trans 'Documents shared with  '%}  {{ProjectStats.project_document_user_shared_total}}  {% trans ' user(s)' %}</h5>
+                                <h5 class="card-title">{% trans 'Documents shared with  '%}  {{project_stats.project_document_user_shared_total}}  {% trans ' user(s)' %}</h5>
                                 
                             </div>
                         </div>
@@ -249,7 +239,7 @@
                         <div class="card border-primary text-center">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{ProjectStats.project_document_group_shared_total}}  {% trans ' group(s)' %}</h5>
+                                <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{project_stats.project_document_group_shared_total}}  {% trans ' group(s)' %}</h5>
                                 
                             </div>
                         </div>
@@ -263,11 +253,6 @@
 
 {% endblock %}
 
-{% block modals %}
-{% if share_form %}
-{% include 'core/share/share_project.html' %}
-{% endif %}
-{% endblock %}
 {% block scripts %}
   {{ block.super }}
   <script src="{% static 'doclist.js' %}" type="text/javascript"></script>
