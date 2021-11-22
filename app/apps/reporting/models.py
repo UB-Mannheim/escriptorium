@@ -134,12 +134,12 @@ class ProjectReport:
         qs = (Document
             .objects
             .filter(project=project)
-            .annotate(_part_count=Count('parts'))
-            .annotate(_part_lines_count=Count('parts__lines'))
-            .annotate(_part_lines_transcriptions=F('parts__lines__transcriptions__content'))
-            .annotate(_part_lines_block=Count('parts__lines__block', distinct=True))
-            .annotate(_part_lines_count_typology=F('parts__lines__typology__name'))
-            .annotate(_part_lines_block_typology=F('parts__lines__block__typology__name'))
+            .annotate(_part_count=Count('parts'),
+                        _part_lines_count=Count('parts__lines'),
+                        _part_lines_transcriptions=F('parts__lines__transcriptions__content'),
+                        _part_lines_block=Count('parts__lines__block', distinct=True),
+                        _part_lines_count_typology=F('parts__lines__typology__name'),
+                        _part_lines_block_typology=F('parts__lines__block__typology__name'))
             .only('shared_with_groups', 'shared_with_users', '_part_count', '_part_lines_count', '_part_lines_transcriptions', '_part_lines_block', '_part_lines_count_typology', '_part_lines_block_typology'))
         
         for tag in tags:

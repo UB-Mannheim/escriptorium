@@ -10,7 +10,7 @@ from django.views.generic.base import TemplateView
 
 from reporting.models import TaskReport, ProjectReport as ModelProjectReport
 from users.models import User
-from core.models import Project, Document
+from core.models import Project
 
 
 class ReportList(LoginRequiredMixin, ListView):
@@ -136,4 +136,3 @@ class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
         context['is_paginated'] = paginator.num_pages > 1
 
         return context
-
