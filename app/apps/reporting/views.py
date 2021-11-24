@@ -8,10 +8,11 @@ from django.utils.functional import cached_property
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
-from reporting.models import TaskReport, ProjectReport as ModelProjectReport
+from reporting.models import TaskReport
 from users.models import User
 from core.models import Project
 
+from django.contrib.postgres.aggregates.general import StringAgg
 
 class ReportList(LoginRequiredMixin, ListView):
     model = TaskReport

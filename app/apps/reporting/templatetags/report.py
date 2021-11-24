@@ -3,6 +3,8 @@ from django import template
 from itertools import islice
 from math import ceil
 
+from collections import Counter
+
 register = template.Library()
 
 @register.filter
@@ -18,7 +20,12 @@ def chunk_data(data):
 
 @register.filter
 def chunk_dict(data):
-    data.pop(" ")
-    raw_data = list(data.items())
+    raw_text = dict(sorted(Counter(data).items()))
+    raw_text.pop(" ")
+    raw_data = list(raw_text.items())
     val_dict = {str(i): {raw_data[i]} for i in range(len(raw_data))}
     return list(chunk_data(val_dict))
+
+@register.filter
+def count_items(value):
+    return dict(Counter(value.split('|'))).items()
