@@ -284,7 +284,7 @@ export default Vue.extend({
                     pastedData = e.clipboardData.getData('text/plain');
                 }
                 
-                var cursor = sel.getRangeAt(0);  // specific posiiton or range
+                var cursor = sel.getRangeAt(0);  // specific position or range
                 // for a range, delete content to clean data and to get resulting specific cursor position from it:
                 cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
 
