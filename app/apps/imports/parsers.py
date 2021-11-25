@@ -301,7 +301,12 @@ class XMLParser(ParserDocument):
             lt.save()
 
     def parse(self, start_at=0, override=False, user=None):
-        for pageTag in self.get_pages():
+        pages = self.get_pages()
+        n_pages = len(pages)
+        n_blocks = 0
+        n_lines = 0
+
+        for pageTag in pages:
             # find the filename to match with existing images
             filename = self.get_filename(pageTag)
             try:
@@ -323,7 +328,10 @@ class XMLParser(ParserDocument):
                         part.lines.all().delete()
                         part.blocks.all().delete()
 
-                    for block_id, blockTag in self.get_blocks(pageTag):
+                    blocks = self.get_blocks(pageTag)
+                    n_blocks += len(blocks)
+
+                    for block_id, blockTag in blocks:
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
                                 block = Block.objects.get(document_part=part, external_id=block_id)
@@ -346,8 +354,11 @@ class XMLParser(ParserDocument):
                                     block.save()
                         else:
                             block = None
+                    
+                        lines = self.get_lines(blockTag)
+                        n_lines += len(lines)
 
-                        for line_id, lineTag in self.get_lines(blockTag):
+                        for line_id, lineTag in lines:
                             if line_id:
                                 try:
                                     line = Line.objects.get(document_part=part, external_id=line_id)
@@ -380,7 +391,7 @@ class XMLParser(ParserDocument):
                                 self.make_transcription(line, lineTag, tc, user=user)
 
                 # TODO: store glyphs too
-                logger.info("Uncompressed and parsed %s" % self.file.name)
+                logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))
                 part.calculate_progress()
                 yield part
 
@@ -420,7 +431,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
     def get_blocks(self, pageTag):
         return [
             (b.get("ID"), b)
-            for b in pageTag.findall("PrintSpace/TextBlock", self.root.nsmap)
+            for b in pageTag.findall("PrintSpace//TextBlock", self.root.nsmap)
         ]
 
     def get_lines(self, blockTag):
