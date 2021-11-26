@@ -1,4 +1,4 @@
 <div class="form-check form-check-inline">
-  <input type="checkbox" name="{{ widget.name }}" id="{{ widget.id|default:widget.name }}" {% include "django/forms/widgets/attrs.html" %}>
+  <input type="checkbox" name="{{ widget.name }}" id="{{ widget.id|default:widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
   <label class="form-check-label" for="{{ widget.id|default:widget.name }}">{{ widget.attrs.title }}</label>
 </div>
