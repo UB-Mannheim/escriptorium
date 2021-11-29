@@ -163,20 +163,15 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                this.setImageAnnoTaxonomy(annotation.taxonomy);
+                this.setAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
                 this.$store.dispatch('imageAnnotations/delete', annotation.pk);
             }.bind(this));
         },
+        setAnnoTaxonomy(taxo) {
 
-        setThisAnnoTaxonomy(taxo) {
-            return this.setImageAnnoTaxonomy(taxo);
-        },
-
-        setImageAnnoTaxonomy(taxo) {
-            this.setAnnoTaxonomy(taxo);
             let marker_map = {
                 'Rectangle': 'rect',
                 'Polygon': 'polygon'

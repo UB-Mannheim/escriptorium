@@ -187,6 +187,11 @@ class TextAnnotationComponentSerializer(serializers.ModelSerializer):
         model = TextAnnotationComponentValue
         fields = ('pk', 'component', 'value')
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['component'] = AnnotationComponentSerializer(instance.component).data
+        return representation
+
 
 class ImageAnnotationSerializer(serializers.ModelSerializer):
     components = ImageAnnotationComponentSerializer(many=True)
@@ -194,7 +199,9 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImageAnnotation
-        fields = ('pk', 'part', 'comments', 'coordinates', 'taxonomy', 'components',
+        fields = ('pk', 'part', 'comments',
+                  'taxonomy', 'components',
+                  'coordinates',
                   'as_w3c')
 
     def create(self, data):
@@ -219,13 +226,14 @@ class ImageAnnotationSerializer(serializers.ModelSerializer):
 
 
 class TextAnnotationSerializer(serializers.ModelSerializer):
-    components = TextAnnotationComponentSerializer(many=True, source='text_components')
+    components = TextAnnotationComponentSerializer(many=True)
     as_w3c = serializers.ReadOnlyField()
 
     class Meta:
         model = TextAnnotation
         fields = ('pk', 'part', 'comments',
                   'taxonomy', 'components',
+                  'transcription',
                   'start_line', 'start_offset', 'end_line', 'end_offset',
                   'as_w3c')
 
