@@ -110,12 +110,13 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include 'includes/pagination.html' %}
       <tagsmodal
         :project-id="{{project.pk}}">
       </tagsmodal>
     </div>
   </div>
-  {% include 'includes/pagination.html' %}
+  
 
 {% endblock %}
 
