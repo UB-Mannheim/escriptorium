@@ -3,7 +3,6 @@ import json
 import logging
 import numpy as np
 import os.path
-import pathlib
 import shutil
 from itertools import groupby
 

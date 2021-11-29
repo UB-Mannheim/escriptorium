@@ -3,7 +3,6 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from channels.layers import get_channel_layer
-from django.conf import settings
 
 
 def get_group_name(user_pk):
