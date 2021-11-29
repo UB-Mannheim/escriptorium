@@ -387,3 +387,6 @@ QUOTA_CPU_MINUTES = int(os.environ['QUOTA_CPU_MINUTES']) if os.environ.get('QUOT
 # Limitation of GPU minutes usage per user over a week, should be defined as a positive integer in GPU-min
 # If set to None, users have unlimited GPU minutes capacity
 QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOTA_GPU_MINUTES') else None
+
+# Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
+QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
