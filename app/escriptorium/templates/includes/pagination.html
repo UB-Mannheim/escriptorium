@@ -1,30 +1,42 @@
-{% load i18n %}
+{% load i18n pagination %}
 
 {% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-end">
-    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-      <a class="page-link" href="{% if page_obj.has_previous %}?page={{page_obj.previous_page_number}}{% else %}#{% endif %}" tabindex="-1"><span aria-hidden="true">&laquo;</span> <span class="sr-only">{% trans "Previous" %}</span></a>
+    <li class="page-item">
+      <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
     </li>
 
     {% if page_obj.number > 1 %}
-    <li class="page-item">
-      <a class="page-link" title="{% trans 'First page' %}" href="?page=1">1</a>
+    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+      <a class="page-link" href="{% if page_obj.has_previous %}?{% url_replace request 'page' page_obj.previous_page_number %}{% else %}#{% endif %}" tabindex="-1"><span aria-hidden="true">&#139;</span> <span class="sr-only">{% trans "Previous" %}</span></a>
     </li>
     {% endif %}
 
-    <li class="page-item active">
-      <a class="page-link" href="#">{{page_obj.number}} <span class="sr-only">(current)</span></a>
+    <li class="page-item">
+      <select class="page-link h-100" onchange="location = this.value;">
+      {% for item in "x"|ljust:page_obj.paginator.num_pages %}
+        {% if page_obj.number == forloop.counter %}
+            <option value="?{% url_replace request 'page' page_obj.number %}" selected>
+                {{ page_obj.number }} out of {{ page_obj.paginator.num_pages }}
+            </option>
+        {% else %}
+            <option value="?{% url_replace request 'page' forloop.counter %}">
+                {{ forloop.counter }} out of {{ page_obj.paginator.num_pages }}
+            </option>
+        {% endif %}
+      {% endfor %}
+      </select>
     </li>
 
     {% if page_obj.number < page_obj.paginator.num_pages %}
-    <li class="page-item">
-      <a class="page-link" title="{% trans 'Last page' %}" href="?page={{page_obj.paginator.num_pages}}">{{page_obj.paginator.num_pages}}</a>
+    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{% if page_obj.has_next %}?{% url_replace request 'page' page_obj.next_page_number %}{% else %}#{% endif %}"><span aria-hidden="true">&#155;</span> <span class="sr-only">{% trans "Next" %}</span></a>
     </li>
     {% endif %}
 
-    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-      <a class="page-link" href="{% if page_obj.has_next %}?page={{page_obj.next_page_number}}{% else %}#{% endif %}"><span aria-hidden="true">&raquo;</span> <span class="sr-only">{% trans "Next" %}</span></a>
+    <li class="page-item">
+      <a class="page-link" title="{% trans 'Last page' %}" href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">&raquo;</a>
     </li>
   </ul>
 </nav>
