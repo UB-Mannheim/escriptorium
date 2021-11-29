@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from datetime import datetime, date, timedelta
@@ -12,6 +13,7 @@ from django.urls import reverse
 from escriptorium.utils import send_email
 from users.consumers import send_notification
 
+logger = logging.getLogger(__name__)
 MEGABYTES_TO_BYTES = 1048576
 
 
@@ -273,3 +275,20 @@ class GroupOwner(models.Model):
 
     def __str__(self):
         return str(self.group)
+
+
+class QuotaEvent(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quota_events')
+    # reached_disk_storage is to be defined in Mb
+    reached_disk_storage = models.PositiveIntegerField(null=True, blank=True)
+    reached_cpu = models.PositiveIntegerField(null=True, blank=True)
+    reached_gpu = models.PositiveIntegerField(null=True, blank=True)
+    sent = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def email_sent(self):
+        self.sent = True
+        self.save()
+
+    def email_error(self):
+        logger.info(f'Failed to send email to user {self.user.pk} to inform him that he reached one or more of his quotas')
