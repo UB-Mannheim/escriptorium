@@ -40,6 +40,7 @@ export function setupFormSet(form) {
         // need to use closest to work with nested formsets
         let input = ev.target;
         let row = input.closest('.js-formset-row');
+        if (row === null) return;
         // if it is the last row, we add a new one
         // :scope allows to only select direct children to deal with nested formsets
         let rows = row.parentNode.querySelectorAll(':scope > .js-formset-row');
