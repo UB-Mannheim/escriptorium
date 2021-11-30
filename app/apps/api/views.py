@@ -26,6 +26,7 @@ from api.serializers import (UserOnboardingSerializer,
                              BlockTypeSerializer,
                              LineTypeSerializer,
                              AnnotationTypeSerializer,
+                             AnnotationComponentSerializer,
                              AnnotationTaxonomySerializer,
                              ImageAnnotationSerializer,
                              TextAnnotationSerializer,
@@ -49,6 +50,7 @@ from core.models import (Project,
                          BlockType,
                          LineType,
                          AnnotationType,
+                         AnnotationComponent,
                          AnnotationTaxonomy,
                          ImageAnnotation,
                          TextAnnotation,
@@ -98,7 +100,7 @@ class TagViewSet(ModelViewSet):
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))
         return serializer.save(project=project)
-    
+
     def get_queryset(self):
         return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
 
@@ -346,6 +348,11 @@ class LineTypeViewSet(ModelViewSet):
 class AnnotationTypeViewSet(ModelViewSet):
     queryset = AnnotationType.objects.filter(public=True)
     serializer_class = AnnotationTypeSerializer
+
+
+class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationComponent.objects.all()
+    serializer_class = AnnotationComponentSerializer
 
 
 class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):

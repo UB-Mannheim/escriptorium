@@ -12,6 +12,7 @@ from api.views import (ProjectViewSet,
                        BlockTypeViewSet,
                        LineTypeViewSet,
                        AnnotationTypeViewSet,
+                       AnnotationComponentViewSet,
                        AnnotationTaxonomyViewSet,
                        LineTranscriptionViewSet,
                        ImageAnnotationViewSet,
@@ -37,6 +38,7 @@ documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='docu
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')
 documents_router.register(r'taxonomies/annotations', AnnotationTaxonomyViewSet)
+documents_router.register(r'taxonomies/components', AnnotationComponentViewSet)
 
 parts_router = routers.NestedSimpleRouter(documents_router, r'parts', lookup='part')
 parts_router.register(r'blocks', BlockViewSet)
