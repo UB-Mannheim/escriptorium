@@ -133,7 +133,7 @@ class AnnotationTypeSerializer(serializers.ModelSerializer):
 class AnnotationComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnotationComponent
-        fields = ('pk', 'name', 'allowed_values')
+        fields = ('pk', 'document', 'name', 'allowed_values')
 
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):

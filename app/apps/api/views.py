@@ -354,6 +354,9 @@ class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = AnnotationComponent.objects.all()
     serializer_class = AnnotationComponentSerializer
 
+    def get_queryset(self):
+        return super().get_queryset().filter(document=self.document)
+
 
 class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = AnnotationTaxonomy.objects.all()
