@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Max, Q, Count
+from django.db.models import Q, Count
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
