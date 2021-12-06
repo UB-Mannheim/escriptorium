@@ -435,10 +435,10 @@ def train_(qs, document, transcription, model=None, user=None):
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
-        model.training_epoch = epoch
-        model.training_accuracy = accuracy
+        model.training_epoch = int(epoch)
+        model.training_accuracy = float(accuracy)
         model.training_total = int(chars)
-        model.training_errors = error
+        model.training_errors = int(error)
         relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
         model.new_version(file=f'{relpath}/version_{epoch}.mlmodel')
         model.save()
@@ -446,10 +446,10 @@ def train_(qs, document, transcription, model=None, user=None):
         send_event('document', document.pk, "training:eval", {
             "id": model.pk,
             'versions': model.versions,
-            'epoch': epoch,
-            'accuracy': accuracy,
+            'epoch': int(epoch),
+            'accuracy': float(accuracy),
             'chars': int(chars),
-            'error': error})
+            'error': int(error)})
 
     trainer.run(_print_eval)
     best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
