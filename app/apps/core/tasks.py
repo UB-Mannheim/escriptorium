@@ -429,7 +429,7 @@ def train_(qs, document, transcription, model=None, user=None):
                                       evaluation_data=evaluation_data,
                                       resize='add',
                                       threads=LOAD_THREADS,
-                                      augment=True,
+                                      augment=False,
                                       hyper_params={'batch_size': 1},
                                       load_hyper_parameters=True))
 
