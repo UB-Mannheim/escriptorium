@@ -41,7 +41,7 @@ def update_client_state(part_id, task, status, task_id=None, data=None):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def generate_part_thumbnails(instance_pk, user_pk=None, **kwargs):
+def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
 
@@ -69,7 +69,7 @@ def generate_part_thumbnails(instance_pk, user_pk=None, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=3 * 60)
-def convert(instance_pk, user_pk=None, **kwargs):
+def convert(instance_pk=None, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -89,7 +89,7 @@ def convert(instance_pk, user_pk=None, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
-def lossless_compression(instance_pk, user_pk=None, **kwargs):
+def lossless_compression(instance_pk=None, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -109,7 +109,7 @@ def lossless_compression(instance_pk, user_pk=None, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def binarize(instance_pk, user_pk=None, binarizer=None, threshold=None, **kwargs):
+def binarize(instance_pk=None, user_pk=None, binarizer=None, threshold=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -160,7 +160,7 @@ def make_segmentation_training_data(part):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
+def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -304,7 +304,7 @@ def segtrain(task, model_pk, document_pk, part_pks, user_pk=None, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=5 * 60)
-def segment(instance_pk, user_pk=None, model_pk=None,
+def segment(instance_pk=None, user_pk=None, model_pk=None,
             steps=None, text_direction=None, override=None,
             **kwargs):
     """
@@ -357,7 +357,7 @@ def segment(instance_pk, user_pk=None, model_pk=None,
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
-def recalculate_masks(instance_pk, user_pk=None, only=None, **kwargs):
+def recalculate_masks(instance_pk=None, user_pk=None, only=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -457,7 +457,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
+def train(task, transcription_pk, model_pk, part_pks=None, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -518,7 +518,7 @@ def train(task, part_pks, transcription_pk, model_pk, user_pk=None, **kwargs):
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def transcribe(instance_pk, model_pk=None, user_pk=None, text_direction=None, **kwargs):
+def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=None, **kwargs):
 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -567,7 +567,7 @@ def check_signal_order(old_signal, new_signal):
 def before_publish_state(sender=None, body=None, **kwargs):
     if not sender.startswith('core.tasks') or sender.endswith('train'):
         return
-    instance_id = body[0][0]
+    instance_id = body[1]["instance_pk"]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
 
     signal_name = kwargs['signal'].name
@@ -597,7 +597,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
 def done_state(sender=None, body=None, **kwargs):
     if not sender.name.startswith('core.tasks') or sender.name.endswith('train'):
         return
-    instance_id = sender.request.args[0]
+    instance_id = sender.request.kwargs["instance_pk"]
 
     try:
         data = json.loads(redis_.get('process-%d' % instance_id) or '{}')

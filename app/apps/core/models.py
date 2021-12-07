@@ -893,28 +893,28 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
             raise AlreadyProcessingException
         tasks = []
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
-            sig = convert.si(self.pk, **kwargs)
+            sig = convert.si(instance_pk=self.pk, **kwargs)
 
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(chain(lossless_compression.si(self.pk, **kwargs),
-                               generate_part_thumbnails.si(self.pk, **kwargs)))
+                sig.link(chain(lossless_compression.si(instance_pk=self.pk, **kwargs),
+                               generate_part_thumbnails.si(instance_pk=self.pk, **kwargs)))
             else:
-                sig.link(lossless_compression.si(self.pk, **kwargs))
+                sig.link(lossless_compression.si(instance_pk=self.pk, **kwargs))
             tasks.append(sig)
 
         if task_name == 'binarize':
-            tasks.append(binarize.si(self.pk,
+            tasks.append(binarize.si(instance_pk=self.pk,
                                      report_label='Binarize in %s' % self.document.name,
                                      **kwargs))
 
         if (task_name == 'segment' or (task_name == 'transcribe'
                                        and not self.segmented)):
-            tasks.append(segment.si(self.pk,
+            tasks.append(segment.si(instance_pk=self.pk,
                                     report_label='Segment in %s' % self.document.name,
                                     **kwargs))
 
         if task_name == 'transcribe':
-            tasks.append(transcribe.si(self.pk,
+            tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
 
@@ -1333,14 +1333,14 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
-                       document.pk,
                        list(parts_qs.values_list('pk', flat=True)),
+                       document_pk=document.pk,
                        user_pk=user and user.pk or None)
 
     def train(self, parts_qs, transcription, user=None):
-        train.delay(list(parts_qs.values_list('pk', flat=True)),
-                    transcription.pk,
+        train.delay(transcription.pk,
                     model_pk=self.pk,
+                    parts_pk=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
 
     def cancel_training(self):
