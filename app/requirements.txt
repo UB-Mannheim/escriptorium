@@ -12,7 +12,7 @@ django-redis==4.10.0
 psycopg2-binary==2.7.6
 django-ordered-model==3.1.1
 easy-thumbnails==2.5
-git+https://github.com/mittagessen/kraken.git@3.0.5#egg=kraken
+kraken==3.0.6
 django-cleanup==5.1.0
 djangorestframework==3.9.2
 drf-nested-routers==0.91
@@ -24,5 +24,6 @@ albumentations
 django-simple-captcha==0.5.12
 pyvips==2.1.12
 scikit-image==0.17.2
+scikit-learn==0.19.2
 scipy==1.5.2
 django-prometheus

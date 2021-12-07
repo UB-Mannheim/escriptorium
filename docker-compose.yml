@@ -25,13 +25,13 @@ services:
       - 5000
 
   db:
-    image: postgres:10.5-alpine
+    image: docker.io/library/postgres:10.5-alpine
     volumes:
       - postgres:/var/lib/postgresql/data/
     env_file: variables.env
 
   redis:
-    image: sickp/alpine-redis:4.0.6
+    image: docker.io/sickp/alpine-redis:4.0.6
 
   nginx:
     image: registry.gitlab.com/scripta/escriptorium/nginx
@@ -88,7 +88,7 @@ services:
     shm_size: '3gb'
 
   flower:
-    image: mher/flower
+    image: docker.io/mher/flower
     command: ["celery", "flower", "--broker=redis://redis:6379/0", "--port=5555"]
     ports:
       - 5555:5555

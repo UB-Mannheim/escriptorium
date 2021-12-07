@@ -7,7 +7,7 @@
     {% csrf_token %}
     {% render_field form.file %}
     {% render_field form.name %}
-    <button type="submit" value="" class="nav-item btn btn-success">{% trans 'Upload' %}</button>
+    <button type="submit" value="" class="nav-item btn btn-success" {% if not has_disk_storage_left %}disabled title="You don't have any disk storage left"{% endif %}>{% trans 'Upload' %}</button>
 </form>
 {% endblock %}
 {% block scripts %}

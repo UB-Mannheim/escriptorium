@@ -566,7 +566,7 @@ export class Segmenter {
         this.reverseBtn = document.getElementById('be-reverse-selection');
         this.linkRegionBtn = document.getElementById('be-link-region');
         this.unlinkRegionBtn = document.getElementById('be-unlink-region');
-        this.setTypeBtn = document.getElementById('be-set-type')
+        this.setTypeBtn = document.getElementById('be-set-type');
 
         // editor settings;
         this.baselinesColorInput = document.getElementById('be-bl-color');
@@ -582,7 +582,7 @@ export class Segmenter {
         }
 
         // create a menu for the context buttons
-        this.contextMenu = document.getElementById('context-menu')
+        this.contextMenu = document.getElementById('context-menu');
         if (!this.contextMenu) {
             document.createElement('div');
             this.contextMenu.id = 'context-menu';
@@ -1714,7 +1714,7 @@ export class Segmenter {
         } else if (this.selection.regions.length) {
             this.regionTypesSelect.style.display = 'block';
             this.regionTypesSelect.style.top = this.setTypeBtn.offsetTop+'px';
-            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px'
+            this.regionTypesSelect.style.left = this.setTypeBtn.offsetLeft+this.setTypeBtn.clientWidth+10+'px';
             this.regionTypesSelect.focus();
             // if all type are the same selects it in the type selector
             if (this.selection.regions.every((reg, i, arr) => reg.type === arr[0].type)) {
