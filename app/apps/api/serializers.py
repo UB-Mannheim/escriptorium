@@ -410,7 +410,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in parts:
             part.chain_tasks(
-                segment.si(part.pk,
+                segment.si(instance_pk=part.pk,
                            user_pk=self.user.pk,
                            model_pk=model.pk,
                            steps=self.validated_data.get('steps'),
@@ -481,8 +481,9 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        segtrain.delay(model.pk if model else None, self.document.pk,
+        segtrain.delay(model.pk if model else None,
                        [part.pk for part in self.validated_data.get('parts')],
+                       document_pk=self.document.pk,
                        user_pk=self.user.pk)
 
 
@@ -548,10 +549,10 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        train.delay([part.pk for part in self.validated_data.get('parts')],
-                    self.validated_data['transcription'].pk,
+        train.delay(self.validated_data['transcription'].pk,
                     model.pk if model else None,
-                    self.user.pk)
+                    part_pks=[part.pk for part in self.validated_data.get('parts')],
+                    user_pk=self.user.pk)
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -580,7 +581,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in self.validated_data.get('parts'):
             part.chain_tasks(
-                transcribe.si(part.pk,
+                transcribe.si(instance_pk=part.pk,
                               model_pk=model.pk,
                               user_pk=self.user.pk)
             )
