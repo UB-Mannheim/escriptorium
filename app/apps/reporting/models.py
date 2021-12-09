@@ -6,6 +6,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from core.models import Document
+
 User = get_user_model()
 
 
@@ -42,6 +44,10 @@ class TaskReport(models.Model):
 
     cpu_cost = models.FloatField(blank=True, null=True)
     gpu_cost = models.FloatField(blank=True, null=True)
+
+    document = models.ForeignKey(
+        Document, blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
+    )
 
     def append(self, text):
         self.messages += text + '\n'
