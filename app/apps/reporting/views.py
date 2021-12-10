@@ -10,7 +10,7 @@ from django.views.generic.base import TemplateView
 
 from reporting.models import TaskReport
 from users.models import User
-from core.models import Project
+from core.models import Project, Document
 
 from django.contrib.postgres.aggregates.general import StringAgg
 

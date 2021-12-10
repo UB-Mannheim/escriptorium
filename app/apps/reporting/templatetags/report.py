@@ -4,12 +4,10 @@ from itertools import islice
 from math import ceil
 
 from collections import Counter
+from django.db.models import Sum
+from django.contrib.postgres.aggregates.general import StringAgg
 
 register = template.Library()
-
-@register.filter
-def split(value, char=None):
-    return value.split(char)
 
 def chunk_data(data):
     SIZE = ceil(len(data) / 12)
@@ -18,14 +16,28 @@ def chunk_data(data):
         for i in range(0, len(data), SIZE):
             yield {k:data[k] for k in islice(it, SIZE)}
 
+def get_aggregate(model, field, delimiter=' '):
+    return model.aggregate(data=StringAgg(field, delimiter=delimiter)).get('data')
+
+@register.filter
+def aggregate_value(model, field):
+    return get_aggregate(model, field)
+
 @register.filter
 def chunk_dict(data):
     raw_text = dict(sorted(Counter(data).items()))
-    raw_text.pop(" ")
+    if data:
+        raw_text.pop(" ")
     raw_data = list(raw_text.items())
     val_dict = {str(i): {raw_data[i]} for i in range(len(raw_data))}
     return list(chunk_data(val_dict))
 
 @register.filter
-def count_items(value):
-    return dict(Counter(value.split('|'))).items()
+def get_count(model, field):
+    value = model.aggregate(Sum(field)).get(field + '__sum')
+    return 0 if value is None else value
+
+@register.filter
+def get_typology_count(model, field):
+    value = get_aggregate(model, field, '|')
+    return dict(Counter(value.split('|'))).items() if value else ''
