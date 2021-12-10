@@ -1,8 +1,26 @@
 {% load i18n pagination %}
 
-{% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-end">
+    {% if paginate_by %}
+      <li class="page-item mr-3">
+        <select class="page-link h-100" onchange="location = this.value;">
+            <option value="?{% url_replace request 'paginate_by' 10 %}" 
+              {% if paginate_by == '10' %}selected{% endif %}>
+                {% trans "Show 10" %}
+            </option>
+            <option value="?{% url_replace request 'paginate_by' 20 %}"
+              {% if paginate_by == '20' %}selected{% endif %}>
+                {% trans "Show 20" %}
+            </option>
+            <option value="?{% url_replace request 'paginate_by' 50 %}"
+              {% if paginate_by == '50' %}selected{% endif %}>
+                {% trans "Show 50" %}
+            </option>
+        </select>
+      </li>
+    {% endif %}
+  {% if is_paginated %}
     <li class="page-item">
       <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
     </li>
@@ -18,11 +36,11 @@
       {% for item in "x"|ljust:page_obj.paginator.num_pages %}
         {% if page_obj.number == forloop.counter %}
             <option value="?{% url_replace request 'page' page_obj.number %}" selected>
-                {{ page_obj.number }} out of {{ page_obj.paginator.num_pages }}
+                {{ page_obj.number }} {% trans "out of" %} {{ page_obj.paginator.num_pages }}
             </option>
         {% else %}
             <option value="?{% url_replace request 'page' forloop.counter %}">
-                {{ forloop.counter }} out of {{ page_obj.paginator.num_pages }}
+                {{ forloop.counter }} {% trans "out of" %} {{ page_obj.paginator.num_pages }}
             </option>
         {% endif %}
       {% endfor %}
@@ -38,6 +56,7 @@
     <li class="page-item">
       <a class="page-link" title="{% trans 'Last page' %}" href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">&raquo;</a>
     </li>
+  {% endif %}
   </ul>
 </nav>
-{% endif %}
+

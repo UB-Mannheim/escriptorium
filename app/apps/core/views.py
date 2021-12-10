@@ -101,6 +101,7 @@ class DocumentsList(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
         context['document_tags'] = list(self.project.document_tags.values())
+        context['paginate_by'] = self.request.GET.get("paginate_by", self.paginate_by)
         if self.project.owner == self.request.user:
             context['share_form'] = ProjectShareForm(instance=self.project,
                                                      request=self.request)
@@ -119,6 +120,9 @@ class DocumentsList(LoginRequiredMixin, ListView):
         context['filters'] = self.request.GET.getlist('tags')
 
         return context
+    
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get("paginate_by", self.paginate_by)
 
 
 class DocumentMixin():
