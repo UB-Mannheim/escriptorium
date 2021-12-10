@@ -133,12 +133,12 @@ class AnnotationTypeSerializer(serializers.ModelSerializer):
 class AnnotationComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnotationComponent
-        fields = ('pk', 'document', 'name', 'allowed_values')
+        fields = ('pk', 'name', 'allowed_values')
 
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
     typology = AnnotationTypeSerializer(required=False)
-    components = AnnotationComponentSerializer(many=True, required=False)
+    # components = AnnotationComponentSerializer(many=True, required=False)
     marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=False)
 
     class Meta:
@@ -158,12 +158,12 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
             typo_data = None
         if typo_data:
             typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+        else:
+            typo = None
         taxo = AnnotationTaxonomy.objects.create(
             typology=typo, **data)
         for compo in components_data:
-            AnnotationComponent.objects.create(
-                taxonomy=taxo,
-                **compo)
+            taxo.components.add(compo)
         return taxo
 
 
