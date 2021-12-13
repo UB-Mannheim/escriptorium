@@ -18,6 +18,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from api.serializers import (UserOnboardingSerializer,
                              ProjectSerializer,
                              DocumentSerializer,
+                             DocumentTasksSerializer,
                              PartDetailSerializer,
                              PartSerializer,
                              PartMoveSerializer,
@@ -118,6 +119,22 @@ class DocumentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def tasks(self, request):
+        extra = {}
+        if not request.user.is_staff:
+            extra = {"owner": request.user}
+
+        documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
+
+        page = self.paginate_queryset(documents)
+        if page is not None:
+            serializer = DocumentTasksSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DocumentTasksSerializer(documents, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):

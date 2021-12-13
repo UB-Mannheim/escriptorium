@@ -48,7 +48,7 @@ class CoreFactory():
             slug="test",
             defaults={
                 "owner": kwargs.get('owner') or self.make_user(),
-                "name": "Unit test"
+                "name": kwargs.get('name') or "Unit test"
             }
         )
         return project
