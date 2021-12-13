@@ -3,7 +3,7 @@ import logging
 import html
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +27,7 @@ from core.models import (Project,
                          OcrModelDocument,
                          DocumentTag)
 from core.tasks import (segtrain, train, segment, transcribe)
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,29 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
+
+
+class DocumentTasksSerializer(serializers.ModelSerializer):
+    tasks_stats = serializers.SerializerMethodField()
+    last_started_task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ('pk', 'name', 'tasks_stats', 'last_started_task')
+
+    def get_tasks_stats(self, document):
+        stats = {state: 0 for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
+        stats.update(dict(document.reports.values('workflow_state').annotate(c=Count('pk')).values_list('workflow_state', 'c')))
+        stats = {str(TaskReport.WORKFLOW_STATE_CHOICES[state][1]): count for state, count in stats.items()}
+        return stats
+
+    def get_last_started_task(self, document):
+        try:
+            last_task = document.reports.latest('started_at')
+        except TaskReport.DoesNotExist:
+            return None
+
+        return last_task.started_at
 
 
 class PartSerializer(serializers.ModelSerializer):

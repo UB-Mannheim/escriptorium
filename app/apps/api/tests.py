@@ -170,6 +170,56 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         # won't work with dummy model and image
         # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
 
+    def test_list_document_with_tasks(self):
+        # Creating a new Document that self.doc.owner shouldn't see
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            resp = self.client.get(reverse('api:document-tasks'))
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [{
+            'pk': self.doc.pk,
+            'name': self.doc.name,
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6},
+            'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        }])
+
+    def test_list_document_with_tasks_staff_user(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        # Creating a new Document that self.doc.owner should also see since he is a staff member
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(8):
+            resp = self.client.get(reverse('api:document-tasks'))
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 2)
+        self.assertEqual(json['results'], [
+            {
+                'pk': other_doc.pk,
+                'name': other_doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0},
+                'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            },
+            {
+                'pk': self.doc.pk,
+                'name': self.doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6},
+                'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            },
+        ])
+
 
 class PartViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
