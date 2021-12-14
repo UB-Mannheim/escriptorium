@@ -22,7 +22,7 @@
                 <div class="mb-4 row justify-content-center"><h4>{% trans 'Data metrics' %}</h4></div>
                 <div class="mb-4 row">
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="far fa-file-image card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of document parts' %}</h5>
@@ -32,7 +32,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-th card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of regions' %}</h5>
@@ -43,7 +43,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-stream card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of lines' %}</h5>
@@ -54,7 +54,7 @@
                     </div>
                 {% with transcriptions=documents|aggregate_value:'part_lines_transcriptions' %}
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="far fa-file-word card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of words' %}</h5>
@@ -64,7 +64,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="far fa-file-word card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Total number of characters' %}</h5>
@@ -117,7 +117,7 @@
                 <div class="mb-4 row justify-content-center"><h4>{% trans 'Annotation' %}</h4></div>
                 <div class="mb-4 row">
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fa fa-tags card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Current use of document tags' %}</h5>
@@ -135,7 +135,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fa fa-tags card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Current use of part tags' %}</h5>
@@ -147,7 +147,7 @@
 
                 <div class="mb-4 row">
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fa fa-tags card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Current use of regions type' %}</h5>
@@ -167,7 +167,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fa fa-tags card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Current use of lines type' %}</h5>
@@ -191,26 +191,26 @@
                 <div class="mb-4 row justify-content-center"><h4>{% trans 'Project activity' %}</h4></div>
                 <div class="mb-4 row">
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-calendar-alt card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Created on' %}</h5>
-                                <h2 class="card-title">{{ object.created_at|date }}</h2>
+                                <h4>{{ object.created_at|date }}</h4>
                             </div>
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-calendar-alt card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Last update on' %}</h5>
-                                <h2 class="card-title">{{ object.updated_at|date }}</h2>
+                                <h4>{{ object.updated_at|date }}</h4>
                                 
                             </div>
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Project shared with '%}  {{object.shared_with_users.count}}  {% trans ' user(s)' %}</h5>
@@ -220,7 +220,7 @@
                 </div>
                 <div class="mb-4 row">
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
                                 <h5 class="card-title">{% trans 'Project shared with '%}  {{object.shared_with_groups.count}}  {% trans ' group(s)' %}</h5>
@@ -229,19 +229,19 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title">{% trans 'Documents shared with  '%}  {{object.documents_shared_with_users}} {% trans ' user(s)' %}</h5>
+                                <h5 class="card-title">{% trans 'Documents shared with  '%}  {{documents|get_count:'documents_shared_with_users'}} {% trans ' user(s)' %}</h5>
                                 
                             </div>
                         </div>
                     </div>
                     <div class="col">
-                        <div class="card border-primary text-center">
+                        <div class="card border-primary text-center h-100">
                             <i class="fas fa-share-square card-header"></i>
                             <div class="card-body">
-                                <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{object.documents_shared_with_groups}} {% trans ' group(s)' %}</h5>
+                                <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{documents|get_count:'documents_shared_with_groups'}} {% trans ' group(s)' %}</h5>
                                 
                             </div>
                         </div>

@@ -3,7 +3,7 @@ from django import template
 from itertools import islice
 from math import ceil
 
-from collections import Counter
+from collections import Counter, OrderedDict
 from django.db.models import Sum
 from django.contrib.postgres.aggregates.general import StringAgg
 
@@ -40,4 +40,4 @@ def get_count(model, field):
 @register.filter
 def get_typology_count(model, field):
     value = get_aggregate(model, field, '|')
-    return dict(Counter(value.split('|'))).items() if value else ''
+    return OrderedDict(Counter(value.split('|'))).items() if value else ''
