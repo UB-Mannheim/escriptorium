@@ -29,7 +29,7 @@
       <th>{% trans "No. of tasks" %}</th>
       <th>{% trans "Runtime" %}</th>
     </tr>
-    {% for user in object_list %}
+    {% for user in page_obj %}
     <tr>
       <td>{{ user.id }}</td>
       <td>{{ user.username }}</td>
