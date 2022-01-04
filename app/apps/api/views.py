@@ -57,6 +57,7 @@ from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +124,40 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=False, methods=['get'])
     def tasks(self, request):
         extra = {}
+
         if not request.user.is_staff:
-            extra = {"owner": request.user}
+            extra["owner"] = request.user
+        else:
+            # Filter results by owner
+            user_id_filter = request.GET.get('user_id')
+
+            if user_id_filter:
+                try:
+                    user_id_filter = int(user_id_filter)
+                except ValueError:
+                    return Response(
+                        {'error': 'Invalid user_id, it should be an int.'},
+                        status=400
+                    )
+
+                extra["owner"] = user_id_filter
+
+        # Filter results by querying their name
+        document_name_filter = request.GET.get('name')
+        if document_name_filter:
+            extra["name__icontains"] = document_name_filter
+
+        # Filter results by TaskReport.workflow_state
+        state_filter = request.GET.get('task_state', '').lower()
+        if state_filter:
+            mapped_labels = {label.lower():state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+            if state_filter not in mapped_labels:
+                return Response(
+                    {'error': 'Invalid task_state, it should match a valid workflow_state.'},
+                    status=400
+                )
+
+            extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
 
         documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
 
