@@ -458,10 +458,6 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
-    # def clean(self):
-    #     # check that we have data
-    #     pass
-
     @property
     def model_job(self):
         return OcrModel.MODEL_JOB_RECOGNIZE

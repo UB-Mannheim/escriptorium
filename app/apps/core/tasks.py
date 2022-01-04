@@ -457,7 +457,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def train(task, transcription_pk, model_pk, part_pks=None, user_pk=None, **kwargs):
+def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
