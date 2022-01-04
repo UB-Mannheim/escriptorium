@@ -1340,7 +1340,7 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     def train(self, parts_qs, transcription, user=None):
         train.delay(transcription.pk,
                     model_pk=self.pk,
-                    parts_pk=list(parts_qs.values_list('pk', flat=True)),
+                    part_pks=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
 
     def cancel_training(self):

@@ -100,10 +100,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['error'], {'parts': [
             'Segmentation training requires at least 2 images.']})
 
-    @unittest.skipIf(
-        os.environ.get("CI") is not None,
-        "Too heavy on resources"
-    )
+    @unittest.skip
     def test_segtrain_new_model(self):
         # This test breaks CI as it consumes too many resources
         self.client.force_login(self.doc.owner)
@@ -169,6 +166,162 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.content, b'{"status":"ok"}')
         # won't work with dummy model and image
         # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
+
+    def test_list_document_with_tasks(self):
+        # Creating a new Document that self.doc.owner shouldn't see
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            resp = self.client.get(reverse('api:document-tasks'))
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [{
+            'pk': self.doc.pk,
+            'name': self.doc.name,
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6},
+            'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        }])
+
+    def test_list_document_with_tasks_staff_user(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        # Creating a new Document that self.doc.owner should also see since he is a staff member
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(8):
+            resp = self.client.get(reverse('api:document-tasks'))
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 2)
+        self.assertEqual(json['results'], [
+            {
+                'pk': other_doc.pk,
+                'name': other_doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0},
+                'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            },
+            {
+                'pk': self.doc.pk,
+                'name': self.doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6},
+                'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            },
+        ])
+
+    def test_list_document_with_tasks_filter_wrong_user_id(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?user_id=blablabla')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json(), {'error': 'Invalid user_id, it should be an int.'})
+
+    def test_list_document_with_tasks_filter_user_id_disabled_for_normal_user(self):
+        # Creating a new Document that self.doc.owner shouldn't see
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            # Filtering by user_id but the user is not part of the staff so the filter will be ignored
+            resp = self.client.get(reverse('api:document-tasks') + f"?user_id={other_doc.owner.id}")
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [{
+            'pk': self.doc.pk,
+            'name': self.doc.name,
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6},
+            'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        }])
+
+    def test_list_document_with_tasks_filter_user_id(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            resp = self.client.get(reverse('api:document-tasks') + f"?user_id={other_doc.owner.id}")
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [
+            {
+                'pk': other_doc.pk,
+                'name': other_doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0},
+                'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            }
+        ])
+
+    def test_list_document_with_tasks_filter_name(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        other_doc = self.factory.make_document(name="other doc", project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            resp = self.client.get(reverse('api:document-tasks') + "?name=other")
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [
+            {
+                'pk': other_doc.pk,
+                'name': other_doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0},
+                'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            }
+        ])
+
+    def test_list_document_with_tasks_filter_wrong_task_state(self):
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?task_state=wrongstate')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json(), {'error': 'Invalid task_state, it should match a valid workflow_state.'})
+
+    def test_list_document_with_tasks_filter_task_state(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start(None, None)
+
+        self.client.force_login(self.doc.owner)
+        with self.assertNumQueries(6):
+            resp = self.client.get(reverse('api:document-tasks') + "?task_state=Running")
+
+        self.assertEqual(resp.status_code, 200)
+        json = resp.json()
+        self.assertEqual(json['count'], 1)
+        self.assertEqual(json['results'], [
+            {
+                'pk': other_doc.pk,
+                'name': other_doc.name,
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0},
+                'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            },
+        ])
 
 
 class PartViewSetTestCase(CoreFactoryTestCase):
