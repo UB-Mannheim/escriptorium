@@ -1,51 +1,55 @@
-import re
+import functools
+import itertools
+import json
 import logging
 import math
 import os
-import json
-import functools
+import random
+import re
 import subprocess
 import time
 import uuid
-from PIL import Image
 from datetime import datetime
-from shapely import affinity
-from shapely.geometry import Polygon, LineString
+import numpy as np
+from sklearn import preprocessing
+from sklearn.cluster import DBSCAN
 
-from django.db import models, transaction
-from django.db.models import Q, Prefetch
-from django.db.models.signals import pre_delete
+from PIL import Image
+from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
+from django.db import models, transaction
+from django.db.models import Q, Prefetch
+from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-
-from celery.task.control import inspect, revoke
-from celery import chain
+from django_prometheus.models import ExportModelOperationsMixin
 from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
-from ordered_model.models import OrderedModel
 from kraken import blla, rpred
 from kraken.binarization import nlbin
 from kraken.lib import vgsl, models as kraken_models
-from kraken.lib.util import is_bitonal
 from kraken.lib.segmentation import calculate_polygonal_environment
+from kraken.lib.util import is_bitonal
+from ordered_model.models import OrderedModel
+from shapely import affinity
+from shapely.geometry import Polygon, LineString
 
-from versioning.models import Versioned
+from celery import chain
 from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
+from core.utils import ColorField
 from core.validators import JSONSchemaValidator
 from users.consumers import send_event
 from users.models import User
-
-from django_prometheus.models import ExportModelOperationsMixin
+from versioning.models import Versioned
 
 redis_ = get_redis_connection()
 logger = logging.getLogger(__name__)
@@ -89,6 +93,33 @@ class BlockType(Typology):
 class LineType(Typology):
     pass
 
+
+def random_color():
+    return "#%06x" % random.randint(0, 0xFFFFFF)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=100)
+    color = ColorField(default=random_color)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+
+class DocumentTag(Tag):
+    project = models.ForeignKey('core.Project', blank=True,
+                                related_name='document_tags',
+                                on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('project', 'name')
+
+
+# class DocumentPartTag(Tag):
+#     pass
 
 class Metadata(ExportModelOperationsMixin('Metadata'), models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -145,7 +176,7 @@ class ProjectManager(models.Manager):
         return (self
                 .filter(Q(owner=user)
                         | Q(shared_with_users=user))
-                        #   | Q(shared_with_groups__user=user))
+                #   | Q(shared_with_groups__user=user))
                 .distinct())
 
     def for_user_read(self, user):
@@ -254,7 +285,8 @@ class Document(ExportModelOperationsMixin('Document'), models.Model):
         max_length=3,
         choices=READ_DIRECTION_CHOICES,
         default=READ_DIRECTION_LTR,
-        help_text=_("The read direction describes the order of the elements in the document, in opposition with the text direction which describes the order of the words in a line and is set by the script.")
+        help_text=_(
+            "The read direction describes the order of the elements in the document, in opposition with the text direction which describes the order of the words in a line and is set by the script.")
     )
     line_offset = models.PositiveSmallIntegerField(choices=LINE_OFFSET_CHOICES,
                                                    default=LINE_OFFSET_BASELINE,
@@ -283,6 +315,8 @@ class Document(ExportModelOperationsMixin('Document'), models.Model):
     shared_with_groups = models.ManyToManyField(Group, blank=True,
                                                 verbose_name=_("Share with teams"),
                                                 related_name='shared_documents')
+
+    tags = models.ManyToManyField(DocumentTag, blank=True)
 
     objects = DocumentManager()
 
@@ -346,6 +380,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     name = models.CharField(max_length=512, blank=True)
     image = models.ImageField(upload_to=document_images_path)
     original_filename = models.CharField(max_length=1024, blank=True)
+    image_file_size = models.BigIntegerField()
     source = models.CharField(max_length=1024, blank=True)
     bw_backend = models.CharField(max_length=128, default='kraken')
     bw_image = models.ImageField(upload_to=document_images_path,
@@ -441,10 +476,8 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         """
         read_direction = read_direction or self.document.read_direction
         # imgbox = ((0, 0), (self.image.width, self.image.height))
-        if read_direction == Document.READ_DIRECTION_RTL:
-            origin_box = [self.image.width, 0]
-        else:
-            origin_box = [0, 0]
+
+        origin_box = [self.image.width if read_direction == Document.READ_DIRECTION_RTL else 0, 0]
 
         def distance(x, y):
             return math.sqrt(sum([(a - b) ** 2 for a, b in zip(x, y)]))
@@ -452,27 +485,71 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         def poly_origin_pt(shape):
             return min(shape, key=lambda pt: distance(pt, origin_box))
 
-        def line_origin_pt(line):
-            if read_direction == Document.READ_DIRECTION_RTL:
-                return line[-1]
-            else:
-                return line[0]
+        def baseline_origin_pt(baseline_, read_direction_):
+            return baseline_[-1 if read_direction_ == Document.READ_DIRECTION_RTL else 0]
+
+        def line_origin_pt(line_, read_direction_):
+            return baseline_origin_pt(line_.baseline, read_direction_) if line_.baseline else poly_origin_pt(line_.mask)
+
+        def line_block_pk(line_):
+            return line_.block.pk if line_.block else 0
+
+        def avg_line_height_column(y_origins_np, line_labels):
+            """"Return the min of the averages line heights of the columns"""
+            labels = np.unique(line_labels)
+            line_heights_list = []
+            for label in labels:
+                y_origins_column = y_origins_np[line_labels == label]
+                column_height = (y_origins_column.max() - y_origins_column.min()) / y_origins_column.size
+                line_heights_list.append(column_height)
+            return min(line_heights_list)
+
+        def avg_line_height_block(lines_in_block, read_direction_):
+            """Returns the average line height in the block taking into account devising number of columns
+            based on x lines origins clustering. Key parameters of the algorithm:
+            x_cluster: tolerance used to gather lines in a column
+            line_height_decrease: scaling factor to avoid over gathering of lines"""
+            x_cluster, line_height_decrease = 0.1, 0.8
+
+            origins_np = np.array(list(map(lambda l: line_origin_pt(l, read_direction_), lines_in_block)))
+
+            # Devise the number of columns by performing DBSCAN clustering on x coordinate of line origins
+            x_origins_np = origins_np[:, 0].reshape(-1, 1)
+            scaler = preprocessing.MinMaxScaler()
+            scaler.fit(x_origins_np)
+            x_scaled = scaler.transform(x_origins_np)
+            clustering = DBSCAN(eps=x_cluster)
+            clustering.fit(x_scaled)
+
+            # Compute the average line size based on the guessed number of columns
+            y_origins_np = origins_np[:, 1]
+            return avg_line_height_column(y_origins_np, clustering.labels_) * line_height_decrease
+
+        def avg_lines_heights_dict(lines, read_direction_):
+            """Returns a dictionary with block.pk (or 0 if None) as keys and average lines height
+            in the block as values"""
+            sorted_by_block = sorted(lines, key=line_block_pk)
+            organized_by_block = itertools.groupby(sorted_by_block, key=line_block_pk)
+
+            avg_heights = {}
+            for block_pk, lines_in_block in organized_by_block:
+                avg_heights[block_pk] = avg_line_height_block(lines_in_block, read_direction_)
+            return avg_heights
 
         # fetch all lines and regroup them by block
         qs = self.lines.select_related('block').all()
         ls = list(qs)
         if len(ls) == 0:
             return
-        ords = list(map(lambda l: (line_origin_pt(l.baseline) if l.baseline
-                                   else poly_origin_pt(l.mask))[0], ls))
-        averageLineHeight = (max(ords) - min(ords)) / len(ords)
+
+        dict_avg_heights = avg_lines_heights_dict(ls, read_direction)
 
         def cmp_lines(a, b):
             # cache origin pts for efficiency
             if not hasattr(a, 'origin_pt'):
-                a.origin_pt = line_origin_pt(a.baseline) if a.baseline else poly_origin_pt(a.mask)
+                a.origin_pt = line_origin_pt(a, read_direction)
             if not hasattr(b, 'origin_pt'):
-                b.origin_pt = line_origin_pt(b.baseline) if b.baseline else poly_origin_pt(b.mask)
+                b.origin_pt = line_origin_pt(b, read_direction)
 
             try:
                 if a.block != b.block:
@@ -486,10 +563,11 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                     pt2 = b.origin_pt
 
                     # # 2 lines more or less on the same level
-                    if abs(pt1[1] - pt2[1]) < averageLineHeight:
+                    avg_height = dict_avg_heights[line_block_pk(a)]
+                    if abs(pt1[1] - pt2[1]) < avg_height:
                         return distance(pt1, origin_box) - distance(pt2, origin_box)
                 return pt1[1] - pt2[1]
-            except TypeError as e:  # invalid line
+            except TypeError:  # invalid line
                 return 0
 
         # sort depending on the distance to the origin
@@ -585,7 +663,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         try:
             return len([task for task in self.tasks
                         if getattr(task, 'timestamp', 0) +
-                        getattr(settings, 'TASK_RECOVER_DELAY', 60*60*24) > now]) != 0
+                        getattr(settings, 'TASK_RECOVER_DELAY', 60 * 60 * 24) > now]) != 0
         except KeyError:
             return True  # probably old school stored task
 
@@ -796,11 +874,11 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                         # 'selfcript_detection': True
                     }
                 it = rpred.rpred(
-                        model_, im,
-                        bounds=bounds,
-                        pad=16,  # TODO: % of the image?
-                        bidi_reordering=True)
-                lt, _ = LineTranscription.objects.get_or_create(
+                    model_, im,
+                    bounds=bounds,
+                    pad=16,  # TODO: % of the image?
+                    bidi_reordering=True)
+                lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=trans)
                 for pred in it:
                     lt.content = pred.prediction
@@ -824,28 +902,28 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
             raise AlreadyProcessingException
         tasks = []
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
-            sig = convert.si(self.pk, **kwargs)
+            sig = convert.si(instance_pk=self.pk, **kwargs)
 
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
-                sig.link(chain(lossless_compression.si(self.pk, **kwargs),
-                               generate_part_thumbnails.si(self.pk, **kwargs)))
+                sig.link(chain(lossless_compression.si(instance_pk=self.pk, **kwargs),
+                               generate_part_thumbnails.si(instance_pk=self.pk, **kwargs)))
             else:
-                sig.link(lossless_compression.si(self.pk, **kwargs))
+                sig.link(lossless_compression.si(instance_pk=self.pk, **kwargs))
             tasks.append(sig)
 
         if task_name == 'binarize':
-            tasks.append(binarize.si(self.pk,
+            tasks.append(binarize.si(instance_pk=self.pk,
                                      report_label='Binarize in %s' % self.document.name,
                                      **kwargs))
 
         if (task_name == 'segment' or (task_name == 'transcribe'
                                        and not self.segmented)):
-            tasks.append(segment.si(self.pk,
+            tasks.append(segment.si(instance_pk=self.pk,
                                     report_label='Segment in %s' % self.document.name,
                                     **kwargs))
 
         if task_name == 'transcribe':
-            tasks.append(transcribe.si(self.pk,
+            tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
 
@@ -896,13 +974,13 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         old_angle = angle_match and int(angle_match.group(1)) or 0
         new_angle = (old_angle + angle) % 360
 
-        def update_name(fpath, old_angle=old_angle,  new_angle=new_angle):
+        def update_name(fpath, old_angle=old_angle, new_angle=new_angle):
             # we need to change the name of the file to avoid all kind of cache issues
             if old_angle:
                 if new_angle:
-                    new_name = re.sub(r'(_rot)'+str(old_angle), r'\g<1>'+str(new_angle), fpath)
+                    new_name = re.sub(r'(_rot)' + str(old_angle), r'\g<1>' + str(new_angle), fpath)
                 else:
-                    new_name = re.sub(r'_rot'+str(old_angle), '', fpath)
+                    new_name = re.sub(r'_rot' + str(old_angle), '', fpath)
             else:
                 # if there was no angle before, there is one now
                 name, ext = os.path.splitext(fpath)
@@ -912,13 +990,13 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         # rotate image
         with Image.open(self.image.file.name) as im:
             # store center point while it's open with old bounds
-            center = (im.width/2, im.height/2)
-            rim = im.rotate(360-angle, expand=True, fillcolor=None)
+            center = (im.width / 2, im.height / 2)
+            rim = im.rotate(360 - angle, expand=True, fillcolor=None)
 
             # the image size is shifted so we need to calculate by which offset
             # to update points accordingly
-            new_center = (rim.width/2, rim.height/2)
-            offset = (center[0]-new_center[0], center[1]-new_center[1])
+            new_center = (rim.width / 2, rim.height / 2)
+            offset = (center[0] - new_center[0], center[1] - new_center[1])
 
             # Note: self.image.file.name (full path) != self.image.name (relative path)
             rim.save(update_name(self.image.file.name))
@@ -929,7 +1007,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         # rotate bw image
         if self.bw_image:
             with Image.open(self.bw_image.file.name) as im:
-                rim = im.rotate(360-angle, expand=True)
+                rim = im.rotate(360 - angle, expand=True)
                 rim.save(update_name(self.bw_image.file.name))
                 rim.close()
                 self.bw_image = update_name(self.bw_image.name)
@@ -942,16 +1020,16 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         for line in self.lines.all():
             if line.baseline:
                 poly = affinity.rotate(LineString(line.baseline), angle, origin=center)
-                line.baseline = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.coords]
+                line.baseline = [(int(x - offset[0]), int(y - offset[1])) for x, y in poly.coords]
             if line.mask:
                 poly = affinity.rotate(Polygon(line.mask), angle, origin=center)
-                line.mask = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+                line.mask = [(int(x - offset[0]), int(y - offset[1])) for x, y in poly.exterior.coords]
             line.save()
 
         # rotate regions
         for region in self.blocks.all():
             poly = affinity.rotate(Polygon(region.box), angle, origin=center)
-            region.box = [(int(x-offset[0]), int(y-offset[1])) for x, y in poly.exterior.coords]
+            region.box = [(int(x - offset[0]), int(y - offset[1])) for x, y in poly.exterior.coords]
             region.save()
 
     def crop(self, x1, y1, x2, y2):
@@ -973,13 +1051,13 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
 
         for line in self.lines.all():
             if line.baseline:
-                line.baseline = [(int(x-x1), int(y-y1)) for x, y in line.baseline]
+                line.baseline = [(int(x - x1), int(y - y1)) for x, y in line.baseline]
             if line.mask:
-                line.mask = [(int(x-x1), int(y-y1)) for x, y in line.mask]
+                line.mask = [(int(x - x1), int(y - y1)) for x, y in line.mask]
             line.save()
 
         for region in self.blocks.all():
-            region.box = [(int(x-x1), int(y-y1)) for x, y in region.box]
+            region.box = [(int(x - x1), int(y - y1)) for x, y in region.box]
             region.save()
 
     def enforce_line_order(self):
@@ -1043,7 +1121,7 @@ class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
     def coordinates_box(self):
         """
         Cast the box field to the format [xmin, ymin, xmax, ymax]
-        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for Alto
+        to make it usable to calculate VPOS, HPOS, WIDTH, HEIGHT for ALTO
         """
         return [*map(min, *self.box), *map(max, *self.box)]
 
@@ -1067,11 +1145,11 @@ class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
 class LineManager(models.Manager):
     def prefetch_transcription(self, transcription):
         return (self.get_queryset().order_by('order')
-                                   .prefetch_related(
-                                       Prefetch('transcriptions',
-                                                to_attr='transcription',
-                                                queryset=LineTranscription.objects.filter(
-                                                    transcription=transcription))))
+            .prefetch_related(
+            Prefetch('transcriptions',
+                     to_attr='transcription',
+                     queryset=LineTranscription.objects.filter(
+                         transcription=transcription))))
 
 
 class Line(OrderedModel):  # Versioned,
@@ -1129,6 +1207,11 @@ class Line(OrderedModel):  # Versioned,
 
     def make_external_id(self):
         self.external_id = 'eSc_line_%s' % str(uuid.uuid4())[:8]
+
+    def clean(self):
+        super().clean()
+        if self.baseline is None and self.mask is None:
+            raise ValidationError(_('Both baseline and mask are empty.'))
 
     def save(self, *args, **kwargs):
         if self.external_id is None:
@@ -1228,6 +1311,7 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
     file = models.FileField(upload_to=models_path, null=True,
                             validators=[FileExtensionValidator(
                                 allowed_extensions=['mlmodel'])])
+    file_size = models.BigIntegerField()
 
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
@@ -1274,7 +1358,8 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
             public=False,
             script=self.script,
             parent=self,
-            versions=[]
+            versions=[],
+            file_size=self.file.size
         )
         model.file = File(self.file, name=os.path.basename(self.file.name))
         model.save()
@@ -1290,14 +1375,14 @@ class OcrModel(ExportModelOperationsMixin('OcrModel'), Versioned, models.Model):
 
     def segtrain(self, document, parts_qs, user=None):
         segtrain.delay(self.pk,
-                       document.pk,
                        list(parts_qs.values_list('pk', flat=True)),
+                       document_pk=document.pk,
                        user_pk=user and user.pk or None)
 
     def train(self, parts_qs, transcription, user=None):
-        train.delay(list(parts_qs.values_list('pk', flat=True)),
-                    transcription.pk,
+        train.delay(transcription.pk,
                     model_pk=self.pk,
+                    part_pks=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
 
     def cancel_training(self):
@@ -1347,8 +1432,8 @@ class OcrModelDocument(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='ocr_model_documents')
     ocr_model = models.ForeignKey(OcrModel, on_delete=models.CASCADE, related_name='ocr_model_documents')
     created_at = models.DateTimeField(auto_now_add=True)
-    trained_on = models.DateTimeField(null=True)
-    executed_on = models.DateTimeField(null=True)
+    trained_on = models.DateTimeField(null=True, blank=True)
+    executed_on = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = (('document', 'ocr_model'),)
@@ -1367,8 +1452,8 @@ class OcrModelRight(models.Model):
             models.CheckConstraint(
                 name='user_xor_group',
                 check=(
-                    models.Q(group_id__isnull=False, user_id__isnull=True)
-                    | models.Q(group_id__isnull=True, user_id__isnull=False)
+                        models.Q(group_id__isnull=False, user_id__isnull=True)
+                        | models.Q(group_id__isnull=True, user_id__isnull=False)
                 )
             )
         ]

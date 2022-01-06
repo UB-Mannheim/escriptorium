@@ -3,7 +3,7 @@ import logging
 import html
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -24,8 +24,10 @@ from core.models import (Project,
                          LineType,
                          Script,
                          OcrModel,
-                         OcrModelDocument)
+                         OcrModelDocument,
+                         DocumentTag)
 from core.tasks import (segtrain, train, segment, transcribe)
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +117,12 @@ class LineTypeSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
+class TagDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentTag
+        fields = ("pk", "name", "color")
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
                                                queryset=Script.objects.all())
@@ -129,7 +137,7 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset',
-                  'valid_block_types', 'valid_line_types', 'parts_count',
+                  'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
                   'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
@@ -146,8 +154,32 @@ class DocumentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This script does not exists in the database.')
 
 
+class DocumentTasksSerializer(serializers.ModelSerializer):
+    tasks_stats = serializers.SerializerMethodField()
+    last_started_task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ('pk', 'name', 'tasks_stats', 'last_started_task')
+
+    def get_tasks_stats(self, document):
+        stats = {state: 0 for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
+        stats.update(dict(document.reports.values('workflow_state').annotate(c=Count('pk')).values_list('workflow_state', 'c')))
+        stats = {str(TaskReport.WORKFLOW_STATE_CHOICES[state][1]): count for state, count in stats.items()}
+        return stats
+
+    def get_last_started_task(self, document):
+        try:
+            last_task = document.reports.latest('started_at')
+        except TaskReport.DoesNotExist:
+            return None
+
+        return last_task.started_at
+
+
 class PartSerializer(serializers.ModelSerializer):
     image = ImageField(required=False, thumbnails=['card', 'large'])
+    image_file_size = serializers.IntegerField(required=False)
     filename = serializers.CharField(read_only=True)
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
@@ -162,6 +194,7 @@ class PartSerializer(serializers.ModelSerializer):
             'title',
             'typology',
             'image',
+            'image_file_size',
             'bw_image',
             'workflow',
             'order',
@@ -171,9 +204,14 @@ class PartSerializer(serializers.ModelSerializer):
         )
 
     def create(self, data):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
+            raise serializers.ValidationError(_("You don't have any disk storage left."))
+
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
+        data['image_file_size'] = data['image'].size
         obj = super().create(data)
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
@@ -308,24 +346,45 @@ class OcrModelSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     job = DisplayChoiceField(choices=OcrModel.MODEL_JOB_CHOICES)
     training = serializers.ReadOnlyField()
+    file_size = serializers.IntegerField(required=False)
 
     class Meta:
         model = OcrModel
-        fields = ('pk', 'name', 'file', 'job',
+        fields = ('pk', 'name', 'file', 'file_size', 'job',
                   'owner', 'training', 'versions')
 
     def create(self, data):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
+            raise serializers.ValidationError(_("You don't have any disk storage left."))
+
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['owner'] = self.context["view"].request.user
+        data['file_size'] = data['file'].size
         obj = super().create(data)
         return obj
 
 
 class ProcessSerializerMixin():
+    CHECK_GPU_QUOTA = False
+    CHECK_DISK_QUOTA = False
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
+
+    def validate(self, data):
+        data = super().validate(data)
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise serializers.ValidationError(_("You don't have any CPU minutes left."))
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise serializers.ValidationError(_("You don't have any GPU minutes left."))
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise serializers.ValidationError(_("You don't have any disk storage left."))
+        return data
 
 
 class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -350,7 +409,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     model = serializers.PrimaryKeyRelatedField(required=False,
                                                allow_null=True,
                                                queryset=OcrModel.objects.all())
-    override = serializers.BooleanField(required=False, default=True)
+    override = serializers.BooleanField(required=False, default=False)
     text_direction = serializers.ChoiceField(default='horizontal-lr',
                                              required=False,
                                              choices=TEXT_DIRECTION_CHOICES)
@@ -375,7 +434,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in parts:
             part.chain_tasks(
-                segment.si(part.pk,
+                segment.si(instance_pk=part.pk,
                            user_pk=self.user.pk,
                            model_pk=model.pk,
                            steps=self.validated_data.get('steps'),
@@ -408,6 +467,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
@@ -430,7 +490,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 owner=self.user,
                 name=self.validated_data['model_name'],
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
-                file=file_
+                file=file_,
+                file_size=file_.size if file_ else 0
             )
         elif not override:
             model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
@@ -444,12 +505,16 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        segtrain.delay(model.pk if model else None, self.document.pk,
+        segtrain.delay(model.pk if model else None,
                        [part.pk for part in self.validated_data.get('parts')],
+                       document_pk=self.document.pk,
                        user_pk=self.user.pk)
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
+    CHECK_GPU_QUOTA = True
+    CHECK_DISK_QUOTA = True
+
     parts = serializers.PrimaryKeyRelatedField(many=True,
                                                queryset=DocumentPart.objects.all())
     model = serializers.PrimaryKeyRelatedField(required=False,
@@ -470,6 +535,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
                     _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
@@ -492,7 +558,9 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 owner=self.user,
                 name=self.validated_data['model_name'],
                 job=OcrModel.MODEL_JOB_RECOGNIZE,
-                file=file_)
+                file=file_,
+                file_size=file_.size if file_ else 0
+            )
         elif not override:
             model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
 
@@ -505,10 +573,10 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        train.delay([part.pk for part in self.validated_data.get('parts')],
-                    self.validated_data['transcription'].pk,
+        train.delay(self.validated_data['transcription'].pk,
                     model.pk if model else None,
-                    self.user.pk)
+                    part_pks=[part.pk for part in self.validated_data.get('parts')],
+                    user_pk=self.user.pk)
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -537,7 +605,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in self.validated_data.get('parts'):
             part.chain_tasks(
-                transcribe.si(part.pk,
+                transcribe.si(instance_pk=part.pk,
                               model_pk=model.pk,
                               user_pk=self.user.pk)
             )

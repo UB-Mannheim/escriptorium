@@ -1,7 +1,7 @@
 {
   "name": "escriptorium",
   "version": "0.1.0",
-  "description": "Escriptorium Frontend project",
+  "description": "eScriptorium Frontend project",
   "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.dev.js",
@@ -11,8 +11,9 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.0",
     "@teklia/virtual-keyboard": "^0.2.1",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "bootstrap": "^4.2.1",
+    "bootstrap-select": "^1.13.18",
     "css-loader": "^5.0.1",
     "diff": "^4.0.1",
     "dropzone": "^5.9.2",
@@ -21,7 +22,7 @@
     "jquery": "^3.3.1",
     "jquery-ui-dist": "^1.12.1",
     "js-cookie": "^2.2.0",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.21",
     "mathjs": "^7.0.0",
     "moment": "^2.23.0",
     "moment-timezone": "^0.5.23",
@@ -32,6 +33,7 @@
     "style-loader": "^2.0.0",
     "undo-manager": "^1.0.5",
     "vue": "^2.6.11",
+    "vue-filter-pretty-bytes": "^0.1.6",
     "vue-loader": "^15.9.6",
     "vue-template-compiler": "^2.6.11",
     "vuex": "^3.6.0"

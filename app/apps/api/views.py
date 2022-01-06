@@ -18,6 +18,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from api.serializers import (UserOnboardingSerializer,
                              ProjectSerializer,
                              DocumentSerializer,
+                             DocumentTasksSerializer,
                              PartDetailSerializer,
                              PartSerializer,
                              PartMoveSerializer,
@@ -34,7 +35,8 @@ from api.serializers import (UserOnboardingSerializer,
                              SegTrainSerializer,
                              ScriptSerializer,
                              TranscribeSerializer,
-                             OcrModelSerializer)
+                             OcrModelSerializer,
+                             TagDocumentSerializer)
 
 from core.models import (Project,
                          Document,
@@ -47,14 +49,15 @@ from core.models import (Project,
                          LineTranscription,
                          OcrModel,
                          Script,
-                         AlreadyProcessingException)
+                         AlreadyProcessingException,
+                         DocumentTag)
 
 from core.tasks import recalculate_masks
 from users.models import User
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from versioning.models import NoChangeException
-
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +86,19 @@ class ProjectViewSet(ModelViewSet):
     paginate_by = 10
 
 
+class TagViewSet(ModelViewSet):
+    queryset = DocumentTag.objects.all()
+    serializer_class = TagDocumentSerializer
+    paginate_by = 10
+
+    def perform_create(self, serializer):
+        project = Project.objects.get(pk=self.kwargs.get('project_pk'))
+        return serializer.save(project=project)
+    
+    def get_queryset(self):
+        return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
+
+
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
@@ -104,6 +120,54 @@ class DocumentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def tasks(self, request):
+        extra = {}
+
+        if not request.user.is_staff:
+            extra["owner"] = request.user
+        else:
+            # Filter results by owner
+            user_id_filter = request.GET.get('user_id')
+
+            if user_id_filter:
+                try:
+                    user_id_filter = int(user_id_filter)
+                except ValueError:
+                    return Response(
+                        {'error': 'Invalid user_id, it should be an int.'},
+                        status=400
+                    )
+
+                extra["owner"] = user_id_filter
+
+        # Filter results by querying their name
+        document_name_filter = request.GET.get('name')
+        if document_name_filter:
+            extra["name__icontains"] = document_name_filter
+
+        # Filter results by TaskReport.workflow_state
+        state_filter = request.GET.get('task_state', '').lower()
+        if state_filter:
+            mapped_labels = {label.lower():state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+            if state_filter not in mapped_labels:
+                return Response(
+                    {'error': 'Invalid task_state, it should match a valid workflow_state.'},
+                    status=400
+                )
+
+            extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
+
+        documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
+
+        page = self.paginate_queryset(documents)
+        if page is not None:
+            serializer = DocumentTasksSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DocumentTasksSerializer(documents, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
@@ -252,10 +316,13 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reset_masks(self, request, document_pk=None, pk=None):
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not request.user.has_free_cpu_minutes():
+            return Response({'error': "You don't have any CPU minutes left."}, status=status.HTTP_400_BAD_REQUEST)
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
-        recalculate_masks.delay(part.pk, user_pk=request.user.pk, only=only)
+        recalculate_masks.delay(instance_pk=part.pk, user_pk=request.user.pk, only=only)
         return Response({'status': 'ok'})
 
     @action(detail=True, methods=['post'])

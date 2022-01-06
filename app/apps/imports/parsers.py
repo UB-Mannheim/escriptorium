@@ -1,4 +1,3 @@
-from collections import defaultdict
 import json
 import logging
 import os.path
@@ -32,6 +31,8 @@ logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
+class DiskQuotaReachedError(Exception):
+    pass
 
 class ParseError(Exception):
     pass
@@ -96,13 +97,21 @@ class PdfParser(ParserDocument):
         n_pages = doc.get('n-pages')
         try:
             for page_nb in range(start_at, n_pages):
+                # If quotas are enforced, assert that the user still has free disk storage
+                if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                    raise DiskQuotaReachedError(
+                        _(f"You ran out of disk storage. {n_pages - page_nb} pages were left to import (over {n_pages - start_at})")
+                    )
+
                 page = pyvips.Image.pdfload_buffer(buff,
                                                    page=page_nb,
                                                    dpi=300,
                                                    access='sequential')
                 part = DocumentPart(document=self.document)
                 fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb+1)
+                part.image_file_size = 0
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
+                part.image_file_size = part.image.size
                 part.original_filename = fname
                 part.save()
                 yield part
@@ -118,7 +127,7 @@ class PdfParser(ParserDocument):
 
 class ZipParser(ParserDocument):
     """
-    For now only deals with a flat list of Alto files
+    For now only deals with a flat list of ALTO files
     """
 
     DEFAULT_NAME = _("Zip Import")
@@ -144,6 +153,7 @@ class ZipParser(ParserDocument):
 
     def parse(self, start_at=0, override=False, user=None):
         with zipfile.ZipFile(self.file) as zfh:
+            total = len(zfh.infolist())
             for index, finfo in enumerate(zfh.infolist()):
                 if index < start_at:
                     continue
@@ -152,6 +162,11 @@ class ZipParser(ParserDocument):
                         file_extension = os.path.splitext(zipedfh.name)[1][1:]
                         # image
                         if file_extension.lower() in get_available_image_extensions():
+                            # If quotas are enforced, assert that the user still has free disk storage
+                            if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                                raise DiskQuotaReachedError(
+                                    _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
+                                )
                             try:
                                 part = DocumentPart.objects.filter(
                                     document=self.document,
@@ -162,7 +177,9 @@ class ZipParser(ParserDocument):
                                     document=self.document,
                                     original_filename=zipedfh.name
                                 )
+                            part.image_file_size = 0
                             part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
+                            part.image_file_size = part.image.size
                             part.save()
 
                         # xml
@@ -170,7 +187,7 @@ class ZipParser(ParserDocument):
                             parser = make_parser(self.document, zipedfh,
                                                  name=self.name, report=self.report)
 
-                            for part in parser.parse(override=override):
+                            for part in parser.parse(override=override, user=user):
                                 yield part
                     except IndexError:
                         # no file extension!?
@@ -283,7 +300,12 @@ class XMLParser(ParserDocument):
             lt.save()
 
     def parse(self, start_at=0, override=False, user=None):
-        for pageTag in self.get_pages():
+        pages = self.get_pages()
+        n_pages = len(pages)
+        n_blocks = 0
+        n_lines = 0
+
+        for pageTag in pages:
             # find the filename to match with existing images
             filename = self.get_filename(pageTag)
             try:
@@ -305,7 +327,10 @@ class XMLParser(ParserDocument):
                         part.lines.all().delete()
                         part.blocks.all().delete()
 
-                    for block_id, blockTag in self.get_blocks(pageTag):
+                    blocks = self.get_blocks(pageTag)
+                    n_blocks += len(blocks)
+
+                    for block_id, blockTag in blocks:
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
                                 block = Block.objects.get(document_part=part, external_id=block_id)
@@ -322,14 +347,17 @@ class XMLParser(ParserDocument):
                                 except ValidationError as e:
                                     if self.report:
                                         self.report.append(
-                                            "Block in '{filen}' line N°{line} was skipped because: {error}".format(
+                                            _("Block in '{filen}' line N°{line} was skipped because: {error}").format(
                                                 filen=self.file.name, line=blockTag.sourceline, error=e))
                                 else:
                                     block.save()
                         else:
                             block = None
+                    
+                        lines = self.get_lines(blockTag)
+                        n_lines += len(lines)
 
-                        for line_id, lineTag in self.get_lines(blockTag):
+                        for line_id, lineTag in lines:
                             if line_id:
                                 try:
                                     line = Line.objects.get(document_part=part, external_id=line_id)
@@ -347,9 +375,12 @@ class XMLParser(ParserDocument):
                                 line.full_clean()
                             except ValidationError as e:
                                 if self.report:
-                                    self.report.append("Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}".format(
-                                        filen=self.file.name, line=blockTag.sourceline,
-                                        lineid=line_id, error=e))
+                                    self.report.append(
+                                        _("Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}")
+                                        .format(filen=self.file.name,
+                                                line=blockTag.sourceline,
+                                                lineid=line_id,
+                                                error=e))
                             else:
                                 line.save()
 
@@ -359,13 +390,13 @@ class XMLParser(ParserDocument):
                                 self.make_transcription(line, lineTag, tc, user=user)
 
                 # TODO: store glyphs too
-                logger.info("Uncompressed and parsed %s" % self.file.name)
+                logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))
                 part.calculate_progress()
                 yield part
 
 
 class AltoParser(XMLParser):
-    DEFAULT_NAME = _("Default Alto Import")
+    DEFAULT_NAME = _("Default ALTO Import")
     escriptorium_alto = "https://gitlab.inria.fr/scripta/escriptorium/-/raw/develop/app/escriptorium/static/alto-4-1-baselines.xsd"
 
     ACCEPTED_SCHEMAS = (
@@ -388,7 +419,7 @@ class AltoParser(XMLParser):
             ).text
         except (IndexError, AttributeError) as e:
             raise ParseError("""
-The alto file should contain a Description/sourceImageInformation/fileName tag for matching.
+The ALTO file should contain a Description/sourceImageInformation/fileName tag for matching.
             """)
         else:
             return filename
@@ -399,7 +430,7 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
     def get_blocks(self, pageTag):
         return [
             (b.get("ID"), b)
-            for b in pageTag.findall("PrintSpace/TextBlock", self.root.nsmap)
+            for b in pageTag.findall("PrintSpace//TextBlock", self.root.nsmap)
         ]
 
     def get_lines(self, blockTag):
@@ -449,8 +480,8 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = ("Invalid baseline %s in {filen} line {linen}" %
-                           (baseline, self.file.name, lineTag.sourceline))
+                    msg = _("Invalid baseline %s in {filen} line {linen}").format(
+                        baseline, self.file.name, lineTag.sourceline)
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)
@@ -468,7 +499,7 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
                 coords = tuple(map(float, polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                msg = "Invalid polygon %s in {filen} line {linen}" % (polygon, self.file.name, lineTag.sourceline)
+                msg = "Invalid polygon %s in %s line %d" % (polygon, self.file.name, lineTag.sourceline)
                 logger.warning(msg)
                 if self.report:
                     self.report.append(msg)
@@ -501,7 +532,7 @@ The alto file should contain a Description/sourceImageInformation/fileName tag f
 
 
 class PagexmlParser(XMLParser):
-    DEFAULT_NAME = _("Default PageXML Import")
+    DEFAULT_NAME = _("Default PAGE Import")
     ACCEPTED_SCHEMAS = (
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd",
         "http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15/pagecontent.xsd",
@@ -512,7 +543,7 @@ class PagexmlParser(XMLParser):
 
     @property
     def total(self):
-        # pagexml file can contain multiple parts
+        # PAGE file can contain multiple parts
         if not self.root:
             self.root = etree.parse(self.file).getroot()
         return len(self.root.findall("Page", self.root.nsmap))
@@ -522,7 +553,7 @@ class PagexmlParser(XMLParser):
             filename = pageTag.get("imageFilename")
         except (IndexError, AttributeError) as e:
             raise ParseError("""
-The PageXml file should contain an attribute imageFilename in Page tag for matching.
+The PAGE file should contain an attribute imageFilename in Page tag for matching.
             """)
         else:
             return filename
@@ -540,7 +571,7 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
 
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
-        #  for pagexml file a box is multiple points x1,y1 x2,y2 x3,y3 ...
+        #  for PAGE file a box is multiple points x1,y1 x2,y2 x3,y3 ...
         block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
 
         type_ = blockTag.get("type")
@@ -563,13 +594,16 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
             line.baseline = self.clean_coords(baseline)
-        except AttributeError:
+        except ParseError:
             #  to check if the baseline is good
             line.baseline = None
 
-        polygon = lineTag.find("Coords", self.root.nsmap)
-        if polygon is not None:
-            line.mask = self.clean_coords(polygon)
+        try:
+            polygon = lineTag.find("Coords", self.root.nsmap)
+            if polygon is not None:
+                line.mask = self.clean_coords(polygon)
+        except ParseError:
+            line.mask = None
 
         type_ = lineTag.get("type")
         if not type_:
@@ -588,14 +622,20 @@ The PageXml file should contain an attribute imageFilename in Page tag for match
                 pass
 
     def clean_coords(self, coordTag):
-        return [
+        try:
+            return [
                 list(map(int, pt.split(",")))
                 for pt in coordTag.get("points").split(" ")
             ]
+        except (AttributeError, ValueError):
+            msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
+                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline)
+            self.report.append(msg)
+            raise ParseError(msg)
 
     def get_transcription_content(self, lineTag):
         words = lineTag.findall("Word", self.root.nsmap)
-        # pagexml can have content for each word inside a word tag or the whole line in textline tag
+        # PAGE XML can have content for each word inside a word tag or the whole line in textline tag
         if len(words) > 0:
             return " ".join(
                 [
@@ -643,7 +683,7 @@ class IIIFManifestParser(ParserDocument):
         be transient.  It will only retry a fixed number of times (default 10),
         and it backs off a little more on each retry. Failure to retrieve
         the image within the retry limit will result in a DownloadError
-        being raised. All other unsuccessful requests will raise a 
+        being raised. All other unsuccessful requests will raise a
         DownloadError as well.
         """
 
@@ -657,10 +697,10 @@ class IIIFManifestParser(ParserDocument):
 
             except requests.exceptions.HTTPError as http_error:
                 # retry on transient 5XX errors, but keep a record of the retry count
-                if http_error.response.status_code in [500, 502, 503, 504, 507, 508]: 
+                if http_error.response.status_code in [500, 502, 503, 504, 507, 508]:
                     current_retry = current_retry + 1
                     continue
-                
+
                 # We probably got a 4XX error, but whatever it is just raise it
                 raise DownloadError(http_error)
 
@@ -686,9 +726,17 @@ class IIIFManifestParser(ParserDocument):
         except KeyError:
             pass
 
+        total = len(self.canvases)
         for i, canvas in enumerate(self.canvases):
             if i < start_at:
                 continue
+
+            # If quotas are enforced, assert that the user still has free disk storage
+            if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                raise DiskQuotaReachedError(
+                    _(f"You ran out of disk storage. {total - i} canvases were left to import (over {total - start_at})")
+                )
+
             try:
                 resource = canvas["images"][0]["resource"]
                 url = resource["@id"]
@@ -712,7 +760,9 @@ class IIIFManifestParser(ParserDocument):
                 # iiif file names are always default.jpg or close to
                 name = "%d_%s_%s" % (i, uuid.uuid4().hex[:5], url.split("/")[-1])
                 part.original_filename = name
+                part.image_file_size = 0
                 part.image.save(name, ContentFile(r.content), save=False)
+                part.image_file_size = part.image.size
                 part.save()
                 yield part
                 time.sleep(0.1)  # avoid being throttled
@@ -728,7 +778,7 @@ class IIIFManifestParser(ParserDocument):
 
 class TranskribusPageXmlParser(PagexmlParser):
     """
-    A Pagexml Parser for documents exported from Transkribus to handle data
+    A PAGE XML Parser for documents exported from Transkribus to handle data
     """
 
     # def validate(self):
@@ -745,7 +795,7 @@ class TranskribusPageXmlParser(PagexmlParser):
             ]
 
 
-def make_parser(document, file_handler, name=None, report=None):
+def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -781,9 +831,9 @@ def make_parser(document, file_handler, name=None, report=None):
             )
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
-    elif ext == "zip":
+    elif zip_allowed and ext == "zip":
         return ZipParser(document, file_handler, report, transcription_name=name)
-    elif ext == "pdf":
+    elif pdf_allowed and ext == "pdf":
         return PdfParser(document, file_handler, report)
     else:
         raise ValueError(

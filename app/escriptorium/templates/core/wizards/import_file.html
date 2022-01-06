@@ -12,7 +12,11 @@
 <div class="form-group">
   {% render_field import_form.name %}
   {% render_field import_form.override %}
-  {% render_field import_form.upload_file class="js-proc-settings" accept=".xml,.alto,.zip" %}
+  {% if not has_disk_storage_left %}
+    {% render_field import_form.upload_file class="js-proc-settings" accept=".xml,.alto" %}
+  {% else %}
+    {% render_field import_form.upload_file class="js-proc-settings" accept=".xml,.alto,.zip" %}
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}

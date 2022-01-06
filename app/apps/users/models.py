@@ -1,14 +1,20 @@
+import logging
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date, timedelta
+
 from django.conf import settings
 from django.db import models
+from django.db.models import Sum
 from django.contrib.auth.models import AbstractUser, Group
 from django.utils.translation import gettext as _
 from django.urls import reverse
 
 from escriptorium.utils import send_email
 from users.consumers import send_notification
+
+logger = logging.getLogger(__name__)
+MEGABYTES_TO_BYTES = 1048576
 
 
 class User(AbstractUser):
@@ -23,6 +29,14 @@ class User(AbstractUser):
         _('Show onboarding'),
         default=True
     )
+
+    # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
+    # quota_disk_storage is to be defined in Mb
+    quota_disk_storage = models.PositiveIntegerField(null=True, blank=True)
+    # quota_cpu is to be defined in CPU-min (spread over a week)
+    quota_cpu = models.PositiveIntegerField(null=True, blank=True)
+    # quota_gpu is to be defined in GPU-min (spread over a week)
+    quota_gpu = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         permissions = (('can_invite', 'Can invite users'),)
@@ -43,6 +57,56 @@ class User(AbstractUser):
         if not os.path.isdir(store_path):
             os.makedirs(store_path)
         return store_path
+
+    def calc_disk_usage(self):
+        models_size = self.ocrmodel_set.aggregate(Sum('file_size'))['file_size__sum'] or 0
+        images_size = self.document_set.aggregate(Sum('parts__image_file_size'))['parts__image_file_size__sum'] or 0
+        return models_size + images_size
+
+    def disk_storage_limit(self):
+        if self.quota_disk_storage != None:
+            return self.quota_disk_storage*MEGABYTES_TO_BYTES
+        if settings.QUOTA_DISK_STORAGE != None:
+            return settings.QUOTA_DISK_STORAGE*MEGABYTES_TO_BYTES
+        return None
+
+    def has_free_disk_storage(self):
+        quota = self.disk_storage_limit()
+        if quota != None:
+            return quota > self.calc_disk_usage()
+        return True   # Unlimited disk storage
+
+    def calc_cpu_usage(self):
+        return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('cpu_cost'))['cpu_cost__sum'] or 0
+
+    def cpu_minutes_limit(self):
+        if self.quota_cpu != None:
+            return self.quota_cpu
+        if settings.QUOTA_CPU_MINUTES != None:
+            return settings.QUOTA_CPU_MINUTES
+        return None
+
+    def has_free_cpu_minutes(self):
+        quota = self.cpu_minutes_limit()
+        if quota != None:
+            return quota > self.calc_cpu_usage()
+        return True   # Unlimited CPU usage
+
+    def calc_gpu_usage(self):
+        return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('gpu_cost'))['gpu_cost__sum'] or 0
+
+    def gpu_minutes_limit(self):
+        if self.quota_gpu != None:
+            return self.quota_gpu
+        if settings.QUOTA_GPU_MINUTES != None:
+            return settings.QUOTA_GPU_MINUTES
+        return None
+
+    def has_free_gpu_minutes(self):
+        quota = self.gpu_minutes_limit()
+        if quota != None:
+            return quota > self.calc_gpu_usage()
+        return True   # Unlimited GPU usage
 
 
 class ResearchField(models.Model):
@@ -211,3 +275,20 @@ class GroupOwner(models.Model):
 
     def __str__(self):
         return str(self.group)
+
+
+class QuotaEvent(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quota_events')
+    # reached_disk_storage is to be defined in Mb
+    reached_disk_storage = models.PositiveIntegerField(null=True, blank=True)
+    reached_cpu = models.PositiveIntegerField(null=True, blank=True)
+    reached_gpu = models.PositiveIntegerField(null=True, blank=True)
+    sent = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def email_sent(self):
+        self.sent = True
+        self.save()
+
+    def email_error(self):
+        logger.info(f'Failed to send email to user {self.user.pk} to inform him that he reached one or more of his quotas')

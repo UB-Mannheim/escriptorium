@@ -1,6 +1,7 @@
 import os.path
 
 CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
 REDIS_DB = 1
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +16,8 @@ class DisableMigrations(object):
             return None
 
 MIGRATION_MODULES = DisableMigrations()
+
+KRAKEN_TRAINING_LOAD_THREADS = 0
 
 # Disables easy-thumbnail spamming
 THUMBNAIL_OPTIMIZE_COMMAND = {}

@@ -105,7 +105,7 @@ For the full text see https://creativecommons.org/licenses/by-sa/4.0/legalcode. 
 	<xsd:import namespace="http://www.w3.org/1999/xlink" schemaLocation="http://www.loc.gov/standards/xlink/xlink.xsd"/>
 	<xsd:element name="alto" type="altoType">
 		<xsd:annotation>
-			<xsd:documentation>ALTO (analyzed layout and text object) stores layout information and 
+			<xsd:documentation>ALTO (analyzed layout and text object) stores layout information and
 			OCR recognized text of pages of any kind of printed documents like books, journals and newspapers.
 			ALTO is a standardized XML format to store layout and content information.
 			It is designed to be used as an extension schema to METS (Metadata Encoding and Transmission Standard),
@@ -117,7 +117,7 @@ For the full text see https://creativecommons.org/licenses/by-sa/4.0/legalcode. 
 		<xsd:sequence>
 			<xsd:element name="Description" type="DescriptionType" minOccurs="0">
 				<xsd:annotation>
-					<xsd:documentation>Describes general settings of the alto file like measurement units and metadata</xsd:documentation>
+					<xsd:documentation>Describes general settings of the ALTO file like measurement units and metadata</xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
 			<xsd:element name="Styles" type="StylesType" minOccurs="0">
@@ -640,7 +640,7 @@ For the full text see https://creativecommons.org/licenses/by-sa/4.0/legalcode. 
 	<xsd:simpleType name="MeasurementUnitType">
 		<xsd:annotation>
 			<xsd:documentation>
-				All measurement values inside the alto file are related to 
+				All measurement values inside the ALTO file are related to
 				this unit, except the font size.
 				Coordinates as being used in HPOS and VPOS are absolute coordinates referring to the upper-left corner of a page.
 				The upper left corner of the page is defined as coordinate (0/0). 

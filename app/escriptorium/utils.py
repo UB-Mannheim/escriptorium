@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import get_template
 
 from users.tasks import async_email
@@ -25,4 +24,4 @@ def send_email(subject_template, txt_template, html_template,
     msg = txt_tmplt.render(context=context)
     html = html_tmplt.render(context=context)
 
-    async_email.delay(subject, msg, recipients, html=html, result_interface=result_interface, disable_reporting=True)
+    async_email.delay(subject, msg, recipients, html=html, result_interface=result_interface)

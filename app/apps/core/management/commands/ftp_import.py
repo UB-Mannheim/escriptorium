@@ -1,9 +1,9 @@
 import os.path
-from ftplib import FTP
+# from ftplib import FTP
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-from core.models import Document, DocumentPart, Line, Transcription, LineTranscription, document_images_path
+from django.core.management.base import BaseCommand
+from core.models import Document, DocumentPart, Line, Transcription, LineTranscription
 
 
 class Command(BaseCommand):
@@ -32,7 +32,7 @@ class Command(BaseCommand):
         with open(fullpath, 'wb+') as fh:
             ftp.retrbinary('RETR ' + filename, fh.write, 1024)
 
-        part = DocumentPart.objects.create(image=fpath, document=self.document)
+        part = DocumentPart.objects.create(image=fpath, image_file_size=os.path.getsize(fpath), document=self.document)
         return part
         
     def handle(self, *args, **options):

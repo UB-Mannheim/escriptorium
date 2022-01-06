@@ -109,6 +109,10 @@ TEMPLATES = [
         },
     },
 ]
+
+# Allow to use the ColorField in the admin
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -198,6 +202,7 @@ CELERY_TASK_QUEUES = (
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
+# When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
 CELERY_TASK_ROUTES = {
     # 'core.tasks.*': {'queue': 'default'},
     'core.tasks.recalculate_masks': {'queue': 'live'},
@@ -208,6 +213,10 @@ CELERY_TASK_ROUTES = {
     'imports.tasks.*': {'queue': 'low-priority'},
     'users.tasks.async_email': {'queue': 'low-priority'},
 }
+
+REPORTING_TASKS_BLACKLIST = [
+    'users.tasks.async_email',
+]
 
 CHANNEL_LAYERS = {
     "default": {
@@ -263,11 +272,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
-        },
-        'console': {
-            'level': 'INFO',
-            'filters': ['require_debug_true'],
-            'class': 'logging.StreamHandler',
         },
         'console': {
             'level': 'ERROR',
@@ -360,3 +364,24 @@ if 'test' in sys.argv:
         from .test_settings import *
     except (ModuleNotFoundError, ImportError):
         pass
+
+CPU_COST_FACTOR = os.getenv('CPU_COST_FACTOR', 1.0)
+GPU_COST = os.getenv('GPU_COST', 1.0)
+
+# Boolean used to defuse quotas enforcement
+DISABLE_QUOTAS = os.getenv('DISABLE_QUOTAS', "True").lower() not in ("false", "0")
+
+# Limitation of disk storage usage per user, should be defined as a positive integer in Mb
+# If set to None, users have unlimited disk storage capacity
+QUOTA_DISK_STORAGE = int(os.environ['QUOTA_DISK_STORAGE']) if os.environ.get('QUOTA_DISK_STORAGE') else None
+
+# Limitation of CPU minutes usage per user over a week, should be defined as a positive integer in CPU-min
+# If set to None, users have unlimited CPU minutes capacity
+QUOTA_CPU_MINUTES = int(os.environ['QUOTA_CPU_MINUTES']) if os.environ.get('QUOTA_CPU_MINUTES') else None
+
+# Limitation of GPU minutes usage per user over a week, should be defined as a positive integer in GPU-min
+# If set to None, users have unlimited GPU minutes capacity
+QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOTA_GPU_MINUTES') else None
+
+# Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
+QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
