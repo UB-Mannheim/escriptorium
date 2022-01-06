@@ -1164,9 +1164,7 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
     content = models.CharField(blank=True, default="", max_length=2048)
-    # graphs = [  # WIP
-    # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
-    # ]
+
     graphs_schema = {
             "type": "array",
             "items": [
@@ -1202,7 +1200,7 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
         }
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True, default=dict,
-                       validators=[JSONSchemaValidator(limit_value=graphs_schema)])  # on postgres it maps to jsonb!
+                       validators=[JSONSchemaValidator(limit_value=graphs_schema)])
 
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(Line, null=True, on_delete=models.CASCADE,
@@ -1215,11 +1213,6 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
     @property
     def text(self):
         return re.sub('<[^<]+?>', '', self.content)
-
-    # Overload save to force JSON validation
-    def save(self, *args, **kwargs):
-        self.clean_fields()
-        return super(LineTranscription, self).save(*args, **kwargs)
 
 
 def models_path(instance, filename):
