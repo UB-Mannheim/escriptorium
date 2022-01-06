@@ -1282,7 +1282,7 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
             ]
         }
     # on postgres this maps to the jsonb type!
-    graphs = JSONField(null=True, blank=True, default=dict,
+    graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
 
     # nullable in case we re-segment ?? for now we lose data.
