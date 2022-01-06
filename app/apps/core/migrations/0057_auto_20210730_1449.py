@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='linetranscription',
             name='graphs',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, validators=[core.validators.JSONSchemaValidator(limit_value={'items': [{'properties': {'bbox': {'items': [{'contains': {'type': 'number'}, 'maxItems': 2, 'minItems': 2, 'type': 'array'}], 'maxItems': 2, 'minItems': 2, 'type': 'array'}, 'c': {'maxLength': 1, 'minLength': 1, 'type': 'string'}, 'confidence': {'maximum': 1, 'minimum': 0, 'type': 'number'}}, 'type': 'object'}], 'type': 'array'})]),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True, validators=[core.validators.JSONSchemaValidator(limit_value={'items': [{'properties': {'poly': {'items': [{'contains': {'type': 'number'}, 'maxItems': 2, 'minItems': 2, 'type': 'array'}], 'maxItems': 2, 'minItems': 2, 'type': 'array'}, 'c': {'maxLength': 1, 'minLength': 1, 'type': 'string'}, 'confidence': {'maximum': 1, 'minimum': 0, 'type': 'number'}}, 'type': 'object'}], 'type': 'array'})]),
         ),
 
         migrations.RunPython(dummy, backward)

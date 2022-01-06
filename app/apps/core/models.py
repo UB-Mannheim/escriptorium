@@ -883,10 +883,11 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                 for pred in it:
                     lt.content = pred.prediction
                     lt.graphs = [{
-                            'c': letter,
-                            'bbox': [[poly[0][0], poly[0][1]], [poly[2][0], poly[2][1]]],
-                            'confidence': float(confidence)
-                        } for letter, poly, confidence in zip(pred.prediction, pred.cuts, pred.confidences)]
+                        'c': letter,
+                        'poly': poly,
+                        'confidence': float(confidence)
+                    } for letter, poly, confidence in zip(
+                        pred.prediction, pred.cuts, pred.confidences)]
                 lt.save()
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
@@ -1259,7 +1260,7 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
                             "minLength": 1,
                             "maxLength": 1
                         },
-                        "bbox": {
+                        "poly": {
                             "type": "array",
                             "minItems": 2,
                             "maxItems": 2,
