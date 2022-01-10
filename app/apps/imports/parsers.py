@@ -480,8 +480,8 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = _("Invalid baseline %s in {filen} line {linen}").format(
-                        baseline, self.file.name, lineTag.sourceline)
+                    msg = _("Invalid baseline {baseline} in {filen} line {linen}").format(
+                        baseline=baseline, filen=self.file.name, linen=lineTag.sourceline)
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)
