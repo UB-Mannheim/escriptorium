@@ -977,13 +977,13 @@ msgstr "Modelle"
 
 #: escriptorium/templates/core/home.html:3
 msgid "Homepage"
-msgstr ""
+msgstr "Homepage"
 
 #: escriptorium/templates/core/home.html:13
 msgid ""
 "A project providing digital recognition of handwritten documents using "
 "machine learning techniques."
-msgstr ""
+msgstr "Ein Projekt zur digitalen Erkennung handgeschriebener Dokumente mit maschinellen Lerntechniken."
 
 #: escriptorium/templates/core/home.html:21
 msgid "Data Interchange"
@@ -1036,7 +1036,7 @@ msgstr "eScriptorium Open-Source-Code"
 
 #: escriptorium/templates/core/home.html:75
 msgid "Scripta Blog"
-msgstr ""
+msgstr "Scripta Blog"
 
 #: escriptorium/templates/core/models_list/main.html:5
 #: escriptorium/templates/core/ocrmodel_form.html:5
@@ -1045,15 +1045,15 @@ msgstr "Modell hochladen"
 
 #: escriptorium/templates/core/models_list/rights/delete.html:5
 msgid "Delete right"
-msgstr ""
+msgstr "Recht entfernen"
 
 #: escriptorium/templates/core/models_list/rights/main.html:5
 msgid "shares"
-msgstr ""
+msgstr "Anteile"
 
 #: escriptorium/templates/core/models_list/rights/main.html:9
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: escriptorium/templates/core/models_list/rights/main.html:10
 msgid "Name"
@@ -1066,7 +1066,7 @@ msgstr "Vollständiger Name oder Kennung"
 #: escriptorium/templates/core/models_list/rights/main.html:19
 #: escriptorium/templates/core/models_list/rights/main.html:23
 msgid "Recipient type"
-msgstr ""
+msgstr "Art des Empfängers"
 
 #: escriptorium/templates/core/models_list/rights/main.html:20
 #: escriptorium/templates/reporting/quotas_leaderboard.html:21
@@ -1075,7 +1075,7 @@ msgstr "Benutzername"
 
 #: escriptorium/templates/core/models_list/rights/main.html:21
 msgid "User full name"
-msgstr ""
+msgstr "Vollständiger Name des Nutzers"
 
 #: escriptorium/templates/core/models_list/rights/main.html:24
 msgid "Group name"
@@ -1129,7 +1129,7 @@ msgstr "Fehler"
 
 #: escriptorium/templates/core/models_list/table.html:23
 msgid "Right"
-msgstr "Rechte"
+msgstr "Recht"
 
 #: escriptorium/templates/core/models_list/table.html:28
 #: escriptorium/templates/core/models_list/table.html:108
@@ -1142,15 +1142,15 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html:30
 msgid "Model script"
-msgstr ""
+msgstr "Schriftmodell"
 
 #: escriptorium/templates/core/models_list/table.html:35
 msgid "Filter by script"
-msgstr ""
+msgstr "Filtern nach Schrift"
 
 #: escriptorium/templates/core/models_list/table.html:42
 msgid "Parent from which the model was trained"
-msgstr ""
+msgstr "Vorbild, anhand dessen das Modell trainiert wurde"
 
 #: escriptorium/templates/core/models_list/table.html:46
 msgid "Is currently training"
@@ -1171,7 +1171,7 @@ msgstr "Anzahl der Fehler/Gesamtzahl der Zeichen"
 
 #: escriptorium/templates/core/models_list/table.html:70
 msgid "Toggle versions"
-msgstr ""
+msgstr "Versionen wechseln"
 
 #: escriptorium/templates/core/models_list/table.html:86
 msgid "Share model"
@@ -1238,7 +1238,7 @@ msgstr "ausgewählte(s) Bild(er)"
 msgid ""
 "Binarization is NOT a mandatory step any more, and might even decrease "
 "quality."
-msgstr ""
+msgstr "Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die Qualität beeinträchtigen."
 
 #: escriptorium/templates/core/wizards/binarize.html:10
 msgid "Manually"
@@ -1254,12 +1254,12 @@ msgstr "Kontrast"
 
 #: escriptorium/templates/core/wizards/binarize.html:22
 msgid "Upload or Binarize"
-msgstr ""
+msgstr "Hochladen oder Binarisieren"
 
 #: escriptorium/templates/core/wizards/import.html:5
 #, python-format
 msgid "See %(opentag)sthe import documentation%(closetag)s for details."
-msgstr ""
+msgstr "Siehe %(opentag)sdie Importdokumentation%(closetag)s für Details."
 
 #: escriptorium/templates/core/wizards/import.html:12
 msgid ""
@@ -1275,7 +1275,7 @@ msgstr "Vorherigen Import fortsetzen"
 #: escriptorium/templates/core/wizards/import.html:17
 #, python-format
 msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
-msgstr ""
+msgstr "Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s fehlgeschlagen."
 
 #: escriptorium/templates/core/wizards/import.html:19
 msgid "Reason:"
@@ -1293,15 +1293,15 @@ msgstr "Beginne Import"
 
 #: escriptorium/templates/core/wizards/import_file.html:11
 msgid "Import segmentation & transcriptions from XML."
-msgstr ""
+msgstr "Importieren Sie die Segmentierung und Transkriptionen aus XML-Datei."
 
 #: escriptorium/templates/core/wizards/import_iiif.html:9
 msgid "Import images from IIIF."
-msgstr ""
+msgstr "Importieren Sie die Bilder aus IIIF."
 
 #: escriptorium/templates/core/wizards/import_pdf.html:11
 msgid "Import images from a PDF document."
-msgstr ""
+msgstr "Importieren Sie die Bilder aus einem PDF Dokument"
 
 #: escriptorium/templates/core/wizards/import_pdf.html:13
 msgid "A single pdf with one image per page."
@@ -1337,7 +1337,7 @@ msgid ""
 "The training data will be generated from the selected images and "
 "transcription."
 msgstr ""
-"Die Trainingsdaten werden aus den ausgewählten Bildern undder Transkription "
+"Die Trainingsdaten werden aus den ausgewählten Bildern und der Transkription "
 "erzeugt."
 
 #: escriptorium/templates/core/wizards/train.html:6
@@ -1356,7 +1356,7 @@ msgstr ""
 msgid ""
 "Make sure that the segmentation is good before going forward because "
 "resegmenting will delete all bound transcriptions."
-msgstr ""
+msgstr "Vergewissern Sie sich, dass die Segmentierung korrekt ist, bevor Sie fortfahren, da bei einer Neusegmentierung alle eingebundenen Transkriptionen gelöscht werden."
 
 #: escriptorium/templates/includes/help/baseline_editor.html:2
 msgid ""
@@ -1463,7 +1463,7 @@ msgstr "Erste Seite"
 
 #: escriptorium/templates/includes/pagination.html:12
 msgid "Previous"
-msgstr ""
+msgstr "Vorherige"
 
 #: escriptorium/templates/includes/pagination.html:34
 msgid "Next"
@@ -1510,7 +1510,13 @@ msgid_plural ""
 "                  Please correct the errors below.\n"
 "              "
 msgstr[0] ""
+"\n"
+"                  Bitte korrigieren Sie den folgenden Fehler.\n"
+"              "
 msgstr[1] ""
+"\n"
+"                  Bitte korrigieren Sie die folgenden Fehler.\n"
+"              "
 
 #: escriptorium/templates/registration/password_change_form.html:30
 msgid ""
@@ -1572,8 +1578,8 @@ msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
 msgstr ""
-"Der Link zum Passwort-Reset war ungültig, möglicherweise, weil er bereits "
-"benutzt wurde. Bitte fordern Sie das Passwort-Reset erneut an."
+"Der Link zum Zurücksetzen des Passworts war ungültig, möglicherweise, weil er bereits "
+"benutzt wurde. Bitte fordern Sie das Zurücksetzes erneut an."
 
 #: escriptorium/templates/registration/password_reset_done.html:13
 msgid ""
@@ -1598,16 +1604,16 @@ msgid ""
 "Forgotten your password? Enter your email address below, and we’ll email "
 "instructions for setting a new one."
 msgstr ""
-"Passwort vergessen? Geben Sie unten Ihre Mail-Adresse an, und wir werden "
+"Passwort vergessen? Geben Sie unten Ihre E-Mail-Adresse an, und wir werden "
 "Ihnen die Anleitung zum Setzen eines neuen Passworts mailen."
 
 #: escriptorium/templates/registration/password_reset_form.html:25
 msgid "Email address:"
-msgstr "Mail-Adresse"
+msgstr "E-Mail-Adresse"
 
 #: escriptorium/templates/registration/password_reset_form.html:28
 msgid "Reset my password"
-msgstr "Setze mein Passwort zurück"
+msgstr "Mein Passwort zurücksetzen"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html:10
 msgid "Total"
@@ -1659,7 +1665,7 @@ msgstr "Laufzeit"
 #: escriptorium/templates/reporting/quotas_leaderboard.html:44
 #: escriptorium/templates/reporting/quotas_leaderboard.html:51
 msgid "All time"
-msgstr ""
+msgstr "Alle Zeiten"
 
 #: escriptorium/templates/reporting/taskreport_detail.html:7
 msgid "Status:"
@@ -1705,7 +1711,7 @@ msgstr "GPU-Nutzung in der letzten Woche"
 msgid ""
 "CPU/GPU usage values also include automatic processing of the images on "
 "upload, those tasks aren't listed below."
-msgstr ""
+msgstr "Die Werte für die CPU-/GPU-Nutzung umfassen auch die automatische Verarbeitung der Bilder während des Hochladens; diese Aufgaben sind unten nicht aufgeführt."
 
 #: escriptorium/templates/reporting/taskreport_list.html:84
 msgid "Task report"
@@ -1788,15 +1794,15 @@ msgid ""
 "      You received an invitation from %(sender)s, please fill the form below "
 "to register.\n"
 "    "
-msgstr ""
+msgstr "Sie haben eine Einladung von %(sender)s erhalten, bitte füllen Sie das folgende Formular aus, um sich zu registrieren.\n"
 
 #: escriptorium/templates/users/invitation_accept_register.html:20
 msgid "Signup"
-msgstr ""
+msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html:11
 msgid "Recipient's informations"
-msgstr ""
+msgstr "Angaben zum Empfänger"
 
 #: escriptorium/templates/users/profile.html:8
 msgid "Informations"
@@ -1820,7 +1826,7 @@ msgstr "Sichere"
 
 #: escriptorium/templates/users/profile_api_key.html:8
 msgid "API Authentication Token:"
-msgstr ""
+msgstr "API-Authentifizierungs-Token:"
 
 #: escriptorium/templates/users/profile_api_key.html:9
 msgid "Copy to clipboard."
