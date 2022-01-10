@@ -46,6 +46,7 @@ from core.tasks import (segtrain, train, binarize,
                         lossless_compression, convert, segment, transcribe,
                         generate_part_thumbnails)
 from core.utils import ColorField
+from core.validators import JSONSchemaValidator
 from users.consumers import send_event
 from users.models import User
 from versioning.models import Versioned
@@ -457,6 +458,9 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
 
     @property
     def filename(self):
+        # TODO: os.path.split(self.image.path)[1] looks like it could sometime
+        # produce an error. Maybe use Path().name, or at the very least
+        # os.path.split(self.image.path)[-1]?
         return self.original_filename or os.path.split(self.image.path)[1]
 
     def calculate_progress(self):
@@ -878,6 +882,12 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                     line=line, transcription=trans)
                 for pred in it:
                     lt.content = pred.prediction
+                    lt.graphs = [{
+                        'c': letter,
+                        'poly': poly,
+                        'confidence': float(confidence)
+                    } for letter, poly, confidence in zip(
+                        pred.prediction, pred.cuts, pred.confidences)]
                 lt.save()
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
@@ -1234,14 +1244,47 @@ class Transcription(ExportModelOperationsMixin('Transcription'), models.Model):
 
 class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Versioned, models.Model):
     """
-    Represents a transcribded line of a document part in a given transcription
+    Represents a transcribed line of a document part in a given transcription
     """
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
     content = models.CharField(blank=True, default="", max_length=2048)
-    # graphs = [  # WIP
-    # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
-    # ]
-    graphs = JSONField(null=True, blank=True)  # on postgres it maps to jsonb!
+
+    graphs_schema = {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "c": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1
+                        },
+                        "poly": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": [
+                                {
+                                    "type": "array",
+                                    "contains": {"type": "number"},
+                                    "minItems": 2,
+                                    "maxItems": 2,
+                                }
+                            ]
+                        },
+                        "confidence": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                        }
+                    }
+                }
+            ]
+        }
+    # on postgres this maps to the jsonb type!
+    graphs = JSONField(null=True, blank=True,
+                       validators=[JSONSchemaValidator(limit_value=graphs_schema)])
 
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(Line, null=True, on_delete=models.CASCADE,
