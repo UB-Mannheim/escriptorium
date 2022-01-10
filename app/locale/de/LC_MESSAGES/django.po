@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-07 15:37+0100\n"
+"POT-Creation-Date: 2022-01-10 16:57+0000\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -78,14 +78,18 @@ msgstr "Vertikal v. r. n. l."
 msgid ""
 "Either use model_name to create a new model, add a model pk to retrain an "
 "existing one, or both to create a new model from an existing one."
-msgstr "Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren, "
-"oder beides, um ein neues Modell aus einem bestehenden zu erstellen."
+msgstr ""
+"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, fügen "
+"Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren, oder "
+"beides, um ein neues Modell aus einem bestehenden zu erstellen."
 
 #: apps/api/serializers.py:541
 msgid ""
 "Either use model_name to create a new model, or add a model pk to retrain an "
 "existing one."
-msgstr "Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
+msgstr ""
+"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
+"fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
 
 #: apps/core/forms.py:159
 msgid "The provided model could not be loaded."
@@ -95,7 +99,9 @@ msgstr "Das angegebene Modell konnte nicht geladen werden."
 msgid ""
 "Invalid model (Couldn't determine whether it's a segmentation or recognition "
 "model)."
-msgstr "Ungültiges Modell (Es konnte nicht festgestellt werden, ob es sich um ein Segmentierungs- oder Erkennungsmodell Modell handelt)."
+msgstr ""
+"Ungültiges Modell (Es konnte nicht festgestellt werden, ob es sich um ein "
+"Segmentierungs- oder Erkennungsmodell Modell handelt)."
 
 #: apps/core/forms.py:173
 msgid "eScriptorium is not compatible with bounding box models."
@@ -105,7 +111,9 @@ msgstr "eScriptorium ist nicht mit Bounding-Box-Modellen kompatibel."
 msgid ""
 "Increase it for low contrast documents, if the letters are not visible "
 "enough."
-msgstr "Erhöhen Sie den Wert bei kontrastarmen Dokumenten, wenn die Buchstaben nicht ausreichend sichtbar sind."
+msgstr ""
+"Erhöhen Sie den Wert bei kontrastarmen Dokumenten, wenn die Buchstaben nicht "
+"ausreichend sichtbar sind."
 
 #: apps/core/forms.py:260
 msgid "Uploaded image with more than one selected image."
@@ -129,7 +137,9 @@ msgstr "Modell"
 msgid ""
 "If checked, deletes existing segmentation <b>and bound transcriptions</b> "
 "first!"
-msgstr "Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und damit verbundene Transkriptionen<b/> zuerst gelöscht!"
+msgstr ""
+"Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
+"damit verbundene Transkriptionen<b/> zuerst gelöscht!"
 
 #: apps/core/models.py:146
 msgid "Top to bottom"
@@ -191,7 +201,8 @@ msgstr "Die Position der Zeile in Abhängigkeit vom Polygon."
 
 #: apps/core/models.py:387
 msgid "Binarized image needs to be the same size as original image."
-msgstr "Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
+msgstr ""
+"Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
 
 #: apps/core/models.py:405 apps/users/models.py:130
 msgid "Created"
@@ -358,7 +369,9 @@ msgstr "Vorhandene Segmentierung überschreiben."
 msgid ""
 "Destroys existing regions, lines and any bound transcription before "
 "importing."
-msgstr "Beseitigt vorhandene Bereiche, Zeilen und gebundene Transkriptionen vor dem Importieren."
+msgstr ""
+"Beseitigt vorhandene Bereiche, Zeilen und gebundene Transkriptionen vor dem "
+"Importieren."
 
 #: apps/imports/forms.py:33
 msgid "IIIF manifesto uri"
@@ -432,8 +445,9 @@ msgstr "Ungültige PDF Datei."
 msgid ""
 "You ran out of disk storage. {n_pages - page_nb} pages were left to import "
 "(over {n_pages - start_at})"
-msgstr "Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum Importieren überlassen "
-"(over {n_pages - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
+"Importieren überlassen (over {n_pages - start_at})"
 
 #: apps/imports/parsers.py:120 apps/imports/parsers.py:197
 #, python-brace-format
@@ -456,8 +470,9 @@ msgstr "Zip-Datei scheint korrupt zu sein."
 msgid ""
 "You ran out of disk storage. {total - index} files were left to import (over "
 "{total - start_at})"
-msgstr "Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum Importieren übrig gelassen (over "
-"{total - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
+"Importieren übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py:319
 msgid "No match found for file {} with filename \"{}\"."
@@ -472,7 +487,9 @@ msgstr "Block in '{filen}' Zeile N°{line} wurde übersprungen, weil: {error}"
 #, python-brace-format
 msgid ""
 "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
-msgstr "Zeile in '{filen}' Zeile N°{line} (id: {lineid}) wurde übersprungen, weil: {error}"
+msgstr ""
+"Zeile in '{filen}' Zeile N°{line} (id: {lineid}) wurde übersprungen, weil: "
+"{error}"
 
 #: apps/imports/parsers.py:399
 msgid "Default ALTO Import"
@@ -505,8 +522,9 @@ msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
 msgid ""
 "You ran out of disk storage. {total - i} canvases were left to import (over "
 "{total - start_at})"
-msgstr "Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import übrig gelassen (over "
-"{total - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
+"übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py:771
 #, python-brace-format
@@ -771,8 +789,11 @@ msgid ""
 "The default configuration only contains semantic types. <br>It is not "
 "recommended to mix semantic, stylistic and layout types.<br><b>It is "
 "required to hit 'Update' to add your new types to the document.</b>"
-msgstr "Die Standardkonfiguration enthält nur semantische Typen. <br>Es wird nicht empfohlen, semantische, stilistische und Layout-Typen zu mischen. "
-"<br><b>Sie müssen auf 'Aktualisieren' klicken, um Ihre neuen Typen dem Dokument hinzuzufügen.</b>"
+msgstr ""
+"Die Standardkonfiguration enthält nur semantische Typen. <br>Es wird nicht "
+"empfohlen, semantische, stilistische und Layout-Typen zu mischen. <br><b>Sie "
+"müssen auf 'Aktualisieren' klicken, um Ihre neuen Typen dem Dokument "
+"hinzuzufügen.</b>"
 
 #: escriptorium/templates/core/document_form.html:106
 msgid "Region types"
@@ -983,7 +1004,9 @@ msgstr "Homepage"
 msgid ""
 "A project providing digital recognition of handwritten documents using "
 "machine learning techniques."
-msgstr "Ein Projekt zur digitalen Erkennung handgeschriebener Dokumente mit maschinellen Lerntechniken."
+msgstr ""
+"Ein Projekt zur digitalen Erkennung handgeschriebener Dokumente mit "
+"maschinellen Lerntechniken."
 
 #: escriptorium/templates/core/home.html:21
 msgid "Data Interchange"
@@ -1238,7 +1261,9 @@ msgstr "ausgewählte(s) Bild(er)"
 msgid ""
 "Binarization is NOT a mandatory step any more, and might even decrease "
 "quality."
-msgstr "Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die Qualität beeinträchtigen."
+msgstr ""
+"Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die "
+"Qualität beeinträchtigen."
 
 #: escriptorium/templates/core/wizards/binarize.html:10
 msgid "Manually"
@@ -1275,7 +1300,9 @@ msgstr "Vorherigen Import fortsetzen"
 #: escriptorium/templates/core/wizards/import.html:17
 #, python-format
 msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
-msgstr "Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s fehlgeschlagen."
+msgstr ""
+"Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s "
+"fehlgeschlagen."
 
 #: escriptorium/templates/core/wizards/import.html:19
 msgid "Reason:"
@@ -1356,7 +1383,10 @@ msgstr ""
 msgid ""
 "Make sure that the segmentation is good before going forward because "
 "resegmenting will delete all bound transcriptions."
-msgstr "Vergewissern Sie sich, dass die Segmentierung korrekt ist, bevor Sie fortfahren, da bei einer Neusegmentierung alle eingebundenen Transkriptionen gelöscht werden."
+msgstr ""
+"Vergewissern Sie sich, dass die Segmentierung korrekt ist, bevor Sie "
+"fortfahren, da bei einer Neusegmentierung alle eingebundenen Transkriptionen "
+"gelöscht werden."
 
 #: escriptorium/templates/includes/help/baseline_editor.html:2
 msgid ""
@@ -1578,8 +1608,8 @@ msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
 msgstr ""
-"Der Link zum Zurücksetzen des Passworts war ungültig, möglicherweise, weil er bereits "
-"benutzt wurde. Bitte fordern Sie das Zurücksetzes erneut an."
+"Der Link zum Zurücksetzen des Passworts war ungültig, möglicherweise, weil "
+"er bereits benutzt wurde. Bitte fordern Sie das Zurücksetzes erneut an."
 
 #: escriptorium/templates/registration/password_reset_done.html:13
 msgid ""
@@ -1711,7 +1741,10 @@ msgstr "GPU-Nutzung in der letzten Woche"
 msgid ""
 "CPU/GPU usage values also include automatic processing of the images on "
 "upload, those tasks aren't listed below."
-msgstr "Die Werte für die CPU-/GPU-Nutzung umfassen auch die automatische Verarbeitung der Bilder während des Hochladens; diese Aufgaben sind unten nicht aufgeführt."
+msgstr ""
+"Die Werte für die CPU-/GPU-Nutzung umfassen auch die automatische "
+"Verarbeitung der Bilder während des Hochladens; diese Aufgaben sind unten "
+"nicht aufgeführt."
 
 #: escriptorium/templates/reporting/taskreport_list.html:84
 msgid "Task report"
@@ -1794,7 +1827,11 @@ msgid ""
 "      You received an invitation from %(sender)s, please fill the form below "
 "to register.\n"
 "    "
-msgstr "Sie haben eine Einladung von %(sender)s erhalten, bitte füllen Sie das folgende Formular aus, um sich zu registrieren.\n"
+msgstr ""
+"\n"
+"      Sie haben eine Einladung von %(sender)s erhalten, bitte füllen Sie das "
+"folgende Formular aus, um sich zu registrieren.\n"
+"    "
 
 #: escriptorium/templates/users/invitation_accept_register.html:20
 msgid "Signup"
