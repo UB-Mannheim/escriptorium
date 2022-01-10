@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-10 16:57+0000\n"
+"POT-Creation-Date: 2022-01-10 18:29+0000\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -496,9 +496,9 @@ msgid "Default ALTO Import"
 msgstr "Standard ALTO-Import"
 
 #: apps/imports/parsers.py:483
-#, python-format, python-brace-format
-msgid "Invalid baseline %s in {filen} line {linen}"
-msgstr "Ungültige Baseline %s in {filen} Zeile {linen}"
+#, python-brace-format
+msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr "Ungültige Baseline {baseline} in {filen} Zeile {linen}"
 
 #: apps/imports/parsers.py:535
 msgid "Default PAGE Import"
