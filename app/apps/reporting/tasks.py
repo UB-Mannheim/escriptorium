@@ -54,9 +54,11 @@ def start_task_reporting(task_id, task, *args, **kwargs):
         except DocumentImport.DoesNotExist:
             pass
     elif task_kwargs.get("part_pks"):
-        documents = list(DocumentPart.objects.filter(pk__in=task_kwargs["part_pks"]).values_list("document", flat=True))
-        if documents and documents[0]:
-            document = documents[0]
+        # They should all belong to the same document
+        first_part = (DocumentPart.objects
+                      .prefetch_related('document')
+                      .get(pk=task_kwargs["part_pks"][0]))
+        document = first_part.document
 
     # TODO: Define an explicit "report_label" kwarg on all tasks
     default_report_label = f"Report for celery task {task_id} of type {task.name}"
