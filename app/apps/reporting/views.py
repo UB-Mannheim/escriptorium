@@ -137,3 +137,35 @@ class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
         context['is_paginated'] = paginator.num_pages > 1
 
         return context
+
+
+class ProjectReport(LoginRequiredMixin, DetailView):
+    template_name = 'reporting/project_reports.html'
+    model = Project
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.object
+        context['documents'] = self.documents
+        context['document_tags'] = list(self.object.document_tags.values())
+        context['filters'] = self.request.GET.getlist('tags')
+        return context
+
+    def get_queryset(self):
+        qs = Project.objects.filter(slug=self.kwargs.get('slug'))
+        document_archived = list(set(qs.get().documents.filter(workflow_state=Document.WORKFLOW_STATE_ARCHIVED).values_list('pk', flat=True)))
+        document_list = qs.get().documents.exclude(pk__in=document_archived)
+
+        for tag in self.request.GET.getlist('tags'):
+            document_list = document_list.filter(tags__name=tag)
+        
+        self.documents = (document_list
+                    .annotate(part_count=Count('parts', distinct=True),
+                                part_lines_count=Count('parts__lines', distinct=True),
+                                documents_shared_with_users=Count('shared_with_users', distinct=True),
+                                documents_shared_with_groups=Count('shared_with_groups', distinct=True),
+                                part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' '),
+                                part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'),
+                                part_lines_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'),
+                                part_block_count=Count('parts__blocks', distinct=True)))
+        return qs
