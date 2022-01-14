@@ -2,24 +2,22 @@
 
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-end">
-    {% with paginate_by=page_obj.paginator.per_page %}
-        <li class="page-item mr-3">
-          <select class="page-link h-100" onchange="location = this.value;">
-              <option value="?{% url_replace request 'paginate_by' 10 %}" 
-                {% if paginate_by == 10 %}selected{% endif %}>
-                  {% trans "Show 10" %}
-              </option>
-              <option value="?{% url_replace request 'paginate_by' 20 %}"
-                {% if paginate_by == 20 %}selected{% endif %}>
-                  {% trans "Show 20" %}
-              </option>
-              <option value="?{% url_replace request 'paginate_by' 50 %}"
-                {% if paginate_by == 50 %}selected{% endif %}>
-                  {% trans "Show 50" %}
-              </option>
-          </select>
-        </li>
-    {% endwith %}
+    {% if select_per_page %}
+      {% with paginate_by=page_obj.paginator.per_page page_range="10 20 50" %}
+          <li class="page-item mr-3">
+            <select class="page-link h-100" onchange="location = this.value;">
+                {% for page in page_range.split %}
+                    <option value="?{% url_replace request 'paginate_by' item %}" 
+                      {% if paginate_by|floatformat == item|floatformat %}selected{% endif %}>
+                      {% blocktrans with item=item %}
+                        Show {{ item }} 
+                      {% endblocktrans %}
+                    </option>
+                {% endfor %}
+            </select>
+          </li>
+      {% endwith %}
+    {% endif %}
   {% if is_paginated %}
     <li class="page-item">
       <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
