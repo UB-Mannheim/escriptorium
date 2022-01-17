@@ -57,8 +57,11 @@ class PerPageMixin():
         return context
 
     def get_paginate_by(self, queryset):
-        _paginate_by = self.request.GET.get("paginate_by", self.paginate_by)
-        return _paginate_by if int(_paginate_by) <= self.MAX_PAGINATE_BY else self.paginate_by
+        try:
+            _paginate_by = int(self.request.GET.get("paginate_by", self.paginate_by))
+        except ValueError:
+            _paginate_by = self.paginate_by
+        return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
 
 
 class ProjectList(LoginRequiredMixin, ListView):

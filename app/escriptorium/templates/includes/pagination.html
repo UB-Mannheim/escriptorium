@@ -1,5 +1,6 @@
 {% load i18n pagination %}
 
+{% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-end">
     {% if select_per_page %}
@@ -7,10 +8,10 @@
           <li class="page-item mr-3">
             <select class="page-link h-100" onchange="location = this.value;">
                 {% for page in page_range.split %}
-                    <option value="?{% url_replace request 'paginate_by' item %}" 
-                      {% if paginate_by|floatformat == item|floatformat %}selected{% endif %}>
-                      {% blocktrans with item=item %}
-                        Show {{ item }} 
+                    <option value="?{% url_replace request 'paginate_by' page %}" 
+                      {% if paginate_by|floatformat == page|floatformat %}selected{% endif %}>
+                      {% blocktrans with page=page %}
+                        Show {{ page }} 
                       {% endblocktrans %}
                     </option>
                 {% endfor %}
@@ -18,7 +19,7 @@
           </li>
       {% endwith %}
     {% endif %}
-  {% if is_paginated %}
+  
     <li class="page-item">
       <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
     </li>
@@ -58,7 +59,6 @@
     <li class="page-item">
       <a class="page-link" title="{% trans 'Last page' %}" href="?{% url_replace request 'page' page_obj.paginator.num_pages %}">&raquo;</a>
     </li>
-  {% endif %}
   </ul>
 </nav>
-
+{% endif %}
