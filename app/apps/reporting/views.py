@@ -147,14 +147,13 @@ class ProjectReport(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['project'] = self.object
         context['documents'] = self.documents
-        context['document_tags'] = list(self.object.document_tags.values())
         context['filters'] = self.request.GET.getlist('tags')
+        context['document_tags'] = list(self.object.document_tags.annotate(document_count=Count('tags_document', distinct=True)).values())
         return context
 
-    def get_queryset(self):
-        qs = Project.objects.filter(slug=self.kwargs.get('slug'))
-        document_archived = list(set(qs.get().documents.filter(workflow_state=Document.WORKFLOW_STATE_ARCHIVED).values_list('pk', flat=True)))
-        document_list = qs.get().documents.exclude(pk__in=document_archived)
+    def get_object(self):
+        project = Project.objects.get(slug=self.kwargs.get('slug'))
+        document_list = project.documents.exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
 
         for tag in self.request.GET.getlist('tags'):
             document_list = document_list.filter(tags__name=tag)
@@ -168,4 +167,4 @@ class ProjectReport(LoginRequiredMixin, DetailView):
                                 part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'),
                                 part_lines_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'),
                                 part_block_count=Count('parts__blocks', distinct=True)))
-        return qs
+        return project

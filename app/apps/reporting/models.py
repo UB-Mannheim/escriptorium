@@ -103,4 +103,3 @@ class TaskReport(models.Model):
         task_duration = (self.done_at - self.started_at).total_seconds()
         self.gpu_cost = (task_duration * settings.GPU_COST) / 60
         self.save()
-

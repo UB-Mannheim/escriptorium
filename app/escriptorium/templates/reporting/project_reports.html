@@ -120,10 +120,10 @@
                         <h5 class="card-title">{% trans 'Current use of document tags' %}</h5>
                         <table class="table">
                             <tbody>
-                                {% for tag in object.document_tags.all %}
+                                {% for tag in document_tags %}
                                     <tr>
                                         <td>{{ tag.name }}</td>
-                                        <td>{{ tag.tags_document.count }}</td>
+                                        <td>{{ tag.document_count }}</td>
                                     </tr>
                                 {% endfor %}
                             <tbody>
