@@ -25,6 +25,7 @@ from core.models import (Block,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata)
+from core.tasks import generate_part_thumbnails
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,7 @@ class PdfParser(ParserDocument):
                 part.original_filename = fname
                 part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
+                generate_part_thumbnails.si(instance_pk=part.pk)
                 yield part
                 page_nb = page_nb + 1
         except pyvips.error.Error as e:
@@ -186,6 +188,7 @@ class ZipParser(ParserDocument):
                             part.image_file_size = part.image.size
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
+                            generate_part_thumbnails.si(instance_pk=part.pk)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
