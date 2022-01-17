@@ -31,11 +31,14 @@ logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
+
 class DiskQuotaReachedError(Exception):
     pass
 
+
 class ParseError(Exception):
     pass
+
 
 class DownloadError(ParseError):
     pass
@@ -113,6 +116,7 @@ class PdfParser(ParserDocument):
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
                 part.original_filename = fname
+                part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
                 yield part
                 page_nb = page_nb + 1
@@ -180,6 +184,7 @@ class ZipParser(ParserDocument):
                             part.image_file_size = 0
                             part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
+                            part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
 
                         # xml
@@ -353,7 +358,7 @@ class XMLParser(ParserDocument):
                                     block.save()
                         else:
                             block = None
-                    
+
                         lines = self.get_lines(blockTag)
                         n_lines += len(lines)
 
