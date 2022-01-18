@@ -76,11 +76,19 @@ class TaskReport(models.Model):
         self.save()
 
     def calc_cpu_cost(self, nb_cores):
+        # No need to calculate the CPU usage if the task was canceled/crashed before even starting
+        if not self.started_at:
+            return
+
         task_duration = (self.done_at - self.started_at).total_seconds()
         self.cpu_cost = (task_duration * nb_cores * settings.CPU_COST_FACTOR) / 60
         self.save()
 
     def calc_gpu_cost(self):
+        # No need to calculate the GPU usage if the task was canceled/crashed before even starting
+        if not self.started_at:
+            return
+
         task_duration = (self.done_at - self.started_at).total_seconds()
         self.gpu_cost = (task_duration * settings.GPU_COST) / 60
         self.save()
