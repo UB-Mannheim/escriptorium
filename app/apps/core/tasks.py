@@ -19,7 +19,7 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken.lib import train as kraken_train
 
-
+from reporting.tasks import create_task_reporting
 from users.consumers import send_event
 
 logger = logging.getLogger(__name__)

@@ -374,23 +374,27 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
 
     // update workflow icons, send by notification through web socket
     var workflow_order = ['pending', 'ongoing', 'error', 'done'];
+
+    function updateWorkflow(card, data) {
+        if ((!data.task_id || card.task_ids[data.process] == data.task_id) &&
+            workflow_order.indexOf(card.workflow[data.process]) > workflow_order.indexOf(data.status)) {
+            return; // protection against race condition
+        }
+        card.workflow[data.process] = data.status;
+        if (data.task_id) card.task_ids[data.process] = data.task_id;
+        card.updateWorkflowIcons();
+
+        // special case, done with thumbnails:
+        if (data.process == 'generate_part_thumbnails' && data.status == 'done') {
+            card.image.thumbnails = data.data;
+            card.updateThumbnail();
+        }
+    }
+
     $('#alerts-container').on('part:workflow', function(ev, data) {
         var card = partCard.fromPk(data.id);
         if (card) {
-            if ((!data.task_id || card.task_ids[data.process] == data.task_id) &&
-                workflow_order.indexOf(card.workflow[data.process]) > workflow_order.indexOf(data.status)) {
-                return; // protection against race condition
-            }
-            card.workflow[data.process] = data.status;
-            if (data.task_id) card.task_ids[data.process] = data.task_id;
-            card.updateWorkflowIcons();
-
-
-            // special case, done with thumbnails:
-            if (data.process == 'generate_part_thumbnails' && data.status == 'done') {
-                card.image.thumbnails = data.data;
-                card.updateThumbnail();
-            }
+            updateWorkflow(card, data);
         } else {
             // we probably received the event before the card was created, retrigger ev in a sec
             setTimeout(function() {
@@ -398,6 +402,16 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             }, 100);
         }
     });
+    $('#alerts-container').on('parts:workflow', function(ev, data) {
+        // Same thing than above but receive more than one part at a time.
+        for (var i=0; i<data.parts.length; i++) {
+            var card = partCard.fromPk(data.parts[i].id);
+            if (card) {
+                updateWorkflow(card, data.parts[i]);
+            }
+        }
+    });
+
     $('#alerts-container').on('part:new', function(ev, data) {
         setTimeout(function() {  // really ugly: but avoid a race condition against dropzone
             var card = partCard.fromPk(data.id);
@@ -435,11 +449,14 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     $alertsContainer.on('import:warning', function(ev, data) {
         Alert.add(Date.now(), data.reason, 'warning');
     });
-    $alertsContainer.on('import:fail', function(ev, data) {
+    $alertsContainer.on('import:error', function(ev, data) {
         $('#import-counter').text('Failed.');
         $('#import-selected').removeClass('blink');
         $('#cancel-import').hide();
-        Alert.add('import-failed', "Import failed because '"+data.reason+"'", 'danger');
+        if (data.reason) {
+            Alert.add('import-failed',
+                      "Import failed because '"+data.reason+"'", 'danger');
+        }
     });
     $alertsContainer.on('import:done', function(ev, data) {
         $('#import-counter').text('Done.');
@@ -465,9 +482,13 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     $alertsContainer.on('export:start', function(ev, data)  {
         $exportBtn.addClass('blink');
     });
-    $alertsContainer.on('export:fail', function(ev, data)  {
+    $alertsContainer.on('export:error', function(ev, data)  {
         $exportBtn.removeClass('blink');
         $exportBtn.addClass('error');
+        if (data.reason) {
+            Alert.add('export-failed',
+                      "Export failed because '"+data.reason+"'", 'danger');
+        }
     });
     $alertsContainer.on('export:done', function(ev, data)  {
         $exportBtn.removeClass('blink');
@@ -505,6 +526,10 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     $alertsContainer.on('training:error', function(ev, data) {
         $('#train-selected').removeClass('blink').addClass('btn-danger');
         $('#cancel-training').hide();
+        if (data.reason) {
+            Alert.add('training-failed',
+                      "Training failed because '"+data.reason+"'", 'danger');
+        }
     });
     $('#cancel-training').click(function(ev, data) {
         let url = API.document + '/cancel_training/';

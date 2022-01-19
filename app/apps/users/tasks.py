@@ -6,6 +6,8 @@ from django.apps import apps
 from django.conf import settings
 from django.core.mail import send_mail
 
+from reporting.tasks import create_task_reporting
+
 
 logger = logging.getLogger(__name__)
 
