@@ -65,11 +65,11 @@ class DocumentImport(models.Model):
     def is_cancelable(self):
         return self.workflow_state < self.WORKFLOW_STATE_DONE
 
-    def cancel(self):
+    def cancel(self, revoke_task=True):
         self.workflow_state = self.WORKFLOW_STATE_ERROR
         self.error_message = 'canceled'
         self.save()
-        if self.report and self.report.task_id:
+        if revoke_task and self.report and self.report.task_id:
             app.control.revoke(self.report.task_id, terminate=True)
 
     def process(self, resume=True):
