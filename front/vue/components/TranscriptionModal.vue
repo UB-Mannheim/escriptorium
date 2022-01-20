@@ -206,6 +206,10 @@ export default Vue.extend({
     created() {
         // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
+            if (this.isVKEnabled) {
+                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                    input.blur();
+            }
             this.$store.dispatch('lines/toggleLineEdition', null);
             this.$store.commit('document/setBlockShortcuts', false);
         }.bind(this));
