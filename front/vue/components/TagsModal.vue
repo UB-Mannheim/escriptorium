@@ -23,7 +23,7 @@
                         </div>
                         <div class="form-row form-group justify-content-center">
                             <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 50%;">
-                            <input type="color" class="form-control" name="color" style="width: 10%;">
+                            <input type="color" class="form-control" name="color" style="width: 10%;" v-bind:value="tagColor">
                         </div>
 
                     </div>
@@ -60,6 +60,9 @@ export default {
         },
         checkboxListData() {
             return this.$store.state.documentslist.checkboxList;
+        },
+        tagColor() {
+            return this.$store.state.documentslist.tagColor;
         }
     },
     mounted(){
@@ -100,6 +103,7 @@ export default {
         },
         async populateItems(){
             this.$store.commit('documentslist/setProjectID', this.projectId);
+            this.$store.commit('documentslist/settagColor');
             if(!this.documentId) await this.$store.dispatch('documentslist/getAllTagsProject');
         }
 

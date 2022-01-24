@@ -8,7 +8,8 @@ export const initialState = () => ({
     projectID: null,
     checkboxList: [],
     lastChecked: null,
-    allProjectTags: []
+    allProjectTags: [],
+    tagColor: null
 })
 
 export const mutations = {
@@ -41,6 +42,11 @@ export const mutations = {
             var item = { "pk": obj.id, "name": obj.name, "color": obj.color };
             return item;
         });
+    },
+    settagColor (state) {
+        let rColor = Math.floor(Math.random() * (255 - 10 + 1)) + 10;
+        let bColor = Math.floor(Math.random() * (255 - 10 + 1)) + 10;
+        state.tagColor = "#" + rColor.toString(16) + bColor.toString(16) + (240).toString(16);
     },
 }
 
@@ -82,6 +88,12 @@ export const actions = {
             }
 
         }
+    },
+    async updateProjectTag ({state, commit}, data) {
+        await api.updatetag(state.projectID, data.pk, data);
+    },
+    async deleteProjectTag ({state, commit}, data) {
+        await api.deletetag(state.projectID, data.pk);
     }
 }
 
