@@ -123,8 +123,8 @@ class PdfParser(ParserDocument):
                 yield part
                 page_nb = page_nb + 1
         except pyvips.error.Error as e:
-            msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                filename=self.file.name, error=e.args[0]
+            msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
+                filename=self.file.name, page=page_nb+1, error=e.args[0]
             )
             logger.warning(msg)
             if self.report:
@@ -202,8 +202,8 @@ class ZipParser(ParserDocument):
                         pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                            filename=self.file.name, error=e.args[0]
+                        msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                            filename=self.file.name, xmlfile=zipedfh.name, error=e.args[0]
                         )
                         logger.warning(msg)
                         if self.report:
