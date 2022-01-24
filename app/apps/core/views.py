@@ -48,6 +48,22 @@ class Home(TemplateView):
         return context
 
 
+class PerPageMixin():
+    MAX_PAGINATE_BY = 50
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['select_per_page'] = True
+        return context
+
+    def get_paginate_by(self, queryset):
+        try:
+            _paginate_by = int(self.request.GET.get("paginate_by", self.paginate_by))
+        except ValueError:
+            _paginate_by = self.paginate_by
+        return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
+
+
 class ProjectList(LoginRequiredMixin, ListView):
     model = Project
     paginate_by = 10
@@ -73,7 +89,7 @@ class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return response
 
 
-class DocumentsList(LoginRequiredMixin, ListView):
+class DocumentsList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Document
     paginate_by = 10
 

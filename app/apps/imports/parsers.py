@@ -25,17 +25,21 @@ from core.models import (Block,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata)
+from core.tasks import generate_part_thumbnails
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
+
 class DiskQuotaReachedError(Exception):
     pass
 
+
 class ParseError(Exception):
     pass
+
 
 class DownloadError(ParseError):
     pass
@@ -113,12 +117,14 @@ class PdfParser(ParserDocument):
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
                 part.original_filename = fname
+                part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
+                generate_part_thumbnails.si(instance_pk=part.pk)
                 yield part
                 page_nb = page_nb + 1
         except pyvips.error.Error as e:
-            msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                filename=self.file.name, error=e.args[0]
+            msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
+                filename=self.file.name, page=page_nb+1, error=e.args[0]
             )
             logger.warning(msg)
             if self.report:
@@ -180,7 +186,9 @@ class ZipParser(ParserDocument):
                             part.image_file_size = 0
                             part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
+                            part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
+                            generate_part_thumbnails.si(instance_pk=part.pk)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
@@ -194,8 +202,8 @@ class ZipParser(ParserDocument):
                         pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                            filename=self.file.name, error=e.args[0]
+                        msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                            filename=self.file.name, xmlfile=zipedfh.name, error=e.args[0]
                         )
                         logger.warning(msg)
                         if self.report:
@@ -353,7 +361,7 @@ class XMLParser(ParserDocument):
                                     block.save()
                         else:
                             block = None
-                    
+
                         lines = self.get_lines(blockTag)
                         n_lines += len(lines)
 
@@ -480,8 +488,8 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = _("Invalid baseline %s in {filen} line {linen}").format(
-                        baseline, self.file.name, lineTag.sourceline)
+                    msg = _("Invalid baseline {baseline} in {filen} line {linen}").format(
+                        baseline=baseline, filen=self.file.name, linen=lineTag.sourceline)
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)

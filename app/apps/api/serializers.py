@@ -170,7 +170,7 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
 
     def get_last_started_task(self, document):
         try:
-            last_task = document.reports.latest('started_at')
+            last_task = document.reports.filter(started_at__isnull=False).latest('started_at')
         except TaskReport.DoesNotExist:
             return None
 
