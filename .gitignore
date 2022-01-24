@@ -14,6 +14,9 @@ front/node_modules
 front/dist
 variables.env
 .vscode
+.idea
 .venv
+.python-version
 WARNING_*
 .nfs*
+**/.DS_Store

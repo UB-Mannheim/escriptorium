@@ -1,4 +1,3 @@
-from collections import defaultdict
 import json
 import logging
 import os.path
@@ -26,17 +25,21 @@ from core.models import (Block,
                          DocumentPart,
                          Metadata,
                          DocumentMetadata)
+from core.tasks import generate_part_thumbnails
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
+
 class DiskQuotaReachedError(Exception):
     pass
 
+
 class ParseError(Exception):
     pass
+
 
 class DownloadError(ParseError):
     pass
@@ -114,12 +117,14 @@ class PdfParser(ParserDocument):
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
                 part.original_filename = fname
+                part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
+                generate_part_thumbnails.si(instance_pk=part.pk)
                 yield part
                 page_nb = page_nb + 1
         except pyvips.error.Error as e:
-            msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                filename=self.file.name, error=e.args[0]
+            msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
+                filename=self.file.name, page=page_nb+1, error=e.args[0]
             )
             logger.warning(msg)
             if self.report:
@@ -181,7 +186,9 @@ class ZipParser(ParserDocument):
                             part.image_file_size = 0
                             part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
+                            part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
+                            generate_part_thumbnails.si(instance_pk=part.pk)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
@@ -195,8 +202,8 @@ class ZipParser(ParserDocument):
                         pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {error}, skipping it.").format(
-                            filename=self.file.name, error=e.args[0]
+                        msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                            filename=self.file.name, xmlfile=zipedfh.name, error=e.args[0]
                         )
                         logger.warning(msg)
                         if self.report:
@@ -301,7 +308,12 @@ class XMLParser(ParserDocument):
             lt.save()
 
     def parse(self, start_at=0, override=False, user=None):
-        for pageTag in self.get_pages():
+        pages = self.get_pages()
+        n_pages = len(pages)
+        n_blocks = 0
+        n_lines = 0
+
+        for pageTag in pages:
             # find the filename to match with existing images
             filename = self.get_filename(pageTag)
             try:
@@ -323,7 +335,10 @@ class XMLParser(ParserDocument):
                         part.lines.all().delete()
                         part.blocks.all().delete()
 
-                    for block_id, blockTag in self.get_blocks(pageTag):
+                    blocks = self.get_blocks(pageTag)
+                    n_blocks += len(blocks)
+
+                    for block_id, blockTag in blocks:
                         if block_id and not block_id.startswith("eSc_dummyblock_"):
                             try:
                                 block = Block.objects.get(document_part=part, external_id=block_id)
@@ -347,7 +362,10 @@ class XMLParser(ParserDocument):
                         else:
                             block = None
 
-                        for line_id, lineTag in self.get_lines(blockTag):
+                        lines = self.get_lines(blockTag)
+                        n_lines += len(lines)
+
+                        for line_id, lineTag in lines:
                             if line_id:
                                 try:
                                     line = Line.objects.get(document_part=part, external_id=line_id)
@@ -380,7 +398,7 @@ class XMLParser(ParserDocument):
                                 self.make_transcription(line, lineTag, tc, user=user)
 
                 # TODO: store glyphs too
-                logger.info("Uncompressed and parsed %s" % self.file.name)
+                logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))
                 part.calculate_progress()
                 yield part
 
@@ -420,7 +438,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
     def get_blocks(self, pageTag):
         return [
             (b.get("ID"), b)
-            for b in pageTag.findall("PrintSpace/TextBlock", self.root.nsmap)
+            for b in pageTag.findall("PrintSpace//TextBlock", self.root.nsmap)
         ]
 
     def get_lines(self, blockTag):
@@ -470,8 +488,8 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = _("Invalid baseline %s in {filen} line {linen}").format(
-                        baseline, self.file.name, lineTag.sourceline)
+                    msg = _("Invalid baseline {baseline} in {filen} line {linen}").format(
+                        baseline=baseline, filen=self.file.name, linen=lineTag.sourceline)
                     logger.warning(msg)
                     if self.report:
                         self.report.append(msg)
@@ -489,7 +507,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                 coords = tuple(map(float, polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                msg = "Invalid polygon %s in {filen} line {linen}" % (polygon, self.file.name, lineTag.sourceline)
+                msg = "Invalid polygon %s in %s line %d" % (polygon, self.file.name, lineTag.sourceline)
                 logger.warning(msg)
                 if self.report:
                     self.report.append(msg)

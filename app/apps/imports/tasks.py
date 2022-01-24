@@ -15,13 +15,14 @@ from celery import shared_task
 from core.models import Line
 from users.consumers import send_event
 from escriptorium.utils import send_email
+from reporting.tasks import create_task_reporting
 
 
 logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True)
-def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, report_label=None):
+def document_import(task, import_pk=None, resume=True, task_id=None, user_pk=None, report_label=None):
     DocumentImport = apps.get_model('imports', 'DocumentImport')
     TaskReport = apps.get_model('reporting', 'TaskReport')
     User = apps.get_model('users', 'User')
@@ -59,7 +60,7 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
                         links=[{'text': 'Report', 'src': imp.report.uri}],
                         id="import-error", level='danger')
 
-        send_event('document', imp.document.pk, "import:fail", {
+        send_event('document', imp.document.pk, "import:error", {
             "id": imp.document.pk,
             "reason": str(e)
         })
@@ -78,8 +79,8 @@ def document_import(task, import_pk, resume=True, task_id=None, user_pk=None, re
 
 
 @shared_task(bind=True)
-def document_export(task, file_format, document_pk, part_pks,
-                    transcription_pk, region_types, include_images=False,
+def document_export(task, file_format, part_pks,
+                    transcription_pk, region_types, document_pk=None, include_images=False,
                     user_pk=None, report_label=None):
     ALTO_FORMAT = "alto"
     PAGEXML_FORMAT = "pagexml"
@@ -202,7 +203,7 @@ def document_export(task, file_format, document_pk, part_pks,
                         id="export-error",
                         level='danger')
 
-        send_event('document', document.pk, "import:fail", {
+        send_event('document', document.pk, "import:error", {
             "id": document.pk,
             "reason": str(e)
         })

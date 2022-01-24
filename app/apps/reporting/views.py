@@ -1,8 +1,11 @@
 from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Page, Paginator
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
+from django.utils.functional import cached_property
 from django.views.generic import ListView, DetailView
+from django.views.generic.base import TemplateView
 
 from reporting.models import TaskReport
 from users.models import User
@@ -63,13 +66,35 @@ class ReportDetail(LoginRequiredMixin, DetailView):
         return qs.filter(user=self.request.user)
 
 
-class QuotasLeaderboard(LoginRequiredMixin, ListView):
-    model = User
+class CustomPaginator(Paginator):
+
+    def __init__(self, *args, **kwargs):
+        self._count = kwargs.pop('total')
+        super(CustomPaginator, self).__init__(*args, **kwargs)
+
+    @cached_property
+    def count(self):
+        return self._count
+
+    def page(self, number):
+        number = self.validate_number(number)
+        return Page(self.object_list, number, self)
+
+
+class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
     template_name = "reporting/quotas_leaderboard.html"
     paginate_by = 20
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['enforce_quotas'] = not settings.DISABLE_QUOTAS
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+        offset = (page-1) * self.paginate_by
+
         today = date.today()
         filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
         filter_last_day = Q(taskreport__started_at__gte=today - timedelta(days=1))
@@ -78,6 +103,7 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
             output_field=DurationField()
         )
 
+        qs = User.objects.all()
         results = list(
             qs.annotate(
                 total_cpu_usage=Sum('taskreport__cpu_cost'),
@@ -90,7 +116,7 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
                 last_week_runtime=Sum(runtime, filter=filter_last_week),
                 last_day_tasks=Count('taskreport', filter=filter_last_day),
                 last_day_runtime=Sum(runtime, filter=filter_last_day)
-            ).order_by(F('total_runtime').desc(nulls_last=True))
+            ).order_by(F('total_runtime').desc(nulls_last=True))[offset:offset+self.paginate_by]
         )
         disk_usages_left = dict(qs.values('id').annotate(disk_usage=Sum('ocrmodel__file_size')).values_list('id', 'disk_usage'))
         disk_usages_right = dict(qs.values('id').annotate(disk_usage=Sum('document__parts__image_file_size')).values_list('id', 'disk_usage'))
@@ -98,9 +124,13 @@ class QuotasLeaderboard(LoginRequiredMixin, ListView):
         for user in results:
             user.disk_usage = (disk_usages_left[user.id] or 0) + (disk_usages_right[user.id] or 0)
 
-        return results
+        # Pagination
+        paginator = CustomPaginator(results, self.paginate_by, total=qs.count())
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['enforce_quotas'] = not settings.DISABLE_QUOTAS
+        if page > paginator.num_pages:
+            page = paginator.num_pages
+
+        context['page_obj'] = paginator.page(page)
+        context['is_paginated'] = paginator.num_pages > 1
+
         return context

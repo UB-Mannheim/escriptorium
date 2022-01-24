@@ -5,8 +5,10 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.translation import gettext as _
+from django_redis import get_redis_connection
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,6 +20,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from api.serializers import (UserOnboardingSerializer,
                              ProjectSerializer,
                              DocumentSerializer,
+                             DocumentTasksSerializer,
                              PartDetailSerializer,
                              PartSerializer,
                              PartMoveSerializer,
@@ -63,11 +66,22 @@ from core.models import (Project,
 
 from core.tasks import recalculate_masks
 from users.models import User
+from users.consumers import send_event
 from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
+from reporting.models import TaskReport
 from versioning.models import NoChangeException
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
+
+redis_ = get_redis_connection()
+CLIENT_TASK_NAME_MAP = {
+    'segtrain': 'training',
+    'train': 'training',
+    'document_export': 'export',
+    'document_import': 'import'
+}
 
 
 class UserViewSet(ModelViewSet):
@@ -125,6 +139,121 @@ class DocumentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def tasks(self, request):
+        extra = {}
+
+        if not request.user.is_staff:
+            extra["owner"] = request.user
+        else:
+            # Filter results by owner
+            user_id_filter = request.GET.get('user_id')
+
+            if user_id_filter:
+                try:
+                    user_id_filter = int(user_id_filter)
+                except ValueError:
+                    return Response(
+                        {'error': 'Invalid user_id, it should be an int.'},
+                        status=400
+                    )
+
+                extra["owner"] = user_id_filter
+
+        # Filter results by querying their name
+        document_name_filter = request.GET.get('name')
+        if document_name_filter:
+            extra["name__icontains"] = document_name_filter
+
+        # Filter results by TaskReport.workflow_state
+        state_filter = request.GET.get('task_state', '').lower()
+        if state_filter:
+            mapped_labels = {label.lower():state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+            if state_filter not in mapped_labels:
+                return Response(
+                    {'error': 'Invalid task_state, it should match a valid workflow_state.'},
+                    status=400
+                )
+
+            extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
+
+        documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
+
+        page = self.paginate_queryset(documents)
+        if page is not None:
+            serializer = DocumentTasksSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DocumentTasksSerializer(documents, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def cancel_tasks(self, request, pk=None):
+        try:
+            document = Document.objects.get(pk=pk)
+        except Document.DoesNotExist:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data={'status': 'Not Found', 'error': f"Document with pk {pk} doesn't exist"}
+            )
+
+        if not request.user.is_staff and document.owner != request.user:
+            raise PermissionDenied
+
+        # Revoking all pending/running tasks for the specified document
+
+        reports = (document.reports
+                   .prefetch_related('document_part')
+                   .filter(workflow_state__in=[TaskReport.WORKFLOW_STATE_QUEUED,
+                                               TaskReport.WORKFLOW_STATE_STARTED]))
+        count = len(reports)  # evaluate query
+        for report in reports:
+            report.cancel(request.user.email)
+
+            method_name = report.method.split('.')[-1]
+            task_name = CLIENT_TASK_NAME_MAP.get(method_name, method_name)
+
+            if report.document_part:
+                # Some glue code from DocumentPart.cancel_tasks function is moved here to prevent performance issues
+                # update redis workflow state
+                redis_.set('process-%d' % report.document_part.pk, json.dumps({report.method: {"status": "canceled"}}))
+            else:
+                try:
+                    send_event('document', document.pk, f'{task_name}:error',
+                               {'reason': _('Canceled.')})
+                except Exception as e:
+                    # don't crash on websocket error
+                    logger.exception(e)
+
+        if count:
+            try:
+                # send a single websocket message for all parts
+                send_event('document', document.pk, 'parts:workflow', {
+                    'parts': [{
+                        'id': report.document_part.pk,
+                        'process': task_name,
+                        'status': 'error',
+                        'reason': _('Canceled.')
+                    } for report in reports]
+                })
+            except Exception as e:
+                # don't crash on websocket error
+                logger.exception(e)
+
+        # Executing all the glue code outside the real revoking of tasks to maintain db objects
+        # up-to-date with the real state of the app (e.g.: we stopped a training, we need to set
+        # the model.training attribute to False)
+        for model in document.ocr_models.filter(training=True):
+            model.cancel_training(revoke_task=False)  # We already revoked the Celery task
+
+        for doc_import in document.documentimport_set.all():
+            doc_import.cancel(revoke_task=False)  # We already revoked the Celery task
+
+        return Response({
+            'status': 'canceled',
+            'details': f'Canceled {count} pending/running tasks linked to document {document.name}.'
+        })
 
     @action(detail=True, methods=['post'])
     def imports(self, request, pk=None):
@@ -281,7 +410,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
-        recalculate_masks.delay(part.pk, user_pk=request.user.pk, only=only)
+        recalculate_masks.delay(instance_pk=part.pk, user_pk=request.user.pk, only=only)
         return Response({'status': 'ok'})
 
     @action(detail=True, methods=['post'])

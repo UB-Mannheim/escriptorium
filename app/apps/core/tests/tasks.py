@@ -107,10 +107,7 @@ class TasksTestCase(CoreFactoryTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(self.part.lines.count(), 19)
 
-    @unittest.skipIf(
-        os.environ.get("CI") is not None,
-        "Too heavy on resources"
-    )
+    @unittest.skip
     def test_train_new_segmentation_model(self):
         self.part = self.factory.make_part(image_asset='segmentation/default.png')
         baselines = [[[13,31],[848,37]], [[99,93],[850,106]], [[15,157],[837,165]]]

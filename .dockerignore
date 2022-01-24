@@ -5,3 +5,6 @@ app/test_media/
 app/logs/
 ci/
 .vscode
+.idea
+variables.env
+.python-version
