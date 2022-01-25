@@ -1,3 +1,4 @@
+
 {
   "name": "escriptorium",
   "version": "0.1.0",
@@ -11,7 +12,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.0",
     "@recogito/annotorious": "^2.7.1",
-    "@recogito/recogito-js": "^1.6.1",
+    "@recogito/recogito-js": "../../recogito-js",
     "@teklia/virtual-keyboard": "^0.2.2",
     "axios": "^0.21.4",
     "bootstrap": "^4.2.1",

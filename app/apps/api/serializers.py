@@ -139,7 +139,7 @@ class AnnotationComponentSerializer(serializers.ModelSerializer):
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
     typology = AnnotationTypeSerializer(required=False)
-    # components = AnnotationComponentSerializer(many=True, required=False)
+    components = AnnotationComponentSerializer(many=True, required=False)
     marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=False)
 
     class Meta:

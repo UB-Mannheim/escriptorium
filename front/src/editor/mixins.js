@@ -137,7 +137,7 @@ export var AnnoPanel = {
                 btn.classList.add('btn-outline-info');
                 btn.classList.remove('btn-info');
             }
-            this.setThisAnnoTaxonomy(taxo);
+            this.setAnnoTaxonomy(taxo);
         },
 
         setThisAnnoTanomy(taxo) {
@@ -161,7 +161,7 @@ export var AnnoPanel = {
                               name: compo.name,
                               values: compo.allowed_values});
             })
-
+            console.log(widgets);
             this.anno.widgets = widgets;
         },
 

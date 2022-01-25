@@ -170,13 +170,18 @@ export default Vue.extend({
                 this.$store.dispatch('imageAnnotations/delete', annotation.pk);
             }.bind(this));
         },
-        setAnnoTaxonomy(taxo) {
 
+        setThisAnnoTanomy(taxo) {
+            this.setImgAnnoTaxonomy(taxo);
+        },
+
+        setImgAnnoTaxonomy(taxo) {
             let marker_map = {
                 'Rectangle': 'rect',
                 'Polygon': 'polygon'
             };
             this.anno.setDrawingTool(marker_map[taxo.marker_type]);
+            this.setAnnoTaxonomy(taxo);
         }
     }
 });

@@ -139,12 +139,11 @@ export default Vue.extend({
         async initAnnotations() {
             this.anno = new Recogito({
                 content: this.$refs.contentContainer,
-                allowEmpty: true,
-                readOnly: false,  // true
+                // allowEmpty: true,
+                readOnly: true,
                 widgets: [],
                 disableEditor: true
             });
-            // !! readOnly doesn't seem to work for recogito as it does for annororious :/
 
             let annos = await this.$store.dispatch('textAnnotations/fetch');
             annos.forEach(function(annotation) {
