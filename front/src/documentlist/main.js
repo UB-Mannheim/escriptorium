@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue from 'vue';
 import store from '../editor/index';
 import TagsSelector from '../../vue/components/TagsSelector.vue';
 import SimpleTagEdit from '../../vue/components/SimpleTagEdit.vue';
