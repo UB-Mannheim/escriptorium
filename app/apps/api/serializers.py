@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 from api.fields import DisplayChoiceField
 from users.models import User
