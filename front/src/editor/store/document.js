@@ -50,16 +50,16 @@ export const mutations = {
         state.blockShortcuts = block
     },
     setVisiblePanels(state, payload) {
-        state.visible_panels = assign({}, state.visible_panels, payload)
+        state.visible_panels = Object.assign({}, state.visible_panels, payload)
     },
     setAnnotationTaxonomies(state, payload) {
         state.annotationTaxonomies[payload[0]] = payload[1]
     },
     setEnabledVKs(state, vks) {
-        state.enabledVKs = assign([], state.enabledVKs, vks)
+        state.enabledVKs = Object.assign([], state.enabledVKs, vks)
     },
     reset (state) {
-        assign(state, initialState())
+        Object.assign(state, initialState())
     }
 }
 

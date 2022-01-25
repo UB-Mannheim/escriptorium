@@ -1223,21 +1223,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
-<<<<<<< HEAD
-        if (
-            task_name == "convert"
-            or self.workflow_state < self.WORKFLOW_STATE_CONVERTED
-        ):
-            sig = convert.si(self.pk, **kwargs)
-
-            if getattr(settings, "THUMBNAIL_ENABLE", True):
-                sig.link(
-                    chain(
-                        lossless_compression.si(self.pk, **kwargs),
-                        generate_part_thumbnails.si(self.pk, **kwargs),
-                    )
-                )
-=======
 
         if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
             sig = convert.si(instance_pk=self.pk, **kwargs)
@@ -1245,37 +1230,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             if getattr(settings, 'THUMBNAIL_ENABLE', True):
                 sig.link(chain(lossless_compression.si(instance_pk=self.pk, **kwargs),
                                generate_part_thumbnails.si(instance_pk=self.pk, **kwargs)))
->>>>>>> develop
             else:
                 sig.link(lossless_compression.si(instance_pk=self.pk, **kwargs))
             tasks.append(sig)
 
-<<<<<<< HEAD
-        if task_name == "binarize":
-            tasks.append(
-                binarize.si(
-                    self.pk,
-                    report_label="Binarize in %s" % self.document.name,
-                    **kwargs,
-                )
-            )
-
-        if task_name == "segment" or (task_name == "transcribe" and not self.segmented):
-            tasks.append(
-                segment.si(
-                    self.pk, report_label="Segment in %s" % self.document.name, **kwargs
-                )
-            )
-
-        if task_name == "transcribe":
-            tasks.append(
-                transcribe.si(
-                    self.pk,
-                    report_label="Transcribe in %s" % self.document.name,
-                    **kwargs,
-                )
-            )
-=======
         if task_name == 'binarize':
             tasks.append(binarize.si(instance_pk=self.pk,
                                      report_label='Binarize in %s' % self.document.name,
@@ -1291,7 +1249,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
->>>>>>> develop
 
         if commit:
             self.chain_tasks(*tasks)
@@ -1787,36 +1744,6 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         return model
 
     def segtrain(self, document, parts_qs, user=None):
-<<<<<<< HEAD
-        segtrain.delay(
-            self.pk,
-            document.pk,
-            list(parts_qs.values_list("pk", flat=True)),
-            user_pk=user and user.pk or None,
-        )
-
-    def train(self, parts_qs, transcription, user=None):
-        train.delay(
-            list(parts_qs.values_list("pk", flat=True)),
-            transcription.pk,
-            model_pk=self.pk,
-            user_pk=user and user.pk or None,
-        )
-
-    def cancel_training(self):
-        try:
-            if self.job == self.MODEL_JOB_RECOGNIZE:
-                task_id = json.loads(redis_.get("training-%d" % self.pk))["task_id"]
-            elif self.job == self.MODEL_JOB_SEGMENT:
-                task_id = json.loads(redis_.get("segtrain-%d" % self.pk))["task_id"]
-        except (TypeError, KeyError):
-            raise ProcessFailureException(_("Couldn't find the training task."))
-        else:
-            if task_id:
-                revoke(task_id, terminate=True)
-                self.training = False
-                self.save()
-=======
         segtrain.delay(self.pk,
                        list(parts_qs.values_list('pk', flat=True)),
                        document_pk=document.pk,
@@ -1846,7 +1773,6 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
 
         self.training = False
         self.save()
->>>>>>> develop
 
     # versioning
     def pack(self, **kwargs):
