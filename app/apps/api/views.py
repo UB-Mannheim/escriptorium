@@ -171,7 +171,7 @@ class DocumentViewSet(ModelViewSet):
 
             extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
 
-        documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
+        documents = Document.objects.filter(reports__isnull=False, **extra).select_related('owner').distinct()
 
         page = self.paginate_queryset(documents)
         if page is not None:

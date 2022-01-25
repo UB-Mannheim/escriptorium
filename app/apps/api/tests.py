@@ -186,6 +186,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(json['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
@@ -209,12 +210,14 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             {
                 'pk': other_doc.pk,
                 'name': other_doc.name,
+                'owner': other_doc.owner.get_full_name(),
                 'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
             {
                 'pk': self.doc.pk,
                 'name': self.doc.name,
+                'owner': self.doc.owner.get_full_name(),
                 'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
                 'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
@@ -246,6 +249,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(json['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
@@ -268,6 +272,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             {
                 'pk': other_doc.pk,
                 'name': other_doc.name,
+                'owner': other_doc.owner.get_full_name(),
                 'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
@@ -291,6 +296,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             {
                 'pk': other_doc.pk,
                 'name': other_doc.name,
+                'owner': other_doc.owner.get_full_name(),
                 'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
@@ -321,6 +327,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             {
                 'pk': other_doc.pk,
                 'name': other_doc.name,
+                'owner': other_doc.owner.get_full_name(),
                 'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
@@ -367,6 +374,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
@@ -394,6 +402,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
@@ -424,6 +433,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
@@ -451,6 +461,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
+            'owner': self.doc.owner.get_full_name(),
             'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
