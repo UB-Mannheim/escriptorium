@@ -604,3 +604,7 @@ class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('model-rights', kwargs={'pk': self.kwargs['modelPk']})
+
+
+class DocumentsTasksList(LoginRequiredMixin, TemplateView):
+    template_name = 'core/documents_tasks_list.html'

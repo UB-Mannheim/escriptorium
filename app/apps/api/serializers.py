@@ -155,12 +155,16 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class DocumentTasksSerializer(serializers.ModelSerializer):
+    owner = serializers.SerializerMethodField()
     tasks_stats = serializers.SerializerMethodField()
     last_started_task = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'tasks_stats', 'last_started_task')
+        fields = ('pk', 'name', 'owner', 'tasks_stats', 'last_started_task')
+
+    def get_owner(self, document):
+        return document.owner.get_full_name() if document.owner else None
 
     def get_tasks_stats(self, document):
         stats = {state: 0 for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
