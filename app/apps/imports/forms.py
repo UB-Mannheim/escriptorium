@@ -20,7 +20,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     name = forms.CharField(
         required=False,
         max_length=256,
-        help_text=_("The name of the target transcription. Will default to '{format} Import'."))
+        help_text=_("The name of the target transcription. Will default to 'Default ALTO|PAGE Import'."))
     upload_file = forms.FileField(
         required=False,
         help_text=_("A single ALTO or PAGE XML file, or a zip file."))
