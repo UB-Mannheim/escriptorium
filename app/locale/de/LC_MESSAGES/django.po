@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-10 18:29+0000\n"
+"POT-Creation-Date: 2022-01-11 13:27+0000\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -352,9 +352,12 @@ msgid "Right deleted successfully!"
 msgstr "Recht erfolgreich gelöscht!"
 
 #: apps/imports/forms.py:23
-#, python-brace-format
+#, fuzzy
+#| msgid ""
+#| "The name of the target transcription. Will default to '{format} Import'."
 msgid ""
-"The name of the target transcription. Will default to '{format} Import'."
+"The name of the target transcription. Will default to 'Default ALTO|PAGE "
+"Import'."
 msgstr "Der Name der Ziel-Transkription. Default ist '{format} Import'."
 
 #: apps/imports/forms.py:26
@@ -1838,7 +1841,9 @@ msgid "Signup"
 msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html:11
-msgid "Recipient's informations"
+#, fuzzy
+#| msgid "Recipient's informations"
+msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
 
 #: escriptorium/templates/users/profile.html:8
