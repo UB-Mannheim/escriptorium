@@ -44,7 +44,7 @@
                 <button v-bind:data-trPk="trans.pk"
                         @click="deleteTranscription"
                         class="btn btn-danger fas fa-trash"
-                        title="Completely remove the transcription and all of its content!&#10;You can not remove the manual or the current transcription."></button>
+                        title="Completely remove the transcription and all of its content! You can not remove the manual or the current transcription."></button>
               </div>
             </div>
           </div>
