@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-17 16:17+0000\n"
+"POT-Creation-Date: 2022-01-29 22:25+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -26,55 +26,55 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/api/serializers.py:209 apps/api/serializers.py:359
-#: apps/api/serializers.py:386 apps/core/forms.py:185 apps/core/forms.py:236
+#: apps/api/serializers.py:213 apps/api/serializers.py:363
+#: apps/api/serializers.py:390 apps/core/forms.py:185 apps/core/forms.py:236
 #: apps/core/forms.py:495 apps/imports/forms.py:98
 #: escriptorium/templates/core/document_images.html:19
 msgid "You don't have any disk storage left."
 msgstr "Sie haben keinen Speicherplatz mehr übrig."
 
-#: apps/api/serializers.py:382 apps/core/forms.py:232 apps/imports/forms.py:94
+#: apps/api/serializers.py:386 apps/core/forms.py:232 apps/imports/forms.py:94
 #: apps/imports/forms.py:182
 msgid "You don't have any CPU minutes left."
 msgstr "Sie haben keine CPU-Minuten mehr übrig."
 
-#: apps/api/serializers.py:384 apps/core/forms.py:234
+#: apps/api/serializers.py:388 apps/core/forms.py:234
 msgid "You don't have any GPU minutes left."
 msgstr "Sie haben keine GPU-Minuten mehr übrig."
 
-#: apps/api/serializers.py:392 apps/core/forms.py:291
+#: apps/api/serializers.py:396 apps/core/forms.py:291
 msgid "Lines and regions"
 msgstr "Zeilen und Bereiche"
 
-#: apps/api/serializers.py:393 apps/core/forms.py:292
+#: apps/api/serializers.py:397 apps/core/forms.py:292
 msgid "Lines Baselines and Masks"
 msgstr "Zeilen Baselines und Masken"
 
-#: apps/api/serializers.py:394 apps/core/forms.py:293
+#: apps/api/serializers.py:398 apps/core/forms.py:293
 msgid "Only lines Masks"
 msgstr "Nur Zeilenmasken"
 
-#: apps/api/serializers.py:395 apps/core/forms.py:294
+#: apps/api/serializers.py:399 apps/core/forms.py:294
 msgid "Regions"
 msgstr "Bereiche"
 
-#: apps/api/serializers.py:398 apps/core/forms.py:300 apps/core/models.py:142
+#: apps/api/serializers.py:402 apps/core/forms.py:300 apps/core/models.py:143
 msgid "Horizontal l2r"
 msgstr "Horizontal v. l. n. r."
 
-#: apps/api/serializers.py:399 apps/core/forms.py:301 apps/core/models.py:143
+#: apps/api/serializers.py:403 apps/core/forms.py:301 apps/core/models.py:144
 msgid "Horizontal r2l"
 msgstr "Horizontal v. r. n. l."
 
-#: apps/api/serializers.py:400 apps/core/forms.py:302 apps/core/models.py:144
+#: apps/api/serializers.py:404 apps/core/forms.py:302 apps/core/models.py:145
 msgid "Vertical l2r"
 msgstr "Vertikal v. l. n. r."
 
-#: apps/api/serializers.py:401 apps/core/forms.py:303 apps/core/models.py:145
+#: apps/api/serializers.py:405 apps/core/forms.py:303 apps/core/models.py:146
 msgid "Vertical r2l"
 msgstr "Vertikal v. r. n. l."
 
-#: apps/api/serializers.py:473
+#: apps/api/serializers.py:477
 msgid ""
 "Either use model_name to create a new model, add a model pk to retrain an "
 "existing one, or both to create a new model from an existing one."
@@ -83,13 +83,17 @@ msgstr ""
 "Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren, oder "
 "beides, um ein neues Modell aus einem bestehenden zu erstellen."
 
-#: apps/api/serializers.py:541
+#: apps/api/serializers.py:545
 msgid ""
 "Either use model_name to create a new model, or add a model pk to retrain an "
 "existing one."
 msgstr ""
 "Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
 "fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
+
+#: apps/api/views.py:217 apps/api/views.py:230 apps/core/models.py:666
+msgid "Canceled."
+msgstr ""
 
 #: apps/core/forms.py:159
 msgid "The provided model could not be loaded."
@@ -141,51 +145,51 @@ msgstr ""
 "Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
 "damit verbundene Transkriptionen<b/> zuerst gelöscht!"
 
-#: apps/core/models.py:146
+#: apps/core/models.py:147
 msgid "Top to bottom"
 msgstr "Von oben nach unten"
 
-#: apps/core/models.py:204 apps/core/models.py:312
+#: apps/core/models.py:205 apps/core/models.py:313
 msgid "Share with users"
 msgstr "Mit Benutzern teilen"
 
-#: apps/core/models.py:207 apps/core/models.py:315
+#: apps/core/models.py:208 apps/core/models.py:316
 msgid "Share with teams"
 msgstr "Mit Teams teilen"
 
-#: apps/core/models.py:257
+#: apps/core/models.py:258
 msgid "Draft"
 msgstr "Entwurf"
 
-#: apps/core/models.py:258
+#: apps/core/models.py:259
 msgid "Published"
 msgstr "Veröffentlicht"
 
-#: apps/core/models.py:259
+#: apps/core/models.py:260
 msgid "Archived"
 msgstr "Archiviert"
 
-#: apps/core/models.py:264
+#: apps/core/models.py:265
 msgid "Left to right"
 msgstr "Links nach rechts"
 
-#: apps/core/models.py:265
+#: apps/core/models.py:266
 msgid "Right to left"
 msgstr "Rechts nach links"
 
-#: apps/core/models.py:271
+#: apps/core/models.py:272
 msgid "Baseline"
 msgstr "Baseline"
 
-#: apps/core/models.py:272
+#: apps/core/models.py:273
 msgid "Topline"
 msgstr "Topline"
 
-#: apps/core/models.py:273
+#: apps/core/models.py:274
 msgid "Centered"
 msgstr "Zentriert"
 
-#: apps/core/models.py:288
+#: apps/core/models.py:289
 msgid ""
 "The read direction describes the order of the elements in the document, in "
 "opposition with the text direction which describes the order of the words in "
@@ -195,74 +199,74 @@ msgstr ""
 "Unterschied dazu beschreibt die Text-Richtung die Anordnung der Wörter in "
 "einer Zeile und ist durch die Schriftart vorgegeben."
 
-#: apps/core/models.py:292
+#: apps/core/models.py:293
 msgid "The position of the line relative to the polygon."
 msgstr "Die Position der Zeile in Abhängigkeit vom Polygon."
 
-#: apps/core/models.py:387
+#: apps/core/models.py:388
 msgid "Binarized image needs to be the same size as original image."
 msgstr ""
 "Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
 
-#: apps/core/models.py:405 apps/users/models.py:130
+#: apps/core/models.py:406 apps/users/models.py:130
 msgid "Created"
 msgstr "Erstellt"
 
-#: apps/core/models.py:406
+#: apps/core/models.py:407
 msgid "Converting"
 msgstr "Konvertiere"
 
-#: apps/core/models.py:407
+#: apps/core/models.py:408
 msgid "Converted"
 msgstr "Konvertiert"
 
-#: apps/core/models.py:408
+#: apps/core/models.py:409
 msgid "Segmenting"
 msgstr "Segmentiere"
 
-#: apps/core/models.py:409
+#: apps/core/models.py:410
 msgid "Segmented"
 msgstr "Segmentiert"
 
-#: apps/core/models.py:410
+#: apps/core/models.py:411
 msgid "Transcribing"
 msgstr "Transkribiere"
 
-#: apps/core/models.py:425
+#: apps/core/models.py:426
 msgid "Element"
 msgstr "Element"
 
-#: apps/core/models.py:1071
+#: apps/core/models.py:1094
 #, python-format
 msgid "%(value)s is not a polygon - a 2 dimensional array."
 msgstr "%(value)s ist kein Polygon, sondern ein 2-dimensionales Feld."
 
-#: apps/core/models.py:1080
+#: apps/core/models.py:1103
 #, python-format
 msgid "Polygon needs to have at least 2 points, it has %(length)d: %(value)s."
 msgstr "Polygon muss mindestens 2 Stellen haben, es hat %(length)d: %(value)s."
 
-#: apps/core/models.py:1089
+#: apps/core/models.py:1112
 #, python-format
 msgid "Polygon needs to have at least 3 points, it has %(length)d: %(value)s."
 msgstr "Polygon muss mindestens 3 Stellen haben, es hat %(length)d: %(value)s."
 
-#: apps/core/models.py:1205
+#: apps/core/models.py:1228
 msgid "Both baseline and mask are empty."
 msgstr "Sowohl die Baseline als auch die Maske sind leer."
 
-#: apps/core/models.py:1277
+#: apps/core/models.py:1333
 #: escriptorium/templates/core/document_images.html:135
 #: escriptorium/templates/core/document_images.html:186
 #: escriptorium/templates/core/wizards/segment.html:21
 msgid "Segment"
 msgstr "Segment"
 
-#: apps/core/models.py:1278
+#: apps/core/models.py:1334
 msgid "Recognize"
 msgstr "Erkenne"
 
-#: apps/core/models.py:1353
+#: apps/core/models.py:1413
 msgid "Couldn't find the training task."
 msgstr "Konnte die Trainings-Aufgabe nicht finden."
 
@@ -307,47 +311,47 @@ msgstr "Während der Transkription ist etwas schiefgelaufen!"
 msgid "Transcription done!"
 msgstr "Transkription abgeschlossen!"
 
-#: apps/core/views.py:65
+#: apps/core/views.py:81
 msgid "Project created successfully!"
 msgstr "Projekt erfolgreich angelegt!"
 
-#: apps/core/views.py:156
+#: apps/core/views.py:172
 msgid "Document created successfully!"
 msgstr "Dokument erfolgreich angelegt!"
 
-#: apps/core/views.py:198
+#: apps/core/views.py:214
 msgid "Document saved successfully!"
 msgstr "Dokument erfolgreich gespeichert!"
 
-#: apps/core/views.py:260
+#: apps/core/views.py:276
 msgid "Document shared successfully!"
 msgstr "Dokument erfolgreich geteilt!"
 
-#: apps/core/views.py:297
+#: apps/core/views.py:313
 msgid "Project shared successfully!"
 msgstr "Projekt erfolgreich geteilt!"
 
-#: apps/core/views.py:341
+#: apps/core/views.py:357
 msgid "Document archived successfully!"
 msgstr "Dokument erfolgreich archiviert!"
 
-#: apps/core/views.py:343
+#: apps/core/views.py:359
 msgid "Document published successfully!"
 msgstr "Dokument erfolgreich veröffentlicht!"
 
-#: apps/core/views.py:490
+#: apps/core/views.py:506
 msgid "Model uploaded successfully!"
 msgstr "Modell erfolgreich hochgeladen!"
 
-#: apps/core/views.py:512
+#: apps/core/views.py:528
 msgid "Model deleted successfully!"
 msgstr "Modell erfolgreich gelöscht!"
 
-#: apps/core/views.py:549
+#: apps/core/views.py:565
 msgid "Right added successfully!"
 msgstr "Recht erfolgreich hinzugefügt!"
 
-#: apps/core/views.py:579
+#: apps/core/views.py:595
 msgid "Right deleted successfully!"
 msgstr "Recht erfolgreich gelöscht!"
 
@@ -437,11 +441,11 @@ msgstr "Wählen Sie mindestens ein Bild für den Export aus."
 msgid "Export %(document_name)s"
 msgstr "Exportiere %(document_name)s"
 
-#: apps/imports/parsers.py:85
+#: apps/imports/parsers.py:89
 msgid "Invalid PDF file."
 msgstr "Ungültige PDF Datei."
 
-#: apps/imports/parsers.py:103
+#: apps/imports/parsers.py:107
 msgid ""
 "You ran out of disk storage. {n_pages - page_nb} pages were left to import "
 "(over {n_pages - start_at})"
@@ -449,24 +453,24 @@ msgstr ""
 "Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
 "Importieren überlassen (over {n_pages - start_at})"
 
-#: apps/imports/parsers.py:120 apps/imports/parsers.py:197
+#: apps/imports/parsers.py:126
 #, python-brace-format
-msgid "Parse error in {filename}: {error}, skipping it."
-msgstr "Verarbeitungsfehler in {filename}: {error}, überspringt ihn."
+msgid "Parse error in {filename}: {page}: {error}, skipping it."
+msgstr "Verarbeitungsfehler in {filename}: {page}: {error}, überspringt ihn."
 
-#: apps/imports/parsers.py:133
+#: apps/imports/parsers.py:139
 msgid "Zip Import"
 msgstr "Zip Import"
 
-#: apps/imports/parsers.py:139
+#: apps/imports/parsers.py:145
 msgid "File appears to not be a valid zip."
 msgstr "Datei scheint ein ungültiges zip-Format zu sein."
 
-#: apps/imports/parsers.py:146
+#: apps/imports/parsers.py:152
 msgid "Zip file appears to be corrupted."
 msgstr "Zip-Datei scheint korrupt zu sein."
 
-#: apps/imports/parsers.py:168
+#: apps/imports/parsers.py:174
 msgid ""
 "You ran out of disk storage. {total - index} files were left to import (over "
 "{total - start_at})"
@@ -474,16 +478,22 @@ msgstr ""
 "Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
 "Importieren übrig gelassen (over {total - start_at})"
 
-#: apps/imports/parsers.py:319
+#: apps/imports/parsers.py:205
+#, python-brace-format
+msgid "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+msgstr ""
+"Verarbeitungsfehler in {filename}: {xmlfile}: {error}, überspringt ihn."
+
+#: apps/imports/parsers.py:327
 msgid "No match found for file {} with filename \"{}\"."
 msgstr "Keine Übereinstimmung für Datei {} mit Dateiname \"{}\" gefunden."
 
-#: apps/imports/parsers.py:350
+#: apps/imports/parsers.py:358
 #, python-brace-format
 msgid "Block in '{filen}' line N°{line} was skipped because: {error}"
 msgstr "Block in '{filen}' Zeile N°{line} wurde übersprungen, weil: {error}"
 
-#: apps/imports/parsers.py:379
+#: apps/imports/parsers.py:387
 #, python-brace-format
 msgid ""
 "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
@@ -491,34 +501,34 @@ msgstr ""
 "Zeile in '{filen}' Zeile N°{line} (id: {lineid}) wurde übersprungen, weil: "
 "{error}"
 
-#: apps/imports/parsers.py:399
+#: apps/imports/parsers.py:407
 msgid "Default ALTO Import"
 msgstr "Standard ALTO-Import"
 
-#: apps/imports/parsers.py:483
-#, python-format, python-brace-format
-msgid "Invalid baseline %s in {filen} line {linen}"
-msgstr "Ungültige Baseline %s in {filen} Zeile {linen}"
+#: apps/imports/parsers.py:491
+#, python-brace-format
+msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr "Ungültige Baseline {baseline} in {filen} Zeile {linen}"
 
-#: apps/imports/parsers.py:535
+#: apps/imports/parsers.py:543
 msgid "Default PAGE Import"
 msgstr "Standard PAGE-Import"
 
-#: apps/imports/parsers.py:631
+#: apps/imports/parsers.py:639
 #, python-brace-format
 msgid "Invalid coordinates for {tag} in {filen} line {line}"
 msgstr "Ungültige Koordinaten für {tag} in {filen} Zeile {line}"
 
-#: apps/imports/parsers.py:661
+#: apps/imports/parsers.py:669
 #, python-brace-format
 msgid "Couldn't decode invalid manifest ({error})"
 msgstr "Ungültiges Manifest konnte nicht dekodiert werden ({error})"
 
-#: apps/imports/parsers.py:672
+#: apps/imports/parsers.py:680
 msgid "Empty or invalid manifest, no images found."
 msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
 
-#: apps/imports/parsers.py:737
+#: apps/imports/parsers.py:745
 msgid ""
 "You ran out of disk storage. {total - i} canvases were left to import (over "
 "{total - start_at})"
@@ -526,57 +536,61 @@ msgstr ""
 "Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
 "übrig gelassen (over {total - start_at})"
 
-#: apps/imports/parsers.py:771
+#: apps/imports/parsers.py:779
 #, python-brace-format
 msgid "Error while fetching {filename}: {error}"
 msgstr "Fehler beim Abrufen von {filename}: {error}"
 
-#: apps/imports/tasks.py:58
+#: apps/imports/tasks.py:59
 msgid "Something went wrong during the import!"
 msgstr "Etwas ist während des Imports schiefgelaufen!"
 
-#: apps/imports/tasks.py:71
+#: apps/imports/tasks.py:72
 msgid "Import finished with warnings!"
 msgstr "Import mit Warnungen beendet!"
 
-#: apps/imports/tasks.py:72
+#: apps/imports/tasks.py:73
 #: escriptorium/templates/reporting/taskreport_list.html:128
 msgid "Details"
 msgstr "Einzelheiten"
 
-#: apps/imports/tasks.py:75
+#: apps/imports/tasks.py:76
 msgid "Import done!"
 msgstr "Import abgeschlossen!"
 
-#: apps/imports/tasks.py:200
+#: apps/imports/tasks.py:201
 msgid "Something went wrong during the export!"
 msgstr "Etwas ist während des Exports schiefgelaufen!"
 
-#: apps/imports/tasks.py:216
+#: apps/imports/tasks.py:217
 msgid "Export done!"
 msgstr "Export abgeschlossen!"
 
-#: apps/imports/tasks.py:218
+#: apps/imports/tasks.py:219
 #: escriptorium/templates/core/models_list/table.html:78
 #: escriptorium/templates/core/models_list/table.html:124
 msgid "Download"
 msgstr "Download"
 
-#: apps/reporting/models.py:20
+#: apps/reporting/models.py:22
 msgid "Queued"
 msgstr "In der Warteschlange"
 
-#: apps/reporting/models.py:21
+#: apps/reporting/models.py:23
 msgid "Running"
 msgstr "Läuft"
 
-#: apps/reporting/models.py:22
+#: apps/reporting/models.py:24
 msgid "Crashed"
 msgstr "Abgestürzt"
 
-#: apps/reporting/models.py:23
+#: apps/reporting/models.py:25
 msgid "Finished"
 msgstr "Abgeschlossen"
+
+#: apps/reporting/models.py:26
+msgid "Canceled"
+msgstr "Abgebrochen"
 
 #: apps/users/admin.py:65
 #, python-format
@@ -738,15 +752,20 @@ msgstr "Profil"
 msgid "Task reports"
 msgstr "Aufgabenbericht"
 
-#: escriptorium/templates/base.html:83
+#: escriptorium/templates/base.html:82
+#: escriptorium/templates/core/documents_tasks_list.html:3
+msgid "Tasks monitoring"
+msgstr ""
+
+#: escriptorium/templates/base.html:84
 msgid "Leaderboard"
 msgstr "Spitzenreiter"
 
-#: escriptorium/templates/base.html:88
+#: escriptorium/templates/base.html:89
 msgid "Logout"
 msgstr "Abmelden"
 
-#: escriptorium/templates/base.html:93
+#: escriptorium/templates/base.html:94
 msgid "Login"
 msgstr "Anmelden"
 
@@ -1045,19 +1064,19 @@ msgstr ""
 "Trainieren Sie neue neuronale Netze und wenden Sie sie an, um den "
 "Transkriptionsprozess von großen Korpora erheblich zu beschleunigen."
 
-#: escriptorium/templates/core/home.html:71
+#: escriptorium/templates/core/home.html:60
 msgid "Resources"
 msgstr "Ressourcen"
 
-#: escriptorium/templates/core/home.html:73
+#: escriptorium/templates/core/home.html:62
 msgid "Tutorial"
 msgstr "Anleitung (englisch)"
 
-#: escriptorium/templates/core/home.html:74
+#: escriptorium/templates/core/home.html:63
 msgid "eScriptorium open source code"
 msgstr "eScriptorium Open-Source-Code"
 
-#: escriptorium/templates/core/home.html:75
+#: escriptorium/templates/core/home.html:64
 msgid "Scripta Blog"
 msgstr "Scripta Blog"
 
@@ -1513,19 +1532,43 @@ msgid ""
 "lala\n"
 msgstr ""
 
-#: escriptorium/templates/includes/pagination.html:7
+#: escriptorium/templates/includes/pagination.html:13
+#, python-format
+msgid ""
+"\n"
+"                        Show %(page)s\n"
+"                      "
+msgstr ""
+
+#: escriptorium/templates/includes/pagination.html:24
 msgid "First page"
 msgstr "Erste Seite"
 
-#: escriptorium/templates/includes/pagination.html:12
+#: escriptorium/templates/includes/pagination.html:29
 msgid "Previous"
 msgstr "Vorherige"
 
-#: escriptorium/templates/includes/pagination.html:34
+#: escriptorium/templates/includes/pagination.html:38
+#, python-format
+msgid ""
+"\n"
+"                %(page_number)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+
+#: escriptorium/templates/includes/pagination.html:44
+#, python-format
+msgid ""
+"\n"
+"                %(counter)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+
+#: escriptorium/templates/includes/pagination.html:55
 msgid "Next"
 msgstr "Nächste"
 
-#: escriptorium/templates/includes/pagination.html:39
+#: escriptorium/templates/includes/pagination.html:60
 msgid "Last page"
 msgstr "Letzte Seite"
 
