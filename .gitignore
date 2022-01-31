@@ -5,13 +5,13 @@
 env/
 .envrc
 __pycache__
-app/escriptorium/local_settings.py
-app/static/
-app/media/
-app/homepage/
+/app/escriptorium/local_settings.py
+/app/static/
+/app/media/
+/app/homepage/
 *.log
-front/node_modules
-front/dist
+/front/node_modules
+/front/dist
 variables.env
 .vscode/*
 .idea
@@ -20,6 +20,7 @@ variables.env
 WARNING_*
 .nfs*
 **/.DS_Store
+/venv*
 yarn.lock
 wsl-dev*
 wsl_dev*
