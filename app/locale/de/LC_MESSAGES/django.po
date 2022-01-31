@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-29 22:25+0100\n"
+"POT-Creation-Date: 2022-01-31 19:12+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1268,9 +1268,13 @@ msgstr "Teams"
 msgid "Users"
 msgstr "Anwender"
 
+#: escriptorium/templates/core/share/share_base.html:25
+msgid "Close"
+msgstr "Abbrechen"
+
 #: escriptorium/templates/core/share/share_base.html:26
 msgid "Share"
-msgstr "Teile"
+msgstr "Teilen"
 
 #: escriptorium/templates/core/wizards/_base.html:21
 msgid "image(s) selected."
@@ -1851,6 +1855,34 @@ msgstr "Sie haben noch keinen Aufgabenbericht."
 #: escriptorium/templates/users/invitation_form.html:17
 msgid "Send"
 msgstr "Absenden"
+
+#: escriptorium/templates/users/email/invitation_html.html:2
+msgid "Hello "
+msgstr "Hallo "
+
+#: escriptorium/templates/users/email/invitation_html.html:3
+msgid "is inviting you to join"
+msgstr "lädt Sie ein,"
+
+#: escriptorium/templates/users/email/invitation_html.html:3
+msgid "his/her team"
+msgstr "seinem/ihrem Team"
+
+#: escriptorium/templates/users/email/invitation_html.html:3
+msgid "on"
+msgstr "in"
+
+#: escriptorium/templates/users/email/invitation_html.html:3
+msgid "eScriptorium!"
+msgstr "eScriptorium beizutreten!"
+
+#: escriptorium/templates/users/email/invitation_html.html:4
+msgid "All you need to do is click on the link below:"
+msgstr "Klicken Sie dafür einfach auf den folgenden Link:"
+
+#: escriptorium/templates/users/email/invitation_html.html:6
+msgid "Sincerely, the eScriptorium team."
+msgstr "Mit freundlichen Grüßen, das eScriptorium-Team"
 
 #: escriptorium/templates/users/group_detail_invite.html:5
 msgid "Back to profile"
