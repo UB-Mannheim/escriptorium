@@ -1,8 +1,9 @@
+# Local settings for eScriptorium on ocr-bw
+
 from escriptorium.settings import *
 
+DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
 CSRF_TRUSTED_ORIGINS = ['ocr-bw.bib.uni-mannheim.de']
-#LOGIN_REDIRECT_URL = '/escriptorium/projects/'
-#LOGOUT_REDIRECT_URL = '/escriptorium/'
 
 # In the format [('Full Name', 'email@example.com'), ('Full Name', 'anotheremail@example.com')]
 ADMINS = [
@@ -11,18 +12,25 @@ ADMINS = [
 ADMINS = ['Administrator <stefan.weil@bib.uni-mannheim.de>']
 
 # Run in subpath
-#BASE_URL = 'https://ocr-bw.bib.uni-mannheim.de/escriptorium'
-#FORCE_SCRIPT_PATH = '/escriptorium'
+#BASE_URL = 'https://ocr-bw.bib.uni-mannheim.de/escriptorium/'
+
+# Settings for running from a subpath.
+##FORCE_SCRIPT_NAME = '/escriptorium'
+##STATIC_URL = '/escriptorium/static/'
+
+#LOGIN_REDIRECT_URL = '/escriptorium/projects/'
+#LOGOUT_REDIRECT_URL = FORCE_SCRIPT_PATH + '/'
+#STATIC_URL = '/xxx/static/'
+#STATIC_URL = '/static/'
 #SCRIPT_PATH = '/escriptorium'
 
-ALLOWED_HOSTS = ['localhost', 'ub-blade-10.bib.uni-mannheim.de', '134.155.36.10']
+#ALLOWED_HOSTS = ['localhost', 'ub-blade-10.bib.uni-mannheim.de', '134.155.36.10']
 DEFAULT_FROM_EMAIL = 'noreply@bib.uni-mannheim.de'
-DOMAIN = 'ub-blade-10.bib.uni-mannheim.de'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = False
-VERSION_DATE = 'develop (2021-10-26)'
+VERSION_DATE = 'develop (2022-01-30)'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -31,7 +39,7 @@ LOCALE_PATHS = [
 DEBUG=True
 
 # https://stackoverflow.com/questions/62047354/build-absolute-uri-with-https-behind-reverse-proxy
-USE_X_FORWARDED_HOST = True
+#USE_X_FORWARDED_HOST = True
 
 DATABASES = {
     'default': {
