@@ -45,17 +45,12 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
             self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
             self.initial['valid_line_types'] = LineType.objects.filter(default=True)
 
-        self.fields['project'].queryset = Project.objects.for_user_read(self.request.user)
-        self.fields['project'].empty_label = None
-        if self.instance.pk and self.instance.owner != self.request.user:
-            self.fields['project'].disabled = True
-
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
 
     class Meta:
         model = Document
-        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
+        fields = ['name', 'read_direction', 'line_offset', 'main_script',
                   'valid_block_types', 'valid_line_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,
@@ -526,3 +521,32 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
             self.add_error('user', 'You must either choose an user OR a group')
             self.add_error('group', 'You must either choose an user OR a group')
         return cleaned_data
+
+class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
+    keep_tags = forms.BooleanField(required=False, label="Migrate with all tags")
+
+    class Meta:
+        model = Document
+        fields = ['project', 'keep_tags']
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.fields['project'].queryset = Project.objects.for_user_read(self.request.user)
+        self.fields['project'].empty_label = None
+        if self.instance.pk and self.instance.owner != self.request.user:
+            self.fields['project'].disabled = True
+    
+    def save(self, commit=True):
+        doc = super().save(commit=commit)
+        project = self.cleaned_data['project']
+        if self.cleaned_data['keep_tags']:
+            for tag in doc.tags.all():
+                try:
+                    project.document_tags.create(name=tag.name, color=tag.color)
+                except IntegrityError:
+                    pass
+        else:
+            doc.tags.clear()
+        
+        return doc

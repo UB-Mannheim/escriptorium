@@ -31,7 +31,8 @@ from core.forms import (ProjectForm,
 
                         UploadImageForm,
                         ModelUploadForm,
-                        ModelRightsForm)
+                        ModelRightsForm,
+                        MigrateDocumentForm)
 from imports.forms import ImportForm, ExportForm
 from reporting.models import TaskReport
 from users.models import User
@@ -223,6 +224,8 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
 
         if self.object.owner == self.request.user:
             context['share_form'] = DocumentShareForm(instance=self.object,
+                                                      request=self.request)
+            context['migrate_form'] = MigrateDocumentForm(instance=self.object,
                                                       request=self.request)
 
         return context
@@ -620,3 +623,8 @@ class DocumentsTasksList(LoginRequiredMixin, TemplateView):
         } if self.request.user and self.request.user.is_staff else {}
 
         return context
+
+
+class MigrateDocument(ShareDocument):
+    form_class = MigrateDocumentForm
+    success_message = _("Project change successfully!")
