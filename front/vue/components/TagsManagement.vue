@@ -12,9 +12,8 @@
                     <input type="hidden" class="form-control" id="project-id" name="project" v-model="projectIdComputed">
                     <div class="modal-body row">
                         <div class="form-group col-sm-4 d-inline-flex tag-template" v-for="tag in tags" :key="tag.pk" v-bind:value="tag.pk" v-bind:id="'div-tag-' + tag.pk">
-                            <input type="text" class="form-control m-1" v-bind:id="'name-tag-' + tag.pk" v-bind:value="tag.name">
-                            <input type="color" class="form-control m-1" v-bind:id="'color-tag-' + tag.pk" style="width: 20%;" v-bind:value="tag.color">
-                            <button type="button" class="btn btn-primary m-1" v-on:click="updateSingleTag(tag.pk)"><i class="fas fa-save"></i></button>
+                            <input type="text" class="form-control m-1" v-bind:id="'name-tag-' + tag.pk" v-bind:value="tag.name" @focusout="updateSingleTag(tag.pk)">
+                            <input type="color" class="form-control m-1" v-bind:id="'color-tag-' + tag.pk" style="width: 20%;" v-bind:value="tag.color" @focusout="updateSingleTag(tag.pk)">
                             <button type="button" class="btn btn-danger m-1" v-on:click="deleteSingleTag(tag.pk)"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>

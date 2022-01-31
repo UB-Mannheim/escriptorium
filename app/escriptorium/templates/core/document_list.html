@@ -8,7 +8,7 @@
 {% if can_create_document %}
 <a href="{% url 'document-create' slug=project.slug %}" class="btn btn-success ml-auto mb-2">{% trans 'Create new Document' %}</a>
 <button type="button" class="btn btn-info mb-2 ml-1" data-toggle="modal" data-target="#tagsModal" title="{% trans "Manage tags" %}"><i class="fas fa-tags"></i></button>
-<button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#tagsManagement" title="{% trans "Management tags" %}"><i class="fas fa-cogs"></i></button>
+<button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#tagsManagement" title="{% trans "Management tags" %}"><i class="fas fa-swatchbook"></i></button>
 {% endif %}
 
 {% if share_form %}
