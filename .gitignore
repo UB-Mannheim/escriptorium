@@ -21,3 +21,4 @@ variables.env
 WARNING_*
 .nfs*
 **/.DS_Store
+/venv*
