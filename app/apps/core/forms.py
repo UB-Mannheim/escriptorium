@@ -532,20 +532,15 @@ class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        self.fields['project'].queryset = Project.objects.for_user_read(self.request.user)
+        self.fields['project'].queryset = Project.objects.for_user_write(self.request.user)
         self.fields['project'].empty_label = None
-        if self.instance.pk and self.instance.owner != self.request.user:
-            self.fields['project'].disabled = True
     
     def save(self, commit=True):
         doc = super().save(commit=commit)
         project = self.cleaned_data['project']
         if self.cleaned_data['keep_tags']:
             for tag in doc.tags.all():
-                try:
-                    project.document_tags.create(name=tag.name, color=tag.color)
-                except IntegrityError:
-                    pass
+                project.document_tags.get_or_create(name=tag.name)
         else:
             doc.tags.clear()
         
