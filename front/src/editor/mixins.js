@@ -1,6 +1,8 @@
 window.Vue = require('vue/dist/vue');
 
 export var BasePanel = {
+    // Base class for all editor panels.
+
     data() {
         return {
             ratio: 1
@@ -68,6 +70,8 @@ export var LineBase = {
 }
 
 var KeyValueWidget = function(args) {
+    // Annotorious/recogito-js widget to a key/value input in the annotation modal.
+
     var purpose = 'attribute-'+args.name;
     var currentValue = args.annotation ?
                        args.annotation.bodies.find(b => b.purpose == purpose)
@@ -117,6 +121,8 @@ var KeyValueWidget = function(args) {
 }
 
 export var AnnoPanel = {
+    // Base class for panels who integrate annotorious/recogito-js.
+
     data() { return {
         currentTaxonomy: null,
     };},
@@ -128,10 +134,9 @@ export var AnnoPanel = {
                 btn.classList.remove('btn-outline-info');
                 btn.classList.add('btn-info');
             } else {
-                /* document.querySelectorAll('.taxo-group .btn-info').forEach(
-                 *     e => {e.classList.remove('btn-info');
-                 *         e.classList.add('btn-outline-info') });
-                 */
+                document.querySelectorAll('.taxo-group .btn-info').forEach(
+                    e => {e.classList.remove('btn-info');
+                        e.classList.add('btn-outline-info') });
 
                 this.anno.readOnly = true;
                 btn.classList.add('btn-outline-info');
@@ -150,7 +155,7 @@ export var AnnoPanel = {
             if (taxo.has_comments || taxo.components.length) {
                 this.anno.disableEditor = false;
             } else {
-                this.anno.disableEditor = true;
+                // this.anno.disableEditor = true;
             }
             let widgets = [];
             if (taxo.has_comments) {
@@ -161,7 +166,6 @@ export var AnnoPanel = {
                               name: compo.name,
                               values: compo.allowed_values});
             })
-            console.log(widgets);
             this.anno.widgets = widgets;
         },
 

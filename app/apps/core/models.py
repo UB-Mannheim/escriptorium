@@ -4,7 +4,6 @@ import json
 import logging
 import math
 import os
-import functools
 import re
 import subprocess
 import time
@@ -24,7 +23,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
 from django.db.models import Q, Prefetch, Sum
 from django.db.models.signals import pre_delete
-from django.db.models.functions import Length
+from django.db.models.functions import Length, Coalesce
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.template.defaultfilters import slugify
@@ -220,6 +219,7 @@ class Annotation(models.Model):
                     h=self.coordinates[1][1] - self.coordinates[0][1],
                 ),
             }
+
         elif self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
             selector = {
                 'type': 'SvgSelector',
@@ -227,44 +227,27 @@ class Annotation(models.Model):
                     pts=' '.join(['%d,%d' % (pt[0], pt[1]) for pt in self.coordinates])
                 )
             }
-        elif self.taxonomy.marker_type in [AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
-                                           AnnotationTaxonomy.MARKER_TYPE_TXT_COLOR,
-                                           AnnotationTaxonomy.MARKER_TYPE_BOLD,
-                                           AnnotationTaxonomy.MARKER_TYPE_ITALIC]:
 
-            start = (LineTranscription.objects
-                     .filter(line__order__lte=self.start_line.order, line__document_part=self.part)
-                     .aggregate(res=Sum(Length('content')))['res'] + self.start_offset)
-            end = (LineTranscription.objects
-                   .filter(line__order__lte=self.end_line.order, line__document_part=self.part)
-                   .aggregate(res=Sum(Length('content')))['res'] + self.end_offset)
-
-            return {
-                "type": "TextPositionSelector",
-                "start": start,
-                "end": end
-            }
         elif self.taxonomy.marker_type in [
             AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
             AnnotationTaxonomy.MARKER_TYPE_TXT_COLOR,
             AnnotationTaxonomy.MARKER_TYPE_BOLD,
             AnnotationTaxonomy.MARKER_TYPE_ITALIC,
         ]:
-
             start = (
                 LineTranscription.objects.filter(
                     line__order__lt=self.start_line.order, line__document_part=self.part
-                ).aggregate(res=Sum(Length("content")))["res"]
+                ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.start_offset
             )
             end = (
                 LineTranscription.objects.filter(
                     line__order__lt=self.end_line.order, line__document_part=self.part
-                ).aggregate(res=Sum(Length("content")))["res"]
+                ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.end_offset
             )
 
-            return {"type": "TextPositionSelector", "start": start, "end": end}
+            selector = {"type": "TextPositionSelector", "start": start, "end": end}
 
         return {
             "id": self.id,
