@@ -17,9 +17,9 @@ const mutations = {
 }
 
 const actions = {
-    async fetchDocumentsTasks({ commit }, page) {
+    async fetchDocumentsTasks({ commit }, params) {
         try {
-            const resp = await api.listDocumentsTasks(page)
+            const resp = await api.listDocumentsTasks(params)
             let data = resp.data
             commit('setDocumentsTasks', data)
         } catch (err) {

@@ -33,6 +33,8 @@ from core.forms import (ProjectForm,
                         ModelUploadForm,
                         ModelRightsForm)
 from imports.forms import ImportForm, ExportForm
+from reporting.models import TaskReport
+from users.models import User
 
 
 logger = logging.getLogger(__name__)
@@ -608,3 +610,13 @@ class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 class DocumentsTasksList(LoginRequiredMixin, TemplateView):
     template_name = 'core/documents_tasks_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['task_states'] = {state: label for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+        context['users'] = {
+            user.id: user.get_full_name() for user in User.objects.all()
+        } if self.request.user and self.request.user.is_staff else {}
+
+        return context
