@@ -39,10 +39,14 @@
 
     <table class="table table-hover">
       <tr>
+        <th>
+          <input class="ml-0" type="checkbox" v-model="selectAll">
+        </th>
         <th>Name</th>
         <th>User</th>
         <th>Statistics</th>
         <th>Last task started</th>
+        <th>Actions</th>
       </tr>
       <template v-if="$store.state.documentsTasks && $store.state.documentsTasks.results && $store.state.documentsTasks.results.length">
         <Row
@@ -50,14 +54,19 @@
           :timezone="timezone"
           :document-tasks="documentTasks"
           :key="documentTasks.pk"
+          :select-all="selectAll"
+          v-on:cancel-success="cancelSucceeded"
+          v-on:cancel-error="cancelFailed"
+          v-on:selected="updateSelectedList"
         />
       </template>
       <template v-else>
         <tr>
-          <td colspan="4">No document tasks to display.</td>
+          <td colspan="6">No document tasks to display.</td>
         </tr>
       </template>
     </table>
+
     <ul class="pagination justify-content-end">
       <li class="page-item">
         <template v-if="$store.state.documentsTasks && $store.state.documentsTasks.previous">
@@ -70,10 +79,28 @@
         </template>
       </li>
     </ul>
+
+    <button
+      data-toggle="modal"
+      data-target="#cancelTasksModal"
+      title="Cancel pending/running tasks for the selected documents"
+      class="btn btn-danger"
+      :disabled="!selectedList || !Object.values(selectedList).length"
+    >
+      Cancel all selected
+    </button>
+
+    <CancelModal
+      id="cancelTasksModal"
+      :documents-tasks="Object.values(selectedList)"
+      v-on:cancel-success="cancelSucceeded"
+      v-on:cancel-error="cancelFailed"
+    />
   </div>
 </template>
 
 <script>
+import CancelModal from "./CancelModal.vue";
 import Row from "./Row.vue";
 
 export default {
@@ -88,9 +115,12 @@ export default {
       selectedState: "",
       selectedUser: "",
       documentName: "",
+      selectAll: false,
+      selectedList: {},
     }
   },
   components: {
+    CancelModal,
     Row,
   },
   async created() {
@@ -109,6 +139,22 @@ export default {
     },
   },
   methods: {
+    cancelSucceeded(messages) {
+      messages.forEach((message, i) => Alert.add(`cancel-succeeded-${i}-${Date.now()}`, message, 'success'))
+      this.getDocumentTasks()
+    },
+    cancelFailed(messages) {
+      messages.forEach((message, i) => Alert.add(`cancel-failed-${i}-${Date.now()}`, message, 'danger'))
+    },
+    updateSelectedList(documentTasks, action) {
+      let newList = {...this.selectedList}
+      if (action === 'add') {
+        newList[documentTasks.pk] = documentTasks
+      } else {
+        delete newList[documentTasks.pk]
+      }
+      this.selectedList = {...newList}
+    },
     loadPrev() {
         this.currentPage -= 1;
         this.getDocumentTasks();
@@ -128,7 +174,7 @@ export default {
 
       await this.$store.dispatch("fetchDocumentsTasks", params);
     },
-  }
+  },
 };
 </script>
 
