@@ -616,7 +616,7 @@ class DocumentsTasksList(LoginRequiredMixin, TemplateView):
 
         context['task_states'] = {state: label for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
         context['users'] = {
-            user.id: user.get_full_name() for user in User.objects.all()
+            user.id: user.username for user in User.objects.all()
         } if self.request.user and self.request.user.is_staff else {}
 
         return context
