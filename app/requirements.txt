@@ -14,8 +14,10 @@ django-ordered-model==3.1.1
 easy-thumbnails==2.5
 git+https://github.com/mittagessen/kraken.git@3.0.5#egg=kraken
 django-cleanup==5.1.0
-djangorestframework==3.9.2
+django-ranged-response==0.2.0
+djangorestframework==3.12.4
 drf-nested-routers==0.91
+drf-writable-nested==0.6.3
 bleach==3.1.5
 beautifulsoup4==4.7.1
 requests==2.21.0
@@ -27,3 +29,4 @@ scikit-image==0.17.2
 scikit-learn==0.19.2
 scipy==1.5.2
 django-prometheus
+drf-spectacular==0.21.0

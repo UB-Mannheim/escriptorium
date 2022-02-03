@@ -4,4 +4,5 @@ app/media/
 app/test_media/
 app/logs/
 ci/
+front/node_modules
 .vscode
