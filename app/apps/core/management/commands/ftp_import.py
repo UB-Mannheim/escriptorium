@@ -1,9 +1,9 @@
 import os.path
-from ftplib import FTP
+# from ftplib import FTP
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-from core.models import Document, DocumentPart, Line, Transcription, LineTranscription, document_images_path
+from django.core.management.base import BaseCommand
+from core.models import Document, DocumentPart, Line, Transcription, LineTranscription
 
 
 class Command(BaseCommand):

@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib import messages
 from django.utils.translation import ngettext
 
-from users.models import User, ResearchField, Invitation, ContactUs, GroupOwner
+from users.models import QuotaEvent, User, ResearchField, Invitation, ContactUs, GroupOwner
 
 
 class MyUserChangeForm(UserChangeForm):
@@ -73,8 +73,17 @@ class ContactUsAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+class QuotaEventAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'reached_disk_storage', 'reached_cpu', 'reached_gpu', 'sent', 'created')
+    ordering = ('-created',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(User, MyUserAdmin)
 admin.site.register(ResearchField)
 admin.site.register(Invitation, InvitationAdmin)
 admin.site.register(ContactUs, ContactUsAdmin)
+admin.site.register(QuotaEvent, QuotaEventAdmin)
 admin.site.register(GroupOwner)

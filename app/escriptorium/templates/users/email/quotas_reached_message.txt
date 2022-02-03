@@ -1,0 +1,17 @@
+Hello {{ user.get_full_name }},
+
+We are sorry to inform you that you have exceeded some of your quotas:
+{% for quota in reached %}
+    {% if quota == "Disk storage" %}
+    {{ quota }} -> {{ user.calc_disk_usage|filesizeformat }} used out of {{ user.disk_storage_limit|filesizeformat }}
+    {% elif quota == "CPU minutes" %}
+    {{ quota }} -> { user.calc_cpu_usage|floatformat:2 }} CPU-min used out of {{ user.cpu_minutes_limit }} CPU-min
+    {% else %}
+    {{ quota }} -> {{ user.calc_gpu_usage|floatformat:2 }} GPU-min used out of {{ user.gpu_minutes_limit }} GPU-min
+    {% endif %}
+{% endfor %}
+
+Please contact your instance administrator if you wish to increase your quotas. 
+
+-----------
+Sincerely, the eScriptorium team.

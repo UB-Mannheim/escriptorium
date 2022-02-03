@@ -48,7 +48,7 @@ class CoreFactory():
             slug="test",
             defaults={
                 "owner": kwargs.get('owner') or self.make_user(),
-                "name": "Unit test"
+                "name": kwargs.get('name') or "Unit test"
             }
         )
         return project
@@ -57,7 +57,7 @@ class CoreFactory():
         attrs = kwargs.copy()
         attrs['owner'] = attrs.get('owner') or self.make_user()
         attrs['project'] = attrs.get('project') or self.make_project(owner=attrs['owner'])
-        attrs.setdefault('name', 'test doc')
+        attrs['name'] =  attrs.get('name') or 'test doc'
         return Document.objects.create(**attrs)
 
     def make_part(self, **kwargs):

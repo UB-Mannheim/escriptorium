@@ -4,7 +4,6 @@ import json
 import logging
 import math
 import os
-import functools
 import re
 import subprocess
 import time
@@ -24,7 +23,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
 from django.db.models import Q, Prefetch, Sum
 from django.db.models.signals import pre_delete
-from django.db.models.functions import Length
+from django.db.models.functions import Length, Coalesce
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.template.defaultfilters import slugify
@@ -54,6 +53,7 @@ from core.tasks import (
     generate_part_thumbnails,
 )
 from core.utils import ColorField
+from core.validators import JSONSchemaValidator
 from users.consumers import send_event
 from users.models import User
 from versioning.models import Versioned
@@ -219,6 +219,7 @@ class Annotation(models.Model):
                     h=self.coordinates[1][1] - self.coordinates[0][1],
                 ),
             }
+
         elif self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
             selector = {
                 'type': 'SvgSelector',
@@ -226,44 +227,27 @@ class Annotation(models.Model):
                     pts=' '.join(['%d,%d' % (pt[0], pt[1]) for pt in self.coordinates])
                 )
             }
-        elif self.taxonomy.marker_type in [AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
-                                           AnnotationTaxonomy.MARKER_TYPE_TXT_COLOR,
-                                           AnnotationTaxonomy.MARKER_TYPE_BOLD,
-                                           AnnotationTaxonomy.MARKER_TYPE_ITALIC]:
 
-            start = (LineTranscription.objects
-                     .filter(line__order__lte=self.start_line.order, line__document_part=self.part)
-                     .aggregate(res=Sum(Length('content')))['res'] + self.start_offset)
-            end = (LineTranscription.objects
-                   .filter(line__order__lte=self.end_line.order, line__document_part=self.part)
-                   .aggregate(res=Sum(Length('content')))['res'] + self.end_offset)
-
-            return {
-                "type": "TextPositionSelector",
-                "start": start,
-                "end": end
-            }
         elif self.taxonomy.marker_type in [
             AnnotationTaxonomy.MARKER_TYPE_BG_COLOR,
             AnnotationTaxonomy.MARKER_TYPE_TXT_COLOR,
             AnnotationTaxonomy.MARKER_TYPE_BOLD,
             AnnotationTaxonomy.MARKER_TYPE_ITALIC,
         ]:
-
             start = (
                 LineTranscription.objects.filter(
                     line__order__lt=self.start_line.order, line__document_part=self.part
-                ).aggregate(res=Sum(Length("content")))["res"]
+                ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.start_offset
             )
             end = (
                 LineTranscription.objects.filter(
                     line__order__lt=self.end_line.order, line__document_part=self.part
-                ).aggregate(res=Sum(Length("content")))["res"]
+                ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.end_offset
             )
 
-            return {"type": "TextPositionSelector", "start": start, "end": end}
+            selector = {"type": "TextPositionSelector", "start": start, "end": end}
 
         return {
             "id": self.id,
@@ -692,6 +676,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
     @property
     def filename(self):
+        # TODO: os.path.split(self.image.path)[1] looks like it could sometime
+        # produce an error. Maybe use Path().name, or at the very least
+        # os.path.split(self.image.path)[-1]?
         return self.original_filename or os.path.split(self.image.path)[1]
 
     def calculate_progress(self):
@@ -920,13 +907,22 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             self.save()
 
         for task_name, task in self.tasks.items():
-            if task_name not in uncancelable:
-                if "task_id" in task:  # if not, it is still pending
-                    revoke(task["task_id"], terminate=True)
-                redis_.set(
-                    "process-%d" % self.pk,
-                    json.dumps({task_name: {"status": "canceled"}}),
-                )
+            if (task_name not in uncancelable
+                and task['status'] not in ['canceled', 'error', 'done']):
+                if 'task_id' in task:  # if not, it is still pending
+                    revoke(task['task_id'], terminate=True)
+
+                try:
+                    send_event('document', self.document.pk, 'part:workflow',
+                               {'id': self.id,
+                                'process': task_name.split('.')[-1],
+                                'status': 'error',
+                                'reason': _('Canceled.')})
+                except Exception as e:
+                    # don't crash on websocket error
+                    logger.exception(e)
+
+                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "canceled"}}))
 
     def recoverable(self):
         now = round(datetime.utcnow().timestamp())
@@ -1188,6 +1184,12 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 )
                 for pred in it:
                     lt.content = pred.prediction
+                    lt.graphs = [{
+                        'c': letter,
+                        'poly': poly,
+                        'confidence': float(confidence)
+                    } for letter, poly, confidence in zip(
+                        pred.prediction, pred.cuts, pred.confidences)]
                 lt.save()
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
@@ -1204,47 +1206,32 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         tasks = []
-        if (
-            task_name == "convert"
-            or self.workflow_state < self.WORKFLOW_STATE_CONVERTED
-        ):
-            sig = convert.si(self.pk, **kwargs)
 
-            if getattr(settings, "THUMBNAIL_ENABLE", True):
-                sig.link(
-                    chain(
-                        lossless_compression.si(self.pk, **kwargs),
-                        generate_part_thumbnails.si(self.pk, **kwargs),
-                    )
-                )
+        if task_name == 'convert' or self.workflow_state < self.WORKFLOW_STATE_CONVERTED:
+            sig = convert.si(instance_pk=self.pk, **kwargs)
+
+            if getattr(settings, 'THUMBNAIL_ENABLE', True):
+                sig.link(chain(lossless_compression.si(instance_pk=self.pk, **kwargs),
+                               generate_part_thumbnails.si(instance_pk=self.pk, **kwargs)))
             else:
-                sig.link(lossless_compression.si(self.pk, **kwargs))
+                sig.link(lossless_compression.si(instance_pk=self.pk, **kwargs))
             tasks.append(sig)
 
-        if task_name == "binarize":
-            tasks.append(
-                binarize.si(
-                    self.pk,
-                    report_label="Binarize in %s" % self.document.name,
-                    **kwargs,
-                )
-            )
+        if task_name == 'binarize':
+            tasks.append(binarize.si(instance_pk=self.pk,
+                                     report_label='Binarize in %s' % self.document.name,
+                                     **kwargs))
 
-        if task_name == "segment" or (task_name == "transcribe" and not self.segmented):
-            tasks.append(
-                segment.si(
-                    self.pk, report_label="Segment in %s" % self.document.name, **kwargs
-                )
-            )
+        if (task_name == 'segment' or (task_name == 'transcribe'
+                                       and not self.segmented)):
+            tasks.append(segment.si(instance_pk=self.pk,
+                                    report_label='Segment in %s' % self.document.name,
+                                    **kwargs))
 
-        if task_name == "transcribe":
-            tasks.append(
-                transcribe.si(
-                    self.pk,
-                    report_label="Transcribe in %s" % self.document.name,
-                    **kwargs,
-                )
-            )
+        if task_name == 'transcribe':
+            tasks.append(transcribe.si(instance_pk=self.pk,
+                                       report_label='Transcribe in %s' % self.document.name,
+                                       **kwargs))
 
         if commit:
             self.chain_tasks(*tasks)
@@ -1596,15 +1583,48 @@ class LineTranscription(
     ExportModelOperationsMixin("LineTranscription"), Versioned, models.Model
 ):
     """
-    Represents a transcribded line of a document part in a given transcription
+    Represents a transcribed line of a document part in a given transcription
     """
 
     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE)
     content = models.CharField(blank=True, default="", max_length=2048)
-    # graphs = [  # WIP
-    # {c: <graph_code>, bbox: ((x1, y1), (x2, y2)), confidence: 0-1}
-    # ]
-    graphs = JSONField(null=True, blank=True)  # on postgres it maps to jsonb!
+
+    graphs_schema = {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "c": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1
+                        },
+                        "poly": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": [
+                                {
+                                    "type": "array",
+                                    "contains": {"type": "number"},
+                                    "minItems": 2,
+                                    "maxItems": 2,
+                                }
+                            ]
+                        },
+                        "confidence": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                        }
+                    }
+                }
+            ]
+        }
+    # on postgres this maps to the jsonb type!
+    graphs = JSONField(null=True, blank=True,
+                       validators=[JSONSchemaValidator(limit_value=graphs_schema)])
 
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(
@@ -1707,34 +1727,35 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         return model
 
     def segtrain(self, document, parts_qs, user=None):
-        segtrain.delay(
-            self.pk,
-            document.pk,
-            list(parts_qs.values_list("pk", flat=True)),
-            user_pk=user and user.pk or None,
-        )
+        segtrain.delay(self.pk,
+                       list(parts_qs.values_list('pk', flat=True)),
+                       document_pk=document.pk,
+                       user_pk=user and user.pk or None)
 
     def train(self, parts_qs, transcription, user=None):
-        train.delay(
-            list(parts_qs.values_list("pk", flat=True)),
-            transcription.pk,
-            model_pk=self.pk,
-            user_pk=user and user.pk or None,
-        )
+        train.delay(transcription.pk,
+                    model_pk=self.pk,
+                    part_pks=list(parts_qs.values_list('pk', flat=True)),
+                    user_pk=user and user.pk or None)
 
-    def cancel_training(self):
-        try:
-            if self.job == self.MODEL_JOB_RECOGNIZE:
-                task_id = json.loads(redis_.get("training-%d" % self.pk))["task_id"]
-            elif self.job == self.MODEL_JOB_SEGMENT:
-                task_id = json.loads(redis_.get("segtrain-%d" % self.pk))["task_id"]
-        except (TypeError, KeyError):
-            raise ProcessFailureException(_("Couldn't find the training task."))
-        else:
-            if task_id:
-                revoke(task_id, terminate=True)
-                self.training = False
-                self.save()
+    def cancel_training(self, revoke_task=True):
+        task_id = None
+
+        # We don't need to search for the task_id if the training task was already revoked
+        if revoke_task:
+            try:
+                if self.job == self.MODEL_JOB_RECOGNIZE:
+                    task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
+                elif self.job == self.MODEL_JOB_SEGMENT:
+                    task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
+            except (TypeError, KeyError):
+                raise ProcessFailureException(_("Couldn't find the training task."))
+
+        if task_id:
+            revoke(task_id, terminate=True)
+
+        self.training = False
+        self.save()
 
     # versioning
     def pack(self, **kwargs):

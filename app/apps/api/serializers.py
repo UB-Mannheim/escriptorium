@@ -3,40 +3,38 @@ import logging
 import html
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 from api.fields import DisplayChoiceField
 from users.models import User
-from core.models import (
-    Project,
-    Document,
-    DocumentPart,
-    Block,
-    Line,
-    Transcription,
-    LineTranscription,
-    BlockType,
-    LineType,
-    AnnotationType,
-    AnnotationTaxonomy,
-    AnnotationComponent,
-    ImageAnnotation,
-    TextAnnotation,
-    ImageAnnotationComponentValue,
-    TextAnnotationComponentValue,
-    Script,
-    OcrModel,
-    OcrModelDocument,
-    DocumentTag,
-)
-from core.tasks import segtrain, train, segment, transcribe
+from core.models import (Project,
+                         Document,
+                         DocumentPart,
+                         Block,
+                         Line,
+                         Transcription,
+                         LineTranscription,
+                         BlockType,
+                         LineType,
+                         AnnotationType,
+                         AnnotationTaxonomy,
+                         AnnotationComponent,
+                         ImageAnnotation,
+                         TextAnnotation,
+                         ImageAnnotationComponentValue,
+                         TextAnnotationComponentValue,
+                         Script,
+                         OcrModel,
+                         OcrModelDocument,
+                         DocumentTag)
+from core.tasks import (segtrain, train, segment, transcribe)
+from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +139,8 @@ class AnnotationComponentSerializer(serializers.ModelSerializer):
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
     typology = AnnotationTypeSerializer(required=False)
-    # components = AnnotationComponentSerializer(many=True, required=False)
-    marker_type = DisplayChoiceField(
-        AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=False
-    )
+    components = AnnotationComponentSerializer(many=True, required=False)
+    marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=False)
 
     class Meta:
         model = AnnotationTaxonomy
@@ -324,6 +320,29 @@ class DocumentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "This script does not exists in the database."
             )
+
+
+class DocumentTasksSerializer(serializers.ModelSerializer):
+    tasks_stats = serializers.SerializerMethodField()
+    last_started_task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ('pk', 'name', 'tasks_stats', 'last_started_task')
+
+    def get_tasks_stats(self, document):
+        stats = {state: 0 for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
+        stats.update(dict(document.reports.values('workflow_state').annotate(c=Count('pk')).values_list('workflow_state', 'c')))
+        stats = {str(TaskReport.WORKFLOW_STATE_CHOICES[state][1]): count for state, count in stats.items()}
+        return stats
+
+    def get_last_started_task(self, document):
+        try:
+            last_task = document.reports.filter(started_at__isnull=False).latest('started_at')
+        except TaskReport.DoesNotExist:
+            return None
+
+        return last_task.started_at
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -632,14 +651,12 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in parts:
             part.chain_tasks(
-                segment.si(
-                    part.pk,
-                    user_pk=self.user.pk,
-                    model_pk=model.pk,
-                    steps=self.validated_data.get("steps"),
-                    text_direction=self.validated_data.get("text_direction"),
-                    override=self.validated_data.get("override"),
-                )
+                segment.si(instance_pk=part.pk,
+                           user_pk=self.user.pk,
+                           model_pk=model.pk,
+                           steps=self.validated_data.get('steps'),
+                           text_direction=self.validated_data.get('text_direction'),
+                           override=self.validated_data.get('override'))
             )
 
 
@@ -718,12 +735,10 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        segtrain.delay(
-            model.pk if model else None,
-            self.document.pk,
-            [part.pk for part in self.validated_data.get("parts")],
-            user_pk=self.user.pk,
-        )
+        segtrain.delay(model.pk if model else None,
+                       [part.pk for part in self.validated_data.get('parts')],
+                       document_pk=self.document.pk,
+                       user_pk=self.user.pk)
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -803,12 +818,10 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        train.delay(
-            [part.pk for part in self.validated_data.get("parts")],
-            self.validated_data["transcription"].pk,
-            model.pk if model else None,
-            self.user.pk,
-        )
+        train.delay(self.validated_data['transcription'].pk,
+                    model.pk if model else None,
+                    part_pks=[part.pk for part in self.validated_data.get('parts')],
+                    user_pk=self.user.pk)
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -842,5 +855,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in self.validated_data.get("parts"):
             part.chain_tasks(
-                transcribe.si(part.pk, model_pk=model.pk, user_pk=self.user.pk)
+                transcribe.si(instance_pk=part.pk,
+                              model_pk=model.pk,
+                              user_pk=self.user.pk)
             )

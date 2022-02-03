@@ -1,4 +1,3 @@
-import json
 import logging
 from PIL import Image
 
@@ -8,7 +7,6 @@ from django.core.validators import FileExtensionValidator, MinValueValidator, Ma
 from django.db.models import Q
 from django.forms.models import inlineformset_factory, BaseInlineFormSet
 from django.utils import timezone
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from bootstrap.forms import BootstrapFormMixin
@@ -605,10 +603,6 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-
-    # def clean(self):
-    #     # check that we have data
-    #     pass
 
     @property
     def model_job(self):

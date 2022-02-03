@@ -129,7 +129,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
     def process(self):
         document_import.delay(
-            self.instance.pk,
+            import_pk=self.instance.pk,
             user_pk=self.user.pk,
             report_label=_('Import in %(document_name)s') % {'document_name': self.document.name}
         )
@@ -188,10 +188,11 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 
-        document_export.delay(file_format, self.document.pk,
+        document_export.delay(file_format,
                               list(parts.values_list('pk', flat=True)),
                               transcription.pk,
                               self.cleaned_data['region_types'],
+                              document_pk=self.document.pk,
                               include_images=self.cleaned_data['include_images'],
                               user_pk=self.user.pk,
                               report_label=_('Export %(document_name)s') % {'document_name': self.document.name})

@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import get_template
 
 from users.tasks import async_email

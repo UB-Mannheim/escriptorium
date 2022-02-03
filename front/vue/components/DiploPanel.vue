@@ -90,7 +90,11 @@ export default Vue.extend({
         },
         '$store.state.document.enabledVKs'() {
             this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        },
+        '$store.state.lines.all'() {
+           this.loadAnnotations();
         }
+
     },
     created() {
         // vue.js quirck, have to dynamically create the event handler
@@ -128,24 +132,32 @@ export default Vue.extend({
             while (this.$refs.diplomaticLines.hasChildNodes()) {
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
+            this.anno.clearAnnotations();
         },
 
         getAPITextAnnotationBody(annotation) {
             var body = this.getAPIAnnotationBody(annotation);
-            body.offsets = {};
+            let offsets = annotation.target.selector.find(e => e.type == 'TextPositionSelector');
+
+            let total = 0;
+            for(let i=0; i<this.$children.length; i++) {
+                let currentLine = this.$children[i];
+                let content = currentLine.getEl().textContent;
+                if (!body.start_line && total+content.length > offsets.start) {
+                    body.start_line = currentLine.line.pk;
+                    body.start_offset = offsets.start - total;
+                }
+                if (!body.end_line && total+content.length >= offsets.end) {
+                    body.end_line = currentLine.line.pk;
+                    body.end_offset = offsets.end - total;
+                }
+                if(body.start_line && body.end_line) break;
+                total += content.length;
+            }
             return body
         },
 
-        async initAnnotations() {
-            this.anno = new Recogito({
-                content: this.$refs.contentContainer,
-                allowEmpty: true,
-                readOnly: false,  // true
-                widgets: [],
-                disableEditor: true
-            });
-            // !! readOnly doesn't seem to work for recogito as it does for annororious :/
-
+        async loadAnnotations() {
             let annos = await this.$store.dispatch('textAnnotations/fetch');
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
@@ -153,25 +165,28 @@ export default Vue.extend({
                 data.taxonomy = this.$store.state.document.annotationTaxonomies.text.find(e => e.pk == annotation.taxonomy);
                 this.anno.addAnnotation(data);
             }.bind(this));
+        },
+
+        initAnnotations() {
+            this.anno = new Recogito({
+                content: this.$refs.diplomaticLines,
+                allowEmpty: true,
+                readOnly: true,
+                widgets: [],
+                disableEditor: false
+            });
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
-                let body = this.getAPIAnnotationBody(annotation);
-                // body.start_line
-                // body.start_offset
-                // body.end_line
-                // body.end_offset
+                let body = this.getAPITextAnnotationBody(annotation);
+                body.transcription = this.$store.state.transcriptions.selectedTranscription;
                 const newAnno = await this.$store.dispatch('textAnnotations/create', body);
                 annotation.pk = newAnno.pk;
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                let body = this.getAPIAnnotationBody(annotation);
+                let body = this.getAPITextAnnotationBody(annotation);
                 body.id = annotation.id;
-                // body.start_line
-                // body.start_offset
-                // body.end_line
-                // body.end_offset
                 this.$store.dispatch('imageAnnotations/update', body);
             }.bind(this));
 

@@ -6,3 +6,6 @@ app/logs/
 ci/
 front/node_modules
 .vscode
+.idea
+variables.env
+.python-version
