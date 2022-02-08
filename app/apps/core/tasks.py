@@ -436,7 +436,7 @@ def train_(qs, document, transcription, model=None, user=None):
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
         model.training_epoch = epoch
-        model.training_accuracy = float(accuracy)
+        model.training_accuracy = float(accuracy.item())
         model.training_total = int(chars)
         model.training_errors = int(error)
         relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
@@ -447,7 +447,7 @@ def train_(qs, document, transcription, model=None, user=None):
             "id": model.pk,
             'versions': model.versions,
             'epoch': epoch,
-            'accuracy': float(accuracy),
+            'accuracy': float(accuracy.item()),
             'chars': int(chars),
             'error': int(error)})
 
