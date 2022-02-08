@@ -16,6 +16,8 @@ from users.models import User
 from core.models import (Project,
                          Document,
                          DocumentPart,
+                         Metadata,
+                         DocumentMetadata,
                          Block,
                          Line,
                          Transcription,
@@ -179,6 +181,28 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
             return None
 
         return last_task.started_at
+
+
+class MetadataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Metadata
+        fields = ('name', 'cidoc_id')
+
+
+class DocumentMetadataSerializer(serializers.ModelSerializer):
+    key = MetadataSerializer()
+
+    class Meta:
+        model = DocumentMetadata
+        fields = ('pk', 'key', 'value')
+
+    def create(self, validated_data):
+        key_data = validated_data.pop('key')
+        md, _created = Metadata.objects.get_or_create(**key_data)
+        dmd = DocumentMetadata.objects.create(document=self.context['document'],
+                                              key=md,
+                                              **validated_data)
+        return dmd
 
 
 class PartSerializer(serializers.ModelSerializer):
