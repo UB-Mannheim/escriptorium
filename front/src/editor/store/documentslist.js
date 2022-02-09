@@ -43,10 +43,17 @@ export const mutations = {
             return item;
         });
     },
-    settagColor (state) {
-        let rColor = Math.floor(Math.random() * (255 - 10 + 1)) + 10;
-        let bColor = Math.floor(Math.random() * (255 - 10 + 1)) + 10;
-        state.tagColor = "#" + rColor.toString(16) + bColor.toString(16) + (240).toString(16);
+    setTagColor (state) {
+        let brigth = 0;
+        let rColor, bColor, gColor = 0;
+        while (brigth < 150) {
+            rColor = Math.floor(Math.random() * (255 - 10)) + 10;
+            bColor = Math.floor(Math.random() * (255 - 10)) + 10;
+            gColor = Math.floor(Math.random() * (255 - 10)) + 10;
+            brigth = rColor + bColor + gColor;
+        }
+        let colorf = "#" + rColor.toString(16) + bColor.toString(16) + gColor.toString(16);
+        state.tagColor = colorf
     },
 }
 
@@ -67,6 +74,8 @@ export const actions = {
             let tagsNames = listProjectTagsId.map((obj) => obj.name);
             if(!tagsNames.includes(name)){
                 const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});
+                listProjectTagsId.push(tag.data);
+                commit('setUnlinkedTags', listProjectTagsId);
                 selectedId.push(tag.data.pk.toString());
             }
             else{
@@ -86,7 +95,6 @@ export const actions = {
                     await api.updateDocument(state.checkboxList[i], {"tags": tags});
                 }
             }
-
         }
     },
     async updateProjectTag ({state, commit}, data) {
@@ -94,6 +102,20 @@ export const actions = {
     },
     async deleteProjectTag ({state, commit}, data) {
         await api.deletetag(state.projectID, data.pk);
+    },
+    async assignSingleTagToDocuments ({state, commit}, data) {
+        if(state.checkboxList.length > 0){
+            for (let i = 0; i < state.checkboxList.length; i++) {
+                const _document = await api.retrieveDocument(state.checkboxList[i]);
+                let _tagsId = _document.data.tags;
+                if(data.selected && !_tagsId.includes(data.pk)) _tagsId.push(data.pk);
+                else{
+                    let index = _tagsId.indexOf(data.pk);
+                    if (index > -1) _tagsId.splice(index, 1);
+                }
+                await api.updateDocument(state.checkboxList[i], {"tags": _tagsId});
+            }
+        }
     }
 }
 
