@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-31 19:12+0100\n"
+"POT-Creation-Date: 2022-01-31 22:20+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -755,11 +755,15 @@ msgstr "Aufgabenbericht"
 #: escriptorium/templates/base.html:82
 #: escriptorium/templates/core/documents_tasks_list.html:3
 msgid "Tasks monitoring"
-msgstr ""
+msgstr "Aufgabenüberwachung"
 
 #: escriptorium/templates/base.html:84
 msgid "Leaderboard"
 msgstr "Spitzenreiter"
+
+#: escriptorium/templates/base.html:88
+msgid "Invite"
+msgstr "Einladen"
 
 #: escriptorium/templates/base.html:89
 msgid "Logout"
