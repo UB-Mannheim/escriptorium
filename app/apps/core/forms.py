@@ -47,10 +47,14 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
 
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
+        self.fields['project'].required = False
+    
+    def clean_project(self):
+        return self.initial['project']
 
     class Meta:
         model = Document
-        fields = ['name', 'read_direction', 'line_offset', 'main_script',
+        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
                   'valid_block_types', 'valid_line_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,
@@ -523,7 +527,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         return cleaned_data
 
 class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
-    keep_tags = forms.BooleanField(required=False, label="Migrate with all tags")
+    keep_tags = forms.BooleanField(required=False, label="Migrate with associated tags")
 
     class Meta:
         model = Document

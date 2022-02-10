@@ -233,6 +233,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
+        form.initial = {'project': self.object.project}
         metadata_form = self.get_metadata_formset(self.request.POST, instance=self.object)
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
@@ -627,4 +628,4 @@ class DocumentsTasksList(LoginRequiredMixin, TemplateView):
 
 class MigrateDocument(ShareDocument):
     form_class = MigrateDocumentForm
-    success_message = _("Project change successfully!")
+    success_message = _("Document was successfully migrated to the selected project!")
