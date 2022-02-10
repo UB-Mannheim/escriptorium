@@ -18,7 +18,7 @@
                     </div>
                     <div class="modal-body row">
                         <div class="form-group col-sm-4 d-inline-flex" v-for="tag in tags" :key="tag.pk" v-bind:value="tag.pk" v-bind:id="'div-tag-' + tag.pk">
-                            <input type="checkbox" v-bind:id="'checkbox-tag-' + tag.pk" v-on:click="assignSingleTag(tag.pk)">
+                            <input type="checkbox" v-bind:id="'checkbox-tag-' + tag.pk" v-on:click="assignSingleTag(tag.pk)" title="Assign this tag to selected documents.">
                             <input type="text" class="form-control m-1" v-bind:id="'name-tag-' + tag.pk" v-bind:value="tag.name" @focusout="updateSingleTag(tag.pk)">
                             <input type="color" class="form-control m-1 w-25" v-bind:id="'color-tag-' + tag.pk" v-bind:value="tag.color" @focusout="updateSingleTag(tag.pk)">
                             <button type="button" class="btn btn-danger m-1" v-on:click="deleteSingleTag(tag.pk)"><i class="fas fa-trash"></i></button>
@@ -88,7 +88,7 @@ export default {
                 this.tags = nv;
                 this.$store.commit('documentslist/setTagColor');
             },
-            immediate: true 
+            immediate: true
         }
     }
 }
@@ -96,6 +96,3 @@ export default {
 
 <style scoped>
 </style>
-
-
-

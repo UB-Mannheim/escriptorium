@@ -3,7 +3,7 @@
             v-on:click="launchModal"
             data-toggle="modal"
             data-target="#tagsModal"
-            title="Manage tags"
+            title="Assign tags"
             class="nav-item btn btn-sm btn-primary"><i class="fas fa fa-tags"></i></button>
 </template>
 
