@@ -535,8 +535,9 @@ class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
+        self.project = kwargs.get('instance').project
         super().__init__(*args, **kwargs)
-        self.fields['project'].queryset = Project.objects.for_user_write(self.request.user)
+        self.fields['project'].queryset = Project.objects.for_user_write(self.request.user).exclude(pk=self.project.pk)
         self.fields['project'].empty_label = None
     
     def save(self, commit=True):
