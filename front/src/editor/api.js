@@ -1,6 +1,7 @@
 import axios from "axios";
+import { SCRIPT_NAME } from '../scriptname.js';
 
-axios.defaults.baseURL = "/api";
+axios.defaults.baseURL = SCRIPT_NAME + '/api'
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 axios.defaults.withCredentials = true;

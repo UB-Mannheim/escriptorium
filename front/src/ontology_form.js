@@ -1,9 +1,11 @@
 "use strict";
 
+import { SCRIPT_NAME } from './scriptname.js';
+
 export function bootOntologyForm() {
     /*** Region/Line types ***/
     function pushType(type, name) {
-        let uri = "/api/types/" + type + "/";
+        let uri = SCRIPT_NAME + "/api/types/" + type + "/";
         return fetch(uri, {
             method: "post",
             credentials: "same-origin",

@@ -1,3 +1,4 @@
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 import axios from "axios";
 import {
     createDocument,
@@ -184,7 +185,7 @@ const actions = {
                     { root: true },
                 );
                 // redirect to new document
-                window.location = `/document/${data.pk}/`;
+                window.location = SCRIPT_NAME + `/document/${data.pk}/`;
                 commit("setCreateDocumentModalOpen", false);
             } else {
                 commit("setLoading", false);
@@ -274,7 +275,7 @@ const actions = {
                 { root: true },
             );
             commit("setDeleteModalOpen", false);
-            window.location = "/projects/";
+            window.location = SCRIPT_NAME + "/projects/";
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -294,7 +295,7 @@ const actions = {
                         ...document,
                         tags: { tags: document.tags },
                         // link to document dashboard
-                        href: `/document/${document.pk}/`,
+                        href: SCRIPT_NAME + `/document/${document.pk}/`,
                     });
                 });
                 commit("setNextPage", data.next);
@@ -372,7 +373,7 @@ const actions = {
                     ...result,
                     tags: { tags: result.tags },
                     // link to document dashboard
-                    href: `/document/${result.pk}/`,
+                    href: SCRIPT_NAME + `/document/${result.pk}/`,
                 })),
             );
         } else {

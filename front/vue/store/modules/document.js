@@ -19,6 +19,7 @@ import { tagColorToVariant } from "../util/color";
 import { getDocumentMetadataCRUD } from "../util/metadata";
 import forms from "../util/initialFormState";
 import { throttle } from "../util/throttle";
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 
 // initial state
 const state = () => ({
@@ -319,7 +320,7 @@ const actions = {
             );
             commit("setDeleteModalOpen", false);
             // redirect to project on delete
-            window.location = `/project/${state.projectSlug}`;
+            window.location = SCRIPT_NAME + `/project/${state.projectSlug}`;
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -549,7 +550,7 @@ const actions = {
                     ...part,
                     title: `${part.title} - ${part.filename}`,
                     thumbnail: part.image?.thumbnails?.card,
-                    href: `/document/${state.id}/part/${part.pk}/edit/`,
+                    href: SCRIPT_NAME + `/document/${state.id}/part/${part.pk}/edit/`,
                 })),
             );
         } else {

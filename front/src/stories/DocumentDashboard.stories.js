@@ -1,6 +1,7 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import { Server } from "mock-socket";
+import { SCRIPT_NAME } from '../scriptname.js';
 import DocumentDashboard from "../../vue/pages/Document/Document.vue";
 import GlobalNavigation from "../../vue/components/GlobalNavigation/GlobalNavigation.vue";
 import {
@@ -30,7 +31,7 @@ export default {
         // mock dropzone image upload api endpoint
         mockData: [
             {
-                url: "/api/documents/1/parts",
+                url: SCRIPT_NAME + "/api/documents/1/parts",
                 method: "POST",
                 status: 201,
             },
@@ -146,7 +147,7 @@ const Template = (args, { argTypes }) => ({
     setup() {
         // setup websocket mocks for tasks
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-        const mockSocketURL = `${scheme}//${window.location.host}/ws/notif/`;
+        const mockSocketURL = `${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`;
         // wrap in try/catch in case reloaded with mock socket still open
         try {
             const mockServer = new Server(mockSocketURL);
