@@ -7,8 +7,7 @@ Dropzone.autoDiscover = false;
 var g_dragged = null; // Note: chrome doesn't understand dataTransfer very well
 var lastSelected = null;
 
-import { SCRIPT_NAME } from './scriptname.js';
-console.log('image_cards: SCRIPT_NAME=', SCRIPT_NAME);
+import { SCRIPT_NAME } from "./scriptname.js";
 
 function openWizard(proc) {
     var selected_num = partCard.getSelectedPks().length;

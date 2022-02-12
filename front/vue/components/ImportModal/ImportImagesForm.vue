@@ -32,6 +32,7 @@ import UploadIcon from "../Icons/UploadIcon/UploadIcon.vue";
 import ImageDropzone from "vue2-dropzone";
 import { thumbnail } from "../../../src/util/dropzone";
 import "vue2-dropzone/dist/vue2Dropzone.min.css";
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 
 export default {
     name: "EscrImportImagesForm",
@@ -70,7 +71,7 @@ export default {
          * Use the document ID from vuex store state to get the parts upload URL.
          */
         imageUploadURL() {
-            return `/api/documents/${this.documentId}/parts/`;
+            return SCRIPT_NAME + `/api/documents/${this.documentId}/parts/`;
         },
         getCsrfToken() {
             return document.cookie.match("(^|;)\\s*" + "csrftoken" + "\\s*=\\s*([^;]+)")?.pop()
