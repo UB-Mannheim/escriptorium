@@ -1,7 +1,6 @@
 "use strict";
 
-import { SCRIPT_NAME } from './scriptname.js';
-console.log('bootOntologyForm: SCRIPT_NAME=', SCRIPT_NAME);
+import { SCRIPT_NAME } from "./scriptname.js";
 
 export function bootOntologyForm() {
     /*** Region/Line types ***/
