@@ -36,7 +36,7 @@
                 <dd>{{ model.rights }}</dd>
                 <dt>Sharing</dt>
                 <dd v-if="model.can_share">
-                    <a :href="`/model/${model.pk}/rights/`">Share</a>
+                    <a :href="SCRIPT_NAME + `/model/${model.pk}/rights/`">Share</a>
                 </dd>
                 <dd v-else>
                     -
