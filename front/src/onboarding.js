@@ -141,7 +141,7 @@ export function bootOnboarding() {
 function exitOnboarding() {
     $.ajax({
         type: 'PUT',
-        url: '/api/user/onboarding/',
+        url: '/escriptorium' + '/api/user/onboarding/',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
             onboarding: "False",
