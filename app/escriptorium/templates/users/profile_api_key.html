@@ -7,5 +7,5 @@
 {% block tab-content %}
 {% trans "API Authentication Token:" %} {{ api_auth_token.key }}
 <button class="btn btn-secondary btn-sm fas fa-clipboard float-right" id="api-key-clipboard" title="{% trans "Copy to clipboard." %}" data-key="{{ api_auth_token.key }}"></button>
-<br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
+<br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/escriptorium/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
 {% endblock %}
