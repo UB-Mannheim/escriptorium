@@ -8,6 +8,7 @@ import {
     segmentDocument,
 } from "../../../src/api";
 import forms from "../util/initialFormState";
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 
 // initial state
 const state = () => ({
@@ -212,7 +213,7 @@ const actions = {
                         ...part,
                         title: `${part.title} - ${part.filename}`,
                         thumbnail: part.image?.thumbnails?.card,
-                        href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                        href: SCRIPT_NAME + `/document/${rootState.document.id}/part/${part.pk}/edit/`,
                     },
                     { root: true },
                 );
@@ -239,7 +240,7 @@ const actions = {
                     ...part,
                     title: `${part.title} - ${part.filename}`,
                     thumbnail: part.image?.thumbnails?.card,
-                    href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                    href: SCRIPT_NAME + `/document/${rootState.document.id}/part/${part.pk}/edit/`,
                 })),
                 { root: true },
             );
@@ -280,7 +281,7 @@ const actions = {
                     ...part,
                     title: `${part.title} - ${part.filename}`,
                     thumbnail: part.image?.thumbnails?.card,
-                    href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                    href: SCRIPT_NAME + `/document/${rootState.document.id}/part/${part.pk}/edit/`,
                 }));
                 // find new or changed parts for add/update operation
                 resultParts.forEach((part) => {
