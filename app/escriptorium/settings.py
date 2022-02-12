@@ -307,7 +307,7 @@ LOGGING = {
             'formatter': 'django.server',
         },
         'mail_admins': {
-            'level': 'DEBUG',
+            'level': 'ERROR',
             # 'filters': ['require_debug_false'],  # make sure to set EMAIL_BACKEND
             'class': 'django.utils.log.AdminEmailHandler'
         }
