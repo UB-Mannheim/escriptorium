@@ -89,7 +89,7 @@ class partCard {
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
-        var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+        var url = '/escriptorium' + '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
@@ -338,9 +338,9 @@ class partCard {
 export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     DOCUMENT_ID = documentId;
     API = {
-        'document': '/api/documents/' + DOCUMENT_ID,
-        'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
-        'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
+        'document': '/escriptorium' + '/api/documents/' + DOCUMENT_ID,
+        'parts': '/escriptorium' + '/api/documents/' + DOCUMENT_ID + '/parts/',
+        'part': '/escriptorium' + '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
     };
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
