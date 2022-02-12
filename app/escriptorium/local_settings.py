@@ -7,29 +7,41 @@ CSRF_TRUSTED_ORIGINS = ['ocr-bw.bib.uni-mannheim.de']
 
 # In the format [('Full Name', 'email@example.com'), ('Full Name', 'anotheremail@example.com')]
 ADMINS = [
-        ('Administrator', 'stefan.weil@bib.uni-mannheim.de'),
+        ('Administrator', 'stefan.weil@uni-mannheim.de')
 ]
-ADMINS = ['Administrator <stefan.weil@bib.uni-mannheim.de>']
+#ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Run in subpath
 #BASE_URL = 'https://ocr-bw.bib.uni-mannheim.de/escriptorium/'
 
 # Settings for running from a subpath.
-##FORCE_SCRIPT_NAME = '/escriptorium'
-##STATIC_URL = '/escriptorium/static/'
-
-#LOGIN_REDIRECT_URL = '/escriptorium/projects/'
-#LOGOUT_REDIRECT_URL = FORCE_SCRIPT_PATH + '/'
-#STATIC_URL = '/xxx/static/'
-#STATIC_URL = '/static/'
-#SCRIPT_PATH = '/escriptorium'
+FORCE_SCRIPT_NAME = '/escriptorium'
+# Relative MEDIA_URL requires at least Django 4.0.
+MEDIA_URL = 'https://ocr-bw.bib.uni-mannheim.de' + FORCE_SCRIPT_NAME + '/media/'
+# Relative STATIC_URL requires at least Django 4.0.
+STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
+LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + '/projects/'
+LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME + '/'
+USE_X_FORWARDED_HOST = True
 
 #ALLOWED_HOSTS = ['localhost', 'ub-blade-10.bib.uni-mannheim.de', '134.155.36.10']
-DEFAULT_FROM_EMAIL = 'noreply@bib.uni-mannheim.de'
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'stefan.weil@uni-mannheim.de'
+
+# Sender e-mail address for log messages sent by e-mail.
+SERVER_EMAIL = 'stefan.weil@uni-mannheim.de'
+
+# https://docs.djangoproject.com/en/3.2/topics/email/
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
+#EMAIL_HOST = 'smtp.mail.uni-mannheim.de'
+#EMAIL_HOST_USER = 'xxx'
+#EMAIL_HOST_PASSWORD = 'xxx'
+#EMAIL_PORT = 587
+#EMAIL_USE_TLS = True
+# SMTP_DOMAIN=uni-mannheim.de
+
 TIME_ZONE = 'Europe/Berlin'
-USE_TZ = False
+USE_TZ = True
 VERSION_DATE = 'develop (2022-01-30)'
 
 LOCALE_PATHS = [
@@ -57,10 +69,10 @@ MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
 INTERNAL_IPS = ['127.0.0.1',]
 
 # only needed in development
-# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
-# KRAKEN_TRAINING_DEVICE = 'cuda:0'
+KRAKEN_TRAINING_DEVICE = 'cuda:0'
 
 DEBUG_TOOLBAR_CONFIG = {
    'SHOW_TOOLBAR_CALLBACK': lambda r: False,  # disables it
