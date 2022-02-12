@@ -185,6 +185,7 @@ import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import ProjectOntologyCard from "../../components/ProjectOntologyCard/ProjectOntologyCard.vue";
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
@@ -266,7 +267,7 @@ export default {
          */
         breadcrumbs() {
             return [
-                { title: "My Projects", href: "/projects" },
+                { title: "My Projects", href: SCRIPT_NAME + "/projects" },
                 { title: this.projectName || "Loading..." }
             ];
         },
@@ -404,7 +405,7 @@ export default {
         },
         navigateToImages(item) {
             if (item?.pk) {
-                window.location = `/document/${item.pk}/images`;
+                window.location = SCRIPT_NAME + `/document/${item.pk}/images`;
             } else {
                 this.addError({ message: "Error navigating to the images page." });
             }

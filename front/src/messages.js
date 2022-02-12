@@ -1,7 +1,6 @@
 export var msgSocket;
 
-import { SCRIPT_NAME } from './scriptname.js';
-console.log('messages: SCRIPT_NAME=', SCRIPT_NAME);
+import { SCRIPT_NAME } from "./scriptname.js";
 
 var alerts = {};
 export class Alert {
