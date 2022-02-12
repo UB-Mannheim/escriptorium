@@ -2,7 +2,7 @@
     <nav class="escr-global-nav">
         <div class="escr-upper-navgroup">
             <a
-                href="/"
+                :href="url('/')"
                 aria-label="eScriptorium"
             >
                 <EscrLogo />
@@ -15,7 +15,7 @@
             >
                 <button
                     v-if="isAuthenticated && !searchDisabled"
-                    href="/search/"
+                    :href="url('/search/')"
                     aria-label="global search"
                     class="escr-global-search"
                     :class="{
@@ -32,12 +32,12 @@
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
-                            <a href="/search/">
+                            <a :href="url('/search/')">
                                 <span>Search</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/find-replace/">
+                            <a :href="url('/find-replace/')">
                                 <span>Find and Replace</span>
                             </a>
                         </li>
@@ -46,7 +46,7 @@
             </VMenu>
             <a
                 v-if="isAuthenticated"
-                href="/projects/"
+                :href="url('/projects/')"
                 aria-label="projects list"
                 :class="{
                     'escr-globalnav-icon': true,
@@ -58,7 +58,7 @@
             </a>
             <a
                 v-if="isAuthenticated"
-                href="/models/"
+                :href="url('/models/')"
                 aria-label="models list"
                 :class="{
                     'escr-globalnav-icon': true,
@@ -102,12 +102,12 @@
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
-                            <a href="/documents/tasks/">
+                            <a :href="url('/documents/tasks/')">
                                 <span>Task Monitoring</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/quotas/">
+                            <a :href="url('/quotas/')">
                                 <span>Task Usage</span>
                             </a>
                         </li>
@@ -138,17 +138,17 @@
                 <template #popper>
                     <ul class="escr-vertical-menu">
                         <li>
-                            <a href="/profile/">
+                            <a :href="url('/profile/')">
                                 <span>Profile Settings</span>
                             </a>
                         </li>
                         <li>
-                            <a href="/password_change/">
+                            <a :href="url('/password_change/')">
                                 <span>Change Password</span>
                             </a>
                         </li>
                         <li v-if="canInvite">
-                            <a href="/invite/">
+                            <a :href="url('/invite/')">
                                 <span>Invite Users</span>
                             </a>
                         </li>
@@ -156,17 +156,17 @@
                             v-if="isStaff"
                             class="new-section"
                         >
-                            <a href="/quotas/instance/">
+                            <a :href="url('/quotas/instance/')">
                                 <span>Leaderboard</span>
                             </a>
                         </li>
                         <li v-if="isStaff">
-                            <a href="/admin/">
+                            <a :href="url('/admin/')">
                                 <span>Site Administration</span>
                             </a>
                         </li>
                         <li class="new-section">
-                            <a href="/logout/">
+                            <a :href="url('/logout/')">
                                 <span>Logout</span>
                             </a>
                         </li>
@@ -175,7 +175,7 @@
             </VMenu>
             <a
                 v-else
-                href="/login"
+                :href="url('/login/')"
                 aria-label="sign in"
                 class="escr-globalnav-icon"
             >
@@ -212,6 +212,7 @@ import TrainIcon from "../Icons/TrainIcon/TrainIcon.vue";
 import "../VerticalMenu/VerticalMenu.css";
 import "./GlobalNavigation.css";
 import { mapActions, mapState } from "vuex";
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 
 export default {
     name: "EscrGlobalNavigation",
@@ -267,6 +268,9 @@ export default {
         ...mapActions("user", [
             "fetchCurrentUser",
         ]),
+        url(addr) {
+            return SCRIPT_NAME + addr;
+        },
         getTheme() {
             return localStorage.getItem("user-theme");
         },
