@@ -1,3 +1,4 @@
+import { SCRIPT_NAME } from '../../../src/scriptname.js';
 import axios from "axios";
 import {
     createProject,
@@ -86,7 +87,7 @@ const actions = {
                 );
                 commit("setCreateModalOpen", false);
                 // redirect to project dashboard
-                window.location = `/project/${data.slug}`;
+                window.location = SCRIPT_NAME + `/project/${data.slug}`;
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create project");
@@ -192,7 +193,7 @@ const actions = {
                     ...result,
                     tags: { tags: result.tags },
                     // link to project dashboard
-                    href: `/project/${result.slug}/`,
+                    href: SCRIPT_NAME + `/project/${result.slug}/`,
                 })),
             );
             commit("setNextPage", data.next);
@@ -216,7 +217,7 @@ const actions = {
                         ...result,
                         tags: { tags: result.tags },
                         // link to project dashboard
-                        href: `/project/${result.slug}/`,
+                        href: SCRIPT_NAME + `/project/${result.slug}/`,
                     });
                 });
                 commit("setNextPage", data.next);

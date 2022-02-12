@@ -345,6 +345,7 @@ import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import QuickActionsPanel from "../../components/QuickActionsPanel/QuickActionsPanel.vue";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
@@ -484,13 +485,13 @@ export default {
                 docBreadcrumbs = [
                     {
                         title: this.projectName,
-                        href: `/project/${this.projectSlug}`
+                        href: SCRIPT_NAME + `/project/${this.projectSlug}`
                     },
                     { title: this.documentName }
                 ];
             }
             return [
-                { title: "My Projects", href: "/projects" },
+                { title: "My Projects", href: SCRIPT_NAME + "/projects" },
                 ...docBreadcrumbs,
             ];
         },
@@ -606,7 +607,7 @@ export default {
         // join document websocket room
         const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-        const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}/ws/notif/`);
+	    const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`);
         msgSocket.maxReconnectAttempts = 3;
         msgSocket.addEventListener("open", function() {
             msgSocket.send(msg);
@@ -663,13 +664,13 @@ export default {
         }),
         navigateToImages() {
             if (this.id) {
-                window.location = `/document/${this.id}/images`;
+                window.location = SCRIPT_NAME + `/document/${this.id}/images`;
             } else {
                 this.addError({ message: "Error navigating to the images page." });
             }
         },
         navigateToTasks() {
-            window.location = "/quotas/";
+            window.location = SCRIPT_NAME + "/quotas/";
         },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));

@@ -21,6 +21,7 @@ import { mapActions } from "vuex";
 import Alerts from "../../components/Toast/ToastGroup.vue";
 import EscrBreadcrumbs from "../../components/Breadcrumbs/Breadcrumbs.vue";
 import EscrSidebar from "../../components/Sidebar/Sidebar.vue";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 export default {
     name: "EscrPage",
@@ -61,7 +62,7 @@ export default {
     },
     created() {
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-        const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}/ws/notif/`);
+	    const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`);
         msgSocket.maxReconnectAttempts = 3;
         msgSocket.addEventListener("message", this.websocketListener);
     },

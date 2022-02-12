@@ -21,6 +21,8 @@ module.exports = {
         filename: "[name].js",
         path: path.resolve(__dirname, "./dist/"),
         publicPath: "",
+        sourcePrefix: "/sourcePrefix/",
+        workerPublicPath: "/workerPublicPath/",
     },
 
     plugins: [
