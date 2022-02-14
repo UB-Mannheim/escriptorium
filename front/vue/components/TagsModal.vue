@@ -57,7 +57,7 @@ export default {
             return this.$store.state.documentslist.checkedTags;
         },
         projectIdComputed() {
-            return this.projectId
+            return this.projectId;
         },
         checkboxListData() {
             return this.$store.state.documentslist.checkboxList;
@@ -84,7 +84,6 @@ export default {
             let json_data = this.buildJSONData($(this.$refs.formTag)[0].elements);
             await this.$store.dispatch('documentslist/updateDocumentTags', json_data);
             $(this.$refs.tagsModal).modal('hide');
-            document.location.reload();
         },
         buildJSONData(el){
             let element = {};
@@ -97,7 +96,7 @@ export default {
                     tabindex.push(el[i].name.toString());
                 }
             }
-            return element
+            return element;
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);
@@ -111,7 +110,7 @@ export default {
                     this.valuesSelected = nv;
                     $(this.$refs.mselectTags).selectpicker('val', nv);
                     $(this.$refs.mselectTags).selectpicker('refresh'); 
-                    this.rColor = this.randomColor
+                    this.rColor = this.randomColor;
                 });
             },
             immediate: true 

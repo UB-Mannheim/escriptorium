@@ -9,7 +9,9 @@ export const initialState = () => ({
     checkboxList: [],
     lastChecked: null,
     allProjectTags: [],
-    tagColor: null
+    tagColor: null,
+    DocumentsId: null,
+    TagsListPerDocument: []
 })
 
 export const mutations = {
@@ -39,7 +41,7 @@ export const mutations = {
     },
     setAllProjectTags (state, value) {
         state.allProjectTags = value.map( function(obj) {
-            var item = { "pk": obj.id, "name": obj.name, "color": obj.color };
+            var item = { "pk": ((obj.id) ? obj.id : obj.pk), "name": obj.name, "color": obj.color };
             return item;
         });
     },
@@ -55,6 +57,12 @@ export const mutations = {
         let colorf = "#" + rColor.toString(16) + bColor.toString(16) + gColor.toString(16);
         state.tagColor = colorf
     },
+    setDocumentsId (state, value) {
+        state.DocumentsId = value
+    },
+    setTagsListPerDocument (state, value) {
+        state.TagsListPerDocument = value
+    },
 }
 
 export const actions = {
@@ -66,7 +74,7 @@ export const actions = {
     async getAllTagsProject ({state, commit}) {
         commit('setUnlinkedTags', state.allProjectTags);
     },
-    async updateDocumentTags ({state, commit}, data) {
+    async updateDocumentTags ({state, commit, dispatch}, data) {
         var selectedId = (data.selectedtags) ? data.selectedtags.split(',') : [];
         var name = data.name;
         if(name) {
@@ -76,6 +84,7 @@ export const actions = {
                 const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});
                 listProjectTagsId.push(tag.data);
                 commit('setUnlinkedTags', listProjectTagsId);
+                commit('setAllProjectTags', listProjectTagsId);
                 selectedId.push(tag.data.pk.toString());
             }
             else{
@@ -96,14 +105,17 @@ export const actions = {
                 }
             }
         }
+        dispatch('buildTagsList');
     },
-    async updateProjectTag ({state, commit}, data) {
+    async updateProjectTag ({state, dispatch}, data) {
         await api.updatetag(state.projectID, data.pk, data);
+        dispatch('buildTagsList');
     },
-    async deleteProjectTag ({state, commit}, data) {
+    async deleteProjectTag ({state, dispatch}, data) {
         await api.deletetag(state.projectID, data.pk);
+        dispatch('buildTagsList');
     },
-    async assignSingleTagToDocuments ({state, commit}, data) {
+    async assignSingleTagToDocuments ({state, dispatch}, data) {
         if(state.checkboxList.length > 0){
             for (let i = 0; i < state.checkboxList.length; i++) {
                 const _document = await api.retrieveDocument(state.checkboxList[i]);
@@ -116,7 +128,16 @@ export const actions = {
                 await api.updateDocument(state.checkboxList[i], {"tags": _tagsId});
             }
         }
-    }
+        dispatch('buildTagsList');
+    },
+    async buildTagsList ({state, commit}) {
+        let element = {};
+        for (let i = 0; i < state.DocumentsId.length; i++){
+            const _document = await api.retrieveDocument(state.DocumentsId[i]);
+            Object.defineProperty(element, _document.data.pk, { value: _document.data.tags });
+        }
+        commit('setTagsListPerDocument', element);
+    },
 }
 
 export default {

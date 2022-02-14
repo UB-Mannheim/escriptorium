@@ -50,7 +50,6 @@ export default {
     },
     mounted(){
         $(this.$refs.tagsManagement).on("show.bs.modal", this.populateItems);
-        $(this.$refs.tagsManagement).on("hide.bs.modal", this.hideModal);
     },
     methods: {
         async updateSingleTag(pk=null){
@@ -74,9 +73,6 @@ export default {
             this.$store.commit('documentslist/setProjectID', this.projectId);
             this.$store.commit('documentslist/setTagColor');
             await this.$store.dispatch('documentslist/getAllTagsProject');
-        },
-        hideModal(){
-            document.location.reload();
         },
         resetField(){
             $(this.$refs.tagName).val("");
