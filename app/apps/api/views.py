@@ -20,6 +20,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from api.serializers import (UserOnboardingSerializer,
                              ProjectSerializer,
                              DocumentSerializer,
+                             DocumentMetadataSerializer,
                              DocumentTasksSerializer,
                              PartDetailSerializer,
                              PartSerializer,
@@ -47,6 +48,7 @@ from core.models import (Project,
                          Line,
                          BlockType,
                          LineType,
+                         DocumentMetadata,
                          Transcription,
                          LineTranscription,
                          OcrModel,
@@ -61,7 +63,6 @@ from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from reporting.models import TaskReport
 from versioning.models import NoChangeException
-from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -339,6 +340,21 @@ class DocumentPermissionMixin():
         except Document.DoesNotExist:
             raise PermissionDenied
         return super().get_queryset()
+
+
+class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = DocumentMetadata.objects.all().select_related('document')
+    serializer_class = DocumentMetadataSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(document=self.kwargs.get('document_pk'))
+        return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['document'] = Document.objects.get(pk=self.kwargs.get('document_pk'))
+        return context
 
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
