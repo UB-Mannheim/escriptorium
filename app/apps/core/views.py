@@ -31,8 +31,11 @@ from core.forms import (ProjectForm,
 
                         UploadImageForm,
                         ModelUploadForm,
-                        ModelRightsForm)
+                        ModelRightsForm,
+                        MigrateDocumentForm)
 from imports.forms import ImportForm, ExportForm
+from reporting.models import TaskReport
+from users.models import User
 
 
 logger = logging.getLogger(__name__)
@@ -222,12 +225,15 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
         if self.object.owner == self.request.user:
             context['share_form'] = DocumentShareForm(instance=self.object,
                                                       request=self.request)
+            context['migrate_form'] = MigrateDocumentForm(instance=self.object,
+                                                      request=self.request)
 
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
+        form.initial = {'project': self.object.project}
         metadata_form = self.get_metadata_formset(self.request.POST, instance=self.object)
         if form.is_valid() and metadata_form.is_valid():
             return self.form_valid(form, metadata_form)
@@ -608,3 +614,18 @@ class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 class DocumentsTasksList(LoginRequiredMixin, TemplateView):
     template_name = 'core/documents_tasks_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['task_states'] = {state: label for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+        context['users'] = {
+            user.id: user.username for user in User.objects.all()
+        } if self.request.user and self.request.user.is_staff else {}
+
+        return context
+
+
+class MigrateDocument(ShareDocument):
+    form_class = MigrateDocumentForm
+    success_message = _("Document was successfully migrated to the selected project!")

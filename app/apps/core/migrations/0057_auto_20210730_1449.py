@@ -32,7 +32,7 @@ def forward(apps, se):
                 "confidence": float(x[2])
             } for x in line_transcription.graphs]
         except Exception as e:
-            logger.exception(e)
+            logger.warning('Invalid graph : {0} : {1}'.format(line_transcription.graphs, e))
         else:
             line_transcription.save()
 
@@ -52,7 +52,7 @@ def backward(apps, se):
                  x['confidence'])
                 for x in line_transcription.graphs]
         except Exception as e:
-            logger.exception(e)
+            logger.warning('Invalid graph : {0} : {1}'.format(line_transcription.graphs, e))
         else:
             line_transcription.save()
 

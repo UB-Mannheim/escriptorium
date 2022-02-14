@@ -274,17 +274,10 @@ export default Vue.extend({
             let tmpDiv = document.createElement('div');
 
             let pastedData;
-            if (e && e.clipboardData && e.clipboardData.types && e.clipboardData.getData) {
-                let types = e.clipboardData.types;
-                if (((types instanceof DOMStringList) && types.contains("text/html")) || (types.indexOf && types.indexOf('text/html') !== -1)) {
-                    let content = e.clipboardData.getData('text/html');
-                    tmpDiv.innerHTML = content;
-                    pastedData = [ ...tmpDiv.childNodes].map(e=>e.textContent).join('\n');
-                } else {
-                    pastedData = e.clipboardData.getData('text/plain');
-                }
+            if (e && e.clipboardData && e.clipboardData.getData) {
+                pastedData = e.clipboardData.getData('text/plain');
                 
-                var cursor = sel.getRangeAt(0);  // specific posiiton or range
+                var cursor = sel.getRangeAt(0);  // specific position or range
                 // for a range, delete content to clean data and to get resulting specific cursor position from it:
                 cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
 

@@ -17,13 +17,24 @@ const mutations = {
 }
 
 const actions = {
-    async fetchDocumentsTasks({ commit }, page) {
+    async fetchDocumentsTasks({ commit }, params) {
         try {
-            const resp = await api.listDocumentsTasks(page)
+            const resp = await api.listDocumentsTasks(params)
             let data = resp.data
             commit('setDocumentsTasks', data)
         } catch (err) {
             console.log('couldnt fetch documents tasks!', err)
+        }
+    },
+
+    async cancelDocumentTasks({ commit }, id) {
+        try {
+            const resp = await api.cancelDocumentTasks(id)
+            commit('setDocumentsTasks', {})
+            return resp.data
+        } catch (err) {
+            console.log(`couldnt cancel tasks for document ${id}!`, err)
+            throw err
         }
     }
 }
