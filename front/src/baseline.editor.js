@@ -1454,6 +1454,10 @@ export class Segmenter {
         /*
            Call when either the available space or the source image size changed.
          */
+        if (this.img.naturalWidth === 0) {
+            console.warn('segmenter.refresh called with an empty image');
+            return;
+        }
         if (paper.view) {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);
@@ -2175,6 +2179,7 @@ export class Segmenter {
             return;
         }
 
+        console.debug('mergeSelection called, with selection of', this.selection.lines);
         this.selection.lines.sort(function(first, second) {
             // let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
             // let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
@@ -2184,6 +2189,7 @@ export class Segmenter {
             return first.baselinePath.position.x - second.baselinePath.position.x;
         });
 
+        console.log('About to trigger baseline-editor:delete for ', this.selection.lines.slice(1))
         this.trigger('baseline-editor:delete', {
             lines: this.selection.lines.slice(1)
         });
