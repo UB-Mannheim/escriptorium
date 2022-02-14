@@ -12,7 +12,7 @@ from django.test import override_settings
 from django.urls import reverse
 from unittest.mock import patch
 
-from core.models import Block, Line, Transcription, LineTranscription, OcrModel
+from core.models import Block, Line, Transcription, LineTranscription, OcrModel, Metadata, DocumentMetadata
 from core.tests.factory import CoreFactoryTestCase
 from reporting.models import TaskReport
 
@@ -548,6 +548,47 @@ class PartViewSetTestCase(CoreFactoryTestCase):
 
         self.part2.refresh_from_db()
         self.assertEqual(self.part2.order, 0)
+
+
+class DocumentMetadataTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.doc = self.factory.make_document()
+        metadatakey1 = Metadata.objects.create(name='testmeta1')
+        self.dm1 = DocumentMetadata.objects.create(document=self.doc, key=metadatakey1, value='testval1')
+        metadatakey2 = Metadata.objects.create(name='testmeta2')
+        self.dm2 = DocumentMetadata.objects.create(document=self.doc, key=metadatakey2, value='testval2')
+
+    def test_detail(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:metadata-detail',
+                      kwargs={'document_pk': self.doc.pk,
+                              'pk': self.dm1.pk})
+        with self.assertNumQueries(6):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["key"], {"name": "testmeta1", "cidoc_id": None})
+        self.assertEqual(resp.json()["value"], "testval1")
+
+    def test_list(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:metadata-list',
+                      kwargs={'document_pk': self.doc.pk})
+        with self.assertNumQueries(8):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 2)
+
+    def test_create(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:metadata-list',
+                      kwargs={'document_pk': self.doc.pk})
+        with self.assertNumQueries(9):
+            resp = self.client.post(uri, {
+                'key': {'name': 'testnewkey'},
+                'value': 'testnewval'
+            }, content_type='application/json')
+        self.assertEqual(resp.status_code, 201, resp.content)
 
 
 class BlockViewSetTestCase(CoreFactoryTestCase):
