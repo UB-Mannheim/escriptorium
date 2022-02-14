@@ -1,0 +1,32 @@
+{% load i18n bootstrap %}
+<div class="modal fade" id="migrateModal" tabindex="-1" role="dialog" aria-labelledby="migrateModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="{% url 'document-migrate' pk=document.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h3 class="modal-title">{% trans "Migrate to another project" %}</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% render_field migrate_form.project %}
+                    {% render_field migrate_form.keep_tags %}
+                    {% if object %}
+                        <div class="form-row form-group">
+                         {% for tag in object.tags.all %}
+                            <span class="badge" title="{{tag.name}}" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:10 }}</span>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="{% trans 'Migrate' %}" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
