@@ -2189,7 +2189,6 @@ export class Segmenter {
             return first.baselinePath.position.x - second.baselinePath.position.x;
         });
 
-        console.log('About to trigger baseline-editor:delete for ', this.selection.lines.slice(1))
         this.trigger('baseline-editor:delete', {
             lines: this.selection.lines.slice(1)
         });
