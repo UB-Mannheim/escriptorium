@@ -3,6 +3,7 @@ import os.path
 from zipfile import ZipFile
 
 from django.apps import apps
+from django.conf import settings
 from django.utils.text import slugify
 from django.db.models import Q, Prefetch, Avg
 from django.template import loader
@@ -10,6 +11,7 @@ from django.template import loader
 TEXT_FORMAT = "text"
 PAGEXML_FORMAT = "pagexml"
 ALTO_FORMAT = "alto"
+OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
 
 
 class BaseExporter:
@@ -166,6 +168,60 @@ class AltoExporter(XMLTemplateExporter):
 
     def render(self):
         super().render_xml_template("export/alto.xml")
+
+
+class OpenITIMARkdownExporter(BaseExporter):
+    file_format = OPENITI_MARKDOWN_FORMAT
+    file_extension = "zip"
+
+    def render(self):
+        template = loader.get_template("export/openiti_markdown.mARkdown")
+
+        DocumentPart = apps.get_model("core", "DocumentPart")
+        parts = DocumentPart.objects.filter(
+            document=self.document, pk__in=self.part_pks
+        )
+
+        region_filters = Q(line__block__typology_id__in=self.region_types)
+        if self.include_orphans:
+            region_filters |= Q(line__block__isnull=True)
+        if self.include_undefined:
+            region_filters |= Q(
+                line__block__isnull=False, line__block__typology_id__isnull=True
+            )
+
+        LineTranscription = apps.get_model("core", "LineTranscription")
+        with ZipFile(self.filepath, "w") as zip_:
+            for part in parts:
+                if self.include_images:
+                    # Note adds image before the mARkdown file
+                    zip_.write(part.image.path, part.filename)
+                try:
+                    page = template.render(
+                        {
+                            "version": settings.VERSION_DATE,
+                            "part": part,
+                            "lines": LineTranscription.objects.filter(
+                                transcription=self.transcription,
+                                line__document_part=part,
+                            )
+                            .filter(region_filters)
+                            .exclude(content="")
+                            .order_by("line__order"),
+                        }
+                    )
+                except Exception as e:
+                    self.report.append(
+                        "Skipped {element}({image}) because '{reason}'.".format(
+                            element=part.name, image=part.filename, reason=str(e)
+                        )
+                    )
+                else:
+                    zip_.writestr(
+                        "%s.mARkdown" % os.path.splitext(part.filename)[0], page
+                    )
+
+            zip_.close()
 
 
 EXPORTER_CLASS = {
