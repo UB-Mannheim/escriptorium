@@ -148,6 +148,7 @@ class ProjectReport(LoginRequiredMixin, DetailView):
         context['project'] = self.object
         context['documents'] = self.documents
         context['filters'] = self.request.GET.getlist('tags')
+        context['vocabulary'] = self.request.GET.get('vocabulary')
         context['document_tags'] = list(self.object.document_tags.annotate(document_count=Count('tags_document', distinct=True)).values())
         return context
 
@@ -159,12 +160,13 @@ class ProjectReport(LoginRequiredMixin, DetailView):
             document_list = document_list.filter(tags__name=tag)
         
         self.documents = (document_list
-                    .annotate(part_count=Count('parts', distinct=True),
-                                part_lines_count=Count('parts__lines', distinct=True),
-                                documents_shared_with_users=Count('shared_with_users', distinct=True),
-                                documents_shared_with_groups=Count('shared_with_groups', distinct=True),
-                                part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' '),
-                                part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'),
-                                part_lines_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'),
-                                part_block_count=Count('parts__blocks', distinct=True)))
+                    .annotate(part_count=Count('parts', distinct=True))
+                    .annotate(part_lines_count=Count('parts__lines', distinct=True))
+                    .annotate(documents_shared_with_users=Count('shared_with_users', distinct=True))
+                    .annotate(documents_shared_with_groups=Count('shared_with_groups', distinct=True))
+                    .annotate(part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' '))
+                    .annotate(part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'))
+                    .annotate(part_lines_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
+                    .annotate(part_block_count=Count('parts__blocks', distinct=True)))
+
         return project

@@ -40,4 +40,4 @@ def get_count(model, field):
 @register.filter
 def get_typology_count(model, field):
     value = get_aggregate(model, field, '|')
-    return OrderedDict(Counter(value.split('|'))).items() if value else ''
+    return OrderedDict(Counter(value.split('|')).most_common()).items() if value else ''

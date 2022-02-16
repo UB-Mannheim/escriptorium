@@ -1,5 +1,5 @@
 {% extends 'core/project_nav.html' %}
-{% load i18n staticfiles bootstrap report %}
+{% load i18n staticfiles bootstrap report pagination %}
 {% block head_title %}{% trans "Project reports" %}{% endblock %}
 
 {% block nav-reports-active %}active{% endblock %}
@@ -71,13 +71,17 @@
                 </div>
             </div>
         </div>
-
+        
         <div class="mb-4 row">
             <div class="col">
                 <div class="card border-primary text-center">
                     <i class="fa fa-tags card-header"></i>
                     <div class="card-body">
-                        <h5 class="card-title">{% trans 'Vocabulary' %}</h5>
+                        <h5 class="card-title">
+                            {% trans 'Vocabulary' %}
+                            <a class="btn btn-primary fas fa-sync" title="{% trans 'Reload vocabulary' %}" href="?{% url_replace request 'vocabulary' 1 %}"></a>
+                        </h5>
+                        {% if vocabulary == "1" %}
                         <table class="table">
                             <tbody>
                                 <tr class="row">
@@ -104,6 +108,7 @@
                                 </tr>
                             <tbody>
                         </table>
+                        {% endif %}
                         <p class="card-text">{% trans 'The vocabulary is the list of all the characters currently used in the transcription of the document along with their frequency.' %}</p>
                     </div>
                 </div>
@@ -202,7 +207,6 @@
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Last update on' %}</h5>
                         <h4>{{ object.updated_at|date }}</h4>
-                        
                     </div>
                 </div>
             </div>
@@ -221,7 +225,6 @@
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Project shared with '%}  {{object.shared_with_groups.count}}  {% trans ' group(s)' %}</h5>
-                        
                     </div>
                 </div>
             </div>
@@ -230,7 +233,6 @@
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Documents shared with  '%}  {{documents|get_count:'documents_shared_with_users'}} {% trans ' user(s)' %}</h5>
-                        
                     </div>
                 </div>
             </div>
@@ -239,7 +241,6 @@
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{documents|get_count:'documents_shared_with_groups'}} {% trans ' group(s)' %}</h5>
-                        
                     </div>
                 </div>
             </div>
