@@ -31,7 +31,7 @@ DEFAULT_FROM_EMAIL = 'stefan.weil@uni-mannheim.de'
 SERVER_EMAIL = 'stefan.weil@uni-mannheim.de'
 
 # https://docs.djangoproject.com/en/3.2/topics/email/
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
 #EMAIL_HOST = 'smtp.mail.uni-mannheim.de'
 #EMAIL_HOST_USER = 'xxx'
@@ -69,7 +69,7 @@ MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
 INTERNAL_IPS = ['127.0.0.1',]
 
 # only needed in development
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
 KRAKEN_TRAINING_DEVICE = 'cuda:0'
