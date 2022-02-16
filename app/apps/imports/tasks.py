@@ -127,7 +127,7 @@ def document_export(task, file_format, part_pks,
         user.notify(_('Export done!'),
                     level='success',
                     links=[{'text': _('Download'),
-                            'src': settings.MEDIA_URL + '/escriptorium' + rel_path}])
+                            'src': settings.MEDIA_URL + rel_path}])
 
         # send websocket msg
         send_event('document', document.pk, "export:done", {
