@@ -22,8 +22,6 @@ RUN adduser --system --no-create-home --ingroup uwsgi uwsgi
 
 RUN pip install -q --upgrade pip
 
-RUN pip install -U git+git://github.com/mittagessen/kraken.git@5a33ff24bcac0b25501769170e99c85e585a4480#egg=kraken
-
 # Install Python packages and remove cache
 COPY ./requirements.txt /usr/src/app/requirements.txt
 RUN pip --no-cache-dir install -q -r requirements.txt

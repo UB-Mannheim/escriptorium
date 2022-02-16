@@ -21,5 +21,7 @@ COPY ./app/entrypoint.sh /usr/src/app/entrypoint.sh
 COPY ./app /usr/src/app/
 COPY --from=frontend /build/dist /usr/src/app/front
 
+RUN pip --no-cache-dir install -U git+git://github.com/mittagessen/kraken.git@5a33ff24bcac0b25501769170e99c85e585a4480#egg=kraken
+
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
