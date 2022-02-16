@@ -22,7 +22,8 @@
                   VPOS="0"
                   WIDTH="{{ part.image.width }}"
                   HEIGHT="{{ part.image.height }}">
-{% for block in blocks %}        <TextBlock HPOS="{{ block.coordinates_box.0 }}"
+{% for block in blocks %}
+      <TextBlock HPOS="{{ block.coordinates_box.0 }}"
                    VPOS="{{ block.coordinates_box.1 }}"
                    WIDTH="{{ block.width }}"
                    HEIGHT="{{ block.height }}"
@@ -33,14 +34,11 @@
 {% include "export/alto_line.xml" %}
 {% endfor %}
         </TextBlock>{% endfor %}
-
-{% if orphan_lines|length %}
-        <TextBlock ID="eSc_dummyblock_">
+{% if orphan_lines|length %}        <TextBlock ID="eSc_dummyblock_">
 {% for line in orphan_lines %}
 {% include "export/alto_line.xml" %}
 {% endfor %}
-        </TextBlock>
-{% endif %}
+        </TextBlock>{% endif %}
       </PrintSpace>
     </Page>
   </Layout>
