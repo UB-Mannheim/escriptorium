@@ -382,8 +382,8 @@ msgstr ""
 "Importieren."
 
 #: apps/imports/forms.py:33
-msgid "IIIF manifesto uri"
-msgstr "IIIF-Manifest uri"
+msgid "IIIF manifest URI"
+msgstr "IIIF-Manifest URI"
 
 #: apps/imports/forms.py:34
 msgid ""
