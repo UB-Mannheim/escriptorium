@@ -215,7 +215,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
+<script>
  'use strict';
  const DOCUMENT_ID = {{ document.pk }};
  {% if user.onboarding %}
@@ -224,7 +224,7 @@
 </script>
 
 {{ block.super }}
-<script type="text/javascript">
+<script>
   $(document).ready(function() {
     // join the ws room
     joinDocumentRoom('{{document.pk}}');
