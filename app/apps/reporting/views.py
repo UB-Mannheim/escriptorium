@@ -13,6 +13,7 @@ from users.models import User
 from core.models import Project, Document
 
 from django.contrib.postgres.aggregates.general import StringAgg
+from collections import Counter, OrderedDict
 
 class ReportList(LoginRequiredMixin, ListView):
     model = TaskReport
@@ -146,10 +147,19 @@ class ProjectReport(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['project'] = self.object
-        context['documents'] = self.documents
         context['filters'] = self.request.GET.getlist('tags')
         context['vocabulary'] = self.request.GET.get('vocabulary')
         context['document_tags'] = list(self.object.document_tags.annotate(document_count=Count('tags_document', distinct=True)).values())
+
+        context['part_count'] = self.get_aggregate_sum('part_count')
+        context['part_lines_count'] = self.get_aggregate_sum('part_lines_count')
+        context['documents_shared_with_users'] = self.get_aggregate_sum('documents_shared_with_users')
+        context['documents_shared_with_groups'] = self.get_aggregate_sum('documents_shared_with_groups')
+        context['part_lines_transcriptions'] = self.get_aggregate('part_lines_transcriptions')
+        context['part_lines_typology'] = self.get_typology_count('part_lines_typology')
+        context['part_block_typology'] = self.get_typology_count('part_block_typology')
+        context['part_block_count'] = self.get_aggregate_sum('part_block_count')
+
         return context
 
     def get_object(self):
@@ -166,7 +176,17 @@ class ProjectReport(LoginRequiredMixin, DetailView):
                     .annotate(documents_shared_with_groups=Count('shared_with_groups', distinct=True))
                     .annotate(part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' '))
                     .annotate(part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'))
-                    .annotate(part_lines_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
+                    .annotate(part_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
                     .annotate(part_block_count=Count('parts__blocks', distinct=True)))
 
         return project
+    
+    def get_aggregate_sum(self, field):
+        return self.documents.aggregate(data=Sum(field)).get('data')
+    
+    def get_aggregate(self, field, delimiter=' '):
+        return self.documents.aggregate(data=StringAgg(field, delimiter=delimiter)).get('data')
+    
+    def get_typology_count(self, field):
+        value = self.get_aggregate(field, '|')
+        return OrderedDict(Counter(value.split('|'))).items() if value else ''
