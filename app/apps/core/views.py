@@ -67,7 +67,7 @@ class PerPageMixin():
         return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
 
 
-class ProjectList(LoginRequiredMixin, ListView):
+class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Project
     paginate_by = 10
 
@@ -459,7 +459,7 @@ class EditPart(LoginRequiredMixin, DetailView):
             return super().dispatch(*args, **kwargs)
 
 
-class DocumentModels(LoginRequiredMixin, ListView):
+class DocumentModels(LoginRequiredMixin, PerPageMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
@@ -479,7 +479,7 @@ class DocumentModels(LoginRequiredMixin, ListView):
         return context
 
 
-class UserModels(LoginRequiredMixin, ListView):
+class UserModels(LoginRequiredMixin, PerPageMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/main.html"
     http_method_names = ('get',)
