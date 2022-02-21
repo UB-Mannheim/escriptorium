@@ -7,11 +7,13 @@ from django.conf import settings
 from django.utils.text import slugify
 from django.db.models import Q, Prefetch, Avg
 from django.template import loader
+import oitei
 
 TEXT_FORMAT = "text"
 PAGEXML_FORMAT = "pagexml"
 ALTO_FORMAT = "alto"
 OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
+TEI_XML_FORMAT = "teixml"
 
 
 class BaseExporter:
@@ -94,8 +96,8 @@ class TextExporter(BaseExporter):
 class XMLTemplateExporter(BaseExporter):
     file_extension = "zip"
 
-    def render_xml_template(self, template_path):
-        tplt = loader.get_template(template_path)
+    def render(self):
+        tplt = loader.get_template(self.template_path)
 
         DocumentPart = apps.get_model("core", "DocumentPart")
         parts = DocumentPart.objects.filter(
@@ -158,24 +160,36 @@ class XMLTemplateExporter(BaseExporter):
 
 class PageXMLExporter(XMLTemplateExporter):
     file_format = PAGEXML_FORMAT
-
-    def render(self):
-        super().render_xml_template("export/pagexml.xml")
+    template_path = "export/pagexml.xml"
 
 
 class AltoExporter(XMLTemplateExporter):
     file_format = ALTO_FORMAT
-
-    def render(self):
-        super().render_xml_template("export/alto.xml")
+    template_path = "export/alto.xml"
 
 
 class OpenITIMARkdownExporter(BaseExporter):
     file_format = OPENITI_MARKDOWN_FORMAT
     file_extension = "zip"
 
-    def render(self):
-        template = loader.get_template("export/openiti_markdown.mARkdown")
+    def render_part_markdown(self, part, region_filters):
+        LineTranscription = apps.get_model("core", "LineTranscription")
+        return self.template.render(
+            {
+                "version": settings.VERSION_DATE,
+                "part": part,
+                "lines": LineTranscription.objects.filter(
+                    transcription=self.transcription,
+                    line__document_part=part,
+                )
+                .filter(region_filters)
+                .exclude(content="")
+                .order_by("line__order"),
+            }
+        )
+
+    def render(self, tei_conversion=False):
+        self.template = loader.get_template("export/openiti_markdown.mARkdown")
 
         DocumentPart = apps.get_model("core", "DocumentPart")
         parts = DocumentPart.objects.filter(
@@ -190,26 +204,19 @@ class OpenITIMARkdownExporter(BaseExporter):
                 line__block__isnull=False, line__block__typology_id__isnull=True
             )
 
-        LineTranscription = apps.get_model("core", "LineTranscription")
         with ZipFile(self.filepath, "w") as zip_:
             for part in parts:
                 if self.include_images:
                     # Note adds image before the mARkdown file
                     zip_.write(part.image.path, part.filename)
                 try:
-                    page = template.render(
-                        {
-                            "version": settings.VERSION_DATE,
-                            "part": part,
-                            "lines": LineTranscription.objects.filter(
-                                transcription=self.transcription,
-                                line__document_part=part,
-                            )
-                            .filter(region_filters)
-                            .exclude(content="")
-                            .order_by("line__order"),
-                        }
-                    )
+                    markdown_content = self.render_part_markdown(part, region_filters)
+
+                    if tei_conversion:
+                        content = oitei.convert(markdown_content).tostring()
+                    else:
+                        content = markdown_content
+
                 except Exception as e:
                     self.report.append(
                         "Skipped {element}({image}) because '{reason}'.".format(
@@ -217,11 +224,20 @@ class OpenITIMARkdownExporter(BaseExporter):
                         )
                     )
                 else:
+                    ext = "xml" if tei_conversion else "mARkdown"
                     zip_.writestr(
-                        "%s.mARkdown" % os.path.splitext(part.filename)[0], page
+                        "%s.%s" % (os.path.splitext(part.filename)[0], ext), content
                     )
 
             zip_.close()
+
+
+class TEIXMLExporter(OpenITIMARkdownExporter):
+    file_format = TEI_XML_FORMAT
+
+    def render(self):
+        # We need an extra TEI conversion after the OpenITI mARkdown generation
+        super().render(tei_conversion=True)
 
 
 EXPORTER_CLASS = {

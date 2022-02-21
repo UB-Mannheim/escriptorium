@@ -27,3 +27,8 @@ scikit-image==0.17.2
 scikit-learn==1.0.2
 scipy==1.5.4
 django-prometheus
+git+https://github.com/OpenITI/oitei@50b6a47#egg=oitei
+# Remove following three imports once oitei#6 (https://github.com/OpenITI/oitei/issues/6) is fixed
+lxml==4.6.4
+oimdp==1.1.0
+typing==3.7.4.3

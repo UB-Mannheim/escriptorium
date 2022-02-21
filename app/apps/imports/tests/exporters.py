@@ -13,6 +13,7 @@ from imports.export import (
     AltoExporter,
     OpenITIMARkdownExporter,
     PageXMLExporter,
+    TEIXMLExporter,
     TextExporter,
 )
 from reporting.models import TaskReport
@@ -483,4 +484,98 @@ class ExportersTestCase(CoreFactoryTestCase):
                 open(
                     f"{SAMPLES_DIR}/openiti_markdown_export_full_part2.mARkdown", "rb"
                 ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render(self, timezone_mock):
+        exporter = TEIXMLExporter(
+            self.all_parts_pks,
+            self.all_regions_types,
+            self.include_images,
+            *self.params,
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_xml_export_filename, self.part2_xml_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part2.xml", "rb").read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_only_one_part(self, timezone_mock):
+        parts_pk = [self.part.pk]
+        exporter = TEIXMLExporter(
+            parts_pk, self.all_regions_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename])
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_only_one_region(self, timezone_mock):
+        region_types = [self.body.pk]
+        exporter = TEIXMLExporter(
+            self.all_parts_pks, region_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_xml_export_filename, self.part2_xml_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/tei_xml_export_only_body_part1.xml",
+                    "rb",
+                ).read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/tei_xml_export_only_body_part2.xml",
+                    "rb",
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_with_images(self, timezone_mock):
+        include_images = True
+        exporter = TEIXMLExporter(
+            self.all_parts_pks, self.all_regions_types, include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [
+                    self.part.filename,
+                    self.part_xml_export_filename,
+                    self.part2.filename,
+                    self.part2_xml_export_filename,
+                ],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part2.xml", "rb").read(),
             )
