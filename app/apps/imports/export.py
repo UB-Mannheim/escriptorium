@@ -240,8 +240,19 @@ class TEIXMLExporter(OpenITIMARkdownExporter):
         super().render(tei_conversion=True)
 
 
-EXPORTER_CLASS = {
-    TEXT_FORMAT: TextExporter,
-    PAGEXML_FORMAT: PageXMLExporter,
-    ALTO_FORMAT: AltoExporter,
+ENABLED_EXPORTERS = {
+    TEXT_FORMAT: {"class": TextExporter, "label": "Text"},
+    PAGEXML_FORMAT: {"class": PageXMLExporter, "label": "PAGE"},
+    ALTO_FORMAT: {"class": AltoExporter, "label": "ALTO"},
 }
+
+if settings.EXPORT_OPENITI_MARKDOWN_ENABLED:
+    ENABLED_EXPORTERS[OPENITI_MARKDOWN_FORMAT] = {
+        "class": OpenITIMARkdownExporter,
+        "label": "OpenITI mARkdown",
+    }
+if settings.EXPORT_TEI_XML_ENABLED:
+    ENABLED_EXPORTERS[TEI_XML_FORMAT] = {
+        "class": TEIXMLExporter,
+        "label": "OpenITI TEI XML",
+    }
