@@ -14,6 +14,6 @@
 
 #META#Header#End#
 
-Some text to be exported during a document_export Celery task.
-Some text to be exported during a document_export Celery task.
-Some text to be exported during a document_export Celery task.
+~~Some text to be exported during a document_export Celery task.
+~~Some text to be exported during a document_export Celery task.
+~~Some text to be exported during a document_export Celery task.

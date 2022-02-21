@@ -16,5 +16,5 @@
 
 #META#Header#End#
 
-{% for line in lines %}{{ line.content }}
+{% for line in lines %}~~{{ line.content }}
 {% endfor %}

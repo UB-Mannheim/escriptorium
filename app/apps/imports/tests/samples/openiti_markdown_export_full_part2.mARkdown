@@ -14,8 +14,8 @@
 
 #META#Header#End#
 
-Another simple test for eScriptorium
-More text to be exported during a document_export Celery task.
-More text to be exported during a document_export Celery task.
-More text to be exported during a document_export Celery task.
-Another beautiful signature
+~~Another simple test for eScriptorium
+~~More text to be exported during a document_export Celery task.
+~~More text to be exported during a document_export Celery task.
+~~More text to be exported during a document_export Celery task.
+~~Another beautiful signature

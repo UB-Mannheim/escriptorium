@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-model href="https://raw.githubusercontent.com/OpenITI/tei_openiti/master/tei_openiti.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://raw.githubusercontent.com/OpenITI/tei_openiti/master/tei_openiti.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title/>
+      </titleStmt>
+      <publicationStmt>
+        <p/>
+      </publicationStmt>
+      <sourceDesc>
+        <p/>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <calendarDesc>
+        <calendar xml:id="ah">
+          <p>Anno Hegirae</p>
+        </calendar>
+      </calendarDesc>
+    </profileDesc>
+    <xenoData xml:space="preserve">
+CREATED: 2022-01-01T00:00:00
+CREATED BY: eScriptorium v1.0.0-testing
+IMAGE FILENAME: default2.png
+IMAGE WIDTH: 747
+IMAGE HEIGHT: 212
+</xenoData>
+  </teiHeader>
+  <text>
+    <body>
+      <div>
+        <p>
+          <lb/>Another simple test for eScriptorium
+          <lb/>More text to be exported during a document_export Celery task.
+          <lb/>More text to be exported during a document_export Celery task.
+          <lb/>More text to be exported during a document_export Celery task.
+          <lb/>Another beautiful signature
+        </p>
+      </div>
+    </body>
+  </text>
+</TEI>
