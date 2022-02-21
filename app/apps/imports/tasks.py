@@ -10,7 +10,7 @@ from celery import shared_task
 
 from users.consumers import send_event
 from escriptorium.utils import send_email
-from imports.export import EXPORTER_CLASS
+from imports.export import ENABLED_EXPORTERS
 from reporting.tasks import create_task_reporting
 
 
@@ -97,11 +97,11 @@ def document_export(task, file_format, part_pks,
             "id": document.pk
         })
 
-        if file_format not in EXPORTER_CLASS:
+        if file_format not in ENABLED_EXPORTERS:
             raise NotImplementedError(f"File format {file_format} isn't a supported format during a data export")
 
         transcription = Transcription.objects.get(document=document, pk=transcription_pk)
-        exporter = EXPORTER_CLASS[file_format](
+        exporter = ENABLED_EXPORTERS[file_format]["class"](
             part_pks, region_types, include_images, user, document, report, transcription
         )
         exporter.render()

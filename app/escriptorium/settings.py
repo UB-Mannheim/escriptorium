@@ -385,3 +385,9 @@ QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOT
 
 # Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
 QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
+
+# Boolean used to enable the OpenITI mARkdown export mode
+EXPORT_OPENITI_MARKDOWN_ENABLED = os.getenv('EXPORT_OPENITI_MARKDOWN', "False").lower() not in ("false", "0")
+
+# Boolean used to enable the OpenITI TEI XML export mode
+EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("false", "0")
