@@ -4,6 +4,7 @@ from rest_framework.authtoken import views
 
 from api.views import (ProjectViewSet,
                        DocumentViewSet,
+                       DocumentMetadataViewSet,
                        UserViewSet,
                        PartViewSet,
                        DocumentTranscriptionViewSet,
@@ -35,6 +36,7 @@ projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='projec
 projects_router.register(r'tags', TagViewSet, basename='tag')
 
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
+documents_router.register(r'metadata', DocumentMetadataViewSet, basename='metadata')
 documents_router.register(r'parts', PartViewSet, basename='part')
 documents_router.register(r'transcriptions', DocumentTranscriptionViewSet, basename='transcription')
 documents_router.register(r'taxonomies/annotations', AnnotationTaxonomyViewSet)

@@ -58,7 +58,7 @@ def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to compress non-existent DocumentPart : %d', instance_pk)
         return
 
     aliases = {}
@@ -83,7 +83,7 @@ def convert(instance_pk=None, user_pk=None, **kwargs):
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to convert innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to convert non-existent DocumentPart : %d', instance_pk)
         return
     part.convert()
 
@@ -103,7 +103,7 @@ def lossless_compression(instance_pk=None, user_pk=None, **kwargs):
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to compress innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to compress non-existent DocumentPart : %d', instance_pk)
         return
     part.compress()
 
@@ -114,7 +114,7 @@ def binarize(instance_pk=None, user_pk=None, binarizer=None, threshold=None, **k
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to binarize innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to binarize non-existent DocumentPart : %d', instance_pk)
         return
 
     if user_pk:
@@ -314,7 +314,7 @@ def segment(instance_pk=None, user_pk=None, model_pk=None,
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist as e:
-        logger.error('Trying to segment innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to segment non-existent DocumentPart : %d', instance_pk)
         return
 
     try:
@@ -371,7 +371,7 @@ def recalculate_masks(instance_pk=None, user_pk=None, only=None, **kwargs):
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist as e:
-        logger.error('Trying to recalculate masks of innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to recalculate masks of non-existent DocumentPart : %d', instance_pk)
         return
 
     result = part.make_masks(only=only)
@@ -436,7 +436,7 @@ def train_(qs, document, transcription, model=None, user=None):
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
         model.training_epoch = epoch
-        model.training_accuracy = int(accuracy)
+        model.training_accuracy = float(accuracy.item())
         model.training_total = int(chars)
         model.training_errors = int(error)
         relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
@@ -447,7 +447,7 @@ def train_(qs, document, transcription, model=None, user=None):
             "id": model.pk,
             'versions': model.versions,
             'epoch': epoch,
-            'accuracy': int(accuracy),
+            'accuracy': float(accuracy.item()),
             'chars': int(chars),
             'error': int(error)})
 
@@ -525,7 +525,7 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
 
-        logger.error('Trying to transcribe innexistant DocumentPart : %d', instance_pk)
+        logger.error('Trying to transcribe non-existent DocumentPart : %d', instance_pk)
         return
 
     if user_pk:

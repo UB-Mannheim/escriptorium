@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n staticfiles bootstrap %}
+{% block head_title %}{% trans "Tasks monitoring" %}{% endblock %}
+
+{% block body %}
+<div id="documents_tasks">
+  <documentstasks :is-admin="{{ user.is_staff|lower }}" :task-states="{{ task_states }}" :users="{{ users }}" />
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script src="{% static 'docstasks.js' %}" type="text/javascript"></script>
+{% endblock %}

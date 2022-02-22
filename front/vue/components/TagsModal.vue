@@ -22,8 +22,8 @@
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control" name="name" placeholder="Add a new tag" style="width: 50%;">
-                            <input type="color" class="form-control" name="color" style="width: 10%;">
+                            <input type="text" class="form-control w-50" name="name" placeholder="Add a new tag">
+                            <input type="color" class="form-control" name="color" style="width: 10%;" v-model="rColor">
                         </div>
 
                     </div>
@@ -45,6 +45,7 @@ export default {
     data () {
         return {
             valuesSelected: [],
+            rColor: null,
             tags: []
         }
     },
@@ -60,11 +61,14 @@ export default {
         },
         checkboxListData() {
             return this.$store.state.documentslist.checkboxList;
+        },
+        randomColor() {
+            return this.$store.state.documentslist.tagColor;
         }
     },
     mounted(){
-        $(this.$refs.tagsModal).on("show.bs.modal", this.populateItems);
         $(this.$refs.tagsModal).on("hide.bs.modal", this.hideModal);
+        this.$store.commit('documentslist/settagColor');
     },
     updated: function(){
         this.$nextTick(function(){ 
@@ -97,22 +101,24 @@ export default {
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);
-        },
-        async populateItems(){
-            this.$store.commit('documentslist/setProjectID', this.projectId);
-            if(!this.documentId) await this.$store.dispatch('documentslist/getAllTagsProject');
         }
-
     },
     watch: {
+        "$store.state.documentslist.checkedTags": {
+            handler: function(nv) {
+                this.$nextTick(function(){ 
+                    this.$store.commit('documentslist/setTagColor');
+                    this.valuesSelected = nv;
+                    $(this.$refs.mselectTags).selectpicker('val', nv);
+                    $(this.$refs.mselectTags).selectpicker('refresh'); 
+                    this.rColor = this.randomColor
+                });
+            },
+            immediate: true 
+        },
         "$store.state.documentslist.mapTags": {
             handler: function(nv) {
                 this.tags = nv;
-                this.$nextTick(function(){ 
-                    this.valuesSelected = this.listCheckedTags;
-                    $(this.$refs.mselectTags).selectpicker('val', this.listCheckedTags); 
-                    $(this.$refs.mselectTags).selectpicker('refresh'); 
-                });
             },
             immediate: true 
         }

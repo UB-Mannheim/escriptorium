@@ -20,6 +20,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from api.serializers import (UserOnboardingSerializer,
                              ProjectSerializer,
                              DocumentSerializer,
+                             DocumentMetadataSerializer,
                              DocumentTasksSerializer,
                              PartDetailSerializer,
                              PartSerializer,
@@ -57,6 +58,7 @@ from core.models import (Project,
                          AnnotationTaxonomy,
                          ImageAnnotation,
                          TextAnnotation,
+                         DocumentMetadata,
                          Transcription,
                          LineTranscription,
                          OcrModel,
@@ -71,7 +73,6 @@ from imports.forms import ImportForm, ExportForm
 from imports.parsers import ParseError
 from reporting.models import TaskReport
 from versioning.models import NoChangeException
-from reporting.models import TaskReport
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +179,7 @@ class DocumentViewSet(ModelViewSet):
 
             extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
 
-        documents = Document.objects.filter(reports__isnull=False, **extra).distinct()
+        documents = Document.objects.filter(reports__isnull=False, **extra).select_related('owner').distinct()
 
         page = self.paginate_queryset(documents)
         if page is not None:
@@ -348,6 +349,21 @@ class DocumentPermissionMixin():
         except Document.DoesNotExist:
             raise PermissionDenied
         return super().get_queryset()
+
+
+class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = DocumentMetadata.objects.all().select_related('document')
+    serializer_class = DocumentMetadataSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(document=self.kwargs.get('document_pk'))
+        return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['document'] = Document.objects.get(pk=self.kwargs.get('document_pk'))
+        return context
 
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):

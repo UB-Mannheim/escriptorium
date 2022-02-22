@@ -16,6 +16,15 @@
         <i class="fas fa-share"></i></button>
     {% endif %}
 
+    {% if migrate_form %}
+    <button type="button"
+            class="nav-item btn btn-primary mr-1"
+            data-toggle="modal"
+            data-target="#migrateModal"
+            title="{% trans "Migrate to another project" %}">
+        <i class="fas fa-external-link-square-alt"></i></button>
+    {% endif %}
+
     {% comment %}
     {% if not object.is_published %}
     <form method="post" class="inline-form" action="{% url 'document-publish' pk=object.pk %}">{% csrf_token %}
@@ -50,7 +59,6 @@
             {% else %}
             {% render_field form.name autofocus=1 %}
             {% endif %}
-            {% render_field form.project %}
 
             {% render_field form.main_script %}
             {% render_field form.read_direction %}
@@ -96,6 +104,9 @@
 {% block modals %}
 {% if share_form %}
 {% include "core/share/share_doc.html" %}
+{% endif %}
+{% if migrate_form %}
+{% include "core/migrate/migrate_document.html" %}
 {% endif %}
 {% endblock %}
 

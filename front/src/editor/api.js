@@ -65,3 +65,7 @@ export const deleteTextAnnotation = async (document_id, part_id, id) => (await a
 export const createProjectTag = async (project_id, data) => (await axios.post(`/projects/${project_id}/tags/`, data))
 
 export const updateDocument = async (document_id, data) => (await axios.patch(`/documents/${document_id}/`, data))
+
+export const deletetag = async (project_id, tag_id) => (await axios.delete(`/projects/${project_id}/tags/${tag_id}/`))
+
+export const updatetag = async (project_id, tag_id, data) => (await axios.put(`/projects/${project_id}/tags/${tag_id}/`, data))

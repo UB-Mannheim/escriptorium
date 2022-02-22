@@ -16,6 +16,8 @@ from users.models import User
 from core.models import (Project,
                          Document,
                          DocumentPart,
+                         Metadata,
+                         DocumentMetadata,
                          Block,
                          Line,
                          Transcription,
@@ -284,12 +286,16 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class DocumentTasksSerializer(serializers.ModelSerializer):
+    owner = serializers.SerializerMethodField()
     tasks_stats = serializers.SerializerMethodField()
     last_started_task = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
-        fields = ('pk', 'name', 'tasks_stats', 'last_started_task')
+        fields = ('pk', 'name', 'owner', 'tasks_stats', 'last_started_task')
+
+    def get_owner(self, document):
+        return document.owner.username if document.owner else None
 
     def get_tasks_stats(self, document):
         stats = {state: 0 for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
@@ -304,6 +310,28 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
             return None
 
         return last_task.started_at
+
+
+class MetadataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Metadata
+        fields = ('name', 'cidoc_id')
+
+
+class DocumentMetadataSerializer(serializers.ModelSerializer):
+    key = MetadataSerializer()
+
+    class Meta:
+        model = DocumentMetadata
+        fields = ('pk', 'key', 'value')
+
+    def create(self, validated_data):
+        key_data = validated_data.pop('key')
+        md, _created = Metadata.objects.get_or_create(**key_data)
+        dmd = DocumentMetadata.objects.create(document=self.context['document'],
+                                              key=md,
+                                              **validated_data)
+        return dmd
 
 
 class PartSerializer(serializers.ModelSerializer):
