@@ -33,21 +33,9 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         model = Document
         fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script']
 
-    class Meta:
-        model = Document
-        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
-                  'valid_block_types', 'valid_line_types']
-        widgets = {
-            'valid_block_types': forms.CheckboxSelectMultiple,
-            'valid_line_types': forms.CheckboxSelectMultiple
-        }
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-
-        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
-        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
         self.fields['project'].required = False
 
     def clean_project(self):
