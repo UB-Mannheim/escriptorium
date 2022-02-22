@@ -52,8 +52,8 @@ export const mutations = {
     setVisiblePanels(state, payload) {
         state.visible_panels = Object.assign({}, state.visible_panels, payload)
     },
-    setAnnotationTaxonomies(state, payload) {
-        state.annotationTaxonomies[payload[0]] = payload[1]
+    setAnnotationTaxonomies(state, {type, taxos}) {
+        state.annotationTaxonomies[type] = taxos
     },
     setEnabledVKs(state, vks) {
         state.enabledVKs = Object.assign([], state.enabledVKs, vks)
@@ -71,7 +71,6 @@ export const actions = {
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
 
-        // commit can not pass parameters as is?!?
         let page=1;
         var img_taxos = [];
         while(page) {
@@ -80,7 +79,7 @@ export const actions = {
             if (resp.data.next) page++
             else page=null
         }
-        commit('setAnnotationTaxonomies', ['image', img_taxos])
+        commit('setAnnotationTaxonomies', {'type': 'image', 'taxos': img_taxos})
 
         page=1;
         var text_taxos = [];
@@ -90,7 +89,7 @@ export const actions = {
             if (resp.data.next) page++
             else page=null
         }
-        commit('setAnnotationTaxonomies', ['text', text_taxos])
+        commit('setAnnotationTaxonomies', {'type': 'text', 'taxos': text_taxos})
     },
 
     async togglePanel ({state, commit}, panel) {
