@@ -26,4 +26,4 @@ pyvips==2.1.12
 scikit-image==0.17.2
 scikit-learn==1.0.2
 scipy==1.5.4
-django-prometheus
+django-prometheus==2.1.0

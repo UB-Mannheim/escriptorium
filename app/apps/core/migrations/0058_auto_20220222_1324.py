@@ -4,7 +4,6 @@ import core.utils
 import django.contrib.postgres.fields
 from django.db import migrations, models
 import django.db.models.deletion
-import django_prometheus.models
 
 
 class Migration(migrations.Migration):
@@ -50,8 +49,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'abstract': False,
-            },
-            bases=(django_prometheus.models.Mixin, models.Model),
+            }
         ),
         migrations.CreateModel(
             name='ImageAnnotation',
