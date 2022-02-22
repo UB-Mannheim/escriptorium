@@ -262,21 +262,6 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
     def get_success_url(self):
         return reverse('document-ontology', kwargs={'pk': self.object.pk})
 
-    # def post(self, request, *args, **kwargs):
-    #     self.object = self.get_object()
-    #     form = self.get_form()
-    #     if form.is_valid() and self.img_anno_form.is_valid():
-    #         return self.form_valid(form)
-    #     else:
-    #         return self.form_invalid(form)
-
-    # def form_valid(self, form, metadata_form):
-    #     with transaction.atomic():
-    #         response = super().form_valid(form)
-    #         # at this point the document is saved
-    #         self.img_anno_form.save()
-    #     return response
-
 
 class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
     model = Document
