@@ -5,6 +5,7 @@ app/test_media/
 app/logs/
 app/env/
 ci/
+front/node_modules
 .vscode
 .idea
 variables.env

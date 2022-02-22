@@ -14,8 +14,10 @@ django-ordered-model==3.1.1
 easy-thumbnails==2.5
 kraken==3.0.8
 django-cleanup==5.1.0
-djangorestframework==3.9.2
+django-ranged-response==0.2.0
+djangorestframework==3.12.4
 drf-nested-routers==0.91
+drf-writable-nested==0.6.3
 bleach==3.1.5
 beautifulsoup4==4.7.1
 requests==2.21.0
