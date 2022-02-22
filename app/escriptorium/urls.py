@@ -19,33 +19,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
 
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularSwaggerView,
-    SpectacularRedocView,
-)
-
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("core.urls")),
-    path("", include("users.urls")),
-    path("", include("reporting.urls")),
-    path("api/", include("api.urls", namespace="api")),
-    path(r"captcha/", include("captcha.urls")),
-    path("", include("django_prometheus.urls")),
-    # DRF Spectacular
-    path("api/schema/escriptorium.yaml", SpectacularAPIView.as_view(), name="schema"),
-    # Optional UI:
-    path(
-        "api/schema/swagger-ui/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
-        name="swagger-ui",
-    ),
-    path(
-        "api/schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
-        name="redoc",
-    ),
+    path('admin/', admin.site.urls),
+    path('', include('core.urls')),
+    path('', include('users.urls')),
+    path('', include('reporting.urls')),
+    path('api/', include('api.urls', namespace='api')),
+    path(r'captcha/', include('captcha.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 if settings.DEBUG:
@@ -54,17 +35,13 @@ if settings.DEBUG:
     except ImportError:
         pass
     else:
-        urlpatterns += [
-            path("__debug__/", include(debug_toolbar.urls)),
-        ]
+        urlpatterns += [path('__debug__/', include(debug_toolbar.urls)),]
 
     # simulates a 500 to test error logging
     from django.views.defaults import server_error
+    urlpatterns += [path('500/', server_error),
+                    path('404/', TemplateView.as_view(template_name='404.html'))]
 
-    urlpatterns += [
-        path("500/", server_error),
-        path("404/", TemplateView.as_view(template_name="404.html")),
-    ]
 
     # Serve static files in development
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

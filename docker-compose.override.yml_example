@@ -1,0 +1,208 @@
+version: "3.9"
+
+services:
+    ### to customize the homepage, uncomment this
+    #app:
+      # volumes:
+      #   - $PWD/app/homepage
+
+    web: &web
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+    channelserver:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+    db:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == db0
+
+      # For development purposes, expose db on localhost
+      # ports:
+      #   - 127.0.0.1:5432:5432
+
+    redis:
+      restart: always
+
+      # For development purposes, expose redis on localhost
+      # ports:
+      #   - 127.0.0.1:6379:6379
+
+    nginx:
+      restart: always
+      ports:
+       - "80:80"
+      # - "443:443"
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+      ### To enable SSL, generate keys (eg with letsencrypt/certbot)
+      ### copy nginx/ssl_certificates.conf_example and edit it
+      ## if need be to correspond to the volume below
+      ### and uncomment this block and the port 443
+      # volumes:
+      # - type: bind
+      #   source: $PWD/nginx/ssl.conf
+      #   target: /etc/nginx/conf.d/nginx.conf
+      # - type: bind
+      #   source: $PWD/nginx/ssl_certificates.conf
+      #   target: /etc/nginx/conf.d/ssl_certificates.conf
+      # - $PWD/nginx/certs/:/etc/certs/
+
+    flower:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+    # cpus and mem_limit imposes a hard limit on cpus usage,
+    # needed to keep some for http/db when working with a single machine
+    #
+    # according to the docker documentation:
+    # Memory reservation is a kind of memory soft limit that allows for greater sharing of memory.
+    # Under normal circumstances, containers can use as much of the memory as needed and are constrained only by the hard limits set with the -m/--memory option (mem_limit in docker-compose).
+    # When memory reservation is set, Docker detects memory contention or low memory and forces containers to restrict their consumption to a reservation limit.
+
+    # the shm_size argument is needed when using KRAKEN_TRAINING_LOAD_THREADS
+
+    # !!!!
+    # example values here are given for 16 cores and 16g of memory keeping 2 cores and 1g of memory at all time
+    # for http & db assuming a low amount of concurrent users <50
+
+    celery-main:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute0
+      #   resources:
+      #     limits:
+      #       cpus: '6'
+      #       memory: 15g
+      #     reservations:
+      #       memory: 4g
+
+    celery-low-priority:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute1
+      #   resources:
+      #     limits:
+      #       cpus: '2'
+      #       memory: 15g
+      #     reservations:
+      #       memory: 1g
+
+    celery-gpu:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.labels.type == gpu
+      #   resources:
+      #     limits:
+      #       cpus: '6'
+      #       memory: 15g
+      #     reservations:
+      #       memory: 1g
+      #       devices:
+      #         - capabilities:
+      #           - gpu
+
+      # shm_size: '3gb'
+      # runtime: nvidia
+      # environment:
+      #   - KRAKEN_TRAINING_DEVICE=cuda:0
+      #   - NVIDIA_VISIBLE_DEVICES=all
+      #   - NVIDIA_DRIVER_CAPABILITIES=all
+
+    # add more workers for every physical gpu
+    # celery-gpu2:
+    #    <<: *celery-gpu
+    #    environment:
+    #       - KRAKEN_TRAINING_DEVICE=cuda:1
+
+  # celerybeat:
+     #   restart: always
+  
+  prometheus:
+    image: prom/prometheus:v2.1.0
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+  #  links:
+  #    - alertmanager:alertmanager
+  
+  alertmanager:
+    image: prom/alertmanager:v0.18.0
+    deploy:
+      replicas: 1
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./prometheus/email.tmpl:/etc/alertmanager/email.tmpl
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--log.level=debug'
+  
+  container-exporter:
+    image: prom/container-exporter
+    volumes:
+      - /sys/fs/cgroup:/cgroup
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9104:9104
+
+#volumes:
+#   static:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      o: 'bind'
+#      device: $PWD/static/
+#   prometheus_data: {}
+#
+#   media:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      o: 'bind'
+#      device: $PWD/media/
