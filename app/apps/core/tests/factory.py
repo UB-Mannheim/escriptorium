@@ -28,6 +28,7 @@ class CoreFactory():
     """
     A model Factory to help create data for tests.
     """
+
     def __init__(self):
         redis_.flushall()
         self.cleanup_registry = []
@@ -57,7 +58,7 @@ class CoreFactory():
         attrs = kwargs.copy()
         attrs['owner'] = attrs.get('owner') or self.make_user()
         attrs['project'] = attrs.get('project') or self.make_project(owner=attrs['owner'])
-        attrs['name'] =  attrs.get('name') or 'test doc'
+        attrs['name'] = attrs.get('name') or 'test doc'
         return Document.objects.create(**attrs)
 
     def make_part(self, **kwargs):
@@ -130,18 +131,18 @@ class CoreFactory():
             transcription = self.make_transcription(document=part.document)
         for i in range(amount):
             block = Block.objects.create(document_part=part, box=[
-                line_margin, i*line_height-line_margin,
-                line_margin+line_width, i*line_height-line_margin
+                line_margin, i * line_height - line_margin,
+                line_margin + line_width, i * line_height - line_margin
             ])
             line = Line.objects.create(document_part=part,
                                        baseline=[
-                                           [line_margin, i*line_height],
-                                           [line_margin+line_width, i*line_height]],
+                                           [line_margin, i * line_height],
+                                           [line_margin + line_width, i * line_height]],
                                        mask=[
-                                           [line_margin, i*line_height+line_margin],
-                                           [line_margin+line_width, i*line_height+line_margin],
-                                           [line_margin+line_width, i*line_height-line_margin],
-                                           [line_margin, i*line_height-line_margin],
+                                           [line_margin, i * line_height + line_margin],
+                                           [line_margin + line_width, i * line_height + line_margin],
+                                           [line_margin + line_width, i * line_height - line_margin],
+                                           [line_margin, i * line_height - line_margin],
                                        ],
                                        block=block)
             LineTranscription.objects.create(transcription=transcription,

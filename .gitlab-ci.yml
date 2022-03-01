@@ -3,6 +3,16 @@ stages:
   - build
   - deploy
 
+lint:
+  image: python:3.8
+  stage: test
+
+  before_script:
+    - pip install pre-commit
+
+  script:
+    - pre-commit run -a
+
 tests:
   stage: test
   image: registry.gitlab.com/scripta/escriptorium/base:0.10.4-oitei2

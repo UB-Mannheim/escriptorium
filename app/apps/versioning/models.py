@@ -64,7 +64,7 @@ class Versioned(models.Model):
         for field in self._meta.fields:
             if (field.name not in ('id', 'revision', 'versions')
                 and field.name not in self._meta.model.version_ignore_fields
-                and not field.name.startswith('version_')):
+                    and not field.name.startswith('version_')):
                 data[field.name] = getattr(self, field.name)
         data.update(kwargs)
         return {
@@ -103,12 +103,12 @@ class Versioned(models.Model):
             last = self.versions[0]
             if (packed['data'] == last['data']
                 and author_ == self.version_author
-                and source_ == self.version_source):
+                    and source_ == self.version_source):
                 raise NoChangeException
         self.versions.insert(0, packed)
         # if we passed version_history_max_length we delete the last one
         if (self.version_history_max_length
-            and len(self.versions) > self.version_history_max_length):
+                and len(self.versions) > self.version_history_max_length):
             self.delete_revision(self.versions[self.version_history_max_length]['revision'])
 
         self.revision = uuid.uuid4()  # new revision number

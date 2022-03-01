@@ -25,8 +25,8 @@ class BootstrapFormMixin():
                 else:
                     class_ += ' form-control'
                     if issubclass(field.widget.__class__, forms.Select):
-                        class_  += ' custom-select'
-                if hasattr(field.widget,'input_type') and field.widget.input_type == 'select':
+                        class_ += ' custom-select'
+                if hasattr(field.widget, 'input_type') and field.widget.input_type == 'select':
                     field.widget.need_label = True
 
                 field.widget.attrs['class'] = class_

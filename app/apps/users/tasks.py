@@ -6,7 +6,8 @@ from django.apps import apps
 from django.conf import settings
 from django.core.mail import send_mail
 
-from reporting.tasks import create_task_reporting
+# DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
+from reporting.tasks import create_task_reporting # noqa F401
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def async_email(subject, message, recipients, html=None, result_interface=None):
             recipients,
             fail_silently=False,
             html_message=html)
-    except:  # Good old catch all, fine in this case
+    except Exception:  # Good old catch all, fine in this case
         logger.exception('Error sending email %s to %s.', subject, recipients)
         if result_interface:
             email_result(result_interface, success=False)
