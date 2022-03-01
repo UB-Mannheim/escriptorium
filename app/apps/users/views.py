@@ -239,7 +239,7 @@ class GroupDetail(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, Upda
             'request': self.request})
         return kwargs
 
-    def get_context_data(self, *args,  **kwargs):
+    def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['other_users'] = self.object.user_set.exclude(pk=self.request.user.pk)
         return context

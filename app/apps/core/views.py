@@ -226,7 +226,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             context['share_form'] = DocumentShareForm(instance=self.object,
                                                       request=self.request)
             context['migrate_form'] = MigrateDocumentForm(instance=self.object,
-                                                      request=self.request)
+                                                          request=self.request)
 
         return context
 
@@ -447,7 +447,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         return context
 
     def dispatch(self, *args, **kwargs):
-        if not 'part_pk' in self.kwargs:
+        if 'part_pk' not in self.kwargs:
             try:
                 first = self.get_queryset()[0]
                 return HttpResponseRedirect(reverse('document-part-edit',
@@ -488,10 +488,10 @@ class UserModels(LoginRequiredMixin, PerPageMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         models = OcrModel.objects.exclude(file="").filter(
-            Q(public=True) |
-            Q(owner=user) |
-            Q(ocr_model_rights__user=user) |
-            Q(ocr_model_rights__group__user=user)
+            Q(public=True)
+            | Q(owner=user)
+            | Q(ocr_model_rights__user=user)
+            | Q(ocr_model_rights__group__user=user)
         ).distinct()
 
         script_filter = self.request.GET.get('script_filter', '')

@@ -11,7 +11,9 @@ from celery import shared_task
 from users.consumers import send_event
 from escriptorium.utils import send_email
 from imports.export import ENABLED_EXPORTERS
-from reporting.tasks import create_task_reporting
+
+# DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
+from reporting.tasks import create_task_reporting # noqa F401
 
 
 logger = logging.getLogger(__name__)
@@ -26,14 +28,14 @@ def document_import(task, import_pk=None, resume=True, task_id=None, user_pk=Non
     user = User.objects.get(pk=user_pk)
     # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
     if not settings.DISABLE_QUOTAS:
-        if user.cpu_minutes_limit() != None:
+        if user.cpu_minutes_limit() is not None:
             assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-        if user.disk_storage_limit() != None:
+        if user.disk_storage_limit() is not None:
             assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
 
     imp = DocumentImport.objects.get(
-        Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED) |
-        Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),
+        Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED)
+        | Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),
         pk=import_pk)
 
     imp.report = TaskReport.objects.get(task_id=task.request.id)
@@ -86,7 +88,7 @@ def document_export(task, file_format, part_pks,
     user = User.objects.get(pk=user_pk)
 
     # If quotas are enforced, assert that the user still has free CPU minutes
-    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
         assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
 
     document = Document.objects.get(pk=document_pk)

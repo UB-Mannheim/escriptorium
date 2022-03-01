@@ -42,8 +42,8 @@ class GroupInvitationForm(InvitationForm):
     def clean_recipient_id(self):
         # we don't throw an error on purpose to avoid fishing
         try:
-            return User.objects.get(Q(email=self.data.get('recipient_id')) |
-                                    Q(username=self.data.get('recipient_id')))
+            return User.objects.get(Q(email=self.data.get('recipient_id'))
+                                    | Q(username=self.data.get('recipient_id')))
         except User.DoesNotExist:
             return None
 

@@ -40,9 +40,10 @@ class MyUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'fields': ('username', 'email', 'password1', 'password2')}
-        ),
+         ),
         ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
+
 
 class InvitationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'

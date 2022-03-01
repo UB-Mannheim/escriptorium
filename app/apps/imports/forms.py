@@ -100,7 +100,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
-            and not cleaned_data.get('iiif_uri')):
+                and not cleaned_data.get('iiif_uri')):
             raise forms.ValidationError(_("Choose one type of import."))
 
         return cleaned_data

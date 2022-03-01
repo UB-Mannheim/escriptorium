@@ -638,9 +638,9 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     def in_queue(self):
         statuses = self.tasks.values()
         try:
-            return (len([t for t in statuses if t['status'] == 'ongoing']) == 0 and
-                    len([t for t in statuses if t['status']
-                         in ['pending', 'before_task_publish']]) > 0)
+            return (len([t for t in statuses if t['status'] == 'ongoing']) == 0
+                    and len([t for t in statuses if t['status']
+                             in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
             return False
 
@@ -654,7 +654,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
 
         for task_name, task in self.tasks.items():
             if (task_name not in uncancelable
-                and task['status'] not in ['canceled', 'error', 'done']):
+                    and task['status'] not in ['canceled', 'error', 'done']):
                 if 'task_id' in task:  # if not, it is still pending
                     revoke(task['task_id'], terminate=True)
 
@@ -674,17 +674,17 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         now = round(datetime.utcnow().timestamp())
         try:
             return len([task for task in self.tasks
-                        if getattr(task, 'timestamp', 0) +
-                        getattr(settings, 'TASK_RECOVER_DELAY', 60 * 60 * 24) > now]) != 0
+                        if getattr(task, 'timestamp', 0)
+                        + getattr(settings, 'TASK_RECOVER_DELAY', 60 * 60 * 24) > now]) != 0
         except KeyError:
             return True  # probably old school stored task
 
     def recover(self):
         i = inspect()
         # Important: this is really slow!
-        queued = ([task['id'] for queue in i.scheduled().values() for task in queue] +
-                  [task['id'] for queue in i.active().values() for task in queue] +
-                  [task['id'] for queue in i.reserved().values() for task in queue])
+        queued = ([task['id'] for queue in i.scheduled().values() for task in queue]
+                  + [task['id'] for queue in i.active().values() for task in queue]
+                  + [task['id'] for queue in i.reserved().values() for task in queue])
 
         data = self.tasks
 
@@ -949,10 +949,10 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
     def make_masks(self, only=None):
         im = Image.open(self.image).convert('L')
         lines = list(self.lines.all())  # needs to store the qs result
-        to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
+        to_calc = [line for line in lines if (only and line.pk in only) or (only is None)]
 
         for line in to_calc:
-            context = [l.baseline for l in lines if l.pk != line.pk]
+            context = [line.baseline for line in lines if line.pk != line.pk]
             if line.block:
                 poly = line.block.box
                 poly.append(line.block.box[0])  # close it
@@ -1159,7 +1159,7 @@ class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
 class LineManager(models.Manager):
     def prefetch_transcription(self, transcription):
         return (self.get_queryset().order_by('order')
-            .prefetch_related(
+                .prefetch_related(
             Prefetch('transcriptions',
                      to_attr='transcription',
                      queryset=LineTranscription.objects.filter(
@@ -1263,8 +1263,8 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
     content = models.CharField(blank=True, default="", max_length=2048)
 
     graphs_schema = {
-            "type": "array",
-            "items": [
+        "type": "array",
+        "items": [
                 {
                     "type": "object",
                     "properties": {
@@ -1293,8 +1293,8 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
                         }
                     }
                 }
-            ]
-        }
+        ]
+    }
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
@@ -1471,8 +1471,8 @@ class OcrModelRight(models.Model):
             models.CheckConstraint(
                 name='user_xor_group',
                 check=(
-                        models.Q(group_id__isnull=False, user_id__isnull=True)
-                        | models.Q(group_id__isnull=True, user_id__isnull=False)
+                    models.Q(group_id__isnull=False, user_id__isnull=True)
+                    | models.Q(group_id__isnull=True, user_id__isnull=False)
                 )
             )
         ]
