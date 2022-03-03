@@ -67,7 +67,7 @@ class PerPageMixin():
         return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
 
 
-class ProjectList(LoginRequiredMixin, ListView):
+class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Project
     paginate_by = 10
 
@@ -226,7 +226,7 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             context['share_form'] = DocumentShareForm(instance=self.object,
                                                       request=self.request)
             context['migrate_form'] = MigrateDocumentForm(instance=self.object,
-                                                      request=self.request)
+                                                          request=self.request)
 
         return context
 
@@ -447,7 +447,7 @@ class EditPart(LoginRequiredMixin, DetailView):
         return context
 
     def dispatch(self, *args, **kwargs):
-        if not 'part_pk' in self.kwargs:
+        if 'part_pk' not in self.kwargs:
             try:
                 first = self.get_queryset()[0]
                 return HttpResponseRedirect(reverse('document-part-edit',
@@ -459,7 +459,7 @@ class EditPart(LoginRequiredMixin, DetailView):
             return super().dispatch(*args, **kwargs)
 
 
-class DocumentModels(LoginRequiredMixin, ListView):
+class DocumentModels(LoginRequiredMixin, PerPageMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/document_models.html"
     http_method_names = ('get',)
@@ -479,7 +479,7 @@ class DocumentModels(LoginRequiredMixin, ListView):
         return context
 
 
-class UserModels(LoginRequiredMixin, ListView):
+class UserModels(LoginRequiredMixin, PerPageMixin, ListView):
     model = OcrModel
     template_name = "core/models_list/main.html"
     http_method_names = ('get',)
@@ -488,10 +488,10 @@ class UserModels(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         models = OcrModel.objects.exclude(file="").filter(
-            Q(public=True) |
-            Q(owner=user) |
-            Q(ocr_model_rights__user=user) |
-            Q(ocr_model_rights__group__user=user)
+            Q(public=True)
+            | Q(owner=user)
+            | Q(ocr_model_rights__user=user)
+            | Q(ocr_model_rights__group__user=user)
         ).distinct()
 
         script_filter = self.request.GET.get('script_filter', '')

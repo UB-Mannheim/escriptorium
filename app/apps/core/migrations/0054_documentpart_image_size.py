@@ -6,7 +6,7 @@ from django.db import migrations, models
 def batch_qs(qs, batch_size=10):
     total = qs.count()
     for start in range(0, total, batch_size):
-        yield qs[start:start+batch_size]
+        yield qs[start:start + batch_size]
 
 
 def set_image_file_size(apps, schema_editor):

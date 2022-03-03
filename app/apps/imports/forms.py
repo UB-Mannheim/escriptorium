@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 from bootstrap.forms import BootstrapFormMixin
 
 from core.models import Transcription, DocumentPart
+from imports.export import ENABLED_EXPORTERS
 from imports.models import DocumentImport
 from imports.parsers import make_parser, ParseError
 from imports.tasks import document_import, document_export
@@ -99,7 +100,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
-            and not cleaned_data.get('iiif_uri')):
+                and not cleaned_data.get('iiif_uri')):
             raise forms.ValidationError(_("Choose one type of import."))
 
         return cleaned_data
@@ -139,14 +140,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
 
 class ExportForm(BootstrapFormMixin, forms.Form):
-    ALTO_FORMAT = "alto"
-    PAGEXML_FORMAT = "pagexml"
-    TEXT_FORMAT = "text"
-
     FORMAT_CHOICES = (
-        (ALTO_FORMAT, 'ALTO'),
-        (TEXT_FORMAT, 'Text'),
-        (PAGEXML_FORMAT, 'PAGE')
+        (export_format, export["label"])
+        for export_format, export in ENABLED_EXPORTERS.items()
     )
     parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())

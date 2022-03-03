@@ -29,6 +29,7 @@ def backward(apps, se):
     BlockType.objects.filter(public=True).delete()
     LineType.objects.filter(public=True).delete()
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ('core', '0038_auto_20200616_0929'),
