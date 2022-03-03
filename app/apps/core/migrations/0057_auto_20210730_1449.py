@@ -13,7 +13,7 @@ schema = {'items': [{'properties': {'bbox': {'items': [{'contains': {'type': 'nu
 def batch_qs(qs, batch_size=1000):
     total = qs.count()
     for start in range(0, total, batch_size):
-        for e in qs[start:start+batch_size]:
+        for e in qs[start:start + batch_size]:
             yield e
 
 

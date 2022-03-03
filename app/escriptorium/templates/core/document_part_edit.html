@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block scripts %}
-  <script type="text/javascript">
+  <script>
     {% if user.onboarding %}
     const ONBOARDING_PAGE  = "onboarding_edit";
     {% endif %}
@@ -25,7 +25,7 @@
 
   {{ block.super }}
 
-  <script type="text/javascript">
+  <script>
     $(document).ready(function() {
        // join the ws room
        joinDocumentRoom('{{document.pk}}');
@@ -33,5 +33,5 @@
     });
   </script>
 
-  <script src="{% static 'editor.js' %}" type="text/javascript"></script>
+  <script src="{% static 'editor.js' %}"></script>
 {% endblock %}

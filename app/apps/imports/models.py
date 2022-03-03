@@ -2,7 +2,6 @@ import os.path
 
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.utils.translation import gettext as _
 
 from escriptorium.celery import app
 

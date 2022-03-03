@@ -8,7 +8,6 @@ import uuid
 import zipfile
 import pyvips
 from lxml import etree
-from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -79,7 +78,7 @@ class ParserDocument:
 class PdfParser(ParserDocument):
     def __init__(self, document, file_handler, report):
         super().__init__(document, file_handler, report)
-        pyvips.voperation.cache_set_max(10) # 0 = no parallelisation at all; default is 1000
+        pyvips.voperation.cache_set_max(10)  # 0 = no parallelisation at all; default is 1000
 
     def validate(self):
         try:
@@ -112,7 +111,7 @@ class PdfParser(ParserDocument):
                                                    dpi=300,
                                                    access='sequential')
                 part = DocumentPart(document=self.document)
-                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb+1)
+                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb + 1)
                 part.image_file_size = 0
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
@@ -124,7 +123,7 @@ class PdfParser(ParserDocument):
                 page_nb = page_nb + 1
         except pyvips.error.Error as e:
             msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
-                filename=self.file.name, page=page_nb+1, error=e.args[0]
+                filename=self.file.name, page=page_nb + 1, error=e.args[0]
             )
             logger.warning(msg)
             if self.report:
@@ -425,7 +424,7 @@ class AltoParser(XMLParser):
             filename = self.root.find(
                 "Description/sourceImageInformation/fileName", self.root.nsmap
             ).text
-        except (IndexError, AttributeError) as e:
+        except (IndexError, AttributeError):
             raise ParseError("""
 The ALTO file should contain a Description/sourceImageInformation/fileName tag for matching.
             """)
@@ -442,7 +441,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         ]
 
     def get_lines(self, blockTag):
-        return [(l.get("ID"), l) for l in blockTag.findall("TextLine", self.root.nsmap)]
+        return [(line.get("ID"), line) for line in blockTag.findall("TextLine", self.root.nsmap)]
 
     def update_block(self, block, blockTag):
         polygon = blockTag.find("Shape/Polygon", self.root.nsmap)
@@ -461,7 +460,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
 
         try:
             tag = blockTag.get("TAGREFS").split(" ")[0]
-            type_ = self.root.find("./Tags/*[@ID='"+tag+"']", self.root.nsmap).get("LABEL")
+            type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             # Index to catch empty tagrefs, Attribute to catch no tagrefs or invalid
             type_ = None
@@ -498,7 +497,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             strings = lineTag.findall("String", self.root.nsmap)
             last_segment = strings[-1]
             line.baseline = [(int(float(e.get('HPOS'))), int(float(e.get('VPOS')))) for e in strings]
-            line.baseline.append((int(float(last_segment.get('HPOS')))+int(float(last_segment.get('WIDTH'))),
+            line.baseline.append((int(float(last_segment.get('HPOS'))) + int(float(last_segment.get('WIDTH'))),
                                   int(float(last_segment.get('VPOS')))))
 
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
@@ -521,7 +520,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
 
         try:
             tag = lineTag.get("TAGREFS").split(" ")[0]
-            type_ = self.root.find("./Tags/*[@ID='"+tag+"']", self.root.nsmap).get("LABEL")
+            type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             type_ = None
 
@@ -559,7 +558,7 @@ class PagexmlParser(XMLParser):
     def get_filename(self, pageTag):
         try:
             filename = pageTag.get("imageFilename")
-        except (IndexError, AttributeError) as e:
+        except (IndexError, AttributeError):
             raise ParseError("""
 The PAGE file should contain an attribute imageFilename in Page tag for matching.
             """)
@@ -575,7 +574,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
         ]
 
     def get_lines(self, blockTag):
-        return [(l.get("id"), l) for l in blockTag.findall("TextLine", self.root.nsmap)]
+        return [(line.get("id"), line) for line in blockTag.findall("TextLine", self.root.nsmap)]
 
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
@@ -586,7 +585,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
         if not type_:
             custom = blockTag.get("custom")
             if custom:
-                match = re.search('structure\s?{.*?type:\s?(\w+);', custom)
+                match = re.search(r'structure\s?{.*?type:\s?(\w+);', custom)
                 if match:
                     type_ = match.groups()[0]
 
@@ -617,7 +616,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
         if not type_:
             custom = lineTag.get("custom")
             if custom:
-                match = re.search('structure\s?{.*?type:\s?(\w+);', custom)
+                match = re.search(r'structure\s?{.*?type:\s?(\w+);', custom)
                 if match:
                     type_ = match.groups()[0]
 
@@ -684,7 +683,7 @@ class IIIFManifestParser(ParserDocument):
         return len(self.canvases)
 
     @staticmethod
-    def get_image(url: str, retry_limit: int=4) -> requests.Response:
+    def get_image(url: str, retry_limit: int = 4) -> requests.Response:
         """Retrieve a iiif image from a iiif server
 
         This method will retry on certain 5XX errors that are likely to
@@ -720,7 +719,7 @@ class IIIFManifestParser(ParserDocument):
 
         # Max retries has been exceeded
         raise DownloadError(f"After {current_retry + 1} tries, the server still errors out loading"
-            f": {url}")
+                            f": {url}")
 
     def parse(self, start_at=0, override=False, user=None):
         try:
@@ -747,8 +746,6 @@ class IIIFManifestParser(ParserDocument):
 
             try:
                 resource = canvas["images"][0]["resource"]
-                url = resource["@id"]
-                base_url = urlparse(url).hostname
                 uri_template = "{image}/{region}/{size}/{rotation}/{quality}.{format}"
                 url = uri_template.format(
                     image=resource["service"]["@id"],
@@ -798,9 +795,9 @@ class TranskribusPageXmlParser(PagexmlParser):
 
     def clean_coords(self, coordTag):
         return [
-                list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
-                for pt in coordTag.get("points").split(" ")
-            ]
+            list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
+            for pt in coordTag.get("points").split(" ")
+        ]
 
 
 def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True):

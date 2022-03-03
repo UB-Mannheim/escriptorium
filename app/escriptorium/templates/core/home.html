@@ -10,48 +10,82 @@
     {% include "additional_heading.html" %}
     {% else %}
     <h1 class="jumbotron-heading">eScriptorium</h1>
-    <p class="lead text-muted">{% trans "A project providing digital recognition of handwritten documents using machine learning techniques." %}</p>
+    <p class="lead text-muted">{% trans "eScriptorium: A Digital Text Production Pipeline for Print and Handwritten Texts using machine learning techniques." %}</p>
     {% endif %}
+
 </div>
 
 <div class="container my-5">
     <div class="row">
-        <div class="col-lg-4 text-center">
-            <img class="rounded-circle" src="{% static "images/t1.png" %}" alt="" width="140" height="140">
-            <h2>{% trans "Data Interchange" %}</h2>
-            <p class="text-muted">{% trans "Import or export transcriptions with ALTO or PAGE XML, import images as zip or IIIF. Access data from any application through a full REST API." %}</p>
+        <div class="col-lg-3 text-center">
+            <img class="rounded-circle" src="{% static "images/t5.png" %}" alt="Generic placeholder image" width="140" height="140">
+            <h4 class="mb-3 mt-1">{% trans "Automatic Transcription" %}</h4>
+            <p class="text-muted">{% trans "Apply OCR/HTR to images of printed and handwritten documents using shared open models." %}</p>
         </div>
-        <div class="col-lg-4 text-center">
-            <img class="rounded-circle" src="{% static "images/t2.png" %}" alt="Generic placeholder image" width="140" height="140">
-            <h2>{% trans "Manual Edition" %}</h2>
+
+        <div class="col-lg-3 text-center">
+            <img class="rounded-circle" src="{% static "images/t4.png" %}" alt="Generic placeholder image" width="140" height="140">
+            <h3 class="mb-3">{% trans "Manual transcription" %}</h3>
             <p class="text-muted">{% trans "Make use of an ergonomic user interface leveraging modern browser technology to edit segmentations and transcriptions." %}</p>
         </div>
-        <div class="col-lg-4 text-center">
-            <img class="rounded-circle" src="{% static "images/t3.png" %}" alt="Generic placeholder image" width="140" height="140">
-            <h2>{% trans "Automatic Transcription" %}</h2>
-            <p class="text-muted">{% trans "Train and apply new neural networks to vastly speed up the transcription process of large corpora." %}</p>
+
+        <div class="col-lg-3 text-center">
+            <img class="rounded-circle" src="{% static "images/t2.png" %}" alt="Generic placeholder image" width="140" height="140">
+            <h3 class="mb-3">{% trans "Train Models" %}</h3>
+            <p class="text-muted">{% trans "Create new models or finetune existing ones to improve automatic recognition." %}</p>
+        </div>
+
+        <div class="col-lg-3 text-center">
+            <img class="rounded-circle" src="{% static "images/t6.png" %}" alt="" width="140" height="140">
+            <h3 class="mb-3">{% trans "Import/Export" %}</h3>
+            <p class="text-muted">{% trans "Import and export models and texts transcriptions in a variety of formats. Access data through a full REST API." %}</p>
         </div>
     </div>
 
     <hr/>
 </div>
 
-
 <div class="row">
     <div class="my-5 container-fluid text-center">
-        <a href="https://www.ephe.psl.eu" target="_blank"><img src="{% static "images/ephe.png" "%}" alt="EPHE logo" height="100"></a>
-        <a href="https://www.resilience-ri.eu/" class="pl-4" target="_blank"><img src="{% static "images/resilience.png" "%}" alt="Resilience logo" height="60"></a>
-        <a href="https://www.dim-humanites-numeriques.fr/" class="pl-4" target="_blank"><img src="{% static "images/logo_DIMSTCN_regioncouleur_RVB.png" "%}" alt="DIM-STCN logo" height="100"></a>
         <a href="https://scripta.psl.eu/en/" class="pl-4" target="_blank"><img src="{% static "images/pslscripta.png" "%}" alt="Scripta PSL logo" height="50"></a>
-        <a href="https://ec.europa.eu/programmes/horizon2020/" class="pl-4" target="_blank"><img src="{% static "images/h2020.jpg" "%}" alt="Horizon 2020 logo" height="80"></a>
-        <a href="https://inria.fr/fr" class="pl-4" target="_blank"><img src="{% static "images/inria.png" "%}" alt="INRIA logo" height="60"></a>
-        <a href="https://www.openiti.org/" class="pl-4" target="_blank"><img src="{% static "images/openiti.png" "%}" alt="DIM Region ile de france logo" height="80"></a>
+        <a href="https://biblissima.fr/" target="_blank"><img src="{% static "images/biblissima-logo.png" "%}" alt="Biblissima+ logo" height="100"></a>
+        <a href="https://www.resilience-ri.eu/" class="pl-4" target="_blank"><img src="{% static "images/resilience.png" "%}" alt="Resilience logo" height="60"></a>
+
+        <a href="https://lectaurep.hypotheses.org/" class="pl-4 pb-2" target="_blank"><img src="{% static "images/lectaurep.png" "%}" alt="Lectaurep logo" height="100"></a>
+
     </div>
 
     {% if CUSTOM_HOME %}
     {% include "additional_icons.html" %}
     {% endif %}
 </div>
+
+<div class="row">
+
+    <div class="my-5 container-fluid text-center">
+        <a href="https://psl.eu" class="pl-4" target="_blank"><img src="{% static "images/psl.png" "%}" alt="PSL logo" height="60"></a>
+        <a href="https://ec.europa.eu/info/index_en" class="pl-4" target="_blank"><img src="{% static "images/eu-logo.png" "%}" alt="European commisssion logo" height="80"></a>
+        <a href="https://www.gouvernement.fr/le-programme-d-investissements-d-avenir" class="pl-4" target="_blank"><img src="{% static "images/pia.png" "%}" alt="PIA logo" height="80"></a>
+        <a href="https://mellon.org/" class="pl-4" target="_blank"><img src="{% static "images/mellon.svg" "%}" alt="MELLON logo" height="80"></a>
+        <a href="https://www.culture.gouv.fr/" class="pl-4" target="_blank"><img src="{% static "images/LogoMCHP.PNG" "%}" alt="MCC logo" height="120"></a>
+        <a href="https://www.dim-humanites-numeriques.fr/" class="pl-4" target="_blank"><img src="{% static "images/logo_DIMSTCN_regioncouleur_RVB.png" "%}" alt="DIM-STCN logo" height="100"></a>
+
+        <a href="https://www.ephe.psl.eu" class="pl-4" target="_blank"><img src="{% static "images/ephe.png" "%}" alt="EPHE logo" height="100"></a>
+
+        <!-- a href="https://ec.europa.eu/programmes/horizon2020/" class="pl-4" target="_blank"><img src="{% static "images/h2020.jpg" "%}" alt="Horizon 2020 logo" height="80"></a -->
+    </div>
+</div>
+
+<div class="row">
+    <div class="my-5 container-fluid text-center">
+        <a href="https://www.openiti.org/" class="pl-4" target="_blank"><img src="{% static "images/openiti.png" "%}" alt="DIM Region ile de france logo" height="80"></a>
+        <a href="https://teklia.com/" class="pl-4" target="_blank"><img src="{% static "images/teklia.png" "%}" alt="Teklia logo" height="40"></a>
+        <a href="https://inria.fr/fr" class="pl-4" target="_blank"><img src="{% static "images/inria.png" "%}" alt="Inria logo" height="60"></a>
+        <a href="http://www.archeo.ens.fr" class="pl-4" target="_blank"><img src="{% static "images/aoroc.jpg" "%}" alt="AOROC logo" height="60"></a>
+        <a href="http://almanach.inria.fr/index-en.html" class="pl-4" target="_blank"><img src="{% static "images/almanach_txt.png" "%}" alt="Almanach logo" height="100"></a>
+    </div>
+</div>
+
 
 <footer class="bg-light mt-5 pt-1">
     <div class="container">
@@ -61,12 +95,22 @@
                 <ul class="list-unstyled">
                     <li><a href="https://lectaurep.hypotheses.org/documentation/escriptorium-tutorial-en" target="_blank">{% trans "Tutorial" %}</a></li>
                     <li><a href="https://gitlab.com/scripta/escriptorium" target="_blank">{% trans "eScriptorium open source code" %}</a> Version {{ VERSION_DATE }}</li>
-                    <li><a href="https://escripta.hypotheses.org/" target="_blank">{% trans "Scripta Blog" %}</a></li>
+                    <li><a href="https://escripta.hypotheses.org/" target="_blank">{% trans "eScriptorium Blog" %}</a></li>
                     <li><a href="http://kraken.re/" target="_blank">{{ KRAKEN_VERSION|capfirst }}</a></li>
                     <li><a href="https://gitlab.inria.fr/scripta/escriptorium/-/wikis/home" target="_blank">Wiki</a></li>
                 </ul>
             </div>
 
+            <div class="col-6">
+                <h5>{% trans "Legal mentions" %}</h5>
+            <small>
+                <ul class="list-unstyled text-muted text-sm">
+                    <li>Ce travail a bénéficié d’une aide de l’État gérée par l’Agence Nationale de la Recherche au titre du Programme d’Investissements d’Avenir portant la référence ANR-21-ESRE-0005.</li>
+                    <li class="mt-1">This project was partially funded through the RESILIENCE project, funded from the European Union’s Horizon 2020 Framework Programme for Research and Innovation.</li>
+                    <li class="mt-1">Partially funded by a grant from The Andrew W. Mellon Foundation.</li>
+                </ul>
+            </small>
+            </div>
             {% if CUSTOM_HOME %}
             {% include "additional_footer.html" %}
             {% endif %}

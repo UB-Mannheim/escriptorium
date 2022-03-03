@@ -163,7 +163,7 @@ class DocumentViewSet(ModelViewSet):
         # Filter results by TaskReport.workflow_state
         state_filter = request.GET.get('task_state', '').lower()
         if state_filter:
-            mapped_labels = {label.lower():state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+            mapped_labels = {label.lower(): state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
             if state_filter not in mapped_labels:
                 return Response(
                     {'error': 'Invalid task_state, it should match a valid workflow_state.'},
@@ -448,7 +448,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         if (x1 is not None
             and y1 is not None
             and x2 is not None
-            and y2 is not None):
+                and y2 is not None):
             document_part.crop(x1, y1, x2, y2)
             return Response({'status': 'done'}, status=200)
         else:
@@ -533,7 +533,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
         data = request.data.get('lines')
-        qs = Line.objects.filter(pk__in=[l['pk'] for l in data])
+        qs = Line.objects.filter(pk__in=[line['pk'] for line in data])
         serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
             resp = serializer.save()

@@ -10,7 +10,7 @@
 
 <div id="alerts-container"></div>
 {% if messages %}
-<script type="text/javascript">
+<script>
 {% for message in messages %}Alert.add(null, "{{ message }}", "{{ message.tags|level_to_color }}");{% endfor %}
 </script>
 {% endif %}

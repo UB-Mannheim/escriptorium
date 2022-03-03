@@ -15,12 +15,12 @@ def initial_data(apps, schema_editor):
     # fetching kraken default models
     OcrModel = apps.get_model('core', 'OcrModel')
     try:
-        error = subprocess.check_call(["kraken", "get", "default"])
-    except:
+        subprocess.check_call(["kraken", "get", "default"])
+    except Exception:
         pass
     else:
         # TODO: ask for ben@kraken to give a higher level function that returns the name of the model
-        default = OcrModel.objects.create(name='default', file='en-default.pronn')
+        OcrModel.objects.create(name='default', file='en-default.pronn')
 
 
 def backward(apps, schema_editor):
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('core', '0001_initial'),
     ]
-    
+
     operations = [
         migrations.RunPython(initial_data, backward),
     ]

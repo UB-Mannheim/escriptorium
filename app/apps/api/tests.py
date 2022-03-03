@@ -5,7 +5,6 @@ So no need to test the content unless there is some magic in the serializer.
 """
 
 import unittest
-import os
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -14,7 +13,6 @@ from unittest.mock import patch
 
 from core.models import Block, Line, Transcription, LineTranscription, OcrModel, Metadata, DocumentMetadata
 from core.tests.factory import CoreFactoryTestCase
-from reporting.models import TaskReport
 
 
 class UserViewSetTestCase(CoreFactoryTestCase):
@@ -27,8 +25,8 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(user)
         uri = reverse('api:user-onboarding')
         resp = self.client.put(uri, {
-                'onboarding': 'False',
-                }, content_type='application/json')
+            'onboarding': 'False',
+        }, content_type='application/json')
 
         user.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
@@ -95,8 +93,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
-                'parts': [self.part.pk],
-                'model': model.pk
+            'parts': [self.part.pk],
+            'model': model.pk
         })
 
         self.assertEqual(resp.status_code, 400)
@@ -109,8 +107,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-segtrain', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, data={
-                'parts': [self.part.pk, self.part2.pk],
-                'model_name': 'new model'
+            'parts': [self.part.pk, self.part2.pk],
+            'model_name': 'new model'
         })
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertEqual(OcrModel.objects.count(), 1)
@@ -469,7 +467,6 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(model.training, False)
 
 
-
 class PartViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
@@ -598,7 +595,7 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
         self.user = self.part.document.owner
         for i in range(2):
             b = Block.objects.create(
-                box=[10+50*i, 10, 50+50*i, 50],
+                box=[10 + 50 * i, 10, 50 + 50 * i, 50],
                 document_part=self.part)
         self.block = b
 
@@ -656,16 +653,16 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.block = Block.objects.create(
-                box=[10, 10, 200, 200],
-                document_part=self.part)
+            box=[10, 10, 200, 200],
+            document_part=self.part)
         self.line = Line.objects.create(
-                mask=[60, 10, 100, 50],
-                document_part=self.part,
-                block=self.block)
+            mask=[60, 10, 100, 50],
+            document_part=self.part,
+            block=self.block)
         self.line2 = Line.objects.create(
-                mask=[90, 10, 70, 50],
-                document_part=self.part,
-                block=self.block)
+            mask=[90, 10, 70, 50],
+            document_part=self.part,
+            block=self.block)
         self.orphan = Line.objects.create(
             mask=[0, 0, 10, 10],
             document_part=self.part,
@@ -854,3 +851,19 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
             self.assertEqual(lines[0].content, "")
             self.assertEqual(lines[1].content, "")
             self.assertEqual(resp.status_code, 204)
+
+
+class OcrModelViewSetTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = self.factory.make_user()
+
+    def test_create(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:ocrmodel-list')
+        model = SimpleUploadedFile("test_model.mlmodel",
+                                   b"file_content")
+        resp = self.client.post(uri, {'name': 'test_model',
+                                      'job': 'Segment',
+                                      'file': model})
+        self.assertEqual(resp.status_code, 201)

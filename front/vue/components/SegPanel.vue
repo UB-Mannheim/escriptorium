@@ -174,7 +174,7 @@ export default Vue.extend({
   data() {
     return {
       segmenter: { loaded: false },
-      imgloaded: false,
+      imageLoaded: false,
       colorMode: "color", //  color - binary - grayscale
       undoManager: new UndoManager(),
     };
@@ -309,6 +309,13 @@ export default Vue.extend({
         this.redo();
       }.bind(this)
     );
+    this.$refs.img.addEventListener(
+      "load",
+      function (ev) {
+        this.onImageLoaded();
+      }.bind(this)
+    );
+
     document.addEventListener(
       "keyup",
       function (ev) {
@@ -324,8 +331,8 @@ export default Vue.extend({
       return this.$store.state.parts.loaded && this.$store.state.parts.bw_image !== null;
     },
     loaded() {
-      // for this panel we need both the image and the segmenter
-      return this.segmenter && this.segmenter.loaded && this.$img.complete;
+            // for this panel we need both the image and the segmenter
+            return this.segmenter && this.segmenter.loaded && this.imageLoaded;
     },
     imageSrc() {
       // empty the src to make sure the complete event gets fired
@@ -363,7 +370,7 @@ export default Vue.extend({
       this.$parent.prefetchImage(
         this.imageSrc,
         function (src) {
-          this.$img.src = src;
+          this.setImageSource(src);
           this.refreshSegmenter();
         }.bind(this)
       );
@@ -371,7 +378,7 @@ export default Vue.extend({
     fullsizeimage: function (n, o) {
       // it was prefetched
       if (n && n != o) {
-        this.$img.src = this.imageSrc;
+        this.setImageSource(this.imageSrc);
         this.segmenter.scale = 1;
         this.segmenter.refresh();
       }
@@ -398,14 +405,22 @@ export default Vue.extend({
       this.$parent.prefetchImage(
         this.imageSrc,
         function (src) {
-          this.$img.src = src;
+          this.setImageSource(src);
           this.refreshSegmenter();
         }.bind(this)
       );
     },
+    setImageSource(src) {
+      this.$img.src = src;
+      this.imageLoaded = false;
+    },
     refreshSegmenter() {
       Vue.nextTick(
         function () {
+          if (this.$img.naturalWidth === 0) {
+            console.warn('refreshSegmenter called with no image');
+            return;
+          }
           this.segmenter.scale =
             this.$img.naturalWidth / this.$store.state.parts.image.size[0];
           if (this.segmenter.loaded) {
@@ -617,6 +632,10 @@ export default Vue.extend({
       await this.$store.dispatch('lines/recalculateMasks');
     },
 
+    onImageLoaded() {
+      this.imageLoaded = true;
+      this.refreshSegmenter();
+    },
     /* History */
     undo() {
       this.undoManager.undo();
@@ -634,6 +653,7 @@ export default Vue.extend({
         this.$refs.redo.disabled = false;
       else this.$refs.redo.disabled = true;
     },
+
   },
 });
 </script>

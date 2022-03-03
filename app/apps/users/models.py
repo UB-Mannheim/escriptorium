@@ -64,15 +64,15 @@ class User(AbstractUser):
         return models_size + images_size
 
     def disk_storage_limit(self):
-        if self.quota_disk_storage != None:
-            return self.quota_disk_storage*MEGABYTES_TO_BYTES
-        if settings.QUOTA_DISK_STORAGE != None:
-            return settings.QUOTA_DISK_STORAGE*MEGABYTES_TO_BYTES
+        if self.quota_disk_storage is not None:
+            return self.quota_disk_storage * MEGABYTES_TO_BYTES
+        if settings.QUOTA_DISK_STORAGE is not None:
+            return settings.QUOTA_DISK_STORAGE * MEGABYTES_TO_BYTES
         return None
 
     def has_free_disk_storage(self):
         quota = self.disk_storage_limit()
-        if quota != None:
+        if quota is not None:
             return quota > self.calc_disk_usage()
         return True   # Unlimited disk storage
 
@@ -80,15 +80,15 @@ class User(AbstractUser):
         return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('cpu_cost'))['cpu_cost__sum'] or 0
 
     def cpu_minutes_limit(self):
-        if self.quota_cpu != None:
+        if self.quota_cpu is not None:
             return self.quota_cpu
-        if settings.QUOTA_CPU_MINUTES != None:
+        if settings.QUOTA_CPU_MINUTES is not None:
             return settings.QUOTA_CPU_MINUTES
         return None
 
     def has_free_cpu_minutes(self):
         quota = self.cpu_minutes_limit()
-        if quota != None:
+        if quota is not None:
             return quota > self.calc_cpu_usage()
         return True   # Unlimited CPU usage
 
@@ -96,15 +96,15 @@ class User(AbstractUser):
         return self.taskreport_set.filter(started_at__gte=date.today() - timedelta(days=7)).aggregate(Sum('gpu_cost'))['gpu_cost__sum'] or 0
 
     def gpu_minutes_limit(self):
-        if self.quota_gpu != None:
+        if self.quota_gpu is not None:
             return self.quota_gpu
-        if settings.QUOTA_GPU_MINUTES != None:
+        if settings.QUOTA_GPU_MINUTES is not None:
             return settings.QUOTA_GPU_MINUTES
         return None
 
     def has_free_gpu_minutes(self):
         quota = self.gpu_minutes_limit()
-        if quota != None:
+        if quota is not None:
             return quota > self.calc_gpu_usage()
         return True   # Unlimited GPU usage
 

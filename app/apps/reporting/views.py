@@ -21,21 +21,21 @@ class ReportList(LoginRequiredMixin, ListView):
         context['cpu_cost_last_week'] = cpu_usage
         gpu_usage = self.request.user.calc_gpu_usage()
         context['gpu_cost_last_week'] = gpu_usage
-        
+
         disk_storage_limit = self.request.user.disk_storage_limit()
-        context['enforce_disk_storage'] = not settings.DISABLE_QUOTAS and disk_storage_limit != None
+        context['enforce_disk_storage'] = not settings.DISABLE_QUOTAS and disk_storage_limit is not None
         if context['enforce_disk_storage']:
-            context['disk_storage_used_percentage'] = min(round((self.request.user.calc_disk_usage()*100)/disk_storage_limit, 2) if disk_storage_limit else 100, 100)
-        
+            context['disk_storage_used_percentage'] = min(round((self.request.user.calc_disk_usage() * 100) / disk_storage_limit, 2) if disk_storage_limit else 100, 100)
+
         cpu_minutes_limit = self.request.user.cpu_minutes_limit()
-        context['enforce_cpu'] = not settings.DISABLE_QUOTAS and cpu_minutes_limit != None
+        context['enforce_cpu'] = not settings.DISABLE_QUOTAS and cpu_minutes_limit is not None
         if context['enforce_cpu']:
-            context['cpu_minutes_used_percentage'] = min(round((cpu_usage*100)/cpu_minutes_limit, 2) if cpu_minutes_limit else 100, 100)
-        
+            context['cpu_minutes_used_percentage'] = min(round((cpu_usage * 100) / cpu_minutes_limit, 2) if cpu_minutes_limit else 100, 100)
+
         gpu_minutes_limit = self.request.user.gpu_minutes_limit()
-        context['enforce_gpu'] = not settings.DISABLE_QUOTAS and gpu_minutes_limit != None
+        context['enforce_gpu'] = not settings.DISABLE_QUOTAS and gpu_minutes_limit is not None
         if context['enforce_gpu']:
-            context['gpu_minutes_used_percentage'] = min(round((gpu_usage*100)/gpu_minutes_limit, 2) if gpu_minutes_limit else 100, 100)
+            context['gpu_minutes_used_percentage'] = min(round((gpu_usage * 100) / gpu_minutes_limit, 2) if gpu_minutes_limit else 100, 100)
 
         return context
 
@@ -93,7 +93,7 @@ class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
             page = int(self.request.GET.get('page', '1'))
         except ValueError:
             page = 1
-        offset = (page-1) * self.paginate_by
+        offset = (page - 1) * self.paginate_by
 
         today = date.today()
         filter_last_week = Q(taskreport__started_at__gte=today - timedelta(days=7))
@@ -116,7 +116,7 @@ class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
                 last_week_runtime=Sum(runtime, filter=filter_last_week),
                 last_day_tasks=Count('taskreport', filter=filter_last_day),
                 last_day_runtime=Sum(runtime, filter=filter_last_day)
-            ).order_by(F('total_runtime').desc(nulls_last=True))[offset:offset+self.paginate_by]
+            ).order_by(F('total_runtime').desc(nulls_last=True))[offset:offset + self.paginate_by]
         )
         disk_usages_left = dict(qs.values('id').annotate(disk_usage=Sum('ocrmodel__file_size')).values_list('id', 'disk_usage'))
         disk_usages_right = dict(qs.values('id').annotate(disk_usage=Sum('document__parts__image_file_size')).values_list('id', 'disk_usage'))

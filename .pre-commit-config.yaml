@@ -1,0 +1,8 @@
+repos:
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes

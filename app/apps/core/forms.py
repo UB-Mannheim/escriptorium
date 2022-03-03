@@ -48,7 +48,7 @@ class DocumentForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
         self.fields['project'].required = False
-    
+
     def clean_project(self):
         return self.initial['project']
 
@@ -307,10 +307,10 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
             self.initial['text_direction'] = 'horizontal-rl'
 
         self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True) |
-            Q(owner=self.user) |
-            Q(ocr_model_rights__user=self.user) |
-            Q(ocr_model_rights__group__user=self.user)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
     def process(self):
@@ -344,10 +344,10 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         super().__init__(*args, **kwargs)
 
         self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True) |
-            Q(owner=self.user) |
-            Q(ocr_model_rights__user=self.user) |
-            Q(ocr_model_rights__group__user=self.user)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
     def process(self):
@@ -526,20 +526,21 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
             self.add_error('group', 'You must either choose an user OR a group')
         return cleaned_data
 
+
 class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
     keep_tags = forms.BooleanField(required=False, label="Migrate with associated tags")
 
     class Meta:
         model = Document
         fields = ['project', 'keep_tags']
-    
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         self.project = kwargs.get('instance').project
         super().__init__(*args, **kwargs)
         self.fields['project'].queryset = Project.objects.for_user_write(self.request.user).exclude(pk=self.project.pk)
         self.fields['project'].empty_label = None
-    
+
     def save(self, commit=True):
         doc = super().save(commit=commit)
         project = self.cleaned_data['project']
@@ -548,5 +549,5 @@ class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
                 project.document_tags.get_or_create(name=tag.name)
         else:
             doc.tags.clear()
-        
+
         return doc
