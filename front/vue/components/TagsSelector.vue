@@ -14,7 +14,7 @@
   props: [
      'tags',
      'filters',
-     'documents',
+     'tagsperdocuments',
   ],
   data () {
     return {
@@ -22,13 +22,22 @@
     }
   },
   created(){
+    this.$store.commit('documentslist/setTagsListPerDocument', {docTags: this.splitNested(this.tagsperdocuments.split('¤')), update: true});
     this.$store.commit('documentslist/setAllProjectTags', this.tags);
-    this.$store.commit('documentslist/setDocumentsId', this.documents);
-    this.$store.dispatch('documentslist/buildTagsList');
+    
   },
   methods: {
     isChecked(tag){ 
         return this.filters.includes(tag)
+    },
+    splitNested(data){ 
+        const toNumbers = arr => arr.map(Number);
+        var elements = [];
+        for (let i = 0; i < data.length; i++){
+            let items = data[i].split(';');
+            elements.push({"pk": parseInt(items[0]), "tags": ((items[1]) ? toNumbers(items[1].split(',')) : [])});
+        }
+        return elements;
     }
   },
   filters: {

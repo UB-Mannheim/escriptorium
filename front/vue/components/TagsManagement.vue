@@ -12,7 +12,7 @@
                     <input type="hidden" class="form-control" id="project-id" name="project" v-model="projectIdComputed">
                     <div class="modal-body row mb-0 pb-0">
                         <div class="form-group col-sm-4 d-inline-flex mx-auto">
-                            <input type="text" class="form-control m-1" @focusout="updateSingleTag()" ref="tagName" placeholder="Add a new tag">
+                            <input type="text" class="form-control m-1" @focusout="updateSingleTag()" ref="tagName" placeholder="Type to add a tag">
                             <input type="color" class="form-control m-1 w-25" v-bind:value="tagColor" @focusout="updateSingleTag()" ref="tagColor">
                         </div>
                     </div>

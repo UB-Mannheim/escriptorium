@@ -17,6 +17,9 @@ export default {
             tags: []
         }
     },
+    mounted(){
+        this.refreshTagsList();
+    },
     computed: {
         tagList() {
             return this.$store.state.documentslist.TagsListPerDocument;
@@ -30,13 +33,28 @@ export default {
             return value.slice(0, num) + (num < value.length ? '...' : '')
         }
     },
+    methods: {
+        refreshTagsList() {
+            const index = this.tagList.findIndex(doc => doc.pk == this.documentId);
+            if(index > -1){
+                let newTags = this.allTagsList.filter(obj => this.tagList[index].tags.includes(obj.pk));
+                this.tags = newTags;
+            } 
+        }
+    },
     watch: {
         "$store.state.documentslist.TagsListPerDocument": {
             handler: function(nv) {
-                let newTags = this.allTagsList.filter(obj => this.tagList[this.documentId].includes(obj.pk));
-                this.tags = newTags;
+                this.refreshTagsList();
             },
-            immediate: false
+            immediate: false,
+            deep: true
+        },
+        allTagsList: {
+            handler: function(newValue) {
+                this.refreshTagsList();
+            },
+            deep: true
         }
     }
 }

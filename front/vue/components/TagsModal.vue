@@ -22,7 +22,7 @@
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control w-50" name="name" placeholder="Add a new tag">
+                            <input type="text" class="form-control w-50" ref="nameNewTag" name="name" placeholder="Type to add a tag">
                             <input type="color" class="form-control" name="color" style="width: 10%;" v-model="rColor">
                         </div>
 
@@ -68,6 +68,7 @@ export default {
     },
     mounted(){
         $(this.$refs.tagsModal).on("hide.bs.modal", this.hideModal);
+        $(this.$refs.tagsModal).on("show.bs.modal", this.populateItems);
         this.$store.commit('documentslist/settagColor');
     },
     updated: function(){
@@ -100,6 +101,10 @@ export default {
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);
+        },
+        populateItems(){
+            this.$store.commit('documentslist/setProjectID', this.projectId);
+            $(this.$refs.nameNewTag).val("");
         }
     },
     watch: {
