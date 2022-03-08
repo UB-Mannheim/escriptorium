@@ -1,5 +1,6 @@
-from django.db import migrations
 import os
+
+from django.db import migrations
 
 
 def change_mydomain_name(apps, schema_editor):

@@ -1,20 +1,18 @@
 import logging
 import os.path
 
+from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from celery import shared_task
-
-from users.consumers import send_event
 from escriptorium.utils import send_email
 from imports.export import ENABLED_EXPORTERS
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
-from reporting.tasks import create_task_reporting # noqa F401
-
+from reporting.tasks import create_task_reporting  # noqa F401
+from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 

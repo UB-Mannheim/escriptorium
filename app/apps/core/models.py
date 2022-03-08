@@ -10,11 +10,9 @@ import subprocess
 import time
 import uuid
 from datetime import datetime
-import numpy as np
-from sklearn import preprocessing
-from sklearn.cluster import DBSCAN
 
-from PIL import Image
+import numpy as np
+from celery import chain
 from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -22,7 +20,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Prefetch, Q
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
@@ -34,17 +32,27 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
-from kraken.lib import vgsl, models as kraken_models
+from kraken.lib import models as kraken_models
+from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
 from kraken.lib.util import is_bitonal
 from ordered_model.models import OrderedModel
+from PIL import Image
 from shapely import affinity
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import LineString, Polygon
+from sklearn import preprocessing
+from sklearn.cluster import DBSCAN
 
-from celery import chain
-from core.tasks import (segtrain, train, binarize,
-                        lossless_compression, convert, segment, transcribe,
-                        generate_part_thumbnails)
+from core.tasks import (
+    binarize,
+    convert,
+    generate_part_thumbnails,
+    lossless_compression,
+    segment,
+    segtrain,
+    train,
+    transcribe,
+)
 from core.utils import ColorField
 from core.validators import JSONSchemaValidator
 from users.consumers import send_event

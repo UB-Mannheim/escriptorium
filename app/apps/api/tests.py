@@ -5,13 +5,21 @@ So no need to test the content unless there is some magic in the serializer.
 """
 
 import unittest
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
-from unittest.mock import patch
 
-from core.models import Block, Line, Transcription, LineTranscription, OcrModel, Metadata, DocumentMetadata
+from core.models import (
+    Block,
+    DocumentMetadata,
+    Line,
+    LineTranscription,
+    Metadata,
+    OcrModel,
+    Transcription,
+)
 from core.tests.factory import CoreFactoryTestCase
 
 

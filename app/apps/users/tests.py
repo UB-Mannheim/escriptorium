@@ -1,11 +1,11 @@
-from django.core import mail
-from django.contrib.auth import get_user_model, get_user
+from django.contrib.auth import get_user, get_user_model
 from django.contrib.auth.models import Group, Permission
+from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from users.models import Invitation, User as CustomUser, ResearchField, GroupOwner
-
+from users.models import GroupOwner, Invitation, ResearchField
+from users.models import User as CustomUser
 
 User = get_user_model()
 

@@ -1,12 +1,11 @@
 import logging
 import os
 
+from celery import states
+from celery.signals import before_task_publish, task_postrun, task_prerun
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
-from celery import states
-from celery.signals import before_task_publish, task_prerun, task_postrun
 
 logger = logging.getLogger(__name__)
 
