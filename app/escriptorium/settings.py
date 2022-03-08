@@ -182,8 +182,12 @@ CACHES = {
     }
 }
 
-ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
-ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
+
+# Boolean used to defuse the search feature (default to True)
+DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'localhost:9200')
+ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
+
 
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
@@ -277,6 +281,10 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
+        'console_info': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -307,6 +315,10 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['django.server'],
+        },
+        'es_indexing': {
+            'handlers': ['console_info'],
+            'level': 'INFO',
         }
     },
 }

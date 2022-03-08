@@ -44,6 +44,19 @@ services:
       # ports:
       #   - 127.0.0.1:6379:6379
 
+    elasticsearch:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == db0
+
+      # For development purposes, expose elasticsearch on localhost
+      # ports:
+      #   - 127.0.0.1:9200:9200
+
     nginx:
       restart: always
       ports:

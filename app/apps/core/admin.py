@@ -38,6 +38,7 @@ class DocumentTagInline(admin.TabularInline):
 
 
 class ProjectAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'name']
     inlines = (TagInline,)
 
 
