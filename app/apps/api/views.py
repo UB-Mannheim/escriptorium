@@ -9,59 +9,60 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
-
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from api.serializers import (UserOnboardingSerializer,
-                             ProjectSerializer,
-                             DocumentSerializer,
-                             DocumentMetadataSerializer,
-                             DocumentTasksSerializer,
-                             PartDetailSerializer,
-                             PartSerializer,
-                             PartMoveSerializer,
-                             BlockSerializer,
-                             LineSerializer,
-                             BlockTypeSerializer,
-                             LineTypeSerializer,
-                             DetailedLineSerializer,
-                             LineOrderSerializer,
-                             TranscriptionSerializer,
-                             LineTranscriptionSerializer,
-                             SegmentSerializer,
-                             TrainSerializer,
-                             SegTrainSerializer,
-                             ScriptSerializer,
-                             TranscribeSerializer,
-                             OcrModelSerializer,
-                             TagDocumentSerializer)
-
-from core.models import (Project,
-                         Document,
-                         DocumentPart,
-                         Block,
-                         Line,
-                         BlockType,
-                         LineType,
-                         DocumentMetadata,
-                         Transcription,
-                         LineTranscription,
-                         OcrModel,
-                         Script,
-                         AlreadyProcessingException,
-                         DocumentTag)
-
+from api.serializers import (
+    BlockSerializer,
+    BlockTypeSerializer,
+    DetailedLineSerializer,
+    DocumentMetadataSerializer,
+    DocumentSerializer,
+    DocumentTasksSerializer,
+    LineOrderSerializer,
+    LineSerializer,
+    LineTranscriptionSerializer,
+    LineTypeSerializer,
+    OcrModelSerializer,
+    PartDetailSerializer,
+    PartMoveSerializer,
+    PartSerializer,
+    ProjectSerializer,
+    ScriptSerializer,
+    SegmentSerializer,
+    SegTrainSerializer,
+    TagDocumentSerializer,
+    TrainSerializer,
+    TranscribeSerializer,
+    TranscriptionSerializer,
+    UserOnboardingSerializer,
+)
+from core.models import (
+    AlreadyProcessingException,
+    Block,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    DocumentTag,
+    Line,
+    LineTranscription,
+    LineType,
+    OcrModel,
+    Project,
+    Script,
+    Transcription,
+)
 from core.tasks import recalculate_masks
-from users.models import User
-from users.consumers import send_event
-from imports.forms import ImportForm, ExportForm
+from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskReport
+from users.consumers import send_event
+from users.models import User
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)

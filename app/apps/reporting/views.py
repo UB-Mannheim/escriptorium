@@ -1,10 +1,11 @@
 from datetime import date, timedelta
+
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Page, Paginator
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
 from django.utils.functional import cached_property
-from django.views.generic import ListView, DetailView
+from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
 from reporting.models import TaskReport

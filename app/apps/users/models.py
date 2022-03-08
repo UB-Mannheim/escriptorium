@@ -1,14 +1,14 @@
 import logging
 import os
 import uuid
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
 from django.db.models import Sum
-from django.contrib.auth.models import AbstractUser, Group
-from django.utils.translation import gettext as _
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from escriptorium.utils import send_email
 from users.consumers import send_notification

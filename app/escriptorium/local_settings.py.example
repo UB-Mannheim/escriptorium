@@ -48,3 +48,13 @@ DEBUG_TOOLBAR_PANELS = [
 # Uncomment the two following variables to enable customized OpenITI export modes
 # EXPORT_OPENITI_MARKDOWN_ENABLED = True
 # EXPORT_TEI_XML_ENABLED = True
+
+# --- SEARCH FEATURE ---
+# Uncomment the following line to enable ElasticSearch
+# DISABLE_ELASTICSEARCH = False
+
+# Set this variable to point to your ES instance (defaults to 'localhost:9200')
+# ELASTICSEARCH_URL = <es_url>
+
+# Set this variable to define the common ES index (defaults to 'es-transcriptions')
+# ELASTICSEARCH_COMMON_INDEX = <common_index_name>

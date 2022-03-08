@@ -1,21 +1,23 @@
 from django.urls import include, path
-from rest_framework_nested import routers
 from rest_framework.authtoken import views
+from rest_framework_nested import routers
 
-from api.views import (ProjectViewSet,
-                       DocumentViewSet,
-                       DocumentMetadataViewSet,
-                       UserViewSet,
-                       PartViewSet,
-                       DocumentTranscriptionViewSet,
-                       BlockViewSet,
-                       LineViewSet,
-                       BlockTypeViewSet,
-                       LineTypeViewSet,
-                       LineTranscriptionViewSet,
-                       ScriptViewSet,
-                       OcrModelViewSet,
-                       TagViewSet)
+from api.views import (
+    BlockTypeViewSet,
+    BlockViewSet,
+    DocumentMetadataViewSet,
+    DocumentTranscriptionViewSet,
+    DocumentViewSet,
+    LineTranscriptionViewSet,
+    LineTypeViewSet,
+    LineViewSet,
+    OcrModelViewSet,
+    PartViewSet,
+    ProjectViewSet,
+    ScriptViewSet,
+    TagViewSet,
+    UserViewSet,
+)
 
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
