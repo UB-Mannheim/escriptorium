@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import sys
 import subprocess
-from kombu import Queue
+import sys
+
 from django.utils.translation import gettext_lazy as _
+from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -373,7 +374,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 if 'test' in sys.argv:
     try:
-        from .test_settings import * # noqa F401
+        from .test_settings import *  # noqa F401
     except (ModuleNotFoundError, ImportError):
         pass
 

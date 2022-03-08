@@ -1,21 +1,36 @@
 import logging
-from PIL import Image
 
+from bootstrap.forms import BootstrapFormMixin
 from django import forms
 from django.conf import settings
-from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
+from django.core.validators import (
+    FileExtensionValidator,
+    MaxValueValidator,
+    MinValueValidator,
+)
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-from bootstrap.forms import BootstrapFormMixin
-from core.models import (Project, Document, Metadata, DocumentMetadata,
-                         DocumentPart, OcrModel, OcrModelDocument, Transcription,
-                         BlockType, LineType, AlreadyProcessingException, OcrModelRight)
-from users.models import User
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
+from PIL import Image
+
+from core.models import (
+    AlreadyProcessingException,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    LineType,
+    Metadata,
+    OcrModel,
+    OcrModelDocument,
+    OcrModelRight,
+    Project,
+    Transcription,
+)
+from users.models import User
 
 logger = logging.getLogger(__name__)
 

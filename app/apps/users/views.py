@@ -2,23 +2,30 @@ from os import listdir, stat
 from os.path import isfile, join, relpath
 
 from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.urls import reverse
-from django.views.generic import CreateView, UpdateView, TemplateView, DetailView
-from django.core.exceptions import PermissionDenied
-
+from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import Group
-from users.models import User, Invitation, ContactUs
-from users.forms import (InvitationForm, InvitationAcceptForm, ProfileForm,
-                         ContactUsForm, GroupForm, GroupInvitationForm,
-                         RemoveUserFromGroup, TransferGroupOwnershipForm)
+
+from users.forms import (
+    ContactUsForm,
+    GroupForm,
+    GroupInvitationForm,
+    InvitationAcceptForm,
+    InvitationForm,
+    ProfileForm,
+    RemoveUserFromGroup,
+    TransferGroupOwnershipForm,
+)
+from users.models import ContactUs, Invitation, User
 
 
 class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):

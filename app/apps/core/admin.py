@@ -1,20 +1,22 @@
 from django.contrib import admin
 
-from core.models import (Project,
-                         Document,
-                         DocumentPart,
-                         Metadata,
-                         DocumentMetadata,
-                         DocumentTag,
-                         LineTranscription,
-                         OcrModel,
-                         OcrModelDocument,
-                         OcrModelRight,
-                         Script,
-                         DocumentType,
-                         DocumentPartType,
-                         BlockType,
-                         LineType)
+from core.models import (
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    DocumentPartType,
+    DocumentTag,
+    DocumentType,
+    LineTranscription,
+    LineType,
+    Metadata,
+    OcrModel,
+    OcrModelDocument,
+    OcrModelRight,
+    Project,
+    Script,
+)
 
 
 class MetadataInline(admin.TabularInline):

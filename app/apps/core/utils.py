@@ -1,5 +1,5 @@
-from django.forms.widgets import Input
 from django.db.models import CharField
+from django.forms.widgets import Input
 
 
 class ColorWidget(Input):

@@ -1,19 +1,18 @@
-import json
 import io
-from django.conf import settings
-import requests
+import json
 
+import requests
+from bootstrap.forms import BootstrapFormMixin
 from django import forms
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
-from bootstrap.forms import BootstrapFormMixin
-
-from core.models import Transcription, DocumentPart
+from core.models import DocumentPart, Transcription
 from imports.export import ENABLED_EXPORTERS
 from imports.models import DocumentImport
-from imports.parsers import make_parser, ParseError
-from imports.tasks import document_import, document_export
+from imports.parsers import ParseError, make_parser
+from imports.tasks import document_export, document_import
 from users.consumers import send_event
 
 
