@@ -2,28 +2,30 @@ import json
 import logging
 import os.path
 import re
-import requests
 import time
 import uuid
 import zipfile
-import pyvips
-from lxml import etree
 
+import pyvips
+import requests
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import get_available_image_extensions
 from django.db import transaction
 from django.forms import ValidationError
-from django.utils.translation import gettext as _
 from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+from lxml import etree
 
-from core.models import (Block,
-                         Line,
-                         Transcription,
-                         LineTranscription,
-                         DocumentPart,
-                         Metadata,
-                         DocumentMetadata)
+from core.models import (
+    Block,
+    DocumentMetadata,
+    DocumentPart,
+    Line,
+    LineTranscription,
+    Metadata,
+    Transcription,
+)
 from core.tasks import generate_part_thumbnails
 from versioning.models import NoChangeException
 

@@ -1,13 +1,13 @@
-from datetime import datetime
 import os.path
+from datetime import datetime
 from zipfile import ZipFile
 
+import oitei
 from django.apps import apps
 from django.conf import settings
-from django.utils.text import slugify
-from django.db.models import Q, Prefetch, Avg
+from django.db.models import Avg, Prefetch, Q
 from django.template import loader
-import oitei
+from django.utils.text import slugify
 
 TEXT_FORMAT = "text"
 PAGEXML_FORMAT = "pagexml"

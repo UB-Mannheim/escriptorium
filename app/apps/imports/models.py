@@ -3,12 +3,11 @@ import os.path
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
-from escriptorium.celery import app
-
 from core.models import Document
-from users.models import User
-from imports.parsers import make_parser, XML_EXTENSIONS
+from escriptorium.celery import app
+from imports.parsers import XML_EXTENSIONS, make_parser
 from reporting.models import TaskReport
+from users.models import User
 
 
 class DocumentImport(models.Model):

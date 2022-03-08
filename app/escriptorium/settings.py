@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import sys
 import subprocess
-from kombu import Queue
+import sys
+
 from django.utils.translation import gettext_lazy as _
+from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -182,8 +183,12 @@ CACHES = {
     }
 }
 
-ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
-ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
+
+# Boolean used to defuse the search feature (default to True)
+DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'localhost:9200')
+ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
+
 
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
@@ -277,6 +282,10 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
+        'console_info': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -307,6 +316,10 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['django.server'],
+        },
+        'es_indexing': {
+            'handlers': ['console_info'],
+            'level': 'INFO',
         }
     },
 }
@@ -361,7 +374,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 if 'test' in sys.argv:
     try:
-        from .test_settings import * # noqa F401
+        from .test_settings import *  # noqa F401
     except (ModuleNotFoundError, ImportError):
         pass
 

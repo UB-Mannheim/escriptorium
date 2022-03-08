@@ -1,8 +1,8 @@
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
 
-from users.models import User, Group
 from core.tests.factory import CoreFactory
+from users.models import Group, User
 
 
 class DocumentShareTestCase(TestCase):

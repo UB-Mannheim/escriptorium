@@ -1,35 +1,36 @@
-import bleach
-import logging
 import html
+import logging
 
+import bleach
 from django.conf import settings
 from django.db.models import Count, Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
+from rest_framework import serializers
 
 from api.fields import DisplayChoiceField
-from users.models import User
-from core.models import (Project,
-                         Document,
-                         DocumentPart,
-                         Metadata,
-                         DocumentMetadata,
-                         Block,
-                         Line,
-                         Transcription,
-                         LineTranscription,
-                         BlockType,
-                         LineType,
-                         Script,
-                         OcrModel,
-                         OcrModelDocument,
-                         DocumentTag)
-from core.tasks import (segtrain, train, segment, transcribe)
+from core.models import (
+    Block,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    DocumentTag,
+    Line,
+    LineTranscription,
+    LineType,
+    Metadata,
+    OcrModel,
+    OcrModelDocument,
+    Project,
+    Script,
+    Transcription,
+)
+from core.tasks import segment, segtrain, train, transcribe
 from reporting.models import TaskReport
+from users.models import User
 
 logger = logging.getLogger(__name__)
 

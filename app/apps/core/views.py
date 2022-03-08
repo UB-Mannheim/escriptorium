@@ -1,42 +1,59 @@
 import json
 import logging
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Q, Count
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
+from django.db.models import Count, Q
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404
-from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.views.generic import View, TemplateView, ListView, DetailView
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.utils.translation import gettext as _
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+    View,
+)
 
-from core.models import (Project, Document, DocumentPart, Metadata,
-                         OcrModel, OcrModelRight, AlreadyProcessingException)
-
-from core.forms import (ProjectForm,
-                        DocumentForm,
-                        MetadataFormSet,
-                        ProjectShareForm,
-                        DocumentShareForm,
-
-                        BinarizeForm,
-                        SegmentForm,
-                        TranscribeForm,
-                        SegTrainForm,
-                        RecTrainForm,
-
-                        UploadImageForm,
-                        ModelUploadForm,
-                        ModelRightsForm,
-                        MigrateDocumentForm)
-from imports.forms import ImportForm, ExportForm
+from core.forms import (
+    BinarizeForm,
+    DocumentForm,
+    DocumentShareForm,
+    MetadataFormSet,
+    MigrateDocumentForm,
+    ModelRightsForm,
+    ModelUploadForm,
+    ProjectForm,
+    ProjectShareForm,
+    RecTrainForm,
+    SegmentForm,
+    SegTrainForm,
+    TranscribeForm,
+    UploadImageForm,
+)
+from core.models import (
+    AlreadyProcessingException,
+    Document,
+    DocumentPart,
+    Metadata,
+    OcrModel,
+    OcrModelRight,
+    Project,
+)
+from imports.forms import ExportForm, ImportForm
 from reporting.models import TaskReport
 from users.models import User
-
 
 logger = logging.getLogger(__name__)
 
