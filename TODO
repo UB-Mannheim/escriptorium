@@ -1,0 +1,101 @@
+Add to ALTO file:
+<OCRProcessing ID="IdOcr"><ocrProcessingStep><processingDateTime>2018-11-23</processingDateTime><processingSoftware><softwareCreator>ABBYY</softwareCreator><softwareName>ABBYY FineReader Engine</softwareName><softwareVersion>11</softwareVersion></processingSoftware></ocrProcessingStep></OCRProcessing>
+
+nohup celery -A escriptorium worker --hostname ub-blade-10.bib.uni-mannheim.de | tee -a escriptorium/logs/celery-20211112.log
+nohup python manage.py runserver --settings escriptorium.local_settings | tee -a escriptorium/logs/runserver-20211112.log
+
+# Install required packages.
+#
+sudo apt install npm postgresql libpq-dev
+sudo apt install libvips42
+sudo apt install libvips netcat-traditional jpegoptim pngcrush
+sudo apt install redis-server
+sudo -u postgres createuser --superuser $USER
+sudo -u postgres createdb escriptorium
+
+# Für Rückverweis aus Admin-Webseite.
+mkdir /var/www/html/WEBROOT
+
+## Upgrade
+
+source venv/bin/activate
+pip install -U pip setuptools==59.5.0 wheel
+pip install -U -r requirements.txt
+cd front
+npm install
+npm audit fix
+npm run production
+cd ../app
+# export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
+python manage.py migrate --settings escriptorium.local_settings
+python manage.py makemessages --all --add-location file --settings escriptorium.local_settings
+python manage.py compilemessages --settings escriptorium.local_settings
+
+pip install --pre --upgrade torch==1.10.1+cu113 torchvision -f https://download.pytorch.org/whl/torch/
+#pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu113/torch_nightly.html -U
+
+pip install "celery<5.0.0" # wegen celery.task
+celery -A escriptorium worker -l INFO
+
+python manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8080
+celery worker --app escriptorium --loglevel DEBUG --detach --logfile escriptorium/logs/celery-20220201.log
+
+# Fix problems with websocket connection.
+pip install --upgrade Pillow autobahn django-ordered-model==3.1.1 protobuf pyOpenSSL threadpoolctl djangorestframework==3.9.2 django-redis==4.10.0 beautifulsoup4==4.7.1 bleach==3.1.5 channels-redis==2.4.2
+
+# Fix AttributeError: ndim
+pip install 'scikit-image<0.18'
+
+# Fix AssertionError: database connection isn't set to UTC
+pip install "psycopg2<2.9" psycopg2-binary
+
+index a759e517..a3497001 100644
+--- a/app/escriptorium/local_settings.py
++++ b/app/escriptorium/local_settings.py
+@@ -34,11 +34,11 @@ SERVER_EMAIL = 'stefan.weil@uni-mannheim.de'
+ #EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+ EMAIL_HOST = 'localhost'
+ #EMAIL_HOST = 'smtp.mail.uni-mannheim.de'
++#EMAIL_HOST_USER = 'xxx'
++#EMAIL_HOST_PASSWORD = 'xxx'
+ #EMAIL_PORT = 587
+ #EMAIL_USE_TLS = True
+-# SMTP_DOMAIN=bib.uni-mannheim.de
++# SMTP_DOMAIN=uni-mannheim.de
+
+ TIME_ZONE = 'Europe/Berlin'
+ USE_TZ = True
+
+
+
+  Applying core.0001_initial... OK
+Retrieving model .[0.1733] Found 0 models when querying for id 'default'
+Traceback (most recent call last):
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/bin/kraken", line 8, in <module>
+    sys.exit(cli())
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/core.py", line 1128, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/core.py", line 1053, in main
+    rv = self.invoke(ctx)
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/core.py", line 1690, in invoke
+    rv.append(sub_ctx.command.invoke(sub_ctx))
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/core.py", line 1395, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/core.py", line 754, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/click/decorators.py", line 26, in new_func
+    return f(get_current_context(), *args, **kwargs)
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/kraken/kraken.py", line 621, in get
+    filename = repo.get_model(model_id, click.get_app_dir(APP_NAME),
+  File "/home/stweil/src/gitlab/scripta/escriptorium/venv/lib/python3.9/site-packages/kraken/repo.py", line 121, in get_model
+    raise KrakenRepoException(f'Found {resp["hits"]["total"]} models when querying for id \'{model_id}\'')
+kraken.lib.exceptions.KrakenRepoException: Found 0 models when querying for id 'default'
+  Applying core.0002_initial_data... OK
+  Applying core.0003_auto_20190121_1458... OK
+
+
+
+
+Try JuliaMono font for line transcriptions: https://juliamono.netlify.app/
+[2]-  Running                 python -Wa manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8080 &
+[3]+  Running                 celery worker --app escriptorium --loglevel DEBUG &
