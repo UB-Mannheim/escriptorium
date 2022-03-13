@@ -51,7 +51,7 @@
 
          $.ajax({
              type: 'PUT',
-             url: '/api/user/onboarding/',
+             url: "{% url 'api:user-onboarding' %}",
              contentType: "application/json; charset=utf-8",
              data: JSON.stringify({
                  onboarding: "True",
