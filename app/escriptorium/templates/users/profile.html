@@ -49,9 +49,13 @@
          userProfile.set('onboarding_trans', false);
          userProfile.set('onboarding_models', false);
 
+         const path_components = location.pathname.split("/", 2);
+         const prefix = path_components[1];
+         const script_name = (prefix.length > 0 ? "/" + prefix : "")
+
          $.ajax({
              type: 'PUT',
-             url: '/escriptorium' + '/api/user/onboarding/',
+             url: script_name + '/api/user/onboarding/',
              contentType: "application/json; charset=utf-8",
              data: JSON.stringify({
                  onboarding: "True",
