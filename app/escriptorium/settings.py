@@ -18,8 +18,8 @@ from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from pkg_resources import get_distribution
 
-MEDIA_URL = '/escriptorium/media/'
-STATIC_URL = '/escriptorium/static/'
+MEDIA_URL = '/escriptorium2/media/'
+STATIC_URL = '/escriptorium2/static/'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
