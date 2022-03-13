@@ -11,11 +11,8 @@ ADMINS = [
 ]
 #ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
-# Run in subpath
-#BASE_URL = 'https://ocr-bw.bib.uni-mannheim.de/escriptorium/'
-
 # Settings for running from a subpath.
-FORCE_SCRIPT_NAME = '/escriptorium'
+FORCE_SCRIPT_NAME = '/escriptorium2'
 # Relative MEDIA_URL requires at least Django 4.0.
 MEDIA_URL = 'https://ocr-bw.bib.uni-mannheim.de' + FORCE_SCRIPT_NAME + '/media/'
 # Relative STATIC_URL requires at least Django 4.0.
@@ -42,7 +39,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'develop (2022-01-30)'
+VERSION_DATE = 'develop (2022-03-12)'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
