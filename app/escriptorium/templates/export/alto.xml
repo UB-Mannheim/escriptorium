@@ -6,13 +6,15 @@
     <MeasurementUnit>pixel</MeasurementUnit>
     <sourceImageInformation>
       <fileName>{{ part.filename }}</fileName>
-{% if part.source %}      <fileIdentifier>{{ part.source }}</fileIdentifier>{% endif %}
+      {% if part.source %}<fileIdentifier>{{ part.source }}</fileIdentifier>{% endif %}
     </sourceImageInformation>
   </Description>
-{% if valid_block_types or valid_line_types %}  <Tags>
+  {% if valid_block_types or valid_line_types %}
+  <Tags>
     {% for type in valid_block_types %}<OtherTag ID="BT{{type.id}}" LABEL="{{type.name}}" DESCRIPTION="block type {{type.name}}"/>{% endfor %}
     {% for type in valid_line_types %}<OtherTag ID="LT{{type.id}}" LABEL="{{type.name}}" DESCRIPTION="line type {{type.name}}"/>{% endfor %}
-  </Tags>{% endif %}
+  </Tags>
+  {% endif %}
   <Layout>
     <Page WIDTH="{{ part.image.width }}"
           HEIGHT="{{ part.image.height }}"
@@ -22,23 +24,27 @@
                   VPOS="0"
                   WIDTH="{{ part.image.width }}"
                   HEIGHT="{{ part.image.height }}">
-{% for block in blocks %}
-      <TextBlock HPOS="{{ block.coordinates_box.0 }}"
+        {% for block in blocks %}
+        <TextBlock HPOS="{{ block.coordinates_box.0 }}"
                    VPOS="{{ block.coordinates_box.1 }}"
                    WIDTH="{{ block.width }}"
                    HEIGHT="{{ block.height }}"
                    ID="{{ block.external_id }}"
                    {% if block.typology.id %}TAGREFS="BT{{block.typology.id}}"{% endif %}>
           <Shape><Polygon POINTS="{% alto_points block.box %}"/></Shape>
-{% for line in block.lines.all %}
-{% include "export/alto_line.xml" %}
-{% endfor %}
-        </TextBlock>{% endfor %}
-{% if orphan_lines|length %}        <TextBlock ID="eSc_dummyblock_">
-{% for line in orphan_lines %}
-{% include "export/alto_line.xml" %}
-{% endfor %}
-        </TextBlock>{% endif %}
+          {% for line in block.lines.all %}
+          {% include "export/alto_line.xml" %}
+          {% endfor %}
+        </TextBlock>
+        {% endfor %}
+
+        {% if orphan_lines|length %}
+        <TextBlock ID="eSc_dummyblock_">
+          {% for line in orphan_lines %}
+          {% include "export/alto_line.xml" %}
+          {% endfor %}
+        </TextBlock>
+        {% endif %}
       </PrintSpace>
     </Page>
   </Layout>
