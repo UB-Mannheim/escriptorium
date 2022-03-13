@@ -1082,7 +1082,7 @@ msgid ""
 "Access data through a full REST API."
 msgstr ""
 "Importieren und exportieren Sie Modelle und Transkriptionen in einer "
-"Vielzahl von Formaten. Greifen Sie auf Daten per RESTfu lAPI zu."
+"Vielzahl von Formaten. Greifen Sie auf Daten per RESTful API zu."
 
 #: escriptorium/templates/core/home.html
 msgid "Resources"
