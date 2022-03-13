@@ -97,6 +97,8 @@
               <a class="dropdown-item" href="{% url 'documents-tasks-list' %}">{% trans "Tasks monitoring" %}</a>
               {% if user.is_staff %}
               <a class="dropdown-item" href="{% url 'quotas-leaderboard' %}">{% trans "Leaderboard" %}</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="/escriptorium2/admin/">{% trans "Administration" %}</a>
               {% endif %}
 
               <div class="dropdown-divider"></div>
