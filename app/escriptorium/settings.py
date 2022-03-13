@@ -246,7 +246,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 150 * 1024 * 1024  # value in bytes (so 150Mb)
 
 FRONTEND_DIR = os.getenv('FRONTEND_DIR', os.path.join(BASE_DIR, '..', 'front', 'dist'))
 
-#STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
@@ -257,7 +257,7 @@ if CUSTOM_HOME:
     # custom homepage directory
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'homepage'))
 
-#MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGGING = {
