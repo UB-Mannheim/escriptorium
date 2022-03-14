@@ -17,6 +17,7 @@
 
     {% if orphan_lines|length %}
     <TextRegion id="eSc_dummyblock_">
+      <Coords points="0,0 0,0"/>
     {% for line in orphan_lines %}
     {% include 'export/pagexml_line.xml' %}
     {% endfor %}
