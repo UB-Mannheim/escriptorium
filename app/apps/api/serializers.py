@@ -68,9 +68,17 @@ class ScriptSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    slug = serializers.ReadOnlyField()
+
     class Meta:
         model = Project
         fields = '__all__'
+
+    def create(self, data):
+        data['owner'] = self.context["view"].request.user
+        obj = super().create(data)
+        return obj
 
 
 class PartMoveSerializer(serializers.ModelSerializer):

@@ -99,6 +99,9 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     paginate_by = 10
 
+    def get_queryset(self):
+        return Project.objects.for_user_read(self.request.user)
+
 
 class TagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
