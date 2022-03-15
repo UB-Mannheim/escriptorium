@@ -22,13 +22,14 @@
     <span>{% trans 'Filters' %}</span>
     <tagsselector
       :tags="{{document_tags}}"
-      :filters="{{filters}}">
+      :filters="{{filters}}"
+      :tagsperdocuments="'{% for doc in object_list %}{{doc.pk}};{% for tag in doc.tags.all %} {{tag.pk}}{% if not forloop.last %},{% endif %}{% endfor %}{% if not forloop.last %}¤{% endif %}{% endfor %}'">
     </tagsselector>
   </div>
   <div class="col-md-11 col-md-offset-4">
-    {% else %}
+  {% else %}
     <div class="col-md-12 col-md-offset-4">
-      {% endif %}
+  {% endif %}
 
       <table id="document-list" class="table table-hover">
         <tbody>
@@ -66,10 +67,9 @@
               <simpletagedit
                 :document-id="{{document.pk}}">
               </simpletagedit>
-
-              {% for tag in  document.tags.all %}
-              <span class="badge" title="{{tag.name}}" style="background-color: {{tag.color}}">{{ tag.name | truncatechars:10 }}</span>
-              {% endfor %}
+              <listtagsdocument
+                :document-id="{{document.pk}}">
+              </listtagsdocument>
             </td>
             {% comment %}
             <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>
