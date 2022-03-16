@@ -2,7 +2,8 @@
 
 import os
 
-from escriptorium.settings import INSTALLED_APPS, MIDDLEWARE
+# from escriptorium.settings import INSTALLED_APPS, MIDDLEWARE
+from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
 CSRF_TRUSTED_ORIGINS = ['ocr-bw.bib.uni-mannheim.de']
