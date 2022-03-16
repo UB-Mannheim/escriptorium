@@ -319,7 +319,6 @@ LOGGING = {
         },
         'es_indexing': {
             'handlers': ['console_info'],
-            'level': 'INFO',
         }
     },
 }
