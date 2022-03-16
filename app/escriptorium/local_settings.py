@@ -2,7 +2,7 @@
 
 import os
 
-from escriptorium.settings import INSTALLED_APPS, MIDDLEWARE
+from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
 CSRF_TRUSTED_ORIGINS = ['ocr-bw.bib.uni-mannheim.de']
@@ -13,15 +13,17 @@ ADMINS = [
 ]
 # ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
-# Settings for running from a subpath.
+# Settings for running from a subpath behind a proxy.
 FORCE_SCRIPT_NAME = '/escriptorium2'
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Relative MEDIA_URL requires at least Django 4.0.
-MEDIA_URL = 'https://ocr-bw.bib.uni-mannheim.de' + FORCE_SCRIPT_NAME + '/media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + '/media/'
 # Relative STATIC_URL requires at least Django 4.0.
 STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + '/projects/'
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME + '/'
-USE_X_FORWARDED_HOST = True
 
 # ALLOWED_HOSTS = ['localhost', 'ub-blade-10.bib.uni-mannheim.de', '134.155.36.10']
 DEFAULT_FROM_EMAIL = 'stefan.weil@uni-mannheim.de'
@@ -41,7 +43,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'develop (2022-03-12)'
+VERSION_DATE = 'develop (2022-03-31)'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -98,3 +100,21 @@ USE_CELERY = True
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 
 CUSTOM_HOME = True
+
+# Uncomment the two following variables to enable customized OpenITI export modes
+EXPORT_OPENITI_MARKDOWN_ENABLED = True
+EXPORT_TEI_XML_ENABLED = True
+
+# --- SEARCH FEATURE ---
+USE_OPENSEARCH = True
+
+# Uncomment the following line to enable Elasticsearch
+DISABLE_ELASTICSEARCH = False
+
+# Set this variable to point to your ES instance (defaults to 'localhost:9200')
+ELASTICSEARCH_URL = 'http://localhost:9200'
+
+# Set this variable to define the common ES index (defaults to 'es-transcriptions')
+# ELASTICSEARCH_COMMON_INDEX = <common_index_name>
+# if USE_OPENSEARCH:
+#    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
