@@ -7,24 +7,24 @@
 # django-admin makemessages -l de
 #
 # To update all translations, run
-# django-admin makemessages -a
+# django-admin makemessages --all --add-location file
 #
 # To compile it, run
 # django-admin compilemessages
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: eScriptorium 0.7.0\n"
+"Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:34+0100\n"
-"PO-Revision-Date: 2021-11-12 19:17+0100\n"
+"POT-Creation-Date: 2022-04-01 16:13+0000\n"
+"PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
-"Language: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 #: escriptorium/templates/core/document_images.html
@@ -45,7 +45,7 @@ msgstr "Zeilen und Bereiche"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Lines Baselines and Masks"
-msgstr "Zeilen Baselines und Masken"
+msgstr "Zeilengrundlinien und Masken"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Only lines Masks"
@@ -93,6 +93,14 @@ msgid "Canceled."
 msgstr "Abgebrochen."
 
 #: apps/core/forms.py
+msgid "Text to search in all of your projects"
+msgstr "Text, der in Ihren Projekten gesucht werden soll"
+
+#: apps/core/forms.py
+msgid "All projects"
+msgstr "Alle Projekte"
+
+#: apps/core/forms.py
 msgid "The provided model could not be loaded."
 msgstr "Das angegebene Modell konnte nicht geladen werden."
 
@@ -128,7 +136,7 @@ msgstr "Hochgeladenes Bild sollte schwarz-weiß sein."
 #, python-brace-format
 msgid "Uploaded image should be the same size as original image {size}."
 msgstr ""
-"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}"
+"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}."
 
 #: apps/core/forms.py
 msgid "Model"
@@ -140,7 +148,7 @@ msgid ""
 "first!"
 msgstr ""
 "Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
-"damit verbundene Transkriptionen<b/> zuerst gelöscht!"
+"damit verbundene Transkriptionen</b> zuerst gelöscht!"
 
 #: apps/core/models.py
 msgid "Top to bottom"
@@ -176,11 +184,11 @@ msgstr "Rechts nach links"
 
 #: apps/core/models.py
 msgid "Baseline"
-msgstr "Baseline"
+msgstr "Grundlinie"
 
 #: apps/core/models.py
 msgid "Topline"
-msgstr "Topline"
+msgstr "Toplinie"
 
 #: apps/core/models.py
 msgid "Centered"
@@ -250,7 +258,7 @@ msgstr "Polygon muss mindestens 3 Stellen haben, es hat %(length)d: %(value)s."
 
 #: apps/core/models.py
 msgid "Both baseline and mask are empty."
-msgstr "Sowohl die Baseline als auch die Maske sind leer."
+msgstr "Sowohl die Grundlinie als auch die Maske sind leer."
 
 #: apps/core/models.py escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/wizards/segment.html
@@ -267,7 +275,7 @@ msgstr "Konnte die Trainings-Aufgabe nicht finden."
 
 #: apps/core/tasks.py
 msgid "Something went wrong during the binarization!"
-msgstr "Bei der Binarisierung ist etwas ist schiefgelaufen."
+msgstr "Bei der Binarisierung ist etwas schiefgelaufen!"
 
 #: apps/core/tasks.py
 msgid "Binarization done!"
@@ -352,7 +360,7 @@ msgstr "Recht erfolgreich gelöscht!"
 
 #: apps/core/views.py
 msgid "Document was successfully migrated to the selected project!"
-msgstr "Dokument wurde erfolgreich zum ausgewählten Projekt migriert"
+msgstr "Dokument wurde erfolgreich zum ausgewählten Projekt migriert!"
 
 #: apps/imports/forms.py
 #, python-brace-format
@@ -384,6 +392,7 @@ msgstr "IIIF-Manifest URI"
 msgid ""
 "exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
 msgstr ""
+"exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
 
 #: apps/imports/forms.py
 msgid "Resume previous import"
@@ -507,11 +516,20 @@ msgstr "Standard ALTO-Import"
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Invalid baseline {baseline} in {filen} line {linen}"
-msgstr "Ungültige Baseline {baseline} in {filen} Zeile {linen}"
+msgstr "Ungültige Grundlinie {baseline} in {filen} Zeile {linen}"
 
 #: apps/imports/parsers.py
 msgid "Default PAGE Import"
 msgstr "Standard PAGE-Import"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line without baseline in {filen} line #{linen}, very likely that it will not "
+"be usable!"
+msgstr ""
+"Zeile ohne Grundlinie in {filen} Zeile #{linen}, das ist sehr wahrscheinlich "
+"nicht verwendbar!"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -667,7 +685,7 @@ msgstr "Sie sind jetzt Mitglied im Team {team_name}!"
 #: apps/users/views.py
 #, python-brace-format
 msgid "User {user} successfully removed from the team {team_name}."
-msgstr "Benutzer {user} erfolgreich aus Team {team_name} entfernt!"
+msgstr "Benutzer {user} erfolgreich aus Team {team_name} entfernt."
 
 #: apps/users/views.py
 #, python-brace-format
@@ -716,6 +734,14 @@ msgstr ""
 msgid "Page not found."
 msgstr "Seite nicht gefunden."
 
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
+
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search"
+msgstr "Suchen"
+
 #: escriptorium/templates/base.html
 msgid "About"
 msgstr "Über"
@@ -749,7 +775,7 @@ msgstr "Profil"
 
 #: escriptorium/templates/base.html
 msgid "Task reports"
-msgstr "Aufgabenbericht"
+msgstr "Aufgabenberichte"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/core/documents_tasks_list.html
@@ -759,10 +785,6 @@ msgstr "Aufgabenüberwachung"
 #: escriptorium/templates/base.html
 msgid "Leaderboard"
 msgstr "Spitzenreiter"
-
-#: escriptorium/templates/base.html
-msgid "Administration"
-msgstr "Administration"
 
 #: escriptorium/templates/base.html
 msgid "Invite"
@@ -918,7 +940,7 @@ msgstr "Training abbrechen"
 
 #: escriptorium/templates/core/document_images.html
 msgid "Binarize selected images."
-msgstr "Binarisieren ausgewählter Bilder"
+msgstr "Binarisieren ausgewählter Bilder."
 
 #: escriptorium/templates/core/document_images.html
 msgid "Binarize"
@@ -926,11 +948,11 @@ msgstr "Binarisieren"
 
 #: escriptorium/templates/core/document_images.html
 msgid "Segment selected images."
-msgstr "Segmentieren ausgewählte Bilder"
+msgstr "Segmentieren ausgewählte Bilder."
 
 #: escriptorium/templates/core/document_images.html
 msgid "Start transcribing selected images."
-msgstr "Beginne die Transkription der ausgewählten Bilder"
+msgstr "Beginne die Transkription der ausgewählten Bilder."
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/wizards/transcribe.html
@@ -973,6 +995,11 @@ msgid "Share this Project"
 msgstr "Dieses Projekt teilen"
 
 #: escriptorium/templates/core/document_list.html
+msgid "Search in project"
+msgstr "Suche im Projekt"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/reporting/project_reports.html
 msgid "Filters"
 msgstr "Filter"
 
@@ -993,8 +1020,8 @@ msgstr "Letzte Änderung am"
 #, python-format
 msgid "1 image."
 msgid_plural "%(n)s images."
-msgstr[0] "1 Bild"
-msgstr[1] "%(n)s Bilder"
+msgstr[0] "1 Bild."
+msgstr[1] "%(n)s Bilder."
 
 #: escriptorium/templates/core/document_list.html
 msgid "Edit last updated Element"
@@ -1038,8 +1065,8 @@ msgstr ""
 "maschineller Lerntechniken."
 
 #: escriptorium/templates/core/home.html
-msgid "Automatic Transcription"
-msgstr "Automatische Transkription"
+msgid "Automatic<br>Transcription"
+msgstr "Automatische<br>Transkription"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1050,8 +1077,8 @@ msgstr ""
 "handgeschriebener Dokumente an."
 
 #: escriptorium/templates/core/home.html
-msgid "Manual transcription"
-msgstr "Manuelle Transkription"
+msgid "Manual<br>transcription"
+msgstr "Manuelle<br>Transkription"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1062,8 +1089,8 @@ msgstr ""
 "Benutzeroberfläche, die moderne Browsertechnologie nutzt."
 
 #: escriptorium/templates/core/home.html
-msgid "Train Models"
-msgstr "Modelltraining, Nachtraining"
+msgid "Train<br>Models"
+msgstr "Modelltraining,<br>Nachtraining"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1073,8 +1100,8 @@ msgstr ""
 "automatische Erkennung zu verbessern."
 
 #: escriptorium/templates/core/home.html
-msgid "Import/Export"
-msgstr "Datenimport / Datenexport"
+msgid "Import/<br>Export"
+msgstr "Datenimport /<br>Datenexport"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1138,6 +1165,7 @@ msgid "Recipient type"
 msgstr "Art des Empfängers"
 
 #: escriptorium/templates/core/models_list/rights/main.html
+#: escriptorium/templates/registration/login.html
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Username"
 msgstr "Benutzername"
@@ -1277,6 +1305,79 @@ msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
 msgid "Documents"
 msgstr "Dokumente"
 
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr "Berichte"
+
+#: escriptorium/templates/core/search.html
+msgid "Search in projects"
+msgstr "Suche in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid "Search text in projects"
+msgstr "Suche Text in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"Couldn't connect to Elasticsearch, please contact your instance "
+"administrator."
+msgstr ""
+"Verbindung zu Elasticsearch nicht möglich, bitte wenden Sie sich an Ihren "
+"Administrator."
+
+#: escriptorium/templates/core/search.html
+#: escriptorium/templates/core/wizards/import.html
+msgid "Reason:"
+msgstr "Grund:"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"You requested to search text in a project you don't have access to. Falling "
+"back to searching entered text in all of your projects."
+msgstr ""
+"Sie haben versucht, Text in einem Projekt, zu dem Sie keinen Zugang haben, "
+"zu suchen. Statt dessen wird in allen Ihren Projekten gesucht."
+
+#: escriptorium/templates/core/search.html
+msgid "Results"
+msgstr "Ergebnisse"
+
+#: escriptorium/templates/core/search.html
+msgid "Content"
+msgstr "Inhalt"
+
+#: escriptorium/templates/core/search.html
+msgid "Image preview"
+msgstr "Bildvorschau"
+
+#: escriptorium/templates/core/search.html
+msgid "Score"
+msgstr "Bewertung"
+
+#: escriptorium/templates/core/search.html
+msgid "View in Editor"
+msgstr "Anzeige im Editor"
+
+#: escriptorium/templates/core/search.html
+msgid "Line transcription enhanced content"
+msgstr "Zeilentranskription hat Inhalt erweitert"
+
+#: escriptorium/templates/core/search.html
+msgid "Full image cropped according to the transcription bounding box"
+msgstr "Vollbild beschnitten gemäß Rahmen um Transkription"
+
+#: escriptorium/templates/core/search.html
+msgid "Search score"
+msgstr "Suchergebnis"
+
+#: escriptorium/templates/core/search.html
+msgid "Go to document part editing page"
+msgstr "Gehen Sie zur Seite für die Dokumentenbearbeitung"
+
+#: escriptorium/templates/core/search.html
+msgid "No results matched your search."
+msgstr "Ihre Suche fand keine Treffer."
+
 #: escriptorium/templates/core/share/share_base.html
 msgid "Share with"
 msgstr "Teile mit"
@@ -1301,7 +1402,7 @@ msgstr "Teilen"
 
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
-msgstr "ausgewählte(s) Bild(er)"
+msgstr "ausgewählte(s) Bild(er)."
 
 #: escriptorium/templates/core/wizards/binarize.html
 msgid ""
@@ -1341,7 +1442,7 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/import.html
 msgid "Resume previous import."
-msgstr "Vorherigen Import fortsetzen"
+msgstr "Vorherigen Import fortsetzen."
 
 #: escriptorium/templates/core/wizards/import.html
 #, python-format
@@ -1349,10 +1450,6 @@ msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
 msgstr ""
 "Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s "
 "fehlgeschlagen."
-
-#: escriptorium/templates/core/wizards/import.html
-msgid "Reason:"
-msgstr "Grund:"
 
 #: escriptorium/templates/core/wizards/import.html
 msgid "Or"
@@ -1374,7 +1471,7 @@ msgstr "Importieren Sie die Bilder aus IIIF."
 
 #: escriptorium/templates/core/wizards/import_pdf.html
 msgid "Import images from a PDF document."
-msgstr "Importieren Sie die Bilder aus einem PDF Dokument"
+msgstr "Importieren Sie die Bilder aus einem PDF Dokument."
 
 #: escriptorium/templates/core/wizards/import_pdf.html
 msgid "A single pdf with one image per page."
@@ -1508,7 +1605,7 @@ msgstr ""
 "    <br/>Falls Bereiche eine Rolle spielen, sollten Sie erst in den "
 "Bereichsmodus wechseln. <i class=\"fas fa-th-large\"></i> (R-Taste).\n"
 "    <br/>Wenn Sie sich im Bereichsmodus befinden, klicken Sie mit der "
-"<b>linken Maustaste</b>, um eine neue rechteckige Region zu erstellen, "
+"<b>linken Maustaste</b>, um einen neuen rechteckigen Bereich zu erstellen, "
 "klicken Sie erneut mit der linken Maustaste, um den Vorgang abzuschließen.\n"
 "    <br/>Zeilen, die innerhalb eines Bereichs gezogen werden, sind "
 "automatisch mit diesem verbunden.\n"
@@ -1628,6 +1725,8 @@ msgid ""
 "\n"
 "lala\n"
 msgstr ""
+"\n"
+"lala\n"
 
 #: escriptorium/templates/includes/pagination.html
 #, python-format
@@ -1636,6 +1735,9 @@ msgid ""
 "                        Show %(page)s\n"
 "                      "
 msgstr ""
+"\n"
+"                        Zeige %(page)s\n"
+"                      "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "First page"
@@ -1652,6 +1754,9 @@ msgid ""
 "                %(page_number)s out of %(num_pages)s\n"
 "              "
 msgstr ""
+"\n"
+"                %(page_number)s von %(num_pages)s\n"
+"              "
 
 #: escriptorium/templates/includes/pagination.html
 #, python-format
@@ -1660,6 +1765,9 @@ msgid ""
 "                %(counter)s out of %(num_pages)s\n"
 "              "
 msgstr ""
+"\n"
+"                %(counter)s von %(num_pages)s\n"
+"              "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "Next"
@@ -1682,6 +1790,10 @@ msgstr ""
 #: escriptorium/templates/registration/login.html
 msgid "Please login to see this page."
 msgstr "Bitte melden Sie sich an, um diese Seite zu sehen."
+
+#: escriptorium/templates/registration/login.html
+msgid "Password"
+msgstr "Passwort"
 
 #: escriptorium/templates/registration/login.html
 msgid "Lost password?"
@@ -1805,11 +1917,152 @@ msgstr ""
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid "Email address:"
-msgstr "E-Mail-Adresse"
+msgstr "E-Mail-Adresse:"
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid "Reset my password"
 msgstr "Mein Passwort zurücksetzen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr "Projektberichte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Data metrics"
+msgstr "Datenmetriken"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of document parts"
+msgstr "Gesamtzahl der Dokumentteile"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "A document part corresponds to one image loaded within a document."
+msgstr "Ein Dokumentteil entspricht einem Bild innerhalb eines Dokumentes."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of regions"
+msgstr "Gesamtzahl der Bereiche"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A region is a polygon drawn on a document part, grouping one, several or no "
+"line(s)."
+msgstr ""
+"Ein Bereich ist ein auf einem Dokumentteil gezeichnetes Polygon, das eine, "
+"mehrere oder keine Zeile(n) umfasst."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of lines"
+msgstr "Gesamtzahl der Zeilen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A line is a segment of text identified on a document part, usually "
+"associated with a polygon (mask) and a transcription."
+msgstr ""
+"Eine Zeile ist ein Textsegment, das in einem Dokumentteil identifiziert "
+"wurde, üblicherweise verbunden mit einem Polygon (der Zeilenmaske) und einer "
+"Transkription."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of words"
+msgstr "Gesamtzahl der Worte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A word is any series of one or more characters, excepted punctuation signs "
+"and white spaces."
+msgstr ""
+"Ein Wort ist eine Abfolge von einem oder mehreren Zeichen, ausgenommen "
+"Satzzeichen und Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of characters"
+msgstr "Gesamtzahl der Zeichen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A character is any symbol used in the transcription, including punctuation, "
+"excepted white spaces."
+msgstr ""
+"Ein Zeichen ist ein beliebiges Symbol, das in der Transkription verwendet "
+"wird, inklusive Satzzeichen, aber ausgenommen Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr "Zeichensatz"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr "Zeichensatz neu laden"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+"Der Zeichensatz ist die Liste aller Zeichen, die momentan in der "
+"Transkription verwendet werden, mit zugehöriger Vorkommenshäufigkeit."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Annotation"
+msgstr "Transkriptionen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of document tags"
+msgstr "Momentante Verwendung der Dokumenttags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of part tags"
+msgstr "Momentante Verwendung der Teiltags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of regions type"
+msgstr "Momentane Verwendung der Bereichstypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of lines type"
+msgstr "Momentane Verwendung der Zeilentypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project activity"
+msgstr "Projektaktivität"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Created on"
+msgstr "Erstellt am"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Last update on"
+msgstr "Letzte Aktualisierung am"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 user"
+msgid_plural "Project shared with %(n)s users"
+msgstr[0] "Projekt geteilt mit 1 Benutzer"
+msgstr[1] "Projekt geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 group"
+msgid_plural "Project shared with %(n)s groups"
+msgstr[0] "Projekt geteilt mit 1 Gruppe"
+msgstr[1] "Projekt geteilt mit %(n)s Gruppen"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 user"
+msgid_plural "Documents shared with %(n)s users"
+msgstr[0] "Dokument geteilt mit 1 Benutzer"
+msgstr[1] "Dokument geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 group"
+msgid_plural "Documents shared with %(n)s groups"
+msgstr[0] "Dokument geteilt mit 1 Gruppe"
+msgstr[1] "Dokument geteilt mit %(n)s Gruppen"
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Total"
@@ -1895,7 +2148,7 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "Task report"
-msgstr "Aufgabenberichte"
+msgstr "Aufgabenbericht"
 
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "Started at"
@@ -1956,7 +2209,7 @@ msgstr "Klicken Sie dafür einfach auf den folgenden Link:"
 
 #: escriptorium/templates/users/email/invitation_html.html
 msgid "Sincerely, the eScriptorium team."
-msgstr "Mit freundlichen Grüßen, das eScriptorium-Team"
+msgstr "Mit freundlichen Grüßen, das eScriptorium-Team."
 
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Back to profile"
@@ -1969,6 +2222,15 @@ msgstr "Team:"
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite a user to this team."
 msgstr "Lade Benutzer in dieses Team ein."
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
+msgstr ""
+"Vergewisserns Sie sich, dass die E-Mail-Adresse korrekt ist, da Sie keine "
+"Fehlernachricht bekommen, falls dies nicht der Fall ist (zwecks Vermeidung "
+"von Phishing)."
 
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Send invitation"
@@ -2012,11 +2274,11 @@ msgid "Signup"
 msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html
-msgid "Recipient's informations"
+msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
 
 #: escriptorium/templates/users/profile.html
-msgid "Informations"
+msgid "Information"
 msgstr "Informationen"
 
 #: escriptorium/templates/users/profile.html
@@ -2099,23 +2361,6 @@ msgstr "Sie sind noch in keinem Team."
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
-#: homepage/additional_footer.html homepage_example/additional_footer.html
+#: homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
-
-#: homepage/additional_heading.html
-msgid "eScriptorium for OCR-BW"
-msgstr "eScriptorium für OCR-BW"
-
-#~ msgid "Data Interchange"
-#~ msgstr "Datenaustausch"
-
-#~ msgid ""
-#~ "Train and apply new neural networks to vastly speed up the transcription "
-#~ "process of large corpora."
-#~ msgstr ""
-#~ "Trainieren Sie neue neuronale Netze und wenden Sie sie an, um den "
-#~ "Transkriptionsprozess von großen Korpora erheblich zu beschleunigen."
-
-#~ msgid "Scripta Blog"
-#~ msgstr "Scripta Blog"
