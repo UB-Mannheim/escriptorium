@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:34+0100\n"
+"POT-Creation-Date: 2022-03-17 19:39+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -384,6 +384,7 @@ msgstr "IIIF-Manifest URI"
 msgid ""
 "exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
 msgstr ""
+"exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
 
 #: apps/imports/forms.py
 msgid "Resume previous import"
@@ -715,6 +716,14 @@ msgstr ""
 #: escriptorium/templates/404.html
 msgid "Page not found."
 msgstr "Seite nicht gefunden."
+
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
+
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search"
+msgstr "Suchen"
 
 #: escriptorium/templates/base.html
 msgid "About"
@@ -1277,6 +1286,75 @@ msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
 msgid "Documents"
 msgstr "Dokumente"
 
+#: escriptorium/templates/core/search.html
+msgid "Search in projects"
+msgstr "Suche in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid "Search text in projects"
+msgstr "Suche Text in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"Couldn't connect to ElasticSearch, please contact your instance "
+"administrator."
+msgstr ""
+"Verbindung zu ElasticSearch nicht möglich, bitte wenden Sie sich an Ihren "
+"Administrator."
+
+#: escriptorium/templates/core/search.html
+#: escriptorium/templates/core/wizards/import.html
+msgid "Reason:"
+msgstr "Grund:"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"You requested to search text in a project you don't have access to. Falling "
+"back to searching entered text in all of your projects."
+msgstr ""
+"Sie haben versucht, Text in einem Projekt, zu dem Sie keinen Zugang haben, "
+"zu suchen. Statt dessen wird in allen Ihren Projekten gesucht"
+
+#: escriptorium/templates/core/search.html
+msgid "Results"
+msgstr "Ergebnisse"
+
+#: escriptorium/templates/core/search.html
+msgid "Content"
+msgstr "Kontakt"
+
+#: escriptorium/templates/core/search.html
+msgid "Image preview"
+msgstr "Bildvorschau"
+
+#: escriptorium/templates/core/search.html
+msgid "Score"
+msgstr "Ergebnis"
+
+#: escriptorium/templates/core/search.html
+msgid "View in Editor"
+msgstr "Ansicht im Editor"
+
+#: escriptorium/templates/core/search.html
+msgid "Line transcription enhanced content"
+msgstr "Zeilentranskription hat Inhalt erweitert"
+
+#: escriptorium/templates/core/search.html
+msgid "Full image cropped according to the transcription bounding box"
+msgstr "Vollbild beschnitten gemäß Rahmen um Transkription"
+
+#: escriptorium/templates/core/search.html
+msgid "Search score"
+msgstr "Suchergebnis"
+
+#: escriptorium/templates/core/search.html
+msgid "Go to document part editing page"
+msgstr "Gehen Sie zur Seite für die Dokumentenbearbeitung"
+
+#: escriptorium/templates/core/search.html
+msgid "No results matched your search."
+msgstr "Ihre Suche fand keine Treffer."
+
 #: escriptorium/templates/core/share/share_base.html
 msgid "Share with"
 msgstr "Teile mit"
@@ -1349,10 +1427,6 @@ msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
 msgstr ""
 "Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s "
 "fehlgeschlagen."
-
-#: escriptorium/templates/core/wizards/import.html
-msgid "Reason:"
-msgstr "Grund:"
 
 #: escriptorium/templates/core/wizards/import.html
 msgid "Or"
@@ -1628,6 +1702,8 @@ msgid ""
 "\n"
 "lala\n"
 msgstr ""
+"\n"
+"lala\n"
 
 #: escriptorium/templates/includes/pagination.html
 #, python-format
@@ -1636,6 +1712,9 @@ msgid ""
 "                        Show %(page)s\n"
 "                      "
 msgstr ""
+"\n"
+"                        Zeige %(page)s\n"
+"                      "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "First page"
@@ -1652,6 +1731,9 @@ msgid ""
 "                %(page_number)s out of %(num_pages)s\n"
 "              "
 msgstr ""
+"\n"
+"                %(page_number)s von %(num_pages)s\n"
+"              "
 
 #: escriptorium/templates/includes/pagination.html
 #, python-format
@@ -1660,6 +1742,9 @@ msgid ""
 "                %(counter)s out of %(num_pages)s\n"
 "              "
 msgstr ""
+"\n"
+"                %(counter)s von %(num_pages)s\n"
+"              "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "Next"
