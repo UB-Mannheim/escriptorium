@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Page, Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import (
@@ -15,16 +16,19 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    FormView,
     ListView,
     TemplateView,
     UpdateView,
     View,
 )
+from elasticsearch import exceptions
 
 from core.forms import (
     BinarizeForm,
@@ -37,6 +41,7 @@ from core.forms import (
     ProjectForm,
     ProjectShareForm,
     RecTrainForm,
+    SearchForm,
     SegmentForm,
     SegTrainForm,
     TranscribeForm,
@@ -51,6 +56,7 @@ from core.models import (
     OcrModelRight,
     Project,
 )
+from core.search import search_in_projects
 from imports.forms import ExportForm, ImportForm
 from reporting.models import TaskReport
 from users.models import User
@@ -66,6 +72,106 @@ class Home(TemplateView):
         context['VERSION_DATE'] = settings.VERSION_DATE
         context['KRAKEN_VERSION'] = settings.KRAKEN_VERSION
         return context
+
+
+class ESPaginator(Paginator):
+
+    def __init__(self, *args, **kwargs):
+        self._count = kwargs.pop('total')
+        super(ESPaginator, self).__init__(*args, **kwargs)
+
+    @cached_property
+    def count(self):
+        return self._count
+
+    def page(self, number):
+        number = self.validate_number(number)
+        return Page(self.object_list, number, self)
+
+
+class Search(LoginRequiredMixin, FormView, TemplateView):
+    template_name = 'core/search.html'
+    form_class = SearchForm
+    paginate_by = 100
+
+    def get_context_data(self, **kwargs):
+        context = super(Search, self).get_context_data(**kwargs)
+
+        # No extra calculation if search feature is deactivated on the instance
+        if settings.DISABLE_ELASTICSEARCH:
+            return
+
+        context['display_right_warning'] = False
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # Search
+        search = self.request.GET.get('query', '')
+
+        user_projects = list(Project.objects.for_user_read(self.request.user).values_list('id', flat=True))
+        try:
+            project = int(self.request.GET.get('project', ''))
+
+            if project in user_projects:
+                projects = [project]
+            else:
+                projects = user_projects
+                context['display_right_warning'] = True
+        except ValueError:
+            projects = user_projects
+
+        try:
+            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search)
+        except exceptions.ConnectionError as e:
+            context['es_error'] = str(e)
+            return context
+
+        template_results = [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']]
+        results = [result.values() for result in template_results]
+
+        # Pagination
+        paginator = ESPaginator(results, self.paginate_by, total=int(es_results['hits']['total']['value']))
+
+        if page > paginator.num_pages:
+            page = paginator.num_pages
+
+        context['page_obj'] = paginator.page(page)
+        context['is_paginated'] = paginator.num_pages > 1
+
+        return context
+
+    def convert_hit_to_template(self, hit):
+        hit_source = hit['_source']
+        bounding_box = hit_source['bounding_box']
+        viewbox = " ".join([
+            str(max([bounding_box[0] - 10, 0])),
+            str(max([bounding_box[1] - 10, 0])),
+            str(bounding_box[2] - bounding_box[0] + 20),
+            str(bounding_box[3] - bounding_box[1] + 20)
+        ])
+        return {
+            'content': hit.get('highlight', {}).get('content', [])[0],
+            'part_pk': hit_source['document_part_id'],
+            'document_pk': hit_source['document_id'],
+            'score': hit['_score'],
+            'img_url': hit_source['image_url'],
+            'img_w': hit_source['image_width'],
+            'img_h': hit_source['image_height'],
+            'viewbox': viewbox,
+        }
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['search'] = self.request.GET.get('query')
+        kwargs['project'] = self.request.GET.get('project')
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('search')
 
 
 class PerPageMixin():
