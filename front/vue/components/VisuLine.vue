@@ -2,7 +2,7 @@
     <g @mouseover="showOverlay"
         @mouseleave="hideOverlay"
         @click="edit">
-        <polygon fill="transparent"
+        <polygon    v-bind:fill="$store.state.document.confidenceVisible ? maskFillColor : 'transparent'"
                     v-bind:stroke="maskStrokeColor"
                     v-bind:points="maskPoints"/>
         <path v-bind:id="textPathId"
@@ -127,6 +127,18 @@ export default Vue.extend({
             } else {
                 return 'lightgrey';
             }
+        },
+        maskFillColor() {
+            if (this.line.currentTrans?.graphs?.length) {
+                // compute the average confidence for this line
+                const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
+                const avgConfidence = lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
+                // convert the avg confidence to hue (0 = red, 120 = green)
+                // use a slight curve so that values are more easily red/yellow
+                const hue = Math.pow(avgConfidence, 3) * 120;
+                return `hsl(${hue}, 100%, 50%, 50%)`;
+            }
+            return 'transparent';
         },
         maskPoints() {
             if (this.line == null || !this.line.mask) return '';

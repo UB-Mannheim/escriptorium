@@ -3,6 +3,14 @@
         <div class="tools">
             <i title="Visual Transcription Panel"
                 class="panel-icon fas fa-language"></i>
+            <button id="toggle-confidence"
+                    title="Toggle confidence visualization"
+                    class="btn btn-sm btn-info ml-3 fas fa-percent"
+                    type="button"
+                    data-toggle="button"
+                    v-on:click="toggleConfidence"
+                    v-bind:disabled="!hasConfidence">C
+            </button>
         </div>
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
@@ -52,12 +60,20 @@ export default Vue.extend({
                 });
             }
         },
+        toggleConfidence() {
+            this.$store.dispatch('document/toggleConfidence');
+        },
         updateView() {
             this.$el.querySelector('svg').style.height = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));
         }
+    },
+    computed: {
+        hasConfidence() {
+            return this.$store.state.lines.all.some(line => line.currentTrans?.graphs?.length)
+        },
     }
 });
 </script>

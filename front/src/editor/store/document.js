@@ -20,6 +20,9 @@ export const initialState = () => ({
         diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
     },
 
+    // Confidence overlay visibility
+    confidenceVisible: false,
+
     enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })
 
@@ -54,6 +57,9 @@ export const mutations = {
     setEnabledVKs(state, vks) {
         state.enabledVKs = assign([], state.enabledVKs, vks)
     },
+    toggleConfidenceVisible(state) {
+        state.confidenceVisible = !state.confidenceVisible;
+    },
     reset (state) {
         assign(state, initialState())
     }
@@ -76,6 +82,10 @@ export const actions = {
 
         // Persist final value in user profile
         userProfile.set('visible-panels', state.visible_panels)
+    },
+
+    async toggleConfidence ({ commit }) {
+        commit('toggleConfidenceVisible');
     }
 }
 
