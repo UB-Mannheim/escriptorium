@@ -875,3 +875,25 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
                                       'job': 'Segment',
                                       'file': model})
         self.assertEqual(resp.status_code, 201)
+
+
+class ProjectViewSetTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.project = self.factory.make_project()
+
+    def test_regression_read_all_projects(self):
+        other_user = self.factory.make_user()
+        self.factory.make_project(owner=other_user)
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 1)
+
+    def test_create(self):
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-list')
+        resp = self.client.post(uri, {'name': 'test proj'})
+        print(resp.content)
+        self.assertEqual(resp.status_code, 201)
