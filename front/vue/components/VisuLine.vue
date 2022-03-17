@@ -14,6 +14,7 @@
         <text :text-anchor="$store.state.document.defaultTextDirection == 'rtl' ? 'end' : ''"
                 ref="textElement"
                 lengthAdjust="spacingAndGlyphs" 
+                data-toggle="tooltip"
                 v-if="$store.state.document.mainTextDirection != 'ttb'">
             <textPath v-bind:href="'#' + textPathId"
                         v-if="line.currentTrans">
@@ -25,6 +26,7 @@
                 ref="textElement"
                 rotate="-90"
                 font-size="1em"
+                data-toggle="tooltip"
                 v-else>
             <textPath v-bind:href="'#' + textPathId"
                         v-if="line.currentTrans">
@@ -108,13 +110,28 @@ export default Vue.extend({
                 }
             }
         },
-
+        computeConfidence() {
+            // compute the average confidence for this line
+            if (this.line.currentTrans?.graphs?.length) {
+                const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
+                const avgConfidence = lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
+                const confidence =  `Confidence: ${(avgConfidence * 100).toFixed(2)}%`;
+                // add confidence to bootstrap title related attributes
+                this.$refs.textElement.setAttribute('title' ,confidence);
+                this.$refs.textElement.setAttribute('data-original-title', confidence);
+            } else {
+                // remove confidence from title attributes
+                this.$refs.textElement.setAttribute('title', '');
+                this.$refs.textElement.setAttribute('data-original-title', '');
+            }
+        },
         edit() {
             this.$store.dispatch('lines/toggleLineEdition', this.line);
         },
         reset() {
             this.computeLineHeight();
             this.computeTextLength();
+            this.computeConfidence();
         },
     },
     computed: {

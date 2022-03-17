@@ -60,7 +60,20 @@ export default Vue.extend({
                 });
             }
         },
+        toggleTooltip(turnOn) {
+            if (turnOn) {
+                // toggle on confidence tooltips
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+            else {
+                // toggle off confidence tooltips
+                $('[data-toggle="tooltip"]').tooltip('dispose');
+            }
+        },
         toggleConfidence() {
+            // use opposite of stored visibility state to toggle tooltip
+            this.toggleTooltip(!this.$store.state.document.confidenceVisible);
+            // toggle colorized confidence overlay
             this.$store.dispatch('document/toggleConfidence');
         },
         updateView() {
