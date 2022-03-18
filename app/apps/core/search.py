@@ -3,7 +3,10 @@ from urllib.parse import unquote_plus
 
 from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
-from elasticsearch import Elasticsearch
+if settings.USE_OPENSEARCH:
+    from opensearchpy import OpenSearch as Elasticsearch
+else:
+    from elasticsearch import Elasticsearch
 
 from core.models import LineTranscription
 
