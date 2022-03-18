@@ -4,7 +4,7 @@ from urllib.parse import unquote_plus
 from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from django.db.models import CharField, F, Func, Value
-from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch as Search
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 WORD_BY_WORD_SEARCH_MODE = "word-by-word"
@@ -12,7 +12,7 @@ REGEX_SEARCH_MODE = "regex"
 
 
 def search_content_es(current_page, page_size, user_id, terms, projects=None, documents=None, transcriptions=None):
-    es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
+    es_client = Search(hosts=[settings.ES_SEARCH_URL])
 
     cleaned_terms = re.escape(terms)
     exact_matches = re.findall(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
@@ -71,7 +71,7 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
     if transcriptions:
         body["query"]["bool"]["must"].append({"terms": {"transcription_id": transcriptions}})
 
-    return es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)
+    return es_client.search(index=settings.ES_SEARCH_COMMON_INDEX, body=body)
 
 
 def get_filtered_queryset(user, project_id, document_id, transcription_id, part_id):
