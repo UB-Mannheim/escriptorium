@@ -28,7 +28,11 @@ from django.views.generic import (
     UpdateView,
     View,
 )
-from elasticsearch import exceptions
+
+if settings.USE_OPENSEARCH:
+    from opensearchpy import exceptions
+else:
+    from elasticsearch import exceptions
 
 from core.forms import (
     BinarizeForm,
