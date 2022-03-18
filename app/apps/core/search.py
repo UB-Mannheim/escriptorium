@@ -2,7 +2,11 @@ import re
 from urllib.parse import unquote_plus
 
 from django.conf import settings
-from elasticsearch import Elasticsearch
+
+if settings.USE_OPENSEARCH:
+    from opensearchpy import OpenSearch as Elasticsearch
+else:
+    from elasticsearch import Elasticsearch
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 
