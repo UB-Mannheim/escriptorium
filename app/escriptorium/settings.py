@@ -217,10 +217,9 @@ CACHES = {
 
 
 # Boolean used to defuse the search feature (default to True)
-DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost:9200')
-ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
-
+DISABLE_ES_SEARCH = os.getenv('DISABLE_ES_SEARCH', 'True').lower() not in ('false', '0')
+ES_SEARCH_URL = os.getenv('ES_SEARCH_URL', 'http://localhost:9200')
+ES_SEARCH_COMMON_INDEX = os.getenv('ES_COMMON_INDEX', 'es-transcriptions')
 
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
