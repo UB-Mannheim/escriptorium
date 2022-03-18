@@ -31,7 +31,7 @@ from django.views.generic import (
     View,
 )
 from easy_thumbnails.files import get_thumbnailer
-from elasticsearch import exceptions as es_exceptions
+from opensearchpy import exceptions as es_exceptions
 
 from core.forms import (
     AlignForm,
@@ -204,7 +204,7 @@ class Search(BaseSearch):
     def no_extra_calculation_condition(self):
         # No extra calculation if:
         # - the search feature is deactivated on the instance
-        return settings.DISABLE_ELASTICSEARCH or super().no_extra_calculation_condition
+        return settings.DISABLE_ES_SEARCH or super().no_extra_calculation_condition
 
     def convert_hit_to_template(self, hit):
         hit_source = hit['_source']

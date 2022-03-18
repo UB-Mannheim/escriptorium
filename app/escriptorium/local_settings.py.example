@@ -66,14 +66,14 @@ DEBUG_TOOLBAR_PANELS = [
 # EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
-# Uncomment the following line to enable Elasticsearch
-# DISABLE_ELASTICSEARCH = False
+# Uncomment the following line to enable search (Elasticsearch, OpenSearch)
+# DISABLE_ES_SEARCH = False
 
-# Set this variable to point to your ES instance (defaults to 'http://localhost:9200')
-# ELASTICSEARCH_URL = <es_url>
+# Set this variable to point to your ES or OS instance (defaults to 'http://localhost:9200')
+# ES_SEARCH_URL = <url>
 
-# Set this variable to define the common ES index (defaults to 'es-transcriptions')
-# ELASTICSEARCH_COMMON_INDEX = <common_index_name>
+# Set this variable to define the common search index (defaults to 'es-transcriptions')
+# ES_SEARCH_COMMON_INDEX = <common_index_name>
 
 # Uncomment the following line to enable text alignment with Passim
 # TEXT_ALIGNMENT_ENABLED = True
