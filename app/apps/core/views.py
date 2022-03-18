@@ -31,7 +31,7 @@ from django.views.generic import (
     View,
 )
 from easy_thumbnails.files import get_thumbnailer
-from elasticsearch import exceptions as es_exceptions
+from opensearchpy import exceptions as es_exceptions
 
 from core.forms import (
     AlignForm,
