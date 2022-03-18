@@ -4,7 +4,10 @@ from urllib.parse import unquote_plus
 from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from django.db.models import CharField, F, Func, Value
-from elasticsearch import Elasticsearch
+if settings.USE_OPENSEARCH:
+    from opensearchpy import OpenSearch as Elasticsearch
+else:
+    from elasticsearch import Elasticsearch
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 WORD_BY_WORD_SEARCH_MODE = "word-by-word"
