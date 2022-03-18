@@ -6,9 +6,9 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db.models import Prefetch, Q
 from easy_thumbnails.files import get_thumbnailer
-from elasticsearch import Elasticsearch
-from elasticsearch.client import IndicesClient
-from elasticsearch.helpers import bulk as es_bulk
+from opensearchpy import OpenSearch as Search
+from opensearchpy.client import IndicesClient
+from opensearchpy.helpers import bulk as es_bulk
 
 from core.models import LineTranscription, Project
 from users.models import User
@@ -41,7 +41,7 @@ INDEX_MAPPING = {
 
 
 class Command(BaseCommand):
-    help = "Index projects by creating one Elasticsearch document for each LineTranscription."
+    help = "Index projects by creating one Elasticsearch/OpenSearch document for each LineTranscription."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -72,16 +72,16 @@ class Command(BaseCommand):
         if options["verbosity"] > 1:
             logger.setLevel(logging.INFO)
 
-        if settings.DISABLE_ELASTICSEARCH:
+        if settings.DISABLE_ES_SEARCH:
             logger.error(
-                "Please set the DISABLE_ELASTICSEARCH Django setting to 'False' to use this command."
+                "Please set the DISABLE_ES_SEARCH Django setting to 'False' to use this command."
             )
             return
 
-        self.es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
+        self.es_client = Search(hosts=[settings.ES_SEARCH_URL])
         if not self.es_client.ping():
             logger.error(
-                f"Unable to connect to Elasticsearch host defined as {settings.ELASTICSEARCH_URL}."
+                f"Unable to connect to Elasticsearch/OpenSearch host defined as {settings.ES_SEARCH_URL}."
             )
             return
 
@@ -91,28 +91,28 @@ class Command(BaseCommand):
         if options.get("drop"):
             # ignore_unavailable prevents an error from being raised if the index doesn't exist yet
             indices.delete(
-                index=settings.ELASTICSEARCH_COMMON_INDEX, ignore_unavailable=True
+                index=settings.ES_SEARCH_COMMON_INDEX, ignore_unavailable=True
             )
 
-        if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
-            indices.create(index=settings.ELASTICSEARCH_COMMON_INDEX)
+        if not indices.exists(index=settings.ES_SEARCH_COMMON_INDEX):
+            indices.create(index=settings.ES_SEARCH_COMMON_INDEX)
             logger.info(
-                f"Created a new index named {settings.ELASTICSEARCH_COMMON_INDEX}"
+                f"Created a new index named {settings.ES_SEARCH_COMMON_INDEX}"
             )
 
         try:
             # Explicitly set the index mapping
-            indices.put_mapping(INDEX_MAPPING, index=settings.ELASTICSEARCH_COMMON_INDEX)
+            indices.put_mapping(INDEX_MAPPING, index=settings.ES_SEARCH_COMMON_INDEX)
 
             # Assert that the current index mapping really match INDEX_MAPPING constant
             real_index_mapping = (
-                indices.get_mapping(index=settings.ELASTICSEARCH_COMMON_INDEX)
-                .get(settings.ELASTICSEARCH_COMMON_INDEX, {})
+                indices.get_mapping(index=settings.ES_SEARCH_COMMON_INDEX)
+                .get(settings.ES_SEARCH_COMMON_INDEX, {})
                 .get("mappings", {})
             )
             assert real_index_mapping == INDEX_MAPPING
         except Exception:
-            raise Exception(f"The index named {settings.ELASTICSEARCH_COMMON_INDEX} has an internal mapping that conflicts from the one defined in the constant INDEX_MAPPING, please use the --drop option to clean the data and reindex everything.")
+            raise Exception(f"The index named {settings.ES_SEARCH_COMMON_INDEX} has an internal mapping that conflicts from the one defined in the constant INDEX_MAPPING, please use the --drop option to clean the data and reindex everything.")
 
         extras = {}
         # Index all projects by default
@@ -172,7 +172,7 @@ class Command(BaseCommand):
                     )
 
             logger.info(
-                f"   Inserted {total_inserted} new entries in index {settings.ELASTICSEARCH_COMMON_INDEX}\n"
+                f"   Inserted {total_inserted} new entries in index {settings.ES_SEARCH_COMMON_INDEX}\n"
             )
 
         logger.info(
@@ -238,7 +238,7 @@ class Command(BaseCommand):
                     # If you change the document structure here, don't forget to update the INDEX_MAPPING constant
                     to_insert.append(
                         {
-                            "_index": settings.ELASTICSEARCH_COMMON_INDEX,
+                            "_index": settings.ES_SEARCH_COMMON_INDEX,
                             "_id": f"{line_transcription.id}",
                             "project_id": project.id,
                             "document_id": document.id,
