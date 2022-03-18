@@ -674,3 +674,7 @@ i.panel-icon {
 #reset-onboarding{
     margin-top: 5%;
 }
+
+input[type="range"]#confidence-range {
+    width: 20%;
+}

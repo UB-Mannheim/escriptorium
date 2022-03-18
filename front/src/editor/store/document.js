@@ -22,6 +22,8 @@ export const initialState = () => ({
 
     // Confidence overlay visibility
     confidenceVisible: false,
+    // exponential scale factor for confidence overlay
+    confidenceScale: 2.5,
 
     enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })
@@ -57,6 +59,9 @@ export const mutations = {
     setEnabledVKs(state, vks) {
         state.enabledVKs = assign([], state.enabledVKs, vks)
     },
+    setConfidenceScale(state, scale) {
+        state.confidenceScale = scale;
+    },
     toggleConfidenceVisible(state) {
         state.confidenceVisible = !state.confidenceVisible;
     },
@@ -86,6 +91,10 @@ export const actions = {
 
     async toggleConfidence ({ commit }) {
         commit('toggleConfidenceVisible');
+    },
+
+    async scaleConfidence({ commit }, scale) {
+        commit('setConfidenceScale', scale);
     }
 }
 

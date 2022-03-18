@@ -11,6 +11,17 @@
                     v-on:click="toggleConfidence"
                     v-bind:disabled="!hasConfidence">C
             </button>
+            <input
+                type="range"
+                class="custom-range"
+                min="1"
+                max="5"
+                id="confidence-range"
+                step="0.1"
+                v-on:input="changeConfidenceScale"
+                v-bind:disabled="!hasConfidence || !$store.state.document.confidenceVisible"
+                v-model="confidenceScale"
+            >
         </div>
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
@@ -43,6 +54,11 @@ export default Vue.extend({
     components: {
         'visuline': VisuLine,
         TranscriptionModal,
+    },
+    data() {
+        return {
+            confidenceScale: this.$store.state.document.confidenceScale,
+        }
     },
     mounted() {
         // wait for the element to be rendered
@@ -81,6 +97,9 @@ export default Vue.extend({
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));
+        },
+        changeConfidenceScale(e) {
+            this.$store.dispatch('document/scaleConfidence', e.target.value);
         }
     },
     computed: {
