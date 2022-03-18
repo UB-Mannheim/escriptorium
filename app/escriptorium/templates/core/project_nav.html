@@ -37,7 +37,7 @@
 {% block modals %}{% endblock %}
 {% endblock %}
 
-{% if not DISABLE_ELASTICSEARCH %}
+{% if not DISABLE_ES_SEARCH %}
   {% block searchbar_hidden_inputs %}
   <input name="project" type="text" value="{{project.pk}}" hidden>
   {% endblock %}
