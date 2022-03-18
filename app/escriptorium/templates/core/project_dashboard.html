@@ -9,7 +9,7 @@
     <div id="project-dashboard">
         <project-dashboard
             :id={{ project.id }}
-            :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+            :search-disabled="{% if DISABLE_ES_SEARCH %}true{% else %}false{% endif %}"
         ></project-dashboard>
     </div>
     {% else %}
