@@ -58,6 +58,9 @@ DEBUG_TOOLBAR_PANELS = [
 # EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
+# Use OpenSearch instead of Elasticsearch
+USE_OPENSEARCH = True
+
 # Uncomment the following line to enable Elasticsearch
 # DISABLE_ELASTICSEARCH = False
 
