@@ -1825,10 +1825,10 @@ msgstr "Suchen"
 
 #: escriptorium/templates/core/search/search.html
 msgid ""
-"Couldn't connect to Elasticsearch, please contact your instance "
+"Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
 msgstr ""
-"Verbindung zu Elasticsearch nicht möglich, bitte wenden Sie sich an Ihren "
+"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich an Ihren "
 "Administrator."
 
 #: escriptorium/templates/core/search/search.html
