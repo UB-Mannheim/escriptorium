@@ -6,9 +6,14 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from easy_thumbnails.files import get_thumbnailer
-from elasticsearch import Elasticsearch
-from elasticsearch.client import IndicesClient
-from elasticsearch.helpers import bulk as es_bulk
+if settings.USE_OPENSEARCH:
+    from opensearchpy import OpenSearch as Elasticsearch
+    from opensearchpy.client import IndicesClient
+    from opensearchpy.helpers import bulk as es_bulk
+else:
+    from elasticsearch import Elasticsearch
+    from elasticsearch.client import IndicesClient
+    from elasticsearch.helpers import bulk as es_bulk
 
 from core.models import Project
 from users.models import User
