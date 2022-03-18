@@ -53,7 +53,7 @@
   <div id="images-page">
     <images-page
         :id={{ document.pk }}
-        :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+        :search-disabled="{% if DISABLE_ES_SEARCH %}true{% else %}false{% endif %}"
         :markdown-enabled="{% if EXPORT_OPENITI_MARKDOWN_ENABLED %}true{% else %}false{% endif %}"
         :tei-enabled="{% if EXPORT_TEI_XML_ENABLED %}true{% else %}false{% endif %}"
     ></images-page>
@@ -79,7 +79,7 @@
     {% endblock %}
 {% endif %}
 
-{% if request.user.legacy_mode and not DISABLE_ELASTICSEARCH %}
+{% if request.user.legacy_mode and not DISABLE_ES_SEARCH %}
   {% block searchbar_hidden_inputs %}
   <input name="project" type="text" value="{{document.project.pk}}" hidden>
   <input name="document" type="text" value="{{document.pk}}" hidden>

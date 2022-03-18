@@ -68,7 +68,7 @@
         </ul>
 
         <ul class="navbar-nav ml-auto mr-auto pt-1">
-          {% if user.is_authenticated and not DISABLE_ELASTICSEARCH and request.resolver_match.view_name != "search" and request.resolver_match.view_name != "find-replace" %}
+          {% if user.is_authenticated and not DISABLE_ES_SEARCH and request.resolver_match.view_name != "search" and request.resolver_match.view_name != "find-replace" %}
           <li class="nav-item">
             <form method="get" action="{% url 'search' %}" id="searchbar">
               {% block searchbar_hidden_inputs %}{% endblock %}
@@ -173,7 +173,7 @@
     <div id="vue-global-nav">
       <global-navigation
         :is-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
-        :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+        :search-disabled="{% if DISABLE_ES_SEARCH %}true{% else %}false{% endif %}"
       ></global-navigation>
     </div>
     {% endif %}

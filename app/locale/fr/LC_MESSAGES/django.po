@@ -1784,7 +1784,7 @@ msgstr ""
 
 #: escriptorium/templates/core/search/search.html
 msgid ""
-"Couldn't connect to Elasticsearch, please contact your instance "
+"Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
 msgstr ""
 
