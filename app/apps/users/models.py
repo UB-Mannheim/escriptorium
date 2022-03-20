@@ -25,6 +25,10 @@ class User(AbstractUser):
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
 
+    language = models.CharField(max_length=10,
+                                choices=settings.LANGUAGES,
+                                default=settings.LANGUAGE_CODE)
+
     onboarding = models.BooleanField(
         _('Show onboarding'),
         default=True
