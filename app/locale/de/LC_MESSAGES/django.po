@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-17 19:39+0100\n"
+"POT-Creation-Date: 2022-03-20 17:29+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1147,6 +1147,7 @@ msgid "Recipient type"
 msgstr "Art des Empfängers"
 
 #: escriptorium/templates/core/models_list/rights/main.html
+#: escriptorium/templates/registration/login.html
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Username"
 msgstr "Benutzername"
@@ -1769,6 +1770,10 @@ msgid "Please login to see this page."
 msgstr "Bitte melden Sie sich an, um diese Seite zu sehen."
 
 #: escriptorium/templates/registration/login.html
+msgid "Password"
+msgstr "Passwort"
+
+#: escriptorium/templates/registration/login.html
 msgid "Lost password?"
 msgstr "Passwort vergessen?"
 
@@ -2124,6 +2129,10 @@ msgstr "Speichern"
 msgid "Reset onboarding"
 msgstr "Starthilfe zurücksetzen"
 
+#: escriptorium/templates/users/profile.html
+msgid "Switch language"
+msgstr "Sprache umschalten"
+
 #: escriptorium/templates/users/profile_api_key.html
 msgid "API Authentication Token:"
 msgstr "API-Authentifizierungs-Token:"
@@ -2187,6 +2196,14 @@ msgstr "Sie haben noch keine Einladungen verschickt."
 #: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr "Impressum"
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr "Datenschutzerklärung"
 
 #: homepage/additional_heading.html
 msgid "eScriptorium for OCR-BW"
