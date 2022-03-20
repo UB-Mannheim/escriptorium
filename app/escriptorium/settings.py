@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'imports',
+    'language_flags',
     'reporting',
     'django_prometheus',
 ]
@@ -169,6 +170,10 @@ LANGUAGES = [
     ('en', _('English')),
     ('fr', _('French')),
     ('de', _('German')),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
 ]
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
