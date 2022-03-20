@@ -42,7 +42,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'develop (2022-03-12)'
+VERSION_DATE = 'develop (2022-03-20)'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -99,3 +99,21 @@ USE_CELERY = True
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 
 CUSTOM_HOME = True
+
+# Uncomment the two following variables to enable customized OpenITI export modes
+EXPORT_OPENITI_MARKDOWN_ENABLED = True
+EXPORT_TEI_XML_ENABLED = True
+
+# --- SEARCH FEATURE ---
+USE_OPENSEARCH = True
+
+# Uncomment the following line to enable ElasticSearch
+DISABLE_ELASTICSEARCH = False
+
+# Set this variable to point to your ES instance (defaults to 'localhost:9200')
+ELASTICSEARCH_URL = 'http://localhost:9200'
+
+# Set this variable to define the common ES index (defaults to 'es-transcriptions')
+# ELASTICSEARCH_COMMON_INDEX = <common_index_name>
+#if USE_OPENSEARCH:
+#    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
