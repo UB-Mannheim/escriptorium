@@ -21,12 +21,31 @@
                         {% render_field form.email %}
                         {% render_field form.first_name %}
                         {% render_field form.last_name %}
-
+                        <!--
+                        { render_field form.language %}
+                        https://lokalise.com/blog/advanced-django-internationalization/
+                         -->
                         <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
                     </fieldset>
                 </form>
                 <button id="reset-onboarding" style="" class="btn btn-lg btn-primary btn-block">{% trans "Reset onboarding" %}</button>
 
+                <div><br></div>
+		<!-- https://docs.djangoproject.com/en/3.2/topics/i18n/translation/ -->
+                <form action="{% url 'set_language' %}" method="post">
+                    {% csrf_token %}
+                    <select name="language">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% get_language_info_list for LANGUAGES as languages %}  {#7#}
+                    {% for language in languages %}
+                        <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
+                            {{ language.name_local }} ({{ language.code }})
+                        </option>
+                    {% endfor %}
+                    </select>
+                    <input class="btn btn-lg btn-primary btn-block" type="submit" value="{% trans 'Switch language' %}">
+                </form>
                 {% endblock %}
             </div>
         </div>
