@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'imports',
+    'language_flags',
     'reporting',
     'django_prometheus',
 ]
@@ -80,6 +81,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -163,7 +165,12 @@ USE_L10N = True
 USE_TZ = True
 LANGUAGES = [
     ('en', _('English')),
-    ('de', _('French')),
+    # ('fr', _('French')),
+    # ('de', _('German')),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
 ]
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail')
