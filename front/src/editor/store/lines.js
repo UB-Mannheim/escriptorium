@@ -1,4 +1,4 @@
-import { assign } from 'lodash'
+import { assign, kebabCase } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
@@ -140,6 +140,7 @@ export const actions = {
         for (let i=0; i<data.lines.length; i++) {
             let l = data.lines[i]
             let newLine = l
+
             newLine.currentTrans = {
                 line: newLine.pk,
                 transcription: transcription,
@@ -148,6 +149,12 @@ export const actions = {
                 version_author: '',
                 version_source: '',
                 version_updated_at: null
+            }
+            if (l.transcriptions) {
+                const tr = l.transcriptions.find(t => t.transcription === transcription);
+                if (tr) {
+                    newLine.currentTrans = tr
+                }
             }
             createdLines.push(newLine)
             commit('append', newLine)
@@ -206,20 +213,21 @@ export const actions = {
     },
 
     async bulkDelete({state, dispatch, commit, rootState}, pks) {
-        await api.bulkDeleteLines(rootState.document.id, rootState.parts.pk, {lines: pks})
+        const resp = await api.bulkDeleteLines(rootState.document.id, rootState.parts.pk, {lines: pks})
+        const deletedLines = resp.data.lines;
 
-        let deletedLines = []
+        let deletedPKs = [];
         for (let i=0; i<pks.length; i++) {
             let index = state.all.findIndex(l=>l.pk==pks[i])
             if (index != -1) {
-                deletedLines.push(pks[i])
-                commit('remove', index)
+                deletedPKs.push(pks[i]);
+                commit('remove', index);
             }
         }
 
-        await dispatch('recalculateOrdering')
+        await dispatch('recalculateOrdering');
 
-        return deletedLines
+        return { deletedPKs, deletedLines };
     },
 
     async move({commit, rootState}, movedLines) {

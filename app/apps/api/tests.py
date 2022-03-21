@@ -711,11 +711,11 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
-        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 200)
 
     def test_bulk_update(self):
         self.client.force_login(self.user)
