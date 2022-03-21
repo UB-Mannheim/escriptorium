@@ -344,6 +344,9 @@ class SegmenterLine {
         if(this.maskPath) this.maskPath.remove();
         if(this.directionHint) this.directionHint.remove();
         if(this.orderDisplay) this.orderDisplay.remove();
+
+        const lineIndex = this.segmenter.lines.findIndex(e => e.id == this.id)
+
         this.segmenter.lines.splice(this.segmenter.lines.findIndex(e => e.id == this.id), 1);
     }
 
@@ -2179,7 +2182,6 @@ export class Segmenter {
             return;
         }
 
-        console.debug('mergeSelection called, with selection of', this.selection.lines);
         this.selection.lines.sort(function(first, second) {
             // let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
             // let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left

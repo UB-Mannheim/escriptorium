@@ -41,6 +41,7 @@ import { LineBase } from '../../src/editor/mixins.js';
 export default Vue.extend({
     mixins: [LineBase],
     mounted() {
+        this.$nextTick(this.reset);
     },
     watch: {
         'line.currentTrans.content': function(n, o) {
