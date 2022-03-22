@@ -663,7 +663,6 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
             )
 
 
-
 class IIIFManifestParser(ParserDocument):
     @cached_property
     def manifest(self):
