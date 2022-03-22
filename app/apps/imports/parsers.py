@@ -602,7 +602,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
     def update_line(self, line, lineTag):
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
-            if baseline:
+            if baseline is not None:
                 line.baseline = self.clean_coords(baseline)
             else:
                 msg = _('Line without baseline in {filen} line #{linen}, very likely that it will not be usable!').format(filen=self.file.name, linen=lineTag.sourceline)
