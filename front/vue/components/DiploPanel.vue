@@ -91,8 +91,8 @@ export default Vue.extend({
         '$store.state.document.enabledVKs'() {
             this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         },
-        '$store.state.lines.all'() {
-           this.loadAnnotations();
+        '$store.state.lines.all'(o, n) {
+            if (o != n) this.loadAnnotations();
         }
 
     },
@@ -135,9 +135,8 @@ export default Vue.extend({
             this.anno.clearAnnotations();
         },
 
-        getAPITextAnnotationBody(annotation) {
+        getAPITextAnnotationBody(annotation, offsets) {
             var body = this.getAPIAnnotationBody(annotation);
-            let offsets = annotation.target.selector.find(e => e.type == 'TextPositionSelector');
 
             let total = 0;
             for(let i=0; i<this.$children.length; i++) {
@@ -178,19 +177,27 @@ export default Vue.extend({
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
-                let body = this.getAPITextAnnotationBody(annotation);
+                let offsets = annotation.target.selector.find(e => e.type == 'TextPositionSelector');
+                let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.transcription = this.$store.state.transcriptions.selectedTranscription;
                 const newAnno = await this.$store.dispatch('textAnnotations/create', body);
                 annotation.pk = newAnno.pk;
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                let body = this.getAPITextAnnotationBody(annotation);
+                let offsets = annotation.target.selector;
+                let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.id = annotation.id;
-                this.$store.dispatch('imageAnnotations/update', body);
+                this.$store.dispatch('textAnnotations/update', body);
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
+                if (this.anno.readOnly == true) {
+                   this.anno.readOnly = false;
+                   let btn = this.getTaxoButton(annotation);
+                   btn.classList.remove('btn-outline-info');
+                   btn.classList.add('btn-info');
+                }
                 this.setTextAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 

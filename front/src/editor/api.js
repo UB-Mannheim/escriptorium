@@ -18,7 +18,7 @@ export const retrieveAnnotationTaxonomies = async (document_id, target, page) =>
 
 export const retrieveImageAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/`))
 
-export const retrieveTextAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/`))
+export const retrieveTextAnnotations = async (document_id, part_id, transcription_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${transcription_id}`))
 
 export const createContent = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/transcriptions/`, data))
 
@@ -54,9 +54,9 @@ export const createImageAnnotation = async(document_id, part_id, data) => (await
 
 export const createTextAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/text/`, data))
 
-export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
+export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.patch(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
 
-export const updateTextAnnotation = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`, data))
+export const updateTextAnnotation = async (document_id, part_id, id, data) => (await axios.patch(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`, data))
 
 export const deleteImageAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`))
 

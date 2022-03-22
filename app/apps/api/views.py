@@ -537,9 +537,16 @@ class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = TextAnnotationSerializer
 
     def get_queryset(self):
-        return (super().get_queryset()
-                .filter(part=self.kwargs['part_pk'])
-                .filter(part__document=self.kwargs['document_pk']))
+        qs = (super().get_queryset()
+              .filter(part=self.kwargs['part_pk'])
+              .filter(part__document=self.kwargs['document_pk']))
+        try:
+            transcription = int(self.request.GET.get('transcription'))
+        except (ValueError, TypeError):
+            pass
+        else:
+            qs = qs.filter(transcription=transcription)
+        return qs
 
 
 class BlockViewSet(DocumentPermissionMixin, ModelViewSet):

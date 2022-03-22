@@ -16,10 +16,10 @@ export const mutations = {
         let index = state.all.findIndex(l => l.pk == pk)
         state.all[index].loaded = true
     },
-    update (state, { pk, annotation }) {
-        let index = state.all.findIndex(a=>a.pk==pk)
-        if (index < 0) return
-    },
+    /* update (state, { pk, annotation }) {
+     *     let index = state.all.findIndex(a=>a.pk==pk)
+     *     if (index < 0) return
+     * }, */
     remove (state, pk) {
         let index = state.all.findIndex(a=>a.pk==pk)
         if (index < 0) return
@@ -54,9 +54,7 @@ export const actions = {
                                                      rootState.parts.pk,
                                                      annotation.id,
                                                      annotation)
-        let updatedAnnotation = resp.data
-        commit('update', updatedAnnotation)
-        return updatedAnnotation
+        return resp.data
     },
 
     async delete({commit, rootState}, annotationPk) {

@@ -145,6 +145,10 @@ export var AnnoPanel = {
             this.setAnnoTaxonomy(taxo);
         },
 
+        getTaxoButton(anno) {
+            return document.getElementById('anno-taxo-' + anno.taxonomy.pk);
+        },
+
         setThisAnnoTanomy(taxo) {
             throw 'override this method in the subclass!';
         },

@@ -163,6 +163,12 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
+                if (this.anno.readOnly == true) {
+                   this.anno.readOnly = false;
+                   let btn = this.getTaxoButton(annotation);
+                   btn.classList.remove('btn-outline-info');
+                   btn.classList.add('btn-info');
+                }
                 this.setAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 

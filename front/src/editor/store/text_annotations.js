@@ -16,10 +16,10 @@ export const mutations = {
         let index = state.all.findIndex(l => l.pk == pk)
         state.all[index].loaded = true
     },
-    update (state, { pk, annotation }) {
-        let index = state.all.findIndex(a=>a.pk==pk)
-        if (index < 0) return
-    },
+    /* update (state, { pk, annotation }) {
+     *     let index = state.all.findIndex(a=>a.pk==pk)
+     *     if (index < 0) return
+     * }, */
     remove (state, pk) {
         let index = state.all.findIndex(a=>a.pk==pk)
         if (index < 0) return
@@ -32,8 +32,10 @@ export const mutations = {
 
 export const actions = {
     async fetch({commit, dispatch, rootState}) {
-        const resp = await api.retrieveTextAnnotations(rootState.document.id,
-                                                       rootState.parts.pk)
+        const resp = await api.retrieveTextAnnotations(
+            rootState.document.id,
+            rootState.parts.pk,
+            rootState.transcriptions.selectedTranscription)
         commit('set', resp.data.results)
         return resp.data.results
     },
@@ -50,7 +52,12 @@ export const actions = {
     },
 
     async update({commit, rootState}, annotation) {
+        const resp = await api.updateTextAnnotation(rootState.document.id,
+                                                     rootState.parts.pk,
+                                                     annotation.id,
+                                                     annotation)
 
+        return resp.data
     },
 
     async delete({commit, rootState}, annotationPk) {
