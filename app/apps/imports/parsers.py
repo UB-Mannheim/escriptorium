@@ -602,7 +602,11 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
     def update_line(self, line, lineTag):
         try:
             baseline = lineTag.find("Baseline", self.root.nsmap)
-            line.baseline = self.clean_coords(baseline)
+            if baseline:
+                line.baseline = self.clean_coords(baseline)
+            else:
+                msg = _('Line without baseline in {filen} line #{linen}, very likely that it will not be usable!').format(filen=self.file.name, linen=lineTag.sourceline)
+                self.report.append(msg)
         except ParseError:
             #  to check if the baseline is good
             line.baseline = None
@@ -643,15 +647,13 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
             raise ParseError(msg)
 
     def get_transcription_content(self, lineTag):
-        words = lineTag.findall("Word", self.root.nsmap)
         # PAGE XML can have content for each word inside a word tag or the whole line in textline tag
+        words = lineTag.findall("Word", self.root.nsmap)
         if len(words) > 0:
-            return " ".join(
-                [
-                    e.text if e.text is not None else ""
-                    for e in lineTag.findall("Word/TextEquiv/Unicode", self.root.nsmap)
-                ]
-            )
+            return " ".join([
+                e.text if e.text is not None else ""
+                for e in lineTag.findall("Word/TextEquiv/Unicode", self.root.nsmap)
+            ])
         else:
             return " ".join(
                 [
@@ -659,6 +661,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     for e in lineTag.findall("TextEquiv/Unicode", self.root.nsmap)
                 ]
             )
+
 
 
 class IIIFManifestParser(ParserDocument):
