@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-20 17:29+0100\n"
+"POT-Creation-Date: 2022-03-21 21:02+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1047,8 +1047,8 @@ msgstr ""
 "maschineller Lerntechniken."
 
 #: escriptorium/templates/core/home.html
-msgid "Automatic Transcription"
-msgstr "Automatische Transkription"
+msgid "Automatic<br>Transcription"
+msgstr "Automatische<br>Transkription"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1059,8 +1059,8 @@ msgstr ""
 "handgeschriebener Dokumente an."
 
 #: escriptorium/templates/core/home.html
-msgid "Manual transcription"
-msgstr "Manuelle Transkription"
+msgid "Manual<br>transcription"
+msgstr "Manuelle<br>Transkription"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1071,8 +1071,8 @@ msgstr ""
 "Benutzeroberfläche, die moderne Browsertechnologie nutzt."
 
 #: escriptorium/templates/core/home.html
-msgid "Train Models"
-msgstr "Modelltraining, Nachtraining"
+msgid "Train<br>Models"
+msgstr "Modelltraining,<br>Nachtraining"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1082,8 +1082,8 @@ msgstr ""
 "automatische Erkennung zu verbessern."
 
 #: escriptorium/templates/core/home.html
-msgid "Import/Export"
-msgstr "Datenimport / Datenexport"
+msgid "Import/<br>Export"
+msgstr "Datenimport /<br>Datenexport"
 
 #: escriptorium/templates/core/home.html
 msgid ""
