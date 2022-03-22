@@ -86,7 +86,7 @@ class AcceptInvitation(CreateView):
         return response
 
 
-class AcceptGroupInvitation(DetailView):
+class AcceptGroupInvitation(LoginRequiredMixin, DetailView):
     model = Invitation
     slug_field = 'token'
 
