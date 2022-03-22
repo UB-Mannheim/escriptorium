@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-20 17:29+0100\n"
+"POT-Creation-Date: 2022-03-21 21:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -991,8 +990,8 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/home.html
-msgid "Automatic Transcription"
-msgstr "Transcription automatique"
+msgid "Automatic<br>Transcription"
+msgstr "Transcription<br>automatique"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1003,8 +1002,8 @@ msgstr ""
 "documents imprimés ou manuscrits."
 
 #: escriptorium/templates/core/home.html
-msgid "Manual transcription"
-msgstr "Transcription manuelle"
+msgid "Manual<br>transcription"
+msgstr "Transcription<br>manuelle"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1015,8 +1014,8 @@ msgstr ""
 "utilisateur ergonomique qui utilise une technologie de navigation moderne."
 
 #: escriptorium/templates/core/home.html
-msgid "Train Models"
-msgstr "Entraînement de modèles"
+msgid "Train<br>Models"
+msgstr "Entraînement<br>de modèles"
 
 #: escriptorium/templates/core/home.html
 msgid ""
@@ -1026,8 +1025,8 @@ msgstr ""
 "existants afin d'améliorer la reconnaissance automatique."
 
 #: escriptorium/templates/core/home.html
-msgid "Import/Export"
-msgstr "Importation / exportation"
+msgid "Import/<br>Export"
+msgstr "Importation /<br>exportation"
 
 #: escriptorium/templates/core/home.html
 msgid ""
