@@ -22,9 +22,9 @@ def format_timedelta(td):
         seconds = seconds - hours * 3600
 
     if seconds > 60:
-        minuts = seconds // 60
-        formatted += f" {int(minuts)}m"
-        seconds = seconds - minuts * 60
+        minutes = seconds // 60
+        formatted += f" {int(minutes)}m"
+        seconds = seconds - minutes * 60
 
     if seconds > 0:
         formatted += f" {int(seconds)}s"

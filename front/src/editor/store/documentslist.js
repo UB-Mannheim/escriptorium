@@ -46,13 +46,13 @@ export const mutations = {
         });
     },
     setTagColor (state) {
-        let brigth = 0;
+        let bright = 0;
         let rColor, bColor, gColor = 0;
-        while (brigth < 150) {
+        while (bright < 150) {
             rColor = Math.floor(Math.random() * (255 - 10)) + 10;
             bColor = Math.floor(Math.random() * (255 - 10)) + 10;
             gColor = Math.floor(Math.random() * (255 - 10)) + 10;
-            brigth = rColor + bColor + gColor;
+            bright = rColor + bColor + gColor;
         }
         let colorf = "#" + rColor.toString(16) + bColor.toString(16) + gColor.toString(16);
         state.tagColor = colorf

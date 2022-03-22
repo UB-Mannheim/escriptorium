@@ -273,9 +273,9 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):
-        nd = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
-        nd = html.unescape(nd)
-        return nd
+        cleaned_data = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
+        cleaned_data = html.unescape(cleaned_data)
+        return cleaned_data
 
     def validate_content(self, content):
         return self.cleanup(content)

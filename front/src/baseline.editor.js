@@ -401,7 +401,7 @@ class SegmenterLine {
                       anchorPath.lastSegment.point);
 
         if (!this.orderDisplay) {
-            // create it if it doesnt already exists
+            // create it if it does not already exists
             this.createOrderDisplay(anchor);
         } else {
             // update
@@ -552,7 +552,7 @@ export class Segmenter {
         this.wideLineStrokes = wideLineStrokes;
 
         this.selecting = null;
-        this.spliting = false;
+        this.splitting = false;
         this.copy = null;
 
         // menu btns
@@ -672,7 +672,7 @@ export class Segmenter {
         }
 
         if (this.splitBtn) this.splitBtn.addEventListener('click', function(event) {
-            this.spliting = !this.spliting;
+            this.splitting = !this.splitting;
             this.splitBtn.classList.toggle('btn-warning');
             this.splitBtn.classList.toggle('btn-success');
             this.setCursor();
@@ -752,7 +752,7 @@ export class Segmenter {
                     this.deleteSelection();
                 }
             } else if (event.keyCode == 67) { // C
-                this.spliting = !this.spliting;
+                this.splitting = !this.splitting;
                 if (this.splitBtn) {
                     this.splitBtn.classList.toggle('btn-warning');
                     this.splitBtn.classList.toggle('btn-success');
@@ -962,7 +962,7 @@ export class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function(event) {
             if (event.event.ctrlKey ||
-                this.spliting ||
+                this.splitting ||
                 // this.selecting ||
                 isRightClick(event.event) ||
                 this.mode != 'regions') return;
@@ -1024,7 +1024,7 @@ export class Segmenter {
         if (line.baselinePath) {
             line.baselinePath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
-                    this.spliting ||
+                    this.splitting ||
                     isRightClick(event.event) ||
                     this.mode != 'lines' ||
                     this.selecting) return;
@@ -1095,7 +1095,7 @@ export class Segmenter {
         if (line.maskPath) {
             line.maskPath.onMouseDown = function(event) {
                 if (event.event.ctrlKey ||
-                    this.spliting ||
+                    this.splitting ||
                     isRightClick(event.event) ||
                     this.selecting ||
                     this.mode != 'lines') return;
@@ -1231,7 +1231,7 @@ export class Segmenter {
         if (isRightClick(event.event)) return;
         if (!this.selecting) {
             if (event.event.ctrlKey) return;
-            if (this.spliting) {
+            if (this.splitting) {
                 this.startCuter(event);
             } else if (event.event.shiftKey) {
                 // lasso selection tool
@@ -2264,7 +2264,7 @@ export class Segmenter {
         if (style) {
             this.canvas.style.cursor = style;
         } else {
-            this.canvas.style.cursor = this.spliting?'crosshair':'copy';
+            this.canvas.style.cursor = this.splitting?'crosshair':'copy';
         }
     }
 

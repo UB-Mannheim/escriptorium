@@ -44,7 +44,7 @@ services:
       # ports:
       #   - 127.0.0.1:6379:6379
 
-    # uncomment this in conjonction with DISABLE_ELASTICSEARCH to enable the search
+    # uncomment this in conjunction with DISABLE_ELASTICSEARCH to enable the search
     # elasticsearch:
     #   restart: always
     #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0

@@ -204,7 +204,7 @@ export default Vue.extend({
         HelpCompareTranscriptions,
     },
     created() {
-        // make sure that typing in the input doesnt trigger keyboard shortcuts
+        // make sure that typing in the input does not trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
             if (this.isVKEnabled) {
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
