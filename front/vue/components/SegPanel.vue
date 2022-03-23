@@ -478,12 +478,23 @@ export default Vue.extend({
         try {
           const newLines = await this.$store.dispatch('lines/bulkCreate', {
             lines: data.lines.map((l) => {
-              return {
+              const mapped = {
                 pk: l.pk,
                 baseline: l.baseline,
                 mask: l.mask,
                 region: (l.region && l.region.context.pk) || null,
               };
+
+              if (l.transcriptionsForUndelete) {
+                mapped.transcriptions = l.transcriptionsForUndelete?.map(t => {
+                  return {
+                    content: t.content,
+                    transcription: t.transcription,
+                  }
+                });
+              }
+
+              return mapped;
             }),
             transcription: this.$store.state.transcriptions.selectedTranscription
           })
@@ -575,17 +586,35 @@ export default Vue.extend({
       }
       if (data.lines && data.lines.length) {
         try {
-          const deletedLines = await this.$store.dispatch('lines/bulkDelete', data.lines.map((l) => l.context.pk));
-          this.segmenter.lines
+          const { deletedPKs, deletedLines } = await this.$store.dispatch('lines/bulkDelete', data.lines.map((l) => l.context.pk));
+
+          // Remove the lines from the segmenter
+          const segmenterLines = this.segmenter.lines.filter((l) => deletedPKs.indexOf(l.context.pk) >= 0);
+          for(const line of segmenterLines) {
+            line.remove();
+          }
+          
+          /*this.segmenter.lines
             .filter((l) => {
               return deletedLines.indexOf(l.context.pk) >= 0;
             })
             .forEach((l) => {
               l.remove();
-            });
-        } catch (err) {
-          console.log('couldnt bulk delete lines', err);
-        }
+            }); */
+
+            // Update the original data.lines - adding the transcriptions, because we will want to pass them on to bulkCreate.
+            // The same data object is placed in the undo stack, so changing the lines in place is enough
+            for (const deletedLine of deletedLines) {
+              const dataLine = data.lines.find(l => l.context.pk === deletedLine.pk);
+              if (!dataLine) {
+                console.warn(`Response of bulkDelete contained line ${deletedLine.pk} which we have never tried to delete`);
+                continue;
+              }
+              dataLine.transcriptionsForUndelete = deletedLine.transcriptions;
+            }
+          } catch (err) {
+            console.error('couldnt bulk delete lines', err);
+          }
       }
     },
 

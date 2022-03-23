@@ -1272,36 +1272,32 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
 
     graphs_schema = {
         "type": "array",
-        "items": [
-                {
-                    "type": "object",
-                    "properties": {
-                        "c": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1
-                        },
-                        "poly": {
-                            "type": "array",
-                            "minItems": 2,
-                            "maxItems": 2,
-                            "items": [
-                                {
-                                    "type": "array",
-                                    "contains": {"type": "number"},
-                                    "minItems": 2,
-                                    "maxItems": 2,
-                                }
-                            ]
-                        },
-                        "confidence": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1,
-                        }
+        "items": {
+            "type": "object",
+            "properties": {
+                "c": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1
+                },
+                "poly": {
+                    "type": "array",
+                    "minItems": 3,
+                    "items": {
+                        "type": "array",
+                        "contains": {"type": "number"},
+                        "minItems": 2,
+                        "maxItems": 2
                     }
+
+                },
+                "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
                 }
-        ]
+            }
+        }
     }
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True,

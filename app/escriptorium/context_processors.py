@@ -1,6 +1,12 @@
 from django.conf import settings
 
 
+def disable_search(request):
+    return {'DISABLE_ELASTICSEARCH': getattr(settings,
+                                             'DISABLE_ELASTICSEARCH',
+                                             True)}
+
+
 def enable_cookie_consent(request):
     return {'ENABLE_COOKIE_CONSENT': getattr(settings,
                                              'ENABLE_COOKIE_CONSENT',

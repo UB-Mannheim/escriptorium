@@ -19,25 +19,25 @@
     <div class="row">
         <div class="col-lg-3 text-center">
             <img class="rounded-circle" src="{% static "images/t5.png" %}" alt="Generic placeholder image" width="140" height="140">
-            <h4 class="mb-3 mt-1">{% trans "Automatic Transcription" %}</h4>
+            <h3 class="mb-3">{% trans "Automatic<br>Transcription" %}</h3>
             <p class="text-muted">{% trans "Apply OCR/HTR to images of printed and handwritten documents using shared open models." %}</p>
         </div>
 
         <div class="col-lg-3 text-center">
             <img class="rounded-circle" src="{% static "images/t4.png" %}" alt="Generic placeholder image" width="140" height="140">
-            <h3 class="mb-3">{% trans "Manual transcription" %}</h3>
+            <h3 class="mb-3">{% trans "Manual<br>transcription" %}</h3>
             <p class="text-muted">{% trans "Make use of an ergonomic user interface leveraging modern browser technology to edit segmentations and transcriptions." %}</p>
         </div>
 
         <div class="col-lg-3 text-center">
             <img class="rounded-circle" src="{% static "images/t2.png" %}" alt="Generic placeholder image" width="140" height="140">
-            <h3 class="mb-3">{% trans "Train Models" %}</h3>
+            <h3 class="mb-3">{% trans "Train<br>Models" %}</h3>
             <p class="text-muted">{% trans "Create new models or finetune existing ones to improve automatic recognition." %}</p>
         </div>
 
         <div class="col-lg-3 text-center">
             <img class="rounded-circle" src="{% static "images/t6.png" %}" alt="" width="140" height="140">
-            <h3 class="mb-3">{% trans "Import/Export" %}</h3>
+            <h3 class="mb-3">{% trans "Import/<br>Export" %}</h3>
             <p class="text-muted">{% trans "Import and export models and texts transcriptions in a variety of formats. Access data through a full REST API." %}</p>
         </div>
     </div>
@@ -103,13 +103,11 @@
 
             <div class="col-6">
                 <h5>{% trans "Legal mentions" %}</h5>
-            <small>
-                <ul class="list-unstyled text-muted text-sm">
+                <ul class="list-unstyled text-muted text-sm" style="font-size: 80%;">
                     <li>Ce travail a bénéficié d’une aide de l’État gérée par l’Agence Nationale de la Recherche au titre du Programme d’Investissements d’Avenir portant la référence ANR-21-ESRE-0005.</li>
                     <li class="mt-1">This project was partially funded through the RESILIENCE project, funded from the European Union’s Horizon 2020 Framework Programme for Research and Innovation.</li>
                     <li class="mt-1">Partially funded by a grant from The Andrew W. Mellon Foundation.</li>
                 </ul>
-            </small>
             </div>
             {% if CUSTOM_HOME %}
             {% include "additional_footer.html" %}

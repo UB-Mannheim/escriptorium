@@ -21,6 +21,7 @@ from core.views import (  # DocumentDetail,
     ModelUpload,
     ProjectList,
     PublishDocument,
+    Search,
     ShareDocument,
     ShareProject,
     UpdateDocument,
@@ -29,6 +30,8 @@ from core.views import (  # DocumentDetail,
 
 urlpatterns = [
     path('', Home.as_view(), name='home'),
+
+    path('search/', Search.as_view(), name='search'),
 
     path('projects/create/', CreateProject.as_view(), name='project-create'),
     path('projects/', ProjectList.as_view(), name='projects-list'),

@@ -711,11 +711,11 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
-        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 200)
 
     def test_bulk_update(self):
         self.client.force_login(self.user)
@@ -874,4 +874,26 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, {'name': 'test_model',
                                       'job': 'Segment',
                                       'file': model})
+        self.assertEqual(resp.status_code, 201)
+
+
+class ProjectViewSetTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.project = self.factory.make_project()
+
+    def test_regression_read_all_projects(self):
+        other_user = self.factory.make_user()
+        self.factory.make_project(owner=other_user)
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 1)
+
+    def test_create(self):
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-list')
+        resp = self.client.post(uri, {'name': 'test proj'})
+        print(resp.content)
         self.assertEqual(resp.status_code, 201)

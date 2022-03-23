@@ -105,7 +105,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
-                'escriptorium.context_processors.custom_homepage'
+                'escriptorium.context_processors.custom_homepage',
+                'escriptorium.context_processors.disable_search'
             ],
         },
     },
@@ -319,7 +320,6 @@ LOGGING = {
         },
         'es_indexing': {
             'handlers': ['console_info'],
-            'level': 'INFO',
         }
     },
 }

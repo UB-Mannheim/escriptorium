@@ -22,7 +22,7 @@
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control w-50" name="name" placeholder="Add a new tag">
+                            <input type="text" class="form-control w-50" ref="nameNewTag" name="name" placeholder="Type to add a tag">
                             <input type="color" class="form-control" name="color" style="width: 10%;" v-model="rColor">
                         </div>
 
@@ -57,7 +57,7 @@ export default {
             return this.$store.state.documentslist.checkedTags;
         },
         projectIdComputed() {
-            return this.projectId
+            return this.projectId;
         },
         checkboxListData() {
             return this.$store.state.documentslist.checkboxList;
@@ -68,6 +68,7 @@ export default {
     },
     mounted(){
         $(this.$refs.tagsModal).on("hide.bs.modal", this.hideModal);
+        $(this.$refs.tagsModal).on("show.bs.modal", this.populateItems);
         this.$store.commit('documentslist/settagColor');
     },
     updated: function(){
@@ -84,7 +85,6 @@ export default {
             let json_data = this.buildJSONData($(this.$refs.formTag)[0].elements);
             await this.$store.dispatch('documentslist/updateDocumentTags', json_data);
             $(this.$refs.tagsModal).modal('hide');
-            document.location.reload();
         },
         buildJSONData(el){
             let element = {};
@@ -97,10 +97,14 @@ export default {
                     tabindex.push(el[i].name.toString());
                 }
             }
-            return element
+            return element;
         },
         hideModal(){
             this.$store.commit('documentslist/setDocumentID', null);
+        },
+        populateItems(){
+            this.$store.commit('documentslist/setProjectID', this.projectId);
+            $(this.$refs.nameNewTag).val("");
         }
     },
     watch: {
@@ -111,7 +115,7 @@ export default {
                     this.valuesSelected = nv;
                     $(this.$refs.mselectTags).selectpicker('val', nv);
                     $(this.$refs.mselectTags).selectpicker('refresh'); 
-                    this.rColor = this.randomColor
+                    this.rColor = this.randomColor;
                 });
             },
             immediate: true 

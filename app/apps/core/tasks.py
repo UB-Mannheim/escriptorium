@@ -420,6 +420,12 @@ def train_(qs, document, transcription, model=None, user=None):
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    if (document.main_script
+        and (document.main_script.text_direction == 'horizontal-rl'
+             or document.main_script.text_direction == 'vertical-rl')):
+        reorder = 'R'
+    else:
+        reorder = 'L'
     trainer = (kraken_train.KrakenTrainer
                .recognition_train_gen(device=DEVICE,
                                       load=load,
@@ -431,7 +437,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                       threads=LOAD_THREADS,
                                       augment=True,
                                       hyper_params={'batch_size': 1},
-                                      load_hyper_parameters=True))
+                                      load_hyper_parameters=True,
+                                      reorder=reorder))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
@@ -452,8 +459,12 @@ def train_(qs, document, transcription, model=None, user=None):
             'error': int(error)})
 
     trainer.run(_print_eval)
-    best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
-    shutil.copy(best_version, model.file.path)
+
+    if trainer.stopper.best_epoch != 0:
+        best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
+        shutil.copy(best_version, model.file.path)
+    else:
+        raise ValueError('No model created.')
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
