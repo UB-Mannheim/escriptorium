@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
 from core.models import DocumentPart, Transcription
-from imports.export import ENABLED_EXPORTERS
+from imports.export import ENABLED_EXPORTERS, ALTO_FORMAT
 from imports.models import DocumentImport
 from imports.parsers import ParseError, make_parser
 from imports.tasks import document_export, document_import
@@ -145,7 +145,7 @@ class ExportForm(BootstrapFormMixin, forms.Form):
     )
     parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
-    file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
+    file_format = forms.ChoiceField(choices=FORMAT_CHOICES, initial=ALTO_FORMAT)
     include_images = forms.BooleanField(
         initial=False, required=False,
         label=_('Include images'),
