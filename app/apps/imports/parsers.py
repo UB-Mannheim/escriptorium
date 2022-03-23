@@ -702,7 +702,7 @@ class IIIFManifestParser(ParserDocument):
         while current_retry < retry_limit:
             time.sleep(0.1 * current_retry)  # avoid being throttled; add a little backoff
             try:
-                r = requests.get(url, stream=True, verify=False, timeout=5)
+                r = requests.get(url, stream=True, verify=False, timeout=10)
                 r.raise_for_status()
                 return r
 
