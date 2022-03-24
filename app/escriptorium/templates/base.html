@@ -80,7 +80,7 @@
         {% for language in languages %}
           <form action="{% url 'set_language' %}" method="post">
             {% csrf_token %}
-	    <button class="btn" type="submit" name="language" title="{{ language.name_local }}" value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} style="scale: 1.5;"{% endif %}>
+	    <button class="btn" type="submit" name="language" title="{{ language.name_local }}" value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} style="transform: scale(1.5);"{% endif %}>
               {% flags_for_language 1 language.code %}
             </button>
           </form>
