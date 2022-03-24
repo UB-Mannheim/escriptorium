@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-21 21:02+0100\n"
+"POT-Creation-Date: 2022-03-24 18:29+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -468,6 +468,13 @@ msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Default PAGE Import"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line without baseline in {filen} line #{linen}, very likely that it will not "
+"be usable!"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -1891,11 +1898,11 @@ msgid "Signup"
 msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
-msgid "Recipient's informations"
+msgid "Recipient's information"
 msgstr ""
 
 #: escriptorium/templates/users/profile.html
-msgid "Informations"
+msgid "Information"
 msgstr ""
 
 #: escriptorium/templates/users/profile.html

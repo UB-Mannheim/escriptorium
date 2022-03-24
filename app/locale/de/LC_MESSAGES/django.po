@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-21 21:02+0100\n"
+"POT-Creation-Date: 2022-03-24 18:29+0100\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -513,6 +513,15 @@ msgstr "Ungültige Baseline {baseline} in {filen} Zeile {linen}"
 #: apps/imports/parsers.py
 msgid "Default PAGE Import"
 msgstr "Standard PAGE-Import"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line without baseline in {filen} line #{linen}, very likely that it will not "
+"be usable!"
+msgstr ""
+"Zeile ohne Grundlinie in {filen} Zeile #{linen}, das ist sehr wahrscheinlich "
+"nicht verwendbar!"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -2102,11 +2111,11 @@ msgid "Signup"
 msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html
-msgid "Recipient's informations"
+msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
 
 #: escriptorium/templates/users/profile.html
-msgid "Informations"
+msgid "Information"
 msgstr "Informationen"
 
 #: escriptorium/templates/users/profile.html
