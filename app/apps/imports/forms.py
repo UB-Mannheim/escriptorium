@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
 from core.models import DocumentPart, Transcription
-from imports.export import ENABLED_EXPORTERS, ALTO_FORMAT
+from imports.export import ALTO_FORMAT, ENABLED_EXPORTERS
 from imports.models import DocumentImport
 from imports.parsers import ParseError, make_parser
 from imports.tasks import document_export, document_import
