@@ -4,7 +4,7 @@ In the 'Images' tab of a Document you can find an 'Import' button which allows y
 Note that you can **NOT** import both the images and the corresponding transcription at the same time, you need to do it in two steps.
 
 ## IIIF
-Input a valid iiif manifesto uri to import all its images in full resolution along with metadatas.
+Input a valid IIIF manifest URI to import all its images in full resolution along with metadatas.
 
 ## ALTO XML
 Upload a valid [ALTO XML](https://en.wikipedia.org/wiki/ALTO_(XML)) file for segmentation and transcriptions.

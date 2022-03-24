@@ -30,7 +30,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
         required=False,
-        label=_("IIIF manifesto uri"),
+        label=_("IIIF manifest URI"),
         help_text=_("exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"))
     resume_import = forms.BooleanField(
         required=False,
