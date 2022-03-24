@@ -57,8 +57,8 @@ class Command(BaseCommand):
 
         # Creating the common index if it doesn't exist
         indices = IndicesClient(self.es_client)
-        if not indices.exists(settings.ELASTICSEARCH_COMMON_INDEX):
-            indices.create(settings.ELASTICSEARCH_COMMON_INDEX)
+        if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
+            indices.create(index=settings.ELASTICSEARCH_COMMON_INDEX)
             logger.info(
                 f"Created a new index named {settings.ELASTICSEARCH_COMMON_INDEX}"
             )
