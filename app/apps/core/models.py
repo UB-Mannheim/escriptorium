@@ -1123,7 +1123,7 @@ def validate_3_points(value):
 
 class Block(ExportModelOperationsMixin('Block'), OrderedModel, models.Model):
     """
-    Represents a visualy close group of graphemes (characters) bound by the same semantic
+    Represents a visually close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
     """
     # box = models.BoxField()  # in case we use PostGIS

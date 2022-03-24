@@ -7,6 +7,12 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.1.0
+    hooks:
+      - id: codespell
+        args: ['--write-changes']
+        exclude: '^app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py$'
   - repo: meta
     hooks:
       - id: check-useless-excludes
