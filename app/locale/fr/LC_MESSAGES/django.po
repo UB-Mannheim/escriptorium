@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 18:29+0100\n"
+"POT-Creation-Date: 2022-03-24 18:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,6 +76,14 @@ msgstr ""
 
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to search in all of your projects"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "All projects"
 msgstr ""
 
 #: apps/core/forms.py
