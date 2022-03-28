@@ -268,7 +268,7 @@ export default Vue.extend({
         },
 
         onPaste(e) {
-            
+
             let diplomaticLines=document.querySelector("#diplomatic-lines");
             let sel = window.getSelection();
             let tmpDiv = document.createElement('div');
@@ -276,14 +276,14 @@ export default Vue.extend({
             let pastedData;
             if (e && e.clipboardData && e.clipboardData.getData) {
                 pastedData = e.clipboardData.getData('text/plain');
-                
+
                 var cursor = sel.getRangeAt(0);  // specific position or range
                 // for a range, delete content to clean data and to get resulting specific cursor position from it:
                 cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
 
-                // after deleting (for an range), 
+                // after deleting (for an range),
                 // check if resulting cursor is in or off a line div or some errors will occur!:
-                let parentEl = sel.getRangeAt(0).commonAncestorContainer; 
+                let parentEl = sel.getRangeAt(0).commonAncestorContainer;
                 if (parentEl.nodeType != 1) {
                     parentEl = parentEl.parentNode;   //  for several different lines, commonAncestorContainer does not exist
                 }
@@ -302,7 +302,7 @@ export default Vue.extend({
                     // occurs when a selection is made on several lines or all is selected
 
                     //we create a between node:
-                    refNode = document.createElement('div'); 
+                    refNode = document.createElement('div');
                     refNode.textContent = '';
 
                     // paste text on the selection (cursor position or range):
@@ -322,7 +322,7 @@ export default Vue.extend({
                 }
 
                 //  get current cursor position within the line div tag
-                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur             
+                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur
 
                 // store previous and next text in the line to it / for a selection within on line:
                 textBeforeCursor = refNode.textContent.substring(0, caretPos);
@@ -338,7 +338,7 @@ export default Vue.extend({
                     textAfterCursor = nextSibling.textContent;
                     nextSibling.parentNode.removeChild(nextSibling);
                 }
-                
+
                 let endPos = 0; //  will set the new cursor position
                 let lastTargetNode = refNode;   //  last impacted node for a copy-paste (for several lines)
 
@@ -349,24 +349,24 @@ export default Vue.extend({
                 else{
                     // store resulting firstLine & lastLine contents regarding cursor position
                     let firstLine = textBeforeCursor + pasted_data_split[0];
-                    let lastLine = pasted_data_split[pasted_data_split.length -1] + textAfterCursor; 
+                    let lastLine = pasted_data_split[pasted_data_split.length -1] + textAfterCursor;
                     let nextNodesContents = new Array();
 
-                    for(var j=0; j < pasted_data_split.length; j++) 
+                    for(var j=0; j < pasted_data_split.length; j++)
                     {
                         var lineContent = pasted_data_split[j];
-                        if(j == 0) 
+                        if(j == 0)
                             lineContent = firstLine;
                         if(j == pasted_data_split.length-1)
                             lineContent = lastLine;
-                        nextNodesContents.push(lineContent);                                                
+                        nextNodesContents.push(lineContent);
                     }
                     // get length of last pasted line to set new caret position
                     endPos = String(pasted_data_split[pasted_data_split.length-1]).length;
-                    
+
                     refNode.textContent = nextNodesContents[nextNodesContents.length-1];
                     lastTargetNode = refNode;
-                    
+
                     nextNodesContents = nextNodesContents.reverse();
 
                     for(var j=1; j < nextNodesContents.length; j++) //  for any other line, we add a div and set this content

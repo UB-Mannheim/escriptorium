@@ -39,7 +39,7 @@ export default {
             if(index > -1){
                 let newTags = this.allTagsList.filter(obj => this.tagList[index].tags.includes(obj.pk));
                 this.tags = newTags;
-            } 
+            }
         }
     },
     watch: {
