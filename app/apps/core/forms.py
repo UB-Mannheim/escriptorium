@@ -187,10 +187,10 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = AnnotationTaxonomy
-        exclude = ['typology', 'marker_detail']
+        exclude = ['typology']
         labels = {
             'marker_detail': _('Color'),
-            'has_comments': _('Comment')
+            'has_comments': _('Allow Comments')
         }
 
     def __init__(self, *args, data=None, **kwargs):

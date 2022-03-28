@@ -94,7 +94,6 @@ export default Vue.extend({
         '$store.state.lines.all'(o, n) {
             if (o != n) this.loadAnnotations();
         }
-
     },
     created() {
         // vue.js quirck, have to dynamically create the event handler
@@ -157,6 +156,24 @@ export default Vue.extend({
         },
 
         async loadAnnotations() {
+            var hexToRGB = function(hex) {
+              var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+              return result ? [
+                 parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)
+              ] : null;
+            };
+
+            // dynamically creates a class for each taxonomies
+            this.$store.state.document.annotationTaxonomies.text.forEach(taxo => {
+                let style = document.createElement('style');
+                let className = 'anno-' + taxo.pk;
+                style.id = className;
+                style.type = 'text/css';
+                let rgb = hexToRGB(taxo.marker_detail);
+                style.innerHTML = "." + className + " {background-color: rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+", 0.2); border-bottom: 2px solid "+taxo.marker_detail+";}";
+                document.getElementsByTagName('head')[0].appendChild(style);
+            });
+
             let annos = await this.$store.dispatch('textAnnotations/fetch');
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
@@ -167,13 +184,22 @@ export default Vue.extend({
         },
 
         initAnnotations() {
+            var colorFormatter = function(annotation) {
+               let anno = annotation.underlying;
+               let className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
+               return className;
+            };
+
             this.anno = new Recogito({
-                content: this.$refs.diplomaticLines,
+                content: this.$refs.contentContainer,
                 allowEmpty: true,
                 readOnly: true,
                 widgets: [],
-                disableEditor: false
+                disableEditor: false,
+                formatter: colorFormatter.bind(this)
             });
+
+            // move the container element up so that it doesn't get hidden
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
@@ -243,10 +269,11 @@ export default Vue.extend({
             }
 
             // need to add/remove danger indicators
-            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
-                let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
+            // for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
+            //    let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
+            for (let line in this.$refs.diplomaticLines.childElement) {
                 if (line === null) {
-                    this.$refs.diplomaticLines.children[i].remove();
+                    line.remove();
                     continue;
                 }
 
@@ -367,7 +394,6 @@ export default Vue.extend({
         },
 
         onPaste(e) {
-
             let diplomaticLines=document.querySelector("#diplomatic-lines");
             let sel = window.getSelection();
             let tmpDiv = document.createElement('div');

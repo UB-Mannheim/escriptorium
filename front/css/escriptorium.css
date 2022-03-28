@@ -465,6 +465,7 @@ i.panel-icon {
 .panel .content-container {
     border: 1px solid lightgrey;
     border-radius: 3px;
+    position: relative;
 }
 
 .panel .content-container .js-wheelzoom-container {

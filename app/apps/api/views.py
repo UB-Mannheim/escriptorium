@@ -85,6 +85,10 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 100
+
+
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserOnboardingSerializer
@@ -525,6 +529,7 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
 class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = ImageAnnotation.objects.all()
     serializer_class = ImageAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         return (super().get_queryset()
@@ -535,6 +540,7 @@ class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
 class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = TextAnnotation.objects.all()
     serializer_class = TextAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         qs = (super().get_queryset()
@@ -608,10 +614,6 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response(resp, status=200)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LargeResultsSetPagination(PageNumberPagination):
-    page_size = 100
 
 
 class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
