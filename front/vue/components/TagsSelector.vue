@@ -24,13 +24,13 @@
   created(){
     this.$store.commit('documentslist/setTagsListPerDocument', {docTags: this.splitNested(this.tagsperdocuments.split('¤')), update: true});
     this.$store.commit('documentslist/setAllProjectTags', this.tags);
-    
+
   },
   methods: {
-    isChecked(tag){ 
+    isChecked(tag){
         return this.filters.includes(tag)
     },
-    splitNested(data){ 
+    splitNested(data){
         const toNumbers = arr => arr.map(Number);
         var elements = [];
         for (let i = 0; i < data.length; i++){

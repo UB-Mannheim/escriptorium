@@ -4,7 +4,7 @@
 {% block body %}
 <div class="row">
   <div class="col-md-6 col-md-offset-4">
-    
+
     <form method="post">
       {% csrf_token %}
       <fieldset>
@@ -13,10 +13,10 @@
         {% render_field form.recipient_first_name %}
         {% render_field form.recipient_last_name %}
         {% render_field form.group %}
-        
+
         <input type="submit" value="{% trans 'Send' %}" class="btn btn-lg btn-success btn-block">
       </fieldset>
-      
+
     </form>
   </div>
 </div>

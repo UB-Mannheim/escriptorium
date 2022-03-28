@@ -38,7 +38,7 @@ module.exports = {
         use: ['vue-loader'],
       }
     ]
-  }, 
+  },
 
   resolve: {
     alias: {

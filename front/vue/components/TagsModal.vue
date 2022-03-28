@@ -72,7 +72,7 @@ export default {
         this.$store.commit('documentslist/settagColor');
     },
     updated: function(){
-        this.$nextTick(function(){ 
+        this.$nextTick(function(){
             $(this.$refs.mselectTags).selectpicker({
                 liveSearch: true,
                 size: 'auto',
@@ -110,21 +110,21 @@ export default {
     watch: {
         "$store.state.documentslist.checkedTags": {
             handler: function(nv) {
-                this.$nextTick(function(){ 
+                this.$nextTick(function(){
                     this.$store.commit('documentslist/setTagColor');
                     this.valuesSelected = nv;
                     $(this.$refs.mselectTags).selectpicker('val', nv);
-                    $(this.$refs.mselectTags).selectpicker('refresh'); 
+                    $(this.$refs.mselectTags).selectpicker('refresh');
                     this.rColor = this.randomColor;
                 });
             },
-            immediate: true 
+            immediate: true
         },
         "$store.state.documentslist.mapTags": {
             handler: function(nv) {
                 this.tags = nv;
             },
-            immediate: true 
+            immediate: true
         }
     }
 }
@@ -132,6 +132,3 @@ export default {
 
 <style scoped>
 </style>
-
-
-

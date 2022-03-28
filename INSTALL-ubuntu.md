@@ -24,7 +24,7 @@ sudo apt install postgresql postgresql-contrib redis-server netcat-traditional j
 Then:
 ```
 sudo -i -u postgres /usr/bin/createuser --superuser $USER
-createdb escriptorium 
+createdb escriptorium
 # psql escriptorium < backup-file.sql # if migrating from somewhere else
 ```
 
@@ -38,7 +38,7 @@ git clone https://gitlab.com/scripta/escriptorium.git # will by default get you 
   source env/bin/activate
   curl -sS https://bootstrap.pypa.io/get-pip.py | python3.8
   python3.8 -m pip install -r app/requirements.txt
-  cp app/escriptorium/local_settings.py{.example,}  
+  cp app/escriptorium/local_settings.py{.example,}
   (
     cd front
     npm install
@@ -50,7 +50,7 @@ echo "export DJANGO_SETTINGS_MODULE=escriptorium.local_settings" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comment anything related to `debug_toolbar` as well as `django_extensions`. If you did not follow the above instructions and kept the database role's name the same as your system user's name, database `USER`, and possibly `PASSWORD` as well might have to be commented-in and filled out. 
+Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comment anything related to `debug_toolbar` as well as `django_extensions`. If you did not follow the above instructions and kept the database role's name the same as your system user's name, database `USER`, and possibly `PASSWORD` as well might have to be commented-in and filled out.
 
 ## Everything Working?
 
@@ -77,6 +77,6 @@ Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comm
 (
   cd escriptorium/app
   celery -A escriptorium worker -l INFO &
-  python3.8 manage.py runserver 
+  python3.8 manage.py runserver
 )
 ```

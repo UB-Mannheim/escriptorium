@@ -1,6 +1,6 @@
 var imageObserver;
 export function bootLazyload() {
-  var lazyloadImages;    
+  var lazyloadImages;
 
   if ("IntersectionObserver" in window) {
     lazyloadImages = document.querySelectorAll(".lazy");
@@ -18,14 +18,14 @@ export function bootLazyload() {
     lazyloadImages.forEach(function(image) {
       imageObserver.observe(image);
     });
-  } else {  
+  } else {
     var lazyloadThrottleTimeout;
     lazyloadImages = document.querySelectorAll(".lazy");
-    
+
     function lazyload () {
       if(lazyloadThrottleTimeout) {
         clearTimeout(lazyloadThrottleTimeout);
-      }    
+      }
 
       lazyloadThrottleTimeout = setTimeout(function() {
         var scrollTop = window.pageYOffset;
@@ -35,7 +35,7 @@ export function bootLazyload() {
               img.classList.remove('lazy');
             }
         });
-        if(lazyloadImages.length == 0) { 
+        if(lazyloadImages.length == 0) {
           document.removeEventListener("scroll", lazyload);
           window.removeEventListener("resize", lazyload);
           window.removeEventListener("orientationChange", lazyload);

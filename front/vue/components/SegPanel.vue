@@ -593,7 +593,7 @@ export default Vue.extend({
           for(const line of segmenterLines) {
             line.remove();
           }
-          
+
           /*this.segmenter.lines
             .filter((l) => {
               return deletedLines.indexOf(l.context.pk) >= 0;
