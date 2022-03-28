@@ -328,6 +328,11 @@ COMPRESS_ENABLE = True
 ALWAYS_CONVERT = False
 
 FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
