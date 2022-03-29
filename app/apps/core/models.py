@@ -1216,8 +1216,10 @@ class Line(OrderedModel):  # Versioned,
     def get_box(self):
         if self.mask:
             return [*map(min, *self.mask), *map(max, *self.mask)]
-        else:
+        elif self.baseline:
             return [*map(min, *self.baseline), *map(max, *self.baseline)]
+        else:
+            return None
 
     def set_box(self, box):
         self.mask = [(box[0], box[1]),

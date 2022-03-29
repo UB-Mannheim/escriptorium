@@ -116,7 +116,7 @@ class Command(BaseCommand):
                         project, document, part, allowed_users
                     )
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         f"Failed to index part {part.pk} on project {project.pk} because: {e}"
                     )
 
