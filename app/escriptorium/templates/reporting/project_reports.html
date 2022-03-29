@@ -13,10 +13,12 @@
         <span>{% trans 'Filters' %}</span>
         <tagsselector 
             :tags="{{document_tags}}" 
-            :filters="{{filters}}">
+            :filters="{{filters}}"
+            :tagsperdocuments="'{% for doc in object_list %}{{doc.pk}};{% for tag in doc.tags.all %} {{tag.pk}}{% if not forloop.last %},{% endif %}{% endfor %}{% if not forloop.last %}¤{% endif %}{% endfor %}'">
         </tagsselector>
     </div>
     <div class="col-10">
+        {% cache 200 project.pk filters %}
         <div class="mb-4 row justify-content-center"><h4>{% trans 'Data metrics' %}</h4></div>
         <div class="mb-4 row">
             <div class="col">
@@ -24,7 +26,7 @@
                     <i class="far fa-file-image card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Total number of document parts' %}</h5>
-                        <h2 class="card-title">{{ part_count }}</h2>
+                        <h2 class="card-title">{{ part_count|default_if_none:"0" }}</h2>
                         <p class="card-text">{% trans 'A document part corresponds to one image loaded within a document.' %}</p>
                     </div>
                 </div>
@@ -34,7 +36,7 @@
                     <i class="fas fa-th card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Total number of regions' %}</h5>
-                        <h2 class="card-title">{{ part_block_count }}</h2>
+                        <h2 class="card-title">{{ part_block_count|default_if_none:"0" }}</h2>
                         <p class="card-text">{% trans 'A region is a polygon drawn on a document part, grouping one, several or no line(s).' %}</p>
                     </div>
                 </div>
@@ -44,11 +46,12 @@
                     <i class="fas fa-stream card-header"></i>
                     <div class="card-body">
                         <h5 class="card-title">{% trans 'Total number of lines' %}</h5>
-                        <h2 class="card-title">{{ part_lines_count }}</h2>
+                        <h2 class="card-title">{{ part_lines_count|default_if_none:"0" }}</h2>
                         <p class="card-text">{% trans 'A line is a segment of text identified on a document part, usually associated with a polygon (mask) and a transcription.' %}</p>
                     </div>
                 </div>
             </div>
+        {% endcache %}
         {% with transcriptions=part_lines_transcriptions %}
             <div class="col">
                 <div class="card border-primary text-center h-100">
@@ -71,7 +74,6 @@
                 </div>
             </div>
         </div>
-        
         <div class="mb-4 row">
             <div class="col">
                 <div class="card border-primary text-center">
@@ -115,7 +117,7 @@
             </div>
         </div>
         {% endwith %}
-
+        {% cache 200 sidebar project.pk filters %}
         <div class="mb-4 row justify-content-center"><h4>{% trans 'Annotation' %}</h4></div>
         <div class="mb-4 row">
             <div class="col">
@@ -125,14 +127,12 @@
                         <h5 class="card-title">{% trans 'Current use of document tags' %}</h5>
                         <table class="table">
                             <tbody>
-                                {% cache 500 sidebar project.pk %}
                                 {% for tag in document_tags %}
                                     <tr>
                                         <td>{{ tag.name }}</td>
                                         <td>{{ tag.document_count }}</td>
                                     </tr>
                                 {% endfor %}
-                                {% endcache %}
                             <tbody>
                         </table>
                     </div>
@@ -234,9 +234,7 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        {% cache 200 documents_shared_with_users project.pk %}
                         <h5 class="card-title">{% trans 'Documents shared with  '%}  {{documents_shared_with_users}} {% trans ' user(s)' %}</h5>
-                        {% endcache %}
                     </div>
                 </div>
             </div>
@@ -244,13 +242,12 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        {% cache 200 documents_shared_with_groups project.pk %}
                         <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{documents_shared_with_groups}} {% trans ' group(s)' %}</h5>
-                        {% endcache %}
                     </div>
                 </div>
             </div>
         </div>
+        {% endcache %}
     </div>
 </div>
 
