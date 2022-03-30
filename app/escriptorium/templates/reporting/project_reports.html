@@ -11,8 +11,8 @@
 <div class="row">
     <div class="col-2" id="document_list">
         <span>{% trans 'Filters' %}</span>
-        <tagsselector 
-            :tags="{{document_tags}}" 
+        <tagsselector
+            :tags="{{document_tags}}"
             :filters="{{filters}}"
             :tagsperdocuments="'{% for doc in object_list %}{{doc.pk}};{% for tag in doc.tags.all %} {{tag.pk}}{% if not forloop.last %},{% endif %}{% endfor %}{% if not forloop.last %}¤{% endif %}{% endfor %}'">
         </tagsselector>
