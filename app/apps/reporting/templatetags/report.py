@@ -1,19 +1,19 @@
-from collections import Counter, OrderedDict
+from collections import Counter
 from itertools import islice
 from math import ceil
 
 from django import template
-from django.contrib.postgres.aggregates.general import StringAgg
-from django.db.models import Sum
 
 register = template.Library()
+
 
 def chunk_data(data):
     SIZE = ceil(len(data) / 12)
     it = iter(data)
     if data:
         for i in range(0, len(data), SIZE):
-            yield {k:data[k] for k in islice(it, SIZE)}
+            yield {k: data[k] for k in islice(it, SIZE)}
+
 
 @register.filter
 def chunk_dict(data):

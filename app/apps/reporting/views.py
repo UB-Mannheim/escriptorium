@@ -167,9 +167,9 @@ class ProjectReport(LoginRequiredMixin, DetailView):
 
         for tag in self.request.GET.getlist('tags'):
             self.documents = self.documents.filter(tags__name=tag)
-        
+
         return project
-    
+
     def get_aggregate_sum(self, field):
         document_list = self.documents
 
@@ -187,9 +187,9 @@ class ProjectReport(LoginRequiredMixin, DetailView):
             document_list = document_list.annotate(part_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
         elif field == 'part_block_count':
             document_list = document_list.annotate(part_block_count=Count('parts__blocks', distinct=True))
-        
+
         return document_list.aggregate(data=Sum(field)).get('data')
-    
+
     def get_aggregate(self, field, delimiter=' '):
         document_list = self.documents
 
@@ -201,7 +201,7 @@ class ProjectReport(LoginRequiredMixin, DetailView):
             document_list = document_list.annotate(part_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
 
         return document_list.aggregate(data=StringAgg(field, delimiter=delimiter)).get('data')
-    
+
     def get_typology_count(self, field):
         value = self.get_aggregate(field, '|')
         return OrderedDict(Counter(value.split('|'))).items() if value else ''
