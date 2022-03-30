@@ -1,11 +1,10 @@
-from django import template
-
+from collections import Counter, OrderedDict
 from itertools import islice
 from math import ceil
 
-from collections import Counter, OrderedDict
-from django.db.models import Sum
+from django import template
 from django.contrib.postgres.aggregates.general import StringAgg
+from django.db.models import Sum
 
 register = template.Library()
 

@@ -1,7 +1,7 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.urls import path
 
-from reporting.views import QuotasLeaderboard, ReportDetail, ReportList, ProjectReport
+from reporting.views import ProjectReport, QuotasLeaderboard, ReportDetail, ReportList
 
 urlpatterns = [
     path('quotas/', ReportList.as_view(), name='report-list'),

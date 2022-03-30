@@ -1,19 +1,19 @@
+from collections import Counter, OrderedDict
 from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.postgres.aggregates.general import StringAgg
 from django.core.paginator import Page, Paginator
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
 from django.utils.functional import cached_property
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
+from core.models import Document, Project
 from reporting.models import TaskReport
 from users.models import User
-from core.models import Project, Document
 
-from django.contrib.postgres.aggregates.general import StringAgg
-from collections import Counter, OrderedDict
 
 class ReportList(LoginRequiredMixin, ListView):
     model = TaskReport
