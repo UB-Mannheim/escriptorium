@@ -11,12 +11,12 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import subprocess
 import sys
 
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
+from pkg_resources import get_distribution
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -353,7 +353,7 @@ ENABLE_COOKIE_CONSENT = os.getenv('ENABLE_COOKIE_CONSENT', True)
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
-KRAKEN_VERSION = subprocess.getoutput('kraken --version')
+KRAKEN_VERSION = 'Kraken version ' + get_distribution('kraken').version
 
 IIIF_IMPORT_QUALITY = 'full'
 
