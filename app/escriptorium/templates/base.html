@@ -83,7 +83,11 @@
           </li>
           <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {% blocktrans with username=user.username %}Hello {{username}}{% endblocktrans %}
+		{% if user.get_short_name %}
+                  {% blocktrans with username=user.get_short_name %}Hello {{username}}{% endblocktrans %}
+                {% else %}
+                  {% blocktrans with username=user.get_username %}Hello {{username}}{% endblocktrans %}
+                {% endif %}
               </a>
               <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="{% url 'password_change' %}">{% trans "Change password" %}</a>
