@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 18:38+0100\n"
+"POT-Creation-Date: 2022-03-31 09:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -942,6 +942,7 @@ msgid "Share this Project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/reporting/project_reports.html
 msgid "Filters"
 msgstr ""
 
@@ -1243,6 +1244,10 @@ msgstr ""
 
 #: escriptorium/templates/core/project_nav.html
 msgid "Documents"
+msgstr ""
+
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1711,6 +1716,136 @@ msgstr ""
 #: escriptorium/templates/registration/password_reset_form.html
 msgid "Reset my password"
 msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Data metrics"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of document parts"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "A document part corresponds to one image loaded within a document."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of regions"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A region is a polygon drawn on a document part, grouping one, several or no "
+"line(s)."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of lines"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A line is a segment of text identified on a document part, usually "
+"associated with a polygon (mask) and a transcription."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of words"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A word is any series of one or more characters, excepted punctuation signs "
+"and white spaces."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of characters"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A character is any symbol used in the transcription, including punctuation, "
+"excepted white spaces."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Annotation"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of document tags"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of part tags"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of regions type"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of lines type"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project activity"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Created on"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Last update on"
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 user"
+msgid_plural "Project shared with %(n)s users"
+msgstr[0] ""
+msgstr[1] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 group"
+msgid_plural "Project shared with %(n)s groups"
+msgstr[0] ""
+msgstr[1] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 user"
+msgid_plural "Documents shared with %(n)s users"
+msgstr[0] ""
+msgstr[1] ""
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 group"
+msgid_plural "Documents shared with %(n)s groups"
+msgstr[0] ""
+msgstr[1] ""
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Total"
