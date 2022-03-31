@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-24 18:38+0100\n"
+"POT-Creation-Date: 2022-03-31 09:17+0200\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -45,7 +45,7 @@ msgstr "Zeilen und Bereiche"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Lines Baselines and Masks"
-msgstr "Zeilen Baselines und Masken"
+msgstr "Zeilengrundlinien und Masken"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Only lines Masks"
@@ -184,11 +184,11 @@ msgstr "Rechts nach links"
 
 #: apps/core/models.py
 msgid "Baseline"
-msgstr "Baseline"
+msgstr "Grundlinie"
 
 #: apps/core/models.py
 msgid "Topline"
-msgstr "Topline"
+msgstr "Toplinie"
 
 #: apps/core/models.py
 msgid "Centered"
@@ -258,7 +258,7 @@ msgstr "Polygon muss mindestens 3 Stellen haben, es hat %(length)d: %(value)s."
 
 #: apps/core/models.py
 msgid "Both baseline and mask are empty."
-msgstr "Sowohl die Baseline als auch die Maske sind leer."
+msgstr "Sowohl die Grundlinie als auch die Maske sind leer."
 
 #: apps/core/models.py escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/wizards/segment.html
@@ -516,7 +516,7 @@ msgstr "Standard ALTO-Import"
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Invalid baseline {baseline} in {filen} line {linen}"
-msgstr "Ungültige Baseline {baseline} in {filen} Zeile {linen}"
+msgstr "Ungültige Grundlinie {baseline} in {filen} Zeile {linen}"
 
 #: apps/imports/parsers.py
 msgid "Default PAGE Import"
@@ -775,7 +775,7 @@ msgstr "Profil"
 
 #: escriptorium/templates/base.html
 msgid "Task reports"
-msgstr "Aufgabenbericht"
+msgstr "Aufgabenberichte"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/core/documents_tasks_list.html
@@ -999,6 +999,7 @@ msgid "Share this Project"
 msgstr "Dieses Projekt teilen"
 
 #: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/reporting/project_reports.html
 msgid "Filters"
 msgstr "Filter"
 
@@ -1304,6 +1305,10 @@ msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
 msgid "Documents"
 msgstr "Dokumente"
 
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr "Berichte"
+
 #: escriptorium/templates/core/search.html
 msgid "Search in projects"
 msgstr "Suche in Projekten"
@@ -1600,7 +1605,7 @@ msgstr ""
 "    <br/>Falls Bereiche eine Rolle spielen, sollten Sie erst in den "
 "Bereichsmodus wechseln. <i class=\"fas fa-th-large\"></i> (R-Taste).\n"
 "    <br/>Wenn Sie sich im Bereichsmodus befinden, klicken Sie mit der "
-"<b>linken Maustaste</b>, um eine neue rechteckige Region zu erstellen, "
+"<b>linken Maustaste</b>, um einen neuen rechteckigen Bereich zu erstellen, "
 "klicken Sie erneut mit der linken Maustaste, um den Vorgang abzuschließen.\n"
 "    <br/>Zeilen, die innerhalb eines Bereichs gezogen werden, sind "
 "automatisch mit diesem verbunden.\n"
@@ -1918,6 +1923,147 @@ msgstr "E-Mail-Adresse"
 msgid "Reset my password"
 msgstr "Mein Passwort zurücksetzen"
 
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr "Projektberichte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Data metrics"
+msgstr "Datenmetriken"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of document parts"
+msgstr "Gesamtzahl der Dokumentteile"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "A document part corresponds to one image loaded within a document."
+msgstr "Ein Dokumentteil entspricht einem Bild innerhalb eines Dokumentes."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of regions"
+msgstr "Gesamtzahl der Bereiche"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A region is a polygon drawn on a document part, grouping one, several or no "
+"line(s)."
+msgstr ""
+"Ein Bereich ist ein auf einem Dokumentteil gezeichnetes Polygon, das eine, "
+"mehrere oder keine Zeile(n) umfasst"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of lines"
+msgstr "Gesamtzahl der Zeilen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A line is a segment of text identified on a document part, usually "
+"associated with a polygon (mask) and a transcription."
+msgstr ""
+"Eine Zeile ist ein Textsegment, das in einem Dokumentteil identifiziert "
+"wurde, üblicherweise verbunden mit einem Polygon (der Zeilenmaske) und einer "
+"Transkription."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of words"
+msgstr "Gesamtzahl der Worte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A word is any series of one or more characters, excepted punctuation signs "
+"and white spaces."
+msgstr ""
+"Ein Wort ist eine Abfolge von einem oder mehreren Zeichen, ausgenommen "
+"Satzzeichen und Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of characters"
+msgstr "Gesamtzahl der Zeichen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A character is any symbol used in the transcription, including punctuation, "
+"excepted white spaces."
+msgstr ""
+"Ein Zeichen ist ein beliebiges Symbol, das in der Transkription verwendet "
+"wird, inklusive Satzzeichen, aber ausgenommen Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr "Zeichensatz"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr "Zeichensatz neu laden"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+"Der Zeichensatz ist die Liste aller Zeichen, die momentan in der "
+"Transkription verwendet werden, mit zugehöriger Vorkommenshäufigkeit."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Annotation"
+msgstr "Transkriptionen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of document tags"
+msgstr "Momentante Verwendung der Dokumenttags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of part tags"
+msgstr "Momentante Verwendung der Teiltags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of regions type"
+msgstr "Momentane Verwendung der Bereichstypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of lines type"
+msgstr "Momentane Verwendung der Zeilentypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project activity"
+msgstr "Projektaktivität"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Created on"
+msgstr "Erstellt am"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Last update on"
+msgstr "Letzte Aktualisierung am"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 user"
+msgid_plural "Project shared with %(n)s users"
+msgstr[0] "Projekt geteilt mit 1 Benutzer"
+msgstr[1] "Projekt geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 group"
+msgid_plural "Project shared with %(n)s groups"
+msgstr[0] "Projekt geteilt mit 1 Gruppe"
+msgstr[1] "Projekt geteilt mit %(n)s Gruppen"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 user"
+msgid_plural "Documents shared with %(n)s users"
+msgstr[0] "Dokument geteilt mit 1 Benutzer"
+msgstr[1] "Dokument geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 group"
+msgid_plural "Documents shared with %(n)s groups"
+msgstr[0] "Dokument geteilt mit 1 Gruppe"
+msgstr[1] "Dokument geteilt mit %(n)s Gruppen"
+
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Total"
 msgstr "Insgesamt"
@@ -2002,7 +2148,7 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "Task report"
-msgstr "Aufgabenberichte"
+msgstr "Aufgabenbericht"
 
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "Started at"
@@ -2225,16 +2371,3 @@ msgstr "Datenschutzerklärung"
 #: homepage/additional_heading.html
 msgid "eScriptorium for OCR-BW"
 msgstr "eScriptorium für OCR-BW"
-
-#~ msgid "Data Interchange"
-#~ msgstr "Datenaustausch"
-
-#~ msgid ""
-#~ "Train and apply new neural networks to vastly speed up the transcription "
-#~ "process of large corpora."
-#~ msgstr ""
-#~ "Trainieren Sie neue neuronale Netze und wenden Sie sie an, um den "
-#~ "Transkriptionsprozess von großen Korpora erheblich zu beschleunigen."
-
-#~ msgid "Scripta Blog"
-#~ msgstr "Scripta Blog"
