@@ -216,7 +216,7 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        <h5 class="card-title">{% trans 'Project shared with '%}  {{object.shared_with_users.count}}  {% trans ' user(s)' %}</h5>
+                        <h5 class="card-title">{% blocktrans count n=object.shared_with_users.count %}Project shared with 1 user{% plural %}Project shared with {{n}} users{% endblocktrans %}</h5>
                     </div>
                 </div>
             </div>
@@ -226,7 +226,7 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        <h5 class="card-title">{% trans 'Project shared with '%}  {{object.shared_with_groups.count}}  {% trans ' group(s)' %}</h5>
+                        <h5 class="card-title">{% blocktrans count n=object.shared_with_groups.count %}Project shared with 1 group{% plural %}Project shared with {{n}} groups{% endblocktrans %}</h5>
                     </div>
                 </div>
             </div>
@@ -234,7 +234,7 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        <h5 class="card-title">{% trans 'Documents shared with  '%}  {{documents_shared_with_users}} {% trans ' user(s)' %}</h5>
+                        <h5 class="card-title">{% blocktrans count n=documents_shared_with_users %}Documents shared with 1 user{% plural %}Documents shared with {{n}} users{% endblocktrans %}</h5>
                     </div>
                 </div>
             </div>
@@ -242,7 +242,7 @@
                 <div class="card border-primary text-center h-100">
                     <i class="fas fa-share-square card-header"></i>
                     <div class="card-body">
-                        <h5 class="card-title"> {% trans 'Documents shared with  '%}  {{documents_shared_with_groups}} {% trans ' group(s)' %}</h5>
+                        <h5 class="card-title"> {% blocktrans count n=documents_shared_with_groups %}Documents shared with 1 group{% plural %}Documents shared with {{n}} groups{% endblocktrans %}</h5>
                     </div>
                 </div>
             </div>

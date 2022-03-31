@@ -188,7 +188,10 @@ class ProjectReport(LoginRequiredMixin, DetailView):
         elif field == 'part_block_count':
             document_list = document_list.annotate(part_block_count=Count('parts__blocks', distinct=True))
 
-        return document_list.aggregate(data=Sum(field)).get('data')
+        sum = document_list.aggregate(data=Sum(field)).get('data')
+        if sum is None:
+            sum = 0
+        return sum
 
     def get_aggregate(self, field, delimiter=' '):
         document_list = self.documents
