@@ -231,7 +231,7 @@ class ProfileInvitations(LoginRequiredMixin, TemplateView):
 
 class ProfileGroupListCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     """
-    Both were we create new groups and list them
+    Create new groups and list them
     """
     model = Group
     success_url = get_script_prefix() + 'profile/teams/'
