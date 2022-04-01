@@ -674,3 +674,12 @@ i.panel-icon {
 #reset-onboarding{
     margin-top: 5%;
 }
+
+.wide-search-crop {
+    width: 30vw;
+    max-height: 15vh;
+}
+
+.tall-search-crop {
+    height: 15vh;
+}
