@@ -2,7 +2,6 @@
 
 import os
 
-# from escriptorium.settings import INSTALLED_APPS, MIDDLEWARE
 from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
@@ -17,7 +16,7 @@ ADMINS = [
 # Settings for running from a subpath.
 FORCE_SCRIPT_NAME = '/escriptorium2'
 # Relative MEDIA_URL requires at least Django 4.0.
-MEDIA_URL = 'https://ocr-bw.bib.uni-mannheim.de' + FORCE_SCRIPT_NAME + '/media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + '/media/'
 # Relative STATIC_URL requires at least Django 4.0.
 STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + '/projects/'
@@ -42,7 +41,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'develop (2022-03-20)'
+VERSION_DATE = 'develop (2022-03-31)'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -107,7 +106,7 @@ EXPORT_TEI_XML_ENABLED = True
 # --- SEARCH FEATURE ---
 USE_OPENSEARCH = True
 
-# Uncomment the following line to enable ElasticSearch
+# Uncomment the following line to enable Elasticsearch
 DISABLE_ELASTICSEARCH = False
 
 # Set this variable to point to your ES instance (defaults to 'localhost:9200')
@@ -115,5 +114,5 @@ ELASTICSEARCH_URL = 'http://localhost:9200'
 
 # Set this variable to define the common ES index (defaults to 'es-transcriptions')
 # ELASTICSEARCH_COMMON_INDEX = <common_index_name>
-#if USE_OPENSEARCH:
+# if USE_OPENSEARCH:
 #    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
