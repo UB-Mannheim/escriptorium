@@ -33,7 +33,7 @@ repos:
     hooks:
       - id: codespell
         args: ['--write-changes']
-        exclude: '^app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py$'
+        exclude: '^.*\.po|app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py$'
   - repo: meta
     hooks:
       - id: check-useless-excludes
