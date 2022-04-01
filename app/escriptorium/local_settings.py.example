@@ -50,7 +50,7 @@ DEBUG_TOOLBAR_PANELS = [
 # EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
-# Uncomment the following line to enable ElasticSearch
+# Uncomment the following line to enable Elasticsearch
 # DISABLE_ELASTICSEARCH = False
 
 # Set this variable to point to your ES instance (defaults to 'localhost:9200')

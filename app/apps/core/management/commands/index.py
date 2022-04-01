@@ -16,7 +16,7 @@ logger.setLevel(logging.ERROR)
 
 
 class Command(BaseCommand):
-    help = "Index projects by creating one ElasticSearch document for each LineTranscription."
+    help = "Index projects by creating one Elasticsearch document for each LineTranscription."
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -28,7 +28,7 @@
 
   {% if es_error %}
   <div class="alert alert-danger" role="alert">
-    {% trans "Couldn't connect to ElasticSearch, please contact your instance administrator." %}
+    {% trans "Couldn't connect to Elasticsearch, please contact your instance administrator." %}
     <p class="mt-2 mb-0"><strong>{% trans "Reason:" %}</strong> {{ es_error }}</p>
   </div>
   {% elif 'query' not in request.GET %}
