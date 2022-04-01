@@ -13,6 +13,21 @@
 {% if share_form %}
 <button type="button" class="btn btn-primary mb-2 ml-1" data-toggle="modal" data-target="#shareModal" title="{% trans "Share this Project" %}"><i class="fas fa-share"></i></button>
 {% endif %}
+
+{% if not DISABLE_ELASTICSEARCH %}
+<form method="get" class="ml-1" style="width: 15%" action="{% url 'search' %}">
+  <input name="project" type="text" value="{{project.pk}}" hidden>
+  <div class="input-group">
+    <input name="query" type="text" class="form-control" placeholder="Search in project">
+    <div class="input-group-append">
+      <button class="btn btn-primary mb-2" type="submit">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+  </div>
+</form>
+{% endif %}
+
 {% endblock %}
 
 {% block tab_content %}
