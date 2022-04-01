@@ -161,6 +161,7 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
             'img_w': hit_source['image_width'],
             'img_h': hit_source['image_height'],
             'viewbox': viewbox,
+            'larger': (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
         }
 
     def get_form_kwargs(self):
