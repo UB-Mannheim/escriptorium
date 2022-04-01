@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-31 09:17+0200\n"
+"POT-Creation-Date: 2022-04-01 13:25+0200\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1319,10 +1319,10 @@ msgstr "Suche Text in Projekten"
 
 #: escriptorium/templates/core/search.html
 msgid ""
-"Couldn't connect to ElasticSearch, please contact your instance "
+"Couldn't connect to Elasticsearch, please contact your instance "
 "administrator."
 msgstr ""
-"Verbindung zu ElasticSearch nicht möglich, bitte wenden Sie sich an Ihren "
+"Verbindung zu Elasticsearch nicht möglich, bitte wenden Sie sich an Ihren "
 "Administrator."
 
 #: escriptorium/templates/core/search.html
