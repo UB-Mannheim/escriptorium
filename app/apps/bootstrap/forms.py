@@ -12,7 +12,7 @@ class BootstrapFormMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
-            if not field.widget.is_hidden:
+            if not field.widget.is_hidden and not field.widget.attrs.get('type', '') == 'hidden':
                 field.widget.attrs.update({
                     'placeholder': field.label or name.capitalize(),
                     'title': field.label or name.capitalize()
