@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-01 13:25+0200\n"
+"POT-Creation-Date: 2022-04-02 04:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -939,6 +939,10 @@ msgstr ""
 
 #: escriptorium/templates/core/document_list.html
 msgid "Share this Project"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Search in project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
@@ -2001,6 +2005,12 @@ msgstr ""
 
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite a user to this team."
+msgstr ""
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
 msgstr ""
 
 #: escriptorium/templates/users/group_detail_invite.html
