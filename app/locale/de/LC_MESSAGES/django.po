@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-01 13:25+0200\n"
+"POT-Creation-Date: 2022-04-02 04:30+0000\n"
 "PO-Revision-Date: 2021-11-12 19:17+0100\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -997,6 +997,10 @@ msgstr "Tags verwalten"
 #: escriptorium/templates/core/document_list.html
 msgid "Share this Project"
 msgstr "Dieses Projekt teilen"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Search in project"
+msgstr "Suche im Projekt"
 
 #: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/reporting/project_reports.html
@@ -2222,6 +2226,15 @@ msgstr "Team:"
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite a user to this team."
 msgstr "Lade Benutzer in dieses Team ein."
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
+msgstr ""
+"Vergewisserns Sie sich, dass die E-Mail-Adresse korrekt ist, da Sie keine "
+"Fehlernachricht bekommen, falls dies nicht der Fall ist (zwecks Vermeidung "
+"von Phishing)."
 
 #: escriptorium/templates/users/group_detail_invite.html
 msgid "Send invitation"
