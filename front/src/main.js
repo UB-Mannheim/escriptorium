@@ -2,6 +2,7 @@ import '../css/escriptorium.css';
 import '../css/rtl.css';
 import '../css/ttb.css';
 import './ajax.js';
+import 'vue-loading-overlay/dist/vue-loading.css';
 import { Alert, bootWebsocket, joinDocumentRoom } from './messages.js';
 window.Alert = Alert;
 window.bootWebsocket = bootWebsocket;

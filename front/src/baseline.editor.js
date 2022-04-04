@@ -2171,6 +2171,19 @@ export class Segmenter {
     }
 
     mergeSelection() {
+        if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
+            return;
+        }
+
+        this.trigger('baseline-editor:merge', {
+            lines: this.selection.lines.map(l => l.get())
+        });
+    }
+
+    frontendMergeSelection() {
+        /* This is a frontend only merge selection. It is kept here in case we want to revive it at some point,
+           for instance when we want the frontend to talk to an older backend. */
+
         /* strategy is:
            1) order the lines by their position,
            line direction doesn't matter since .join() can merge from start or end points
@@ -2178,7 +2191,7 @@ export class Segmenter {
            the starting and ending points of both lines.
            3) Delete the left over
          */
-        if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
+           if (this.selection.lines.filter(sel => sel.baselinePath === null).length > 0) {
             return;
         }
 
