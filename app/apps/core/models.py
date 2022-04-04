@@ -800,6 +800,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
         else:
             model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         model_ = vgsl.TorchVGSLModel.load_model(model_path)
+
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
@@ -870,6 +871,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
             name='kraken:' + model.name,
             document=self.document)
         model_ = kraken_models.load_any(model.file.path)
+
         lines = self.lines.all()
         text_direction = (text_direction
                           or (self.document.main_script
@@ -939,13 +941,18 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                                      report_label='Binarize in %s' % self.document.name,
                                      **kwargs))
 
-        if (task_name == 'segment' or (task_name == 'transcribe'
-                                       and not self.segmented)):
+        if (task_name == 'segment'):
             tasks.append(segment.si(instance_pk=self.pk,
                                     report_label='Segment in %s' % self.document.name,
                                     **kwargs))
 
         if task_name == 'transcribe':
+            if not self.segmented:
+                kw = kwargs.copy()
+                kw.pop('model_pk')  # we don't want to transcribe with a segmentation model
+                tasks.append(segment.si(instance_pk=self.pk,
+                                        report_label='Segment in %s' % self.document.name,
+                                        **kw))
             tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
