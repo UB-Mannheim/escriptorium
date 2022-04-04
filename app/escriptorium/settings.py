@@ -287,6 +287,10 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
         },
+        'console_debug': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',

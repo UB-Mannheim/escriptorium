@@ -230,6 +230,45 @@ export const actions = {
         return { deletedPKs, deletedLines };
     },
 
+    async merge({state, dispatch, commit, rootState}, {pks, transcription}) {
+        const resp = await api.mergeLines(rootState.document.id, rootState.parts.pk, { lines: pks })
+        const deletedLines = resp.data.lines.deleted;
+        const createdLine = resp.data.lines.created;
+
+        const deletedPKs = [];
+        for (let i=0; i<pks.length; i++) {
+            let index = state.all.findIndex(l=>l.pk==pks[i])
+            if (index != -1) {
+                deletedPKs.push(pks[i]);
+                commit('remove', index);
+            }
+        }
+
+        createdLine.currentTrans = {
+            line: createdLine.pk,
+            transcription: transcription,
+            content: '',
+            versions: [],
+            version_author: '',
+            version_source: '',
+            version_updated_at: null
+        }
+        if (createdLine.transcriptions) {
+            const tr = createdLine.transcriptions.find(t => t.transcription === transcription);
+            if (tr) {
+                createdLine.currentTrans = tr
+            }
+        }
+        commit('append', createdLine)
+
+        await dispatch('recalculateOrdering');
+        if (getters.hasMasks) {
+            await dispatch('recalculateMasks', createdLine.pk)
+        }
+
+        return { createdLine, deletedPKs, deletedLines };
+    },
+
     async move({commit, rootState}, movedLines) {
         const resp = await api.moveLines(rootState.document.id, rootState.parts.pk, {"lines": movedLines})
         let data = resp.data

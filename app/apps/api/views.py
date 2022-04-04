@@ -42,6 +42,7 @@ from api.serializers import (
     TranscriptionSerializer,
     UserOnboardingSerializer,
 )
+from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
     AlreadyProcessingException,
     Block,
@@ -523,6 +524,12 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     def bulk_create(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
 
+        response_json = self._bulk_create_helper(lines)
+        return Response({'status': 'ok', 'lines': response_json})
+
+    def _bulk_create_helper(self, lines):
+        # Performs the actual creation, called from two endpoints
+
         # We create the lines in two parts - first the lines, then their transcriptions.
         # We can't used the DetailedLineSerializer, since the Transcription serializer requires a line property,
         # which is unknown at this time - the line has not been created yet.
@@ -554,7 +561,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         # Simplest way to do this - just use the PKs to load the lines again
         qs = Line.objects.filter(pk__in=line_pks)
         serializer = DetailedLineSerializer(qs, many=True)
-        return Response({'status': 'ok', 'lines': serializer.data})
+        return serializer.data
 
     @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
@@ -573,6 +580,25 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         json = serializer.data
         qs.delete()
         return Response({'status': 'ok', 'lines': json}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def merge(self, request, document_pk=None, part_pk=None):
+        original_lines = request.data.get("lines")
+        if len(original_lines) > MAX_MERGE_SIZE:
+            return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
+
+        lines = list(Line.objects.filter(pk__in=original_lines))
+        original_serializer = DetailedLineSerializer(lines, many=True)
+        deleted_json = original_serializer.data
+
+        merged_line_json = merge_lines(lines)
+        created_json = self._bulk_create_helper([merged_line_json])
+        for line in lines:
+            line.delete()
+
+        response_json = dict(created=created_json[0], deleted=deleted_json)
+        return Response(dict(status='ok', lines=response_json), status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):

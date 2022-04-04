@@ -160,6 +160,7 @@ class Script(ExportModelOperationsMixin('Script'), models.Model):
     iso_code = models.CharField(max_length=4, blank=True)
     text_direction = models.CharField(max_length=64, default='horizontal-lr',
                                       choices=TEXT_DIRECTION_CHOICES)
+    blank_char = models.CharField(max_length=1, default=' ', blank=True)  # Blank character in script
 
     class Meta:
         ordering = ('name',)
