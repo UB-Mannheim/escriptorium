@@ -15,7 +15,7 @@
                 type="range"
                 class="custom-range"
                 min="1"
-                max="5"
+                max="8"
                 id="confidence-range"
                 step="0.1"
                 v-on:input="changeConfidenceScale"
