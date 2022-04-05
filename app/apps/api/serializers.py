@@ -110,12 +110,14 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         except IntegrityError:
             return Transcription.objects.get(name=data['name'])
 
+
 class ProjectTranscriptionSerializer(serializers.ModelSerializer):
     avg_confidence = serializers.SerializerMethodField()
+
     class Meta:
         model = Transcription
         fields = ('pk', 'name', 'document', 'avg_confidence')
-    
+
     def get_avg_confidence(self, transcription):
         line_set = transcription.linetranscription_set.all()
         confidences = []
@@ -125,6 +127,7 @@ class ProjectTranscriptionSerializer(serializers.ModelSerializer):
         if confidences:
             return mean(confidences)
         return 0
+
 
 class UserOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
