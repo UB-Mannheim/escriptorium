@@ -1,5 +1,6 @@
 import html
 import logging
+from statistics import mean
 
 import bleach
 from django.conf import settings
@@ -109,6 +110,21 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         except IntegrityError:
             return Transcription.objects.get(name=data['name'])
 
+class ProjectTranscriptionSerializer(serializers.ModelSerializer):
+    avg_confidence = serializers.SerializerMethodField()
+    class Meta:
+        model = Transcription
+        fields = ('pk', 'name', 'document', 'avg_confidence')
+    
+    def get_avg_confidence(self, transcription):
+        line_set = transcription.linetranscription_set.all()
+        confidences = []
+        for line in line_set:
+            if line.graphs:
+                confidences += [graph['confidence'] for graph in line.graphs]
+        if confidences:
+            return mean(confidences)
+        return 0
 
 class UserOnboardingSerializer(serializers.ModelSerializer):
     class Meta:

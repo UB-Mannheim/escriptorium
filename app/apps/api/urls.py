@@ -5,6 +5,7 @@ from rest_framework_nested import routers
 from api.views import (
     BlockTypeViewSet,
     BlockViewSet,
+    CharAccuracyViewSet,
     DocumentMetadataViewSet,
     DocumentTranscriptionViewSet,
     DocumentViewSet,
@@ -30,6 +31,7 @@ router.register(r'types/line', LineTypeViewSet)
 
 projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 projects_router.register(r'tags', TagViewSet, basename='tag')
+projects_router.register(r'char_accuracy', CharAccuracyViewSet, basename='char_accuracy')
 
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'metadata', DocumentMetadataViewSet, basename='metadata')

@@ -11,7 +11,8 @@ export const initialState = () => ({
     lastChecked: null,
     allProjectTags: [],
     tagColor: null,
-    TagsListPerDocument: []
+    TagsListPerDocument: [],
+    charAccuracyListPerDocument: [],
 })
 
 export const mutations = {
@@ -70,6 +71,9 @@ export const mutations = {
             }
         }
     },
+    setCharAccuracyListPerDocument (state, accuracyList) {
+        state.charAccuracyListPerDocument = accuracyList;
+    }
 }
 
 export const actions = {
@@ -144,6 +148,20 @@ export const actions = {
                 commit('setTagsListPerDocument', {pk: state.checkboxList[i], tags: _tagsId});
             }
         }
+    },
+    async fetchCharAccuracy({ state, commit }) {
+        const list = await api.retrieveProjectCharAccuracyList(state.projectID);
+        const charAccuracy = []
+        list.data.results.forEach(result => {
+            let existingAccuracyForDoc = charAccuracy.findIndex(doc => doc.pk === result.document);
+            let newAccuracy = { pk: result.document, model: result.name, accuracy: result.avg_confidence };
+            if (existingAccuracyForDoc == -1) {
+                charAccuracy.push(newAccuracy);
+            } else if (existingAccuracyForDoc.accuracy < result.avg_confidence) {
+                charAccuracy[existingAccuracyForDoc] = newAccuracy;
+            }
+        });
+        commit('setCharAccuracyListPerDocument', charAccuracy);
     }
 }
 

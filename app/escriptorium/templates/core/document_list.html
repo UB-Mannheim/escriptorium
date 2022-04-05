@@ -33,6 +33,35 @@
 
       <table id="document-list" class="table table-hover">
         <tbody>
+          <tr>
+            <th>
+              {% trans 'Select' %}
+            </th>
+            <th>
+              {% trans 'Preview' %}
+            </th>
+            <th>
+              {% trans 'Name' %}
+            </th>
+            <th>
+              {% trans 'Owner' %}
+            </th>
+            <th>
+              {% trans 'Last modified' %}
+            </th>
+            <th>
+              {% trans 'Image count' %}
+            </th>
+            <th>
+              {% trans 'Tags' %}
+            </th>
+            <th>
+              {% trans 'Avg. OCR accuracy' %}
+            </th>
+            <th>
+              {% trans 'Tools' %}
+            </th>
+          </tr>
           {% for document in object_list %}
           <tr>
             <td>
@@ -49,10 +78,10 @@
               {% endif %}
               {% endwith %}
             </td>
-            <th  onclick="document.location='{% url 'document-images' pk=document.pk %}'" style="cursor: pointer">
-              {{ document.name }}
+            <td  onclick="document.location='{% url 'document-images' pk=document.pk %}'" style="cursor: pointer">
+              <strong>{{ document.name }}</strong>
               {% if document.typology %}<br><span class="text-muted"><small>{{ document.typology|default_if_none:'-' }}</small></span>{% endif %}
-            </th>
+            </td>
             <td>
               <span title="{% trans 'Owner' %}">{{document.owner}}</span>
               {% with groups=document.shared_with_groups.all %}
@@ -70,6 +99,12 @@
               <listtagsdocument
                 :document-id="{{document.pk}}">
               </listtagsdocument>
+            </td>
+            <td>
+              <documentcharaccuracy
+                :document-id="{{document.pk}}"
+                :project-id="{{project.pk}}">
+              </documentcharaccuracy>
             </td>
             {% comment %}
             <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>
