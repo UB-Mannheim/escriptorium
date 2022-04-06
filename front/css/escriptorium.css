@@ -681,8 +681,10 @@ i.panel-icon {
 .r6o-widget {
     padding: .4rem;
 }
+
 .r6o-widget input,  .r6o-widget select {
     width: 100%;
+}
 
 .wide-search-crop {
     width: 30vw;

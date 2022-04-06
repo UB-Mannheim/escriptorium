@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from core.views import (  # DocumentDetail,
+from core.views import (
     CreateDocument,
     CreateProject,
     DeleteDocumentUserShare,

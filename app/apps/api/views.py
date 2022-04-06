@@ -18,12 +18,16 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
+    AnnotationComponentSerializer,
+    AnnotationTaxonomySerializer,
+    AnnotationTypeSerializer,
     BlockSerializer,
     BlockTypeSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
     DocumentSerializer,
     DocumentTasksSerializer,
+    ImageAnnotationSerializer,
     LineOrderSerializer,
     LineSerializer,
     LineTranscriptionSerializer,
@@ -37,6 +41,7 @@ from api.serializers import (
     SegmentSerializer,
     SegTrainSerializer,
     TagDocumentSerializer,
+    TextAnnotationSerializer,
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
@@ -45,18 +50,23 @@ from api.serializers import (
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
     AlreadyProcessingException,
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     Block,
     BlockType,
     Document,
     DocumentMetadata,
     DocumentPart,
     DocumentTag,
+    ImageAnnotation,
     Line,
     LineTranscription,
     LineType,
     OcrModel,
     Project,
     Script,
+    TextAnnotation,
     Transcription,
 )
 from core.tasks import recalculate_masks

@@ -33,6 +33,7 @@ from elasticsearch import exceptions
 from core.forms import (
     BinarizeForm,
     DocumentForm,
+    DocumentOntologyForm,
     DocumentShareForm,
     MetadataFormSet,
     MigrateDocumentForm,

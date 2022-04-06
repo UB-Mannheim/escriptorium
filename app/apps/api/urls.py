@@ -24,7 +24,6 @@ from api.views import (
     UserViewSet,
 )
 
-
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
 router.register(r'projects', ProjectViewSet)
