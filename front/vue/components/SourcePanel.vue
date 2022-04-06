@@ -25,7 +25,7 @@
                     :id="'anno-taxo-' + taxo.pk"
                     @click="toggleTaxonomy(taxo)"
                     class="btn btn-sm btn-outline-info"
-                    autocomplete="off">{{ taxo.abreviation ? taxo.abreviation : taxo.name }}</button>
+                    autocomplete="off">{{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}</button>
             </div>
         </div>
         <div ref="content" class="content-container">

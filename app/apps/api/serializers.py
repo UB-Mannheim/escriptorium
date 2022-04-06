@@ -154,7 +154,7 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnnotationTaxonomy
-        fields = ('pk', 'document', 'name', 'abreviation',
+        fields = ('pk', 'document', 'name', 'abbreviation',
                   'marker_type', 'marker_detail', 'has_comments',
                   'typology', 'components')
 

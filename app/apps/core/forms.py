@@ -9,10 +9,9 @@ from django.core.validators import (
     MinValueValidator,
 )
 from django.db.models import Q
-from django.forms.models import inlineformset_factory, BaseInlineFormSet
+from django.forms.models import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
 from PIL import Image

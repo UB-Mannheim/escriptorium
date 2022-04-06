@@ -26,7 +26,7 @@
                         @click="toggleTaxonomy(taxo)"
                         title=""
                         class="btn btn-sm btn-outline-info"
-                        autocomplete="off">{{ taxo.abreviation ? taxo.abreviation : taxo.name }}</button>
+                        autocomplete="off">{{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}</button>
             </div>
         </div>
         <div :class="'content-container ' + $store.state.document.readDirection" ref="contentContainer">

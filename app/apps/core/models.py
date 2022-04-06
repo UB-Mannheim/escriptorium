@@ -15,13 +15,13 @@ from celery import chain
 from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import Q, Prefetch, Sum
+from django.db.models import Prefetch, Q, Sum
+from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
-from django.db.models.functions import Length, Coalesce
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.template.defaultfilters import slugify
@@ -181,7 +181,7 @@ class AnnotationTaxonomy(OrderedModel):
     has_comments = models.BooleanField(default=False)
 
     name = models.CharField(max_length=64)
-    abreviation = models.CharField(max_length=3, null=True, blank=True)
+    abbreviation = models.CharField(max_length=3, null=True, blank=True)
     marker_type = models.PositiveSmallIntegerField(choices=MARKER_TYPE_CHOICES)
     marker_detail = ColorField(null=True, blank=True)
 
