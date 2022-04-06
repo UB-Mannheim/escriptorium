@@ -23,7 +23,7 @@
                 <button v-for="taxo in typo"
                         :data-taxo="taxo"
                         :id="'anno-taxo-' + taxo.pk"
-                        @click="toggleTaxonomy($event, taxo)"
+                        @click="toggleTaxonomy(taxo)"
                         title=""
                         class="btn btn-sm btn-outline-info"
                         autocomplete="off">{{ taxo.abreviation ? taxo.abreviation : taxo.name }}</button>
