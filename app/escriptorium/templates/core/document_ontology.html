@@ -24,7 +24,18 @@
                 <button type="button" class="close" aria-label="Close">
                   <span aria-hidden="true">×</span>
                 </button>
-                <p class="form-text text-muted mb-0">{% trans "The default configuration only contains semantic types. <br>It is not recommended to mix semantic, stylistic and layout types.<br><b>It is required to hit 'Update' to add your new types to the document.</b>" %}</p>
+                <p class="form-text text-muted mb-0">
+                  <h5>{% trans "Lines and Regions typologies:" %}</h5>
+                  {% trans "The default configuration only contains semantic types." %} </br>
+                  {% trans "It is not recommended to mix semantic, stylistic and layout types." %} </br>
+                  {% trans "<b>It is required to hit 'Update' to add your new types to the document.</b>" %}</br>
+
+                  <br/><h5>{% trans "Annotations:" %}</h5>
+                  {% trans "Each Annotation can store values for different components." %}</br>
+                  {% trans "<b>Components needs to be saved first before adding them to Annotation definitions.</b>" %}</br>
+                  {% trans "Annotation types allow to regroup the corresponding buttons in the editing interface (and may be used as a hint for import/export)." %}</br>
+
+                </p>
               </div>
 
               <div id="region-types">
@@ -92,11 +103,12 @@
                     {{ subform.id }}  {# hidden #}
                     {{ subform.document }}  {# hidden #}
 
-                    {% render_field subform.name group=True %}
-                    {% render_field subform.typo group=True %}
+                    {% render_field subform.name group=True class="w-25" %}
+                    {% render_field subform.abreviation group=True %}
+                    {% render_field subform.typo group=True class="w-25" %}
                     {# TODO: add dataset for typo #}
                     {% render_field subform.marker_type group=True %}
-                    {% render_field subform.marker_detail group=True %}
+                    {% render_field subform.marker_detail group=True class="mr-1" %}
                     {% render_field subform.has_comments group=True %}
                     <div class="input-group-prepend">
                         <input type="hidden"
@@ -144,11 +156,12 @@
                       {{ subform.id }}  {# hidden #}
                       {{ subform.document }}  {# hidden #}
 
-                      {% render_field subform.name group=True %}
-                      {% render_field subform.typo group=True %}
+                      {% render_field subform.name group=True class="w-25" %}
+                      {% render_field subform.abreviation group=True %}
+                      {% render_field subform.typo group=True class="w-25" %}
                       {# TODO: add dataset for typo #}
                       {% render_field subform.marker_type group=True %}
-                      {% render_field subform.marker_detail group=True %}
+                      {% render_field subform.marker_detail group=True class="mr-1" %}
                       {% render_field subform.has_comments group=True %}
                       <div class="input-group-prepend">
                           <input type="hidden"

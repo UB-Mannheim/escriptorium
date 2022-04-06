@@ -21,28 +21,11 @@
 
             <div class="btn-group taxo-group ml-2"
                  v-for="typo,group in groupedTaxonomies">
-            <div v-if="typo.length > 4" class="dropdown">
-              <button class="btn btn-sm btn-info dropdown-toggle"
-                      type="button"
-                      id="dropdownMenuButton1"
-                      data-toggle="dropdown">
-                {{ group }}
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                <li v-for="taxo in typo">
-                  <a class="dropdown-item"
-                     :id="'anno-taxo-' + taxo.pk"
-                     @click="toggleTaxonomy(taxo, $event)">
-                    {{ taxo.name }}</a>
-                </li>
-              </ul>
-            </div>
-            <button v-else
-                    v-for="taxo in typo"
+            <button v-for="taxo in typo"
                     :id="'anno-taxo-' + taxo.pk"
-                    @click="toggleTaxonomy(taxo, $event)"
+                    @click="toggleTaxonomy(taxo)"
                     class="btn btn-sm btn-outline-info"
-                    autocomplete="off">{{ taxo.name }}</button>
+                    autocomplete="off">{{ taxo.abreviation ? taxo.abreviation : taxo.name }}</button>
             </div>
         </div>
         <div ref="content" class="content-container">
@@ -128,19 +111,40 @@ export default Vue.extend({
             return coordinates;
         },
 
+        makeTaxonomiesStyles() {
+            let style = document.createElement('style');
+            style.type = 'text/css';
+            style.id = 'anno-img-taxonomies-styles';
+            document.getElementsByTagName('head')[0].appendChild(style);
+            this.$store.state.document.annotationTaxonomies.image.forEach(taxo => {
+                let className = 'anno-' + taxo.pk;
+                style.innerHTML += "\n ." + className + " .a9s-inner {stroke: " + taxo.marker_detail + ";}";
+            });
+        },
+
         async initAnnotations() {
+            if (document.getElementById('anno-taxonomies-styles') == null)
+                this.makeTaxonomiesStyles();
+
+            var imgAnnoFormatter = function(annotation) {
+               let anno = annotation.underlying;
+               let className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
+               return className;
+            };
+
             this.anno = new Annotorious({
                 image: document.getElementById('source-panel-img'),
                 allowEmpty: true,
                 readOnly: true,
                 widgets: [],
-                disableEditor: false
+                disableEditor: false,
+                formatters: imgAnnoFormatter.bind(this)
             });
             let annos = await this.$store.dispatch('imageAnnotations/fetch');
 
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
-                data.pk = annotation.pk;
+                data.id = annotation.pk;
                 data.taxonomy = this.$store.state.document.annotationTaxonomies.image.find(e => e.pk == annotation.taxonomy);
                 this.anno.addAnnotation(data);
             }.bind(this));
@@ -154,8 +158,6 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
-                // TODO: change annotation type?!
-                // annotation.taxonomy = this.currentTaxonomy;
                 let body = this.getAPIAnnotationBody(annotation);
                 body.id = annotation.id;
                 body.coordinates = this.getCoordinatesFromW3C(annotation);
@@ -163,12 +165,7 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                if (this.anno.readOnly == true) {
-                   this.anno.readOnly = false;
-                   let btn = this.getTaxoButton(annotation);
-                   btn.classList.remove('btn-outline-info');
-                   btn.classList.add('btn-info');
-                }
+                this.enableTaxonomy(annotation.taxonomy);
                 this.setAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 
@@ -177,7 +174,7 @@ export default Vue.extend({
             }.bind(this));
         },
 
-        setThisAnnoTanomy(taxo) {
+        setThisAnnoTaxonomy(taxo) {
             this.setImgAnnoTaxonomy(taxo);
         },
 

@@ -127,29 +127,38 @@ export var AnnoPanel = {
         currentTaxonomy: null,
     };},
     methods: {
-        toggleTaxonomy(taxo, ev) {
-            var btn = ev.target;
-            if (this.anno.readOnly == true) {
-                this.anno.readOnly = false;
-                btn.classList.remove('btn-outline-info');
-                btn.classList.add('btn-info');
+        toggleTaxonomy(taxo) {
+            if (this.currentTaxonomy == taxo) {
+                this.disableTaxonomy(taxo);
             } else {
-                document.querySelectorAll('.taxo-group .btn-info').forEach(
-                    e => {e.classList.remove('btn-info');
-                        e.classList.add('btn-outline-info') });
-
-                this.anno.readOnly = true;
-                btn.classList.add('btn-outline-info');
-                btn.classList.remove('btn-info');
+                if (this.currentTaxonomy) {
+                    this.disableTaxonomy(this.currentTaxonomy);
+                }
+                this.enableTaxonomy(taxo);
+                this.setThisAnnoTaxonomy(taxo);
             }
-            this.setAnnoTaxonomy(taxo);
         },
 
-        getTaxoButton(anno) {
-            return document.getElementById('anno-taxo-' + anno.taxonomy.pk);
+        disableTaxonomy(taxo) {
+            this.anno.readOnly = true;
+            this.currentTaxonomy = null;
+            document.querySelectorAll('.taxo-group .btn-info').forEach(
+                e => {e.classList.remove('btn-info');
+                      e.classList.add('btn-outline-info'); });
         },
 
-        setThisAnnoTanomy(taxo) {
+        enableTaxonomy(taxo) {
+            let btn = this.getTaxoButton(taxo);
+            this.anno.readOnly = false;
+            btn.classList.remove('btn-outline-info');
+            btn.classList.add('btn-info');
+        },
+
+        getTaxoButton(taxo) {
+            return document.getElementById('anno-taxo-' + taxo.pk);
+        },
+
+        setThisAnnoTaxonomy(taxo) {
             throw 'override this method in the subclass!';
         },
 

@@ -23,10 +23,10 @@
                 <button v-for="taxo in typo"
                         :data-taxo="taxo"
                         :id="'anno-taxo-' + taxo.pk"
-                        @click="toggleTaxonomy(taxo, $event)"
+                        @click="toggleTaxonomy($event, taxo)"
                         title=""
                         class="btn btn-sm btn-outline-info"
-                        autocomplete="off">{{ taxo.name }}</button>
+                        autocomplete="off">{{ taxo.abreviation ? taxo.abreviation : taxo.name }}</button>
             </div>
         </div>
         <div :class="'content-container ' + $store.state.document.readDirection" ref="contentContainer">
@@ -91,10 +91,11 @@ export default Vue.extend({
         '$store.state.document.enabledVKs'() {
             this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         },
-        '$store.state.lines.all'(o, n) {
-            if (o != n) this.loadAnnotations();
+        '$store.state.transcriptions.transcriptionsLoaded'(o, n) {
+            this.loadAnnotations();
         }
     },
+
     created() {
         // vue.js quirck, have to dynamically create the event handler
         // call save every 10 seconds after last change
@@ -102,6 +103,7 @@ export default Vue.extend({
             this.save();
         }.bind(this), 10000);
     },
+
     mounted() {
         // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width won't be bigger than other, especially for ttb text:
         document.querySelector('#diplo-panel').style.width = document.querySelector('#diplo-panel').clientWidth + 'px';
@@ -126,6 +128,7 @@ export default Vue.extend({
 
         this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
     },
+
     methods: {
         empty() {
             while (this.$refs.diplomaticLines.hasChildNodes()) {
@@ -155,7 +158,7 @@ export default Vue.extend({
             return body
         },
 
-        async loadAnnotations() {
+        makeTaxonomiesStyles() {
             var hexToRGB = function(hex) {
               var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
               return result ? [
@@ -163,28 +166,41 @@ export default Vue.extend({
               ] : null;
             };
 
+            let style = document.createElement('style');
+            style.type = 'text/css';
+            style.id = 'anno-text-taxonomies-styles';
+            document.getElementsByTagName('head')[0].appendChild(style);
             // dynamically creates a class for each taxonomies
             this.$store.state.document.annotationTaxonomies.text.forEach(taxo => {
-                let style = document.createElement('style');
                 let className = 'anno-' + taxo.pk;
-                style.id = className;
-                style.type = 'text/css';
-                let rgb = hexToRGB(taxo.marker_detail);
-                style.innerHTML = "." + className + " {background-color: rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+", 0.2); border-bottom: 2px solid "+taxo.marker_detail+";}";
-                document.getElementsByTagName('head')[0].appendChild(style);
+                if (taxo.marker_type == "Background Color") {
+                   let rgb = hexToRGB(taxo.marker_detail);
+                   style.innerHTML += "\n." + className + " {background-color: rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+", 0.2); border-bottom: 2px solid "+taxo.marker_detail+";}";
+                } else if (taxo.marker_type == "Text Color") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; color: " + taxo.marker_detail + ";}";
+                } else if (taxo.marker_type == "Bold") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-weight: bold;}";
+                } else if (taxo.marker_type == "Italic") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-style: italic;}";
+                }
             });
+        },
+
+        async loadAnnotations() {
+            if (document.getElementById('anno-text-taxonomies-styles') == null)
+                this.makeTaxonomiesStyles();
 
             let annos = await this.$store.dispatch('textAnnotations/fetch');
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
-                data.pk = annotation.pk;
+                data.id = annotation.pk;
                 data.taxonomy = this.$store.state.document.annotationTaxonomies.text.find(e => e.pk == annotation.taxonomy);
                 this.anno.addAnnotation(data);
             }.bind(this));
         },
 
         initAnnotations() {
-            var colorFormatter = function(annotation) {
+            var textAnnoFormatter = function(annotation) {
                let anno = annotation.underlying;
                let className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
                return className;
@@ -196,7 +212,7 @@ export default Vue.extend({
                 readOnly: true,
                 widgets: [],
                 disableEditor: false,
-                formatter: colorFormatter.bind(this)
+                formatter: textAnnoFormatter.bind(this)
             });
 
             // move the container element up so that it doesn't get hidden
@@ -218,20 +234,15 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                if (this.anno.readOnly == true) {
-                   this.anno.readOnly = false;
-                   let btn = this.getTaxoButton(annotation);
-                   btn.classList.remove('btn-outline-info');
-                   btn.classList.add('btn-info');
-                }
+                this.enableTaxonomy(annotation.taxonomy);
                 this.setTextAnnoTaxonomy(annotation.taxonomy);
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
                 this.$store.dispatch('textAnnotations/delete', annotation.pk);
             }.bind(this));
-
         },
+
         toggleSort() {
             if (this.$refs.diplomaticLines.contentEditable === 'true') {
                 this.$refs.diplomaticLines.contentEditable = 'false';
@@ -245,10 +256,12 @@ export default Vue.extend({
                 this.$refs.sortMode.classList.add('btn-info');
             }
         },
+
         changed() {
             this.$refs.saveNotif.classList.remove('hide');
             this.debouncedSave();
         },
+
         appendLine(pos) {
             let div = document.createElement('div');
             div.appendChild(document.createElement('br'));
@@ -262,6 +275,7 @@ export default Vue.extend({
             }
             return div;
         },
+
         constrainLineNumber() {
             // add lines until we have enough of them
             while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
@@ -290,14 +304,17 @@ export default Vue.extend({
                 }
             }
         },
+
         startEdit(ev) {
             this.$store.commit('document/setBlockShortcuts', true);
         },
+
         stopEdit(ev) {
             this.$store.commit('document/setBlockShortcuts', false);
             this.constrainLineNumber();
             this.save();
         },
+
         onDraggingEnd(ev) {
             /*
                Finish dragging lines, save new positions
@@ -320,6 +337,7 @@ export default Vue.extend({
             }
             this.moveLines();
         },
+
         async moveLines() {
             if(this.movedLines.length != 0) {
                 try {
@@ -330,6 +348,7 @@ export default Vue.extend({
                 }
             }
         },
+
         save() {
             /*
                if some lines are modified add them to updatedlines,
@@ -340,6 +359,7 @@ export default Vue.extend({
             this.bulkUpdate();
             this.bulkCreate();
         },
+
         focusNextLine(sel, line) {
             if (line.nextSibling) {
                 let range = document.createRange();
@@ -355,6 +375,7 @@ export default Vue.extend({
                 sel.addRange(range);
             }
         },
+
         focusPreviousLine(sel, line) {
             if (line.previousSibling) {
                 let range = document.createRange();
@@ -384,6 +405,7 @@ export default Vue.extend({
                 ev.preventDefault();
             }
         },
+
         cleanSource(dirtyText) {
             // cleanup html and possibly other tags (?)
             var tmp = document.createElement("div");
@@ -531,6 +553,7 @@ export default Vue.extend({
                 this.hideOverlay();
             }
         },
+
         hideOverlay() {
             if (this.$children.length) this.$children[0].hideOverlay();
         },
@@ -541,12 +564,14 @@ export default Vue.extend({
                 this.updatedLines = [];
             }
         },
+
         async bulkCreate() {
             if(this.createdLines.length){
                 await this.$store.dispatch('transcriptions/bulkCreate', this.createdLines);
                 this.createdLines = [];
             }
         },
+
         addToList() {
             /*
                parse all lines if the content changed, add it to updated lines
@@ -564,6 +589,7 @@ export default Vue.extend({
                 }
             }
         },
+
         addToUpdatedLines(lt) {
             /*
                if line already exists in updatedLines update its content on the list
@@ -576,9 +602,11 @@ export default Vue.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
+
         setHeight() {
             this.$refs.contentContainer.style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
         },
+
         updateView() {
             this.setHeight();
         },
@@ -607,16 +635,19 @@ export default Vue.extend({
             this.anno.formatter = marker_map[taxo.marker_type];
             this.setAnnoTaxonomy(taxo);
         },
+
         activateVK(div) {
             div.contentEditable = 'true';
             this.$refs.diplomaticLines.contentEditable = 'false';
             enableVirtualKeyboard(div);
         },
+
         deactivateVK(div) {
             div.removeAttribute('contentEditable');
             this.$refs.diplomaticLines.contentEditable = 'true';
             div.onfocus = (e) => { e.preventDefault() };
         },
+
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
             let vks = this.$store.state.document.enabledVKs;

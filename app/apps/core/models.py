@@ -180,6 +180,7 @@ class AnnotationTaxonomy(OrderedModel):
     has_comments = models.BooleanField(default=False)
 
     name = models.CharField(max_length=64)
+    abreviation = models.CharField(max_length=3, null=True, blank=True)
     marker_type = models.PositiveSmallIntegerField(choices=MARKER_TYPE_CHOICES)
     marker_detail = ColorField(null=True, blank=True)
 

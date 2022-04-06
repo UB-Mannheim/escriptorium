@@ -677,3 +677,10 @@ i.panel-icon {
 #reset-onboarding{
     margin-top: 5%;
 }
+
+.r6o-widget {
+    padding: .4rem;
+}
+.r6o-widget input,  .r6o-widget select {
+    width: 100%;
+}

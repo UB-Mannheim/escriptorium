@@ -198,6 +198,12 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
         if self.instance and self.instance.typology:
             self.fields['typo'].initial = self.instance.typology.name
 
+    def has_changed(self, *args, **kwargs):
+        # avoid triggering validation for empty formsets
+        if len(self.initial.keys()) == 0 and 'name' not in self.changed_data:
+            return False
+        return super().has_changed(*args, **kwargs)
+
     def save(self, commit=True):
         typo = self.cleaned_data.get('typo')
         instance = super().save(commit=False)
@@ -211,15 +217,13 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
 class ImageAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        blank = (('', '---------'),)
-        self.fields['marker_type'].choices = blank + AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
+        self.fields['marker_type'].choices = AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
 
 
 class TextAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        blank = (('', '---------'),)
-        self.fields['marker_type'].choices = blank + AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
+        self.fields['marker_type'].choices = AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
 
 
 class ComponentForm(BootstrapFormMixin, forms.ModelForm):
@@ -231,6 +235,10 @@ class AnnotationComponentForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         fields = '__all__'
 
+    def __init__(self, *args, document=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['annotationcomponent'].queryset = AnnotationComponent.objects.filter(document=document)
+
 
 class AnnotationTaxonomyFormset(BaseInlineFormSet):
     def add_fields(self, form, index):
@@ -238,6 +246,7 @@ class AnnotationTaxonomyFormset(BaseInlineFormSet):
 
         form.compo_form = AnnotationComponentFormSet(
             instance=form.instance,
+            form_kwargs={'document': form.instance.document},
             data=form.data if form.is_bound else None,
             files=form.files if form.is_bound else None,
             prefix='component-%s-%s' % (

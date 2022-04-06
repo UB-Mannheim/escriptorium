@@ -145,7 +145,7 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnnotationTaxonomy
-        fields = ('pk', 'document', 'name',
+        fields = ('pk', 'document', 'name', 'abreviation',
                   'marker_type', 'marker_detail', 'has_comments',
                   'typology', 'components')
 
@@ -245,6 +245,18 @@ class TextAnnotationSerializer(serializers.ModelSerializer):
         for component in components_data:
             TextAnnotationComponentValue.objects.create(annotation=anno,
                                                         **component)
+        return anno
+
+    def update(self, instance, data):
+        components_data = data.pop('components')
+        anno = super().update(instance, data)
+        for component_value in components_data:
+            # for some reason this is an instance of AnnotationComponent
+            component, created = TextAnnotationComponentValue.objects.get_or_create(
+                component=component_value['component'],
+                annotation=anno)
+            component.value = component_value['value']
+            component.save()
         return anno
 
 
