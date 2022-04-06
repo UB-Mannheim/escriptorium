@@ -280,16 +280,12 @@ LOGGING = {
             'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
         },
         'console': {
-            'level': 'INFO',
-            'filters': ['require_debug_true'],
-            'class': 'logging.StreamHandler',
-        },
-        'console': {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
         'console_info': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
         'console_debug': {

@@ -25,14 +25,12 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
-    ImageAnnotation,
     LineType,
     Metadata,
     OcrModel,
     OcrModelDocument,
     OcrModelRight,
     Project,
-    TextAnnotation,
     Transcription,
 )
 from users.models import User
