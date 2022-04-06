@@ -30,6 +30,8 @@ export const bulkUpdateLines = async (document_id, part_id, data) => (await axio
 
 export const bulkDeleteLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/bulk_delete/`, data))
 
+export const mergeLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/merge/`, data))
+
 export const recalculateMasks = async (document_id, part_id, data, params) => (await axios.post(`/documents/${document_id}/parts/${part_id}/reset_masks/`, data, { params: params }))
 
 export const recalculateOrdering = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/recalculate_ordering/`, data))
@@ -69,3 +71,5 @@ export const updateDocument = async (document_id, data) => (await axios.patch(`/
 export const deletetag = async (project_id, tag_id) => (await axios.delete(`/projects/${project_id}/tags/${tag_id}/`))
 
 export const updatetag = async (project_id, tag_id, data) => (await axios.put(`/projects/${project_id}/tags/${tag_id}/`, data))
+
+export const retrieveProjectTag = async (project_id) => (await axios.get(`/projects/${project_id}/tags/`))

@@ -4,7 +4,6 @@ from django.urls import reverse
 
 from core.models import Document
 from core.tests.factory import CoreFactory
-from users.models import User
 
 
 class DocumentTestCase(TestCase):
@@ -38,11 +37,11 @@ class DocumentTestCase(TestCase):
         with self.assertNumQueries(22):
             resp = self.client.post(uri, {
                 'project': str(self.project.id),
-                'name':"Test+metadatas",
+                'name': "Test+metadatas",
                 'main_script': '',
                 'read_direction': 'rtl',
                 'line_offset': 0,
-                #'typology': '',
+                # 'typology': '',
                 'documentmetadata_set-TOTAL_FORMS': 3,
                 'documentmetadata_set-INITIAL_FORMS': 0,
                 'documentmetadata_set-MIN_NUM_FORMS': 0,

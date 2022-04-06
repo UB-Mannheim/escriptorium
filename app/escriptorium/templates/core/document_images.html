@@ -35,7 +35,7 @@
         data-toggle="dropdown"
         {% if not has_cpu_minutes_left %}
           disabled
-          title="{% trans 'You don\'t have any CPU minutes left' %}"
+          title="{% trans "You don't have any CPU minutes left" %}"
         {% endif %}
       >
         <i class="fas fa-file-import mr-1"></i>{% trans "Import" %}
@@ -66,7 +66,7 @@
       class="btn btn-sm btn-primary js-proc-selected ml-1"
       {% if not has_cpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any CPU minutes left' %}"
+        title="{% trans "You don't have any CPU minutes left" %}"
       {% else %}
         title="{% trans 'Export' %}"
       {% endif %}
@@ -86,13 +86,13 @@
       data-toggle="dropdown"
       {% if not has_cpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any CPU minutes left' %}"
+        title="{% trans "You don't have any CPU minutes left" %}"
       {% elif not has_gpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any GPU minutes left' %}"
+        title="{% trans "You don't have any GPU minutes left" %}"
       {% elif not has_disk_storage_left %}
         disabled
-        title="{% trans 'You don\'t have any disk storage left' %}"
+        title="{% trans "You don't have any disk storage left" %}"
       {% else %}
         title="{% trans 'Train a segmenter/recognizer model.' %}"
       {% endif %}
@@ -117,7 +117,7 @@
       data-proc="binarize"
       {% if not has_cpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any CPU minutes left' %}"
+        title="{% trans "You don't have any CPU minutes left" %}"
       {% else %}
         title="{% trans 'Binarize selected images.' %}"
       {% endif %}
@@ -128,7 +128,7 @@
       data-proc="segment"
       {% if not has_cpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any CPU minutes left' %}"
+        title="{% trans "You don't have any CPU minutes left" %}"
       {% else %}
         title="{% trans 'Segment selected images.' %}"
       {% endif %}
@@ -139,7 +139,7 @@
       data-proc="transcribe"
       {% if not has_cpu_minutes_left %}
         disabled
-        title="{% trans 'You don\'t have any CPU minutes left' %}"
+        title="{% trans "You don't have any CPU minutes left" %}"
       {% else %}
         title="{% trans 'Start transcribing selected images.' %}"
       {% endif %}
@@ -148,7 +148,7 @@
 </div>
 
 <div id="cards-container" class="mt-2 d-flex flex-row flex-nowrap {{ document.read_direction }}">
-  <div class="dropable js-drop"></div>
+  <div class="droppable js-drop"></div>
   {# card are created through the dom api (see below) #}
 </div>
 {% endblock %}
@@ -173,7 +173,7 @@
         <span
           class="btn proc js-binarized {% if not has_cpu_minutes_left %}disabled{% endif %}"
           {% if not has_cpu_minutes_left %}
-            data-title="{% trans 'You don\'t have any CPU minutes left' %}"
+            data-title="{% trans "You don't have any CPU minutes left" %}"
           {% else %}
             data-title="{% trans 'Binarize' %}"
           {% endif %}
@@ -181,7 +181,7 @@
         <span
           class="btn proc ml-2 js-segmented {% if not has_cpu_minutes_left %}disabled{% endif %}"
           {% if not has_cpu_minutes_left %}
-            data-title="{% trans 'You don\'t have any CPU minutes left' %}"
+            data-title="{% trans "You don't have any CPU minutes left" %}"
           {% else %}
             data-title="{% trans 'Segment' %}"
           {% endif %}
@@ -189,7 +189,7 @@
         <span
           class="btn proc ml-2 js-trans-progress {% if not has_cpu_minutes_left %}disabled{% endif %}"
           {% if not has_cpu_minutes_left %}
-            data-title="{% trans 'You don\'t have any CPU minutes left' %}"
+            data-title="{% trans "You don't have any CPU minutes left" %}"
           {% else %}
             data-title="{% trans 'Transcribe' %}"
           {% endif %}
@@ -199,7 +199,7 @@
       </div>
     </div>
   </div>
-  <div class="dropable js-drop"></div>
+  <div class="droppable js-drop"></div>
 </div>
 
 {# Process wizards #}
@@ -215,7 +215,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
+<script>
  'use strict';
  const DOCUMENT_ID = {{ document.pk }};
  {% if user.onboarding %}
@@ -224,7 +224,7 @@
 </script>
 
 {{ block.super }}
-<script type="text/javascript">
+<script>
   $(document).ready(function() {
     // join the ws room
     joinDocumentRoom('{{document.pk}}');

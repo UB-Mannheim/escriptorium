@@ -4,10 +4,18 @@ import shutil
 from unittest.mock import patch
 from zipfile import ZipFile
 
+from django.test import override_settings
+
 from core.models import Block, BlockType, Line, LineTranscription
 from core.tests.factory import CoreFactoryTestCase
 from escriptorium.test_settings import MEDIA_ROOT
-from imports.export import AltoExporter, PageXMLExporter, TextExporter
+from imports.export import (
+    AltoExporter,
+    OpenITIMARkdownExporter,
+    PageXMLExporter,
+    TEIXMLExporter,
+    TextExporter,
+)
 from reporting.models import TaskReport
 
 SAMPLES_DIR = os.path.join(
@@ -41,11 +49,17 @@ class ExportersTestCase(CoreFactoryTestCase):
         doc = self.factory.make_document(owner=user)
         self.part = self.factory.make_part(document=doc)
         self.part_xml_export_filename = f"{os.path.splitext(self.part.filename)[0]}.xml"
+        self.part_md_export_filename = (
+            f"{os.path.splitext(self.part.filename)[0]}.mARkdown"
+        )
         self.part2 = self.factory.make_part(
             document=doc, image_asset="segmentation/default2.png"
         )
         self.part2_xml_export_filename = (
             f"{os.path.splitext(self.part2.filename)[0]}.xml"
+        )
+        self.part2_md_export_filename = (
+            f"{os.path.splitext(self.part2.filename)[0]}.mARkdown"
         )
         self.all_parts_pks = [self.part.pk, self.part2.pk]
         transcription = self.factory.make_transcription(document=doc)
@@ -366,4 +380,202 @@ class ExportersTestCase(CoreFactoryTestCase):
                 open(f"{SAMPLES_DIR}/alto_export_full_part2.xml", "rb")
                 .read()
                 .replace(b"\\t", b"\t"),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_openiti_markdown_exporter_render(self, timezone_mock):
+        exporter = OpenITIMARkdownExporter(
+            self.all_parts_pks,
+            self.all_regions_types,
+            self.include_images,
+            *self.params,
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_md_export_filename, self.part2_md_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_full_part1.mARkdown", "rb"
+                ).read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_full_part2.mARkdown", "rb"
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_openiti_markdown_exporter_render_only_one_part(self, timezone_mock):
+        parts_pk = [self.part.pk]
+        exporter = OpenITIMARkdownExporter(
+            parts_pk, self.all_regions_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(archive.namelist(), [self.part_md_export_filename])
+            self.assertEqual(
+                archive.read(self.part_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_full_part1.mARkdown", "rb"
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_openiti_markdown_exporter_render_only_one_region(self, timezone_mock):
+        region_types = [self.body.pk]
+        exporter = OpenITIMARkdownExporter(
+            self.all_parts_pks, region_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_md_export_filename, self.part2_md_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_only_body_part1.mARkdown",
+                    "rb",
+                ).read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_only_body_part2.mARkdown",
+                    "rb",
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_openiti_markdown_exporter_render_with_images(self, timezone_mock):
+        include_images = True
+        exporter = OpenITIMARkdownExporter(
+            self.all_parts_pks, self.all_regions_types, include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [
+                    self.part.filename,
+                    self.part_md_export_filename,
+                    self.part2.filename,
+                    self.part2_md_export_filename,
+                ],
+            )
+            self.assertEqual(
+                archive.read(self.part_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_full_part1.mARkdown", "rb"
+                ).read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_md_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/openiti_markdown_export_full_part2.mARkdown", "rb"
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render(self, timezone_mock):
+        exporter = TEIXMLExporter(
+            self.all_parts_pks,
+            self.all_regions_types,
+            self.include_images,
+            *self.params,
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_xml_export_filename, self.part2_xml_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part2.xml", "rb").read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_only_one_part(self, timezone_mock):
+        parts_pk = [self.part.pk]
+        exporter = TEIXMLExporter(
+            parts_pk, self.all_regions_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename])
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_only_one_region(self, timezone_mock):
+        region_types = [self.body.pk]
+        exporter = TEIXMLExporter(
+            self.all_parts_pks, region_types, self.include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [self.part_xml_export_filename, self.part2_xml_export_filename],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/tei_xml_export_only_body_part1.xml",
+                    "rb",
+                ).read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(
+                    f"{SAMPLES_DIR}/tei_xml_export_only_body_part2.xml",
+                    "rb",
+                ).read(),
+            )
+
+    @override_settings(VERSION_DATE="1.0.0-testing")
+    def test_tei_xml_exporter_render_with_images(self, timezone_mock):
+        include_images = True
+        exporter = TEIXMLExporter(
+            self.all_parts_pks, self.all_regions_types, include_images, *self.params
+        )
+        exporter.render()
+
+        with ZipFile(exporter.filepath, "r") as archive:
+            self.assertListEqual(
+                archive.namelist(),
+                [
+                    self.part.filename,
+                    self.part_xml_export_filename,
+                    self.part2.filename,
+                    self.part2_xml_export_filename,
+                ],
+            )
+            self.assertEqual(
+                archive.read(self.part_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part1.xml", "rb").read(),
+            )
+            self.assertEqual(
+                archive.read(self.part2_xml_export_filename),
+                open(f"{SAMPLES_DIR}/tei_xml_export_full_part2.xml", "rb").read(),
             )

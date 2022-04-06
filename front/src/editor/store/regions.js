@@ -14,7 +14,7 @@ export const mutations = {
     },
     load (state, pk) {
         let index = state.all.findIndex(l => l.pk == pk)
-        state.all[index].loaded = true 
+        state.all[index].loaded = true
     },
     update (state, { pk, region }) {
         let index = state.all.findIndex(r=>r.pk==pk)
@@ -65,7 +65,7 @@ export const actions = {
 
     async delete({commit, rootState}, regionPk) {
         await api.deleteRegion(rootState.document.id, rootState.parts.pk, regionPk)
-        
+
         commit('remove', regionPk)
     }
 }

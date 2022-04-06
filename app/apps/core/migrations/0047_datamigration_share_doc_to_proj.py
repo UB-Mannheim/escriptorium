@@ -24,7 +24,7 @@ def forwards(apps, schema_editor):
     Document = apps.get_model('core', 'Document')
     # create user projects
     for user in User.objects.all():
-        proj, created = Project.objects.get_or_create(name=user.username+"'s Project",
+        proj, created = Project.objects.get_or_create(name=user.username + "'s Project",
                                                       owner=user)
         if not proj.slug:
             make_slug(proj, Project)
@@ -37,7 +37,7 @@ def forwards(apps, schema_editor):
     # deal with documents without owner (shouldn't be any but let's be safe)
     # move them to admin's
     user = User.objects.filter(is_superuser=True).first()
-    proj, dummy = Project.objects.get_or_create(name=user.username+"'s Project",
+    proj, dummy = Project.objects.get_or_create(name=user.username + "'s Project",
                                                 owner=user)
     if not proj.slug:
         make_slug(proj, Project)

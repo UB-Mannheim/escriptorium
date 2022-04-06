@@ -1,42 +1,43 @@
-import bleach
-import logging
 import html
+import logging
 
+import bleach
 from django.conf import settings
 from django.db.models import Count, Q
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
+from rest_framework import serializers
 
 from api.fields import DisplayChoiceField
-from users.models import User
-from core.models import (Project,
-                         Document,
-                         DocumentPart,
-                         Metadata,
-                         DocumentMetadata,
-                         Block,
-                         Line,
-                         Transcription,
-                         LineTranscription,
-                         BlockType,
-                         LineType,
-                         AnnotationType,
-                         AnnotationTaxonomy,
-                         AnnotationComponent,
-                         ImageAnnotation,
-                         TextAnnotation,
-                         ImageAnnotationComponentValue,
-                         TextAnnotationComponentValue,
-                         Script,
-                         OcrModel,
-                         OcrModelDocument,
-                         DocumentTag)
-from core.tasks import (segtrain, train, segment, transcribe)
+from core.models import (
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
+    Block,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    DocumentTag,
+    ImageAnnotation,
+    ImageAnnotationComponentValue,
+    Line,
+    LineTranscription,
+    LineType,
+    Metadata,
+    OcrModel,
+    OcrModelDocument,
+    Project,
+    Script,
+    TextAnnotation,
+    TextAnnotationComponentValue,
+    Transcription,
+)
+from core.tasks import segment, segtrain, train, transcribe
 from reporting.models import TaskReport
+from users.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +75,17 @@ class ScriptSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    slug = serializers.ReadOnlyField()
+
     class Meta:
         model = Project
         fields = '__all__'
+
+    def create(self, data):
+        data['owner'] = self.context["view"].request.user
+        obj = super().create(data)
+        return obj
 
 
 class PartMoveSerializer(serializers.ModelSerializer):
@@ -405,9 +414,9 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):
-        nd = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
-        nd = html.unescape(nd)
-        return nd
+        cleaned_data = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
+        cleaned_data = html.unescape(cleaned_data)
+        return cleaned_data
 
     def validate_content(self, content):
         return self.cleanup(content)
@@ -527,7 +536,6 @@ class OcrModelSerializer(serializers.ModelSerializer):
         if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
             raise serializers.ValidationError(_("You don't have any disk storage left."))
 
-        document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['owner'] = self.context["view"].request.user
         data['file_size'] = data['file'].size
         obj = super().create(data)
@@ -707,7 +715,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         if not data.get('model') and not data.get('model_name'):
             raise serializers.ValidationError(
-                    _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
+                _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
 
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):

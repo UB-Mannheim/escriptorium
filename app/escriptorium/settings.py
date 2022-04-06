@@ -12,10 +12,11 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import sys
-import subprocess
-from kombu import Queue
+
 from django.utils.translation import gettext_lazy as _
+from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
+from pkg_resources import get_distribution
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -104,7 +105,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
-                'escriptorium.context_processors.custom_homepage'
+                'escriptorium.context_processors.custom_homepage',
+                'escriptorium.context_processors.disable_search'
             ],
         },
     },
@@ -160,8 +162,8 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 LANGUAGES = [
-  ('en', _('English')),
-  ('de', _('French')),
+    ('en', _('English')),
+    ('de', _('French')),
 ]
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail')
@@ -182,8 +184,12 @@ CACHES = {
     }
 }
 
-ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
-ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_HOST', 9200)
+
+# Boolean used to defuse the search feature (default to True)
+DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'localhost:9200')
+ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
+
 
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
@@ -227,7 +233,7 @@ CHANNEL_LAYERS = {
     },
 }
 # fixes https://github.com/django/channels/issues/1240:
-DATA_UPLOAD_MAX_MEMORY_SIZE = 150*1024*1024  # value in bytes (so 150Mb)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 150 * 1024 * 1024  # value in bytes (so 150Mb)
 
 
 # Static files (CSS, JavaScript, Images)
@@ -282,6 +288,14 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
+        'console_info': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+        'console_debug': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
         'django.server': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -312,6 +326,9 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['django.server'],
+        },
+        'es_indexing': {
+            'handlers': ['console_info'],
         }
     },
 }
@@ -320,6 +337,11 @@ COMPRESS_ENABLE = True
 ALWAYS_CONVERT = False
 
 FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
@@ -340,7 +362,7 @@ ENABLE_COOKIE_CONSENT = os.getenv('ENABLE_COOKIE_CONSENT', True)
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
-KRAKEN_VERSION = subprocess.getoutput('kraken --version')
+KRAKEN_VERSION = 'Kraken version ' + get_distribution('kraken').version
 
 IIIF_IMPORT_QUALITY = 'full'
 
@@ -366,7 +388,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 if 'test' in sys.argv:
     try:
-        from .test_settings import *
+        from .test_settings import *  # noqa F401
     except (ModuleNotFoundError, ImportError):
         pass
 
@@ -390,3 +412,9 @@ QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOT
 
 # Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
 QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
+
+# Boolean used to enable the OpenITI mARkdown export mode
+EXPORT_OPENITI_MARKDOWN_ENABLED = os.getenv('EXPORT_OPENITI_MARKDOWN', "False").lower() not in ("false", "0")
+
+# Boolean used to enable the OpenITI TEI XML export mode
+EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("false", "0")

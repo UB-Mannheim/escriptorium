@@ -9,11 +9,9 @@ import subprocess
 import time
 import uuid
 from datetime import datetime
-import numpy as np
-from sklearn import preprocessing
-from sklearn.cluster import DBSCAN
 
-from PIL import Image
+import numpy as np
+from celery import chain
 from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -34,23 +32,26 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
-from kraken.lib import vgsl, models as kraken_models
+from kraken.lib import models as kraken_models
+from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
 from kraken.lib.util import is_bitonal
 from ordered_model.models import OrderedModel
+from PIL import Image
 from shapely import affinity
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import LineString, Polygon
+from sklearn import preprocessing
+from sklearn.cluster import DBSCAN
 
-from celery import chain
 from core.tasks import (
+    binarize,
+    convert,
+    generate_part_thumbnails,
+    lossless_compression,
+    segment,
     segtrain,
     train,
-    binarize,
-    lossless_compression,
-    convert,
-    segment,
     transcribe,
-    generate_part_thumbnails,
 )
 from core.utils import ColorField
 from core.validators import JSONSchemaValidator
@@ -332,9 +333,9 @@ class Script(ExportModelOperationsMixin("Script"), models.Model):
     name = models.CharField(max_length=128)
     name_fr = models.CharField(max_length=128, blank=True)
     iso_code = models.CharField(max_length=4, blank=True)
-    text_direction = models.CharField(
-        max_length=64, default="horizontal-lr", choices=TEXT_DIRECTION_CHOICES
-    )
+    text_direction = models.CharField(max_length=64, default='horizontal-lr',
+                                      choices=TEXT_DIRECTION_CHOICES)
+    blank_char = models.CharField(max_length=1, default=' ', blank=True)  # Blank character in script
 
     class Meta:
         ordering = ("name",)
@@ -522,7 +523,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         related_name="shared_documents",
     )
 
-    tags = models.ManyToManyField(DocumentTag, blank=True)
+    tags = models.ManyToManyField(DocumentTag, blank=True, related_name='tags_document')
 
     objects = DocumentManager()
 
@@ -883,17 +884,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     def in_queue(self):
         statuses = self.tasks.values()
         try:
-            return (
-                len([t for t in statuses if t["status"] == "ongoing"]) == 0
-                and len(
-                    [
-                        t
-                        for t in statuses
-                        if t["status"] in ["pending", "before_task_publish"]
-                    ]
-                )
-                > 0
-            )
+            return (len([t for t in statuses if t['status'] == 'ongoing']) == 0
+                    and len([t for t in statuses if t['status']
+                             in ['pending', 'before_task_publish']]) > 0)
         except (KeyError, TypeError):
             return False
 
@@ -909,7 +902,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
         for task_name, task in self.tasks.items():
             if (task_name not in uncancelable
-                and task['status'] not in ['canceled', 'error', 'done']):
+                    and task['status'] not in ['canceled', 'error', 'done']):
                 if 'task_id' in task:  # if not, it is still pending
                     revoke(task['task_id'], terminate=True)
 
@@ -928,29 +921,19 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     def recoverable(self):
         now = round(datetime.utcnow().timestamp())
         try:
-            return (
-                len(
-                    [
-                        task
-                        for task in self.tasks
-                        if getattr(task, "timestamp", 0)
-                        + getattr(settings, "TASK_RECOVER_DELAY", 60 * 60 * 24)
-                        > now
-                    ]
-                )
-                != 0
-            )
+            return len([task for task in self.tasks
+                        if getattr(task, 'timestamp', 0)
+                        + getattr(settings, 'TASK_RECOVER_DELAY', 60 * 60 * 24) > now]) != 0
+
         except KeyError:
             return True  # probably old school stored task
 
     def recover(self):
         i = inspect()
         # Important: this is really slow!
-        queued = (
-            [task["id"] for queue in i.scheduled().values() for task in queue]
-            + [task["id"] for queue in i.active().values() for task in queue]
-            + [task["id"] for queue in i.reserved().values() for task in queue]
-        )
+        queued = ([task['id'] for queue in i.scheduled().values() for task in queue]
+                  + [task['id'] for queue in i.active().values() for task in queue]
+                  + [task['id'] for queue in i.reserved().values() for task in queue])
 
         data = self.tasks
 
@@ -1070,6 +1053,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         else:
             model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
         model_ = vgsl.TorchVGSLModel.load_model(model_path)
+
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
@@ -1144,6 +1128,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             name="kraken:" + model.name, document=self.document
         )
         model_ = kraken_models.load_any(model.file.path)
+
         lines = self.lines.all()
         text_direction = (
             text_direction
@@ -1223,13 +1208,18 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                      report_label='Binarize in %s' % self.document.name,
                                      **kwargs))
 
-        if (task_name == 'segment' or (task_name == 'transcribe'
-                                       and not self.segmented)):
+        if (task_name == 'segment'):
             tasks.append(segment.si(instance_pk=self.pk,
                                     report_label='Segment in %s' % self.document.name,
                                     **kwargs))
 
         if task_name == 'transcribe':
+            if not self.segmented:
+                kw = kwargs.copy()
+                kw.pop('model_pk')  # we don't want to transcribe with a segmentation model
+                tasks.append(segment.si(instance_pk=self.pk,
+                                        report_label='Segment in %s' % self.document.name,
+                                        **kw))
             tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
@@ -1242,10 +1232,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     def make_masks(self, only=None):
         im = Image.open(self.image).convert("L")
         lines = list(self.lines.all())  # needs to store the qs result
-        to_calc = [l for l in lines if (only and l.pk in only) or (only is None)]
+        to_calc = [line for line in lines if (only and line.pk in only) or (only is None)]
 
         for line in to_calc:
-            context = [l.baseline for l in lines if l.pk != line.pk]
+            context = [line.baseline for line in lines if line.pk != line.pk]
             if line.block:
                 poly = line.block.box
                 poly.append(line.block.box[0])  # close it
@@ -1419,7 +1409,7 @@ def validate_3_points(value):
 
 class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
     """
-    Represents a visualy close group of graphemes (characters) bound by the same semantic
+    Represents a visually close group of graphemes (characters) bound by the same semantic
     example: a paragraph, a margin note or floating text
     """
 
@@ -1465,19 +1455,12 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
 
 class LineManager(models.Manager):
     def prefetch_transcription(self, transcription):
-        return (
-            self.get_queryset()
-            .order_by("order")
-            .prefetch_related(
-                Prefetch(
-                    "transcriptions",
-                    to_attr="transcription",
-                    queryset=LineTranscription.objects.filter(
-                        transcription=transcription
-                    ),
-                )
-            )
-        )
+        return (self.get_queryset().order_by('order')
+                .prefetch_related(
+            Prefetch('transcriptions',
+                     to_attr='transcription',
+                     queryset=LineTranscription.objects.filter(
+                         transcription=transcription))))
 
 
 class Line(OrderedModel):  # Versioned,
@@ -1530,8 +1513,10 @@ class Line(OrderedModel):  # Versioned,
     def get_box(self):
         if self.mask:
             return [*map(min, *self.mask), *map(max, *self.mask)]
-        else:
+        elif self.baseline:
             return [*map(min, *self.baseline), *map(max, *self.baseline)]
+        else:
+            return None
 
     def set_box(self, box):
         self.mask = [
@@ -1591,38 +1576,34 @@ class LineTranscription(
     content = models.CharField(blank=True, default="", max_length=2048)
 
     graphs_schema = {
-            "type": "array",
-            "items": [
-                {
-                    "type": "object",
-                    "properties": {
-                        "c": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1
-                        },
-                        "poly": {
-                            "type": "array",
-                            "minItems": 2,
-                            "maxItems": 2,
-                            "items": [
-                                {
-                                    "type": "array",
-                                    "contains": {"type": "number"},
-                                    "minItems": 2,
-                                    "maxItems": 2,
-                                }
-                            ]
-                        },
-                        "confidence": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1,
-                        }
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "c": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1
+                },
+                "poly": {
+                    "type": "array",
+                    "minItems": 3,
+                    "items": {
+                        "type": "array",
+                        "contains": {"type": "number"},
+                        "minItems": 2,
+                        "maxItems": 2
                     }
+
+                },
+                "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
                 }
-            ]
+            }
         }
+    }
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
@@ -1835,8 +1816,8 @@ class OcrModelRight(models.Model):
                 check=(
                     models.Q(group_id__isnull=False, user_id__isnull=True)
                     | models.Q(group_id__isnull=True, user_id__isnull=False)
-                ),
-            ),
+                )
+            )
         ]
 
 

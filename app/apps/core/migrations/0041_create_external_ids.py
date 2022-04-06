@@ -3,10 +3,12 @@ import uuid
 
 from django.db import migrations
 
+
 def batch_qs(qs, batch_size=10):
     total = qs.count()
     for start in range(0, total, batch_size):
         yield qs[:batch_size]
+
 
 def forward(apps, se):
     Block = apps.get_model('core', 'Block')

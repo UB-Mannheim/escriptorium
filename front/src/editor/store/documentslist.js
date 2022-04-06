@@ -1,5 +1,6 @@
 import { assign } from 'lodash'
 import * as api from '../api'
+import Vue from 'vue'
 
 export const initialState = () => ({
     checkedTags: [],
@@ -9,7 +10,8 @@ export const initialState = () => ({
     checkboxList: [],
     lastChecked: null,
     allProjectTags: [],
-    tagColor: null
+    tagColor: null,
+    TagsListPerDocument: []
 })
 
 export const mutations = {
@@ -39,21 +41,34 @@ export const mutations = {
     },
     setAllProjectTags (state, value) {
         state.allProjectTags = value.map( function(obj) {
-            var item = { "pk": obj.id, "name": obj.name, "color": obj.color };
+            var item = { "pk": ((obj.id) ? obj.id : obj.pk), "name": obj.name, "color": obj.color };
             return item;
         });
     },
     setTagColor (state) {
-        let brigth = 0;
+        let bright = 0;
         let rColor, bColor, gColor = 0;
-        while (brigth < 150) {
+        while (bright < 150) {
             rColor = Math.floor(Math.random() * (255 - 10)) + 10;
             bColor = Math.floor(Math.random() * (255 - 10)) + 10;
             gColor = Math.floor(Math.random() * (255 - 10)) + 10;
-            brigth = rColor + bColor + gColor;
+            bright = rColor + bColor + gColor;
         }
         let colorf = "#" + rColor.toString(16) + bColor.toString(16) + gColor.toString(16);
         state.tagColor = colorf
+    },
+    setTagsListPerDocument (state, data) {
+        if(data.update) {
+            state.TagsListPerDocument = data.docTags;
+        }
+        else{
+            const index = state.TagsListPerDocument.findIndex(tag => tag.pk == data.pk);
+            if(index > -1){
+                let tpmTags = state.TagsListPerDocument;
+                tpmTags.splice(index, 1, {"pk": data.pk, "tags": data.tags});
+                state.TagsListPerDocument = tpmTags;
+            }
+        }
     },
 }
 
@@ -66,8 +81,9 @@ export const actions = {
     async getAllTagsProject ({state, commit}) {
         commit('setUnlinkedTags', state.allProjectTags);
     },
-    async updateDocumentTags ({state, commit}, data) {
+    async updateDocumentTags ({state, commit, dispatch}, data) {
         var selectedId = (data.selectedtags) ? data.selectedtags.split(',') : [];
+        const toNumbers = arr => arr.map(Number);
         var name = data.name;
         if(name) {
             var listProjectTagsId = state.allProjectTags;
@@ -76,6 +92,7 @@ export const actions = {
                 const tag = await api.createProjectTag(state.projectID, {"name": name, "color": data.color});
                 listProjectTagsId.push(tag.data);
                 commit('setUnlinkedTags', listProjectTagsId);
+                commit('setAllProjectTags', listProjectTagsId);
                 selectedId.push(tag.data.pk.toString());
             }
             else{
@@ -85,6 +102,7 @@ export const actions = {
         }
         if(state.documentID) {
             await api.updateDocument(state.documentID, {"tags": selectedId});
+            commit('setTagsListPerDocument', {pk: state.documentID.toString(), tags: toNumbers(selectedId)});
         }
         else {
             if(state.checkboxList.length > 0){
@@ -93,17 +111,26 @@ export const actions = {
                     let _tagsId = _document.data.tags;
                     let tags = _tagsId.concat(selectedId.filter(item => !_tagsId.includes(item)));
                     await api.updateDocument(state.checkboxList[i], {"tags": tags});
+                    commit('setTagsListPerDocument', {pk: state.checkboxList[i], tags: toNumbers(tags)});
                 }
             }
         }
     },
-    async updateProjectTag ({state, commit}, data) {
+    async updateProjectTag ({state, commit, dispatch}, data) {
         await api.updatetag(state.projectID, data.pk, data);
+        const index = state.allProjectTags.findIndex(tag => tag.pk == data.pk);
+        if(index > -1){
+            let tpmTags = state.allProjectTags;
+            tpmTags.splice(index, 1, data);
+            commit('setAllProjectTags', tpmTags);
+        }
     },
-    async deleteProjectTag ({state, commit}, data) {
+    async deleteProjectTag ({state, commit, dispatch}, data) {
         await api.deletetag(state.projectID, data.pk);
+        let tpmTags = state.allProjectTags.filter(item => item.pk != data.pk);
+        commit('setAllProjectTags', tpmTags);
     },
-    async assignSingleTagToDocuments ({state, commit}, data) {
+    async assignSingleTagToDocuments ({state, commit, dispatch}, data) {
         if(state.checkboxList.length > 0){
             for (let i = 0; i < state.checkboxList.length; i++) {
                 const _document = await api.retrieveDocument(state.checkboxList[i]);
@@ -114,6 +141,7 @@ export const actions = {
                     if (index > -1) _tagsId.splice(index, 1);
                 }
                 await api.updateDocument(state.checkboxList[i], {"tags": _tagsId});
+                commit('setTagsListPerDocument', {pk: state.checkboxList[i], tags: _tagsId});
             }
         }
     }

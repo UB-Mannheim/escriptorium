@@ -1,25 +1,25 @@
-import os
 import json
 import logging
-import numpy as np
+import os
 import os.path
 import shutil
 from itertools import groupby
 
+import numpy as np
+from celery import shared_task
+from celery.signals import before_task_publish, task_failure, task_prerun, task_success
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
-
-from celery import shared_task
-from celery.signals import before_task_publish, task_prerun, task_success, task_failure
 from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken.lib import train as kraken_train
 
-from reporting.tasks import create_task_reporting
+# DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
+from reporting.tasks import create_task_reporting  # noqa F401
 from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -74,7 +74,7 @@ def convert(instance_pk=None, user_pk=None, **kwargs):
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -94,7 +94,7 @@ def lossless_compression(instance_pk=None, user_pk=None, **kwargs):
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -121,7 +121,7 @@ def binarize(instance_pk=None, user_pk=None, binarizer=None, threshold=None, **k
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -151,10 +151,10 @@ def make_segmentation_training_data(part):
                        'baseline': line.baseline}
                       for line in part.lines.only('baseline', 'typology')
                       if line.baseline],
-        'regions':  {typo: list(reg.box for reg in regs)
-                     for typo, regs in groupby(
-                        part.blocks.only('box', 'typology').order_by('typology'),
-                        key=lambda reg: reg.typology and reg.typology.name or 'default')}
+        'regions': {typo: list(reg.box for reg in regs)
+                    for typo, regs in groupby(
+            part.blocks.only('box', 'typology').order_by('typology'),
+            key=lambda reg: reg.typology and reg.typology.name or 'default')}
     }
     return data
 
@@ -170,11 +170,11 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
             if not settings.DISABLE_QUOTAS:
-                if user.cpu_minutes_limit() != None:
+                if user.cpu_minutes_limit() is not None:
                     assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-                if user.gpu_minutes_limit() != None:
+                if user.gpu_minutes_limit() is not None:
                     assert user.has_free_gpu_minutes(), f"User {user.id} doesn't have any GPU minutes left"
-                if user.disk_storage_limit() != None:
+                if user.disk_storage_limit() is not None:
                     assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
@@ -274,7 +274,7 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
             shutil.copy(load, model.file.path)
@@ -313,7 +313,7 @@ def segment(instance_pk=None, user_pk=None, model_pk=None,
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist as e:
+    except DocumentPart.DoesNotExist:
         logger.error('Trying to segment non-existent DocumentPart : %d', instance_pk)
         return
 
@@ -327,7 +327,7 @@ def segment(instance_pk=None, user_pk=None, model_pk=None,
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -362,7 +362,7 @@ def recalculate_masks(instance_pk=None, user_pk=None, only=None, **kwargs):
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -370,7 +370,7 @@ def recalculate_masks(instance_pk=None, user_pk=None, only=None, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist as e:
+    except DocumentPart.DoesNotExist:
         logger.error('Trying to recalculate masks of non-existent DocumentPart : %d', instance_pk)
         return
 
@@ -420,6 +420,12 @@ def train_(qs, document, transcription, model=None, user=None):
 
     DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    if (document.main_script
+        and (document.main_script.text_direction == 'horizontal-rl'
+             or document.main_script.text_direction == 'vertical-rl')):
+        reorder = 'R'
+    else:
+        reorder = 'L'
     trainer = (kraken_train.KrakenTrainer
                .recognition_train_gen(device=DEVICE,
                                       load=load,
@@ -431,7 +437,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                       threads=LOAD_THREADS,
                                       augment=False,
                                       hyper_params={'batch_size': 1},
-                                      load_hyper_parameters=True))
+                                      load_hyper_parameters=True,
+                                      reorder=reorder))
 
     def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
         model.refresh_from_db()
@@ -452,8 +459,12 @@ def train_(qs, document, transcription, model=None, user=None):
             'error': int(error)})
 
     trainer.run(_print_eval)
-    best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
-    shutil.copy(best_version, model.file.path)
+
+    if trainer.stopper.best_epoch != 0:
+        best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
+        shutil.copy(best_version, model.file.path)
+    else:
+        raise ValueError('No model created.')
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -463,11 +474,11 @@ def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
             if not settings.DISABLE_QUOTAS:
-                if user.cpu_minutes_limit() != None:
+                if user.cpu_minutes_limit() is not None:
                     assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-                if user.gpu_minutes_limit() != None:
+                if user.gpu_minutes_limit() is not None:
                     assert user.has_free_gpu_minutes(), f"User {user.id} doesn't have any GPU minutes left"
-                if user.disk_storage_limit() != None:
+                if user.disk_storage_limit() is not None:
                     assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
         except User.DoesNotExist:
             user = None
@@ -532,7 +543,7 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         try:
             user = User.objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
         except User.DoesNotExist:
             user = None
@@ -574,8 +585,8 @@ def before_publish_state(sender=None, body=None, **kwargs):
 
     try:
         # protects against signal race condition
-        if (data[sender]['task_id'] == sender.request.id and
-            not check_signal_order(data[sender]['status'], signal_name)):
+        if (data[sender]['task_id'] == sender.request.id
+                and not check_signal_order(data[sender]['status'], signal_name)):
             return
     except (KeyError, AttributeError):
         pass
@@ -609,8 +620,8 @@ def done_state(sender=None, body=None, **kwargs):
 
     try:
         # protects against signal race condition
-        if (data[sender.name]['task_id'] == sender.request.id and
-            not check_signal_order(data[sender.name]['status'], signal_name)):
+        if (data[sender.name]['task_id'] == sender.request.id
+                and not check_signal_order(data[sender.name]['status'], signal_name)):
             return
     except KeyError:
         pass

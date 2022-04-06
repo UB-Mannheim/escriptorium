@@ -1,25 +1,66 @@
 import logging
-from PIL import Image
 
+from bootstrap.forms import BootstrapFormMixin
 from django import forms
 from django.conf import settings
-from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
+from django.core.validators import (
+    FileExtensionValidator,
+    MaxValueValidator,
+    MinValueValidator,
+)
 from django.db.models import Q
 from django.forms.models import inlineformset_factory, BaseInlineFormSet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from bootstrap.forms import BootstrapFormMixin
-from core.models import (Project, Document, Metadata, DocumentMetadata,
-                         AnnotationType, AnnotationComponent,
-                         ImageAnnotation, TextAnnotation, AnnotationTaxonomy,
-                         DocumentPart, OcrModel, OcrModelDocument, Transcription,
-                         BlockType, LineType, AlreadyProcessingException, OcrModelRight)
-from users.models import User
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
+from PIL import Image
+
+from core.models import (
+    AlreadyProcessingException,
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    ImageAnnotation,
+    LineType,
+    Metadata,
+    OcrModel,
+    OcrModelDocument,
+    OcrModelRight,
+    Project,
+    TextAnnotation,
+    Transcription,
+)
+from users.models import User
 
 logger = logging.getLogger(__name__)
+
+
+class SearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(label=_("Text to search in all of your projects"), required=True)
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        label="",
+        empty_label=_("All projects"),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        search = kwargs.pop('search')
+        user = kwargs.pop('user')
+        project = kwargs.pop('project')
+        super().__init__(*args, **kwargs)
+        self.fields['query'].initial = search
+        self.fields['project'].queryset = Project.objects.for_user_read(user)
+        self.fields['project'].initial = project
+
+    class Meta:
+        fields = ['query', 'project']
 
 
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
@@ -462,10 +503,10 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
             self.initial['text_direction'] = 'horizontal-rl'
 
         self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True) |
-            Q(owner=self.user) |
-            Q(ocr_model_rights__user=self.user) |
-            Q(ocr_model_rights__group__user=self.user)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
     def process(self):
@@ -499,10 +540,10 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         super().__init__(*args, **kwargs)
 
         self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True) |
-            Q(owner=self.user) |
-            Q(ocr_model_rights__user=self.user) |
-            Q(ocr_model_rights__group__user=self.user)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
     def process(self):
@@ -680,6 +721,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
             self.add_error('user', 'You must either choose an user OR a group')
             self.add_error('group', 'You must either choose an user OR a group')
         return cleaned_data
+
 
 class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
     keep_tags = forms.BooleanField(required=False, label="Migrate with associated tags")

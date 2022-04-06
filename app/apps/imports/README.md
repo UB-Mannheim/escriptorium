@@ -4,7 +4,7 @@ In the 'Images' tab of a Document you can find an 'Import' button which allows y
 Note that you can **NOT** import both the images and the corresponding transcription at the same time, you need to do it in two steps.
 
 ## IIIF
-Input a valid iiif manifesto uri to import all its images in full resolution along with metadatas.
+Input a valid IIIF manifest URI to import all its images in full resolution along with metadatas.
 
 ## ALTO XML
 Upload a valid [ALTO XML](https://en.wikipedia.org/wiki/ALTO_(XML)) file for segmentation and transcriptions.
@@ -70,7 +70,7 @@ if you faced an error message like this
 > {"upload_file": ["Couldn't parse the given file or its validation failed: Document didn't validate. Element '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2016-07-15}PcGts': No matching global declaration available for the validation root., line 2"], "__all__": ["Choose one type of import."]}.
 
 Update the attributes xmlns and schemaLocation of `<PcGts>` to supported version as descirbed above.
-By defaults the segmentation for the selected images, both regions and lines, will be overrided, `Uncheck Override existing segmentation to Undo`.
+By defaults the segmentation for the selected images, both regions and lines, will be overridden, `Uncheck Override existing segmentation to Undo`.
  You can disable this behavior by unchecking 'Override existing segmentation.', in which case the system will try to match the lines and regions by their `ID` attribute. The old content for matching lines is then stored in its history and new lines/regions are created when no matching existing element are found.
 TextRegion tag have a list of coordinates declared as `x1,y1 x2,y2...xn,yn`.
 `Baseline` are optional in PAGE.

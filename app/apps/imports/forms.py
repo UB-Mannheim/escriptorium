@@ -1,18 +1,18 @@
-import json
 import io
-from django.conf import settings
-import requests
+import json
 
+import requests
+from bootstrap.forms import BootstrapFormMixin
 from django import forms
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
-from bootstrap.forms import BootstrapFormMixin
-
-from core.models import Transcription, DocumentPart
+from core.models import DocumentPart, Transcription
+from imports.export import ALTO_FORMAT, ENABLED_EXPORTERS
 from imports.models import DocumentImport
-from imports.parsers import make_parser, ParseError
-from imports.tasks import document_import, document_export
+from imports.parsers import ParseError, make_parser
+from imports.tasks import document_export, document_import
 from users.consumers import send_event
 
 
@@ -30,7 +30,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         help_text=_("Destroys existing regions, lines and any bound transcription before importing."))
     iiif_uri = forms.URLField(
         required=False,
-        label=_("IIIF manifesto uri"),
+        label=_("IIIF manifest URI"),
         help_text=_("exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"))
     resume_import = forms.BooleanField(
         required=False,
@@ -99,7 +99,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
         if (not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
-            and not cleaned_data.get('iiif_uri')):
+                and not cleaned_data.get('iiif_uri')):
             raise forms.ValidationError(_("Choose one type of import."))
 
         return cleaned_data
@@ -139,18 +139,13 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
 
 class ExportForm(BootstrapFormMixin, forms.Form):
-    ALTO_FORMAT = "alto"
-    PAGEXML_FORMAT = "pagexml"
-    TEXT_FORMAT = "text"
-
     FORMAT_CHOICES = (
-        (ALTO_FORMAT, 'ALTO'),
-        (TEXT_FORMAT, 'Text'),
-        (PAGEXML_FORMAT, 'PAGE')
+        (export_format, export["label"])
+        for export_format, export in ENABLED_EXPORTERS.items()
     )
     parts = forms.ModelMultipleChoiceField(queryset=None)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
-    file_format = forms.ChoiceField(choices=FORMAT_CHOICES)
+    file_format = forms.ChoiceField(choices=FORMAT_CHOICES, initial=ALTO_FORMAT)
     include_images = forms.BooleanField(
         initial=False, required=False,
         label=_('Include images'),

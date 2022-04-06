@@ -1,5 +1,4 @@
 import logging
-
 from datetime import date, timedelta
 
 from django.conf import settings
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Send quotas alerts to users by email.'
-      
+
     def handle(self, *args, **options):
         if settings.DISABLE_QUOTAS:
             logger.info('Quotas are disabled on this instance, no need to run this command')

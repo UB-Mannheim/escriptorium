@@ -1,6 +1,6 @@
 import os.path
-import celery.app.trace
 
+import celery.app.trace
 from celery import signals
 
 from reporting.tasks import create_task_reporting
@@ -12,13 +12,15 @@ REDIS_DB = 1
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, 'test_media')
 
+
 class DisableMigrations(object):
 
-        def __contains__(self, item):
-            return True
+    def __contains__(self, item):
+        return True
 
-        def __getitem__(self, item):
-            return None
+    def __getitem__(self, item):
+        return None
+
 
 MIGRATION_MODULES = DisableMigrations()
 

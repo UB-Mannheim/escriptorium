@@ -3,75 +3,68 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
-
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from api.serializers import (UserOnboardingSerializer,
-                             ProjectSerializer,
-                             DocumentSerializer,
-                             DocumentMetadataSerializer,
-                             DocumentTasksSerializer,
-                             PartDetailSerializer,
-                             PartSerializer,
-                             PartMoveSerializer,
-                             BlockSerializer,
-                             LineSerializer,
-                             BlockTypeSerializer,
-                             LineTypeSerializer,
-                             AnnotationTypeSerializer,
-                             AnnotationComponentSerializer,
-                             AnnotationTaxonomySerializer,
-                             ImageAnnotationSerializer,
-                             TextAnnotationSerializer,
-                             DetailedLineSerializer,
-                             LineOrderSerializer,
-                             TranscriptionSerializer,
-                             LineTranscriptionSerializer,
-                             SegmentSerializer,
-                             TrainSerializer,
-                             SegTrainSerializer,
-                             ScriptSerializer,
-                             TranscribeSerializer,
-                             OcrModelSerializer,
-                             TagDocumentSerializer)
-
-from core.models import (Project,
-                         Document,
-                         DocumentPart,
-                         Block,
-                         Line,
-                         BlockType,
-                         LineType,
-                         AnnotationType,
-                         AnnotationComponent,
-                         AnnotationTaxonomy,
-                         ImageAnnotation,
-                         TextAnnotation,
-                         DocumentMetadata,
-                         Transcription,
-                         LineTranscription,
-                         OcrModel,
-                         Script,
-                         AlreadyProcessingException,
-                         DocumentTag)
-
+from api.serializers import (
+    BlockSerializer,
+    BlockTypeSerializer,
+    DetailedLineSerializer,
+    DocumentMetadataSerializer,
+    DocumentSerializer,
+    DocumentTasksSerializer,
+    LineOrderSerializer,
+    LineSerializer,
+    LineTranscriptionSerializer,
+    LineTypeSerializer,
+    OcrModelSerializer,
+    PartDetailSerializer,
+    PartMoveSerializer,
+    PartSerializer,
+    ProjectSerializer,
+    ScriptSerializer,
+    SegmentSerializer,
+    SegTrainSerializer,
+    TagDocumentSerializer,
+    TrainSerializer,
+    TranscribeSerializer,
+    TranscriptionSerializer,
+    UserOnboardingSerializer,
+)
+from core.merger import MAX_MERGE_SIZE, merge_lines
+from core.models import (
+    AlreadyProcessingException,
+    Block,
+    BlockType,
+    Document,
+    DocumentMetadata,
+    DocumentPart,
+    DocumentTag,
+    Line,
+    LineTranscription,
+    LineType,
+    OcrModel,
+    Project,
+    Script,
+    Transcription,
+)
 from core.tasks import recalculate_masks
-from users.models import User
-from users.consumers import send_event
-from imports.forms import ImportForm, ExportForm
+from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskReport
+from users.consumers import send_event
+from users.models import User
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -109,6 +102,9 @@ class ScriptViewSet(ReadOnlyModelViewSet):
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+
+    def get_queryset(self):
+        return Project.objects.for_user_read(self.request.user)
 
 
 class TagViewSet(ModelViewSet):
@@ -174,7 +170,7 @@ class DocumentViewSet(ModelViewSet):
         # Filter results by TaskReport.workflow_state
         state_filter = request.GET.get('task_state', '').lower()
         if state_filter:
-            mapped_labels = {label.lower():state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
+            mapped_labels = {label.lower(): state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
             if state_filter not in mapped_labels:
                 return Response(
                     {'error': 'Invalid task_state, it should match a valid workflow_state.'},
@@ -461,7 +457,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         if (x1 is not None
             and y1 is not None
             and x2 is not None
-            and y2 is not None):
+                and y2 is not None):
             document_part.crop(x1, y1, x2, y2)
             return Response({'status': 'done'}, status=200)
         else:
@@ -580,13 +576,56 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         else:  # create, list
             return LineSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = DetailedLineSerializer(instance)
+        json = serializer.data
+        super().destroy(request, *args, **kwargs)
+        return Response(status=200, data=json)
+
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def bulk_create(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
+
+        response_json = self._bulk_create_helper(lines)
+        return Response({'status': 'ok', 'lines': response_json})
+
+    def _bulk_create_helper(self, lines):
+        # Performs the actual creation, called from two endpoints
+
+        # We create the lines in two parts - first the lines, then their transcriptions.
+        # We can't used the DetailedLineSerializer, since the Transcription serializer requires a line property,
+        # which is unknown at this time - the line has not been created yet.
+        # We may want to move this code into the DetailedLineSerializer's create method at some point.
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'status': 'ok', 'lines': serializer.data})
+
+        # Now we go over the lines retrieved from the request, take their transcriptions, and add the right line PK to each one.
+        # serializer.data is ordered, in the same order as lines
+        if len(lines) != len(serializer.data):
+            raise ValueError(f"LineSerializer created {len(serializer.data)} lines, while {len(lines)} were expected")
+
+        transcriptions = []
+        line_pks = []
+        for i in range(len(lines)):
+            pk = serializer.data[i]['pk']
+            line_transcriptions = lines[i].get('transcriptions', [])
+            for lt in line_transcriptions:
+                lt['line'] = pk
+            transcriptions += line_transcriptions
+            line_pks.append(pk)
+
+        serializer = LineTranscriptionSerializer(data=transcriptions, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Finally, for a response, we want to create all the newly created lines along with their transcriptions.
+        # Simplest way to do this - just use the PKs to load the lines again
+        qs = Line.objects.filter(pk__in=line_pks)
+        serializer = DetailedLineSerializer(qs, many=True)
+        return serializer.data
 
     @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
@@ -601,13 +640,34 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     def bulk_delete(self, request, document_pk=None, part_pk=None):
         deleted_lines = request.data.get("lines")
         qs = Line.objects.filter(pk__in=deleted_lines)
+        serializer = DetailedLineSerializer(qs, many=True)
+        json = serializer.data
         qs.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'status': 'ok', 'lines': json}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def merge(self, request, document_pk=None, part_pk=None):
+        original_lines = request.data.get("lines")
+        if len(original_lines) > MAX_MERGE_SIZE:
+            return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
+
+        lines = list(Line.objects.filter(pk__in=original_lines))
+        original_serializer = DetailedLineSerializer(lines, many=True)
+        deleted_json = original_serializer.data
+
+        merged_line_json = merge_lines(lines)
+        created_json = self._bulk_create_helper([merged_line_json])
+        for line in lines:
+            line.delete()
+
+        response_json = dict(created=created_json[0], deleted=deleted_json)
+        return Response(dict(status='ok', lines=response_json), status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
         data = request.data.get('lines')
-        qs = Line.objects.filter(pk__in=[l['pk'] for l in data])
+        qs = Line.objects.filter(pk__in=[line['pk'] for line in data])
         serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
             resp = serializer.save()

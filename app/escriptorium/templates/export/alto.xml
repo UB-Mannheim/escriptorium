@@ -30,7 +30,7 @@
                    WIDTH="{{ block.width }}"
                    HEIGHT="{{ block.height }}"
                    ID="{{ block.external_id }}"
-                   TAGREFS="BT{{block.typology.id}}">
+                   {% if block.typology.id %}TAGREFS="BT{{block.typology.id}}"{% endif %}>
           <Shape><Polygon POINTS="{% alto_points block.box %}"/></Shape>
           {% for line in block.lines.all %}
           {% include "export/alto_line.xml" %}

@@ -1,6 +1,6 @@
 from escriptorium.settings import *
 
-DEBUG=True
+DEBUG = True
 
 DATABASES = {
     'default': {
@@ -14,8 +14,8 @@ DATABASES = {
 }
 
 INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
-MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
-INTERNAL_IPS = ['127.0.0.1',]
+MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+INTERNAL_IPS = ['127.0.0.1']
 
 # only needed in development
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
@@ -30,7 +30,7 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.headers.HeadersPanel',
     'debug_toolbar.panels.request.RequestPanel',
     'debug_toolbar.panels.sql.SQLPanel',
-#   'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    # 'debug_toolbar.panels.staticfiles.StaticFilesPanel',
     'debug_toolbar.panels.templates.TemplatesPanel',
     'debug_toolbar.panels.cache.CachePanel',
     'debug_toolbar.panels.signals.SignalsPanel',
@@ -44,3 +44,17 @@ DEBUG_TOOLBAR_PANELS = [
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 
 # CUSTOM_HOME = True
+
+# Uncomment the two following variables to enable customized OpenITI export modes
+# EXPORT_OPENITI_MARKDOWN_ENABLED = True
+# EXPORT_TEI_XML_ENABLED = True
+
+# --- SEARCH FEATURE ---
+# Uncomment the following line to enable Elasticsearch
+# DISABLE_ELASTICSEARCH = False
+
+# Set this variable to point to your ES instance (defaults to 'localhost:9200')
+# ELASTICSEARCH_URL = <es_url>
+
+# Set this variable to define the common ES index (defaults to 'es-transcriptions')
+# ELASTICSEARCH_COMMON_INDEX = <common_index_name>

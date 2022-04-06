@@ -1,18 +1,18 @@
 import logging
 import os.path
 
+from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from celery import shared_task
-
-from users.consumers import send_event
 from escriptorium.utils import send_email
-from imports.export import EXPORTER_CLASS
-from reporting.tasks import create_task_reporting
+from imports.export import ENABLED_EXPORTERS
 
+# DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
+from reporting.tasks import create_task_reporting  # noqa F401
+from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,14 @@ def document_import(task, import_pk=None, resume=True, task_id=None, user_pk=Non
     user = User.objects.get(pk=user_pk)
     # If quotas are enforced, assert that the user still has free CPU minutes and disk storage
     if not settings.DISABLE_QUOTAS:
-        if user.cpu_minutes_limit() != None:
+        if user.cpu_minutes_limit() is not None:
             assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-        if user.disk_storage_limit() != None:
+        if user.disk_storage_limit() is not None:
             assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
 
     imp = DocumentImport.objects.get(
-        Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED) |
-        Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),
+        Q(workflow_state=DocumentImport.WORKFLOW_STATE_CREATED)
+        | Q(workflow_state=DocumentImport.WORKFLOW_STATE_ERROR),
         pk=import_pk)
 
     imp.report = TaskReport.objects.get(task_id=task.request.id)
@@ -86,7 +86,7 @@ def document_export(task, file_format, part_pks,
     user = User.objects.get(pk=user_pk)
 
     # If quotas are enforced, assert that the user still has free CPU minutes
-    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() != None:
+    if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
         assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
 
     document = Document.objects.get(pk=document_pk)
@@ -97,11 +97,11 @@ def document_export(task, file_format, part_pks,
             "id": document.pk
         })
 
-        if file_format not in EXPORTER_CLASS:
+        if file_format not in ENABLED_EXPORTERS:
             raise NotImplementedError(f"File format {file_format} isn't a supported format during a data export")
 
         transcription = Transcription.objects.get(document=document, pk=transcription_pk)
-        exporter = EXPORTER_CLASS[file_format](
+        exporter = ENABLED_EXPORTERS[file_format]["class"](
             part_pks, region_types, include_images, user, document, report, transcription
         )
         exporter.render()

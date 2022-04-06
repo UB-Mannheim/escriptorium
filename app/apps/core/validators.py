@@ -1,6 +1,6 @@
 import django
-from django.core.validators import BaseValidator
 import jsonschema
+from django.core.validators import BaseValidator
 
 
 # Straight from https://stackoverflow.com/questions/37642742/django-postgresql-json-field-schema-validation/49755623

@@ -111,13 +111,13 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
+<script>
  {% if user.onboarding %}
  const ONBOARDING_PAGE = 'onboarding_document_form';
  {% endif %}
 </script>
 {{ block.super }}
-<script type="text/javascript">
+<script>
  $(document).ready(function(){
      var scripts = { {% for script in form.fields.main_script.queryset %}
          '{{script.pk}}':'{{script.text_direction}}',{% endfor %} };

@@ -8,10 +8,10 @@
           <li class="page-item mr-3">
             <select class="page-link h-100" onchange="location = this.value;">
                 {% for page in page_range.split %}
-                    <option value="?{% url_replace request 'paginate_by' page %}" 
+                    <option value="?{% url_replace request 'paginate_by' page %}"
                       {% if paginate_by|floatformat == page|floatformat %}selected{% endif %}>
                       {% blocktrans with page=page %}
-                        Show {{ page }} 
+                        Show {{ page }}
                       {% endblocktrans %}
                     </option>
                 {% endfor %}
@@ -19,7 +19,7 @@
           </li>
       {% endwith %}
     {% endif %}
-  
+
     <li class="page-item">
       <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
     </li>

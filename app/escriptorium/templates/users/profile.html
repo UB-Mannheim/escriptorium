@@ -5,7 +5,7 @@
 <div class="container">
     <div class="row">
         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-            <a class="nav-link {% block infos-tab-active %}active{% endblock %}" id="nav-infos-tab" href="{% url 'profile' %}" role="tab">{% trans "Informations" %}</a>
+            <a class="nav-link {% block infos-tab-active %}active{% endblock %}" id="nav-infos-tab" href="{% url 'profile' %}" role="tab">{% trans "Information" %}</a>
             <a class="nav-link {% block key-tab-active %}{% endblock %}" id="nav-key-tab"  href="{% url 'profile-api-key' %}" role="tab">{% trans "Api key" %}</a>
             <a class="nav-link {% block files-tab-active %}{% endblock %}" id="nav-files-tab" href="{% url 'profile-files' %}" role="tab">{% trans "Files" %}</a>
             <a class="nav-link {% block team-tab-active %}{% endblock %}" id="nav-infos-tab" href="{% url 'profile-team-list' %}" role="tab">{% trans "Teams" %}</a>
@@ -25,7 +25,7 @@
                         <input type="submit" value="{% trans 'Save' %}" class="btn btn-lg btn-success btn-block">
                     </fieldset>
                 </form>
-                <button id="reset-onboarding" style="" class="btn btn-lg btn-primary btn-block">Reset onboarding</button>
+                <button id="reset-onboarding" style="" class="btn btn-lg btn-primary btn-block">{% trans "Reset onboarding" %}</button>
 
                 {% endblock %}
             </div>

@@ -1,12 +1,11 @@
 import logging
 import os
 
+from celery import states
+from celery.signals import before_task_publish, task_postrun, task_prerun
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
-from celery import states
-from celery.signals import before_task_publish, task_prerun, task_postrun
 
 logger = logging.getLogger(__name__)
 
@@ -110,9 +109,9 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     # Checking if the report wasn't already ended by tasks like "document_export" or "document_import"
     # or canceled by the Document.cancel_tasks API endpoint
     if (
-        report.workflow_state != report.WORKFLOW_STATE_ERROR and
-        report.workflow_state != report.WORKFLOW_STATE_DONE and
-        report.workflow_state != report.WORKFLOW_STATE_CANCELED
+        report.workflow_state != report.WORKFLOW_STATE_ERROR
+        and report.workflow_state != report.WORKFLOW_STATE_DONE
+        and report.workflow_state != report.WORKFLOW_STATE_CANCELED
     ):
         if kwargs.get("state") == states.SUCCESS:
             report.end()

@@ -1,12 +1,12 @@
-from django import forms
-from django.db.models import Q
-from django.contrib.auth.forms import UserCreationForm
-from django.utils.translation import gettext as _
-from django.contrib.auth.models import Group
-
-from captcha.fields import CaptchaField
 from bootstrap.forms import BootstrapFormMixin
-from users.models import Invitation, User, ContactUs, GroupOwner
+from captcha.fields import CaptchaField
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import Group
+from django.db.models import Q
+from django.utils.translation import gettext as _
+
+from users.models import ContactUs, GroupOwner, Invitation, User
 
 
 class InvitationForm(BootstrapFormMixin, forms.ModelForm):
@@ -42,8 +42,8 @@ class GroupInvitationForm(InvitationForm):
     def clean_recipient_id(self):
         # we don't throw an error on purpose to avoid fishing
         try:
-            return User.objects.get(Q(email=self.data.get('recipient_id')) |
-                                    Q(username=self.data.get('recipient_id')))
+            return User.objects.get(Q(email=self.data.get('recipient_id'))
+                                    | Q(username=self.data.get('recipient_id')))
         except User.DoesNotExist:
             return None
 

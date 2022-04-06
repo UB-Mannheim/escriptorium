@@ -1,7 +1,7 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
-from versioning.models import TestModel, NoChangeException
+from versioning.models import NoChangeException, TestModel
 
 User = get_user_model()
 

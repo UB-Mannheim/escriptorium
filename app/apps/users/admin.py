@@ -1,11 +1,17 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
-from django.contrib import messages
 from django.utils.translation import ngettext
 
-from users.models import QuotaEvent, User, ResearchField, Invitation, ContactUs, GroupOwner
+from users.models import (
+    ContactUs,
+    GroupOwner,
+    Invitation,
+    QuotaEvent,
+    ResearchField,
+    User,
+)
 
 
 class MyUserChangeForm(UserChangeForm):
@@ -40,9 +46,10 @@ class MyUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'fields': ('username', 'email', 'password1', 'password2')}
-        ),
+         ),
         ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
+
 
 class InvitationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'

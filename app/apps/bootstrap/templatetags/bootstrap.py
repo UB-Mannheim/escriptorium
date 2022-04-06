@@ -1,7 +1,7 @@
 from django import template
 
-
 register = template.Library()
+
 
 @register.filter
 def level_to_color(tags):
