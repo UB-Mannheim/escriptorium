@@ -57,6 +57,7 @@
                     </button>
                 </div>
                 <div :class="'modal-body ' + $store.state.document.defaultTextDirection">
+                    <p v-if="line.mask == null" class="text-warning">No mask found for the line, preview unavailable! Calculate masks by hitting the green thumbs up button in the segmentation panel.</p>
                     <div id="modal-img-container" ref="modalImgContainer" width="80%">
                         <img id="line-img"
                                 v-bind:src="modalImgSrc"
