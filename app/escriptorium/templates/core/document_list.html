@@ -56,7 +56,7 @@
               {% trans 'Tags' %}
             </th>
             <th>
-              {% trans 'OCR accuracy' %}
+              {% trans 'OCR confidence' %}
             </th>
             <th>
               {% trans 'Actions' %}
@@ -101,10 +101,10 @@
               </listtagsdocument>
             </td>
             <td>
-              <documentcharaccuracy
+              <documentocrconfidence
                 :document-id="{{document.pk}}"
                 :project-id="{{project.pk}}">
-              </documentcharaccuracy>
+              </documentocrconfidence>
             </td>
             {% comment %}
             <td {% if document.workflow_state %}title="{% trans 'Published' %}"{% else %}title="{% trans 'Unpublished' %}"{% endif %}>

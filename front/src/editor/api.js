@@ -54,4 +54,4 @@ export const updatetag = async (project_id, tag_id, data) => (await axios.put(`/
 
 export const retrieveProjectTag = async (project_id) => (await axios.get(`/projects/${project_id}/tags/`))
 
-export const retrieveProjectCharAccuracyList = async (project_id) => (await axios.get(`/projects/${project_id}/char_accuracy/`))
+export const retrieveProjectOCRConfidenceList = async (project_id) => (await axios.get(`/projects/${project_id}/ocr_confidence/`))

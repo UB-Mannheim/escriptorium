@@ -12,7 +12,7 @@ export const initialState = () => ({
     allProjectTags: [],
     tagColor: null,
     TagsListPerDocument: [],
-    charAccuracyListPerDocument: [],
+    ocrConfidenceListPerDocument: [],
 })
 
 export const mutations = {
@@ -71,8 +71,9 @@ export const mutations = {
             }
         }
     },
-    setCharAccuracyListPerDocument (state, accuracyList) {
-        state.charAccuracyListPerDocument = accuracyList;
+    setOCRConfidenceListPerDocument (state, confidenceList) {
+        // Sets the list of document-level average OCR confidences on the state
+        state.ocrConfidenceListPerDocument = confidenceList;
     }
 }
 
@@ -149,19 +150,27 @@ export const actions = {
             }
         }
     },
-    async fetchCharAccuracy({ state, commit }) {
-        const list = await api.retrieveProjectCharAccuracyList(state.projectID);
-        const charAccuracy = []
+    async fetchOCRConfidence({ state, commit }) {
+        // Fetches OCR confidences from API and saves them on the store
+        const list = await api.retrieveProjectOCRConfidenceList(state.projectID);
+        const ocrConfidence = []
         list.data.results.forEach(result => {
-            let existingAccuracyForDoc = charAccuracy.findIndex(doc => doc.pk === result.document);
-            let newAccuracy = { pk: result.document, model: result.name, accuracy: result.avg_confidence };
-            if (existingAccuracyForDoc == -1) {
-                charAccuracy.push(newAccuracy);
-            } else if (existingAccuracyForDoc.accuracy < result.avg_confidence) {
-                charAccuracy[existingAccuracyForDoc] = newAccuracy;
+            // If we've got a confidence value for this document already, compare with this confidence value
+            let existingConfidenceForDoc = ocrConfidence.findIndex(doc => doc.pk === result.document);
+            let newConfidence = {
+                pk: result.document,
+                model: result.name, // Storing the model so we know which transcription this refers to
+                confidence: result.avg_confidence
+            };
+            // If we don't have a confidence value for this document, save this one
+            if (existingConfidenceForDoc == -1) {
+                ocrConfidence.push(newConfidence);
+            // Otherwise, if this confidence is higher than existing, overwrite it
+            } else if (existingConfidenceForDoc.confidence < result.avg_confidence) {
+                ocrConfidence[existingConfidenceForDoc] = newConfidence;
             }
         });
-        commit('setCharAccuracyListPerDocument', charAccuracy);
+        commit('setOCRConfidenceListPerDocument', ocrConfidence);
     }
 }
 

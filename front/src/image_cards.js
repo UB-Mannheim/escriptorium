@@ -48,6 +48,8 @@ class partCard {
         this.task_ids = {};  // helps preventing card status race conditions
         this.progress = part.transcription_progress;
         this.locked = false;
+        this.avgConfidence = part.max_avg_confidence;
+        this.avgConfidenceModel = part.best_transcription_name;
 
         this.api = API.part.replace('{part_pk}', this.pk);
 
@@ -90,6 +92,12 @@ class partCard {
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+
+        // show avg confidence on the card
+        let avgConfidenceElement = $(".avg-confidence", this.$element);
+        avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
+        avgConfidenceElement.attr('title', this.avgConfidenceModel);
+
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });

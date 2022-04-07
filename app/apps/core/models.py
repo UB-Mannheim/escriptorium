@@ -6,6 +6,7 @@ import math
 import os
 import random
 import re
+from statistics import StatisticsError, mean
 import subprocess
 import time
 import uuid
@@ -401,6 +402,9 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # average confidence for lines on this part (page)
+    max_avg_confidence = models.FloatField(null=True, blank=True)
+    best_transcription = models.ForeignKey("Transcription", null=True, blank=True, on_delete=models.SET_NULL)
 
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
@@ -1248,6 +1252,7 @@ class Transcription(ExportModelOperationsMixin('Transcription'), models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     archived = models.BooleanField(default=False)
+    avg_confidence = models.FloatField(null=True, blank=True)
 
     DEFAULT_NAME = 'manual'
 
@@ -1306,6 +1311,9 @@ class LineTranscription(ExportModelOperationsMixin('LineTranscription'), Version
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
+
+    # average confidence for graphs in the line
+    avg_confidence = models.FloatField(null=True, blank=True)
 
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(Line, null=True, on_delete=models.CASCADE,

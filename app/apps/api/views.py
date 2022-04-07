@@ -117,7 +117,7 @@ class TagViewSet(ModelViewSet):
         return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
 
 
-class CharAccuracyViewSet(ReadOnlyModelViewSet):
+class OCRConfidenceViewSet(ReadOnlyModelViewSet):
     queryset = Transcription.objects.all()
     serializer_class = ProjectTranscriptionSerializer
     paginate_by = 10

@@ -112,21 +112,10 @@ class TranscriptionSerializer(serializers.ModelSerializer):
 
 
 class ProjectTranscriptionSerializer(serializers.ModelSerializer):
-    avg_confidence = serializers.SerializerMethodField()
 
     class Meta:
         model = Transcription
         fields = ('pk', 'name', 'document', 'avg_confidence')
-
-    def get_avg_confidence(self, transcription):
-        line_set = transcription.linetranscription_set.all()
-        confidences = []
-        for line in line_set:
-            if line.graphs:
-                confidences += [graph['confidence'] for graph in line.graphs]
-        if confidences:
-            return mean(confidences)
-        return 0
 
 
 class UserOnboardingSerializer(serializers.ModelSerializer):
@@ -240,6 +229,7 @@ class PartSerializer(serializers.ModelSerializer):
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
+    best_transcription_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DocumentPart
@@ -256,7 +246,9 @@ class PartSerializer(serializers.ModelSerializer):
             'order',
             'recoverable',
             'transcription_progress',
-            'source'
+            'source',
+            'max_avg_confidence',
+            'best_transcription_name',
         )
 
     def create(self, data):
@@ -272,6 +264,9 @@ class PartSerializer(serializers.ModelSerializer):
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
         return obj
+
+    def get_best_transcription_name(self, part):
+        return part.best_transcription.name
 
 
 class BlockSerializer(serializers.ModelSerializer):
