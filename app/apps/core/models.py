@@ -243,9 +243,6 @@ class Project(ExportModelOperationsMixin('Project'), models.Model):
 
 
 class DocumentManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset()
-
     def for_user(self, user):
         return (Document.objects
                 .filter(Q(owner=user)

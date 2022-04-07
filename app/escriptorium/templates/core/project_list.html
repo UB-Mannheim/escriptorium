@@ -17,7 +17,7 @@
             <tr onclick="document.location='{% url 'documents-list' slug=project.slug %}'" role="button">
                 <td><a href="{% url 'documents-list' slug=project.slug %}">{{project.name}}</a></td>
                 <td title="{% trans "Owner" %}">{{project.owner}}</td>
-                <td>{% blocktrans count n=project.documents.count %}1 document.{% plural %}{{ n }} documents.{% endblocktrans %}</td>
+                <td>{% blocktrans count n=project.documents_count %}1 document.{% plural %}{{ n }} documents.{% endblocktrans %}</td>
 
                 <td>
                 {% if request.user in project.shared_with_users.all %}

@@ -198,7 +198,10 @@ class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
     def get_queryset(self):
         return (Project.objects
                 .for_user_read(self.request.user)
-                .annotate(documents_count=Count('documents'))
+                .annotate(documents_count=Count(
+                    'documents',
+                    filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
+                    distinct=True))
                 .select_related('owner'))
 
 
