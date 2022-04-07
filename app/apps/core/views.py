@@ -53,6 +53,7 @@ from core.models import (
     DocumentPart,
     Metadata,
     OcrModel,
+    OcrModelDocument,
     OcrModelRight,
     Project,
 )
@@ -654,6 +655,22 @@ class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs.update({'user': self.request.user})
         return kwargs
+
+
+class ModelUnbind(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = OcrModelDocument
+
+    def get_object(self):
+        return OcrModelDocument.objects.get(
+            document__owner=self.request.user,
+            document__pk=self.kwargs['docPk'],
+            ocr_model__pk=self.kwargs['pk'])
+
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('user-models')
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

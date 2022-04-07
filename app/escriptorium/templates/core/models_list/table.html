@@ -91,10 +91,11 @@
         {% endif %}
 
         {% if model.owner == request.user and not model.training %}
-        <span title="{% trans "Delete model" %}">
-          <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
+        <span title="{% if unbind_model %}{% trans "Unbind model from the document" %}{% else %}{% trans "Delete model" %}{% endif %}">
+
+          <form method="POST" class="inline-form" action="{% if unbind_model %}{% url 'model-unbind' model.pk document.pk %}{% else %}{% url 'model-delete' model.pk %}{% endif %}?next={{request.path}}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-danger" ">
+            <button type="submit" class="btn btn-sm {% if unbind_model %}btn-warning{% else %}btn-danger{% endif %}">
               <i class="fas fa-trash"></i>
             </button>
           </form>
