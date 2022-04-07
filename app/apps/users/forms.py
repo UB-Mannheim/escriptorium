@@ -67,6 +67,7 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
     """
     This is a registration form since a user is created.
     """
+    username = forms.CharField(min_length=3)
 
     class Meta(UserCreationForm.Meta):
         model = User
