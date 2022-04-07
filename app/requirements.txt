@@ -11,11 +11,11 @@ django-country-and-language-flags
 django-ordered-model==3.1.1
 django-prometheus==2.1.0
 django-redis==4.10.0
-django-simple-captcha==0.5.12
-djangorestframework==3.9.2
-drf-nested-routers==0.91
-easy-thumbnails==2.5
-elasticsearch==7.17.0
+django-simple-captcha~=0.5.12
+djangorestframework~=3.9.2
+drf-nested-routers~=0.91
+easy-thumbnails~=2.5
+elasticsearch>=7.17.0
 #for python 3.7 you need recent versions of celery (> 4.2)
 kombu==4.6.11
 kraken==3.0.13
