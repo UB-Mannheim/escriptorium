@@ -387,7 +387,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             order = int(request.GET.get('order'))
         except ValueError:
             return Response({'error': 'invalid order.'})
-        if not order:
+        except TypeError:
             return Response({'error': 'pass order as an url parameter.'})
         try:
             part = self.get_queryset().get(order=order)

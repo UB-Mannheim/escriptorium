@@ -4,7 +4,7 @@
             <span v-if="$store.state.document.name" id="part-name">{{ $store.state.document.name }}</span>
             <span id="part-title"
                   v-if="$store.state.parts.loaded"
-                  title="Click to go to another Element (Ctrl+Home)."
+                  title="Click to go to another Element (Alt+G)."
                   data-toggle="modal"
                   data-target="#gotoModal"
                   role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }}) - {{ $store.state.parts.image_file_size | prettyBytes }}</span>
@@ -38,7 +38,7 @@
 export default {
     async created() {
         document.addEventListener('keyup', async function(event) {
-            if (event.ctrlKey && event.keyCode == 36) { // Home
+            if (event.altKey && event.key == 'g') {
                 $('#gotoModal').modal('show');
             }
         });
