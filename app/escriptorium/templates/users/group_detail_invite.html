@@ -12,7 +12,8 @@
             <div class="col">
                 {% csrf_token %}
                 <input type="hidden" name="group" value="{{object.pk}}"/>
-                {% render_field form.recipient_id help_text="Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." %}
+		{% trans "Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." as help_text  %}
+		{% render_field form.recipient_id help_text=help_text %}
             </div>
             <div class="col-auto">
                 <input type="submit" value="{% trans 'Send invitation' %}" title="{% trans "Send invitation" %}" class="btn btn-success btn-block">
