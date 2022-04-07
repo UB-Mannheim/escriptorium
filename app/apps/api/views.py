@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -714,7 +714,9 @@ class OcrModelViewSet(ModelViewSet):
 
     def get_queryset(self):
         return (super().get_queryset()
-                .filter(owner=self.request.user))
+                .filter(Q(owner=self.request.user)
+                        | Q(ocr_model_rights__user=self.request.user)
+                        | Q(ocr_model_rights__group__user=self.request.user)))
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
