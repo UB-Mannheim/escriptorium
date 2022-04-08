@@ -13,5 +13,10 @@ def enable_cookie_consent(request):
                                              True)}
 
 
+def languages(request):
+    setattr(settings, 'ESC_LANGUAGES', 'en,fr,hu,de,en')
+    return {'ESC_LANGUAGES': getattr(settings, 'ESC_LANGUAGES', 'en').split(',')}
+
+
 def custom_homepage(request):
     return {'CUSTOM_HOME': getattr(settings, 'CUSTOM_HOME', False)}
