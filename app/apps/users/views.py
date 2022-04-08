@@ -12,7 +12,13 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import get_script_prefix, reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    TemplateView,
+    UpdateView,
+)
 from rest_framework.authtoken.models import Token
 
 from users.forms import (
@@ -22,6 +28,7 @@ from users.forms import (
     InvitationAcceptForm,
     InvitationForm,
     ProfileForm,
+    RegenerateApiTokenForm,
     RemoveUserFromGroup,
     TransferGroupOwnershipForm,
 )
@@ -165,8 +172,21 @@ class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return self.request.user
 
 
-class ProfileApiKey(LoginRequiredMixin, TemplateView):
+class ProfileApiKey(LoginRequiredMixin, FormView):
     template_name = 'users/profile_api_key.html'
+    form_class = RegenerateApiTokenForm
+
+    def get_success_url(self):
+        return reverse('profile-api-key')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
