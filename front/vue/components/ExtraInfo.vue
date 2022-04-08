@@ -17,16 +17,18 @@
              role="dialog">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-              <div class="modal-body">
+              <div class="modal-body" style="line-height: 30px;">
                 Element #
                 <input type="number"
+                       id="goto-modal-input"
                        v-if="$store.state.parts.loaded"
                        min="1"
                        :max="$store.state.document.partsCount"
-                       width="100%"
                        v-bind:value="$store.state.parts.order+1"
-                       @change.lazy="goTo"/>
+                       class="w-25"
+                       @keyup.enter="goTo"/>
                 / {{$store.state.document.partsCount}}
+                <button class="btn btn-info float-right" @click="goTo">Go to</button>
               </div>
             </div>
           </div>
@@ -50,8 +52,9 @@ export default {
     },
     methods: {
         async goTo(ev) {
-            if (ev.target.value > 0 && ev.target.value <= parseInt(ev.target.attributes.max.value)) {
-              await this.$store.dispatch('parts/loadPartByOrder', ev.target.value-1);
+            let input = document.getElementById('goto-modal-input');
+            if (input.value > 0 && input.value <= parseInt(input.attributes.max.value)) {
+              await this.$store.dispatch('parts/loadPartByOrder', input.value-1);
               $('#gotoModal').modal('hide');
             }
         }
