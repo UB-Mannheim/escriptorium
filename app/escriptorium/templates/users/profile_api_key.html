@@ -13,5 +13,5 @@
   <button class="btn btn-warning btn-sm fas fa-redo" id="api-key-regen" title="{% trans "Regenerate Token." %}"></button>
 </form>
 
-<br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}/api/documents/ -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
+<br/><span class="text-muted"><small>{% trans "example: "%} $ curl {{request.scheme}}://{{request.get_host}}{% url 'api:document-list' %} -H 'Authorization: Token {{ api_auth_token.key }}'</small></span>
 {% endblock %}
