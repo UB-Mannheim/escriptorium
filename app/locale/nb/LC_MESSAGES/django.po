@@ -14,9 +14,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: eScriptorium 0.9.0\n"
+"Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-02 10:27+0000\n"
+"POT-Creation-Date: 2022-04-09 15:26+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: Norwegian <nb@li.org>\n"
@@ -676,6 +676,14 @@ msgstr ""
 msgid "English"
 msgstr ""
 
+#: escriptorium/settings.py
+msgid "French"
+msgstr ""
+
+#: escriptorium/settings.py
+msgid "German"
+msgstr ""
+
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
 msgstr ""
@@ -734,6 +742,10 @@ msgstr ""
 
 #: escriptorium/templates/base.html
 msgid "Leaderboard"
+msgstr ""
+
+#: escriptorium/templates/base.html
+msgid "Site administration"
 msgstr ""
 
 #: escriptorium/templates/base.html
@@ -936,6 +948,10 @@ msgstr ""
 
 #: escriptorium/templates/core/document_list.html
 msgid "Share this Project"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Search in project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
@@ -1198,6 +1214,10 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html
 msgid "Share model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Unbind model from the document"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html
@@ -1991,6 +2011,12 @@ msgid "Invite a user to this team."
 msgstr ""
 
 #: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
+msgstr ""
+
+#: escriptorium/templates/users/group_detail_invite.html
 msgid "Send invitation"
 msgstr ""
 
@@ -2064,6 +2090,10 @@ msgid "Copy to clipboard."
 msgstr ""
 
 #: escriptorium/templates/users/profile_api_key.html
+msgid "Regenerate Token."
+msgstr ""
+
+#: escriptorium/templates/users/profile_api_key.html
 msgid "example: "
 msgstr ""
 
@@ -2112,6 +2142,18 @@ msgstr ""
 msgid "You didn't send any invitations yet."
 msgstr ""
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
 msgstr ""
