@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-01 16:13+0000\n"
+"POT-Creation-Date: 2022-04-09 15:26+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -787,6 +787,10 @@ msgid "Leaderboard"
 msgstr "Spitzenreiter"
 
 #: escriptorium/templates/base.html
+msgid "Site administration"
+msgstr "Website-Administration"
+
+#: escriptorium/templates/base.html
 msgid "Invite"
 msgstr "Einladen"
 
@@ -1269,6 +1273,10 @@ msgstr "Versionen wechseln"
 #: escriptorium/templates/core/models_list/table.html
 msgid "Share model"
 msgstr "Modell teilen"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Unbind model from the document"
+msgstr "Löse Modell vom Dokument"
 
 #: escriptorium/templates/core/models_list/table.html
 msgid "Delete model"
@@ -2310,6 +2318,10 @@ msgid "Copy to clipboard."
 msgstr "Kopiere in die Zwischenablage."
 
 #: escriptorium/templates/users/profile_api_key.html
+msgid "Regenerate Token."
+msgstr "Erzeuge Token erneut."
+
+#: escriptorium/templates/users/profile_api_key.html
 msgid "example: "
 msgstr "Beispiel: "
 
@@ -2361,6 +2373,18 @@ msgstr "Sie sind noch in keinem Team."
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr "Impressum"
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr "Datenschutzerklärung"
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
+msgstr "eScriptorium für OCR-BW"
