@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-02 10:19+0000\n"
+"POT-Creation-Date: 2022-04-14 13:42+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,11 +85,25 @@ msgid "Canceled."
 msgstr ""
 
 #: apps/core/forms.py
-msgid "Text to search in all of your projects"
+msgid ""
+"Text to search in all of your projects, surround it with quotation marks to "
+"deactivate fuzziness"
 msgstr ""
 
 #: apps/core/forms.py
 msgid "All projects"
+msgstr ""
+
+#: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
+msgid "Type"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Color"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Allow Comments"
 msgstr ""
 
 #: apps/core/forms.py
@@ -133,6 +147,34 @@ msgstr ""
 msgid ""
 "If checked, deletes existing segmentation <b>and bound transcriptions</b> "
 "first!"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Comma separated list of possible value, leave it empty for free input."
+msgstr ""
+
+#: apps/core/models.py
+msgid "Rectangle"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Polygon"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Background Color"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Text Color"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Bold"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Italic"
 msgstr ""
 
 #: apps/core/models.py
@@ -304,6 +346,10 @@ msgstr ""
 
 #: apps/core/views.py
 msgid "Document saved successfully!"
+msgstr ""
+
+#: apps/core/views.py
+msgid "Ontology saved successfully!"
 msgstr ""
 
 #: apps/core/views.py
@@ -673,6 +719,14 @@ msgstr ""
 msgid "English"
 msgstr ""
 
+#: escriptorium/settings.py
+msgid "French"
+msgstr ""
+
+#: escriptorium/settings.py
+msgid "German"
+msgstr ""
+
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
 msgstr ""
@@ -734,6 +788,10 @@ msgid "Leaderboard"
 msgstr ""
 
 #: escriptorium/templates/base.html
+msgid "Site administration"
+msgstr ""
+
+#: escriptorium/templates/base.html
 msgid "Invite"
 msgstr ""
 
@@ -781,38 +839,13 @@ msgid "Metadata"
 msgstr ""
 
 #: escriptorium/templates/core/document_form.html
-msgid "Ontology"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
-msgid ""
-"The default configuration only contains semantic types. <br>It is not "
-"recommended to mix semantic, stylistic and layout types.<br><b>It is "
-"required to hit 'Update' to add your new types to the document.</b>"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
-msgid "Region types"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
-msgid "Add a region type"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
-msgid "Line types"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
-msgid "Add a line type"
-msgstr ""
-
-#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_ontology.html
 #: escriptorium/templates/core/project_form.html
 msgid "Update"
 msgstr ""
 
 #: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_ontology.html
 #: escriptorium/templates/core/project_form.html
 #: escriptorium/templates/users/profile_group_list.html
 msgid "Create"
@@ -936,6 +969,10 @@ msgid "Share this Project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
+msgid "Search in project"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Filters"
 msgstr ""
@@ -982,11 +1019,84 @@ msgid "Description"
 msgstr ""
 
 #: escriptorium/templates/core/document_nav.html
+msgid "Ontology"
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
 msgid "Images"
 msgstr ""
 
 #: escriptorium/templates/core/document_nav.html
 msgid "Models"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Document Ontology"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Lines and Regions typologies:"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "The default configuration only contains semantic types."
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "It is not recommended to mix semantic, stylistic and layout types."
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"<b>It is required to hit 'Update' to add your new types to the document.</b>"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Annotations:"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Each Annotation can store values for different components."
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"<b>Components needs to be saved first before adding them to Annotation "
+"definitions.</b>"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid ""
+"Annotation types allow to regroup the corresponding buttons in the editing "
+"interface (and may be used as a hint for import/export)."
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Region types"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a region type"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Line types"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a line type"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Annotations components"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Image Annotations"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Text Annotations"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
@@ -1073,10 +1183,6 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "shares"
-msgstr ""
-
-#: escriptorium/templates/core/models_list/rights/main.html
-msgid "Type"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -1195,6 +1301,10 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html
 msgid "Share model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Unbind model from the document"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/table.html
@@ -1988,6 +2098,12 @@ msgid "Invite a user to this team."
 msgstr ""
 
 #: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
+msgstr ""
+
+#: escriptorium/templates/users/group_detail_invite.html
 msgid "Send invitation"
 msgstr ""
 
@@ -2061,6 +2177,10 @@ msgid "Copy to clipboard."
 msgstr ""
 
 #: escriptorium/templates/users/profile_api_key.html
+msgid "Regenerate Token."
+msgstr ""
+
+#: escriptorium/templates/users/profile_api_key.html
 msgid "example: "
 msgstr ""
 
@@ -2109,6 +2229,18 @@ msgstr ""
 msgid "You didn't send any invitations yet."
 msgstr ""
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
 msgstr ""
