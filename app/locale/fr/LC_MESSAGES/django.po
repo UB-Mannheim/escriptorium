@@ -14,7 +14,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: eScriptorium 0.9.0\n"
+"Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-04-09 15:26+0000\n"
 "PO-Revision-Date: 2022-04-01 16:17+0100\n"
