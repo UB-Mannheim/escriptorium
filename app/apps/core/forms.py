@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class SearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label=_("Text to search in all of your projects"), required=True)
+    query = forms.CharField(label=_("Text to search in all of your projects, surround it with quotation marks to deactivate fuzziness"), required=True)
     project = forms.ModelChoiceField(
         queryset=Project.objects.all(),
         label="",

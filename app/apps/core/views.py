@@ -124,8 +124,10 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         except ValueError:
             projects = user_projects
 
+        fuzziness = not (search.startswith('"') and search.endswith('"'))
+
         try:
-            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search)
+            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search, fuzziness)
         except exceptions.ConnectionError as e:
             context['es_error'] = str(e)
             return context
