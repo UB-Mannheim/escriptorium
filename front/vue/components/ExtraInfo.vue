@@ -44,6 +44,10 @@ export default {
                 $('#gotoModal').modal('show');
             }
         });
+
+        $(document).on('shown.bs.modal', '#gotoModal', function () {
+            $('#goto-modal-input').focus();
+        });
     },
     computed: {
         imageSize() {
