@@ -5,13 +5,13 @@ from django.conf import settings
 from elasticsearch import Elasticsearch
 
 
-def search_in_projects(current_page, page_size, user_id, projects, terms, fuzziness=False):
+def search_in_projects(current_page, page_size, user_id, projects, terms):
     es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
 
-    exact_matches = re.findall('"[^"]*[^"]"', terms)
+    exact_matches = re.findall('"[^"]*[^"]"', re.escape(terms))
     terms_exact = [m[1:-1] for m in exact_matches]
     if terms_exact:
-        terms_fuzzy = re.split('|'.join(exact_matches), terms)
+        terms_fuzzy = re.split('|'.join(exact_matches), re.escape(terms))
     else:
         terms_fuzzy = [terms]
 
@@ -32,12 +32,10 @@ def search_in_projects(current_page, page_size, user_id, projects, terms, fuzzin
                         }
                     }}
                     for term in terms_fuzzy if term.strip() != ""
-                ]
-                + [
-                    {"match": {
+                ] + [
+                    {"match_phrase": {
                         "content": {
-                            "query": unquote_plus(term),
-                            "fuzziness": 0
+                            "query": unquote_plus(term)
                         }
                     }}
                     for term in terms_exact if term.strip() != ""
