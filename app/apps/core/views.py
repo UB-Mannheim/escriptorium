@@ -100,17 +100,20 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
 
         # No extra calculation if search feature is deactivated on the instance
         if settings.DISABLE_ELASTICSEARCH:
-            return
+            return context
 
         context['display_right_warning'] = False
+
+        # Search
+        search = self.request.GET.get('query', '')
+
+        if not search:
+            return context
 
         try:
             page = int(self.request.GET.get('page', '1'))
         except ValueError:
             page = 1
-
-        # Search
-        search = self.request.GET.get('query', '')
 
         user_projects = list(Project.objects.for_user_read(self.request.user).values_list('id', flat=True))
         try:
@@ -124,10 +127,8 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         except ValueError:
             projects = user_projects
 
-        fuzziness = not (search.startswith('"') and search.endswith('"'))
-
         try:
-            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search, fuzziness)
+            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search)
         except exceptions.ConnectionError as e:
             context['es_error'] = str(e)
             return context
