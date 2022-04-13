@@ -33,6 +33,7 @@ from elasticsearch import exceptions
 from core.forms import (
     BinarizeForm,
     DocumentForm,
+    DocumentOntologyForm,
     DocumentShareForm,
     MetadataFormSet,
     MigrateDocumentForm,
@@ -381,6 +382,16 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             # at this point the document is saved
             metadata_form.save()
         return response
+
+
+class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
+    model = Document
+    form_class = DocumentOntologyForm
+    template_name = "core/document_ontology.html"
+    success_message = _("Ontology saved successfully!")
+
+    def get_success_url(self):
+        return reverse('document-ontology', kwargs={'pk': self.object.pk})
 
 
 class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):

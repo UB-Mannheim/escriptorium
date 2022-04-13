@@ -285,6 +285,7 @@ LOGGING = {
         },
         'console_info': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
         'console_debug': {

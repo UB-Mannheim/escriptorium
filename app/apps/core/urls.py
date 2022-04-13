@@ -1,13 +1,14 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from core.views import (  # DocumentDetail,
+from core.views import (
     CreateDocument,
     CreateProject,
     DeleteDocumentUserShare,
     DeleteProjectUserShare,
     DocumentImages,
     DocumentModels,
+    DocumentOntology,
     DocumentPartsProcessAjax,
     DocumentsList,
     DocumentsTasksList,
@@ -45,6 +46,7 @@ urlpatterns = [
     path('documents/tasks/', DocumentsTasksList.as_view(), name='documents-tasks-list'),
     # path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
     path('document/<int:pk>/edit/', UpdateDocument.as_view(), name='document-update'),
+    path('document/<int:pk>/ontology/', DocumentOntology.as_view(), name='document-ontology'),
     path('document/<int:pk>/parts/edit/', EditPart.as_view(), name='document-part-edit'),
     path('document/<int:pk>/part/<int:part_pk>/edit/', EditPart.as_view(),
          name='document-part-edit'),
