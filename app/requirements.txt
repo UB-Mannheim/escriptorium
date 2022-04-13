@@ -18,7 +18,7 @@ easy-thumbnails==2.5
 elasticsearch==7.17.0
 #for python 3.7 you need recent versions of celery (> 4.2)
 kombu==4.6.11
-kraken==3.0.9
+kraken==3.0.13
 numpy>=1.17
 oitei==1.0.0
 Pillow>=5.4.1
