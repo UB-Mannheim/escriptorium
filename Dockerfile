@@ -5,7 +5,7 @@ COPY ./front /build
 RUN npm ci && npm run production
 
 # Pull official base image
-FROM registry.gitlab.com/scripta/escriptorium/base:0.10.5-elasticsearch
+FROM registry.gitlab.com/scripta/escriptorium/base:0.12.2b
 
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto
