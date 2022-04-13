@@ -25,8 +25,8 @@ export const mutations = {
         if (index < 0) return
         Vue.delete(state.comparedTranscriptions, index)
     },
-    hasLoadedTranscriptions(state) {
-        state.transcriptionsLoaded = true
+    hasLoadedTranscriptions(state, value) {
+        state.transcriptionsLoaded = value
     },
     reset (state) {
         assign(state, initialState())
@@ -96,7 +96,7 @@ export const actions = {
             if (data.next) await fetchPage(page+1)
         }
         await fetchPage(1)
-        commit('hasLoadedTranscriptions');
+        commit('hasLoadedTranscriptions', true);
     },
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
@@ -157,6 +157,7 @@ export const actions = {
     },
 
     async getCurrentContent({state, commit, dispatch}, transcription) {
+        commit('hasLoadedTranscriptions', false);
         await dispatch('fetchContent', transcription)
         commit('lines/updateCurrentTrans', state.selectedTranscription, {root: true})
     },

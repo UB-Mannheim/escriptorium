@@ -91,8 +91,10 @@ export default Vue.extend({
         '$store.state.document.enabledVKs'() {
             this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         },
-        '$store.state.transcriptions.transcriptionsLoaded'(o, n) {
-            this.loadAnnotations();
+        '$store.state.transcriptions.transcriptionsLoaded'(new_, old_) {
+            if (new_ === true) {
+               this.loadAnnotations();
+            }
         }
     },
 
@@ -213,13 +215,16 @@ export default Vue.extend({
                 disableEditor: false,
                 formatter: textAnnoFormatter.bind(this)
             });
+
             // deal with annotation disappearing (user deleted the whole text)
             const annotatonHighlighRemove = function(mutationsList, observer) {
                 for (let mutation of mutationsList) {
                     if (mutation.removedNodes) {
                         for (let node of mutation.removedNodes) {
                             if (node.classList && node.classList.contains('r6o-annotation')) {
-                                this.$store.dispatch('textAnnotations/delete', node.dataset.id);
+                                if (this.$store.state.transcriptions && this.$store.state.transcriptions.transcriptionsLoaded) {
+                                   this.$store.dispatch('textAnnotations/delete', node.dataset.id);
+                                }
                             }
                         }
                     }
