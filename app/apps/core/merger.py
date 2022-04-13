@@ -86,6 +86,10 @@ def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
         raise ValueError(f"Found more than one transcription {transcription} for line {line.pk}")  # This should never happen
 
     doc = ordered_lines[0].document_part.document
+    rtl = doc.main_script.text_direction in ['horizontal-rl', 'vertical-rl']
+    if rtl:
+        ordered_lines = list(reversed(ordered_lines))
+
     transcriptions = doc.transcriptions.all()
     prefetch_related_objects(ordered_lines, 'transcriptions')
 
