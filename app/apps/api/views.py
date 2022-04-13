@@ -20,12 +20,16 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
+    AnnotationComponentSerializer,
+    AnnotationTaxonomySerializer,
+    AnnotationTypeSerializer,
     BlockSerializer,
     BlockTypeSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
     DocumentSerializer,
     DocumentTasksSerializer,
+    ImageAnnotationSerializer,
     LineOrderSerializer,
     LineSerializer,
     LineTranscriptionSerializer,
@@ -39,6 +43,7 @@ from api.serializers import (
     SegmentSerializer,
     SegTrainSerializer,
     TagDocumentSerializer,
+    TextAnnotationSerializer,
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
@@ -47,18 +52,23 @@ from api.serializers import (
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
     AlreadyProcessingException,
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     Block,
     BlockType,
     Document,
     DocumentMetadata,
     DocumentPart,
     DocumentTag,
+    ImageAnnotation,
     Line,
     LineTranscription,
     LineType,
     OcrModel,
     Project,
     Script,
+    TextAnnotation,
     Transcription,
 )
 from core.tasks import recalculate_masks
@@ -80,6 +90,10 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 100
+
+
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserOnboardingSerializer
@@ -94,14 +108,12 @@ class UserViewSet(ModelViewSet):
 
 class ScriptViewSet(ReadOnlyModelViewSet):
     queryset = Script.objects.all()
-    paginate_by = 20
     serializer_class = ScriptSerializer
 
 
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    paginate_by = 10
 
     def get_queryset(self):
         return Project.objects.for_user_read(self.request.user)
@@ -123,7 +135,6 @@ class TagViewSet(ModelViewSet):
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    paginate_by = 10
 
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).prefetch_related(
@@ -344,7 +355,9 @@ class DocumentViewSet(ModelViewSet):
 class DocumentPermissionMixin():
     def get_queryset(self):
         try:
-            Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            self.document = (Document.objects
+                             .for_user(self.request.user)
+                             .get(pk=self.kwargs.get('document_pk')))
         except Document.DoesNotExist:
             raise PermissionDenied
         return super().get_queryset()
@@ -489,6 +502,67 @@ class LineTypeViewSet(ModelViewSet):
     serializer_class = LineTypeSerializer
 
 
+class AnnotationTypeViewSet(ModelViewSet):
+    queryset = AnnotationType.objects.filter(public=True)
+    serializer_class = AnnotationTypeSerializer
+
+
+class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationComponent.objects.all()
+    serializer_class = AnnotationComponentSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().filter(document=self.document)
+
+
+class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationTaxonomy.objects.all()
+    serializer_class = AnnotationTaxonomySerializer
+
+    def get_queryset(self):
+        qs = (super().get_queryset()
+              .filter(document=self.document)
+              .prefetch_related('typology', 'components'))
+        target = self.request.query_params.get('target')
+        if target == 'image':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES])
+        elif target == 'text':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES])
+        else:
+            return qs
+
+
+class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = ImageAnnotation.objects.all()
+    serializer_class = ImageAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(part=self.kwargs['part_pk'])
+                .filter(part__document=self.kwargs['document_pk']))
+
+
+class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = TextAnnotation.objects.all()
+    serializer_class = TextAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        qs = (super().get_queryset()
+              .filter(part=self.kwargs['part_pk'])
+              .filter(part__document=self.kwargs['document_pk']))
+        try:
+            transcription = int(self.request.GET.get('transcription'))
+        except (ValueError, TypeError):
+            pass
+        else:
+            qs = qs.filter(transcription=transcription)
+        return qs
+
+
 class BlockViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = Block.objects.select_related('typology')
     serializer_class = BlockSerializer
@@ -612,10 +686,6 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response(resp, status=200)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LargeResultsSetPagination(PageNumberPagination):
-    page_size = 100
 
 
 class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):

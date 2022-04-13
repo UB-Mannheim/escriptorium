@@ -1,4 +1,3 @@
-import { assign } from 'lodash'
 import * as api from '../api'
 
 export const initialState = () => ({
@@ -10,6 +9,8 @@ export const initialState = () => ({
     readDirection: null,
     types: {},
     blockShortcuts: false,
+
+    annotationTaxonomies: {},
 
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
@@ -49,13 +50,16 @@ export const mutations = {
         state.blockShortcuts = block
     },
     setVisiblePanels(state, payload) {
-        state.visible_panels = assign({}, state.visible_panels, payload)
+        state.visible_panels = Object.assign({}, state.visible_panels, payload)
+    },
+    setAnnotationTaxonomies(state, {type, taxos}) {
+        state.annotationTaxonomies[type] = taxos
     },
     setEnabledVKs(state, vks) {
-        state.enabledVKs = assign([], state.enabledVKs, vks)
+        state.enabledVKs = Object.assign([], state.enabledVKs, vks)
     },
     reset (state) {
-        assign(state, initialState())
+        Object.assign(state, initialState())
     }
 }
 
@@ -66,6 +70,26 @@ export const actions = {
         commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
+
+        let page=1;
+        var img_taxos = [];
+        while(page) {
+            let resp = await api.retrieveAnnotationTaxonomies(data.pk, 'image', page)
+            img_taxos = img_taxos.concat(resp.data.results)
+            if (resp.data.next) page++
+            else page=null
+        }
+        commit('setAnnotationTaxonomies', {'type': 'image', 'taxos': img_taxos})
+
+        page=1;
+        var text_taxos = [];
+        while(page) {
+            let resp = await api.retrieveAnnotationTaxonomies(data.pk, 'text', page)
+            text_taxos = text_taxos.concat(resp.data.results)
+            if (resp.data.next) page++
+            else page=null
+        }
+        commit('setAnnotationTaxonomies', {'type': 'text', 'taxos': text_taxos})
     },
 
     async togglePanel ({state, commit}, panel) {
