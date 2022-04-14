@@ -1,7 +1,7 @@
 # German translations for eScriptorium.
-# Copyright (C) 2021
+# Copyright (C) 2021, 2023
 # This file is distributed under the same license as the eScriptorium package.
-# Stefan Weil <sw@weilnetz.de, 2021
+# Stefan Weil <sw@weilnetz.de, 2021-2023
 #
 # This file was created like this:
 # django-admin makemessages -l de
@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-08 20:07+0000\n"
+"POT-Creation-Date: 2023-06-09 14:29+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -339,6 +339,7 @@ msgstr "Leere Ground Truth Daten."
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
 msgstr ""
+"Liste möglicher Werte (mit Komma getrennt), leer lassen für freie Eingabe."
 
 #: apps/core/models.py
 msgid "Rectangle"
@@ -1396,6 +1397,8 @@ msgstr ""
 #: escriptorium/templates/core/document_ontology.html
 msgid "It is not recommended to mix semantic, stylistic and layout types."
 msgstr ""
+"Es wird nicht empfohlen, semantische, stilistische und Layouttypen zu "
+"mischen."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
@@ -1415,12 +1418,17 @@ msgid ""
 "<b>Components needs to be saved first before adding them to Annotation "
 "definitions.</b>"
 msgstr ""
+"<b>Komponenten müssen zuerst gespeichert werden, bevor sie den "
+"Annotationsdefinitionen hinzugefügt werden.</b>"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
 "Annotation types allow to regroup the corresponding buttons in the editing "
 "interface (and may be used as a hint for import/export)."
 msgstr ""
+"Annotationstypen gestatten es, die entsprechenden Bedienelemente im "
+"Bearbeitungsinterface umzugruppieren (und können als Hinweis beim Import/"
+"Export verwendet werden)."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Region types"
@@ -1448,15 +1456,15 @@ msgstr "Füge eine Teileart hinzu"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Annotations components"
-msgstr ""
+msgstr "Annotationskomponenten"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Image Annotations"
-msgstr ""
+msgstr "Bildannotationen"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Text Annotations"
-msgstr ""
+msgstr "Textannotationen"
 
 #: escriptorium/templates/core/home.html
 msgid "Homepage"
@@ -2233,6 +2241,9 @@ msgid ""
 "          Show %(page)s\n"
 "          "
 msgstr ""
+"\n"
+"          Zeige %(page)s\n"
+"          "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "First page"
@@ -2894,18 +2905,18 @@ msgstr "Sie sind noch in keinem Team."
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
 
-#~ msgid "Show onboarding"
-#~ msgstr "Onboarding anzeigen"
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr "Impressum"
 
-#~ msgid "Errors"
-#~ msgstr "Fehler"
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr "Datenschutzerklärung"
 
-#~ msgid "Number of errors/Total number of characters"
-#~ msgstr "Anzahl der Fehler/Gesamtzahl der Zeichen"
-
-#~ msgid "Reset onboarding"
-#~ msgstr "Starthilfe zurücksetzen"
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
+msgstr "eScriptorium für OCR-BW"
