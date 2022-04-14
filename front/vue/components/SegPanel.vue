@@ -655,27 +655,30 @@ export default Vue.extend({
         }
       }
     },
+
+    async deleteRegion(region) {
+      try {
+        this.$store.dispatch(
+          "regions/delete",
+          region.context.pk
+        );
+        let segRegion = this.segmenter.regions.find(
+          (r) => r.context.pk == region.context.pk
+        );
+        if (segRegion) segRegion.remove();
+      } catch (err) {
+        console.log(
+          "couldn't delete region #",
+          region.context.pk,
+          err
+        );
+      }
+    },
+
     async bulkDelete(data) {
       if (data.regions && data.regions.length) {
-        // regions have a bulk delete
-        for (let i = 0; i < data.regions.length; i++) {
-          try {
-            await this.$store.dispatch(
-              "regions/delete",
-              data.regions[i].context.pk
-            );
-            let region = this.segmenter.regions.find(
-              (r) => r.context.pk == data.regions[i].context.pk
-            );
-            if (region) region.remove();
-          } catch (err) {
-            console.log(
-              "couldn't delete region #",
-              data.regions[i].context.pk,
-              err
-            );
-          }
-        }
+        // regions don't have a bulk delete
+        await Promise.all(data.regions.map(r => this.deleteRegion(r)));
       }
       if (data.lines && data.lines.length) {
         try {
