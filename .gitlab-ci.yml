@@ -15,7 +15,7 @@ lint:
 
 tests:
   stage: test
-  image: registry.gitlab.com/scripta/escriptorium/base:0.12.2b
+  image: registry.gitlab.com/scripta/escriptorium/base:0.12.2-languages2
 
   services:
     - postgres:13-alpine
