@@ -86,7 +86,7 @@ def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
         raise ValueError(f"Found more than one transcription {transcription} for line {line.pk}")  # This should never happen
 
     doc = ordered_lines[0].document_part.document
-    rtl = doc.main_script.text_direction in ['horizontal-rl', 'vertical-rl']
+    rtl = doc.main_script and doc.main_script.text_direction in ['horizontal-rl', 'vertical-rl']
     if rtl:
         ordered_lines = list(reversed(ordered_lines))
 
@@ -101,7 +101,7 @@ def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
     for transcription in transcriptions:
         line_transcriptions = [get_line_transcription(line, transcription) for line in ordered_lines]  # type:ignore PyLance doesn't find the transcriptions related property
         actual = [t.content for t in line_transcriptions if t is not None]
-        joined_content = doc.main_script.blank_char.join(actual)
+        joined_content = doc.main_script and doc.main_script.blank_char.join(actual) or ' '
 
         json = dict(transcription=transcription.pk, content=joined_content, )
         result.append(json)
