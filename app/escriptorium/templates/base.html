@@ -1,4 +1,4 @@
-{% load i18n staticfiles %}<!DOCTYPE html>
+{% load i18n language_flags_tags staticfiles %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8">
@@ -22,6 +22,7 @@
     {% block styles %}
     <link href="{% static 'vendor.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/flags.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
   <body id="escriptorium" class="{% block bodyclass %}{% endblock %}">
@@ -104,13 +105,32 @@
               <div class="dropdown-divider"></div>
               {% if perms.users.can_invite %}<a class="dropdown-item" href="{% url 'send-invitation' %}">{% trans 'Invite' %}</a>{% endif %}
               <a class="dropdown-item" href="{% url 'logout' %}">{% trans 'Logout' %}</a>
-            </div>
+              </div>
           </li>
-        {% else %}
+          {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'login' %}">{% trans 'Login' %}</a>
           </li>
-        {% endif %}
+          {% endif %}
+
+          {% get_language_info_list for ESC_LANGUAGES as languages %}
+          {% if languages|length > 1 %}
+          <li class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"> {% flags_for_language 1 LANGUAGE_CODE %} <span class="caret"></span></a>
+            <form action="{% url 'set_language' %}" method="post">
+              {% csrf_token %}
+              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                {% for language in languages %}
+                <li>
+	          <button class="btn" type="submit" name="language" title="{{ language.name_local }}" value="{{ language.code }}">
+                    {% flags_for_language 1 language.code %} <span class="{% if language.code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ language.name }}</span>
+                  </button>
+                </li>
+                {% endfor %}
+              </ul>
+            </form>
+          </li>
+          {% endif %}
         </ul>
       </div>
     </nav>
