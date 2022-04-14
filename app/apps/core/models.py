@@ -1232,7 +1232,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         to_calc = [line for line in lines if (only and line.pk in only) or (only is None)]
 
         for line in to_calc:
-            context = [line.baseline for line in lines if line.pk != line.pk]
+            context = [line_.baseline for line_ in lines if line_.pk != line.pk]
             if line.block:
                 poly = line.block.box
                 poly.append(line.block.box[0])  # close it
