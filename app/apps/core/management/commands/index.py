@@ -149,11 +149,15 @@ class Command(BaseCommand):
                         "_id": f"{line_transcription.id}",
                         "project_id": project.id,
                         "document_id": document.id,
+                        "document_name": document.name,
                         "document_part_id": part.id,
+                        "part_title": part.title,
                         "image_url": part.image.url,
                         "image_width": part.image.width,
                         "image_height": part.image.height,
                         "transcription_id": tr_id,
+                        "transcription_name": line_transcription.transcription.name,
+                        "line_number": line.order + 1,
                         # Build the enhanced LineTranscription content by adding the last LineTranscription content for this Transcription
                         "content": f"{previous_contents[tr_id]} {line_transcription.content}"
                         if previous_contents.get(tr_id) is not None

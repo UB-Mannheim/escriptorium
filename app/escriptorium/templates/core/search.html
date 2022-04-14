@@ -56,9 +56,17 @@
       </tr>
     </thead>
     <tbody>
-      {% for content, part_pk, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
+      {% for content, line_number, transcription_name, part_title, part_pk, document_name, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
       <tr>
-        <td title="{% trans 'Line transcription enhanced content' %}">{{ content|safe }}</td>
+        <td title="{% trans 'Line transcription enhanced content' %}">
+          {{ content|safe }}
+          <br/>
+          <small class="text-muted text-sm align-bottom">
+            {% blocktrans with line=line_number part=part_title doc=document_name trans=transcription_name %}
+            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document <strong>{{ doc }}</strong> ({{ trans }})
+            {% endblocktrans %}
+          </small>
+        </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
           <svg viewBox="{{ viewbox }}" {% if larger %}class="wide-search-crop"{% else %}class="tall-search-crop"{% endif %}>
             <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" xlink:href="{{ img_url }}">
