@@ -7,8 +7,11 @@ export function bootLazyload() {
     imageObserver = new IntersectionObserver(function(entries, observer) {
       entries.forEach(function(entry) {
         if (entry.isIntersecting) {
-          var image = entry.target;
-          image.src = image.dataset.src;
+          // isIntersecting doesn't work on chrome for empty svg image
+          // so we need to put the lazy class on the parent <svg>
+          let image = entry.target.dataset.src ? entry.target : entry.target.querySelector('[data-src]');
+          if (image.namespaceURI.includes('svg')) image.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', image.dataset.src);
+          else  image.setAttribute('src', image.dataset.src);
           image.classList.remove("lazy");
           imageObserver.unobserve(image);
         }

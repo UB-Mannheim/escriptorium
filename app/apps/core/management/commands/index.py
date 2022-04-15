@@ -1,9 +1,11 @@
 import logging
+from math import ceil
 
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db.models import Q
+from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk as es_bulk
@@ -130,6 +132,17 @@ class Command(BaseCommand):
         logger.info("\n" + "-" * 50 + "\n")
 
     def ingest_document_part(self, project, document, part, allowed_users):
+        thumbnailer = get_thumbnailer(part.image)
+        try:
+            thumbnail = thumbnailer.get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
+            assert thumbnail
+        except Exception:
+            thumbnail = part.image
+            pass
+
+        # Factors to scale line bboxes if necessary
+        scale_factors = [thumbnail.width / part.image.width, thumbnail.height / part.image.height] * 2
+
         to_insert = []
         previous_contents = {}
         previous_index = {}
@@ -152,9 +165,9 @@ class Command(BaseCommand):
                         "document_name": document.name,
                         "document_part_id": part.id,
                         "part_title": part.title,
-                        "image_url": part.image.url,
-                        "image_width": part.image.width,
-                        "image_height": part.image.height,
+                        "image_url": thumbnail.url,
+                        "image_width": thumbnail.width,
+                        "image_height": thumbnail.height,
                         "transcription_id": tr_id,
                         "transcription_name": line_transcription.transcription.name,
                         "line_number": line.order + 1,
@@ -162,7 +175,8 @@ class Command(BaseCommand):
                         "content": f"{previous_contents[tr_id]} {line_transcription.content}"
                         if previous_contents.get(tr_id) is not None
                         else line_transcription.content,
-                        "bounding_box": line.get_box(),
+                        # Rescaling the line bbox to match the thumbnail if necessary
+                        "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
                         "have_access": list(set(allowed_users)),
                     }
                 )
