@@ -6,7 +6,7 @@ import math
 import os
 import random
 import re
-from statistics import StatisticsError, mean
+from statistics import mean
 import subprocess
 import time
 import uuid
@@ -880,6 +880,7 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                           or 'horizontal-lr')
 
         with Image.open(self.image.file.name) as im:
+            line_confidences = []
             for line in lines:
                 if not line.baseline:
                     bounds = {
@@ -912,8 +913,24 @@ class DocumentPart(ExportModelOperationsMixin('DocumentPart'), OrderedModel):
                         'confidence': float(confidence)
                     } for letter, poly, confidence in zip(
                         pred.prediction, pred.cuts, pred.confidences)]
+                if lt.graphs:
+                    line_avg_confidence = mean([graph['confidence'] for graph in lt.graphs if "confidence" in graph])
+                    lt.avg_confidence = line_avg_confidence
+                    line_confidences.append(line_avg_confidence)
                 lt.save()
-
+        if line_confidences:
+            # calculate and set all avg OCR confidence values on models
+            avg_line_confidence = mean(line_confidences)
+            # store max avg confidence on the page
+            if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
+                self.max_avg_confidence = avg_line_confidence
+                self.best_transcription = trans
+            # store avg line confidence on the Translation
+            if trans.avg_confidence:
+                trans.avg_confidence = mean([trans.avg_confidence, avg_line_confidence])
+            else:
+                trans.avg_confidence = avg_line_confidence
+            trans.save()
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
         self.save()
