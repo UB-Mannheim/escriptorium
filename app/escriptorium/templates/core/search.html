@@ -15,6 +15,7 @@
 <div>
   <h2>{% trans "Search text in projects" %}</h2>
   <form method="get" class="mt-3">
+    <div>{% render_field form.document %}</div>
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
       <div class="col">{% render_field form.query group=True %}</div>
@@ -22,6 +23,18 @@
         <input type="submit" value="{% trans 'Search' %}" class="btn btn-primary"></input>
       </div>
     </div>
+
+    {% if form.errors %}
+    <div class="mt-3 alert alert-danger" role="alert">
+      <ul class="mb-0">
+      {% for field_errors in form.errors.values %}
+        {% for error in field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </form>
 
   <hr>
@@ -31,12 +44,13 @@
     {% trans "Couldn't connect to Elasticsearch, please contact your instance administrator." %}
     <p class="mt-2 mb-0"><strong>{% trans "Reason:" %}</strong> {{ es_error }}</p>
   </div>
-  {% elif 'query' not in request.GET %}
-  <!-- No need to display anything, user must search terms -->
+  {% elif 'query' not in request.GET or not request.GET.query or form.errors %}
+  <!-- No need to display anything, user must search terms or the form contains errors -->
   {% else %}
-    {% if display_right_warning %}
-    <div class="alert alert-warning" role="alert">
-      {% trans "You requested to search text in a project you don't have access to. Falling back to searching entered text in all of your projects." %}
+    {% if form.cleaned_data.document %}
+    <div class="alert alert-primary" role="alert">
+      {% blocktrans with name=form.cleaned_data.document.name %}Currently searching entered text in the document named <strong>{{ name }}</strong>.{% endblocktrans %}
+      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">Click here to remove this filter.</a>
     </div>
     {% endif %}
 

@@ -33,31 +33,85 @@ from core.models import (
     Project,
     Transcription,
 )
+from core.search import search_content
 from users.models import User
 
 logger = logging.getLogger(__name__)
 
 
-class SearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label=_("Text to search in all of your projects, surround it with quotation marks to deactivate fuzziness"), required=True)
-    project = forms.ModelChoiceField(
-        queryset=Project.objects.all(),
-        label="",
-        empty_label=_("All projects"),
-        required=False
-    )
+class SearchModelChoiceField(forms.ModelChoiceField):
 
     def __init__(self, *args, **kwargs):
-        search = kwargs.pop('search')
-        user = kwargs.pop('user')
-        project = kwargs.pop('project')
+        obj_class = kwargs.pop('obj_class')
+        obj_name = kwargs.pop('obj_name')
         super().__init__(*args, **kwargs)
-        self.fields['query'].initial = search
-        self.fields['project'].queryset = Project.objects.for_user_read(user)
-        self.fields['project'].initial = project
+        self.obj_class = obj_class
+        self.obj_name = obj_name
+
+    def clean(self, value):
+        # Custom cleaning method to raise pretty and explanatory errors
+        if value:
+            try:
+                obj_pk = int(value)
+                obj = self.obj_class.objects.get(pk=obj_pk)
+                if obj not in self.queryset:
+                    raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} you don't have access to."))
+            except (ValueError, self.obj_class.DoesNotExist):
+                raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} that doesn't exist."))
+
+        return super().clean(value)
+
+
+class SearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(label=_("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness"), required=False)
+    project = SearchModelChoiceField(
+        queryset=Project.objects.none(),
+        label="",
+        empty_label=_("All projects"),
+        required=False,
+        obj_class=Project,
+        obj_name="project"
+    )
+    document = SearchModelChoiceField(
+        queryset=Document.objects.none(),
+        label="",
+        required=False,
+        widget=forms.HiddenInput,
+        obj_class=Document,
+        obj_name="document"
+    )
 
     class Meta:
-        fields = ['query', 'project']
+        fields = ['query', 'project', 'document']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super().__init__(*args, **kwargs)
+
+        self.fields['project'].queryset = Project.objects.for_user_read(self.user)
+
+        project = self.data.get('project')
+        doc_qs = Document.objects.for_user(self.user)
+        if project:
+            try:
+                project = int(project)
+                doc_qs = doc_qs.filter(project=project)
+            except ValueError:
+                pass
+        self.fields['document'].queryset = doc_qs
+
+    def search(self, page, paginate_by):
+        projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
+        documents = [self.cleaned_data['document'].id] if self.cleaned_data['document'] else None
+
+        return search_content(
+            page,
+            paginate_by,
+            self.user.id,
+            self.cleaned_data['query'],
+            projects=projects,
+            documents=documents
+        )
 
 
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
