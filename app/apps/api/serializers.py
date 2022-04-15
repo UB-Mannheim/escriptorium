@@ -1,6 +1,5 @@
 import html
 import logging
-from statistics import mean
 
 import bleach
 from django.conf import settings
