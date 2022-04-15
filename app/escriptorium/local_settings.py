@@ -34,16 +34,10 @@ SERVER_EMAIL = 'stefan.weil@uni-mannheim.de'
 # https://docs.djangoproject.com/en/3.2/topics/email/
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
-# EMAIL_HOST = 'smtp.mail.uni-mannheim.de'
-# EMAIL_HOST_USER = 'xxx'
-# EMAIL_HOST_PASSWORD = 'xxx'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# SMTP_DOMAIN=uni-mannheim.de
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2022-04-10'
+VERSION_DATE = 'UBMA-2022-04-14'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
