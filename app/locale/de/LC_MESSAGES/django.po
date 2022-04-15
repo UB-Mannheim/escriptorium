@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-11 14:51+0000\n"
+"POT-Creation-Date: 2022-04-14 18:28+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -168,7 +168,8 @@ msgstr ""
 
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
-msgstr "Liste möglicher Werte (mit Komma getrennt), leer lassen für freie Eingabe.""
+msgstr ""
+"Liste möglicher Werte (mit Komma getrennt), leer lassen für freie Eingabe."
 
 #: apps/core/models.py
 msgid "Rectangle"
@@ -2465,7 +2466,7 @@ msgstr "Sie sind noch in keinem Team."
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
 
