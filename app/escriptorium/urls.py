@@ -25,8 +25,9 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('reporting.urls')),
     path('api/', include('api.urls', namespace='api')),
-    path(r'captcha/', include('captcha.urls')),
+    path('captcha/', include('captcha.urls')),
     path('', include('django_prometheus.urls')),
+    path('i18n/', include('django.conf.urls.i18n')),
 ]
 
 if settings.DEBUG:

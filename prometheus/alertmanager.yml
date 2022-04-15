@@ -1,6 +1,6 @@
 global:
     resolve_timeout: 5m
-  
+
 route:
   group_by: ['alertname', 'job']
   group_wait: 45s
@@ -13,7 +13,7 @@ receivers:
   email_configs:
   - to: 'yves.tadjo-takianpi@inria.fr' # Admin email
     from: 'sender@gmail.com'
-    smarthost: smtp.gmail.com:587 # Port 
+    smarthost: smtp.gmail.com:587 # Port
     auth_username: 'sender@gmail.com'
     auth_identity: 'sender@gmail.com'
     auth_password: 'XXXXXXXX'

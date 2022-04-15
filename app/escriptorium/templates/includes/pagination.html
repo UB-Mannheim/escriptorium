@@ -4,22 +4,22 @@
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-end">
     {% if select_per_page %}
-      {% with paginate_by=page_obj.paginator.per_page page_range="10 20 50" %}
-          <li class="page-item mr-3">
-            <select class="page-link h-100" onchange="location = this.value;">
-                {% for page in page_range.split %}
-                    <option value="?{% url_replace request 'paginate_by' page %}" 
-                      {% if paginate_by|floatformat == page|floatformat %}selected{% endif %}>
-                      {% blocktrans with page=page %}
-                        Show {{ page }} 
-                      {% endblocktrans %}
-                    </option>
-                {% endfor %}
-            </select>
-          </li>
-      {% endwith %}
+    {% with paginate_by=page_obj.paginator.per_page %}
+    <li class="page-item mr-3">
+      <select class="page-link h-100" onchange="location = this.value;">
+        {% for choice in paginate_by_choices %}
+        <option value="?{% url_replace request 'paginate_by' choice %}"
+                {% if paginate_by|floatformat == choice|floatformat %}selected{% endif %}>
+          {% blocktrans with page=choice %}
+          Show {{ page }}
+          {% endblocktrans %}
+        </option>
+        {% endfor %}
+      </select>
+    </li>
+    {% endwith %}
     {% endif %}
-  
+
     <li class="page-item">
       <a class="page-link" title="{% trans 'First page' %}" href="?{% url_replace request 'page' 1 %}">&laquo;</a>
     </li>

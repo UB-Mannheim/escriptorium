@@ -13,7 +13,7 @@
     }
   },
   methods: {
-    appendDocument(event){ 
+    appendDocument(event){
       let id = parseInt($(this.$refs.checkbox).prop('id'));
       let checked = $(this.$refs.checkbox).prop('checked');
       let scope = this;

@@ -15,6 +15,7 @@ export class Alert {
             for (let i=0; i<this.links.length; i++) {
                 let link = $('<div>').html('<a href="'+this.links[i].src+'" target="_blank">'+this.links[i].text+'</a>');
                 if (this.links[i].cssClass) $('a', link).addClass(this.links[i].cssClass);
+                if (this.links[i].targetBlank === false) $('a', link).removeAttr('target');
                 $('.additional', $new).append(link).css('display', 'block');
             }
         }

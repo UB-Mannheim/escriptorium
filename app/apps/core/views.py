@@ -28,11 +28,12 @@ from django.views.generic import (
     UpdateView,
     View,
 )
-from elasticsearch import exceptions
+from elasticsearch import exceptions as es_exceptions
 
 from core.forms import (
     BinarizeForm,
     DocumentForm,
+    DocumentOntologyForm,
     DocumentShareForm,
     MetadataFormSet,
     MigrateDocumentForm,
@@ -53,15 +54,33 @@ from core.models import (
     DocumentPart,
     Metadata,
     OcrModel,
+    OcrModelDocument,
     OcrModelRight,
     Project,
 )
-from core.search import search_in_projects
 from imports.forms import ExportForm, ImportForm
 from reporting.models import TaskReport
 from users.models import User
 
 logger = logging.getLogger(__name__)
+
+
+class PerPageMixin():
+    paginate_by = 50
+    MAX_PAGINATE_BY = 50
+    PAGINATE_BY_CHOICES = [10, 20, 50]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['select_per_page'] = True
+        context['paginate_by_choices'] = self.PAGINATE_BY_CHOICES
+        return context
+
+    def get_paginate_by(self, queryset):
+        try:
+            return min(int(self.request.GET.get("paginate_by", self.paginate_by)), self.MAX_PAGINATE_BY)
+        except ValueError:
+            return self.paginate_by
 
 
 class Home(TemplateView):
@@ -89,43 +108,41 @@ class ESPaginator(Paginator):
         return Page(self.object_list, number, self)
 
 
-class Search(LoginRequiredMixin, FormView, TemplateView):
+class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
     template_name = 'core/search.html'
     form_class = SearchForm
-    paginate_by = 100
+
+    def get_paginate_by(self):
+        return super().get_paginate_by(None)
+
+    def get_form(self):
+        self.form = SearchForm(self.request.GET, **self.get_form_kwargs())
+        return self.form
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(Search, self).get_context_data(**kwargs)
 
-        # No extra calculation if search feature is deactivated on the instance
-        if settings.DISABLE_ELASTICSEARCH:
-            return
-
-        context['display_right_warning'] = False
+        # No extra calculation if:
+        # - search feature is deactivated on the instance
+        # - the form is invalid
+        # - the search terms are empty
+        if settings.DISABLE_ELASTICSEARCH or not self.form.is_valid() or not self.form.cleaned_data.get('query'):
+            return context
 
         try:
             page = int(self.request.GET.get('page', '1'))
         except ValueError:
             page = 1
 
-        # Search
-        search = self.request.GET.get('query', '')
-
-        user_projects = list(Project.objects.for_user_read(self.request.user).values_list('id', flat=True))
+        paginate_by = self.get_paginate_by()
         try:
-            project = int(self.request.GET.get('project', ''))
-
-            if project in user_projects:
-                projects = [project]
-            else:
-                projects = user_projects
-                context['display_right_warning'] = True
-        except ValueError:
-            projects = user_projects
-
-        try:
-            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search)
-        except exceptions.ConnectionError as e:
+            es_results = self.form.search(page, paginate_by)
+        except es_exceptions.ConnectionError as e:
             context['es_error'] = str(e)
             return context
 
@@ -133,7 +150,7 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         results = [result.values() for result in template_results]
 
         # Pagination
-        paginator = ESPaginator(results, self.paginate_by, total=int(es_results['hits']['total']['value']))
+        paginator = ESPaginator(results, paginate_by, total=int(es_results['hits']['total']['value']))
 
         if page > paginator.num_pages:
             page = paginator.num_pages
@@ -154,40 +171,22 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         ])
         return {
             'content': hit.get('highlight', {}).get('content', [])[0],
+            'line_number': hit_source['line_number'],
+            'transcription_name': hit_source['transcription_name'],
+            'part_title': hit_source['part_title'],
             'part_pk': hit_source['document_part_id'],
+            'document_name': hit_source['document_name'],
             'document_pk': hit_source['document_id'],
             'score': hit['_score'],
             'img_url': hit_source['image_url'],
             'img_w': hit_source['image_width'],
             'img_h': hit_source['image_height'],
             'viewbox': viewbox,
+            'larger': (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
         }
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['search'] = self.request.GET.get('query')
-        kwargs['project'] = self.request.GET.get('project')
-        kwargs['user'] = self.request.user
-        return kwargs
 
     def get_success_url(self):
         return reverse('search')
-
-
-class PerPageMixin():
-    MAX_PAGINATE_BY = 50
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['select_per_page'] = True
-        return context
-
-    def get_paginate_by(self, queryset):
-        try:
-            _paginate_by = int(self.request.GET.get("paginate_by", self.paginate_by))
-        except ValueError:
-            _paginate_by = self.paginate_by
-        return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
 
 
 class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
@@ -197,7 +196,10 @@ class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
     def get_queryset(self):
         return (Project.objects
                 .for_user_read(self.request.user)
-                .annotate(documents_count=Count('documents'))
+                .annotate(documents_count=Count(
+                    'documents',
+                    filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
+                    distinct=True))
                 .select_related('owner'))
 
 
@@ -373,6 +375,16 @@ class UpdateDocument(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, Upd
             # at this point the document is saved
             metadata_form.save()
         return response
+
+
+class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, UpdateView):
+    model = Document
+    form_class = DocumentOntologyForm
+    template_name = "core/document_ontology.html"
+    success_message = _("Ontology saved successfully!")
+
+    def get_success_url(self):
+        return reverse('document-ontology', kwargs={'pk': self.object.pk})
 
 
 class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
@@ -650,6 +662,22 @@ class ModelUpload(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs.update({'user': self.request.user})
         return kwargs
+
+
+class ModelUnbind(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = OcrModelDocument
+
+    def get_object(self):
+        return OcrModelDocument.objects.get(
+            document__owner=self.request.user,
+            document__pk=self.kwargs['docPk'],
+            ocr_model__pk=self.kwargs['pk'])
+
+    def get_success_url(self):
+        if 'next' in self.request.GET:
+            return self.request.GET.get('next')
+        else:
+            return reverse('user-models')
 
 
 class ModelDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

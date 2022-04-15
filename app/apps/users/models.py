@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from rest_framework.authtoken.models import Token
 
 from escriptorium.utils import send_email
 from users.consumers import send_notification
@@ -107,6 +108,14 @@ class User(AbstractUser):
         if quota is not None:
             return quota > self.calc_gpu_usage()
         return True   # Unlimited GPU usage
+
+    def regenerate_api_token(self):
+        try:
+            self.auth_token.delete()
+        except AttributeError:
+            # no token found
+            pass
+        return Token.objects.create(user=self)
 
 
 class ResearchField(models.Model):

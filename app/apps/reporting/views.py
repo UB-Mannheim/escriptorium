@@ -1,13 +1,16 @@
+from collections import Counter, OrderedDict
 from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.postgres.aggregates.general import StringAgg
 from django.core.paginator import Page, Paginator
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
 from django.utils.functional import cached_property
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
+from core.models import Document, Project
 from reporting.models import TaskReport
 from users.models import User
 
@@ -135,3 +138,73 @@ class QuotasLeaderboard(LoginRequiredMixin, TemplateView):
         context['is_paginated'] = paginator.num_pages > 1
 
         return context
+
+
+class ProjectReport(LoginRequiredMixin, DetailView):
+    template_name = 'reporting/project_reports.html'
+    model = Project
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['project'] = self.object
+        context['filters'] = self.request.GET.getlist('tags')
+        context['vocabulary'] = self.request.GET.get('vocabulary')
+        context['document_tags'] = list(self.object.document_tags.annotate(document_count=Count('tags_document', distinct=True)).values())
+        context['part_count'] = self.get_aggregate_sum('part_count')
+        context['part_lines_count'] = self.get_aggregate_sum('part_lines_count')
+        context['documents_shared_with_users'] = self.get_aggregate_sum('documents_shared_with_users')
+        context['documents_shared_with_groups'] = self.get_aggregate_sum('documents_shared_with_groups')
+        context['part_lines_transcriptions'] = self.get_aggregate('part_lines_transcriptions')
+        context['part_lines_typology'] = self.get_typology_count('part_lines_typology')
+        context['part_block_typology'] = self.get_typology_count('part_block_typology')
+        context['part_block_count'] = self.get_aggregate_sum('part_block_count')
+
+        return context
+
+    def get_object(self):
+        project = Project.objects.get(slug=self.kwargs.get('slug'))
+        self.documents = project.documents.exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+
+        for tag in self.request.GET.getlist('tags'):
+            self.documents = self.documents.filter(tags__name=tag)
+
+        return project
+
+    def get_aggregate_sum(self, field):
+        document_list = self.documents
+
+        if field == 'part_count':
+            document_list = document_list.annotate(part_count=Count('parts', distinct=True))
+        elif field == 'part_lines_count':
+            document_list = document_list.annotate(part_lines_count=Count('parts__lines', distinct=True))
+        elif field == 'documents_shared_with_users':
+            document_list = document_list.annotate(documents_shared_with_users=Count('shared_with_users', distinct=True))
+        elif field == 'documents_shared_with_groups':
+            document_list = document_list.annotate(documents_shared_with_groups=Count('shared_with_groups', distinct=True))
+        elif field == 'part_lines_typology':
+            document_list = document_list.annotate(part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'))
+        elif field == 'part_block_typology':
+            document_list = document_list.annotate(part_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
+        elif field == 'part_block_count':
+            document_list = document_list.annotate(part_block_count=Count('parts__blocks', distinct=True))
+
+        sum = document_list.aggregate(data=Sum(field)).get('data')
+        if sum is None:
+            sum = 0
+        return sum
+
+    def get_aggregate(self, field, delimiter=' '):
+        document_list = self.documents
+
+        if field == 'part_lines_transcriptions':
+            document_list = document_list.annotate(part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' '))
+        elif field == 'part_lines_typology':
+            document_list = document_list.annotate(part_lines_typology=StringAgg('parts__lines__typology__name', delimiter='|'))
+        elif field == 'part_block_typology':
+            document_list = document_list.annotate(part_block_typology=StringAgg('parts__blocks__typology__name', delimiter='|'))
+
+        return document_list.aggregate(data=StringAgg(field, delimiter=delimiter)).get('data')
+
+    def get_typology_count(self, field):
+        value = self.get_aggregate(field, '|')
+        return OrderedDict(Counter(value.split('|'))).items() if value else ''

@@ -9,7 +9,7 @@ from django.core.validators import (
     MinValueValidator,
 )
 from django.db.models import Q
-from django.forms.models import inlineformset_factory
+from django.forms.models import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from kraken.lib import vgsl
@@ -18,6 +18,9 @@ from PIL import Image
 
 from core.models import (
     AlreadyProcessingException,
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     BlockType,
     Document,
     DocumentMetadata,
@@ -30,31 +33,85 @@ from core.models import (
     Project,
     Transcription,
 )
+from core.search import search_content
 from users.models import User
 
 logger = logging.getLogger(__name__)
 
 
-class SearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label="Text to search in all of your projects", required=True)
-    project = forms.ModelChoiceField(
-        queryset=Project.objects.all(),
-        label="",
-        empty_label="All projects",
-        required=False
-    )
+class SearchModelChoiceField(forms.ModelChoiceField):
 
     def __init__(self, *args, **kwargs):
-        search = kwargs.pop('search')
-        user = kwargs.pop('user')
-        project = kwargs.pop('project')
+        obj_class = kwargs.pop('obj_class')
+        obj_name = kwargs.pop('obj_name')
         super().__init__(*args, **kwargs)
-        self.fields['query'].initial = search
-        self.fields['project'].queryset = Project.objects.for_user_read(user)
-        self.fields['project'].initial = project
+        self.obj_class = obj_class
+        self.obj_name = obj_name
+
+    def clean(self, value):
+        # Custom cleaning method to raise pretty and explanatory errors
+        if value:
+            try:
+                obj_pk = int(value)
+                obj = self.obj_class.objects.get(pk=obj_pk)
+                if obj not in self.queryset:
+                    raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} you don't have access to."))
+            except (ValueError, self.obj_class.DoesNotExist):
+                raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} that doesn't exist."))
+
+        return super().clean(value)
+
+
+class SearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(label=_("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness"), required=False)
+    project = SearchModelChoiceField(
+        queryset=Project.objects.none(),
+        label="",
+        empty_label=_("All projects"),
+        required=False,
+        obj_class=Project,
+        obj_name="project"
+    )
+    document = SearchModelChoiceField(
+        queryset=Document.objects.none(),
+        label="",
+        required=False,
+        widget=forms.HiddenInput,
+        obj_class=Document,
+        obj_name="document"
+    )
 
     class Meta:
-        fields = ['query', 'project']
+        fields = ['query', 'project', 'document']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super().__init__(*args, **kwargs)
+
+        self.fields['project'].queryset = Project.objects.for_user_read(self.user)
+
+        project = self.data.get('project')
+        doc_qs = Document.objects.for_user(self.user)
+        if project:
+            try:
+                project = int(project)
+                doc_qs = doc_qs.filter(project=project)
+            except ValueError:
+                pass
+        self.fields['document'].queryset = doc_qs
+
+    def search(self, page, paginate_by):
+        projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
+        documents = [self.cleaned_data['document'].id] if self.cleaned_data['document'] else None
+
+        return search_content(
+            page,
+            paginate_by,
+            self.user.id,
+            self.cleaned_data['query'],
+            projects=projects,
+            documents=documents
+        )
 
 
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
@@ -64,39 +121,17 @@ class ProjectForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script']
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
-        if self.request.method == "POST":
-            # we need to accept all types when posting for added ones
-            block_qs = BlockType.objects.all()
-            line_qs = LineType.objects.all()
-        elif self.instance.pk:
-            block_qs = BlockType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-            line_qs = LineType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-        else:
-            block_qs = BlockType.objects.filter(public=True)
-            line_qs = LineType.objects.filter(public=True)
-            self.initial['valid_block_types'] = BlockType.objects.filter(default=True)
-            self.initial['valid_line_types'] = LineType.objects.filter(default=True)
-
-        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
-        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
         self.fields['project'].required = False
 
     def clean_project(self):
         return self.initial['project']
-
-    class Meta:
-        model = Document
-        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script',
-                  'valid_block_types', 'valid_line_types']
-        widgets = {
-            'valid_block_types': forms.CheckboxSelectMultiple,
-            'valid_line_types': forms.CheckboxSelectMultiple
-        }
 
 
 class ShareForm(BootstrapFormMixin, forms.ModelForm):
@@ -170,6 +205,181 @@ class MetadataForm(BootstrapFormMixin, forms.ModelForm):
 MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
                                         form=MetadataForm,
                                         extra=1, can_delete=True)
+
+
+class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['valid_block_types', 'valid_line_types']
+        widgets = {
+            'valid_block_types': forms.CheckboxSelectMultiple,
+            'valid_line_types': forms.CheckboxSelectMultiple
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+
+        if self.request.method == "POST":
+            # we need to accept all types when posting for added ones
+            # TODO: if the form has errors it show everything.. need to find a better solution
+            block_qs = BlockType.objects.all()
+            line_qs = LineType.objects.all()
+        elif self.instance.pk:
+            block_qs = BlockType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+            line_qs = LineType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
+        else:
+            block_qs = BlockType.objects.filter(public=True)
+            line_qs = LineType.objects.filter(public=True)
+            self.initial['valid_block_types'] = block_qs
+            self.initial['valid_line_types'] = line_qs
+
+        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
+        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
+
+        self.compo_form = ComponentFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            prefix='compo_form',
+            instance=self.instance)
+
+        img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
+        self.img_anno_form = ImageAnnotationTaxonomyFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            queryset=AnnotationTaxonomy.objects.filter(
+                marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
+            prefix='img_anno_form',
+            instance=self.instance)
+
+        text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
+        self.text_anno_form = TextAnnotationTaxonomyFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            queryset=AnnotationTaxonomy.objects.filter(
+                marker_type__in=text_choices).select_related('typology').prefetch_related('components'),
+            prefix='text_anno_form',
+            instance=self.instance)
+
+    def is_valid(self):
+        return (super().is_valid()
+                and (self.compo_form.is_valid())
+                and (self.img_anno_form.is_valid())
+                and (self.text_anno_form.is_valid()))
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        self.compo_form.save()
+        self.img_anno_form.save()
+        self.text_anno_form.save()
+        return instance
+
+
+class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
+    typo = forms.CharField(label=_('Type'), required=False)
+
+    class Meta:
+        model = AnnotationTaxonomy
+        exclude = ['typology']
+        labels = {
+            'marker_detail': _('Color'),
+            'has_comments': _('Allow Comments')
+        }
+
+    def __init__(self, *args, data=None, **kwargs):
+        super().__init__(*args, data=data, **kwargs)
+        if self.instance and self.instance.typology:
+            self.fields['typo'].initial = self.instance.typology.name
+
+    def has_changed(self, *args, **kwargs):
+        # avoid triggering validation for empty formsets
+        if len(self.initial.keys()) == 0 and 'name' not in self.changed_data:
+            return False
+        return super().has_changed(*args, **kwargs)
+
+    def save(self, commit=True):
+        typo = self.cleaned_data.get('typo')
+        instance = super().save(commit=False)
+        if typo:
+            typology, created = AnnotationType.objects.get_or_create(name=typo)
+            instance.typology = typology
+        instance.save()
+        return instance
+
+
+class ImageAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['marker_type'].choices = AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES
+
+
+class TextAnnotationTaxonomyForm(AnnotationTaxonomyBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['marker_type'].choices = AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES
+
+
+class ComponentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        fields = '__all__'
+
+
+class AnnotationComponentForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        fields = '__all__'
+
+    def __init__(self, *args, document=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['annotationcomponent'].queryset = AnnotationComponent.objects.filter(document=document)
+
+
+class AnnotationTaxonomyFormset(BaseInlineFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+
+        form.compo_form = AnnotationComponentFormSet(
+            instance=form.instance,
+            form_kwargs={'document': form.instance.document},
+            data=form.data if form.is_bound else None,
+            files=form.files if form.is_bound else None,
+            prefix='component-%s-%s' % (
+                form.prefix,
+                AnnotationComponentFormSet.get_default_prefix()))
+
+    def is_valid(self):
+        result = super().is_valid()
+        if self.is_bound:
+            for form in self.forms:
+                if form.is_bound:
+                    result = form.compo_form.is_valid() and result
+        return result
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        for form in self.forms:
+            if not self._should_delete_form(form):
+                form.compo_form.save(commit=commit)
+        return instance
+
+
+ComponentFormSet = inlineformset_factory(Document,
+                                         AnnotationComponent,
+                                         form=ComponentForm,
+                                         can_delete=True, extra=1)
+
+ImageAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
+                                                       form=ImageAnnotationTaxonomyForm,
+                                                       formset=AnnotationTaxonomyFormset,
+                                                       can_order=True,
+                                                       can_delete=True, extra=1)
+TextAnnotationTaxonomyFormSet = inlineformset_factory(Document, AnnotationTaxonomy,
+                                                      form=TextAnnotationTaxonomyForm,
+                                                      formset=AnnotationTaxonomyFormset,
+                                                      can_order=True,
+                                                      can_delete=True, extra=1)
+AnnotationComponentFormSet = inlineformset_factory(AnnotationTaxonomy,
+                                                   AnnotationComponent.taxonomy.through,
+                                                   form=AnnotationComponentForm,
+                                                   can_delete=True, extra=1)
 
 
 class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):

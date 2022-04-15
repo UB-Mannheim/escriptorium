@@ -1,14 +1,17 @@
 var imageObserver;
 export function bootLazyload() {
-  var lazyloadImages;    
+  var lazyloadImages;
 
   if ("IntersectionObserver" in window) {
     lazyloadImages = document.querySelectorAll(".lazy");
     imageObserver = new IntersectionObserver(function(entries, observer) {
       entries.forEach(function(entry) {
         if (entry.isIntersecting) {
-          var image = entry.target;
-          image.src = image.dataset.src;
+          // isIntersecting doesn't work on chrome for empty svg image
+          // so we need to put the lazy class on the parent <svg>
+          let image = entry.target.dataset.src ? entry.target : entry.target.querySelector('[data-src]');
+          if (image.namespaceURI.includes('svg')) image.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', image.dataset.src);
+          else  image.setAttribute('src', image.dataset.src);
           image.classList.remove("lazy");
           imageObserver.unobserve(image);
         }
@@ -18,14 +21,14 @@ export function bootLazyload() {
     lazyloadImages.forEach(function(image) {
       imageObserver.observe(image);
     });
-  } else {  
+  } else {
     var lazyloadThrottleTimeout;
     lazyloadImages = document.querySelectorAll(".lazy");
-    
+
     function lazyload () {
       if(lazyloadThrottleTimeout) {
         clearTimeout(lazyloadThrottleTimeout);
-      }    
+      }
 
       lazyloadThrottleTimeout = setTimeout(function() {
         var scrollTop = window.pageYOffset;
@@ -35,7 +38,7 @@ export function bootLazyload() {
               img.classList.remove('lazy');
             }
         });
-        if(lazyloadImages.length == 0) { 
+        if(lazyloadImages.length == 0) {
           document.removeEventListener("scroll", lazyload);
           window.removeEventListener("resize", lazyload);
           window.removeEventListener("orientationChange", lazyload);

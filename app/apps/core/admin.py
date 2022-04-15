@@ -1,6 +1,9 @@
 from django.contrib import admin
 
 from core.models import (
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     BlockType,
     Document,
     DocumentMetadata,
@@ -97,4 +100,7 @@ admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
 admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)
 admin.site.register(OcrModelRight, OcrModelRightAdmin)
+admin.site.register(AnnotationType)
+admin.site.register(AnnotationTaxonomy)
+admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)

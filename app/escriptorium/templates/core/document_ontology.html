@@ -1,0 +1,217 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n staticfiles bootstrap json %}
+
+{% block head_title %}{% trans "Document Ontology" %}{% endblock %}
+
+{% block nav-onto-active %}active{% endblock %}
+
+{% block tab_content %}
+<div class="tab-pane fade show active" id="nav-doc" role="tabpanel" aria-labelledby="nav-doc-tab">
+    <form id="ontology-form" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <div class="form-group">
+                {% for err in form.non_field_errors %}
+                <p class="error">{{ err }}</p>
+                {% endfor %}
+            </div>
+
+            <div id="ontology-form" class="col-xl">
+              <button type="button" class="btn help open" aria-label="Help">
+                <span class="fas fa-question"></span>
+              </button>
+              <div id="ontology-help" class="alert alert-primary help-text">
+                <button type="button" class="close" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+                <p class="form-text text-muted mb-0">
+                  <h5>{% trans "Lines and Regions typologies:" %}</h5>
+                  {% trans "The default configuration only contains semantic types." %} </br>
+                  {% trans "It is not recommended to mix semantic, stylistic and layout types." %} </br>
+                  {% trans "<b>It is required to hit 'Update' to add your new types to the document.</b>" %}</br>
+
+                  <br/><h5>{% trans "Annotations:" %}</h5>
+                  {% trans "Each Annotation can store values for different components." %}</br>
+                  {% trans "<b>Components needs to be saved first before adding them to Annotation definitions.</b>" %}</br>
+                  {% trans "Annotation types allow to regroup the corresponding buttons in the editing interface (and may be used as a hint for import/export)." %}</br>
+
+                </p>
+              </div>
+
+              <div id="region-types">
+                <div>{% trans "Region types" %}</div>
+                {% render_field form.valid_block_types group=True %}
+                <!-- free input handleed by js-->
+                <div class="form-row">
+                  <div class="col">
+                    <input class="form-control form-control-sm"
+                           id="add-region-type-input"
+                           placeholder="{% trans "Add a region type" %}" />
+                  </div>
+                  <div class="col-auto">
+                    <button id="add-region-type-btn"
+                            class="btn btn-success fas fa-plus"></button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="line-types">
+                <div class="mt-4">{% trans "Line types" %}</div>
+                {% render_field form.valid_line_types group=True %}
+                <div class="form-row">
+                  <div class="col">
+                    <input class="form-control form-control-sm"
+                           id="add-line-type-input"
+                           placeholder="{% trans "Add a line type" %}" />
+                  </div>
+                  <div class="col-auto">
+                    <button id="add-line-type-btn"
+                            class="btn btn-success fas fa-plus"></button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="components" class="js-compos-form">
+                  <div class="mt-4">{% trans "Annotations components" %}</div>
+                  {{ form.compo_form.management_form}}
+                  {% for subform in form.compo_form.forms %}
+                  <div class="input-group input-group-sm mt-2 js-formset-row">
+                      {{ subform.id }}
+                      {% render_field subform.name group=True %}
+                      {% render_field subform.allowed_values group=True %}
+                      <div class="input-group-prepend">
+                          <input type="hidden"
+                                 name="compo_form-{{forloop.counter0}}-DELETE"
+                                 id="compo_form-{{forloop.counter0}}-DELETE">
+                          <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                  for="compo_form-{{forloop.counter0}}-DELETE">✗</button>
+                      </div>
+
+                      {% for field, errors in subform.errors.items %}{% for error in errors %}
+                      <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                      {% endfor %}{% endfor %}
+                  </div>
+                  {% endfor %}
+              </div>
+
+              <div id="image-annotations" class="js-img-anno-form">
+                <div class="mt-4">{% trans "Image Annotations" %}</div>
+                {{ form.img_anno_form.management_form }}
+
+                {% for subform in form.img_anno_form.forms %}
+                <div class="input-group input-group-sm mt-2 js-formset-row">
+                    {{ subform.id }}  {# hidden #}
+                    {{ subform.document }}  {# hidden #}
+
+                    {% render_field subform.name group=True class="w-25" %}
+                    {% render_field subform.abbreviation group=True %}
+                    {% render_field subform.typo group=True class="w-25" %}
+                    {# TODO: add dataset for typo #}
+                    {% render_field subform.marker_type group=True %}
+                    {% render_field subform.marker_detail group=True class="mr-1" %}
+                    {% render_field subform.has_comments group=True %}
+                    <div class="input-group-prepend">
+                        <input type="hidden"
+                               name="img_anno_form-{{forloop.counter0}}-DELETE"
+                               id="id_img_anno_form-{{forloop.counter0}}-DELETE">
+                        <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                for="id_img_anno_form-{{forloop.counter0}}-DELETE">✗</button>
+                    </div>
+
+                    {% for field, errors in subform.errors.items %}{% for error in errors %}
+                    <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                    {% endfor %}{% endfor %}
+
+                    {% if subform.compo_form %}
+                    {{ subform.compo_form.management_form }}
+                    {% for nested in subform.compo_form.forms %}
+                    <div class="input-group input-group-sm mt-2 js-formset-row pl-3">
+                        {{ nested.id }}
+                        {% render_field nested.annotationcomponent group=True %}
+                        <div class="input-group-prepend">
+                            <input type="hidden"
+                                   name="component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE"
+                                   id="id_component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">
+                            <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                    for="id_component-img_anno_form-{{ forloop.parentloop.counter0 }}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">✗</button>
+                        </div>
+                    </div>
+                    {% for field, errors in nested.errors.items %}{% for error in errors %}
+                    <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                    {% endfor %}{% endfor %}
+                    {% endfor %}
+                    {% endif %}
+
+                </div>
+                {% endfor %}
+              </div>
+
+
+              <div id="text-annotations" class="js-text-anno-form">
+                  <div class="mt-4">{% trans "Text Annotations" %}</div>
+                  {{ form.text_anno_form.management_form }}
+
+                  {% for subform in form.text_anno_form.forms %}
+                  <div class="input-group input-group-sm mt-2 js-formset-row">
+                      {{ subform.id }}  {# hidden #}
+                      {{ subform.document }}  {# hidden #}
+
+                      {% render_field subform.name group=True class="w-25" %}
+                      {% render_field subform.abbreviation group=True %}
+                      {% render_field subform.typo group=True class="w-25" %}
+                      {# TODO: add dataset for typo #}
+                      {% render_field subform.marker_type group=True %}
+                      {% render_field subform.marker_detail group=True class="mr-1" %}
+                      {% render_field subform.has_comments group=True %}
+                      <div class="input-group-prepend">
+                          <input type="hidden"
+                                 name="text_anno_form-{{forloop.counter0}}-DELETE"
+                                 id="id_text_anno_form-{{forloop.counter0}}-DELETE">
+                          <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                  for="id_text_anno_form-{{forloop.counter0}}-DELETE">✗</button>
+                      </div>
+
+                      {% for field, errors in subform.errors.items %}{% for error in errors %}
+                      <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                      {% endfor %}{% endfor %}
+
+                      {% if subform.compo_form %}
+                      {{ subform.compo_form.management_form }}
+                      {% for nested in subform.compo_form.forms %}
+                      <div class="input-group input-group-sm mt-2 js-formset-row pl-3">
+                          {{ nested.id }}
+                          {% render_field nested.annotationcomponent group=True %}
+                          <div class="input-group-prepend">
+                              <input type="hidden"
+                                     name="component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE"
+                                     id="id_component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">
+                              <button class="btn btn-outline-secondary js-formset-delete" type="button"
+                                      for="id_component-text_anno_form-{{forloop.parentloop.counter0}}-AnnotationTaxonomy_components-{{forloop.counter0}}-DELETE">✗</button>
+                          </div>
+                      </div>
+                      {% for field, errors in nested.errors.items %}{% for error in errors %}
+                      <div class="text-danger mb-2">{{ field }}: {{ error }}</div>
+                      {% endfor %}{% endfor %}
+                      {% endfor %}
+                      {% endif %}
+
+                  </div>
+                  {% endfor %}
+
+              </div>
+            </div>
+            <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
+        </fieldset>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+ $(document).ready(function(){
+     bootOntologyForm();
+     bootHelp();
+ });
+</script>
+{% endblock %}

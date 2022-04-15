@@ -12,12 +12,17 @@ from rest_framework import serializers
 
 from api.fields import DisplayChoiceField
 from core.models import (
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     Block,
     BlockType,
     Document,
     DocumentMetadata,
     DocumentPart,
     DocumentTag,
+    ImageAnnotation,
+    ImageAnnotationComponentValue,
     Line,
     LineTranscription,
     LineType,
@@ -26,6 +31,8 @@ from core.models import (
     OcrModelDocument,
     Project,
     Script,
+    TextAnnotation,
+    TextAnnotationComponentValue,
     Transcription,
 )
 from core.tasks import segment, segtrain, train, transcribe
@@ -126,6 +133,145 @@ class LineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineType
         fields = ('pk', 'name')
+
+
+class AnnotationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnnotationType
+        fields = ('pk', 'name')
+
+
+class AnnotationComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnnotationComponent
+        fields = ('pk', 'name', 'allowed_values')
+
+    def create(self, data):
+        data['document_id'] = self.context['view'].kwargs['document_pk']
+        return super().create(data)
+
+
+class AnnotationTaxonomySerializer(serializers.ModelSerializer):
+    typology = AnnotationTypeSerializer(required=False)
+    components = AnnotationComponentSerializer(many=True, required=False)
+    marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=True)
+
+    class Meta:
+        model = AnnotationTaxonomy
+        fields = ('pk', 'name', 'abbreviation',
+                  'marker_type', 'marker_detail', 'has_comments',
+                  'typology', 'components')
+
+    def create(self, data):
+        try:
+            components_data = data.pop('components')
+        except KeyError:
+            components_data = []
+        try:
+            typo_data = data.pop('typology')
+        except KeyError:
+            typo_data = None
+        if typo_data:
+            typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+        else:
+            typo = None
+        data['document_id'] = self.context['view'].kwargs['document_pk']
+        taxo = AnnotationTaxonomy.objects.create(
+            typology=typo, **data)
+        for compo in components_data:
+            taxo.components.add(compo)
+        return taxo
+
+
+class ImageAnnotationComponentSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(allow_null=True)
+
+    class Meta:
+        model = ImageAnnotationComponentValue
+        fields = ('pk', 'component', 'value')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['component'] = AnnotationComponentSerializer(instance.component).data
+        return representation
+
+
+class TextAnnotationComponentSerializer(serializers.ModelSerializer):
+    value = serializers.CharField(allow_null=True)
+
+    class Meta:
+        model = TextAnnotationComponentValue
+        fields = ('pk', 'component', 'value')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['component'] = AnnotationComponentSerializer(instance.component).data
+        return representation
+
+
+class ImageAnnotationSerializer(serializers.ModelSerializer):
+    components = ImageAnnotationComponentSerializer(many=True)
+    as_w3c = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ImageAnnotation
+        fields = ('pk', 'part', 'comments',
+                  'taxonomy', 'components',
+                  'coordinates',
+                  'as_w3c')
+
+    def create(self, data):
+        components_data = data.pop('components')
+        anno = ImageAnnotation.objects.create(**data)
+        for component in components_data:
+            ImageAnnotationComponentValue.objects.create(annotation=anno,
+                                                         **component)
+        return anno
+
+    def update(self, instance, data):
+        components_data = data.pop('components')
+        anno = super().update(instance, data)
+        for component_value in components_data:
+            # for some reason this is an instance of AnnotationComponent
+            component, created = ImageAnnotationComponentValue.objects.get_or_create(
+                component=component_value['component'],
+                annotation=anno)
+            component.value = component_value['value']
+            component.save()
+        return anno
+
+
+class TextAnnotationSerializer(serializers.ModelSerializer):
+    components = TextAnnotationComponentSerializer(many=True)
+    as_w3c = serializers.ReadOnlyField()
+
+    class Meta:
+        model = TextAnnotation
+        fields = ('pk', 'part', 'comments',
+                  'taxonomy', 'components',
+                  'transcription',
+                  'start_line', 'start_offset', 'end_line', 'end_offset',
+                  'as_w3c')
+
+    def create(self, data):
+        components_data = data.pop('components')
+        anno = TextAnnotation.objects.create(**data)
+        for component in components_data:
+            TextAnnotationComponentValue.objects.create(annotation=anno,
+                                                        **component)
+        return anno
+
+    def update(self, instance, data):
+        components_data = data.pop('components')
+        anno = super().update(instance, data)
+        for component_value in components_data:
+            # for some reason this is an instance of AnnotationComponent
+            component, created = TextAnnotationComponentValue.objects.get_or_create(
+                component=component_value['component'],
+                annotation=anno)
+            component.value = component_value['value']
+            component.save()
+        return anno
 
 
 class TagDocumentSerializer(serializers.ModelSerializer):
@@ -273,9 +419,9 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):
-        nd = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
-        nd = html.unescape(nd)
-        return nd
+        cleaned_data = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=True)
+        cleaned_data = html.unescape(cleaned_data)
+        return cleaned_data
 
     def validate_content(self, content):
         return self.cleanup(content)

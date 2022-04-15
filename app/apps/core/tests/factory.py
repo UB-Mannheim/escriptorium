@@ -19,7 +19,7 @@ from core.models import (
     Project,
     Transcription,
 )
-from users.models import User
+from users.models import Group, User
 
 redis_ = get_redis_connection()
 
@@ -37,12 +37,20 @@ class CoreFactory():
         for obj in self.cleanup_registry:
             obj.delete()
 
-    def make_user(self):
+    def make_user(self, group_name=None):
         name = 'test-%s' % str(uuid.uuid1())
         return User.objects.create(
             username=name,
             email='%s@test.com' % name
         )
+
+    def make_group(self, users=None):
+        name = 'group-%s' % str(uuid.uuid1())
+        group = Group.objects.create(name=name)
+        if users:
+            for user in users:
+                user.groups.add(group)
+        return group
 
     def make_project(self, **kwargs):
         project, _ = Project.objects.get_or_create(

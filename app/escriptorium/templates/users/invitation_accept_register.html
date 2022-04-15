@@ -7,7 +7,7 @@
     <p>{% blocktrans with sender=invitation.sender.get_full_name %}
       You received an invitation from {{sender}}, please fill the form below to register.
     {% endblocktrans %}</p>
-    
+
     <form method="post">
       {% csrf_token %}
       <fieldset>
@@ -19,7 +19,6 @@
         {% render_field form.password2 required %}
         <input type="submit" value="{% trans 'Signup' %}" class="btn btn-lg btn-success btn-block">
       </fieldset>
-
     </form>
   </div>
 </div>

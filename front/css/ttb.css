@@ -19,11 +19,11 @@
 
 #diplomatic-lines.ttb{
     writing-mode: vertical-lr;
-    text-orientation: upright;  
+    text-orientation: upright;
 }
 
 #diplomatic-lines.ttb div{
-    text-align: left;  
+    text-align: left;
     min-width:25px;
     padding: 0;
     margin: 0;
@@ -38,11 +38,11 @@
     position: absolute;
     display: block; /*to set size properties*/
     white-space: nowrap;
-    text-align: left;  
+    text-align: left;
 
     width: 100%; /*adapt to #diplomatic-lines.ttb div size - set to position:relative*/
     height: auto;
-    
+
     margin-left: 0;
     margin-right: .5rem;
     margin-top: -30px;

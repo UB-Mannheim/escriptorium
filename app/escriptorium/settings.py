@@ -11,12 +11,12 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import subprocess
 import sys
 
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
+from pkg_resources import get_distribution
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'imports',
+    'language_flags',
     'reporting',
     'django_prometheus',
 ]
@@ -80,6 +81,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -106,7 +108,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
                 'escriptorium.context_processors.custom_homepage',
-                'escriptorium.context_processors.disable_search'
+                'escriptorium.context_processors.disable_search',
+                'escriptorium.context_processors.languages',
             ],
         },
     },
@@ -161,9 +164,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en')
 LANGUAGES = [
     ('en', _('English')),
-    ('de', _('French')),
+    ('fr', _('French')),
+    ('de', _('German')),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
 ]
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail')
@@ -285,6 +294,11 @@ LOGGING = {
         },
         'console_info': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        },
+        'console_debug': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
         'django.server': {
@@ -328,6 +342,11 @@ COMPRESS_ENABLE = True
 ALWAYS_CONVERT = False
 
 FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+
 THUMBNAIL_ENABLE = True
 THUMBNAIL_ALIASES = {
     '': {
@@ -348,7 +367,7 @@ ENABLE_COOKIE_CONSENT = os.getenv('ENABLE_COOKIE_CONSENT', True)
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
 VERSION_DATE = os.getenv('VERSION_DATE', '<development>')
-KRAKEN_VERSION = subprocess.getoutput('kraken --version')
+KRAKEN_VERSION = 'Kraken version ' + get_distribution('kraken').version
 
 IIIF_IMPORT_QUALITY = 'full'
 

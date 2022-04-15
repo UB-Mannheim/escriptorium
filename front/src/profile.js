@@ -34,12 +34,17 @@ class Profile {
             let alert = Alert.add('cookie-consent',
                                   "eScriptorium uses cookies to store the user session and local storage to save user interface preferences.",
                                   "warning",
-                                  [{src: '', text:'Accept', cssClass: 'btn btn-outline-dark btn-sm mt-2'}]);
+                                  [{src: '', text:'Accept', cssClass: 'btn btn-outline-dark btn-sm mt-2', targetBlank: false}]);
             alert.htmlElement.querySelector('.additional a').addEventListener('click', function(ev) {
                 this.set('cookie-consent', true);
                 return false;
             }.bind(this));
         }
+    }
+
+    resetCookieConsent() {
+        // convenience method
+        this.set('cookie-consent', false);
     }
 }
 

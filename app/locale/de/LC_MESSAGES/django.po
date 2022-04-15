@@ -1,0 +1,2378 @@
+# German translations for eScriptorium.
+# Copyright (C) 2021
+# This file is distributed under the same license as the eScriptorium package.
+# Stefan Weil <sw@weilnetz.de, 2021
+#
+# This file was created like this:
+# django-admin makemessages -l de
+#
+# To update all translations, run
+# django-admin makemessages --all --add-location file
+#
+# To compile it, run
+# django-admin compilemessages
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: eScriptorium 0.11.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-04-11 14:51+0000\n"
+"PO-Revision-Date: 2022-04-02 06:09+0000\n"
+"Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
+"Language-Team: German <de@li.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+#: escriptorium/templates/core/document_images.html
+msgid "You don't have any disk storage left."
+msgstr "Sie haben keinen Speicherplatz mehr übrig."
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+msgid "You don't have any CPU minutes left."
+msgstr "Sie haben keine CPU-Minuten mehr übrig."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You don't have any GPU minutes left."
+msgstr "Sie haben keine GPU-Minuten mehr übrig."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Lines and regions"
+msgstr "Zeilen und Bereiche"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Lines Baselines and Masks"
+msgstr "Zeilengrundlinien und Masken"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Only lines Masks"
+msgstr "Nur Zeilenmasken"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Regions"
+msgstr "Bereiche"
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Horizontal l2r"
+msgstr "Horizontal v. l. n. r."
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Horizontal r2l"
+msgstr "Horizontal v. r. n. l."
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Vertical l2r"
+msgstr "Vertikal v. l. n. r."
+
+#: apps/api/serializers.py apps/core/forms.py apps/core/models.py
+msgid "Vertical r2l"
+msgstr "Vertikal v. r. n. l."
+
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, add a model pk to retrain an "
+"existing one, or both to create a new model from an existing one."
+msgstr ""
+"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, fügen "
+"Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren, oder "
+"beides, um ein neues Modell aus einem bestehenden zu erstellen."
+
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, or add a model pk to retrain an "
+"existing one."
+msgstr ""
+"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
+"fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
+
+#: apps/api/views.py apps/core/models.py
+msgid "Canceled."
+msgstr "Abgebrochen."
+
+#: apps/core/forms.py
+msgid "Text to search in all of your projects"
+msgstr "Text, der in Ihren Projekten gesucht werden soll"
+
+#: apps/core/forms.py
+msgid "All projects"
+msgstr "Alle Projekte"
+
+#: apps/core/forms.py
+msgid "The provided model could not be loaded."
+msgstr "Das angegebene Modell konnte nicht geladen werden."
+
+#: apps/core/forms.py
+msgid ""
+"Invalid model (Couldn't determine whether it's a segmentation or recognition "
+"model)."
+msgstr ""
+"Ungültiges Modell (Es konnte nicht festgestellt werden, ob es sich um ein "
+"Segmentierungs- oder Erkennungsmodell Modell handelt)."
+
+#: apps/core/forms.py
+msgid "eScriptorium is not compatible with bounding box models."
+msgstr "eScriptorium ist nicht mit Bounding-Box-Modellen kompatibel."
+
+#: apps/core/forms.py
+msgid ""
+"Increase it for low contrast documents, if the letters are not visible "
+"enough."
+msgstr ""
+"Erhöhen Sie den Wert bei kontrastarmen Dokumenten, wenn die Buchstaben nicht "
+"ausreichend sichtbar sind."
+
+#: apps/core/forms.py
+msgid "Uploaded image with more than one selected image."
+msgstr "Hochgeladenes Bild mit mehr als einem ausgewählten Bild."
+
+#: apps/core/forms.py
+msgid "Uploaded image should be black and white."
+msgstr "Hochgeladenes Bild sollte schwarz-weiß sein."
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "Uploaded image should be the same size as original image {size}."
+msgstr ""
+"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}."
+
+#: apps/core/forms.py
+msgid "Model"
+msgstr "Modell"
+
+#: apps/core/forms.py
+msgid ""
+"If checked, deletes existing segmentation <b>and bound transcriptions</b> "
+"first!"
+msgstr ""
+"Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
+"damit verbundene Transkriptionen</b> zuerst gelöscht!"
+
+#: apps/core/models.py
+msgid "Top to bottom"
+msgstr "Von oben nach unten"
+
+#: apps/core/models.py
+msgid "Share with users"
+msgstr "Mit Benutzern teilen"
+
+#: apps/core/models.py
+msgid "Share with teams"
+msgstr "Mit Teams teilen"
+
+#: apps/core/models.py
+msgid "Draft"
+msgstr "Entwurf"
+
+#: apps/core/models.py
+msgid "Published"
+msgstr "Veröffentlicht"
+
+#: apps/core/models.py
+msgid "Archived"
+msgstr "Archiviert"
+
+#: apps/core/models.py
+msgid "Left to right"
+msgstr "Links nach rechts"
+
+#: apps/core/models.py
+msgid "Right to left"
+msgstr "Rechts nach links"
+
+#: apps/core/models.py
+msgid "Baseline"
+msgstr "Grundlinie"
+
+#: apps/core/models.py
+msgid "Topline"
+msgstr "Toplinie"
+
+#: apps/core/models.py
+msgid "Centered"
+msgstr "Zentriert"
+
+#: apps/core/models.py
+msgid ""
+"The read direction describes the order of the elements in the document, in "
+"opposition with the text direction which describes the order of the words in "
+"a line and is set by the script."
+msgstr ""
+"Die Lese-Richtung beschreibt die Anordnung der Elemente im Dokument. Im "
+"Unterschied dazu beschreibt die Text-Richtung die Anordnung der Wörter in "
+"einer Zeile und ist durch die Schriftart vorgegeben."
+
+#: apps/core/models.py
+msgid "The position of the line relative to the polygon."
+msgstr "Die Position der Zeile in Abhängigkeit vom Polygon."
+
+#: apps/core/models.py
+msgid "Binarized image needs to be the same size as original image."
+msgstr ""
+"Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
+
+#: apps/core/models.py apps/users/models.py
+msgid "Created"
+msgstr "Erstellt"
+
+#: apps/core/models.py
+msgid "Converting"
+msgstr "Konvertiere"
+
+#: apps/core/models.py
+msgid "Converted"
+msgstr "Konvertiert"
+
+#: apps/core/models.py
+msgid "Segmenting"
+msgstr "Segmentiere"
+
+#: apps/core/models.py
+msgid "Segmented"
+msgstr "Segmentiert"
+
+#: apps/core/models.py
+msgid "Transcribing"
+msgstr "Transkribiere"
+
+#: apps/core/models.py
+msgid "Element"
+msgstr "Element"
+
+#: apps/core/models.py
+#, python-format
+msgid "%(value)s is not a polygon - a 2 dimensional array."
+msgstr "%(value)s ist kein Polygon, sondern ein 2-dimensionales Feld."
+
+#: apps/core/models.py
+#, python-format
+msgid "Polygon needs to have at least 2 points, it has %(length)d: %(value)s."
+msgstr "Polygon muss mindestens 2 Stellen haben, es hat %(length)d: %(value)s."
+
+#: apps/core/models.py
+#, python-format
+msgid "Polygon needs to have at least 3 points, it has %(length)d: %(value)s."
+msgstr "Polygon muss mindestens 3 Stellen haben, es hat %(length)d: %(value)s."
+
+#: apps/core/models.py
+msgid "Both baseline and mask are empty."
+msgstr "Sowohl die Grundlinie als auch die Maske sind leer."
+
+#: apps/core/models.py escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/segment.html
+msgid "Segment"
+msgstr "Segmentieren"
+
+#: apps/core/models.py
+msgid "Recognize"
+msgstr "Transkribieren"
+
+#: apps/core/models.py
+msgid "Couldn't find the training task."
+msgstr "Konnte die Trainings-Aufgabe nicht finden."
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the binarization!"
+msgstr "Bei der Binarisierung ist etwas schiefgelaufen!"
+
+#: apps/core/tasks.py
+msgid "Binarization done!"
+msgstr "Binarisierung abgeschlossen!"
+
+#: apps/core/tasks.py
+msgid "Training didn't get better results than base model!"
+msgstr ""
+"Das Training hat keine besseren Ergebnisse als das Basis-Modell erzielt!"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the segmenter training process!"
+msgstr "Beim Segmentierungstraining ist etwas schiefgelaufen!"
+
+#: apps/core/tasks.py
+msgid "Training finished!"
+msgstr "Training abgeschlossen!"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the segmentation!"
+msgstr "Während der Segmentierung ist etwas schiefgelaufen!"
+
+#: apps/core/tasks.py
+msgid "Segmentation done!"
+msgstr "Segmentierung abgeschlossen!"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the training process!"
+msgstr "Während des Trainingsprozesses ist etwas schiefgelaufen!"
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the transcription!"
+msgstr "Während der Transkription ist etwas schiefgelaufen!"
+
+#: apps/core/tasks.py
+msgid "Transcription done!"
+msgstr "Transkription abgeschlossen!"
+
+#: apps/core/views.py
+msgid "Project created successfully!"
+msgstr "Projekt erfolgreich angelegt!"
+
+#: apps/core/views.py
+msgid "Document created successfully!"
+msgstr "Dokument erfolgreich angelegt!"
+
+#: apps/core/views.py
+msgid "Document saved successfully!"
+msgstr "Dokument erfolgreich gespeichert!"
+
+#: apps/core/views.py
+msgid "Document shared successfully!"
+msgstr "Dokument erfolgreich geteilt!"
+
+#: apps/core/views.py
+msgid "Project shared successfully!"
+msgstr "Projekt erfolgreich geteilt!"
+
+#: apps/core/views.py
+msgid "Document archived successfully!"
+msgstr "Dokument erfolgreich archiviert!"
+
+#: apps/core/views.py
+msgid "Document published successfully!"
+msgstr "Dokument erfolgreich veröffentlicht!"
+
+#: apps/core/views.py
+msgid "Model uploaded successfully!"
+msgstr "Modell erfolgreich hochgeladen!"
+
+#: apps/core/views.py
+msgid "Model deleted successfully!"
+msgstr "Modell erfolgreich gelöscht!"
+
+#: apps/core/views.py
+msgid "Right added successfully!"
+msgstr "Recht erfolgreich hinzugefügt!"
+
+#: apps/core/views.py
+msgid "Right deleted successfully!"
+msgstr "Recht erfolgreich gelöscht!"
+
+#: apps/core/views.py
+msgid "Document was successfully migrated to the selected project!"
+msgstr "Dokument wurde erfolgreich zum ausgewählten Projekt migriert!"
+
+#: apps/imports/forms.py
+#, python-brace-format
+msgid ""
+"The name of the target transcription. Will default to '{format} Import'."
+msgstr "Der Name der Ziel-Transkription. Default ist '{format} Import'."
+
+#: apps/imports/forms.py
+msgid "A single ALTO or PAGE XML file, or a zip file."
+msgstr "Eine einzelne ALTO oder PAGE XML Datei, oder eine ZIP-Datei."
+
+#: apps/imports/forms.py
+msgid "Override existing segmentation."
+msgstr "Vorhandene Segmentierung überschreiben."
+
+#: apps/imports/forms.py
+msgid ""
+"Destroys existing regions, lines and any bound transcription before "
+"importing."
+msgstr ""
+"Beseitigt vorhandene Bereiche, Zeilen und gebundene Transkriptionen vor dem "
+"Importieren."
+
+#: apps/imports/forms.py
+msgid "IIIF manifest URI"
+msgstr "IIIF-Manifest URI"
+
+#: apps/imports/forms.py
+msgid ""
+"exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
+msgstr ""
+"exp: https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
+
+#: apps/imports/forms.py
+msgid "Resume previous import"
+msgstr "Früheren Import fortsetzen"
+
+#: apps/imports/forms.py
+msgid "A single ALTO or PAGE XML file."
+msgstr "Eine einzelne ALTO oder PAGE XML Datei."
+
+#: apps/imports/forms.py
+msgid "The document is unreachable, unreadable or the host timed out."
+msgstr ""
+"Das Dokument ist nicht erreichbar, unlesbar, oder der Host meldet einen Time-"
+"out."
+
+#: apps/imports/forms.py
+msgid "The document pointed to by the given uri doesn't seem to be valid json."
+msgstr ""
+"Das Dokument, auf das die angegebene uri verweist, scheint kein gültiges "
+"json zu sein."
+
+#: apps/imports/forms.py
+msgid "Couldn't parse the given file or its validation failed"
+msgstr ""
+"Konnte die angegebene Datei nicht parsen, oder die Validierung ist "
+"fehlgeschlagen"
+
+#: apps/imports/forms.py
+msgid "Choose one type of import."
+msgstr "Wählen Sie einen Import-Typ."
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr "Importieren in %(document_name)s"
+
+#: apps/imports/forms.py
+msgid "Include images"
+msgstr "Bilder einbeziehen"
+
+#: apps/imports/forms.py
+msgid ""
+"Will significantly increase the time to produce and download the export."
+msgstr ""
+"Wird die Zeit deutlich erhöhen, die für die Produktion und den Download des "
+"Exports benötigt wird."
+
+#: apps/imports/forms.py
+msgid "Select at least one image to export."
+msgstr "Wählen Sie mindestens ein Bild für den Export aus."
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Export %(document_name)s"
+msgstr "Exportiere %(document_name)s"
+
+#: apps/imports/parsers.py
+msgid "Invalid PDF file."
+msgstr "Ungültige PDF Datei."
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
+"(over {n_pages - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
+"Importieren überlassen (over {n_pages - start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Parse error in {filename}: {page}: {error}, skipping it."
+msgstr "Verarbeitungsfehler in {filename}: {page}: {error}, überspringt ihn."
+
+#: apps/imports/parsers.py
+msgid "Zip Import"
+msgstr "Zip Import"
+
+#: apps/imports/parsers.py
+msgid "File appears to not be a valid zip."
+msgstr "Datei scheint ein ungültiges zip-Format zu sein."
+
+#: apps/imports/parsers.py
+msgid "Zip file appears to be corrupted."
+msgstr "Zip-Datei scheint korrupt zu sein."
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {total - index} files were left to import (over "
+"{total - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
+"Importieren übrig gelassen (over {total - start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+msgstr ""
+"Verarbeitungsfehler in {filename}: {xmlfile}: {error}, überspringt ihn."
+
+#: apps/imports/parsers.py
+msgid "No match found for file {} with filename \"{}\"."
+msgstr "Keine Übereinstimmung für Datei {} mit Dateiname \"{}\" gefunden."
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Block in '{filen}' line N°{line} was skipped because: {error}"
+msgstr "Block in '{filen}' Zeile N°{line} wurde übersprungen, weil: {error}"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
+msgstr ""
+"Zeile in '{filen}' Zeile N°{line} (id: {lineid}) wurde übersprungen, weil: "
+"{error}"
+
+#: apps/imports/parsers.py
+msgid "Default ALTO Import"
+msgstr "Standard ALTO-Import"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr "Ungültige Grundlinie {baseline} in {filen} Zeile {linen}"
+
+#: apps/imports/parsers.py
+msgid "Default PAGE Import"
+msgstr "Standard PAGE-Import"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid ""
+"Line without baseline in {filen} line #{linen}, very likely that it will not "
+"be usable!"
+msgstr ""
+"Zeile ohne Grundlinie in {filen} Zeile #{linen}, das ist sehr wahrscheinlich "
+"nicht verwendbar!"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Invalid coordinates for {tag} in {filen} line {line}"
+msgstr "Ungültige Koordinaten für {tag} in {filen} Zeile {line}"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Couldn't decode invalid manifest ({error})"
+msgstr "Ungültiges Manifest konnte nicht dekodiert werden ({error})"
+
+#: apps/imports/parsers.py
+msgid "Empty or invalid manifest, no images found."
+msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
+
+#: apps/imports/parsers.py
+msgid ""
+"You ran out of disk storage. {total - i} canvases were left to import (over "
+"{total - start_at})"
+msgstr ""
+"Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
+"übrig gelassen (over {total - start_at})"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Error while fetching {filename}: {error}"
+msgstr "Fehler beim Abrufen von {filename}: {error}"
+
+#: apps/imports/tasks.py
+msgid "Something went wrong during the import!"
+msgstr "Etwas ist während des Imports schiefgelaufen!"
+
+#: apps/imports/tasks.py
+msgid "Import finished with warnings!"
+msgstr "Import mit Warnungen beendet!"
+
+#: apps/imports/tasks.py escriptorium/templates/reporting/taskreport_list.html
+msgid "Details"
+msgstr "Einzelheiten"
+
+#: apps/imports/tasks.py
+msgid "Import done!"
+msgstr "Import abgeschlossen!"
+
+#: apps/imports/tasks.py
+msgid "Something went wrong during the export!"
+msgstr "Etwas ist während des Exports schiefgelaufen!"
+
+#: apps/imports/tasks.py
+msgid "Export done!"
+msgstr "Export abgeschlossen!"
+
+#: apps/imports/tasks.py escriptorium/templates/core/models_list/table.html
+msgid "Download"
+msgstr "Download"
+
+#: apps/reporting/models.py
+msgid "Queued"
+msgstr "In der Warteschlange"
+
+#: apps/reporting/models.py
+msgid "Running"
+msgstr "Läuft"
+
+#: apps/reporting/models.py
+msgid "Crashed"
+msgstr "Abgestürzt"
+
+#: apps/reporting/models.py
+msgid "Finished"
+msgstr "Abgeschlossen"
+
+#: apps/reporting/models.py
+msgid "Canceled"
+msgstr "Abgebrochen"
+
+#: apps/users/admin.py
+#, python-format
+msgid "%d invitation was resent."
+msgid_plural "%d invitations were resent."
+msgstr[0] "%d Einladung wurde noch einmal verschickt."
+msgstr[1] "%d Einladungen wurden noch einmal verschickt."
+
+#: apps/users/forms.py
+msgid "Email or username."
+msgstr "E-Mail oder Benutzerkennung."
+
+#: apps/users/forms.py
+msgid ""
+"Message : Please precise your institution or research center if applicable"
+msgstr ""
+"Nachricht: Bitte geben Sie Ihre Einrichtung oder Ihr Forschungszentrum an "
+"(falls zutreffend)"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "Disk storage"
+msgstr "Speicherplatz"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "CPU minutes"
+msgstr "CPU-Minuten"
+
+#: apps/users/management/commands/check_quotas.py
+msgid "GPU minutes"
+msgstr "GPU-Minuten"
+
+#: apps/users/models.py
+msgid "email address"
+msgstr "E-Mail-Adresse"
+
+#: apps/users/models.py
+msgid "Show onboarding"
+msgstr "Onboarding anzeigen"
+
+#: apps/users/models.py
+msgid "Error"
+msgstr "Fehler"
+
+#: apps/users/models.py
+msgid "Sent"
+msgstr "Verschickt"
+
+#: apps/users/models.py
+msgid "Received"
+msgstr "Empfangen"
+
+#: apps/users/models.py
+msgid "Accepted"
+msgstr "Akzeptiert"
+
+#: apps/users/models.py
+msgid "Team"
+msgstr "Team"
+
+#: apps/users/models.py
+#, python-brace-format
+msgid "{username} accepted your invitation!"
+msgstr "{username} hat Ihre Einladung angenommen!"
+
+#: apps/users/views.py
+msgid "Invitation sent successfully!"
+msgstr "Einladung erfolgreich verschickt!"
+
+#: apps/users/views.py
+msgid "Successfully registered, you can now log in!"
+msgstr "Registrierung erfolgreich, Sie können sich jetzt einloggen!"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "You are now a member of Team {team_name}!"
+msgstr "Sie sind jetzt Mitglied im Team {team_name}!"
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "User {user} successfully removed from the team {team_name}."
+msgstr "Benutzer {user} erfolgreich aus Team {team_name} entfernt."
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "You successfully left {team}."
+msgstr "Sie haben das Team {team} erfolgreich verlassen."
+
+#: apps/users/views.py
+#, python-brace-format
+msgid "Successfully transferred ownership to {user}."
+msgstr "Erfolgreiche Eigentumsübergabe an {user}."
+
+#: apps/users/views.py
+msgid "Profile successfully saved."
+msgstr "Profil erfolgreich gespeichert."
+
+#: apps/users/views.py
+msgid "Team successfully created."
+msgstr "Team erfolgreich angelegt."
+
+#: apps/users/views.py
+msgid "User successfully invited to the team."
+msgstr "Benutzer erfolgreich in das Team eingeladen."
+
+#: apps/users/views.py
+msgid "Message successfully sent."
+msgstr "Nachricht erfolgreich verschickt."
+
+#: escriptorium/settings.py
+msgid "English"
+msgstr "Englisch"
+
+#: escriptorium/settings.py
+msgid "French"
+msgstr "Französisch"
+
+#: escriptorium/settings.py
+msgid "German"
+msgstr "Deutsch"
+
+#: escriptorium/templates/403.html
+msgid "You don't have permission to view or edit this document."
+msgstr ""
+"Sie haben keine Berechtigung, dieses Dokument anzusehen oder zu bearbeiten."
+
+#: escriptorium/templates/404.html
+msgid "Page not found."
+msgstr "Seite nicht gefunden."
+
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
+
+#: escriptorium/templates/base.html escriptorium/templates/core/search.html
+msgid "Search"
+msgstr "Suchen"
+
+#: escriptorium/templates/base.html
+msgid "About"
+msgstr "Über"
+
+#: escriptorium/templates/base.html
+msgid "Contact"
+msgstr "Kontakt"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/project_list.html
+msgid "My Projects"
+msgstr "Meine Projekte"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/models_list/main.html
+msgid "My Models"
+msgstr "Meine Modelle"
+
+#: escriptorium/templates/base.html
+#, python-format
+msgid "Hello %(username)s"
+msgstr "Hallo %(username)s"
+
+#: escriptorium/templates/base.html
+msgid "Change password"
+msgstr "Passwort ändern"
+
+#: escriptorium/templates/base.html
+msgid "Profile"
+msgstr "Profil"
+
+#: escriptorium/templates/base.html
+msgid "Task reports"
+msgstr "Aufgabenberichte"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/core/documents_tasks_list.html
+msgid "Tasks monitoring"
+msgstr "Aufgabenüberwachung"
+
+#: escriptorium/templates/base.html
+msgid "Leaderboard"
+msgstr "Spitzenreiter"
+
+#: escriptorium/templates/base.html
+msgid "Site administration"
+msgstr "Website-Administration"
+
+#: escriptorium/templates/base.html
+msgid "Invite"
+msgstr "Einladen"
+
+#: escriptorium/templates/base.html
+msgid "Logout"
+msgstr "Abmelden"
+
+#: escriptorium/templates/base.html
+msgid "Login"
+msgstr "Anmelden"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/document_part_edit.html
+msgid "Update a Document"
+msgstr "Aktualisiere ein Dokument"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/document_part_edit.html
+msgid "Create a new Document"
+msgstr "Erzeuge ein neues Dokument"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Share this Document"
+msgstr "Teile dieses Dokument"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/migrate/migrate_document.html
+msgid "Migrate to another project"
+msgstr "Migriere zu einem anderen Projekt"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_list.html
+msgid "Do you really want to delete the document?"
+msgstr "Wollen Sie das Dokument wirklich löschen?"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/document_list.html
+msgid "Delete"
+msgstr "Löschen"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Metadata"
+msgstr "Metadaten"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Ontology"
+msgstr "Ontologie"
+
+#: escriptorium/templates/core/document_form.html
+msgid ""
+"The default configuration only contains semantic types. <br>It is not "
+"recommended to mix semantic, stylistic and layout types.<br><b>It is "
+"required to hit 'Update' to add your new types to the document.</b>"
+msgstr ""
+"Die Standardkonfiguration enthält nur semantische Typen. <br>Es wird nicht "
+"empfohlen, semantische, stilistische und Layout-Typen zu mischen. <br><b>Sie "
+"müssen auf 'Aktualisieren' klicken, um Ihre neuen Typen dem Dokument "
+"hinzuzufügen.</b>"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Region types"
+msgstr "Bereichsstypen"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Add a region type"
+msgstr "Einen Bereichstyp hinzufügen"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Line types"
+msgstr "Zeilentypen"
+
+#: escriptorium/templates/core/document_form.html
+msgid "Add a line type"
+msgstr "Einen Zeilentyp hinzufügen"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/project_form.html
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: escriptorium/templates/core/document_form.html
+#: escriptorium/templates/core/project_form.html
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Create"
+msgstr "Erzeugen"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Drop images here or click to upload."
+msgstr "Bilder hier ablegen oder zum Hochladen anklicken."
+
+#: escriptorium/templates/core/document_images.html
+msgid "Select all"
+msgstr "Alle auswählen"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Unselect all"
+msgstr "Alle abwählen"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Loading"
+msgstr "Lade"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Selected"
+msgstr "Ausgewählt"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any CPU minutes left"
+msgstr "Sie haben keine CPU-Minuten mehr übrig"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Import"
+msgstr "Import"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Importing"
+msgstr "Importieren"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/export.html
+msgid "Export"
+msgstr "Export"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any GPU minutes left"
+msgstr "Sie haben keine GPU-Minuten mehr übrig"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any disk storage left"
+msgstr "Sie haben keinen Speicherplatz mehr übrig"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Train a segmenter/recognizer model."
+msgstr "Trainieren Sie ein Segmentierungs-/Erkennungsmodell."
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "Train"
+msgstr "Trainieren"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/models_list/table.html
+msgid "Cancel training"
+msgstr "Training abbrechen"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Binarize selected images."
+msgstr "Binarisieren ausgewählter Bilder."
+
+#: escriptorium/templates/core/document_images.html
+msgid "Binarize"
+msgstr "Binarisieren"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Segment selected images."
+msgstr "Segmentieren ausgewählte Bilder."
+
+#: escriptorium/templates/core/document_images.html
+msgid "Start transcribing selected images."
+msgstr "Beginne die Transkription der ausgewählten Bilder."
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid "Transcribe"
+msgstr "Transkribieren"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Delete this image and all its data (segmentation, transcriptions)"
+msgstr ""
+"Dieses Bild und alle zugehörigen Daten (Segmentierung, Transkriptionen) "
+"löschen"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Cancel tasks"
+msgstr "Aufgaben abbrechen"
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/document_nav.html
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: escriptorium/templates/core/document_images.html
+msgid "Compressing"
+msgstr "Komprimieren"
+
+#: escriptorium/templates/core/document_list.html
+msgid "My Documents"
+msgstr "Meine Dokumente"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Create new Document"
+msgstr "Neues Dokument anlegen"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Manage tags"
+msgstr "Tags verwalten"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Share this Project"
+msgstr "Dieses Projekt teilen"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Search in project"
+msgstr "Suche im Projekt"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Filters"
+msgstr "Filter"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/project_list.html
+msgid "Owner"
+msgstr "Besitzer"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Shared with"
+msgstr "Geteilt mit"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Last modified on"
+msgstr "Letzte Änderung am"
+
+#: escriptorium/templates/core/document_list.html
+#, python-format
+msgid "1 image."
+msgid_plural "%(n)s images."
+msgstr[0] "1 Bild."
+msgstr[1] "%(n)s Bilder."
+
+#: escriptorium/templates/core/document_list.html
+msgid "Edit last updated Element"
+msgstr "Zuletzt aktualisiertes Element bearbeiten"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Do you really want to remove the document from your list?"
+msgstr "Wollen Sie das Dokument wirklich von Ihrer Liste entfernen?"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/project_list.html
+msgid "Remove from list"
+msgstr "Von der Liste entfernen"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Back to document list"
+msgstr "Zurück zur Liste der Dokumente"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Description"
+msgstr "Beschreibung"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Images"
+msgstr "Bilder"
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Models"
+msgstr "Modelle"
+
+#: escriptorium/templates/core/home.html
+msgid "Homepage"
+msgstr "Homepage"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"eScriptorium: A Digital Text Production Pipeline for Print and Handwritten "
+"Texts using machine learning techniques."
+msgstr ""
+"Erzeugen von Text für Drucke und handgeschriebene Dokumente mit Hilfe "
+"maschineller Lerntechniken."
+
+#: escriptorium/templates/core/home.html
+msgid "Automatic<br>Transcription"
+msgstr "Automatische<br>Transkription"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Apply OCR/HTR to images of printed and handwritten documents using shared "
+"open models."
+msgstr ""
+"Wenden Sie OCR/HTR mit frei geteilten Modellen auf Bilder gedruckter oder "
+"handgeschriebener Dokumente an."
+
+#: escriptorium/templates/core/home.html
+msgid "Manual<br>transcription"
+msgstr "Manuelle<br>Transkription"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Make use of an ergonomic user interface leveraging modern browser technology "
+"to edit segmentations and transcriptions."
+msgstr ""
+"Bearbeiten Sie Segmentierungen und Transkriptionen in der ergonomischen "
+"Benutzeroberfläche, die moderne Browsertechnologie nutzt."
+
+#: escriptorium/templates/core/home.html
+msgid "Train<br>Models"
+msgstr "Modelltraining,<br>Nachtraining"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Create new models or finetune existing ones to improve automatic recognition."
+msgstr ""
+"Erzeugen Sie neue Modelle oder trainieren Sie vorhandene nach, um die "
+"automatische Erkennung zu verbessern."
+
+#: escriptorium/templates/core/home.html
+msgid "Import/<br>Export"
+msgstr "Datenimport /<br>Datenexport"
+
+#: escriptorium/templates/core/home.html
+msgid ""
+"Import and export models and texts transcriptions in a variety of formats. "
+"Access data through a full REST API."
+msgstr ""
+"Importieren und exportieren Sie Modelle und Transkriptionen in einer "
+"Vielzahl von Formaten. Greifen Sie auf Daten per RESTful API zu."
+
+#: escriptorium/templates/core/home.html
+msgid "Resources"
+msgstr "Ressourcen"
+
+#: escriptorium/templates/core/home.html
+msgid "Tutorial"
+msgstr "Anleitung (englisch)"
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium open source code"
+msgstr "eScriptorium Open-Source-Code"
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium Blog"
+msgstr "eScriptorium Blog"
+
+#: escriptorium/templates/core/home.html
+msgid "Legal mentions"
+msgstr "Rechtliche Hinweise"
+
+#: escriptorium/templates/core/migrate/migrate_document.html
+msgid "Migrate"
+msgstr "Migriere"
+
+#: escriptorium/templates/core/models_list/main.html
+#: escriptorium/templates/core/ocrmodel_form.html
+msgid "Upload a model"
+msgstr "Modell hochladen"
+
+#: escriptorium/templates/core/models_list/rights/delete.html
+msgid "Delete right"
+msgstr "Recht entfernen"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "shares"
+msgstr "Anteile"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Type"
+msgstr "Typ"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Name"
+msgstr "Name"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Full name or identifier"
+msgstr "Vollständiger Name oder Kennung"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Recipient type"
+msgstr "Art des Empfängers"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+#: escriptorium/templates/registration/login.html
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Username"
+msgstr "Benutzername"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "User full name"
+msgstr "Vollständiger Name des Nutzers"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Group name"
+msgstr "Gruppenname"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Group identifier"
+msgstr "Gruppenkennung"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Stop sharing"
+msgstr "Teilen einstellen"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "or"
+msgstr "oder"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Add right"
+msgstr "Recht hinzufügen"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Role"
+msgstr "Rolle"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Script"
+msgstr "Schriftart"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Size"
+msgstr "Größe"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Trained from"
+msgstr "Trainiert von"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Training Status"
+msgstr "Trainingsstatus"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Accuracy"
+msgstr "Genauigkeit"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Errors"
+msgstr "Fehler"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Right"
+msgstr "Besitzer"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model name"
+msgstr "Modellbezeichnung"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model role"
+msgstr "Modellverwendung"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Model script"
+msgstr "Schriftmodell"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Filter by script"
+msgstr "Filtern nach Schrift"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Parent from which the model was trained"
+msgstr "Vorbild, anhand dessen das Modell trainiert wurde"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Is currently training"
+msgstr "Trainiert gerade"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Is done training"
+msgstr "Training ist abgeschlossen"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Gathering data"
+msgstr "Sammele Daten"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Number of errors/Total number of characters"
+msgstr "Anzahl der Fehler/Gesamtzahl der Zeichen"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Toggle versions"
+msgstr "Versionen wechseln"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Share model"
+msgstr "Modell teilen"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Unbind model from the document"
+msgstr "Löse Modell vom Dokument"
+
+#: escriptorium/templates/core/models_list/table.html
+msgid "Delete model"
+msgstr "Modell löschen"
+
+#: escriptorium/templates/core/ocrmodel_form.html
+msgid "Upload"
+msgstr "Hochladen"
+
+#: escriptorium/templates/core/project_form.html
+msgid "Update a Project"
+msgstr "Aktualisiere ein Projekt"
+
+#: escriptorium/templates/core/project_form.html
+msgid "Create a new Project"
+msgstr "Lege ein neues Projekt an"
+
+#: escriptorium/templates/core/project_list.html
+msgid "Create new Project"
+msgstr "Erzeuge neues Projekt"
+
+#: escriptorium/templates/core/project_list.html
+#, python-format
+msgid "1 document."
+msgid_plural "%(n)s documents."
+msgstr[0] "1 Dokument."
+msgstr[1] "%(n)s Dokumente."
+
+#: escriptorium/templates/core/project_list.html
+msgid "Do you really want to remove the project from your list?"
+msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
+
+#: escriptorium/templates/core/project_nav.html
+msgid "Documents"
+msgstr "Dokumente"
+
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr "Berichte"
+
+#: escriptorium/templates/core/search.html
+msgid "Search in projects"
+msgstr "Suche in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid "Search text in projects"
+msgstr "Suche Text in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"Couldn't connect to Elasticsearch, please contact your instance "
+"administrator."
+msgstr ""
+"Verbindung zu Elasticsearch nicht möglich, bitte wenden Sie sich an Ihren "
+"Administrator."
+
+#: escriptorium/templates/core/search.html
+#: escriptorium/templates/core/wizards/import.html
+msgid "Reason:"
+msgstr "Grund:"
+
+#: escriptorium/templates/core/search.html
+msgid ""
+"You requested to search text in a project you don't have access to. Falling "
+"back to searching entered text in all of your projects."
+msgstr ""
+"Sie haben versucht, Text in einem Projekt, zu dem Sie keinen Zugang haben, "
+"zu suchen. Statt dessen wird in allen Ihren Projekten gesucht."
+
+#: escriptorium/templates/core/search.html
+msgid "Results"
+msgstr "Ergebnisse"
+
+#: escriptorium/templates/core/search.html
+msgid "Content"
+msgstr "Inhalt"
+
+#: escriptorium/templates/core/search.html
+msgid "Image preview"
+msgstr "Bildvorschau"
+
+#: escriptorium/templates/core/search.html
+msgid "Score"
+msgstr "Bewertung"
+
+#: escriptorium/templates/core/search.html
+msgid "View in Editor"
+msgstr "Anzeige im Editor"
+
+#: escriptorium/templates/core/search.html
+msgid "Line transcription enhanced content"
+msgstr "Zeilentranskription hat Inhalt erweitert"
+
+#: escriptorium/templates/core/search.html
+msgid "Full image cropped according to the transcription bounding box"
+msgstr "Vollbild beschnitten gemäß Rahmen um Transkription"
+
+#: escriptorium/templates/core/search.html
+msgid "Search score"
+msgstr "Suchergebnis"
+
+#: escriptorium/templates/core/search.html
+msgid "Go to document part editing page"
+msgstr "Gehen Sie zur Seite für die Dokumentenbearbeitung"
+
+#: escriptorium/templates/core/search.html
+msgid "No results matched your search."
+msgstr "Ihre Suche fand keine Treffer."
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Share with"
+msgstr "Teile mit"
+
+#: escriptorium/templates/core/share/share_base.html
+#: escriptorium/templates/users/profile.html
+msgid "Teams"
+msgstr "Teams"
+
+#: escriptorium/templates/core/share/share_base.html
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Users"
+msgstr "Anwender"
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Close"
+msgstr "Abbrechen"
+
+#: escriptorium/templates/core/share/share_base.html
+msgid "Share"
+msgstr "Teilen"
+
+#: escriptorium/templates/core/wizards/_base.html
+msgid "image(s) selected."
+msgstr "ausgewählte(s) Bild(er)."
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid ""
+"Binarization is NOT a mandatory step any more, and might even decrease "
+"quality."
+msgstr ""
+"Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die "
+"Qualität beeinträchtigen."
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Manually"
+msgstr "Manuell"
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Or automatically"
+msgstr "Oder automatisch"
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Contrast"
+msgstr "Kontrast"
+
+#: escriptorium/templates/core/wizards/binarize.html
+msgid "Upload or Binarize"
+msgstr "Hochladen oder Binarisieren"
+
+#: escriptorium/templates/core/wizards/import.html
+#, python-format
+msgid "See %(opentag)sthe import documentation%(closetag)s for details."
+msgstr "Siehe %(opentag)sdie Importdokumentation%(closetag)s für Details."
+
+#: escriptorium/templates/core/wizards/import.html
+msgid ""
+"Import is already ongoing, please wait for it to be finished or cancel it."
+msgstr ""
+"Der Import läuft bereits, bitte warten Sie auf den Abschluss oder brechen "
+"Sie ihn ab."
+
+#: escriptorium/templates/core/wizards/import.html
+msgid "Resume previous import."
+msgstr "Vorherigen Import fortsetzen."
+
+#: escriptorium/templates/core/wizards/import.html
+#, python-format
+msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
+msgstr ""
+"Vorheriger Import (%(filename)s) bei Schritt %(progress)s/%(total)s "
+"fehlgeschlagen."
+
+#: escriptorium/templates/core/wizards/import.html
+msgid "Or"
+msgstr "Oder"
+
+#: escriptorium/templates/core/wizards/import.html
+#: escriptorium/templates/core/wizards/import_file.html
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "Start importing"
+msgstr "Beginne Import"
+
+#: escriptorium/templates/core/wizards/import_file.html
+msgid "Import segmentation & transcriptions from XML."
+msgstr "Importieren Sie die Segmentierung und Transkriptionen aus XML-Datei."
+
+#: escriptorium/templates/core/wizards/import_iiif.html
+msgid "Import images from IIIF."
+msgstr "Importieren Sie die Bilder aus IIIF."
+
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "Import images from a PDF document."
+msgstr "Importieren Sie die Bilder aus einem PDF Dokument."
+
+#: escriptorium/templates/core/wizards/import_pdf.html
+msgid "A single pdf with one image per page."
+msgstr "Ein einzelnes PDF mit einem Bild pro Seite."
+
+#: escriptorium/templates/core/wizards/segment.html
+msgid "Beware that re-segmenting will delete any existing transcriptions!"
+msgstr ""
+"Achtung - eine Re-Segmentierung wird alle bestehenden Transkriptionen "
+"löschen!"
+
+#: escriptorium/templates/core/wizards/segment.html
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid "Select a model"
+msgstr "Wählen Sie ein Modell aus"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+msgid "(PLACEHOLDER)"
+msgstr "(PLATZHALTER)"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "New model"
+msgstr "Neues Modell"
+
+#: escriptorium/templates/core/wizards/segtrain.html
+#: escriptorium/templates/core/wizards/train.html
+msgid "Or select an existing one"
+msgstr "Oder wählen Sie ein bestehendes aus"
+
+#: escriptorium/templates/core/wizards/train.html
+msgid ""
+"The training data will be generated from the selected images and "
+"transcription."
+msgstr ""
+"Die Trainingsdaten werden aus den ausgewählten Bildern und der Transkription "
+"erzeugt."
+
+#: escriptorium/templates/core/wizards/train.html
+msgid "Empty lines will be ignored."
+msgstr "Leere Zeilen werden ignoriert."
+
+#: escriptorium/templates/core/wizards/train.html
+msgid ""
+"Gathering data can take time and the model won't be available in the models "
+"tab until then."
+msgstr ""
+"Die Datensammlung kann Zeit in Anspruch nehmen und das Modell wird "
+"währenddessen nicht im Modelle-Tab verfügbar sein."
+
+#: escriptorium/templates/core/wizards/transcribe.html
+msgid ""
+"Make sure that the segmentation is good before going forward because "
+"resegmenting will delete all bound transcriptions."
+msgstr ""
+"Vergewissern Sie sich, dass die Segmentierung korrekt ist, bevor Sie "
+"fortfahren, da bei einer Neusegmentierung alle eingebundenen Transkriptionen "
+"gelöscht werden."
+
+#: escriptorium/templates/includes/help/baseline_editor.html
+msgid ""
+"\n"
+"<p>\n"
+"    <b>Left click</b> on the image to <u>create</u> new line, <b>Right "
+"click</b> to <b>add points</b> and <b>Left click</b> again to <u>finish</u> "
+"it.\n"
+"    <br/>You can keep the mouse button pressed for free drawing.\n"
+"    <br/>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.\n"
+"    <br/>If regions matter to you switch to region mode first <i class=\"fas "
+"fa-th-large\"></i> (R key).\n"
+"    <br/>when in region mode <b>Left click</b> to create a new rectangular "
+"region, left click again to finish it.\n"
+"    <br/>lines drawn inside a region will automatically be bound to it.\n"
+"    <br/>When the quality of the segmentation is good, you can prompt the "
+"system to calculate masks <i class=\"text-success fas fa-thumbs-up\"></i>,\n"
+"    <br/>once a page already has masks new lines will automatically get a "
+"mask and updating a line will also recalculate its mask.\n"
+"    <br/><b>Note</b> that the quality of the masks is highly dependent on "
+"the quality of the whole segmentation, not only the corresponding line,\n"
+"    <br/>so make sure to draw all the lines before calculating the masks.\n"
+"    <br>You can also have the option to calculate the masks <i>en masse</i> "
+"in the Images tab -> segment -> choose 'Only masks'.\n"
+"</p>\n"
+"<p>\n"
+"    <b>Left click</b> on a line to select it, then you can drag its closest "
+"control point.\n"
+"    <br/><b>Double click</b> on the line will create a <u>new control point</"
+"u> at the mouse location.\n"
+"    <br/>You can reverse the order of the line's points by selecting a line "
+"(or multiple) and using reverse <i class=\"fas fa-arrow-alt-h\"></i> (I "
+"key).\n"
+"    <br/>When in region mode, Regions can be edited the same way.\n"
+"    <br/>Selected lines can be linked or unlinked to regions with the "
+"corresponding buttons <i class=\"fas fa-link\"></i>(Y key) <i class=\"fas fa-"
+"unlink\"> (U key).</i>\n"
+"    <br/>By using the cut mode <i class=\"text-warning fas fa-cut\"></i> (C "
+"key) you can cut through lines, splitting them in two or removing part of "
+"them.\n"
+"    <br/>If at least two lines are selected a option to join them becomes "
+"available <i class=\"fas fa-compress-arrows-alt\"></i> (J key).\n"
+"    <br/>You can go through your changes <u>history</u> back and forth with "
+"<b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding "
+"buttons <i class=\"fas fa-undo\"></i><i class=\"fas fa-redo\"></i>.\n"
+"</p>\n"
+"<p>\n"
+"    <b>Shift+click</b> allows to add or remove a line from the <u>selection</"
+"u>,\n"
+"    <br/>Clicking on an empty space clears the selection,\n"
+"    <br/><b>shift and drag</b> creates a <u>lasso</u> selection tool that "
+"allows to select control points (they then appear black).\n"
+"    <br/><b>Note:</b> If lines are already selected the lasso will only "
+"select points in those lines.\n"
+"    <br/><b>Ctrl+drag</b> allows to move all the selected control points at "
+"once (or the selected lines if no control points are selected).\n"
+"\n"
+"    <br/>The red trash <i class=\"text-danger fas fa-trash\"></i> button "
+"<b>deletes</b> all selected <b>lines/regions</b>,\n"
+"    <br/>The yellow trash button <i class=\"text-warning fas fa-trash\"></i> "
+"only <b>deletes</b> selected control <b>points</b>.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p>\n"
+"    Klicken Sie mit der <b>linken Maustaste</b> auf das Bild, um eine neue "
+"Zeile <u>zu erstellen</u>, klicken Sie mit der <b>rechten Maustaste</b>, um "
+"<b>Punkte hinzuzufügen</b>, und klicken Sie erneut mit der <b>linken "
+"Maustaste</b>, um den Vorgang <u>abzuschließen</u>.\n"
+"    <br/>Zum freien Zeichnen halten Sie die Maustaste gedrückt.\n"
+"    <br/>Wenn Sie beim Zeichnen einer Zeile die <b>Escape-Taste</b> gedrückt "
+"halten, wird die Zeile <u>gelöscht</u>.\n"
+"    <br/>Falls Bereiche eine Rolle spielen, sollten Sie erst in den "
+"Bereichsmodus wechseln. <i class=\"fas fa-th-large\"></i> (R-Taste).\n"
+"    <br/>Wenn Sie sich im Bereichsmodus befinden, klicken Sie mit der "
+"<b>linken Maustaste</b>, um einen neuen rechteckigen Bereich zu erstellen, "
+"klicken Sie erneut mit der linken Maustaste, um den Vorgang abzuschließen.\n"
+"    <br/>Zeilen, die innerhalb eines Bereichs gezogen werden, sind "
+"automatisch mit diesem verbunden.\n"
+"    <br/>Wenn die Qualität der Segmentierung gut genug ist, können Sie die "
+"Masken berechnen lassen.<i class=\"text-success fas fa-thumbs-up\"></i>,\n"
+"    <br/>Besitzt eine Seite schon Masken, erhalten neue Zeilen automatisch "
+"eine Maske und wenn Sie eine Zeile aktualisieren, wird auch deren Maske neu "
+"berechnet.\n"
+"    <br/><b>Hinweis:</b> Die Qualität der Masken ist stark abhängig von der "
+"Qualität der gesamten Segmentierung, nicht nur von der entsprechenden "
+"Zeile.\n"
+"    <br/>Stellen Sie also sicher, dass Sie alle Zeilen zeichnen bevor Sie "
+"die Masken kalkulieren lassen.\n"
+"    <br/>Sie haben außerdem die Option <i>sämtliche</i>  Masken auf einmal "
+"zu kalkulieren: Tab „Bilder“  -> Segmentieren -> Auswahl: „Nur Masken“\n"
+"</p>\n"
+"<p>\n"
+"    Klicken Sie mit der <b>linken Maustaste</b> auf eine Zeile, um sie "
+"auszuwählen, und ziehen Sie dann den nächstgelegenen Kontrollpunkt.\n"
+"    <br/>Ein <b>Doppelklick</b> auf eine Zeile erzeugt einen <u>neuen "
+"Kontrollpunkt</u> an der Mausposition.\n"
+"    <br/>Sie können die Reihenfolge der Zeilen-Punkte vertauschen, wenn Sie "
+"eine oder mehrere Linien auswählen und die I-Taste<i class=\"fas fa-arrow-"
+"alt-h\"></i> drücken.\n"
+"    <br/>Im Bereichsmodus können Bereiche auf dieselbe Art und Weise "
+"editiert werden.\n"
+"    <br/>Ausgewählte Zeilen können mit Bereichen verbunden und von ihnen "
+"getrennt werden mit den dazugehörigen Tasten <i class=\"fas fa-link\"></i> "
+"(Y-Taste) <i class=\"fas fa-unlink\"> (U-Taste).\n"
+"    <br/>Mit dem Scherenmodus <i class=\"text-warning fas fa-cut\"></i> (C-"
+"Taste) können Sie Zeilen durchtrennen, sie in zwei Teile teilen oder einen "
+"Teil davon entfernen.\n"
+"    <br/>Wenn mindestens zwei Zeilen ausgewählt sind, gibt es die Option "
+"diese zu verbinden <i class=\"fas fa-compress-arrows-alt\"></i> (J-Taste).\n"
+"    <br/>Sie können mit <b>Strg+Z</b> (Rückgängig) und <b>Ctrl+Y</b> "
+"(Wiederherstellen) oder indem Sie die dazugehörigen Buttons <i class=\"fas "
+"fa-undo\"></i><i class=\"fas fa-redo\"></i> nutzen durch den "
+"<u>Änderungsverlauf</u>  vor und zurück gehen.\n"
+"</p>\n"
+"<p>\n"
+"    <b>Mit Shift + Klicken</b> können Sie eine Zeile in der <u>Auswahl</"
+"u>hinzuzufügen oder entfernen.\n"
+" <br/>Durch Klicken auf eine leere Stelle wird die Auswahl gelöscht.\n"
+"    <br/><b>Shift + Ziehen</b> erzeugt ein <u>Lasso</u>-Auswahl-Werkzeug, "
+"welches es Ihnen erlaubt Kontrollpunkte auszuwählen (diese erscheinen "
+"schwarz).\n"
+"    <br/><b>Hinweis:</b> Wenn Zeilen bereits ausgewählt sind, dann wählt das "
+"Lasso nur Kontrollpunkte auf dieser Zeile aus.\n"
+"    <br/><b>Strg + Ziehen</b> können Sie alle ausgewählten Kontrollpunkte "
+"auf einmal verschieben (oder die ausgewählten Zeilen, wenn keine "
+"Kontrollpunkte ausgewählt sind)).\n"
+"\n"
+"    <br/>Der rote Papierkorb-Button <i class=\"text-danger fas fa-trash\"></"
+"i> <b>löscht</b> alle ausgewählten <b>Zeilen/Bereiche</b>.\n"
+"    <br/>Der gelbe Papierkorb-Button <i class=\"text-warning fas fa-trash"
+"\"></i> <b>löscht</b> nur die ausgewählten <b>Kontrollpunkte</b>.\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/compare_transcriptions.html
+msgid ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Each line is a different transcription as checked in the transcription "
+"management window <i class=\"fas fa-cog\"></i>\n"
+"    <br>The colors represent the difference with the current transcription,\n"
+"    <br><font color=\"green\">green</font> characters are not present in the "
+"current (editable) transcription while <font color=\"red\">red</font> "
+"characters are not present in the compared transcription.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Jede Zeile ist eine andere Transkription, wie im "
+"Transkriptionsverwaltungsfenster ausgewählt <i class=\"fas fa-cog\"></i>\n"
+"    <br>Die Farben stellen den Unterschied zur aktuellen Transkription dar,\n"
+"    <br><font color=\"green\">grüne</font> Zeichen sind in der aktuellen "
+"(bearbeitbaren) Transkription nicht vorhanden, während <font color=\"red"
+"\">rote</font> Zeichen in der verglichenen Transkription nicht enthalten "
+"sind.\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/versions.html
+msgid ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Each line corresponds to a an edition of the content, in inverse "
+"chronological order (Most recent at the top).\n"
+"    <br>The colors represent the difference with the previous version,\n"
+"    <br><font color=\"green\">green</font> are <b>additions</b> while <font "
+"color=\"red\">red</font> are <b>deletions</b>,\n"
+"    <br>meaning red characters are not actually part of the line anymore, "
+"they are displayed to easily spot the differences.\n"
+"    <br>You can mouse over the text to see the actual content.\n"
+"    <br>The load state button <i class=\"fas fa-file-upload\"></i> simply "
+"revert the content of the line to the corresponding text version.\n"
+"</p>\n"
+msgstr ""
+"\n"
+"<p style=\"direction:ltr\">\n"
+"    Jede Zeile entspricht einer Version des Inhalts, in umgekehrter "
+"chronologischer Reihenfolge (die neuste Version steht oben).\n"
+"    <br>Die Farben stellen den Unterschied zur vorherigen Version dar,\n"
+"    <br><font color=\"green\">grün</font> sind <b>Ergänzungen</b> während "
+"<font color=\"red\">rot</font> <b>Streichungen</b> sind.\n"
+"    <br>Das bedeutet, dass die roten Zeichen eigentlich nicht mehr Teil der "
+"Zeile sind, sondern nur angezeigt werden, um die Unterschiede zu "
+"verdeutlichen.\n"
+"    <br>Sie können mit der Maus über den Text fahren, um den tatsächlichen "
+"Inhalt zu sehen.\n"
+"    <br>Mit der Option 'Zustand laden' <i class=\"fas fa-file-upload\"></i> "
+"können Sie den Inhalt der Zeile einfach auf die entsprechende Textversion "
+"zurücksetzen.\n"
+"</p>\n"
+
+#: escriptorium/templates/includes/help/versions_diff.html
+msgid ""
+"\n"
+"lala\n"
+msgstr ""
+"\n"
+"lala\n"
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"                        Show %(page)s\n"
+"                      "
+msgstr ""
+"\n"
+"                        Zeige %(page)s\n"
+"                      "
+
+#: escriptorium/templates/includes/pagination.html
+msgid "First page"
+msgstr "Erste Seite"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Previous"
+msgstr "Vorherige"
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"                %(page_number)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+"\n"
+"                %(page_number)s von %(num_pages)s\n"
+"              "
+
+#: escriptorium/templates/includes/pagination.html
+#, python-format
+msgid ""
+"\n"
+"                %(counter)s out of %(num_pages)s\n"
+"              "
+msgstr ""
+"\n"
+"                %(counter)s von %(num_pages)s\n"
+"              "
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Next"
+msgstr "Nächste"
+
+#: escriptorium/templates/includes/pagination.html
+msgid "Last page"
+msgstr "Letzte Seite"
+
+#: escriptorium/templates/registration/login.html
+msgid "Please Sign In"
+msgstr "Bitte melden Sie sich an"
+
+#: escriptorium/templates/registration/login.html
+msgid "Your username and password didn't match. Please try again."
+msgstr ""
+"Ihr Username und das Passwort passen nicht zueinander. Bitte versuchen Sie "
+"es noch einmal."
+
+#: escriptorium/templates/registration/login.html
+msgid "Please login to see this page."
+msgstr "Bitte melden Sie sich an, um diese Seite zu sehen."
+
+#: escriptorium/templates/registration/login.html
+msgid "Password"
+msgstr "Passwort"
+
+#: escriptorium/templates/registration/login.html
+msgid "Lost password?"
+msgstr "Passwort vergessen?"
+
+#: escriptorium/templates/registration/password_change_done.html
+msgid "Your password has successfully been changed."
+msgstr "Ihr Passwort wurde erfolgreich geändert."
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Change your password"
+msgstr "Ändern Sie Ihr Passwort"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid ""
+"\n"
+"                  Please correct the error below.\n"
+"              "
+msgid_plural ""
+"\n"
+"                  Please correct the errors below.\n"
+"              "
+msgstr[0] ""
+"\n"
+"                  Bitte korrigieren Sie den folgenden Fehler.\n"
+"              "
+msgstr[1] ""
+"\n"
+"                  Bitte korrigieren Sie die folgenden Fehler.\n"
+"              "
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid ""
+"Please enter your old password, for security's sake, and then enter your new "
+"password twice so we can verify you typed it in correctly."
+msgstr ""
+"Bitte geben Sie zur Sicherheit Ihr altes Passwort ein, und geben Sie danach "
+"Ihr neues Passwort zweimal ein, damit wir sicherstellen können, dass die "
+"Schreibweise korrekt ist."
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "Old password:"
+msgstr "Altes Passwort:"
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "New password:"
+msgstr "Neues Passwort:"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "New password confirmation:"
+msgstr "Bestätigung für neues Passwort:"
+
+#: escriptorium/templates/registration/password_change_form.html
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Change my password"
+msgstr "Ändere mein Passwort"
+
+#: escriptorium/templates/registration/password_change_form.html
+msgid "Lost your password?"
+msgstr "Passwort verloren?"
+
+#: escriptorium/templates/registration/password_reset_complete.html
+msgid "Your password has been set.  You may go ahead and "
+msgstr "Ihr Passwort wurde gesetzt. Sie können fortfahren und "
+
+#: escriptorium/templates/registration/password_reset_complete.html
+msgid "log in"
+msgstr "sich anmelden"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Reset your password"
+msgstr "Setzen Sie Ihr Passwort zurück"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr ""
+"Bitte geben Sie Ihr neues Passwort zweimal ein, damit wir sicherstellen "
+"können, dass die Schreibweise korrekt ist."
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid "Confirm password:"
+msgstr "Bestätige Passwort:"
+
+#: escriptorium/templates/registration/password_reset_confirm.html
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr ""
+"Der Link zum Zurücksetzen des Passworts war ungültig, möglicherweise, weil "
+"er bereits benutzt wurde. Bitte fordern Sie das Zurücksetzes erneut an."
+
+#: escriptorium/templates/registration/password_reset_done.html
+msgid ""
+"We’ve emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr ""
+"Wir haben Ihnen die Anleitung zum Setzen Ihres Passworts per Mail geschickt, "
+"falls es ein Konto mit der von Ihnen angegebenen Mail-Adresse gibt. Sie "
+"sollten sie in Kürze erhalten."
+
+#: escriptorium/templates/registration/password_reset_done.html
+msgid ""
+"If you don’t receive an email, please make sure you’ve entered the address "
+"you registered with, and check your spam folder."
+msgstr ""
+"Falls Sie keine Mail erhalten, stellen Sie sicher, dass Sie die Adresse "
+"eingegeben haben, mit der Sie sich registriert haben. Prüfen Sie auch Ihren "
+"Spam-Ordner."
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid ""
+"Forgotten your password? Enter your email address below, and we’ll email "
+"instructions for setting a new one."
+msgstr ""
+"Passwort vergessen? Geben Sie unten Ihre E-Mail-Adresse an, und wir werden "
+"Ihnen die Anleitung zum Setzen eines neuen Passworts mailen."
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Email address:"
+msgstr "E-Mail-Adresse:"
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Reset my password"
+msgstr "Mein Passwort zurücksetzen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr "Projektberichte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Data metrics"
+msgstr "Datenmetriken"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of document parts"
+msgstr "Gesamtzahl der Dokumentteile"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "A document part corresponds to one image loaded within a document."
+msgstr "Ein Dokumentteil entspricht einem Bild innerhalb eines Dokumentes."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of regions"
+msgstr "Gesamtzahl der Bereiche"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A region is a polygon drawn on a document part, grouping one, several or no "
+"line(s)."
+msgstr ""
+"Ein Bereich ist ein auf einem Dokumentteil gezeichnetes Polygon, das eine, "
+"mehrere oder keine Zeile(n) umfasst."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of lines"
+msgstr "Gesamtzahl der Zeilen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A line is a segment of text identified on a document part, usually "
+"associated with a polygon (mask) and a transcription."
+msgstr ""
+"Eine Zeile ist ein Textsegment, das in einem Dokumentteil identifiziert "
+"wurde, üblicherweise verbunden mit einem Polygon (der Zeilenmaske) und einer "
+"Transkription."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of words"
+msgstr "Gesamtzahl der Worte"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A word is any series of one or more characters, excepted punctuation signs "
+"and white spaces."
+msgstr ""
+"Ein Wort ist eine Abfolge von einem oder mehreren Zeichen, ausgenommen "
+"Satzzeichen und Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Total number of characters"
+msgstr "Gesamtzahl der Zeichen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"A character is any symbol used in the transcription, including punctuation, "
+"excepted white spaces."
+msgstr ""
+"Ein Zeichen ist ein beliebiges Symbol, das in der Transkription verwendet "
+"wird, inklusive Satzzeichen, aber ausgenommen Leerzeichen."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr "Zeichensatz"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr "Zeichensatz neu laden"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+"Der Zeichensatz ist die Liste aller Zeichen, die momentan in der "
+"Transkription verwendet werden, mit zugehöriger Vorkommenshäufigkeit."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Annotation"
+msgstr "Transkriptionen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of document tags"
+msgstr "Momentante Verwendung der Dokumenttags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of part tags"
+msgstr "Momentante Verwendung der Teiltags"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of regions type"
+msgstr "Momentane Verwendung der Bereichstypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Current use of lines type"
+msgstr "Momentane Verwendung der Zeilentypen"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project activity"
+msgstr "Projektaktivität"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Created on"
+msgstr "Erstellt am"
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Last update on"
+msgstr "Letzte Aktualisierung am"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 user"
+msgid_plural "Project shared with %(n)s users"
+msgstr[0] "Projekt geteilt mit 1 Benutzer"
+msgstr[1] "Projekt geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Project shared with 1 group"
+msgid_plural "Project shared with %(n)s groups"
+msgstr[0] "Projekt geteilt mit 1 Gruppe"
+msgstr[1] "Projekt geteilt mit %(n)s Gruppen"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 user"
+msgid_plural "Documents shared with %(n)s users"
+msgstr[0] "Dokument geteilt mit 1 Benutzer"
+msgstr[1] "Dokument geteilt mit %(n)s Benutzern"
+
+#: escriptorium/templates/reporting/project_reports.html
+#, python-format
+msgid "Documents shared with 1 group"
+msgid_plural "Documents shared with %(n)s groups"
+msgstr[0] "Dokument geteilt mit 1 Gruppe"
+msgstr[1] "Dokument geteilt mit %(n)s Gruppen"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Total"
+msgstr "Insgesamt"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Last week"
+msgstr "Letzte Woche"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Last day"
+msgstr "Letzter Tag"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "User ID"
+msgstr "Benutzerkennung"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Disk usage"
+msgstr "Speicherplatznutzung"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_detail.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU usage"
+msgstr "CPU-Nutzung"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+#: escriptorium/templates/reporting/taskreport_detail.html
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU usage"
+msgstr "GPU-Nutzung"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "No. of tasks"
+msgstr "Anzahl der Aufgaben"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "Runtime"
+msgstr "Laufzeit"
+
+#: escriptorium/templates/reporting/quotas_leaderboard.html
+msgid "All time"
+msgstr "Alle Zeiten"
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Status:"
+msgstr "Status:"
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Queued at:"
+msgstr "In die Warteschlange um:"
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Started at:"
+msgstr "Begonnen um:"
+
+#: escriptorium/templates/reporting/taskreport_detail.html
+msgid "Ended at:"
+msgstr "Beendet um:"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Calculated from your images and models"
+msgstr "Berechnet aus Ihren Bildern und Modellen"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU usage over the last week"
+msgstr "CPU-Nutzung in der letzten Woche"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU usage over the last week"
+msgstr "GPU-Nutzung in der letzten Woche"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid ""
+"CPU/GPU usage values also include automatic processing of the images on "
+"upload, those tasks aren't listed below."
+msgstr ""
+"Die Werte für die CPU-/GPU-Nutzung umfassen auch die automatische "
+"Verarbeitung der Bilder während des Hochladens; diese Aufgaben sind unten "
+"nicht aufgeführt."
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Task report"
+msgstr "Aufgabenbericht"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Started at"
+msgstr "Gestartet am"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Done at"
+msgstr "Abgeschlossen zum"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "Duration"
+msgstr "Dauer"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "State"
+msgstr "Status"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "CPU cost"
+msgstr "CPU-Kosten"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "GPU cost"
+msgstr "GPU-Kosten"
+
+#: escriptorium/templates/reporting/taskreport_list.html
+msgid "You don't have any task report yet."
+msgstr "Sie haben noch keinen Aufgabenbericht."
+
+#: escriptorium/templates/users/contactus.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send"
+msgstr "Absenden"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "Hello "
+msgstr "Hallo "
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "is inviting you to join"
+msgstr "lädt Sie ein,"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "his/her team"
+msgstr "seinem/ihrem Team"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "on"
+msgstr "in"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "eScriptorium!"
+msgstr "eScriptorium beizutreten!"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "All you need to do is click on the link below:"
+msgstr "Klicken Sie dafür einfach auf den folgenden Link:"
+
+#: escriptorium/templates/users/email/invitation_html.html
+msgid "Sincerely, the eScriptorium team."
+msgstr "Mit freundlichen Grüßen, das eScriptorium-Team."
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Back to profile"
+msgstr "Zurück zum Profil"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Team:"
+msgstr "Team:"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Invite a user to this team."
+msgstr "Lade Benutzer in dieses Team ein."
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid ""
+"Make sure to use a correct email as you will not receive an error message if "
+"it is not the case (in order to avoid phishing)."
+msgstr ""
+"Vergewisserns Sie sich, dass die E-Mail-Adresse korrekt ist, da Sie keine "
+"Fehlernachricht bekommen, falls dies nicht der Fall ist (zwecks Vermeidung "
+"von Phishing)."
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Send invitation"
+msgstr "Versende Einladung"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Transfer ownership"
+msgstr "Übertrage Besitzrecht"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Remove"
+msgstr "Entferne"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "Remove user from group"
+msgstr "Entferne Benutzer aus Team"
+
+#: escriptorium/templates/users/group_detail_invite.html
+msgid "No other user in this team."
+msgstr "Kein anderer Benutzer in diesem Team."
+
+#: escriptorium/templates/users/invitation_accept_register.html
+msgid "Register to eScriptorium"
+msgstr "Registrieren Sie sich für eScriptorium"
+
+#: escriptorium/templates/users/invitation_accept_register.html
+#, python-format
+msgid ""
+"\n"
+"      You received an invitation from %(sender)s, please fill the form below "
+"to register.\n"
+"    "
+msgstr ""
+"\n"
+"      Sie haben eine Einladung von %(sender)s erhalten, bitte füllen Sie das "
+"folgende Formular aus, um sich zu registrieren.\n"
+"    "
+
+#: escriptorium/templates/users/invitation_accept_register.html
+msgid "Signup"
+msgstr "Anmelden"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Recipient's information"
+msgstr "Angaben zum Empfänger"
+
+#: escriptorium/templates/users/profile.html
+msgid "Information"
+msgstr "Informationen"
+
+#: escriptorium/templates/users/profile.html
+msgid "API key"
+msgstr "API-Schlüssel"
+
+#: escriptorium/templates/users/profile.html
+msgid "Files"
+msgstr "Dateien"
+
+#: escriptorium/templates/users/profile.html
+msgid "Invitations"
+msgstr "Einladungen"
+
+#: escriptorium/templates/users/profile.html
+msgid "Save"
+msgstr "Speichern"
+
+#: escriptorium/templates/users/profile.html
+msgid "Reset onboarding"
+msgstr "Starthilfe zurücksetzen"
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "API Authentication Token:"
+msgstr "API-Authentifizierungs-Token:"
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "Copy to clipboard."
+msgstr "Kopiere in die Zwischenablage."
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "Regenerate Token."
+msgstr "Erzeuge Token erneut."
+
+#: escriptorium/templates/users/profile_api_key.html
+msgid "example: "
+msgstr "Beispiel: "
+
+#: escriptorium/templates/users/profile_files.html
+msgid "You don't have any saved files yet."
+msgstr "Sie haben noch keine gespeicherten Dateien."
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Create a new Team"
+msgstr "Lege ein neues Team an"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Pending Invitations"
+msgstr "Noch offene Einladungen"
+
+#: escriptorium/templates/users/profile_group_list.html
+#, python-format
+msgid ""
+"\n"
+"            Invited to %(team_name)s by %(sender)s\n"
+"            "
+msgstr ""
+"\n"
+"            Zu Team %(team_name)s von %(sender)s eingeladen\n"
+"            "
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Accept"
+msgstr "Akzeptieren"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "My Teams"
+msgstr "Meine Teams"
+
+#: escriptorium/templates/users/profile_group_list.html
+#, python-format
+msgid "Owned by %(owner)s"
+msgstr "Besitzer: %(owner)s"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Leave"
+msgstr "Verlassen"
+
+#: escriptorium/templates/users/profile_group_list.html
+msgid "You are not part of any team yet."
+msgstr "Sie sind noch in keinem Team."
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "You didn't send any invitations yet."
+msgstr "Sie haben noch keine Einladungen verschickt."
+
+#: homepage_example/additional_footer.html
+msgid "Powered by"
+msgstr "Mit Hilfe von"
