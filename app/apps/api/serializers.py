@@ -266,7 +266,7 @@ class PartSerializer(serializers.ModelSerializer):
         return obj
 
     def get_best_transcription_name(self, part):
-        return part.best_transcription.name
+        return part.best_transcription.name if part.best_transcription else ""
 
 
 class BlockSerializer(serializers.ModelSerializer):

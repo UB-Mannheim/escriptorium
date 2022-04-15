@@ -94,10 +94,11 @@ class partCard {
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
 
         // show avg confidence on the card
-        let avgConfidenceElement = $(".avg-confidence", this.$element);
-        avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
-        avgConfidenceElement.attr('title', this.avgConfidenceModel);
-
+        if (this.avgConfidence) {
+            let avgConfidenceElement = $(".avg-confidence", this.$element);
+            avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
+            avgConfidenceElement.attr('title', this.avgConfidenceModel);
+        }
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
