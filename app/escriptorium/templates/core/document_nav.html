@@ -5,7 +5,7 @@
 {% block body %}
 <div id="part-edit">
     <nav>
-        <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+      <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
         {% block nav %}
 
         {% if object %}
@@ -24,19 +24,28 @@
 
         <a href="{% if document  %}{% url 'document-part-edit' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% block nav-edit-active %}{% endblock %}{% if not object or not document.parts.count %}disabled{% endif %}" id="nav-edit-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Edit" %}</a>
 
-      {% with models_count=document.ocr_models.count %}
-      <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
-      {% endwith %}
+        {% with models_count=document.ocr_models.count %}
+        <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
+        {% endwith %}
 
-      {% endblock nav %}
+        {% endblock nav %}
 
-      {% block extra_nav %}
-      <div class="nav-div nav-item ml-5">{{document.name}}</div>
-      {% endblock %}
-    </div>
-  </nav>
+        {% block extra_nav %}
+        <div class="nav-div nav-item ml-5">{{document.name}}</div>
+        {% endblock %}
+      </div>
+    </nav>
 
   {% block tab_content %}{% endblock %}
 </div>
 {% block modals %}{% endblock %}
 {% endblock %}
+
+{% if not DISABLE_ELASTICSEARCH %}
+  {% block searchbar_hidden_inputs %}
+  <input name="project" type="text" value="{{document.project.pk}}" hidden>
+  <input name="document" type="text" value="{{document.pk}}" hidden>
+  {% endblock %}
+
+  {% block searchbar_placeholder %}{% blocktrans with name=document.name %}Search in {{ name }}{% endblocktrans %}{% endblock %}
+{% endif %}

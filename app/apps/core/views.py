@@ -28,7 +28,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
-from elasticsearch import exceptions
+from elasticsearch import exceptions as es_exceptions
 
 from core.forms import (
     BinarizeForm,
@@ -58,7 +58,6 @@ from core.models import (
     OcrModelRight,
     Project,
 )
-from core.search import search_in_projects
 from imports.forms import ExportForm, ImportForm
 from reporting.models import TaskReport
 from users.models import User
@@ -96,19 +95,23 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
     form_class = SearchForm
     paginate_by = 100
 
+    def get_form(self):
+        self.form = SearchForm(self.request.GET, **self.get_form_kwargs())
+        return self.form
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super(Search, self).get_context_data(**kwargs)
 
-        # No extra calculation if search feature is deactivated on the instance
-        if settings.DISABLE_ELASTICSEARCH:
-            return context
-
-        context['display_right_warning'] = False
-
-        # Search
-        search = self.request.GET.get('query', '')
-
-        if not search:
+        # No extra calculation if:
+        # - search feature is deactivated on the instance
+        # - the form is invalid
+        # - the search terms are empty
+        if settings.DISABLE_ELASTICSEARCH or not self.form.is_valid() or not self.form.cleaned_data.get('query'):
             return context
 
         try:
@@ -116,21 +119,9 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         except ValueError:
             page = 1
 
-        user_projects = list(Project.objects.for_user_read(self.request.user).values_list('id', flat=True))
         try:
-            project = int(self.request.GET.get('project', ''))
-
-            if project in user_projects:
-                projects = [project]
-            else:
-                projects = user_projects
-                context['display_right_warning'] = True
-        except ValueError:
-            projects = user_projects
-
-        try:
-            es_results = search_in_projects(page, self.paginate_by, self.request.user.id, projects, search)
-        except exceptions.ConnectionError as e:
+            es_results = self.form.search(page, self.paginate_by)
+        except es_exceptions.ConnectionError as e:
             context['es_error'] = str(e)
             return context
 
@@ -172,13 +163,6 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
             'viewbox': viewbox,
             'larger': (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
         }
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['search'] = self.request.GET.get('query')
-        kwargs['project'] = self.request.GET.get('project')
-        kwargs['user'] = self.request.user
-        return kwargs
 
     def get_success_url(self):
         return reverse('search')

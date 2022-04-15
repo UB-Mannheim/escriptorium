@@ -27,3 +27,11 @@
 {% block tab_content %}{% endblock %}
 {% block modals %}{% endblock %}
 {% endblock %}
+
+{% if not DISABLE_ELASTICSEARCH %}
+  {% block searchbar_hidden_inputs %}
+  <input name="project" type="text" value="{{project.pk}}" hidden>
+  {% endblock %}
+
+  {% block searchbar_placeholder %}{% blocktrans with name=project.name %}Search in {{ name }}{% endblocktrans %}{% endblock %}
+{% endif %}

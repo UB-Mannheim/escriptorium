@@ -37,21 +37,9 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav">
           <li class="nav-item {% block nav-home-class %}{% endblock %}">
             <a class="nav-link" href="{% url 'home'%}">Home</a>
-          </li>
-
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              {% if DISABLE_ELASTICSEARCH %}
-              disabled=""
-              title="{% trans 'Search feature is deactivated on this instance.' %}"
-              {% else %}
-              href="{% url 'search' %}"
-              {% endif %}
-            >{% trans 'Search' %}</a>
           </li>
 
           <!-- <li class="nav-item">
@@ -60,21 +48,35 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'contactus' %}">{% trans 'Contact' %}</a>
           </li>
-
-          {% comment %}
-          {# search bar #}
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-              <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-info my-2 my-sm-0" type="submit">Search</button>
-              </form>
-            </li>
-          </ul>
-          {% endcomment %}
         </ul>
 
-        <ul class="navbar-nav mr-right">
+        <ul class="navbar-nav ml-auto mr-auto pt-1">
+          {% if user.is_authenticated and not DISABLE_ELASTICSEARCH and request.resolver_match.view_name != "search" %}
+          <li class="nav-item">
+            <form method="get" action="{% url 'search' %}">
+              {% block searchbar_hidden_inputs %}{% endblock %}
+              <div class="input-group">
+                <input
+                  name="query"
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="{% block searchbar_placeholder %}{% trans "Search in all your projects" %}{% endblock %}"
+                >
+                <div class="input-group-append">
+                  <button
+                    class="btn btn-primary btn-sm mb-2"
+                    type="submit"
+                  >
+                    <i class="fas fa-search"></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </li>
+          {% endif %}
+        </ul>
+
+        <ul class="navbar-nav">
           {% if user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link {% block nav-proj-list-class %}{% endblock %}" href="{% url 'projects-list' %}">{% trans "My Projects" %}</a>
