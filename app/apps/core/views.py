@@ -65,6 +65,24 @@ from users.models import User
 logger = logging.getLogger(__name__)
 
 
+class PerPageMixin():
+    paginate_by = 50
+    MAX_PAGINATE_BY = 50
+    PAGINATE_BY_CHOICES = [10, 20, 50]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['select_per_page'] = True
+        context['paginate_by_choices'] = self.PAGINATE_BY_CHOICES
+        return context
+
+    def get_paginate_by(self, queryset):
+        try:
+            return min(int(self.request.GET.get("paginate_by", self.paginate_by)), self.MAX_PAGINATE_BY)
+        except ValueError:
+            return self.paginate_by
+
+
 class Home(TemplateView):
     template_name = 'core/home.html'
 
@@ -90,10 +108,12 @@ class ESPaginator(Paginator):
         return Page(self.object_list, number, self)
 
 
-class Search(LoginRequiredMixin, FormView, TemplateView):
+class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
     template_name = 'core/search.html'
     form_class = SearchForm
-    paginate_by = 100
+
+    def get_paginate_by(self):
+        return super().get_paginate_by(None)
 
     def get_form(self):
         self.form = SearchForm(self.request.GET, **self.get_form_kwargs())
@@ -119,8 +139,9 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         except ValueError:
             page = 1
 
+        paginate_by = self.get_paginate_by()
         try:
-            es_results = self.form.search(page, self.paginate_by)
+            es_results = self.form.search(page, paginate_by)
         except es_exceptions.ConnectionError as e:
             context['es_error'] = str(e)
             return context
@@ -129,7 +150,7 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
         results = [result.values() for result in template_results]
 
         # Pagination
-        paginator = ESPaginator(results, self.paginate_by, total=int(es_results['hits']['total']['value']))
+        paginator = ESPaginator(results, paginate_by, total=int(es_results['hits']['total']['value']))
 
         if page > paginator.num_pages:
             page = paginator.num_pages
@@ -166,22 +187,6 @@ class Search(LoginRequiredMixin, FormView, TemplateView):
 
     def get_success_url(self):
         return reverse('search')
-
-
-class PerPageMixin():
-    MAX_PAGINATE_BY = 50
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['select_per_page'] = True
-        return context
-
-    def get_paginate_by(self, queryset):
-        try:
-            _paginate_by = int(self.request.GET.get("paginate_by", self.paginate_by))
-        except ValueError:
-            _paginate_by = self.paginate_by
-        return _paginate_by if _paginate_by <= self.MAX_PAGINATE_BY else self.paginate_by
 
 
 class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):

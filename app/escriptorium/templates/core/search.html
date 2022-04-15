@@ -66,7 +66,7 @@
         {% if debug %}
         <th>{% trans "Score" %}</th>
         {% endif %}
-        <th>{% trans "View in Editor" %}</th>
+        <th>{% trans "Edit" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -82,8 +82,8 @@
           </small>
         </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
-          <svg viewBox="{{ viewbox }}" {% if larger %}class="wide-search-crop"{% else %}class="tall-search-crop"{% endif %}>
-            <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" xlink:href="{{ img_url }}">
+          <svg viewBox="{{ viewbox }}" class="lazy {% if larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
+            <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" data-src="{{ img_url }}">
           </svg>
         </td>
         {% if debug %}
@@ -107,4 +107,13 @@
   {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  $(document).ready(function() {
+    bootLazyload();
+  });
+</script>
 {% endblock %}
