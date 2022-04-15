@@ -6,11 +6,11 @@ import math
 import os
 import random
 import re
-from statistics import mean
 import subprocess
 import time
 import uuid
 from datetime import datetime
+from statistics import mean
 
 import numpy as np
 from celery import chain
