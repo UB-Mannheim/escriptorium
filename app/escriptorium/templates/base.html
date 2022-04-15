@@ -125,7 +125,7 @@
                 {% for language in languages %}
                 <li>
 	          <button class="btn" type="submit" name="language" title="{{ language.name_local }}" value="{{ language.code }}">
-                    {% flags_for_language 1 language.code %} <span class="{% if language.code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ language.name }}</span>
+                    {% flags_for_language 1 language.code %} <span class="{% if language.code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ language.name_local }}</span>
                   </button>
                 </li>
                 {% endfor %}
