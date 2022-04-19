@@ -60,10 +60,15 @@ import { BasePanel } from '../../src/editor/mixins.js';
 import { AnnoPanel } from '../../src/editor/mixins.js';
 import { Annotorious } from '@recogito/annotorious';
 
+const rectangleRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?,(?<w>\d+)(?:\.\d+)?,(?<h>\d+)(?:\.\d+)?/);
+const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
 
 export default Vue.extend({
     mixins: [BasePanel, AnnoPanel],
     props: ['fullsizeimage'],
+    data: {
+        imageLoaded: false,
+    },
     computed: {
         imageSrc() {
             let src = !this.fullsizeimage
@@ -78,10 +83,29 @@ export default Vue.extend({
                              });
         }
     },
+    watch: {
+        fullsizeimage: function (n, o) {
+            // it was prefetched
+            if (n && n != o) {
+                if (this.anno) {
+                    this.imageLoaded = false;
+                    // reload annotations with updated img size when img is loaded
+                    this.anno.clearAnnotations();
+                }
+            }
+        }
+    },
     mounted: function() {
         this.$parent.zoom.register(
             this.$el.querySelector('#source-zoom-container'),
             {map: true});
+
+        this.$refs.img.addEventListener(
+            "load",
+            function (ev) {
+                this.onImageLoaded();
+            }.bind(this)
+        );
 
         this.initAnnotations();
     },
@@ -90,23 +114,33 @@ export default Vue.extend({
             await this.$store.dispatch('parts/rotate', angle);
         },
 
+        onImageLoaded() {
+            this.imageLoaded = true;
+            this.loadAnnotations();
+        },
+
         getCoordinatesFromW3C(annotation) {
             var coordinates = [];
             if (annotation.taxonomy.marker_type == 'Rectangle') {
                 // looks like xywh=pixel:133.98072814941406,144.94607543945312,169.30674743652344,141.2919921875"
-                let m = annotation.target.selector.value.match(
-                    new RegExp(/(?<x>\d+)(.\d+)?,(?<y>\d+)(\.\d+)?,(?<w>\d+)(\.\d+)?,(?<h>\d+)(\.\d+)?/)).groups;
+                let m = annotation.target.selector.value.match(rectangleRegExp).groups;
                 coordinates = [[parseInt(m.x), parseInt(m.y)],
                                [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)]];
             } else if (annotation.taxonomy.marker_type == 'Polygon') {
                 // looks like <svg><polygon points=\"168.08567810058594,230.20848083496094 422.65484619140625,242.38882446289062 198.5365447998047,361.75616455078125\"></polygon></svg>
-                let matches = annotation.target.selector.value.matchAll(
-                    /(?<x>\d+)(.\d+)?,(?<y>\d+)(.\d+)?/g);
+                let matches = annotation.target.selector.value.matchAll(polygonRegExp);
                 for (let m of matches) {
                     coordinates.push([m.groups.x, m.groups.y])
                 }
             }
-            return coordinates;
+            const scale = this.$refs.img.naturalWidth / this.$store.state.parts.image.size[0];
+            return coordinates.map(function(pt) {
+                // convert a point from UI coordinates to real image coordinates
+                return [
+                    parseInt(pt[0] / scale),
+                    parseInt(pt[1] / scale)
+                ];
+            }.bind(this));
         },
 
         makeTaxonomiesStyles() {
@@ -138,7 +172,6 @@ export default Vue.extend({
                 disableEditor: false,
                 formatters: imgAnnoFormatter.bind(this)
             });
-            const annos = await this.$store.dispatch('imageAnnotations/fetch');
 
             // We need to move the annotation editor out of the zoom container
             const img = document.getElementById('source-panel-img');
@@ -166,12 +199,8 @@ export default Vue.extend({
             const editorObserver = new MutationObserver(isEditorOpen);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
-            annos.forEach(function(annotation) {
-                let data = annotation.as_w3c;
-                data.id = annotation.pk;
-                data.taxonomy = this.$store.state.document.annotationTaxonomies.image.find(e => e.pk == annotation.taxonomy);
-                this.anno.addAnnotation(data);
-            }.bind(this));
+            await this.$store.dispatch('imageAnnotations/fetch');
+            this.loadAnnotations();
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
@@ -195,6 +224,39 @@ export default Vue.extend({
 
             this.anno.on('deleteAnnotation', function(annotation) {
                 this.$store.dispatch('imageAnnotations/delete', annotation.id);
+            }.bind(this));
+        },
+
+        updateW3CCoordsToUIImg(selector) {
+            // coordinates are stored for real size image,
+            // we need to pass actual thumbnail coords to annotorious
+            const scale = this.$refs.img.naturalWidth / this.$store.state.parts.image.size[0];
+            if (selector.type == 'FragmentSelector') {
+                return selector.value.replace(rectangleRegExp, function(match, x, y, w, h) {
+                    return parseInt(x * scale) + ',' +
+                        parseInt(y * scale) + ',' +
+                        parseInt(w * scale) + ',' +
+                        parseInt(h * scale);
+                });
+            } else if (selector.type == 'SvgSelector') {
+                return selector.value.replace(polygonRegExp, function(match, x, y) {
+                    return [
+                        parseInt(x * scale),
+                        parseInt(y * scale)
+                    ];
+                });
+            }
+        },
+
+        loadAnnotations() {
+            const annos = this.$store.state.imageAnnotations.all;
+            annos.forEach(function(annotation) {
+                // ugly way to deep copy so that we don't modify data in the store
+                let data = JSON.parse(JSON.stringify(annotation.as_w3c));
+                data.id = annotation.pk;
+                data.taxonomy = this.$store.state.document.annotationTaxonomies.image.find(e => e.pk == annotation.taxonomy);
+                data.target.selector.value = this.updateW3CCoordsToUIImg(data.target.selector);
+                this.anno.addAnnotation(data);
             }.bind(this));
         },
 
