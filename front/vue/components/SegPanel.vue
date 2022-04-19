@@ -283,7 +283,7 @@ export default Vue.extend({
         zoom.events.addEventListener(
           "wheelzoom.updated",
           function (e) {
-            this.updateZoom();
+            this.updateZoom(e.detail);
           }.bind(this)
         );
 
@@ -518,10 +518,10 @@ export default Vue.extend({
         }.bind(this)
       );
     },
-    updateZoom() {
+    updateZoom(zoom) {
       // might not be mounted yet
       if (this.segmenter && this.$img.complete) {
-        var zoom = this.$parent.zoom;
+        // var zoom = this.$parent.zoom;
         this.segmenter.canvas.style.top = zoom.pos.y + "px";
         this.segmenter.canvas.style.left = zoom.pos.x + "px";
         this.segmenter.refresh();

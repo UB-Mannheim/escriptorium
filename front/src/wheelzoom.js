@@ -1,8 +1,8 @@
 /*
-* Usage:
-* var zoom = new WheelZoom(domElement)
-* zoom.register(container);
-*/
+ * Usage:
+ * var zoom = new WheelZoom(domElement)
+ * zoom.register(container);
+ */
 
 'use strict';
 
@@ -163,7 +163,7 @@ export class WheelZoom {
     zoomTo(target, delta) {
         let oldScale = this.scale;
         this.scale += delta;
-	    if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
+	if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 
         var diff = {scale: this.scale / oldScale};
@@ -175,28 +175,28 @@ export class WheelZoom {
         return diff;
     }
 
-	scrolled(e) {
+    scrolled(e) {
         if (this.disabled) return null;
         e.preventDefault();
 
-		var delta = e.delta || e.wheelDelta;
-		if (delta === undefined) {
-	      //we are on firefox
-	      delta = -e.detail;
-	    }
+	var delta = e.delta || e.wheelDelta;
+	if (delta === undefined) {
+	    //we are on firefox
+	    delta = -e.detail;
+	}
         // cap the delta to [-1,1] for cross browser consistency
-	    delta = Math.max(-1, Math.min(1, delta));
-	    // determine the point on where the slide is zoomed in
+	delta = Math.max(-1, Math.min(1, delta));
+	// determine the point on where the slide is zoomed in
         let bounds = e.target.getBoundingClientRect();
-		var zoom_point = {x: (e.pageX - bounds.x - document.documentElement.scrollLeft),
-		                  y: (e.pageY - bounds.y - document.documentElement.scrollTop)};
+	var zoom_point = {x: (e.pageX - bounds.x - document.documentElement.scrollLeft),
+		          y: (e.pageY - bounds.y - document.documentElement.scrollTop)};
 
         return this.zoomTo(zoom_point, delta * this.factor);
-	}
+    }
 
-	drag(e) {
+    drag(e) {
         if (this.disabled) return null;
-		e.preventDefault();
+	e.preventDefault();
         let target = this.dragging;
         if (!target) return null;
         let ts = target.container.getBoundingClientRect();
@@ -207,10 +207,10 @@ export class WheelZoom {
                 this.angle = (this.angle + (e.pageX - this.previousEvent.pageX)) % 360;
             } else {
                 this.pos.x += (e.pageX - this.previousEvent.pageX);
-		        this.pos.y += (e.pageY - this.previousEvent.pageY);
+		this.pos.y += (e.pageY - this.previousEvent.pageY);
             }
         }
-	    // Make sure the slide stays in its container area when zooming in/out
+	// Make sure the slide stays in its container area when zooming in/out
         if (this.scale > 1) {
             if (this.pos.x > 0) { this.pos.x = 0; }
             if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
@@ -218,12 +218,12 @@ export class WheelZoom {
             }
 
             if (this.pos.y > 0) { this.pos.y = 0; }
-	        // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
+	    // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
             //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
             // }
         } else {
             if (this.pos.x < 0) { this.pos.x = 0; }
-	        if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
+	    if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth *  this.scale;
             }
 
@@ -233,41 +233,41 @@ export class WheelZoom {
             }
         }
 
-		this.previousEvent = e;
+	this.previousEvent = e;
         let diff = {
             x: (this.pos.x - oldPos.x) / this.scale,
             y: (this.pos.y - oldPos.y) / this.scale,
             angle: this.angle - oldAngle
         };
-		this.updateStyle(diff);
+	this.updateStyle(diff);
         this.dragging.showMap(this.pos, this.scale);
         return diff;
-	}
+    }
 
-	removeDrag() {
+    removeDrag() {
         // this.targets.forEach(function(target,i) {
         //     target.element.classList.remove('notransition');
         // });
 
-		document.removeEventListener('mouseup', this.bRemDrag);
-		document.removeEventListener('mousemove', this.bDrag);
+	document.removeEventListener('mouseup', this.bRemDrag);
+	document.removeEventListener('mousemove', this.bDrag);
         this.previousEvent = null;
-	}
+    }
 
-	draggable(event) {
+    draggable(event) {
         if (this.disabled) return;
-		event.preventDefault();
-		this.previousEvent = event;
+	event.preventDefault();
+	this.previousEvent = event;
         // this.rotationOrigin = e.point;
 
         // set bound event handlers
         this.bDrag = this.drag.bind(this);
         this.bRemDrag = this.removeDrag.bind(this);
-		document.addEventListener('mousemove', this.bDrag);
-		document.addEventListener('mouseup', this.bRemDrag);
-	}
+	document.addEventListener('mousemove', this.bDrag);
+	document.addEventListener('mouseup', this.bRemDrag);
+    }
 
-	updateStyle(delta) {
+    updateStyle(delta) {
         this.targets.forEach(function(target, i) {
             target.update(this.pos, this.scale);
             // if (this.rotationOrigin) {
@@ -275,9 +275,11 @@ export class WheelZoom {
             //     target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
             // }
         }.bind(this));
-        var event = new CustomEvent('wheelzoom.updated', {detail:delta});
+        var event = new CustomEvent('wheelzoom.updated', {detail: {delta: delta,
+                                                                   pos: this.pos,
+                                                                   scale: this.scale}});
         if (this.events) this.events.dispatchEvent(event);
-	}
+    }
 
     refresh() {
         this.updateStyle();
@@ -286,7 +288,7 @@ export class WheelZoom {
     reset() {
         let oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
         this.pos = {x:0, y:0};
-	    this.scale = this.initialScale || 1;
+	this.scale = this.initialScale || 1;
         this.updateStyle({x: -oldPos.x, y:-oldPos.y, scale: 1/oldAngle});
     }
 

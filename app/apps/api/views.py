@@ -122,7 +122,6 @@ class ProjectViewSet(ModelViewSet):
 class TagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
     serializer_class = TagDocumentSerializer
-    paginate_by = 10
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))

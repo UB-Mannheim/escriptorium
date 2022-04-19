@@ -16,9 +16,9 @@ export const retrievePage = async (document_id, part_id, transcription, page) =>
 
 export const retrieveAnnotationTaxonomies = async (document_id, target, page) => (await axios.get(`/documents/${document_id}/taxonomies/annotations/?target=${target}&page=${page}&paginate_by=50`))
 
-export const retrieveImageAnnotations = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/`))
+export const retrieveImageAnnotations = async (document_id, part_id, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/?page=${page}`))
 
-export const retrieveTextAnnotations = async (document_id, part_id, transcription_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${transcription_id}`))
+export const retrieveTextAnnotations = async (document_id, part_id, transcription_id, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${transcription_id}&page=${page}`))
 
 export const createContent = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/transcriptions/`, data))
 

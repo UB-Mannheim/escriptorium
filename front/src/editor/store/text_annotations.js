@@ -32,12 +32,21 @@ export const mutations = {
 
 export const actions = {
     async fetch({commit, dispatch, rootState}) {
-        const resp = await api.retrieveTextAnnotations(
-            rootState.document.id,
-            rootState.parts.pk,
-            rootState.transcriptions.selectedTranscription)
-        commit('set', resp.data.results)
-        return resp.data.results
+        let next = true, page = 1
+        let data = []
+        while (next) {
+            let resp = await api.retrieveTextAnnotations(
+                rootState.document.id,
+                rootState.parts.pk,
+                rootState.transcriptions.selectedTranscription,
+                page
+            )
+            page = page + 1
+            data.push(...resp.data.results)
+            next = resp.data.next
+        }
+        commit('set', data)
+        return data
     },
 
     async create({commit, rootState}, annotation) {
