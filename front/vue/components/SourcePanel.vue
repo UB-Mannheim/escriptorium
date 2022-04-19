@@ -83,9 +83,6 @@ export default Vue.extend({
             {map: true});
 
         this.initAnnotations();
-        // we need to move the annotation editor out of the zoom container
-        let img = document.getElementById('source-panel-img');
-        this.$refs.content.insertBefore(img.nextElementSibling, null);
     },
     methods: {
         async rotate(angle) {
@@ -140,12 +137,25 @@ export default Vue.extend({
                 disableEditor: false,
                 formatters: imgAnnoFormatter.bind(this)
             });
-            let annos = await this.$store.dispatch('imageAnnotations/fetch');
+            const annos = await this.$store.dispatch('imageAnnotations/fetch');
+
+            // We need to move the annotation editor out of the zoom container
+            const img = document.getElementById('source-panel-img');
+            this.$refs.content.insertBefore(img.nextElementSibling, null);
+
+            // The annotation editor doesn't take zoom into account
+            var zoom = this.$parent.zoom;
+            zoom.events.addEventListener(
+                "wheelzoom.updated",
+                function (e) {
+                    this.fixEditorPosition();
+                }.bind(this)
+            );
 
             const isEditorOpen = function(mutationsList, observer) {
-
                 for (let mutation of mutationsList) {
                     if (mutation.addedNodes.length) {
+                        this.fixEditorPosition();
                         this.$store.commit('document/setBlockShortcuts', true);
                     } else if (mutation.removedNodes.length) {
                         this.$store.commit('document/setBlockShortcuts', false);
@@ -185,6 +195,12 @@ export default Vue.extend({
             this.anno.on('deleteAnnotation', function(annotation) {
                 this.$store.dispatch('imageAnnotations/delete', annotation.id);
             }.bind(this));
+        },
+
+        fixEditorPosition() {
+            const zoom = this.$parent.zoom;
+            const editor = this.anno._appContainerEl.firstChild;
+            if (editor) editor.style.transform = 'translate('+(zoom.pos.x)+'px,'+(zoom.pos.y)+'px)';
         },
 
         setThisAnnoTaxonomy(taxo) {
