@@ -89,11 +89,12 @@ export default Vue.extend({
             if (n && n != o) {
                 if (this.anno) {
                     this.imageLoaded = false;
-                    // reload annotations with updated img size when img is loaded
-                    this.anno.clearAnnotations();
                 }
             }
         }
+    },
+    beforeDestroy: function() {
+        this.anno.destroy();
     },
     mounted: function() {
         this.$parent.zoom.register(
@@ -108,13 +109,14 @@ export default Vue.extend({
         );
 
         this.initAnnotations();
+        this.fetchAnnotations();
     },
     methods: {
         async rotate(angle) {
             await this.$store.dispatch('parts/rotate', angle);
         },
 
-        onImageLoaded() {
+        async onImageLoaded() {
             this.imageLoaded = true;
             this.loadAnnotations();
         },
@@ -154,7 +156,11 @@ export default Vue.extend({
             });
         },
 
-        async initAnnotations() {
+        async fetchAnnotations() {
+            await this.$store.dispatch('imageAnnotations/fetch');
+        },
+
+        initAnnotations() {
             if (document.getElementById('anno-taxonomies-styles') == null)
                 this.makeTaxonomiesStyles();
 
@@ -198,9 +204,6 @@ export default Vue.extend({
             }.bind(this);
             const editorObserver = new MutationObserver(isEditorOpen);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
-
-            await this.$store.dispatch('imageAnnotations/fetch');
-            this.loadAnnotations();
 
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
@@ -249,6 +252,7 @@ export default Vue.extend({
         },
 
         loadAnnotations() {
+            this.anno.clearAnnotations();
             const annos = this.$store.state.imageAnnotations.all;
             annos.forEach(function(annotation) {
                 // ugly way to deep copy so that we don't modify data in the store
