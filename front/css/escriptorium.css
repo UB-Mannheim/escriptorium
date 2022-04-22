@@ -678,3 +678,70 @@ i.panel-icon {
 input[type="range"]#confidence-range {
     width: 20%;
 }
+/* "Show confidence" toggle
+ * Adapted from https://codepen.io/adamhutch/pen/JoKEPp
+ */
+input[type="checkbox"]#show-confidence {
+    font-size: 14px;
+    display: none;
+}
+input[type="checkbox"]#show-confidence + label {
+    -webkit-transition: 0.3s background;
+    -moz-transition: 0.3s background;
+    transition: 0.3s background;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    height: 1.5em;
+    width: 3em;
+    background: #ECECEC;
+    border-radius: 20em;
+    vertical-align: middle;
+    margin-bottom: 0;
+}
+input[type="checkbox"]#show-confidence + label:before, input[type=checkbox]#show-confidence + label:after {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+input[type="checkbox"]#show-confidence + label:before {
+    -webkit-transition: 0.3s left;
+    -moz-transition: 0.3s left;
+    transition: 0.3s left;
+    content: "";
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.5);
+    height: 1.125em;
+    width: 1.125em;
+    margin: 0.1875em;
+    border-radius: 50%;
+    z-index: 5;
+}
+input[type="checkbox"]#show-confidence + label:after {
+    color: #fff;
+    content: " ";
+    top: 50%;
+    margin-top: -0.5em;
+    left: 1.5em;
+}
+input[type="checkbox"]#show-confidence:checked + label {
+    background: #17a2b8;
+}
+input[type="checkbox"]#show-confidence:checked + label:before {
+    left: 1.5em;
+}
+input[type="checkbox"]#show-confidence:checked + label:after {
+    content: " ";
+    left: 0.375em;
+}
+ 
+input[type="checkbox"]#show-confidence + label span {
+    position: absolute;
+    top: -3px;
+    left: 55px;
+    width: 170px;
+}

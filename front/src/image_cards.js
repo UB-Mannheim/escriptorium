@@ -94,11 +94,14 @@ class partCard {
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
 
         // show avg confidence on the card
+        let avgConfidenceElement = $(".avg-confidence", this.$element);
         if (this.avgConfidence) {
-            let avgConfidenceElement = $(".avg-confidence", this.$element);
             avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
             avgConfidenceElement.attr('title', this.avgConfidenceModel);
         }
+        // start with avg confidence disabled
+        avgConfidenceElement.hide();
+
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
@@ -629,6 +632,16 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             if (data.status == 'error') { alert(data.error); }
             if (DEBUG) console.log(xhr);
         });
+    });
+
+    // "Show OCR confidence" toggle switch
+    let avgConfidenceToggle = $('input[type="checkbox"]#show-confidence');
+    avgConfidenceToggle.on('change', function() {
+        if (avgConfidenceToggle.prop('checked')) {
+            $('.avg-confidence').show();
+        } else {
+            $('.avg-confidence').hide();
+        }
     });
 
     /* Select card if coming from edit page */
