@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-14 18:28+0000\n"
+"POT-Creation-Date: 2022-05-16 11:35+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -93,9 +93,20 @@ msgid "Canceled."
 msgstr "Supprimé."
 
 #: apps/core/forms.py
+#, python-brace-format
 msgid ""
-"Text to search in all of your projects, surround it with quotation marks to "
-"deactivate fuzziness"
+"You requested to search text in a {self.obj_name} you don't have access to."
+msgstr ""
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "You requested to search text in a {self.obj_name} that doesn't exist."
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Text to search in all of your projects, surround one or more terms with "
+"quotation marks to deactivate fuzziness"
 msgstr ""
 
 #: apps/core/forms.py
@@ -632,6 +643,13 @@ msgstr ""
 
 #: apps/users/admin.py
 #, python-format
+msgid "%d user disabled."
+msgid_plural "%d users disabled."
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/users/admin.py
+#, python-format
 msgid "%d invitation was resent."
 msgid_plural "%d invitations were resent."
 msgstr[0] ""
@@ -755,14 +773,6 @@ msgstr ""
 msgid "Page not found."
 msgstr ""
 
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search feature is deactivated on this instance."
-msgstr ""
-
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search"
-msgstr ""
-
 #: escriptorium/templates/base.html
 msgid "About"
 msgstr ""
@@ -770,6 +780,10 @@ msgstr ""
 #: escriptorium/templates/base.html
 msgid "Contact"
 msgstr "Contact"
+
+#: escriptorium/templates/base.html
+msgid "Search in all your projects"
+msgstr "Recherche dans tous vos projets"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
@@ -965,6 +979,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/search.html
 msgid "Edit"
 msgstr ""
 
@@ -986,10 +1001,6 @@ msgstr ""
 
 #: escriptorium/templates/core/document_list.html
 msgid "Share this Project"
-msgstr ""
-
-#: escriptorium/templates/core/document_list.html
-msgid "Search in project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
@@ -1050,15 +1061,27 @@ msgstr ""
 msgid "Models"
 msgstr ""
 
+#: escriptorium/templates/core/document_nav.html
+msgid "Select a specific transcription to search in."
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
+msgid "All levels"
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+#, python-format
+msgid "Search in %(name)s"
+msgstr ""
+
 #: escriptorium/templates/core/document_ontology.html
 msgid "Document Ontology"
 msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
-#, fuzzy
-#| msgid "Lines and regions"
 msgid "Lines and Regions typologies:"
-msgstr "Lignes et régions"
+msgstr "Typologies de lignes et régions"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "The default configuration only contains semantic types."
@@ -1381,7 +1404,15 @@ msgid "Search in projects"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr ""
+
+#: escriptorium/templates/core/search.html
 msgid "Search text in projects"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Search"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1396,9 +1427,17 @@ msgid "Reason:"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
+#, python-format
 msgid ""
-"You requested to search text in a project you don't have access to. Falling "
-"back to searching entered text in all of your projects."
+"\n"
+"        Currently searching entered text in the document named <strong>"
+"%(name)s</strong>.\n"
+"      "
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+#, python-format
+msgid "And on the transcription level <strong>%(name)s</strong>."
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1418,15 +1457,44 @@ msgid "Score"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
-msgid "View in Editor"
+msgid "Previous line"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
-msgid "Line transcription enhanced content"
+msgid "Line transcription"
+msgstr "Transcription de ligne"
+
+#: escriptorium/templates/core/search.html
+msgid "Search terms found in previous or next line."
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Next line"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+#, python-format
+msgid ""
+"\n"
+"            Line <strong>#%(line)s</strong> of <strong>%(part)s</strong> in "
+"document\n"
+"            "
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Filter results by this document"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Filter results by this transcription level"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
 msgid "Full image cropped according to the transcription bounding box"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Image preview is not available for this search result"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1682,8 +1750,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Show %(page)s\n"
-"                      "
+"          Show %(page)s\n"
+"          "
 msgstr ""
 
 #: escriptorium/templates/includes/pagination.html
@@ -2274,10 +2342,5 @@ msgid "Privacy Policy"
 msgstr ""
 
 #: homepage/additional_heading.html
-#, fuzzy
-#| msgid "eScriptorium Blog"
 msgid "eScriptorium for OCR-BW"
-msgstr "eScriptorium blog"
-
-#~ msgid "Text to search in all of your projects"
-#~ msgstr "Du texte à rechercher dans tous vos projets"
+msgstr "eScriptorium pour OCR-BW"
