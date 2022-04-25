@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-14 18:28+0000\n"
+"POT-Creation-Date: 2022-04-21 19:17+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -93,9 +93,21 @@ msgid "Canceled."
 msgstr "Abgebrochen."
 
 #: apps/core/forms.py
+#, python-brace-format
 msgid ""
-"Text to search in all of your projects, surround it with quotation marks to "
-"deactivate fuzziness"
+"You requested to search text in a {self.obj_name} you don't have access to."
+msgstr ""
+"Sie wollten Text in {self.obj_name}, zu dem Sie keinen Zugang haben, suchen."
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "You requested to search text in a {self.obj_name} that doesn't exist."
+msgstr "Sie wollten Text in {self.obj_name}, das nicht existiert, suchen."
+
+#: apps/core/forms.py
+msgid ""
+"Text to search in all of your projects, surround one or more terms with "
+"quotation marks to deactivate fuzziness"
 msgstr ""
 "Test, der in allen Ihren Projekten gesucht werden soll (für exakte Suche in "
 "Anführungszeichen setzen)"
@@ -783,14 +795,6 @@ msgstr ""
 msgid "Page not found."
 msgstr "Seite nicht gefunden."
 
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search feature is deactivated on this instance."
-msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
-
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search"
-msgstr "Suchen"
-
 #: escriptorium/templates/base.html
 msgid "About"
 msgstr "Über"
@@ -798,6 +802,10 @@ msgstr "Über"
 #: escriptorium/templates/base.html
 msgid "Contact"
 msgstr "Kontakt"
+
+#: escriptorium/templates/base.html
+msgid "Search in all your projects"
+msgstr "Suche in allen Ihren Projekten"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
@@ -995,6 +1003,7 @@ msgstr "Aufgaben abbrechen"
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/search.html
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -1017,10 +1026,6 @@ msgstr "Tags verwalten"
 #: escriptorium/templates/core/document_list.html
 msgid "Share this Project"
 msgstr "Dieses Projekt teilen"
-
-#: escriptorium/templates/core/document_list.html
-msgid "Search in project"
-msgstr "Suche im Projekt"
 
 #: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/reporting/project_reports.html
@@ -1080,6 +1085,12 @@ msgstr "Bilder"
 msgid "Models"
 msgstr "Modelle"
 
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+#, python-format
+msgid "Search in %(name)s"
+msgstr "Suche in %(name)s"
+
 #: escriptorium/templates/core/document_ontology.html
 msgid "Document Ontology"
 msgstr "Dokument-Ontologie"
@@ -1111,19 +1122,24 @@ msgstr "Transkriptionen:"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Each Annotation can store values for different components."
-msgstr ""
+msgstr "Jede Annotation kann Werte für unterschiedliche Komponenten speichern."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
 "<b>Components needs to be saved first before adding them to Annotation "
 "definitions.</b>"
 msgstr ""
+"<b>Komponenten müssen zuerst gespeichert werden, bevor sie den "
+"Annotationsdefinitionen hinzugefügt werden.</b>"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
 "Annotation types allow to regroup the corresponding buttons in the editing "
 "interface (and may be used as a hint for import/export)."
 msgstr ""
+"Annotationstypen gestatten es, die entsprechenden Bedienelemente im "
+"Bearbeitungsinterface umzugruppieren (und können als Hinweis beim Import/"
+"Export verwendet werden)."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Region types"
@@ -1415,8 +1431,16 @@ msgid "Search in projects"
 msgstr "Suche in Projekten"
 
 #: escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
+
+#: escriptorium/templates/core/search.html
 msgid "Search text in projects"
 msgstr "Suche Text in Projekten"
+
+#: escriptorium/templates/core/search.html
+msgid "Search"
+msgstr "Suchen"
 
 #: escriptorium/templates/core/search.html
 msgid ""
@@ -1432,12 +1456,13 @@ msgid "Reason:"
 msgstr "Grund:"
 
 #: escriptorium/templates/core/search.html
+#, python-format
 msgid ""
-"You requested to search text in a project you don't have access to. Falling "
-"back to searching entered text in all of your projects."
+"Currently searching entered text in the document named <strong>%(name)s</"
+"strong>."
 msgstr ""
-"Sie haben versucht, Text in einem Projekt, zu dem Sie keinen Zugang haben, "
-"zu suchen. Statt dessen wird in allen Ihren Projekten gesucht."
+"Momentan wird der eingegebene Text im Dokument <strong>%(name)s</strong> "
+"gesucht."
 
 #: escriptorium/templates/core/search.html
 msgid "Results"
@@ -1456,12 +1481,17 @@ msgid "Score"
 msgstr "Bewertung"
 
 #: escriptorium/templates/core/search.html
-msgid "View in Editor"
-msgstr "Anzeige im Editor"
-
-#: escriptorium/templates/core/search.html
 msgid "Line transcription enhanced content"
 msgstr "Zeilentranskription hat Inhalt erweitert"
+
+#: escriptorium/templates/core/search.html
+#, python-format
+msgid ""
+"\n"
+"            Line <strong>#%(line)s</strong> of <strong>%(part)s</strong> in "
+"document <strong>%(doc)s</strong> (%(trans)s)\n"
+"            "
+msgstr ""
 
 #: escriptorium/templates/core/search.html
 msgid "Full image cropped according to the transcription bounding box"
@@ -1833,12 +1863,12 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Show %(page)s\n"
-"                      "
+"          Show %(page)s\n"
+"          "
 msgstr ""
 "\n"
-"                        Zeige %(page)s\n"
-"                      "
+"          Zeige %(page)s\n"
+"          "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "First page"
@@ -2481,16 +2511,3 @@ msgstr "Datenschutzerklärung"
 #: homepage/additional_heading.html
 msgid "eScriptorium for OCR-BW"
 msgstr "eScriptorium für OCR-BW"
-
-#~ msgid "Text to search in all of your projects"
-#~ msgstr "Text, der in Ihren Projekten gesucht werden soll"
-
-#~ msgid ""
-#~ "The default configuration only contains semantic types. <br>It is not "
-#~ "recommended to mix semantic, stylistic and layout types.<br><b>It is "
-#~ "required to hit 'Update' to add your new types to the document.</b>"
-#~ msgstr ""
-#~ "Die Standardkonfiguration enthält nur semantische Typen. <br>Es wird "
-#~ "nicht empfohlen, semantische, stilistische und Layout-Typen zu mischen. "
-#~ "<br><b>Sie müssen auf 'Aktualisieren' klicken, um Ihre neuen Typen dem "
-#~ "Dokument hinzuzufügen.</b>"
