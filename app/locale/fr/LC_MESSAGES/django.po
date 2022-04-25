@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-14 18:28+0000\n"
+"POT-Creation-Date: 2022-11-03 17:30+0100\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -27,6 +27,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
 "X-Generator: Weblate 4.12-dev\n"
+
+#: apps/api/serializers.py
+msgid "PDF is not a valid image, please use the dedicated Import function."
+msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 #: escriptorium/templates/core/document_images.html
@@ -93,9 +97,20 @@ msgid "Canceled."
 msgstr "Supprimé."
 
 #: apps/core/forms.py
+#, python-brace-format
 msgid ""
-"Text to search in all of your projects, surround it with quotation marks to "
-"deactivate fuzziness"
+"You requested to search text in a {self.obj_name} you don't have access to."
+msgstr ""
+
+#: apps/core/forms.py
+#, python-brace-format
+msgid "You requested to search text in a {self.obj_name} that doesn't exist."
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Text to search in all of your projects, surround one or more terms with "
+"quotation marks to deactivate fuzziness"
 msgstr ""
 
 #: apps/core/forms.py
@@ -165,6 +180,137 @@ msgid ""
 msgstr ""
 "Si cette option est sélectionnée, les segmentations <b>et transcriptions "
 "existantes</b> seront d'abord supprimées !"
+
+#: apps/core/forms.py
+msgid "The transcription on which to perform alignment."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "N-gram"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; reduce for noisier "
+"transcriptions and lower precision results."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Max offset"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Beam size"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will "
+"be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Merge aligned text with existing transcription"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text separately."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Line length match threshold"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr ""
+
+#: apps/core/forms.py
+#, fuzzy
+#| msgid "Username"
+msgid "Layer name"
+msgstr "Nom d'utilisateur"
+
+#: apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "The model is already training."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Either choose a model name or overwrite an existing one."
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"You need to choose a model to override if the override option is checked."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Empty Ground Truth data."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
@@ -253,6 +399,20 @@ msgid "The position of the line relative to the polygon."
 msgstr "La position de la ligne par rapport au polygone."
 
 #: apps/core/models.py
+msgid "Show confidence visualizations"
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"If checked, enable toggling on and off colorized overlays for automatic "
+"transcription (OCR/HTR) confidences."
+msgstr ""
+
+#: apps/core/models.py
+msgid "Couldn't find the alignment task."
+msgstr ""
+
+#: apps/core/models.py
 msgid "Binarized image needs to be the same size as original image."
 msgstr "L'image binarisée doit avoir la même taille que l'image originale."
 
@@ -279,6 +439,14 @@ msgstr "Segmenté"
 #: apps/core/models.py
 msgid "Transcribing"
 msgstr "Transcription"
+
+#: apps/core/models.py
+msgid "Aligning"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Aligned"
+msgstr ""
 
 #: apps/core/models.py
 msgid "Element"
@@ -354,6 +522,14 @@ msgstr ""
 
 #: apps/core/tasks.py
 msgid "Transcription done!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the alignment!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Alignment done!"
 msgstr ""
 
 #: apps/core/views.py
@@ -632,6 +808,13 @@ msgstr ""
 
 #: apps/users/admin.py
 #, python-format
+msgid "%d user disabled."
+msgid_plural "%d users disabled."
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/users/admin.py
+#, python-format
 msgid "%d invitation was resent."
 msgid_plural "%d invitations were resent."
 msgstr[0] ""
@@ -755,14 +938,6 @@ msgstr ""
 msgid "Page not found."
 msgstr ""
 
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search feature is deactivated on this instance."
-msgstr ""
-
-#: escriptorium/templates/base.html escriptorium/templates/core/search.html
-msgid "Search"
-msgstr ""
-
 #: escriptorium/templates/base.html
 msgid "About"
 msgstr ""
@@ -770,6 +945,10 @@ msgstr ""
 #: escriptorium/templates/base.html
 msgid "Contact"
 msgstr "Contact"
+
+#: escriptorium/templates/base.html
+msgid "Search in all your projects"
+msgstr "Recherche dans tous vos projets"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
@@ -956,6 +1135,15 @@ msgid "Transcribe"
 msgstr ""
 
 #: escriptorium/templates/core/document_images.html
+msgid "Align transcribed images to a textual witness (reference text)."
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/align.html
+msgid "Align"
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
 msgid "Delete this image and all its data (segmentation, transcriptions)"
 msgstr ""
 
@@ -965,6 +1153,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/search.html
 msgid "Edit"
 msgstr ""
 
@@ -989,17 +1178,42 @@ msgid "Share this Project"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
-msgid "Search in project"
-msgstr ""
-
-#: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Filters"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
+msgid "Select"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Preview"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Name"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/core/project_list.html
 msgid "Owner"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Last modified"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Image count"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Tags"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Actions"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
@@ -1050,15 +1264,32 @@ msgstr ""
 msgid "Models"
 msgstr ""
 
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
+msgid "Select a specific transcription to search in."
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
+msgid "All levels"
+msgstr ""
+
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+#, python-format
+msgid "Search in %(name)s"
+msgstr ""
+
 #: escriptorium/templates/core/document_ontology.html
 msgid "Document Ontology"
 msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
-#, fuzzy
-#| msgid "Lines and regions"
 msgid "Lines and Regions typologies:"
-msgstr "Lignes et régions"
+msgstr "Typologies de lignes et régions"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "The default configuration only contains semantic types."
@@ -1107,6 +1338,14 @@ msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Add a line type"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Part types"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a part type"
 msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
@@ -1213,10 +1452,6 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "shares"
-msgstr ""
-
-#: escriptorium/templates/core/models_list/rights/main.html
-msgid "Name"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -1372,16 +1607,20 @@ msgstr ""
 msgid "Documents"
 msgstr ""
 
-#: escriptorium/templates/core/project_nav.html
-msgid "Reports"
-msgstr ""
-
 #: escriptorium/templates/core/search.html
 msgid "Search in projects"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
+msgid "Search feature is deactivated on this instance."
+msgstr ""
+
+#: escriptorium/templates/core/search.html
 msgid "Search text in projects"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Search"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1396,9 +1635,17 @@ msgid "Reason:"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
+#, python-format
 msgid ""
-"You requested to search text in a project you don't have access to. Falling "
-"back to searching entered text in all of your projects."
+"\n"
+"        Currently searching entered text in the document named <strong>"
+"%(name)s</strong>.\n"
+"      "
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+#, python-format
+msgid "And on the transcription level <strong>%(name)s</strong>."
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1418,15 +1665,44 @@ msgid "Score"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
-msgid "View in Editor"
+msgid "Previous line"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
-msgid "Line transcription enhanced content"
+msgid "Line transcription"
+msgstr "Transcription de ligne"
+
+#: escriptorium/templates/core/search.html
+msgid "Search terms found in previous or next line."
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Next line"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+#, python-format
+msgid ""
+"\n"
+"            Line <strong>#%(line)s</strong> of <strong>%(part)s</strong> in "
+"document\n"
+"            "
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Filter results by this document"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Filter results by this transcription level"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
 msgid "Full image cropped according to the transcription bounding box"
+msgstr ""
+
+#: escriptorium/templates/core/search.html
+msgid "Image preview is not available for this search result"
 msgstr ""
 
 #: escriptorium/templates/core/search.html
@@ -1466,6 +1742,28 @@ msgstr ""
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
 msgstr ""
+
+#: escriptorium/templates/core/wizards/align.html
+msgid ""
+"Choose a transcription and a textual witness (reference text) to align to "
+"the transcription."
+msgstr ""
+
+#: escriptorium/templates/core/wizards/align.html
+#, fuzzy
+#| msgid "Line transcription"
+msgid "Select a transcription"
+msgstr "Transcription de ligne"
+
+#: escriptorium/templates/core/wizards/align.html
+msgid "Upload or select a textual witness"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/align.html
+#, fuzzy
+#| msgid "Segmenting"
+msgid "Settings"
+msgstr "Segmenter"
 
 #: escriptorium/templates/core/wizards/binarize.html
 msgid ""
@@ -1682,8 +1980,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Show %(page)s\n"
-"                      "
+"          Show %(page)s\n"
+"          "
 msgstr ""
 
 #: escriptorium/templates/includes/pagination.html
@@ -1843,20 +2141,74 @@ msgstr ""
 msgid "Reset my password"
 msgstr ""
 
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Project reports"
+#: escriptorium/templates/reporting/document_report.html
+msgid "Document report"
 msgstr ""
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Data metrics"
 msgstr ""
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Total number of document parts"
 msgstr ""
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "A document part corresponds to one image loaded within a document."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "Transcribed document parts"
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "The number of transcribed images in the selected transcription(s)."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#, fuzzy
+#| msgid "Line transcription"
+msgid "Average transcription confidence"
+msgstr "Transcription de ligne"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"Confidence is an estimate of the automatic transcription model to "
+"approximate its own accuracy per character."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"The validity of this figure will depend on specific cases and models and is "
+"not necessarily an indication of result quality."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "No vocabulary found in the selected transcription(s)."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
 msgstr ""
 
 #: escriptorium/templates/reporting/project_reports.html
@@ -1897,20 +2249,6 @@ msgstr ""
 msgid ""
 "A character is any symbol used in the transcription, including punctuation, "
 "excepted white spaces."
-msgstr ""
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Vocabulary"
-msgstr ""
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Reload vocabulary"
-msgstr ""
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid ""
-"The vocabulary is the list of all the characters currently used in the "
-"transcription of the document along with their frequency."
 msgstr ""
 
 #: escriptorium/templates/reporting/project_reports.html
@@ -2274,10 +2612,5 @@ msgid "Privacy Policy"
 msgstr ""
 
 #: homepage/additional_heading.html
-#, fuzzy
-#| msgid "eScriptorium Blog"
 msgid "eScriptorium for OCR-BW"
-msgstr "eScriptorium blog"
-
-#~ msgid "Text to search in all of your projects"
-#~ msgstr "Du texte à rechercher dans tous vos projets"
+msgstr "eScriptorium pour OCR-BW"
