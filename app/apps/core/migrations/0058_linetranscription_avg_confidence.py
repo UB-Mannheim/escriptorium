@@ -44,16 +44,18 @@ def populate_avg_confidence(apps, schema_editor):
     # here we determine the greatest average as opposed to just the average. This should be
     # sufficient for overview/summary purposes.
     for part in parts:
-        max_avg = LineTranscription.objects.filter(
+        avg_qs = LineTranscription.objects.filter(
             line__document_part=part
         ).values(
             "transcription",  # Since DocumentPart does not keep track of individual transcriptions,
                               # and is only linked to lines, we have to group lines by transcription.
         ).annotate(
             avg=Coalesce(models.Avg("avg_confidence"), -1),  # Average "avg_confidence" for this set of lines
-        ).order_by("-avg")[0]
-        part.max_avg_confidence = max_avg["avg"]
-        part.best_transcription = Transcription.objects.get(pk=max_avg["transcription"])
+        ).order_by("-avg")
+        if avg_qs.count():
+            max_avg = avg_qs[0]
+            part.max_avg_confidence = max_avg["avg"]
+            part.best_transcription = Transcription.objects.get(pk=max_avg["transcription"])
 
     DocumentPart.objects.bulk_update(parts, ["max_avg_confidence", "best_transcription"])
 
