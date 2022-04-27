@@ -53,5 +53,3 @@ export const deletetag = async (project_id, tag_id) => (await axios.delete(`/pro
 export const updatetag = async (project_id, tag_id, data) => (await axios.put(`/projects/${project_id}/tags/${tag_id}/`, data))
 
 export const retrieveProjectTag = async (project_id) => (await axios.get(`/projects/${project_id}/tags/`))
-
-export const retrieveProjectOCRConfidenceList = async (project_id) => (await axios.get(`/projects/${project_id}/ocr_confidence/`))

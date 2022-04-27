@@ -6,7 +6,6 @@ import TagsModal from '../../vue/components/TagsModal.vue';
 import CheckboxListDocument from '../../vue/components/CheckboxListDocument.vue';
 import TagsManagement from '../../vue/components/TagsManagement.vue';
 import ListTagsDocument from '../../vue/components/ListTagsDocument.vue';
-import DocumentOCRConfidence from '../../vue/components/DocumentOCRConfidence.vue';
 
 export var doclistVM = new Vue({
     el: "#document_list",
@@ -18,6 +17,5 @@ export var doclistVM = new Vue({
         'checkboxlistdocument': CheckboxListDocument,
         'tagsmanagement': TagsManagement,
         'listtagsdocument': ListTagsDocument,
-        'documentocrconfidence': DocumentOCRConfidence,
     }
 });

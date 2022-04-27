@@ -12,7 +12,6 @@ export const initialState = () => ({
     allProjectTags: [],
     tagColor: null,
     TagsListPerDocument: [],
-    ocrConfidenceListPerDocument: [],
 })
 
 export const mutations = {
@@ -71,10 +70,6 @@ export const mutations = {
             }
         }
     },
-    setOCRConfidenceListPerDocument (state, confidenceList) {
-        // Sets the list of document-level average OCR confidences on the state
-        state.ocrConfidenceListPerDocument = confidenceList;
-    }
 }
 
 export const actions = {
@@ -150,28 +145,6 @@ export const actions = {
             }
         }
     },
-    async fetchOCRConfidence({ state, commit }) {
-        // Fetches OCR confidences from API and saves them on the store
-        const list = await api.retrieveProjectOCRConfidenceList(state.projectID);
-        const ocrConfidence = []
-        list.data.results.forEach(result => {
-            // If we've got a confidence value for this document already, compare with this confidence value
-            let existingConfidenceForDoc = ocrConfidence.findIndex(doc => doc.pk === result.document);
-            let newConfidence = {
-                pk: result.document,
-                model: result.name, // Storing the model so we know which transcription this refers to
-                confidence: result.avg_confidence
-            };
-            // If we don't have a confidence value for this document, save this one
-            if (existingConfidenceForDoc == -1) {
-                ocrConfidence.push(newConfidence);
-            // Otherwise, if this confidence is higher than existing, overwrite it
-            } else if (existingConfidenceForDoc.confidence < result.avg_confidence) {
-                ocrConfidence[existingConfidenceForDoc] = newConfidence;
-            }
-        });
-        commit('setOCRConfidenceListPerDocument', ocrConfidence);
-    }
 }
 
 export default {

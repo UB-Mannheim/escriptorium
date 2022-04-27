@@ -32,7 +32,6 @@ from api.serializers import (
     PartMoveSerializer,
     PartSerializer,
     ProjectSerializer,
-    ProjectTranscriptionSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
@@ -115,16 +114,6 @@ class TagViewSet(ModelViewSet):
 
     def get_queryset(self):
         return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
-
-
-class OCRConfidenceViewSet(ReadOnlyModelViewSet):
-    queryset = Transcription.objects.all()
-    serializer_class = ProjectTranscriptionSerializer
-    paginate_by = 10
-
-    def get_queryset(self):
-        return Transcription.objects.filter(document__project__pk=self.kwargs.get('project_pk'))
-
 
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()

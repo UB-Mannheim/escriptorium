@@ -99,7 +99,7 @@ class PartMoveSerializer(serializers.ModelSerializer):
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription
-        fields = ('pk', 'name')
+        fields = ('pk', 'name', 'avg_confidence')
 
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
@@ -108,13 +108,6 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             return super().create(data)
         except IntegrityError:
             return Transcription.objects.get(name=data['name'])
-
-
-class ProjectTranscriptionSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Transcription
-        fields = ('pk', 'name', 'document', 'avg_confidence')
 
 
 class UserOnboardingSerializer(serializers.ModelSerializer):
