@@ -3,14 +3,15 @@
         <div class="tools">
             <i title="Visual Transcription Panel"
                 class="panel-icon fas fa-language"></i>
-            <button id="toggle-confidence"
-                    title="Toggle confidence visualization"
-                    class="btn btn-sm btn-info ml-3 fas fa-percent"
-                    type="button"
-                    data-toggle="button"
-                    v-on:click="toggleConfidence"
-                    v-bind:disabled="!hasConfidence">C
-            </button>
+            <input id="toggle-confidence"
+                   class="toggle-switch"
+                   type="checkbox"
+                   title="Toggle confidence visualization"
+                   v-on:click="toggleConfidence"
+                   v-bind:disabled="!hasConfidence" />
+            <label for="toggle-confidence" class="ml-3">
+                <span>Show OCR confidence</span>
+            </label>
             <input
                 type="range"
                 class="custom-range"
