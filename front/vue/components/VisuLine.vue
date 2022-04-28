@@ -13,7 +13,7 @@
 
         <text :text-anchor="$store.state.document.defaultTextDirection == 'rtl' ? 'end' : ''"
                 ref="textElement"
-                lengthAdjust="spacingAndGlyphs" 
+                lengthAdjust="spacingAndGlyphs"
                 data-toggle="tooltip"
                 v-if="$store.state.document.mainTextDirection != 'ttb'">
             <textPath v-bind:href="'#' + textPathId"
@@ -147,7 +147,7 @@ export default Vue.extend({
         lineAvgConfidence() {
             // compute the average confidence for the current line
             const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
-            return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);   
+            return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
         },
         maskFillColor() {
             if (this.line.currentTrans?.graphs?.length) {

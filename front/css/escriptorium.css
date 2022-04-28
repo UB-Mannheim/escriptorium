@@ -743,7 +743,7 @@ input[type="checkbox"].toggle-switch:checked + label:after {
     content: " ";
     left: 0.375em;
 }
- 
+
 input[type="checkbox"].toggle-switch + label span {
     position: absolute;
     top: -3px;
