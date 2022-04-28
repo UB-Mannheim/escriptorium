@@ -115,6 +115,7 @@ class TagViewSet(ModelViewSet):
     def get_queryset(self):
         return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
 
+
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
