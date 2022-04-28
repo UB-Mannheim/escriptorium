@@ -10,35 +10,47 @@
                     @click="toggleSort"
                     autocomplete="off"
                     :disabled="isVKEnabled"></button>
-            <button class="btn btn-sm ml-2 mr-1"
+
+            <button class="btn btn-sm ml-2"
                     :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
                     title="Toggle Virtual Keyboard for this document."
                     @click="toggleVK">
                 <i class="fas fa-keyboard"></i>
             </button>
+
+            <div class="btn-group taxo-group ml-2 mr-1"
+                 v-for="typo in groupedTaxonomies">
+                <button v-for="taxo in typo"
+                        :data-taxo="taxo"
+                        :id="'anno-taxo-' + taxo.pk"
+                        @click="toggleTaxonomy(taxo)"
+                        :title="taxo.name"
+                        class="btn btn-sm btn-outline-info"
+                        autocomplete="off">{{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}</button>
+            </div>
         </div>
         <div :class="'content-container ' + $store.state.document.readDirection" ref="contentContainer">
 
             <diploline v-for="line in $store.state.lines.all"
-                        v-bind:line="line"
-                        v-bind:ratio="ratio"
-                        v-bind:key="'DL' + line.pk">
+                       v-bind:line="line"
+                       v-bind:ratio="ratio"
+                       v-bind:key="'DL' + line.pk">
             </diploline>
 
             <!--adding a class to get styles for ttb direction:-->
             <div :class="$store.state.document.mainTextDirection"
-                    id="diplomatic-lines"
-                    ref="diplomaticLines"
-                    contenteditable="true"
-                    autocomplete="off"
-                    @keydown="onKeyPress"
-                    @keyup="constrainLineNumber"
-                    @input="changed"
-                    @focusin="startEdit"
-                    @focusout="stopEdit"
-                    @paste="onPaste"
-                    @mousemove="showOverlay"
-                    @mouseleave="hideOverlay">
+                 id="diplomatic-lines"
+                 ref="diplomaticLines"
+                 contenteditable="true"
+                 autocomplete="off"
+                 @keydown="onKeyPress"
+                 @keyup="constrainLineNumber"
+                 @input="changed"
+                 @focusin="startEdit"
+                 @focusout="stopEdit"
+                 @paste="onPaste"
+                 @mousemove="showOverlay"
+                 @mouseleave="hideOverlay">
             </div>
         </div>
     </div>
@@ -46,18 +58,28 @@
 
 <script>
 import { BasePanel } from '../../src/editor/mixins.js';
+import { AnnoPanel } from '../../src/editor/mixins.js';
 import DiploLine from './DiploLine.vue';
+import { Recogito } from '@recogito/recogito-js';
 
 export default Vue.extend({
-    mixins: [BasePanel],
+    mixins: [BasePanel, AnnoPanel],
     data() { return {
         updatedLines : [],
         createdLines : [],
         movedLines:[],
-        isVKEnabled: false,
+        isVKEnabled: false
     };},
     components: {
         'diploline': DiploLine,
+    },
+    computed: {
+        groupedTaxonomies() {
+            return _.groupBy(this.$store.state.document.annotationTaxonomies.text,
+                             function(taxo) {
+                                 return taxo.typology && taxo.typology.name
+                             });
+        }
     },
     watch: {
         '$store.state.parts.loaded': function(isLoaded, wasLoaded) {
@@ -68,8 +90,14 @@ export default Vue.extend({
         },
         '$store.state.document.enabledVKs'() {
             this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        },
+        '$store.state.transcriptions.transcriptionsLoaded'(new_, old_) {
+            if (new_ === true) {
+               this.loadAnnotations();
+            }
         }
     },
+
     created() {
         // vue.js quirck, have to dynamically create the event handler
         // call save every 10 seconds after last change
@@ -77,6 +105,7 @@ export default Vue.extend({
             this.save();
         }.bind(this), 10000);
     },
+
     mounted() {
         // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width won't be bigger than other, especially for ttb text:
         document.querySelector('#diplo-panel').style.width = document.querySelector('#diplo-panel').clientWidth + 'px';
@@ -97,16 +126,152 @@ export default Vue.extend({
             });
         }.bind(this));
 
-        this.refresh();
+        this.initAnnotations();
 
         this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
     },
+
     methods: {
         empty() {
             while (this.$refs.diplomaticLines.hasChildNodes()) {
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
+            this.anno.clearAnnotations();
         },
+
+        getAPITextAnnotationBody(annotation, offsets) {
+            var body = this.getAPIAnnotationBody(annotation);
+            let total = 0;
+            for(let i=0; i<this.$children.length; i++) {
+                let currentLine = this.$children[i];
+                let content = currentLine.getEl().textContent;
+                if (!body.start_line && total+content.length > offsets.start) {
+                    body.start_line = currentLine.line.pk;
+                    body.start_offset = offsets.start - total;
+                }
+                if (!body.end_line && total+content.length >= offsets.end) {
+                    body.end_line = currentLine.line.pk;
+                    body.end_offset = offsets.end - total;
+                }
+                if(body.start_line && body.end_line) break;
+                total += content.length;
+            }
+            return body
+        },
+
+        makeTaxonomiesStyles() {
+            var hexToRGB = function(hex) {
+              var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+              return result ? [
+                 parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)
+              ] : null;
+            };
+
+            let style = document.createElement('style');
+            style.type = 'text/css';
+            style.id = 'anno-text-taxonomies-styles';
+            document.getElementsByTagName('head')[0].appendChild(style);
+            // dynamically creates a class for each taxonomies
+            this.$store.state.document.annotationTaxonomies.text.forEach(taxo => {
+                let className = 'anno-' + taxo.pk;
+                if (taxo.marker_type == "Background Color") {
+                   let rgb = hexToRGB(taxo.marker_detail);
+                   style.innerHTML += "\n." + className + " {background-color: rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+", 0.2); border-bottom: 2px solid "+taxo.marker_detail+";}";
+                } else if (taxo.marker_type == "Text Color") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; color: " + taxo.marker_detail + ";}";
+                } else if (taxo.marker_type == "Bold") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-weight: bold;}";
+                } else if (taxo.marker_type == "Italic") {
+                   style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-style: italic;}";
+                }
+            });
+        },
+
+        async loadAnnotations() {
+            if (document.getElementById('anno-text-taxonomies-styles') == null)
+                this.makeTaxonomiesStyles();
+
+            let annos = await this.$store.dispatch('textAnnotations/fetch');
+            annos.forEach(function(annotation) {
+                let data = annotation.as_w3c;
+                data.id = annotation.pk;
+                data.taxonomy = this.$store.state.document.annotationTaxonomies.text.find(e => e.pk == annotation.taxonomy);
+                this.anno.addAnnotation(data);
+            }.bind(this));
+        },
+
+        initAnnotations() {
+            const textAnnoFormatter = function(annotation) {
+               const anno = annotation.underlying;
+               const className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
+               return className;
+            };
+
+            this.anno = new Recogito({
+                content: this.$refs.contentContainer,
+                allowEmpty: true,
+                readOnly: true,
+                widgets: [],
+                disableEditor: false,
+                formatter: textAnnoFormatter.bind(this)
+            });
+
+            // deal with annotation disappearing (user deleted the whole text)
+            const annotatonHighlighRemove = function(mutationsList, observer) {
+                for (let mutation of mutationsList) {
+                    if (mutation.removedNodes) {
+                        for (let node of mutation.removedNodes) {
+                            if (node.classList && node.classList.contains('r6o-annotation')) {
+                                if (this.$store.state.transcriptions && this.$store.state.transcriptions.transcriptionsLoaded) {
+                                   this.$store.dispatch('textAnnotations/delete', node.dataset.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }.bind(this);
+            const observer = new MutationObserver(annotatonHighlighRemove);
+            observer.observe(this.$refs.diplomaticLines, {childList: true, subtree: true});
+
+            const isEditorOpen = function(mutationsList, observer) {
+                // let's hope for no race condition with the contenteditable focusin/out...
+                for (let mutation of mutationsList) {
+                    if (mutation.addedNodes.length) {
+                        this.$store.commit('document/setBlockShortcuts', true);
+                    } else if (mutation.removedNodes.length) {
+                        this.$store.commit('document/setBlockShortcuts', false);
+                    }
+                }
+            }.bind(this);
+            const editorObserver = new MutationObserver(isEditorOpen);
+            editorObserver.observe(this.anno._appContainerEl, {childList: true});
+
+            this.anno.on('createAnnotation', async function(annotation) {
+                annotation.taxonomy = this.currentTaxonomy;
+                let offsets = annotation.target.selector.find(e => e.type == 'TextPositionSelector');
+                let body = this.getAPITextAnnotationBody(annotation, offsets);
+                body.transcription = this.$store.state.transcriptions.selectedTranscription;
+                const newAnno = await this.$store.dispatch('textAnnotations/create', body);
+                annotation.id = newAnno.pk;
+            }.bind(this));
+
+            this.anno.on('updateAnnotation', function(annotation) {
+                let offsets = annotation.target.selector;
+                let body = this.getAPITextAnnotationBody(annotation, offsets);
+                body.id = annotation.id;
+                this.$store.dispatch('textAnnotations/update', body);
+            }.bind(this));
+
+            this.anno.on('selectAnnotation', function(annotation) {
+                this.enableTaxonomy(annotation.taxonomy);
+                this.setTextAnnoTaxonomy(annotation.taxonomy);
+            }.bind(this));
+
+            this.anno.on('deleteAnnotation', function(annotation) {
+                this.$store.dispatch('textAnnotations/delete', annotation.id);
+            }.bind(this));
+        },
+
         toggleSort() {
             if (this.$refs.diplomaticLines.contentEditable === 'true') {
                 this.$refs.diplomaticLines.contentEditable = 'false';
@@ -120,10 +285,43 @@ export default Vue.extend({
                 this.$refs.sortMode.classList.add('btn-info');
             }
         },
-        changed() {
+
+        recalculateAnnotationSelectors() {
+            for (let anno of this.anno.getAnnotations()) {
+                let annoEl = document.querySelector('.r6o-annotation[data-id="'+anno.id+'"]');
+
+                if (annoEl === null) {
+                    this.$store.dispatch('textAnnotations/delete', anno.id);
+                }
+                let range = document.createRange();
+                range.selectNodeContents(annoEl);
+                let rangeBefore = document.createRange();
+                rangeBefore.setStart(this.$refs.contentContainer, 0);
+                rangeBefore.setEnd(range.startContainer, range.startOffset);
+                let quote = range.toString();
+                let oldStart = anno.target.selector.start;
+                let oldEnd = anno.target.selector.end;
+                let start = rangeBefore.toString().length;
+                let end = start + quote.length;
+                anno.target.selector = {
+                    type: 'TextPositionSelector',
+                    start: start,
+                    end: end
+                };
+
+                let body = this.getAPITextAnnotationBody(anno, anno.target.selector);
+                body.id = anno.id;
+                if (oldStart != start || oldEnd != end) {
+                    this.$store.dispatch('textAnnotations/update', body);
+                }
+            }
+        },
+
+        changed(ev) {
             this.$refs.saveNotif.classList.remove('hide');
             this.debouncedSave();
         },
+
         appendLine(pos) {
             let div = document.createElement('div');
             div.appendChild(document.createElement('br'));
@@ -137,6 +335,7 @@ export default Vue.extend({
             }
             return div;
         },
+
         constrainLineNumber() {
             // add lines until we have enough of them
             while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
@@ -144,10 +343,11 @@ export default Vue.extend({
             }
 
             // need to add/remove danger indicators
-            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
-                let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
+            // for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
+            //    let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
+            for (let line in this.$refs.diplomaticLines.childElement) {
                 if (line === null) {
-                    this.$refs.diplomaticLines.children[i].remove();
+                    line.remove();
                     continue;
                 }
 
@@ -164,14 +364,17 @@ export default Vue.extend({
                 }
             }
         },
+
         startEdit(ev) {
             this.$store.commit('document/setBlockShortcuts', true);
         },
+
         stopEdit(ev) {
             this.$store.commit('document/setBlockShortcuts', false);
             this.constrainLineNumber();
             this.save();
         },
+
         onDraggingEnd(ev) {
             /*
                Finish dragging lines, save new positions
@@ -194,6 +397,7 @@ export default Vue.extend({
             }
             this.moveLines();
         },
+
         async moveLines() {
             if(this.movedLines.length != 0) {
                 try {
@@ -204,6 +408,7 @@ export default Vue.extend({
                 }
             }
         },
+
         save() {
             /*
                if some lines are modified add them to updatedlines,
@@ -213,7 +418,9 @@ export default Vue.extend({
             this.addToList();
             this.bulkUpdate();
             this.bulkCreate();
+            this.recalculateAnnotationSelectors();
         },
+
         focusNextLine(sel, line) {
             if (line.nextSibling) {
                 let range = document.createRange();
@@ -229,6 +436,7 @@ export default Vue.extend({
                 sel.addRange(range);
             }
         },
+
         focusPreviousLine(sel, line) {
             if (line.previousSibling) {
                 let range = document.createRange();
@@ -258,6 +466,7 @@ export default Vue.extend({
                 ev.preventDefault();
             }
         },
+
         cleanSource(dirtyText) {
             // cleanup html and possibly other tags (?)
             var tmp = document.createElement("div");
@@ -268,7 +477,6 @@ export default Vue.extend({
         },
 
         onPaste(e) {
-            
             let diplomaticLines=document.querySelector("#diplomatic-lines");
             let sel = window.getSelection();
             let tmpDiv = document.createElement('div');
@@ -276,14 +484,14 @@ export default Vue.extend({
             let pastedData;
             if (e && e.clipboardData && e.clipboardData.getData) {
                 pastedData = e.clipboardData.getData('text/plain');
-                
+
                 var cursor = sel.getRangeAt(0);  // specific position or range
                 // for a range, delete content to clean data and to get resulting specific cursor position from it:
                 cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
 
-                // after deleting (for an range), 
+                // after deleting (for an range),
                 // check if resulting cursor is in or off a line div or some errors will occur!:
-                let parentEl = sel.getRangeAt(0).commonAncestorContainer; 
+                let parentEl = sel.getRangeAt(0).commonAncestorContainer;
                 if (parentEl.nodeType != 1) {
                     parentEl = parentEl.parentNode;   //  for several different lines, commonAncestorContainer does not exist
                 }
@@ -302,7 +510,7 @@ export default Vue.extend({
                     // occurs when a selection is made on several lines or all is selected
 
                     //we create a between node:
-                    refNode = document.createElement('div'); 
+                    refNode = document.createElement('div');
                     refNode.textContent = '';
 
                     // paste text on the selection (cursor position or range):
@@ -322,7 +530,7 @@ export default Vue.extend({
                 }
 
                 //  get current cursor position within the line div tag
-                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur             
+                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur
 
                 // store previous and next text in the line to it / for a selection within on line:
                 textBeforeCursor = refNode.textContent.substring(0, caretPos);
@@ -338,7 +546,7 @@ export default Vue.extend({
                     textAfterCursor = nextSibling.textContent;
                     nextSibling.parentNode.removeChild(nextSibling);
                 }
-                
+
                 let endPos = 0; //  will set the new cursor position
                 let lastTargetNode = refNode;   //  last impacted node for a copy-paste (for several lines)
 
@@ -349,24 +557,24 @@ export default Vue.extend({
                 else{
                     // store resulting firstLine & lastLine contents regarding cursor position
                     let firstLine = textBeforeCursor + pasted_data_split[0];
-                    let lastLine = pasted_data_split[pasted_data_split.length -1] + textAfterCursor; 
+                    let lastLine = pasted_data_split[pasted_data_split.length -1] + textAfterCursor;
                     let nextNodesContents = new Array();
 
-                    for(var j=0; j < pasted_data_split.length; j++) 
+                    for(var j=0; j < pasted_data_split.length; j++)
                     {
                         var lineContent = pasted_data_split[j];
-                        if(j == 0) 
+                        if(j == 0)
                             lineContent = firstLine;
                         if(j == pasted_data_split.length-1)
                             lineContent = lastLine;
-                        nextNodesContents.push(lineContent);                                                
+                        nextNodesContents.push(lineContent);
                     }
                     // get length of last pasted line to set new caret position
                     endPos = String(pasted_data_split[pasted_data_split.length-1]).length;
-                    
+
                     refNode.textContent = nextNodesContents[nextNodesContents.length-1];
                     lastTargetNode = refNode;
-                    
+
                     nextNodesContents = nextNodesContents.reverse();
 
                     for(var j=1; j < nextNodesContents.length; j++) //  for any other line, we add a div and set this content
@@ -406,6 +614,7 @@ export default Vue.extend({
                 this.hideOverlay();
             }
         },
+
         hideOverlay() {
             if (this.$children.length) this.$children[0].hideOverlay();
         },
@@ -416,12 +625,14 @@ export default Vue.extend({
                 this.updatedLines = [];
             }
         },
+
         async bulkCreate() {
             if(this.createdLines.length){
                 await this.$store.dispatch('transcriptions/bulkCreate', this.createdLines);
                 this.createdLines = [];
             }
         },
+
         addToList() {
             /*
                parse all lines if the content changed, add it to updated lines
@@ -439,6 +650,7 @@ export default Vue.extend({
                 }
             }
         },
+
         addToUpdatedLines(lt) {
             /*
                if line already exists in updatedLines update its content on the list
@@ -451,22 +663,52 @@ export default Vue.extend({
                 elt.version_updated_at = lt.version_updated_at;
             }
         },
+
         setHeight() {
             this.$refs.contentContainer.style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + 'px';
         },
+
         updateView() {
             this.setHeight();
         },
+
+        setThisAnnoTaxonomy(taxo) {
+            this.setTextAnnoTaxonomy(taxo);
+        },
+
+        setTextAnnoTaxonomy(taxo) {
+            var colorFormatter = function(annotation) {
+                // todo: find a way to pass the marker_detail..
+                return "colored-text";
+            };
+            var boldFormatter = function(annotation) {
+                return "strong";
+            };
+            var italicFormatter = function(annotation) {
+                return "italic";
+            };
+            let marker_map = {
+                'Background Color': null,
+                'Text Color': colorFormatter,
+                'Bold' : boldFormatter,
+                'Italic': italicFormatter
+            };
+            this.anno.formatter = marker_map[taxo.marker_type];
+            this.setAnnoTaxonomy(taxo);
+        },
+
         activateVK(div) {
             div.contentEditable = 'true';
             this.$refs.diplomaticLines.contentEditable = 'false';
             enableVirtualKeyboard(div);
         },
+
         deactivateVK(div) {
             div.removeAttribute('contentEditable');
             this.$refs.diplomaticLines.contentEditable = 'true';
             div.onfocus = (e) => { e.preventDefault() };
         },
+
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
             let vks = this.$store.state.document.enabledVKs;

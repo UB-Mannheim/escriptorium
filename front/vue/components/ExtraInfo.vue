@@ -4,7 +4,7 @@
             <span v-if="$store.state.document.name" id="part-name">{{ $store.state.document.name }}</span>
             <span id="part-title"
                   v-if="$store.state.parts.loaded"
-                  title="Click to go to another Element (Ctrl+Home)."
+                  title="Click to go to another Element (Alt+G)."
                   data-toggle="modal"
                   data-target="#gotoModal"
                   role="button">{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }}) - {{ $store.state.parts.image_file_size | prettyBytes }}</span>
@@ -17,16 +17,18 @@
              role="dialog">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-              <div class="modal-body">
+              <div class="modal-body" style="line-height: 30px;">
                 Element #
                 <input type="number"
+                       id="goto-modal-input"
                        v-if="$store.state.parts.loaded"
                        min="1"
                        :max="$store.state.document.partsCount"
-                       width="100%"
                        v-bind:value="$store.state.parts.order+1"
-                       @change.lazy="goTo"/>
+                       class="w-25"
+                       @keyup.enter="goTo"/>
                 / {{$store.state.document.partsCount}}
+                <button class="btn btn-info float-right" @click="goTo">Go to</button>
               </div>
             </div>
           </div>
@@ -38,9 +40,13 @@
 export default {
     async created() {
         document.addEventListener('keyup', async function(event) {
-            if (event.ctrlKey && event.keyCode == 36) { // Home
+            if (event.altKey && event.key == 'g') {
                 $('#gotoModal').modal('show');
             }
+        });
+
+        $(document).on('shown.bs.modal', '#gotoModal', function () {
+            $('#goto-modal-input').focus();
         });
     },
     computed: {
@@ -50,8 +56,9 @@ export default {
     },
     methods: {
         async goTo(ev) {
-            if (ev.target.value > 0 && ev.target.value <= parseInt(ev.target.attributes.max.value)) {
-              await this.$store.dispatch('parts/loadPartByOrder', ev.target.value-1);
+            let input = document.getElementById('goto-modal-input');
+            if (input.value > 0 && input.value <= parseInt(input.attributes.max.value)) {
+              await this.$store.dispatch('parts/loadPartByOrder', input.value-1);
               $('#gotoModal').modal('hide');
             }
         }

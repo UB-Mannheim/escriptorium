@@ -4,7 +4,8 @@ import * as api from '../api'
 export const initialState = () => ({
     all: [],
     selectedTranscription: null,
-    comparedTranscriptions: []
+    comparedTranscriptions: [],
+    transcriptionsLoaded: false
 })
 
 export const mutations = {
@@ -23,6 +24,9 @@ export const mutations = {
         let index = state.comparedTranscriptions.findIndex(e=>e.pk == pk)
         if (index < 0) return
         Vue.delete(state.comparedTranscriptions, index)
+    },
+    hasLoadedTranscriptions(state, value) {
+        state.transcriptionsLoaded = value
     },
     reset (state) {
         assign(state, initialState())
@@ -92,6 +96,7 @@ export const actions = {
             if (data.next) await fetchPage(page+1)
         }
         await fetchPage(1)
+        commit('hasLoadedTranscriptions', true);
     },
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
@@ -152,6 +157,7 @@ export const actions = {
     },
 
     async getCurrentContent({state, commit, dispatch}, transcription) {
+        commit('hasLoadedTranscriptions', false);
         await dispatch('fetchContent', transcription)
         commit('lines/updateCurrentTrans', state.selectedTranscription, {root: true})
     },

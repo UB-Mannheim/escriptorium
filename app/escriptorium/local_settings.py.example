@@ -1,6 +1,6 @@
 from escriptorium.settings import *
 
-DEBUG=True
+DEBUG = True
 
 DATABASES = {
     'default': {
@@ -13,9 +13,11 @@ DATABASES = {
     }
 }
 
+ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en,fr,de')
+
 INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
-MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware',]
-INTERNAL_IPS = ['127.0.0.1',]
+MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+INTERNAL_IPS = ['127.0.0.1']
 
 # only needed in development
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
@@ -30,7 +32,7 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.headers.HeadersPanel',
     'debug_toolbar.panels.request.RequestPanel',
     'debug_toolbar.panels.sql.SQLPanel',
-#   'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    # 'debug_toolbar.panels.staticfiles.StaticFilesPanel',
     'debug_toolbar.panels.templates.TemplatesPanel',
     'debug_toolbar.panels.cache.CachePanel',
     'debug_toolbar.panels.signals.SignalsPanel',
@@ -50,7 +52,7 @@ DEBUG_TOOLBAR_PANELS = [
 # EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
-# Uncomment the following line to enable ElasticSearch
+# Uncomment the following line to enable Elasticsearch
 # DISABLE_ELASTICSEARCH = False
 
 # Set this variable to point to your ES instance (defaults to 'localhost:9200')

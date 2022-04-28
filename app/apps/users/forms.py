@@ -67,6 +67,7 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
     """
     This is a registration form since a user is created.
     """
+    username = forms.CharField(min_length=3)
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -149,3 +150,12 @@ class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = ContactUs
         fields = ('name', 'email', 'message', 'captcha')
+
+
+class RegenerateApiTokenForm(forms.Form):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def save(self):
+        self.user.regenerate_api_token()

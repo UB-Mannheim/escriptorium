@@ -14,6 +14,12 @@ export const retrieveDocumentPartByOrder = async (document_id, order) => (await 
 
 export const retrievePage = async (document_id, part_id, transcription, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`))
 
+export const retrieveAnnotationTaxonomies = async (document_id, target, page) => (await axios.get(`/documents/${document_id}/taxonomies/annotations/?target=${target}&page=${page}&paginate_by=50`))
+
+export const retrieveImageAnnotations = async (document_id, part_id, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/image/?page=${page}`))
+
+export const retrieveTextAnnotations = async (document_id, part_id, transcription_id, page) => (await axios.get(`/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${transcription_id}&page=${page}`))
+
 export const createContent = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/transcriptions/`, data))
 
 export const updateContent = async (document_id, part_id, id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/${id}/`, data))
@@ -23,6 +29,8 @@ export const bulkCreateLines = async (document_id, part_id, data) => (await axio
 export const bulkUpdateLines = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/lines/bulk_update/`, data))
 
 export const bulkDeleteLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/bulk_delete/`, data))
+
+export const mergeLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/merge/`, data))
 
 export const recalculateMasks = async (document_id, part_id, data, params) => (await axios.post(`/documents/${document_id}/parts/${part_id}/reset_masks/`, data, { params: params }))
 
@@ -43,6 +51,18 @@ export const bulkCreateLineTranscriptions = async (document_id, part_id, data) =
 export const bulkUpdateLineTranscriptions = async (document_id, part_id, data) => (await axios.put(`/documents/${document_id}/parts/${part_id}/transcriptions/bulk_update/`, data))
 
 export const moveLines = async (document_id, part_id, data) => (await axios.post(`/documents/${document_id}/parts/${part_id}/lines/move/`, data))
+
+export const createImageAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/image/`, data))
+
+export const createTextAnnotation = async(document_id, part_id, data) => (await axios.post(`documents/${document_id}/parts/${part_id}/annotations/text/`, data))
+
+export const updateImageAnnotation = async (document_id, part_id, id, data) => (await axios.patch(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`, data))
+
+export const updateTextAnnotation = async (document_id, part_id, id, data) => (await axios.patch(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`, data))
+
+export const deleteImageAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/image/${id}/`))
+
+export const deleteTextAnnotation = async (document_id, part_id, id) => (await axios.delete(`/documents/${document_id}/parts/${part_id}/annotations/text/${id}/`))
 
 export const createProjectTag = async (project_id, data) => (await axios.post(`/projects/${project_id}/tags/`, data))
 

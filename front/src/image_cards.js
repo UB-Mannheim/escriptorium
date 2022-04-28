@@ -30,6 +30,12 @@ function openWizard(proc) {
         $('#process-part-form-train #id_transcription').val(itrans[DOCUMENT_ID]);
     }
 
+    // initialize export format with user's last selected format
+    let export_format = userProfile.get('exportFormat');
+    if (export_format) {
+        $('#process-part-form-export #id_file_format').val(export_format);
+    }
+
     $('#'+proc+'-wizard').modal('show');
 }
 
@@ -602,6 +608,12 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
 
     $('#process-part-form-binarize #id_threshold').on('input', function() {
         $(this).attr('title', this.value);
+    });
+
+    $('#process-part-form-export').submit(function(ev) {
+        // store the export format choice for later use
+        let export_format = $('#process-part-form-export #id_file_format').val();
+        userProfile.set('exportFormat', export_format);
     });
 
     $('.process-part-form').submit(function(ev) {

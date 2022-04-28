@@ -14,29 +14,43 @@
 {% else %}
 <div>
   <h2>{% trans "Search text in projects" %}</h2>
-  <form method="get">
+  <form method="get" class="mt-3">
+    <div>{% render_field form.document %}</div>
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
-      <div class="col mt-4">{% render_field form.query group=True %}</div>
-      <div class="col-auto mt-4">
+      <div class="col">{% render_field form.query group=True %}</div>
+      <div class="col-auto">
         <input type="submit" value="{% trans 'Search' %}" class="btn btn-primary"></input>
       </div>
     </div>
+
+    {% if form.errors %}
+    <div class="mt-3 alert alert-danger" role="alert">
+      <ul class="mb-0">
+      {% for field_errors in form.errors.values %}
+        {% for error in field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </form>
 
   <hr>
 
   {% if es_error %}
   <div class="alert alert-danger" role="alert">
-    {% trans "Couldn't connect to ElasticSearch, please contact your instance administrator." %}
+    {% trans "Couldn't connect to Elasticsearch, please contact your instance administrator." %}
     <p class="mt-2 mb-0"><strong>{% trans "Reason:" %}</strong> {{ es_error }}</p>
   </div>
-  {% elif 'query' not in request.GET %}
-  <!-- No need to display anything, user must search terms -->
+  {% elif 'query' not in request.GET or not request.GET.query or form.errors %}
+  <!-- No need to display anything, user must search terms or the form contains errors -->
   {% else %}
-    {% if display_right_warning %}
-    <div class="alert alert-warning" role="alert">
-      {% trans "You requested to search text in a project you don't have access to. Falling back to searching entered text in all of your projects." %}
+    {% if form.cleaned_data.document %}
+    <div class="alert alert-primary" role="alert">
+      {% blocktrans with name=form.cleaned_data.document.name %}Currently searching entered text in the document named <strong>{{ name }}</strong>.{% endblocktrans %}
+      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">Click here to remove this filter.</a>
     </div>
     {% endif %}
 
@@ -49,20 +63,32 @@
       <tr>
         <th>{% trans "Content" %}</th>
         <th>{% trans "Image preview" %}</th>
+        {% if debug %}
         <th>{% trans "Score" %}</th>
-        <th>{% trans "View in Editor" %}</th>
+        {% endif %}
+        <th>{% trans "Edit" %}</th>
       </tr>
     </thead>
     <tbody>
-      {% for content, part_pk, document_pk, score, img_url, img_w, img_h, viewbox in page_obj %}
+      {% for content, line_number, transcription_name, part_title, part_pk, document_name, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
       <tr>
-        <td title="{% trans 'Line transcription enhanced content' %}">{{ content|safe }}</td>
+        <td title="{% trans 'Line transcription enhanced content' %}">
+          {{ content|safe }}
+          <br/>
+          <small class="text-muted text-sm align-bottom">
+            {% blocktrans with line=line_number part=part_title doc=document_name trans=transcription_name %}
+            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document <strong>{{ doc }}</strong> ({{ trans }})
+            {% endblocktrans %}
+          </small>
+        </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
-          <svg width="100%" height="100%" viewBox="{{ viewbox }}" style="width: 50vw;">
-            <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" xlink:href="{{ img_url }}">
+          <svg viewBox="{{ viewbox }}" class="lazy {% if larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
+            <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" data-src="{{ img_url }}">
           </svg>
         </td>
+        {% if debug %}
         <td title="{% trans 'Search score' %}">{{ score }}</td>
+        {% endif %}
         <td title="{% trans 'Go to document part editing page' %}">
           <a class="btn btn-primary" target="_blank" href="{% url 'document-part-edit' pk=document_pk part_pk=part_pk %}">
             <i class="fas fa-external-link-square-alt"></i>
@@ -71,7 +97,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4">{% trans "No results matched your search." %}</td>
+        <td colspan="{% if debug %}4{% else %}3{% endif %}">{% trans "No results matched your search." %}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -81,4 +107,13 @@
   {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  $(document).ready(function() {
+    bootLazyload();
+  });
+</script>
 {% endblock %}

@@ -1,9 +1,11 @@
 import logging
+from math import ceil
 
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db.models import Q
+from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk as es_bulk
@@ -16,7 +18,7 @@ logger.setLevel(logging.ERROR)
 
 
 class Command(BaseCommand):
-    help = "Index projects by creating one ElasticSearch document for each LineTranscription."
+    help = "Index projects by creating one Elasticsearch document for each LineTranscription."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -57,8 +59,8 @@ class Command(BaseCommand):
 
         # Creating the common index if it doesn't exist
         indices = IndicesClient(self.es_client)
-        if not indices.exists(settings.ELASTICSEARCH_COMMON_INDEX):
-            indices.create(settings.ELASTICSEARCH_COMMON_INDEX)
+        if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
+            indices.create(index=settings.ELASTICSEARCH_COMMON_INDEX)
             logger.info(
                 f"Created a new index named {settings.ELASTICSEARCH_COMMON_INDEX}"
             )
@@ -116,7 +118,7 @@ class Command(BaseCommand):
                         project, document, part, allowed_users
                     )
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         f"Failed to index part {part.pk} on project {project.pk} because: {e}"
                     )
 
@@ -130,6 +132,17 @@ class Command(BaseCommand):
         logger.info("\n" + "-" * 50 + "\n")
 
     def ingest_document_part(self, project, document, part, allowed_users):
+        thumbnailer = get_thumbnailer(part.image)
+        try:
+            thumbnail = thumbnailer.get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
+            assert thumbnail
+        except Exception:
+            thumbnail = part.image
+            pass
+
+        # Factors to scale line bboxes if necessary
+        scale_factors = [thumbnail.width / part.image.width, thumbnail.height / part.image.height] * 2
+
         to_insert = []
         previous_contents = {}
         previous_index = {}
@@ -149,16 +162,21 @@ class Command(BaseCommand):
                         "_id": f"{line_transcription.id}",
                         "project_id": project.id,
                         "document_id": document.id,
+                        "document_name": document.name,
                         "document_part_id": part.id,
-                        "image_url": part.image.url,
-                        "image_width": part.image.width,
-                        "image_height": part.image.height,
+                        "part_title": part.title,
+                        "image_url": thumbnail.url,
+                        "image_width": thumbnail.width,
+                        "image_height": thumbnail.height,
                         "transcription_id": tr_id,
+                        "transcription_name": line_transcription.transcription.name,
+                        "line_number": line.order + 1,
                         # Build the enhanced LineTranscription content by adding the last LineTranscription content for this Transcription
                         "content": f"{previous_contents[tr_id]} {line_transcription.content}"
                         if previous_contents.get(tr_id) is not None
                         else line_transcription.content,
-                        "bounding_box": line.get_box(),
+                        # Rescaling the line bbox to match the thumbnail if necessary
+                        "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
                         "have_access": list(set(allowed_users)),
                     }
                 )

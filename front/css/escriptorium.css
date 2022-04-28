@@ -94,9 +94,11 @@ form.inline-form {
     display: block;
 }
 
-.js-metadata-row:last-of-type .js-metadata-delete {
+.js-metadata-row:last-of-type .js-metadata-delete,
+.js-formset-row:last-of-type .js-formset-delete {
     display: none;
 }
+
 
 .dropzone {
     border: 2px dashed #0087F7;
@@ -112,7 +114,7 @@ form.inline-form {
     display: flex;
 }
 
-.dropable {
+.droppable {
     z-index: 2;
     min-width: 10px;
     opacity: 0.5;
@@ -463,6 +465,7 @@ i.panel-icon {
 .panel .content-container {
     border: 1px solid lightgrey;
     border-radius: 3px;
+    position: relative;
 }
 
 .panel .content-container .js-wheelzoom-container {
@@ -746,4 +749,20 @@ input[type="checkbox"].toggle-switch + label span {
     top: -3px;
     left: 55px;
     width: 170px;
+}
+.r6o-widget {
+    padding: .4rem;
+}
+
+.r6o-widget input,  .r6o-widget select {
+    width: 100%;
+}
+
+.wide-search-crop {
+    width: 30vw;
+    max-height: 15vh;
+}
+
+.tall-search-crop {
+    height: 15vh;
 }

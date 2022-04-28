@@ -43,6 +43,7 @@ import { LineBase } from '../../src/editor/mixins.js';
 export default Vue.extend({
     mixins: [LineBase],
     mounted() {
+        this.$nextTick(this.reset);
     },
     watch: {
         'line.currentTrans.content': function(n, o) {
@@ -86,14 +87,14 @@ export default Vue.extend({
             } else {
                 lineHeight = 30;
             }
- 
+
             lineHeight = Math.max(Math.round(lineHeight), 5) * 0.3;
 
             let ratio = 1/4;    //  more well suited for horizontal latin writings
             if(this.$store.state.document.mainTextDirection == 'ttb')
                 ratio = 1/2;
 
-            this.$refs.textElement.setAttribute("font-size", String(lineHeight * (ratio)) + 'px'); 
+            this.$refs.textElement.setAttribute("font-size", String(lineHeight * (ratio)) + 'px');
 
             //return lineHeight+'px';
             return 10+'px';

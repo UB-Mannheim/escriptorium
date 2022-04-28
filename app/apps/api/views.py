@@ -3,13 +3,16 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db.models import Prefetch
+from django.db import transaction
+from django.db.models import Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
 from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -17,12 +20,16 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
+    AnnotationComponentSerializer,
+    AnnotationTaxonomySerializer,
+    AnnotationTypeSerializer,
     BlockSerializer,
     BlockTypeSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
     DocumentSerializer,
     DocumentTasksSerializer,
+    ImageAnnotationSerializer,
     LineOrderSerializer,
     LineSerializer,
     LineTranscriptionSerializer,
@@ -36,25 +43,32 @@ from api.serializers import (
     SegmentSerializer,
     SegTrainSerializer,
     TagDocumentSerializer,
+    TextAnnotationSerializer,
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
     UserOnboardingSerializer,
 )
+from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
     AlreadyProcessingException,
+    AnnotationComponent,
+    AnnotationTaxonomy,
+    AnnotationType,
     Block,
     BlockType,
     Document,
     DocumentMetadata,
     DocumentPart,
     DocumentTag,
+    ImageAnnotation,
     Line,
     LineTranscription,
     LineType,
     OcrModel,
     Project,
     Script,
+    TextAnnotation,
     Transcription,
 )
 from core.tasks import recalculate_masks
@@ -76,6 +90,10 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 100
+
+
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserOnboardingSerializer
@@ -90,14 +108,12 @@ class UserViewSet(ModelViewSet):
 
 class ScriptViewSet(ReadOnlyModelViewSet):
     queryset = Script.objects.all()
-    paginate_by = 20
     serializer_class = ScriptSerializer
 
 
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    paginate_by = 10
 
     def get_queryset(self):
         return Project.objects.for_user_read(self.request.user)
@@ -106,7 +122,6 @@ class ProjectViewSet(ModelViewSet):
 class TagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
     serializer_class = TagDocumentSerializer
-    paginate_by = 10
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))
@@ -119,7 +134,6 @@ class TagViewSet(ModelViewSet):
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    paginate_by = 10
 
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).prefetch_related(
@@ -340,7 +354,9 @@ class DocumentViewSet(ModelViewSet):
 class DocumentPermissionMixin():
     def get_queryset(self):
         try:
-            Document.objects.for_user(self.request.user).get(pk=self.kwargs.get('document_pk'))
+            self.document = (Document.objects
+                             .for_user(self.request.user)
+                             .get(pk=self.kwargs.get('document_pk')))
         except Document.DoesNotExist:
             raise PermissionDenied
         return super().get_queryset()
@@ -385,7 +401,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
             order = int(request.GET.get('order'))
         except ValueError:
             return Response({'error': 'invalid order.'})
-        if not order:
+        except TypeError:
             return Response({'error': 'pass order as an url parameter.'})
         try:
             part = self.get_queryset().get(order=order)
@@ -485,6 +501,67 @@ class LineTypeViewSet(ModelViewSet):
     serializer_class = LineTypeSerializer
 
 
+class AnnotationTypeViewSet(ModelViewSet):
+    queryset = AnnotationType.objects.filter(public=True)
+    serializer_class = AnnotationTypeSerializer
+
+
+class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationComponent.objects.all()
+    serializer_class = AnnotationComponentSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().filter(document=self.document)
+
+
+class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = AnnotationTaxonomy.objects.all()
+    serializer_class = AnnotationTaxonomySerializer
+
+    def get_queryset(self):
+        qs = (super().get_queryset()
+              .filter(document=self.document)
+              .prefetch_related('typology', 'components'))
+        target = self.request.query_params.get('target')
+        if target == 'image':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES])
+        elif target == 'text':
+            return qs.filter(
+                marker_type__in=[c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES])
+        else:
+            return qs
+
+
+class ImageAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = ImageAnnotation.objects.all()
+    serializer_class = ImageAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(part=self.kwargs['part_pk'])
+                .filter(part__document=self.kwargs['document_pk']))
+
+
+class TextAnnotationViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = TextAnnotation.objects.all()
+    serializer_class = TextAnnotationSerializer
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        qs = (super().get_queryset()
+              .filter(part=self.kwargs['part_pk'])
+              .filter(part__document=self.kwargs['document_pk']))
+        try:
+            transcription = int(self.request.GET.get('transcription'))
+        except (ValueError, TypeError):
+            pass
+        else:
+            qs = qs.filter(transcription=transcription)
+        return qs
+
+
 class BlockViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = Block.objects.select_related('typology')
     serializer_class = BlockSerializer
@@ -510,13 +587,56 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         else:  # create, list
             return LineSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = DetailedLineSerializer(instance)
+        json = serializer.data
+        super().destroy(request, *args, **kwargs)
+        return Response(status=200, data=json)
+
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def bulk_create(self, request, document_pk=None, part_pk=None):
         lines = request.data.get("lines")
+
+        response_json = self._bulk_create_helper(lines)
+        return Response({'status': 'ok', 'lines': response_json})
+
+    def _bulk_create_helper(self, lines):
+        # Performs the actual creation, called from two endpoints
+
+        # We create the lines in two parts - first the lines, then their transcriptions.
+        # We can't used the DetailedLineSerializer, since the Transcription serializer requires a line property,
+        # which is unknown at this time - the line has not been created yet.
+        # We may want to move this code into the DetailedLineSerializer's create method at some point.
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'status': 'ok', 'lines': serializer.data})
+
+        # Now we go over the lines retrieved from the request, take their transcriptions, and add the right line PK to each one.
+        # serializer.data is ordered, in the same order as lines
+        if len(lines) != len(serializer.data):
+            raise ValueError(f"LineSerializer created {len(serializer.data)} lines, while {len(lines)} were expected")
+
+        transcriptions = []
+        line_pks = []
+        for i in range(len(lines)):
+            pk = serializer.data[i]['pk']
+            line_transcriptions = lines[i].get('transcriptions', [])
+            for lt in line_transcriptions:
+                lt['line'] = pk
+            transcriptions += line_transcriptions
+            line_pks.append(pk)
+
+        serializer = LineTranscriptionSerializer(data=transcriptions, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Finally, for a response, we want to create all the newly created lines along with their transcriptions.
+        # Simplest way to do this - just use the PKs to load the lines again
+        qs = Line.objects.filter(pk__in=line_pks)
+        serializer = DetailedLineSerializer(qs, many=True)
+        return serializer.data
 
     @action(detail=False, methods=['put'])
     def bulk_update(self, request, document_pk=None, part_pk=None):
@@ -531,8 +651,29 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     def bulk_delete(self, request, document_pk=None, part_pk=None):
         deleted_lines = request.data.get("lines")
         qs = Line.objects.filter(pk__in=deleted_lines)
+        serializer = DetailedLineSerializer(qs, many=True)
+        json = serializer.data
         qs.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'status': 'ok', 'lines': json}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def merge(self, request, document_pk=None, part_pk=None):
+        original_lines = request.data.get("lines")
+        if len(original_lines) > MAX_MERGE_SIZE:
+            return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
+
+        lines = list(Line.objects.filter(pk__in=original_lines))
+        original_serializer = DetailedLineSerializer(lines, many=True)
+        deleted_json = original_serializer.data
+
+        merged_line_json = merge_lines(lines)
+        created_json = self._bulk_create_helper([merged_line_json])
+        for line in lines:
+            line.delete()
+
+        response_json = dict(created=created_json[0], deleted=deleted_json)
+        return Response(dict(status='ok', lines=response_json), status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
@@ -544,10 +685,6 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response(resp, status=200)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LargeResultsSetPagination(PageNumberPagination):
-    page_size = 100
 
 
 class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -648,7 +785,9 @@ class OcrModelViewSet(ModelViewSet):
 
     def get_queryset(self):
         return (super().get_queryset()
-                .filter(owner=self.request.user))
+                .filter(Q(owner=self.request.user)
+                        | Q(ocr_model_rights__user=self.request.user)
+                        | Q(ocr_model_rights__group__user=self.request.user)))
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
@@ -659,3 +798,17 @@ class OcrModelViewSet(ModelViewSet):
             logger.exception(e)
             return Response({'status': 'failed'}, status=400)
         return Response({'status': 'canceled'})
+
+
+class RegenerableAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        if not created and request.data.get('regenerate'):
+            token.delete()
+            token, created = Token.objects.get_or_create(user=user)
+
+        return Response({'token': token.key})

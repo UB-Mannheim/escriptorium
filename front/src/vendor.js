@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap-reboot.min.css';
 import 'dropzone/dist/min/basic.min.css';
 import 'dropzone/dist/min/dropzone.min.css';
 import 'intro.js/introjs.css';
+// import '@recogito/annotorious/dist/annotorious.min.css';
 import 'lodash';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'moment-timezone/builds/moment-timezone-with-data-2012-2022.min.js';

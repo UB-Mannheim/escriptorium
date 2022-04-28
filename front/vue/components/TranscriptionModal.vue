@@ -57,6 +57,7 @@
                     </button>
                 </div>
                 <div :class="'modal-body ' + $store.state.document.defaultTextDirection">
+                    <p v-if="line.mask == null" class="text-warning">No mask found for the line, preview unavailable! Calculate masks by hitting the green thumbs up button in the segmentation panel.</p>
                     <div id="modal-img-container" ref="modalImgContainer" width="80%">
                         <img id="line-img"
                                 v-bind:src="modalImgSrc"
@@ -204,13 +205,19 @@ export default Vue.extend({
         HelpCompareTranscriptions,
     },
     created() {
-        // make sure that typing in the input doesnt trigger keyboard shortcuts
         $(document).on('hide.bs.modal', '#trans-modal', function(ev) {
+            if (this.localTranscription != this.$refs.transInput.value
+                && !confirm('You have unsaved data, are you sure you want to close the modal?')) {
+                   return false;
+            }
+
             if (this.isVKEnabled) {
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                     input.blur();
             }
             this.$store.dispatch('lines/toggleLineEdition', null);
+
+            // make sure that typing in the input does not trigger keyboard shortcuts
             this.$store.commit('document/setBlockShortcuts', false);
         }.bind(this));
 
@@ -220,8 +227,13 @@ export default Vue.extend({
 
         this.timeZone = moment.tz.guess();
     },
+    destroyed() {
+        // unbind all events to avoid duplicating them
+        $(document).off('hide.bs.modal');
+        $(document).off('show.bs.modal');
+    },
     mounted() {
-        $(this.$refs.transModal).modal('show');
+        $(this.$refs.transModal).modal({show: true});
         $(this.$refs.transModal).draggable({handle: '.modal-header'});
         $(this.$refs.transModal).resizable();
         this.computeStyles();
@@ -246,7 +258,6 @@ export default Vue.extend({
 
             }, false);
         }
-
 
         this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
         if (this.isVKEnabled)
@@ -294,12 +305,16 @@ export default Vue.extend({
                 return this.line.currentTrans && this.line.currentTrans.content || '';
             },
             set: async function(newValue) {
+                let oldValue = this.line.currentTrans.content;
                 if (this.$refs.transInput.value != newValue) {
-                   // Note: better way to do that?
-                   this.$refs.transInput.value = newValue;
-                   this.computeStyles();
+                    // Note: better way to do that?
+                    this.$refs.transInput.value = newValue;
+                    this.computeStyles();
                 }
-                await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
+
+                if (oldValue != newValue) {
+                    await this.$store.dispatch('transcriptions/updateLineTranscriptionVersion', { line: this.line, content: newValue });
+                }
             }
         },
     },

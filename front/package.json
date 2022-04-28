@@ -1,3 +1,4 @@
+
 {
   "name": "escriptorium",
   "version": "0.1.0",
@@ -10,6 +11,8 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.0",
+    "@recogito/annotorious": "^2.7.2",
+    "@recogito/recogito-js": "^1.7.1",
     "@teklia/virtual-keyboard": "^0.2.2",
     "axios": "^0.21.4",
     "bootstrap": "^4.2.1",
@@ -35,6 +38,7 @@
     "vue": "^2.6.11",
     "vue-filter-pretty-bytes": "^0.1.6",
     "vue-loader": "^15.9.6",
+    "vue-loading-overlay": "^3.0",
     "vue-template-compiler": "^2.6.11",
     "vuex": "^3.6.0"
   },

@@ -9,10 +9,16 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import get_script_prefix, reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    TemplateView,
+    UpdateView,
+)
 from rest_framework.authtoken.models import Token
 
 from users.forms import (
@@ -22,6 +28,7 @@ from users.forms import (
     InvitationAcceptForm,
     InvitationForm,
     ProfileForm,
+    RegenerateApiTokenForm,
     RemoveUserFromGroup,
     TransferGroupOwnershipForm,
 )
@@ -35,7 +42,7 @@ class SendInvitation(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Invitation
     template_name = 'users/invitation_form.html'
     form_class = InvitationForm
-    success_url = '/'
+    success_url = get_script_prefix()
     success_message = _("Invitation sent successfully!")
 
     def get_form(self):
@@ -47,7 +54,7 @@ class AcceptInvitation(CreateView):
     model = User
     template_name = 'users/invitation_accept_register.html'
     form_class = InvitationAcceptForm
-    success_url = '/login/'
+    success_url = get_script_prefix() + 'login/'
     success_message = _("Successfully registered, you can now log in!")
 
     @cached_property
@@ -86,7 +93,7 @@ class AcceptInvitation(CreateView):
         return response
 
 
-class AcceptGroupInvitation(DetailView):
+class AcceptGroupInvitation(LoginRequiredMixin, DetailView):
     model = Invitation
     slug_field = 'token'
 
@@ -129,7 +136,7 @@ class RemoveFromGroup(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, 
 
 class LeaveGroup(LoginRequiredMixin, SuccessMessageMixin, DetailView):
     model = Group
-    success_url = '/profile/teams/'
+    success_url = get_script_prefix() + 'profile/teams/'
 
     def get_success_message(self, data):
         return _('You successfully left {team}.').format(team=self.object)
@@ -157,7 +164,7 @@ class TransferGroupOwnership(GroupOwnerMixin, LoginRequiredMixin, SuccessMessage
 class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
     form_class = ProfileForm
-    success_url = '/profile/'
+    success_url = get_script_prefix() + 'profile/'
     success_message = _('Profile successfully saved.')
     template_name = 'users/profile.html'
 
@@ -165,8 +172,21 @@ class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return self.request.user
 
 
-class ProfileApiKey(LoginRequiredMixin, TemplateView):
+class ProfileApiKey(LoginRequiredMixin, FormView):
     template_name = 'users/profile_api_key.html'
+    form_class = RegenerateApiTokenForm
+
+    def get_success_url(self):
+        return reverse('profile-api-key')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -211,10 +231,10 @@ class ProfileInvitations(LoginRequiredMixin, TemplateView):
 
 class ProfileGroupListCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     """
-    Both were we create new groups and list them
+    Create new groups and list them
     """
     model = Group
-    success_url = '/profile/teams/'
+    success_url = get_script_prefix() + 'profile/teams/'
     success_message = _('Team successfully created.')
     template_name = 'users/profile_group_list.html'
     form_class = GroupForm
@@ -257,4 +277,4 @@ class ContactUsView(SuccessMessageMixin, CreateView):
     form_class = ContactUsForm
     success_message = _('Message successfully sent.')
     template_name = 'users/contactus.html'
-    success_url = '/contact/'
+    success_url = get_script_prefix() + 'contact/'

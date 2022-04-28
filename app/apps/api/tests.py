@@ -711,11 +711,11 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(9):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
-        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 200)
 
     def test_bulk_update(self):
         self.client.force_login(self.user)
@@ -876,6 +876,31 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
                                       'file': model})
         self.assertEqual(resp.status_code, 201)
 
+    def test_shared_user(self):
+        doc = self.factory.make_document()
+        user2 = self.factory.make_user()
+        model = self.factory.make_model(doc)
+        model.ocr_model_rights.create(ocr_model=model, user=user2)
+
+        self.client.force_login(user2)
+        uri = reverse('api:ocrmodel-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200, resp.json())
+        self.assertEqual(resp.json()['count'], 1)
+
+    def test_shared_group(self):
+        doc = self.factory.make_document()
+        user2 = self.factory.make_user()
+        group = self.factory.make_group(users=[user2])
+        model = self.factory.make_model(doc)
+        model.ocr_model_rights.create(ocr_model=model, group=group)
+
+        self.client.force_login(user2)
+        uri = reverse('api:ocrmodel-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200, resp.json())
+        self.assertEqual(resp.json()['count'], 1)
+
 
 class ProjectViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -895,5 +920,4 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-list')
         resp = self.client.post(uri, {'name': 'test proj'})
-        print(resp.content)
         self.assertEqual(resp.status_code, 201)
