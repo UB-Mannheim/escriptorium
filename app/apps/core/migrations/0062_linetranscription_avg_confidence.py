@@ -63,7 +63,7 @@ def populate_avg_confidence(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0057_auto_20210730_1449"),
+        ("core", "0061_auto_20220419_1414"),
     ]
 
     operations = [
