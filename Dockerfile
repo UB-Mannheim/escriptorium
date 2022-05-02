@@ -13,6 +13,8 @@ FROM registry.gitlab.com/scripta/escriptorium/base:0.12.2-languages2
 ARG VERSION_DATE="passthistobuildcmd"
 ENV VERSION_DATE=$VERSION_DATE
 ENV FRONTEND_DIR=/usr/src/app/front
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # set work directory
 WORKDIR /usr/src/app
