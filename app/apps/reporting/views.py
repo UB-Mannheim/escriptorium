@@ -5,12 +5,12 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.postgres.aggregates.general import StringAgg
 from django.core.paginator import Page, Paginator
-from django.db.models import Count, DurationField, ExpressionWrapper, F, Q, Sum
+from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q, Sum
 from django.utils.functional import cached_property
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
-from core.models import Document, Project
+from core.models import Document, LineTranscription, Project
 from reporting.models import TaskReport
 from users.models import User
 
@@ -208,3 +208,49 @@ class ProjectReport(LoginRequiredMixin, DetailView):
     def get_typology_count(self, field):
         value = self.get_aggregate(field, '|')
         return OrderedDict(Counter(value.split('|'))).items() if value else ''
+
+
+class DocumentReport(LoginRequiredMixin, DetailView):
+    template_name = 'reporting/document_report.html'
+    model = Document
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # get form data
+        transcription_pk = self.request.GET.get('transcription')
+        all_transcriptions = self.object.transcriptions.all()
+
+        # set self.transcriptions to those matching PK, or all transcriptions
+        if transcription_pk and transcription_pk != "all":
+            self.transcriptions = self.object.transcriptions.filter(pk=int(transcription_pk))
+            context['selected_transcription'] = self.transcriptions.first()
+        else:
+            self.transcriptions = all_transcriptions
+
+        context['document'] = self.object
+        context['all_transcriptions'] = all_transcriptions
+        context['part_count'] = self.object.parts.count()
+        context['transcribed_part_count'] = self.get_transcribed_part_count()
+        context['avg_ocr_confidence'] = self.get_ocr_confidence()
+        return context
+
+    def get_transcribed_part_count(self):
+        """Count the number of document parts in selected transcription(s)"""
+        # since DocumentPart is not directly related to Transcription, we have to go through
+        # related objects Line and LineTranscription
+
+        # get part PKs from this document
+        part_pks = self.object.parts.values_list('pk', flat=True)
+        # get transcription PKs from applied filter
+        transcription_pks = self.transcriptions.values_list('pk', flat=True)
+        return LineTranscription.objects.filter(     # find all LineTranscriptions that contain
+            line__document_part__pk__in=part_pks,    # lines related to DocumentParts on this doc,
+            transcription__pk__in=transcription_pks  # and whose transcription matches the filter
+        ).values(
+            "line__document_part"  # count the distinct related DocumentParts
+        ).distinct().count()
+
+    def get_ocr_confidence(self):
+        """Compute the average OCR confidence for selected transcription(s)"""
+        return self.transcriptions.aggregate(avg=Avg("avg_confidence")).get("avg")

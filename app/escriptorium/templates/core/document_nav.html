@@ -28,6 +28,13 @@
         <a href="{% if document and models_count %}{% url 'document-models' document_pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not document or not models_count %}disabled{% endif %}" id="nav-models-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Models" %}</a>
         {% endwith %}
 
+        <a href="{% if document  %}{% url 'document-report' pk=document.pk %}{% else %}#{% endif %}"
+           class="nav-item nav-link {% block nav-reports-active %}{% endblock %}"
+           id="nav-reports-tab"
+           role="tab"
+           aria-controls="nav-reports"
+           aria-selected="true">{% trans "Reports" %}</a>
+
         {% endblock nav %}
 
         {% block extra_nav %}

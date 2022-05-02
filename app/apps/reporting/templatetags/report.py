@@ -23,3 +23,9 @@ def chunk_dict(data):
     raw_data = list(raw_text.items())
     val_dict = {str(i): {raw_data[i]} for i in range(len(raw_data))}
     return list(chunk_data(val_dict))
+
+
+@register.filter
+def format_percentage(number, decimal_places):
+    """Format a floating point number to the passed number of decimal places"""
+    return format(number, f".{decimal_places}%")
