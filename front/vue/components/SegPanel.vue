@@ -278,6 +278,23 @@ export default Vue.extend({
           this.initSegmenter();
         }
 
+        // Prevent shortcuts from interfering with the searchbox in the navbar and conversely
+        let searchbox = document.getElementById("navbar-searchbox")
+        if (searchbox) {
+          searchbox.addEventListener(
+            "focus",
+            function (e) {
+              this.$store.commit('document/setBlockShortcuts', true);
+            }.bind(this)
+          );
+          searchbox.addEventListener(
+            "blur",
+            function (e) {
+              this.$store.commit('document/setBlockShortcuts', false);
+            }.bind(this)
+          );
+        }
+
         // simulates wheelzoom for canvas
         var zoom = this.$parent.zoom;
         zoom.events.addEventListener(
