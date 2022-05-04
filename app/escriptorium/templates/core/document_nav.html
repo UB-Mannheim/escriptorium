@@ -47,5 +47,22 @@
   <input name="document" type="text" value="{{document.pk}}" hidden>
   {% endblock %}
 
+  {% block searchbar_transcription_filter %}
+  <input id="hiddenSearchTrLevelInput" name="transcription" type="text" value="" hidden>
+
+  <div class="input-group-prepend">
+    <select
+      class="form-control form-control-sm not-rounded-left"
+      onchange="getElementById('hiddenSearchTrLevelInput').value = this.value;"
+      title="{% trans "Select a specific transcription to search in." %}"
+    >
+      <option value="">{% trans "All levels" %}</option>
+      {% for tr_lvl in document.transcriptions.all %}
+      <option value="{{ tr_lvl.id }}">{{ tr_lvl.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endblock %}
+
   {% block searchbar_placeholder %}{% blocktrans with name=document.name %}Search in {{ name }}{% endblocktrans %}{% endblock %}
 {% endif %}

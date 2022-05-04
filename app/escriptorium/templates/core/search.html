@@ -16,6 +16,7 @@
   <h2>{% trans "Search text in projects" %}</h2>
   <form method="get" class="mt-3">
     <div>{% render_field form.document %}</div>
+    <div>{% render_field form.transcription %}</div>
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
       <div class="col">{% render_field form.query group=True %}</div>
@@ -49,8 +50,15 @@
   {% else %}
     {% if form.cleaned_data.document %}
     <div class="alert alert-primary" role="alert">
-      {% blocktrans with name=form.cleaned_data.document.name %}Currently searching entered text in the document named <strong>{{ name }}</strong>.{% endblocktrans %}
-      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">Click here to remove this filter.</a>
+      {% blocktrans with name=form.cleaned_data.document.name %}
+        Currently searching entered text in the document named <strong>{{ name }}</strong>.
+      {% endblocktrans %}
+      {% if form.cleaned_data.transcription %}
+        {% blocktrans with name=form.cleaned_data.transcription.name %}And on the transcription level <strong>{{ name }}</strong>.{% endblocktrans %}
+      {% endif %}
+      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">
+        Click here to remove {% if form.cleaned_data.transcription %}these filters{% else %}this filter{% endif %}.
+      </a>
     </div>
     {% endif %}
 
@@ -70,15 +78,30 @@
       </tr>
     </thead>
     <tbody>
-      {% for content, line_number, transcription_name, part_title, part_pk, document_name, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
+      {% for content, line_number, transcription_pk, transcription_name, part_title, part_pk, document_name, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
       <tr>
-        <td title="{% trans 'Line transcription enhanced content' %}">
-          {{ content|safe }}
+        <td>
+          <span title="{% trans 'Line transcription enhanced content' %}">{{ content|safe }}</span>
           <br/>
           <small class="text-muted text-sm align-bottom">
-            {% blocktrans with line=line_number part=part_title doc=document_name trans=transcription_name %}
-            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document <strong>{{ doc }}</strong> ({{ trans }})
+            {% blocktrans with line=line_number part=part_title %}
+            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document
             {% endblocktrans %}
+            <strong>
+              <a
+                title="{% trans 'Filter results by this document' %}"
+                href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ document_pk }}"
+              >
+                {{ document_name }}
+              </a>
+            </strong>
+
+            <a
+              title="{% trans 'Filter results by this transcription level' %}"
+              href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ document_pk }}&transcription={{ transcription_pk }}"
+            >
+              ({{ transcription_name }})
+            </a>
           </small>
         </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">

@@ -56,6 +56,7 @@
             <form method="get" action="{% url 'search' %}">
               {% block searchbar_hidden_inputs %}{% endblock %}
               <div class="input-group">
+                {% block searchbar_transcription_filter %}{% endblock %}
                 <input
                   name="query"
                   type="text"
