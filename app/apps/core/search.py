@@ -5,7 +5,7 @@ from django.conf import settings
 from elasticsearch import Elasticsearch
 
 
-def search_content(current_page, page_size, user_id, terms, projects=None, documents=None):
+def search_content(current_page, page_size, user_id, terms, projects=None, documents=None, transcriptions=None):
     es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
 
     exact_matches = re.findall('"[^"]*[^"]"', re.escape(terms))
@@ -53,5 +53,8 @@ def search_content(current_page, page_size, user_id, terms, projects=None, docum
 
     if documents:
         body["query"]["bool"]["must"].append({"terms": {"document_id": documents}})
+
+    if transcriptions:
+        body["query"]["bool"]["must"].append({"terms": {"transcription_id": transcriptions}})
 
     return es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)

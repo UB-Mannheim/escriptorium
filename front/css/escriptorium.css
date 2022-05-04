@@ -694,3 +694,8 @@ i.panel-icon {
 .tall-search-crop {
     height: 15vh;
 }
+
+.not-rounded-left {
+    border-radius: 0.2rem 0rem 0rem 0.2rem;
+    width: 50px;
+}
