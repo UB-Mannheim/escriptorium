@@ -66,9 +66,9 @@ const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
 export default Vue.extend({
     mixins: [BasePanel, AnnoPanel],
     props: ['fullsizeimage'],
-    data: {
-        imageLoaded: false,
-    },
+    data() { return {
+        imageLoaded: false
+    };},
     computed: {
         imageSrc() {
             let src = !this.fullsizeimage
