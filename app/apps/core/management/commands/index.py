@@ -144,45 +144,53 @@ class Command(BaseCommand):
         scale_factors = [thumbnail.width / part.image.width, thumbnail.height / part.image.height] * 2
 
         to_insert = []
-        previous_contents = {}
-        previous_index = {}
-        for line in part.lines.all().order_by("order"):
-            for line_transcription in line.transcriptions.all():
-                tr_id = line_transcription.transcription.id
+        # Iterate on all DocumentPart regions and also on None to retrieve lines that aren't associated to one
+        for block in [*part.blocks.all().order_by("order"), None]:
+            if block:
+                lines = block.lines.all()
+            else:
+                lines = part.lines.filter(block__isnull=True)
 
-                if previous_index.get(tr_id) is not None:
-                    # Enhance the previous ES document for this Transcription with the content of its next neighbor
-                    to_insert[previous_index[tr_id]][
-                        "content"
-                    ] += f" {line_transcription.content}"
+            # Reset the context "cache" for each region to avoid connecting lines from different regions
+            previous_contents = {}
+            previous_index = {}
+            for line in lines.order_by("order"):
+                for line_transcription in line.transcriptions.all():
+                    tr_id = line_transcription.transcription.id
 
-                to_insert.append(
-                    {
-                        "_index": settings.ELASTICSEARCH_COMMON_INDEX,
-                        "_id": f"{line_transcription.id}",
-                        "project_id": project.id,
-                        "document_id": document.id,
-                        "document_name": document.name,
-                        "document_part_id": part.id,
-                        "part_title": part.title,
-                        "image_url": thumbnail.url,
-                        "image_width": thumbnail.width,
-                        "image_height": thumbnail.height,
-                        "transcription_id": tr_id,
-                        "transcription_name": line_transcription.transcription.name,
-                        "line_number": line.order + 1,
-                        # Build the enhanced LineTranscription content by adding the last LineTranscription content for this Transcription
-                        "content": f"{previous_contents[tr_id]} {line_transcription.content}"
-                        if previous_contents.get(tr_id) is not None
-                        else line_transcription.content,
-                        # Rescaling the line bbox to match the thumbnail if necessary
-                        "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
-                        "have_access": list(set(allowed_users)),
-                    }
-                )
+                    if previous_index.get(tr_id) is not None:
+                        # Enhance the previous ES document for this Transcription with the content of its next neighbor
+                        to_insert[previous_index[tr_id]][
+                            "content"
+                        ] += f" {line_transcription.content}"
 
-                previous_contents[tr_id] = line_transcription.content
-                previous_index[tr_id] = len(to_insert) - 1
+                    to_insert.append(
+                        {
+                            "_index": settings.ELASTICSEARCH_COMMON_INDEX,
+                            "_id": f"{line_transcription.id}",
+                            "project_id": project.id,
+                            "document_id": document.id,
+                            "document_name": document.name,
+                            "document_part_id": part.id,
+                            "part_title": part.title,
+                            "image_url": thumbnail.url,
+                            "image_width": thumbnail.width,
+                            "image_height": thumbnail.height,
+                            "transcription_id": tr_id,
+                            "transcription_name": line_transcription.transcription.name,
+                            "line_number": line.order + 1,
+                            # Build the enhanced LineTranscription content by adding the last LineTranscription content for this Transcription
+                            "content": f"{previous_contents[tr_id]} {line_transcription.content}"
+                            if previous_contents.get(tr_id) is not None
+                            else line_transcription.content,
+                            # Rescaling the line bbox to match the thumbnail if necessary
+                            "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
+                            "have_access": list(set(allowed_users)),
+                        }
+                    )
+
+                    previous_contents[tr_id] = line_transcription.content
+                    previous_index[tr_id] = len(to_insert) - 1
 
         to_insert = [entry for entry in to_insert if entry["content"]]
 
