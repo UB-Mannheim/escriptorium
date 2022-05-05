@@ -669,10 +669,13 @@ class ModelUnbind(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = OcrModelDocument
 
     def get_object(self):
-        return OcrModelDocument.objects.get(
-            document__owner=self.request.user,
-            document__pk=self.kwargs['docPk'],
-            ocr_model__pk=self.kwargs['pk'])
+        try:
+            return OcrModelDocument.objects.filter(
+                document__owner=self.request.user,
+                document__pk=self.kwargs['docPk'],
+                ocr_model__pk=self.kwargs['pk'])
+        except OcrModelDocument.DoesNotExist:
+            raise Http404
 
     def get_success_url(self):
         if 'next' in self.request.GET:
