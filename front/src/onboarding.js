@@ -140,8 +140,8 @@ export function bootOnboarding() {
 
 function exitOnboarding() {
     $.ajax({
-        type: 'PUT',
-        url: '/api/user/onboarding/',
+        type: 'PATCH',
+        url: '/api/users/' + userProfile.userId,
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
             onboarding: "False",
