@@ -167,7 +167,8 @@
       {% endif %}
       {% if ENABLE_COOKIE_CONSENT %}
       <script>
-          userProfile.getCookieConsent();
+        userProfile.setUserId({{ request.user.id }});
+        userProfile.getCookieConsent();
       </script>
       {% endif %}
       {% endif %}

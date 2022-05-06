@@ -31,8 +31,8 @@ class UserViewSetTestCase(CoreFactoryTestCase):
     def test_onboarding(self):
         user = self.factory.make_user()
         self.client.force_login(user)
-        uri = reverse('api:user-onboarding')
-        resp = self.client.put(uri, {
+        uri = reverse('api:user-detail', kwargs={'pk': user.pk})
+        resp = self.client.patch(uri, {
             'onboarding': 'False',
         }, content_type='application/json')
 

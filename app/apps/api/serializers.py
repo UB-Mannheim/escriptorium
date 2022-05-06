@@ -117,10 +117,14 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             return Transcription.objects.get(name=data['name'])
 
 
-class UserOnboardingSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('onboarding',)
+        fields = ('pk', 'is_active',
+                  'username', 'email', 'first_name', 'last_name',
+                  'date_joined', 'last_login',
+                  'onboarding')
+        read_only_fields = ('date_joined', 'last_login')
 
 
 class BlockTypeSerializer(serializers.ModelSerializer):

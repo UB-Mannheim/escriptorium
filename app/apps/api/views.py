@@ -15,6 +15,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -47,7 +48,7 @@ from api.serializers import (
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
-    UserOnboardingSerializer,
+    UserSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -90,20 +91,36 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+class IsAdminOrSelfOnly(BasePermission):
+    """
+    Permission class letting a non-admin user only update his own record,
+    and admin users can update everyone and create/delete users.
+    Really only makes sense for the UserViewset.
+    """
+
+    def has_permission(self, request, view):
+        return bool(request.method in ("GET", "PUT", "PATCH")
+                    or (request.method in ("POST", "DELETE") and request.user.is_staff))
+
+    def has_object_permission(self, request, view, obj):
+        return bool(obj == request.user
+                    or request.user.is_staff)
+
+
 class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100
 
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserOnboardingSerializer
+    serializer_class = UserSerializer
+    permission_classes = (IsAdminOrSelfOnly,)
 
-    @action(detail=False, methods=['put'])
-    def onboarding(self, request):
-        serializer = UserOnboardingSerializer(self.request.user, data=request.data, partial=True)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(status=status.HTTP_200_OK)
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_staff:
+            return qs.filter(id=self.request.user.id)
+        return qs
 
 
 class ScriptViewSet(ReadOnlyModelViewSet):
