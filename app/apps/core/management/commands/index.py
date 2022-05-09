@@ -171,6 +171,7 @@ class Command(BaseCommand):
                             "project_id": project.id,
                             "document_id": document.id,
                             "document_name": document.name,
+                            "document_archived": document.is_archived,
                             "document_part_id": part.id,
                             "part_title": part.title,
                             "image_url": thumbnail.url,

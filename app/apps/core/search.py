@@ -23,6 +23,8 @@ def search_content(current_page, page_size, user_id, terms, projects=None, docum
             "bool": {
                 "must": [
                     {"term": {"have_access": user_id}},
+                    # Prevent from loading results from archived documents
+                    {"term": {"document_archived": False}},
                 ] + [
                     {"match": {
                         "content": {
