@@ -163,12 +163,18 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
     def convert_hit_to_template(self, hit):
         hit_source = hit['_source']
         bounding_box = hit_source['bounding_box']
-        viewbox = " ".join([
-            str(max([bounding_box[0] - 10, 0])),
-            str(max([bounding_box[1] - 10, 0])),
-            str(bounding_box[2] - bounding_box[0] + 20),
-            str(bounding_box[3] - bounding_box[1] + 20)
-        ])
+
+        viewbox = None
+        larger = False
+        if bounding_box:
+            viewbox = " ".join([
+                str(max([bounding_box[0] - 10, 0])),
+                str(max([bounding_box[1] - 10, 0])),
+                str(bounding_box[2] - bounding_box[0] + 20),
+                str(bounding_box[3] - bounding_box[1] + 20)
+            ])
+            larger = (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+
         return {
             'content': hit.get('highlight', {}).get('content', [])[0],
             'line_number': hit_source['line_number'],
@@ -183,7 +189,7 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
             'img_w': hit_source['image_width'],
             'img_h': hit_source['image_height'],
             'viewbox': viewbox,
-            'larger': (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+            'larger': larger
         }
 
     def get_success_url(self):

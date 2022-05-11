@@ -164,6 +164,7 @@ class Command(BaseCommand):
                             "content"
                         ] += f" {line_transcription.content}"
 
+                    line_box = line.get_box()
                     to_insert.append(
                         {
                             "_index": settings.ELASTICSEARCH_COMMON_INDEX,
@@ -185,7 +186,7 @@ class Command(BaseCommand):
                             if previous_contents.get(tr_id) is not None
                             else line_transcription.content,
                             # Rescaling the line bbox to match the thumbnail if necessary
-                            "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
+                            "bounding_box": [ceil(value * factor) for value, factor in zip(line_box, scale_factors)] if line_box else None,
                             "have_access": list(set(allowed_users)),
                         }
                     )
