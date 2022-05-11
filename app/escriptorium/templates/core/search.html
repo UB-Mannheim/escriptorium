@@ -105,9 +105,15 @@
           </small>
         </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
+          {% if viewbox %}
           <svg viewBox="{{ viewbox }}" class="lazy {% if larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
             <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" data-src="{{ img_url }}">
           </svg>
+          {% else %}
+          <div class="alert alert-warning pl-3 pr-3 pt-2 pb-2 d-inline-block" role="alert">
+            {% trans "Image preview is not available for this search result" %}
+          </div>
+          {% endif %}
         </td>
         {% if debug %}
         <td title="{% trans 'Search score' %}">{{ score }}</td>
