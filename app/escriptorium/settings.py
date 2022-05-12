@@ -108,8 +108,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
                 'escriptorium.context_processors.custom_homepage',
-                'escriptorium.context_processors.disable_search',
-                'escriptorium.context_processors.languages',
+                'escriptorium.context_processors.disable_search'
             ],
         },
     },
@@ -164,12 +163,14 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en')
+ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en').split(',')
 LANGUAGES = [
     ('en', _('English')),
-    ('fr', _('French')),
-    ('de', _('German')),
 ]
+if 'fr' in ESC_LANGUAGES:
+    LANGUAGES.append(('fr', _('French')))
+if 'de' in ESC_LANGUAGES:
+    LANGUAGES.append(('de', _('German')))
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
