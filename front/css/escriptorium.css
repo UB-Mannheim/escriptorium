@@ -699,3 +699,7 @@ i.panel-icon {
     border-radius: 0.2rem 0rem 0rem 0.2rem;
     width: 50px;
 }
+
+small.context {
+    opacity: 0.5;
+}
