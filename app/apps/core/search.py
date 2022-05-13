@@ -4,14 +4,18 @@ from urllib.parse import unquote_plus
 from django.conf import settings
 from elasticsearch import Elasticsearch
 
+EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
+
 
 def search_content(current_page, page_size, user_id, terms, projects=None, documents=None, transcriptions=None):
     es_client = Elasticsearch(hosts=[settings.ELASTICSEARCH_URL])
 
-    exact_matches = re.findall('"[^"]*[^"]"', re.escape(terms))
+    cleaned_terms = re.escape(terms)
+    exact_matches = re.findall(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
+    # Removing the quotation marks around exact terms
     terms_exact = [m[1:-1] for m in exact_matches]
     if terms_exact:
-        terms_fuzzy = re.split('|'.join(exact_matches), re.escape(terms))
+        terms_fuzzy = re.split(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
     else:
         terms_fuzzy = [terms]
 
