@@ -8,7 +8,7 @@
                    type="checkbox"
                    title="Toggle confidence visualization"
                    v-on:click="toggleConfidence"
-                   v-bind:disabled="!hasConfidence" />
+                   v-bind:disabled="!hasConfidence && !$store.state.document.confidenceVisible" />
             <label for="toggle-confidence" class="ml-3">
                 <span>Show OCR confidence</span>
             </label>
@@ -105,7 +105,9 @@ export default Vue.extend({
     },
     computed: {
         hasConfidence() {
-            return this.$store.state.lines.all.some(line => line.currentTrans?.graphs?.length)
+            return this.$store.state.lines.all.some(line => (
+                line.currentTrans?.graphs?.length || line.currentTrans?.avg_confidence
+            ))
         },
     }
 });

@@ -421,7 +421,7 @@ class BlockSerializer(serializers.ModelSerializer):
 class LineTranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineTranscription
-        fields = ('pk', 'line', 'transcription', 'content', 'graphs',
+        fields = ('pk', 'line', 'transcription', 'content', 'graphs', 'avg_confidence',
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):

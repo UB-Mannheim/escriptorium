@@ -113,7 +113,7 @@ export default Vue.extend({
         },
         computeConfidence() {
             // compute the average confidence for this line
-            if (this.line.currentTrans?.graphs?.length) {
+            if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
                 const confidence =  `Confidence: ${(this.lineAvgConfidence * 100).toFixed(2)}%`;
                 // add confidence to bootstrap title related attributes
                 this.$refs.textElement.setAttribute('title' ,confidence);
@@ -146,11 +146,15 @@ export default Vue.extend({
         },
         lineAvgConfidence() {
             // compute the average confidence for the current line
-            const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
-            return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
+            if (this.line.currentTrans.avg_confidence) {
+                return this.line.currentTrans.avg_confidence;
+            } else if (this.line.currentTrans?.graphs?.length) {
+                const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
+                return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
+            }
         },
         maskFillColor() {
-            if (this.line.currentTrans?.graphs?.length) {
+            if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
                 // convert the avg confidence to hue (0 = red, 120 = green)
                 // use a slight curve so that values are more easily red/yellow
                 const hue = Math.pow(this.lineAvgConfidence, this.$store.state.document.confidenceScale) * 120;
