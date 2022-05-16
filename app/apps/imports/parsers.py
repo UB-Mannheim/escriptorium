@@ -287,7 +287,7 @@ class XMLParser(ParserDocument):
     def update_line(self, line, lineTag):
         raise NotImplementedError
 
-    def make_transcription(self, line, content, avg_confidence=0.0, user=None):
+    def make_transcription(self, line, content, avg_confidence=None, user=None):
         try:
             # lazily creates the Transcription on the fly if need be cf transcription() property
             lt = LineTranscription.objects.get(
@@ -308,7 +308,8 @@ class XMLParser(ParserDocument):
                 pass
         finally:
             lt.content = content
-            lt.avg_confidence = avg_confidence
+            if avg_confidence:
+                lt.avg_confidence = avg_confidence
             lt.save()
 
             # update the avg confidence across the whole transcription
@@ -409,8 +410,9 @@ class XMLParser(ParserDocument):
                             # needs to be done after line is created!
                             tc = self.get_transcription_content(lineTag)
                             ac = self.get_avg_confidence(lineTag)
-                            self.all_line_confidences.append(ac)
-                            part_line_confidences.append(ac)
+                            if ac:
+                                self.all_line_confidences.append(ac)
+                                part_line_confidences.append(ac)
                             if tc:
                                 self.make_transcription(line, tc, avg_confidence=ac, user=user)
                     if part_line_confidences:
@@ -564,7 +566,10 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
     def get_avg_confidence(self, lineTag):
         # WC attribute (a float between 0.0 and 1.0) is used for confidence
         confidences = [float(e.get("WC")) for e in lineTag.findall("String", self.root.nsmap) if e.get("WC")]
-        return mean(confidences)
+        if (confidences):
+            return mean(confidences)
+        else:
+            return None
 
 
 class PagexmlParser(XMLParser):
