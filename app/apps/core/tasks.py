@@ -11,7 +11,7 @@ from celery.signals import before_task_publish, task_failure, task_prerun, task_
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import F, Q
+from django.db.models import Avg, F, Q
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
@@ -554,6 +554,15 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
         part.transcribe(model)
+        # recalculate average confidence across the transcription
+        Transcription = apps.get_model('core', 'Transcription')
+        trans = Transcription.objects.get(
+            name="kraken:" + model.name, document=part.document
+        )
+        lines_with_confidence = trans.linetranscription_set.filter(avg_confidence__isnull=False)
+        trans.avg_confidence = lines_with_confidence.aggregate(avg=Avg("avg_confidence")).get("avg")
+        trans.save()
+
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),

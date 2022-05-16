@@ -611,7 +611,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # average confidence for lines on this part (page)
+    # average confidence for lines on this part (page), from the transcription whose confidence is the best
     max_avg_confidence = models.FloatField(null=True, blank=True)
     best_transcription = models.ForeignKey("Transcription", null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -1110,9 +1110,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
+                    try:
+                        bl_type = line["script"]
+                    except KeyError:
+                        # changed in kraken 4.0
+                        bl_type = line["tags"]["type"]
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(line["script"]),
+                        typology=line_types.get(bl_type),
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -1155,6 +1160,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                 "boundary": line.mask,
                                 "text_direction": text_direction,
                                 "script": "default",
+                                "tags": {"type": "default"},  # needed for kraken 4.0
                             }
                         ],  # self.document.main_script.name
                         "type": "baselines",
@@ -1190,12 +1196,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
                 self.max_avg_confidence = avg_line_confidence
                 self.best_transcription = trans
-            # store avg line confidence on the Translation
-            if trans.avg_confidence:
-                trans.avg_confidence = mean([trans.avg_confidence, avg_line_confidence])
-            else:
-                trans.avg_confidence = avg_line_confidence
-            trans.save()
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
         self.save()

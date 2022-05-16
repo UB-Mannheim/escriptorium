@@ -5,6 +5,7 @@ import re
 import time
 import uuid
 import zipfile
+from statistics import mean
 
 import pyvips
 import requests
@@ -215,6 +216,7 @@ class ZipParser(ParserDocument):
 
 class XMLParser(ParserDocument):
     ACCEPTED_SCHEMAS = ()
+    all_line_confidences = []
 
     def __init__(self, document, file_handler, report, transcription_name=None, xml_root=None):
         super().__init__(document,
@@ -285,7 +287,7 @@ class XMLParser(ParserDocument):
     def update_line(self, line, lineTag):
         raise NotImplementedError
 
-    def make_transcription(self, line, lineTag, content, user=None):
+    def make_transcription(self, line, content, avg_confidence=0.0, user=None):
         try:
             # lazily creates the Transcription on the fly if need be cf transcription() property
             lt = LineTranscription.objects.get(
@@ -306,7 +308,13 @@ class XMLParser(ParserDocument):
                 pass
         finally:
             lt.content = content
+            lt.avg_confidence = avg_confidence
             lt.save()
+
+            # update the avg confidence across the whole transcription
+            if self.all_line_confidences:
+                lt.transcription.avg_confidence = mean(self.all_line_confidences)
+            lt.transcription.save()
 
     def parse(self, start_at=0, override=False, user=None):
         pages = self.get_pages()
@@ -335,6 +343,11 @@ class XMLParser(ParserDocument):
                     if override:
                         part.lines.all().delete()
                         part.blocks.all().delete()
+
+                    # list to store all computed avg confidences for lines on this document part
+                    part_line_confidences = []
+                    # store the max average confidence for comparison
+                    max_avg_confidence = part.max_avg_confidence
 
                     blocks = self.get_blocks(pageTag)
                     n_blocks += len(blocks)
@@ -395,8 +408,17 @@ class XMLParser(ParserDocument):
 
                             # needs to be done after line is created!
                             tc = self.get_transcription_content(lineTag)
+                            ac = self.get_avg_confidence(lineTag)
+                            self.all_line_confidences.append(ac)
+                            part_line_confidences.append(ac)
                             if tc:
-                                self.make_transcription(line, lineTag, tc, user=user)
+                                self.make_transcription(line, tc, avg_confidence=ac, user=user)
+                    if part_line_confidences:
+                        # if applicable, store max avg confidence / best transcription on document part
+                        part_avg_confidence = mean(part_line_confidences)
+                        if not max_avg_confidence or (max_avg_confidence and part_avg_confidence > max_avg_confidence):
+                            part.max_avg_confidence = part_avg_confidence
+                            part.best_transcription = self.transcription
 
                 # TODO: store glyphs too
                 logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))
@@ -538,6 +560,11 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         return " ".join(
             [e.get("CONTENT") for e in lineTag.findall("String", self.root.nsmap)]
         )
+
+    def get_avg_confidence(self, lineTag):
+        # WC attribute (a float between 0.0 and 1.0) is used for confidence
+        confidences = [float(e.get("WC")) for e in lineTag.findall("String", self.root.nsmap) if e.get("WC")]
+        return mean(confidences)
 
 
 class PagexmlParser(XMLParser):
