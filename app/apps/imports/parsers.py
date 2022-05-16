@@ -287,7 +287,13 @@ class XMLParser(ParserDocument):
     def update_line(self, line, lineTag):
         raise NotImplementedError
 
-    def make_transcription(self, line, content, avg_confidence=None, user=None):
+    def get_avg_confidence(self, lineTag):
+        raise NotImplementedError
+
+    def get_transcription_content(self, lineTag):
+        raise NotImplementedError
+
+    def make_transcription(self, line, lineTag, content, avg_confidence=None, user=None):
         try:
             # lazily creates the Transcription on the fly if need be cf transcription() property
             lt = LineTranscription.objects.get(
@@ -414,7 +420,7 @@ class XMLParser(ParserDocument):
                                 self.all_line_confidences.append(ac)
                                 part_line_confidences.append(ac)
                             if tc:
-                                self.make_transcription(line, tc, avg_confidence=ac, user=user)
+                                self.make_transcription(line, lineTag, tc, avg_confidence=ac, user=user)
                     if part_line_confidences:
                         # if applicable, store max avg confidence / best transcription on document part
                         part_avg_confidence = mean(part_line_confidences)
@@ -566,10 +572,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
     def get_avg_confidence(self, lineTag):
         # WC attribute (a float between 0.0 and 1.0) is used for confidence
         confidences = [float(e.get("WC")) for e in lineTag.findall("String", self.root.nsmap) if e.get("WC")]
-        if (confidences):
-            return mean(confidences)
-        else:
-            return None
+        return mean(confidences) if confidences else None
 
 
 class PagexmlParser(XMLParser):
@@ -693,6 +696,16 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     for e in lineTag.findall("TextEquiv/Unicode", self.root.nsmap)
                 ]
             )
+
+    def get_avg_confidence(self, lineTag):
+        # PAGE XML can have content for each word inside a word tag or the whole line in textline tag
+        words = lineTag.findall("Word", self.root.nsmap)
+        # get @conf attribute from TextEquiv if present
+        if len(words) > 0:
+            confidences = [float(e.get("@conf")) for e in lineTag.findall("Word/TextEquiv", self.root.nsmap) if e.get("@conf")]
+        else:
+            confidences = [float(e.get("@conf")) for e in lineTag.findall("TextEquiv", self.root.nsmap) if e.get("@conf")]
+        return mean(confidences) if confidences else None
 
 
 class IIIFManifestParser(ParserDocument):
