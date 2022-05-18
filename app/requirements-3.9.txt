@@ -51,14 +51,14 @@ matplotlib==3.5.1
 mpmath==1.2.1
 msgpack==0.6.2
 networkx==2.6.3
-numpy==1.21.5
+numpy>=1.21.5
 opencv-python-headless==4.5.5.62
 packaging==21.3
 Pillow==9.0.1
 pkgconfig==1.5.5
 prometheus-client==0.13.1
 protobuf==3.19.4
-psycopg2==2.8.6
+#psycopg2==2.8.6
 psycopg2-binary==2.9.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
@@ -76,9 +76,9 @@ qudida==0.0.4
 redis==3.2.1
 regex==2022.1.18
 requests==2.21.0
-scikit-image==0.17.2
+scikit-image>=0.17.2
 scikit-learn==1.0.2
-scipy==1.5.4
+scipy>=1.5.4
 service-identity==21.1.0
 Shapely==1.8.0
 six==1.16.0
@@ -87,7 +87,7 @@ sqlparse==0.4.2
 sympy==1.9
 threadpoolctl==3.1.0
 tifffile==2021.11.2
-torch==1.10.1+cu113
+torch>=1.10.1
 torchvision==0.11.2
 tqdm==4.62.3
 Twisted==21.7.0
