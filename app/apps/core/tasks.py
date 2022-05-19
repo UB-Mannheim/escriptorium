@@ -45,15 +45,6 @@ def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
 
-    if user_pk:
-        try:
-            user = User.objects.get(pk=user_pk)
-            # If quotas are enforced, assert that the user still has free CPU minutes
-            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
-                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
-        except User.DoesNotExist:
-            user = None
-
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)

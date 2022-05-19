@@ -470,7 +470,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         document_part = DocumentPart.objects.get(pk=pk)
         angle = self.request.data.get('angle')
         if angle:
-            document_part.rotate(angle)
+            document_part.rotate(angle, user=self.request.user)
             return Response({'status': 'done'}, status=200)
         else:
             return Response({'error': "Post an angle."},

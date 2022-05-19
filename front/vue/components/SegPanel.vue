@@ -237,7 +237,7 @@ export default Vue.extend({
       imageLoaded: false,
       colorMode: "color", //  color - binary - grayscale
       undoManager: new UndoManager(),
-      isWorking: false,
+      isWorking: false
     };
   },
   components: {
