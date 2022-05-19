@@ -12,13 +12,13 @@ Ubuntu 18.04:
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa # needed to get python > 3.7
 sudo apt update
-sudo apt install postgresql postgresql-contrib redis-server netcat-traditional jpegoptim pngcrush build-essential python3.8 python-dev python3-dev python3-virtualenv
+sudo apt install postgresql postgresql-contrib redis-server git libvips42 netcat-traditional jpegoptim pngcrush build-essential python3.8 python-dev python3-dev python3-virtualenv
 ```
 
 Ubuntu 20.04:
 ```
 sudo apt update
-sudo apt install postgresql postgresql-contrib redis-server netcat-traditional jpegoptim pngcrush build-essential python3.8 python3.8-dev python3-virtualenv npm
+sudo apt install postgresql postgresql-contrib redis-server git libvips42 netcat-traditional jpegoptim pngcrush build-essential python3.8 python3.8-dev python3-virtualenv npm
 ```
 
 Then:
