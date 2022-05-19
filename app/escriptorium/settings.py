@@ -232,6 +232,11 @@ CELERY_TASK_ROUTES = {
 
 REPORTING_TASKS_BLACKLIST = [
     'users.tasks.async_email',
+    # if the user still has disk space but no cpu quota it will just slow everything down
+    # to forbid thumbnails creation or image compression.
+    'core.tasks.convert',
+    'core.tasks.lossless_compression',
+    'core.tasks.generate_part_thumbnails'
 ]
 
 CHANNEL_LAYERS = {
