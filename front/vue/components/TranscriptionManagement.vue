@@ -6,6 +6,7 @@
               title="Transcription"
               class="form-control custom-select">
         <option v-for="transcription in $store.state.transcriptions.all"
+                v-if="transcription.archived == false"
                 v-bind:key="transcription.pk"
                 v-bind:value="transcription.pk">{{ transcription.name }}</option>
       </select>
@@ -31,10 +32,12 @@
                 <span>Compare</span>
                 <span class="float-right">Delete</span>
               </div>
-              <div v-for="trans in $store.state.transcriptions.all"
+                <div v-for="trans in $store.state.transcriptions.all"
+                   v-if="trans.archived == false"
                    v-bind="trans"
                    v-bind:key="trans.pk"
                    class="inline-form form-check mt-1">
+
                 <input type="checkbox" class="form-check-input"
                        v-bind:id="'opt' + trans.pk"
                        v-model="$store.state.transcriptions.comparedTranscriptions"
@@ -42,6 +45,7 @@
                 <label v-bind:for="'opt'+trans.pk"
                        class="form-check-label col">{{ trans.name }}</label>
                 <button v-bind:data-trPk="trans.pk"
+                        v-if="trans.name!='manual' && trans.pk != $store.state.transcriptions.selectedTranscription"
                         @click="deleteTranscription"
                         class="btn btn-danger fas fa-trash"
                         title="Completely remove the transcription and all of its content!&#10;You can not remove the manual or the current transcription."></button>
@@ -61,9 +65,14 @@ export default {
             let transcription = ev.target.dataset.trpk;
             // I lied, it's only archived
             if(confirm("Are you sure you want to delete the transcription?")) {
-                await this.$store.dispatch('transcriptions/archive', transcription);
-                ev.target.parentNode.remove();  // meh
-                this.$store.commit('transcriptions/removeComparedTranscription', transcription);
+                this.$store.dispatch('transcriptions/archive', transcription)
+                .then(test => {
+                    ev.target.parentNode.remove();
+                    this.$store.commit('transcriptions/removeComparedTranscription', transcription);
+                })
+                .catch(err => {
+                    console.log('couldnt archive transcription #', transcription, err)
+                })
             }
         },
     }

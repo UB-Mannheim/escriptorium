@@ -1539,6 +1539,10 @@ class Line(OrderedModel):  # Versioned,
         return super().save(*args, **kwargs)
 
 
+class ProtectedObjectException(Exception):
+    pass
+
+
 class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(
@@ -1558,8 +1562,17 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
         return self.name
 
     def archive(self):
-        self.archived = True
-        self.save()
+        if self.name == self.DEFAULT_NAME:
+            raise ProtectedObjectException
+        else:
+            self.archived = True
+            self.save()
+
+    def delete(self):
+        if self.name == self.DEFAULT_NAME:
+            raise ProtectedObjectException
+        else:
+            super().delete()
 
 
 class LineTranscription(

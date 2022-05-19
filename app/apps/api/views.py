@@ -68,6 +68,7 @@ from core.models import (
     LineType,
     OcrModel,
     Project,
+    ProtectedObjectException,
     Script,
     TextAnnotation,
     Transcription,
@@ -504,8 +505,12 @@ class DocumentTranscriptionViewSet(ModelViewSet):
             archived=False,
             document=self.kwargs['document_pk'])
 
-    def perform_delete(self, serializer):
-        serializer.instance.archive()
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.get_object().archive()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedObjectException:
+            return Response("This object can not be deleted.", status=400)
 
 
 class BlockTypeViewSet(ModelViewSet):
