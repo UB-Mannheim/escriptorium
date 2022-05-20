@@ -1183,7 +1183,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk):
+    def align(self, transcription_pk, witness_pk, n_gram):
         """Use subprocess call to Passim to align transcription with textual witness"""
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
@@ -1229,7 +1229,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             "seriatim",  # Passim call
             "--linewise",
             "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
-            "-n", "4",  # index 4-grams TODO: make configurable?
+            "-n", str(n_gram),  # index n-grams
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
             infile,
@@ -1277,6 +1277,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
             lt.save()
         # clean up temp files
+        os.remove(infile)
         shutil.rmtree(outdir)
 
         self.workflow_state = self.WORKFLOW_STATE_ALIGNED

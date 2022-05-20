@@ -640,14 +640,30 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
     transcription = forms.ModelChoiceField(
         queryset=Transcription.objects.filter(archived=False),
         required=True,
+        help_text=_("The transcription on which to perform alignment."),
     )
     witness_file = forms.FileField(
         validators=[FileExtensionValidator(allowed_extensions=["txt"])],
         required=False,
+        help_text=_("The reference text for alignment; must be a .txt file."),
     )
     existing_witness = forms.ModelChoiceField(
         queryset=TextualWitness.objects.all(),
         required=False,
+        help_text=_("Reuse a previously-uploaded reference text."),
+    )
+    N_GRAM_CHOICES = (
+        (2, _("Bigram (2-gram)")),
+        (3, _("Trigram (3-gram)")),
+        (4, _("4-gram")),
+    )
+    # Configuration of n-gram vale to pass to passim
+    n_gram = forms.TypedChoiceField(
+        choices=N_GRAM_CHOICES,
+        coerce=int,
+        required=True,
+        initial=4,
+        help_text=_("Length of sequences to compare; leave default if unsure."),
     )
 
     def __init__(self, *args, **kwargs):
@@ -682,6 +698,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         transcription = self.cleaned_data.get("transcription")
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
+        n_gram = self.cleaned_data.get("n_gram")
 
         if existing_witness:
             witness = existing_witness
@@ -700,6 +717,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 user_pk=self.user.pk,
                 transcription_pk=transcription.pk,
                 witness_pk=witness.pk,
+                n_gram=int(n_gram),
             )
 
 
