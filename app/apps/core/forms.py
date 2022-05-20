@@ -1,4 +1,5 @@
 import logging
+from os.path import splitext
 
 from bootstrap.forms import BootstrapFormMixin
 from django import forms
@@ -31,6 +32,7 @@ from core.models import (
     OcrModelDocument,
     OcrModelRight,
     Project,
+    TextualWitness,
     Transcription,
 )
 from core.search import search_content
@@ -631,6 +633,74 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
             part.task('transcribe',
                       user_pk=self.user.pk,
                       model_pk=model.pk)
+
+
+class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
+    """Form to perform text alignment by passing a transcription and textual witness"""
+    transcription = forms.ModelChoiceField(
+        queryset=Transcription.objects.filter(archived=False),
+        required=True,
+    )
+    witness_file = forms.FileField(
+        validators=[FileExtensionValidator(allowed_extensions=["txt"])],
+        required=False,
+    )
+    existing_witness = forms.ModelChoiceField(
+        queryset=TextualWitness.objects.all(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Refine querysets to filter transcription and witness on document"""
+        super().__init__(*args, **kwargs)
+
+        self.fields["transcription"].queryset = self.fields["transcription"].queryset.filter(
+            document=self.document
+        ).distinct()
+
+        self.fields["existing_witness"].queryset = self.fields["existing_witness"].queryset.filter(
+            owner=self.user,
+            document=self.document,
+        ).distinct()
+
+    def clean(self):
+        """Validate such that exactly one of the witness fields is present"""
+        cleaned_data = super().clean()
+        witness_file = cleaned_data.get("witness_file")
+        existing_witness = cleaned_data.get("existing_witness")
+        if not witness_file and not existing_witness:
+            raise forms.ValidationError(
+                _("You must supply a textual witness (reference text).")
+            )
+        elif witness_file and existing_witness:
+            raise forms.ValidationError(
+                _("You may only supply one witness text (file upload or existing text).")
+            )
+
+    def process(self):
+        """Instantiate or set the witness to use, then enqueue the task(s)"""
+        transcription = self.cleaned_data.get("transcription")
+        witness_file = self.cleaned_data.get("witness_file")
+        existing_witness = self.cleaned_data.get("existing_witness")
+
+        if existing_witness:
+            witness = existing_witness
+        else:
+            witness = TextualWitness(
+                file=witness_file,
+                name=splitext(witness_file.name)[0],
+                document=self.document,
+                owner=self.user,
+            )
+            witness.save()
+
+        for part in self.cleaned_data.get("parts"):
+            part.task(
+                "align",
+                user_pk=self.user.pk,
+                transcription_pk=transcription.pk,
+                witness_pk=witness.pk,
+            )
 
 
 class TrainMixin():

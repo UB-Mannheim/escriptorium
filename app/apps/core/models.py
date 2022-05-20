@@ -5,10 +5,12 @@ import logging
 import math
 import os
 import re
+import shutil
 import subprocess
 import time
 import uuid
 from datetime import datetime
+from glob import glob
 
 import numpy as np
 from celery import chain
@@ -44,6 +46,7 @@ from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
 
 from core.tasks import (
+    align,
     binarize,
     convert,
     generate_part_thumbnails,
@@ -607,6 +610,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     WORKFLOW_STATE_SEGMENTING = 5
     WORKFLOW_STATE_SEGMENTED = 6
     WORKFLOW_STATE_TRANSCRIBING = 7
+    WORKFLOW_STATE_ALIGNING = 8
+    WORKFLOW_STATE_ALIGNED = 9
     WORKFLOW_STATE_CHOICES = (
         (WORKFLOW_STATE_CREATED, _("Created")),
         (WORKFLOW_STATE_CONVERTING, _("Converting")),
@@ -614,6 +619,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
         (WORKFLOW_STATE_SEGMENTED, _("Segmented")),
         (WORKFLOW_STATE_TRANSCRIBING, _("Transcribing")),
+        (WORKFLOW_STATE_ALIGNING, _("Aligning")),
+        (WORKFLOW_STATE_ALIGNED, _("Aligned")),
     )
     workflow_state = models.PositiveSmallIntegerField(
         choices=WORKFLOW_STATE_CHOICES, default=WORKFLOW_STATE_CREATED
@@ -839,12 +846,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             w["segment"] = "done"
         if self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
             w["transcribe"] = "done"
+        if self.workflow_state == self.WORKFLOW_STATE_ALIGNING:
+            w["align"] = "ongoing"
+        if self.workflow_state == self.WORKFLOW_STATE_ALIGNED:
+            w["align"] = "done"
 
         # check on redis for reruns
         for task_name in [
             "core.tasks.binarize",
             "core.tasks.segment",
             "core.tasks.transcribe",
+            "core.tasks.align",
         ]:
             if task_name in self.tasks:
                 if self.tasks[task_name]["status"] == "pending":
@@ -941,6 +953,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             "core.tasks.transcribe": (
                 self.WORKFLOW_STATE_TRANSCRIBING,
                 self.WORKFLOW_STATE_SEGMENTED,
+            ),
+            "core.tasks.align": (
+                self.WORKFLOW_STATE_ALIGNING,
+                self.WORKFLOW_STATE_TRANSCRIBING,
             ),
         }
         for task_name in tasks_map:
@@ -1167,6 +1183,105 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
+    def align(self, transcription_pk, witness_pk):
+        """Use subprocess call to Passim to align transcription with textual witness"""
+        self.workflow_state = self.WORKFLOW_STATE_ALIGNING
+        self.save()
+
+        outdir = os.path.join(
+            settings.MEDIA_ROOT,
+            f"alignments/document-{self.document.pk}/docpart-{self.pk}-transc-{transcription_pk}",
+        )
+        # get relevant LineTranscriptions
+        line_transcriptions = LineTranscription.objects.filter(
+            line__document_part__pk=self.pk,    # has lines related to this DocumentPart,
+            transcription__pk=transcription_pk  # transcription matches the filter
+        )
+
+        # build the JSON input for passim
+        input_list = []
+        for lt in line_transcriptions:
+            # prep the line transcription to serialize to json
+            line_dict = {
+                "id": lt.line.pk,
+                "text": lt.content,
+                "ref": 0,  # distinguishes OCR from witness
+            }
+            input_list.append(line_dict)
+        witness = TextualWitness.objects.get(pk=witness_pk)
+        f = witness.file.open('r')
+        txt = f.read()
+        witness_dict = {
+            "id": "witness",
+            "text": txt,
+            "ref": 1,  # distinguishes witness from OCR
+        }
+        input_list.append(witness_dict)
+        # save to a file
+        infile = f"{outdir}.json"
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        with open(infile, "w", encoding="utf-8") as file:
+            json.dump(input_list, file, ensure_ascii=False)
+
+        # call passim
+        subprocess.check_call([
+            "seriatim",  # Passim call
+            "--linewise",
+            "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
+            "-n", "4",  # index 4-grams TODO: make configurable?
+            "--fields", "ref",
+            "--filterpairs", "ref = 1 AND ref2 = 0",
+            infile,
+            outdir,
+        ])
+
+        # get the output json file(s)
+        out_json = glob(f"{outdir}/out.json/*.json")
+        if out_json:
+            aligned_lines = []
+            # handle multi-part output
+            for json_part in out_json:
+                json_file = open(json_part, "r", encoding="utf-8")
+                json_lines = json_file.readlines()
+                # the whole file is not valid json, but each line is
+                for line in json_lines:
+                    aligned_lines.append(json.loads(line))
+
+        # build the new transcription layer
+        original_trans = Transcription.objects.get(pk=transcription_pk)
+        trans, created = Transcription.objects.get_or_create(
+            name="Aligned: " + witness.name + " + " + original_trans.name,
+            document=self.document,
+        )
+        lines = self.lines.all()
+        for line in lines:
+            # find this line by "id2" key in the output json
+            matches = list(filter(lambda alg: int(alg["id2"]) == line.pk, aligned_lines))
+
+            # build LineTranscription
+            lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
+
+            # if this line is present in the aligned output, set its content to aligned text
+            if matches:
+                # use matches[0]["alg"] instead for forced alignment with dashes
+                # lt.content = matches[0]["alg"]
+                lt.content = matches[0]["text"]
+            # if this line is not present, get content from original transcription
+            else:
+                try:
+                    old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
+                    lt.content = old_lt.content
+                except LineTranscription.DoesNotExist:
+                    lt.content = ""
+
+            lt.save()
+        # clean up temp files
+        shutil.rmtree(outdir)
+
+        self.workflow_state = self.WORKFLOW_STATE_ALIGNED
+        self.save()
+
     def chain_tasks(self, *tasks):
         redis_.set(
             "process-%d" % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}})
@@ -1208,6 +1323,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
+
+        if task_name == 'align':
+            tasks.append(align.si(
+                instance_pk=self.pk,
+                report_label='Align in %s' % self.document.name,
+                **kwargs,
+            ))
 
         if commit:
             self.chain_tasks(*tasks)
@@ -1829,6 +1951,31 @@ class OcrModelRight(models.Model):
                 )
             )
         ]
+
+
+class TextualWitness(models.Model):
+    """
+    A known reference text to use in text alignment along with an automated or uncertain transcription.
+    """
+
+    # This model is needed so that we can pass the uploaded file through Celery's JSON serialization.
+    file = models.FileField(
+        upload_to="witnesses/",
+        null=False,
+        validators=[FileExtensionValidator(allowed_extensions=["mlmodel"])],
+    )
+    name = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+    )
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name="witnesses"
+    )
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.name
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid="thumbnails_delete_signal")

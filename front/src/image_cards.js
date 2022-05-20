@@ -91,6 +91,7 @@ class partCard {
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
         this.transcribeButton = $('.js-trans-progress', this.$element);
+        this.alignButton = $('.js-align', this.$element);
         this.progressBar = $('.progress-bar', this.transcribeButton);
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
@@ -118,6 +119,11 @@ class partCard {
                 this.select();
                 partCard.refreshSelectedCount();
                 openWizard('transcribe');
+            }, this));
+            this.alignButton.click($.proxy(function(ev) {
+                this.select();
+                partCard.refreshSelectedCount();
+                openWizard('align');
             }, this));
         }
 
@@ -172,7 +178,8 @@ class partCard {
         return ((this.workflow['convert'] == 'pending' ||
                  this.workflow['binarize'] == 'pending' ||
                  this.workflow['segment'] == 'pending' ||
-                 this.workflow['transcribe'] == 'pending') &&
+                 this.workflow['transcribe'] == 'pending' ||
+                 this.workflow['align'] == 'pending') &&
                 !this.working());
     }
 
@@ -180,16 +187,18 @@ class partCard {
         return (this.workflow['convert'] == 'ongoing' ||
                 this.workflow['binarize'] == 'ongoing' ||
                 this.workflow['segment'] == 'ongoing' ||
-                this.workflow['transcribe'] == 'ongoing');
+                this.workflow['transcribe'] == 'ongoing' ||
+                this.workflow['align'] == 'ongoing');
     }
 
     isCancelable() {
-        return (this.workflow['binarize'] == 'ongoing' ||
-                this.workflow['segment'] == 'ongoing' ||
-                this.workflow['transcribe'] == 'ongoing' ||
-                this.workflow['binarize'] == 'pending' ||
-                this.workflow['segment'] == 'pending' ||
-                this.workflow['transcribe'] == 'pending');
+        const workflows = [
+            this.workflow['align'],
+            this.workflow['binarize'],
+            this.workflow['segment'],
+            this.workflow['transcribe'],
+        ]
+        return workflows.some(workflow => ['ongoing', 'pending'].includes(workflow));
     }
 
     updateThumbnail() {
@@ -210,7 +219,8 @@ class partCard {
             ['convert', this.convertIcon],
             ['binarize', this.binarizedButton],
             ['segment', this.segmentedButton],
-            ['transcribe', this.transcribeButton]];
+            ['transcribe', this.transcribeButton],
+            ['align', this.alignButton]];
         for (var i=0; i < map.length; i++) {
             var proc = map[i][0], btn = map[i][1];
             if (this.workflow[proc] == undefined) {

@@ -707,3 +707,8 @@ i.panel-icon {
 small.context {
     opacity: 0.5;
 }
+
+/* force transcription names to wrap in transcriptions management modal */
+.transcription-name {
+    word-break: break-all;
+}

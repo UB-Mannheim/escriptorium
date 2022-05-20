@@ -560,6 +560,43 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
                         level='success')
 
 
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None, **kwargs):
+    try:
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        part = DocumentPart.objects.get(pk=instance_pk)
+    except DocumentPart.DoesNotExist:
+        logger.error('Trying to align text with non-existent DocumentPart : %d', instance_pk)
+        return
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    try:
+        part.align(transcription_pk, witness_pk)
+    except Exception as e:
+        if user:
+            user.notify(_("Something went wrong during the alignment!"),
+                        id="alignment-error", level='danger')
+        part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+        part.save()
+        logger.exception(e)
+        raise e
+    else:
+        if user:
+            user.notify(_("Alignment done!"),
+                        id="alignment-success",
+                        level='success')
+
+
 def check_signal_order(old_signal, new_signal):
     SIGNAL_ORDER = ['before_task_publish', 'task_prerun', 'task_failure', 'task_success']
     return SIGNAL_ORDER.index(old_signal) < SIGNAL_ORDER.index(new_signal)

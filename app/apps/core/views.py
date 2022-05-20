@@ -31,6 +31,7 @@ from django.views.generic import (
 from elasticsearch import exceptions as es_exceptions
 
 from core.forms import (
+    AlignForm,
     BinarizeForm,
     DocumentForm,
     DocumentOntologyForm,
@@ -412,6 +413,7 @@ class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
         context['binarize_form'] = BinarizeForm(self.object, self.request.user)
         context['segment_form'] = SegmentForm(self.object, self.request.user)
         context['transcribe_form'] = TranscribeForm(self.object, self.request.user)
+        context['align_form'] = AlignForm(self.object, self.request.user)
         context['segtrain_form'] = SegTrainForm(self.object, self.request.user)
         context['rectrain_form'] = RecTrainForm(self.object, self.request.user)
 
@@ -536,6 +538,8 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
             form_class = SegmentForm
         elif task == 'transcribe':
             form_class = TranscribeForm
+        elif task == 'align':
+            form_class = AlignForm
         elif task == 'segtrain':
             form_class = SegTrainForm
         elif task == 'train':
