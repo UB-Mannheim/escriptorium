@@ -571,7 +571,7 @@ def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None
 
     if user_pk:
         try:
-            user = User.objects.get(pk=user_pk)
+            user = get_user_model().objects.get(pk=user_pk)
             # If quotas are enforced, assert that the user still has free CPU minutes
             if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
                 assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"

@@ -1,8 +1,10 @@
 import unittest
+from unittest.mock import patch
 
 from django.urls import reverse
 
-from core.models import Line
+from core.models import DocumentPart, Line
+from core.tasks import align
 from core.tests.factory import CoreFactoryTestCase
 
 # DO NOT REMOVE THIS IMPORT, it will break a lot of tests
@@ -134,3 +136,49 @@ class TasksTestCase(CoreFactoryTestCase):
 
     def test_train_existing_segmentation_model(self):
         pass
+
+    def test_align_task(self):
+        """Unit tests for document alignment task"""
+        # should log error on bad DocumentPart PK
+        try:
+            # ensure part with this pk actually does not exist
+            DocumentPart.objects.get(pk=123456789).delete()
+        except DocumentPart.DoesNotExist:
+            pass
+        with self.assertLogs('core.tasks') as mock_log:
+            align(instance_pk=123456789)
+            self.assertEqual(mock_log.output, ["ERROR:core.tasks:Trying to align text with non-existent DocumentPart : 123456789"])
+
+        with patch("core.tasks.apps") as apps_mock:
+            # should call apps.get_model and DocumentPart.objects.get
+            align(instance_pk=1)
+            apps_mock.get_model.assert_called_with('core', 'DocumentPart')
+            apps_mock.get_model.return_value.objects.get.assert_called_with(pk=1)
+
+            with patch("core.tasks.get_user_model") as get_user_model_mock:
+                # should call User.objects.get
+                align(instance_pk=1, user_pk=2)
+                get_user_model_mock.assert_called()
+                get_user_model_mock.return_value.objects.get.assert_called_with(pk=2)
+
+                # should call part.align with transcription, witness pks (and default n-gram of 4)
+                align(instance_pk=1, user_pk=2, transcription_pk=3, witness_pk=4)
+                part = apps_mock.get_model.return_value.objects.get.return_value
+                part.align.assert_called_with(3, 4, 4)
+
+                # should call part.align with set n-gram value
+                align(instance_pk=1, user_pk=2, transcription_pk=3, witness_pk=4, n_gram=2)
+                part.align.assert_called_with(3, 4, 2)
+
+                # when part.align raises an exception:
+                part.align.side_effect = Exception
+                # should notify the user about the exception, set the workflow state
+                # back to transcribing, log the exception, and raise the exception
+                with self.assertLogs('core.tasks') as mock_log:
+                    with self.assertRaises(Exception):
+                        align(instance_pk=1, user_pk=2, transcription_pk=3, witness_pk=4)
+                    user = get_user_model_mock.return_value.objects.get.return_value
+                    user.notify.assert_called()
+                    self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
+                    part.save.assert_called()
+                    self.assertEqual(mock_log.output[0][:17], "ERROR:core.tasks:")
