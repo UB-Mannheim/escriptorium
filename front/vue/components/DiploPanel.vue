@@ -238,8 +238,8 @@ export default Vue.extend({
                 let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.transcription = this.$store.state.transcriptions.selectedTranscription;
                 const newAnno = await this.$store.dispatch('textAnnotations/create', body);
-                overrideId(newAnno.pk);
                 // updates actual object (annotation is just a copy)
+                annotation.id = newAnno.pk;
                 this.anno.addAnnotation(annotation);
             }.bind(this));
 
@@ -407,7 +407,6 @@ export default Vue.extend({
             this.addToList();
             var updated = this.bulkUpdate();
             this.bulkCreate();
-
             updated.then(function(value) {
                 if (value > 0) this.recalculateAnnotationSelectors();
             }.bind(this));
