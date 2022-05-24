@@ -4,7 +4,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django_redis import get_redis_connection
 from kraken.lib import vgsl
 from PIL import Image, ImageDraw
@@ -17,6 +17,7 @@ from core.models import (
     LineTranscription,
     OcrModel,
     Project,
+    TextualWitness,
     Transcription,
 )
 from users.models import Group, User
@@ -135,6 +136,10 @@ class CoreFactory():
         line_width = 50
         line_margin = 10
 
+        # Lines of randomized garbage text to use for transcription content
+        f = open(os.path.join(os.path.dirname(__file__), "assets", "lines.txt"), "r")
+        lines = f.readlines()
+
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
         for i in range(amount):
@@ -153,12 +158,28 @@ class CoreFactory():
                                            [line_margin, i * line_height - line_margin],
                                        ],
                                        block=block)
+
             LineTranscription.objects.create(transcription=transcription,
                                              line=line,
-                                             content='test %d' % i)
+                                             content=lines[i])
+
+    def make_witness(self, document, user):
+        """Generate a textual witness (reference text) for use in alignment"""
+        # text of transcription with random minor changes
+        f = open(os.path.join(os.path.dirname(__file__), "assets", "alignment/witness.txt"), "rb")
+        return TextualWitness.objects.create(
+            file=SimpleUploadedFile(
+                name="witness.txt",
+                content=f.read(),
+                content_type="text/plain",
+            ),
+            name="fake_textual_witness",
+            document=document,
+            owner=user,
+        )
 
 
-class CoreFactoryTestCase(TestCase):
+class CoreFactoryTestCase(TransactionTestCase):
     def setUp(self):
         self.factory = CoreFactory()
 

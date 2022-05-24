@@ -11,6 +11,7 @@ import time
 import uuid
 from datetime import datetime
 from glob import glob
+from os import makedirs, path, remove
 
 import numpy as np
 from celery import chain
@@ -1188,7 +1189,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
 
-        outdir = os.path.join(
+        outdir = path.join(
             settings.MEDIA_ROOT,
             f"alignments/document-{self.document.pk}/docpart-{self.pk}-transc-{transcription_pk}",
         )
@@ -1219,8 +1220,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         input_list.append(witness_dict)
         # save to a file
         infile = f"{outdir}.json"
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
+        if not path.exists(outdir):
+            makedirs(outdir)
         with open(infile, "w", encoding="utf-8") as file:
             json.dump(input_list, file, ensure_ascii=False)
 
@@ -1238,8 +1239,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
         # get the output json file(s)
         out_json = glob(f"{outdir}/out.json/*.json")
+        aligned_lines = []
         if out_json:
-            aligned_lines = []
             # handle multi-part output
             for json_part in out_json:
                 json_file = open(json_part, "r", encoding="utf-8")
@@ -1277,7 +1278,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
             lt.save()
         # clean up temp files
-        os.remove(infile)
+        remove(infile)
         shutil.rmtree(outdir)
 
         self.workflow_state = self.WORKFLOW_STATE_ALIGNED
@@ -1963,7 +1964,7 @@ class TextualWitness(models.Model):
     file = models.FileField(
         upload_to="witnesses/",
         null=False,
-        validators=[FileExtensionValidator(allowed_extensions=["mlmodel"])],
+        validators=[FileExtensionValidator(allowed_extensions=["txt"])],
     )
     name = models.CharField(
         max_length=256,
