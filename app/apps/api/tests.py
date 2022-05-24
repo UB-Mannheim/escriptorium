@@ -529,7 +529,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(26):
+        with self.assertNumQueries(22):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -594,7 +594,7 @@ class DocumentMetadataTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:metadata-list',
                       kwargs={'document_pk': self.doc.pk})
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(7):
             resp = self.client.post(uri, {
                 'key': {'name': 'testnewkey'},
                 'value': 'testnewval'
