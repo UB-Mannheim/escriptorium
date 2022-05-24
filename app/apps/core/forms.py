@@ -698,7 +698,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         transcription = self.cleaned_data.get("transcription")
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
-        n_gram = self.cleaned_data.get("n_gram")
+        n_gram = self.cleaned_data.get("n_gram", 4)
 
         if existing_witness:
             witness = existing_witness

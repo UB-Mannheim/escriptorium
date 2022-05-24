@@ -21,7 +21,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.transcription = self.factory.make_transcription(document=self.part.document)
         self.factory.make_content(self.part, transcription=self.transcription)
         self.user = self.factory.make_user()
-        self.witness = self.factory.make_witness(self.part.document, self.user)
+        self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
 
     @patch("core.models.subprocess")
     def test_align(self, mock_subprocess):
