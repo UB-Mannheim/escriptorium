@@ -16,7 +16,7 @@ def create_task_reporting(sender, body, **kwargs):
     task_kwargs = body[1]
 
     # If the reporting is disabled for this task we don't need to execute following code
-    if sender.name in settings.REPORTING_TASKS_BLACKLIST:
+    if sender in settings.REPORTING_TASKS_BLACKLIST:
         return
 
     User = get_user_model()
