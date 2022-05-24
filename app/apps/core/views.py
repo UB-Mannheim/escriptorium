@@ -147,10 +147,9 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
             return context
 
         template_results = [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']]
-        results = [result.values() for result in template_results]
 
         # Pagination
-        paginator = ESPaginator(results, paginate_by, total=int(es_results['hits']['total']['value']))
+        paginator = ESPaginator(template_results, paginate_by, total=int(es_results['hits']['total']['value']))
 
         if page > paginator.num_pages:
             page = paginator.num_pages
@@ -162,16 +161,26 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
 
     def convert_hit_to_template(self, hit):
         hit_source = hit['_source']
+        highlight = hit.get('highlight', {})
         bounding_box = hit_source['bounding_box']
-        viewbox = " ".join([
-            str(max([bounding_box[0] - 10, 0])),
-            str(max([bounding_box[1] - 10, 0])),
-            str(bounding_box[2] - bounding_box[0] + 20),
-            str(bounding_box[3] - bounding_box[1] + 20)
-        ])
+
+        viewbox = None
+        larger = False
+        if bounding_box:
+            viewbox = " ".join([
+                str(max([bounding_box[0] - 10, 0])),
+                str(max([bounding_box[1] - 10, 0])),
+                str(bounding_box[2] - bounding_box[0] + 20),
+                str(bounding_box[3] - bounding_box[1] + 20)
+            ])
+            larger = (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+
         return {
-            'content': hit.get('highlight', {}).get('content', [])[0],
+            'context_before': highlight.get('context_before'),
+            'content': highlight.get('raw_content'),
+            'context_after': highlight.get('context_after'),
             'line_number': hit_source['line_number'],
+            'transcription_pk': hit_source['transcription_id'],
             'transcription_name': hit_source['transcription_name'],
             'part_title': hit_source['part_title'],
             'part_pk': hit_source['document_part_id'],
@@ -182,7 +191,7 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
             'img_w': hit_source['image_width'],
             'img_h': hit_source['image_height'],
             'viewbox': viewbox,
-            'larger': (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+            'larger': larger
         }
 
     def get_success_url(self):
@@ -668,10 +677,13 @@ class ModelUnbind(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = OcrModelDocument
 
     def get_object(self):
-        return OcrModelDocument.objects.get(
-            document__owner=self.request.user,
-            document__pk=self.kwargs['docPk'],
-            ocr_model__pk=self.kwargs['pk'])
+        try:
+            return OcrModelDocument.objects.filter(
+                document__owner=self.request.user,
+                document__pk=self.kwargs['docPk'],
+                ocr_model__pk=self.kwargs['pk'])
+        except OcrModelDocument.DoesNotExist:
+            raise Http404
 
     def get_success_url(self):
         if 'next' in self.request.GET:

@@ -28,6 +28,10 @@ class Profile {
         this.saveProfile();
     }
 
+    setUserId(id) {
+        this.userId = id;
+    }
+
     getCookieConsent() {
         // get cookie consent.
         if (!this.get('cookie-consent')) {

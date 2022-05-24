@@ -1,6 +1,6 @@
 <template>
   <div class="col panel">
-    <loading :active.sync="isWorking" :is-full-screen="false" />
+    <loading :active.sync="isWorking" :is-full-page="false" />
     <div class="tools">
       <i title="Segmentation Panel" class="panel-icon fas fa-align-left"></i>
       <div class="btn-group">
@@ -237,7 +237,7 @@ export default Vue.extend({
       imageLoaded: false,
       colorMode: "color", //  color - binary - grayscale
       undoManager: new UndoManager(),
-      isWorking: false,
+      isWorking: false
     };
   },
   components: {
@@ -278,6 +278,23 @@ export default Vue.extend({
           this.initSegmenter();
         }
 
+        // Prevent shortcuts from interfering with the searchbox in the navbar and conversely
+        let searchbox = document.getElementById("navbar-searchbox")
+        if (searchbox) {
+          searchbox.addEventListener(
+            "focus",
+            function (e) {
+              this.$store.commit('document/setBlockShortcuts', true);
+            }.bind(this)
+          );
+          searchbox.addEventListener(
+            "blur",
+            function (e) {
+              this.$store.commit('document/setBlockShortcuts', false);
+            }.bind(this)
+          );
+        }
+
         // simulates wheelzoom for canvas
         var zoom = this.$parent.zoom;
         zoom.events.addEventListener(
@@ -316,7 +333,14 @@ export default Vue.extend({
           async (ev) => {
             const data = ev.detail;
             this.isWorking = true;
-            await this.merge(data); // Updates data and adds createdLine
+            try {
+              await this.merge(data); // Updates data and adds createdLine
+            } catch (error) {
+              console.warn("Failed to merge lines:", error);
+              this.isWorking = false;
+              return;
+            }
+
             this.pushHistory(
               () => {
                 this.bulkDelete({ lines: [data.createdLine] });
@@ -718,23 +742,24 @@ export default Vue.extend({
         dataLine.transcriptionsForUndelete = deletedLine.transcriptions;
       }
     },
+
     async merge(data) {
       const { createdLine, deletedPKs, deletedLines } =
         await this.$store.dispatch(
-          "lines/merge",{
+          "lines/merge", {
             pks: data.lines.map((l) => l.context.pk),
             transcription: this.$store.state.transcriptions.selectedTranscription,
           }
         );
       let region = this.segmenter.regions.find(
           (r) => r.context.pk == createdLine.region
-        );
+      );
       const segmenterLine = this.segmenter.loadLine(createdLine, region);
+
       // update the segmenter pk
       segmenterLine.context.pk = createdLine.pk;
       data.createdLine = segmenterLine.get();
       this.$store.commit("lines/load", createdLine.pk);
-
       this.processDeleteResponse(data, deletedPKs, deletedLines);
     },
 

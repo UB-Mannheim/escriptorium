@@ -1,5 +1,6 @@
 <template>
     <div class="col panel">
+        <loading :active.sync="isWorking" :is-full-page="false" />
         <div class="tools">
             <i title="Source Panel" class="panel-icon fas fa-eye"></i>
             <a v-bind:href="$store.state.parts.image.uri" target="_blank">
@@ -59,6 +60,7 @@ import { assign } from 'lodash'
 import { BasePanel } from '../../src/editor/mixins.js';
 import { AnnoPanel } from '../../src/editor/mixins.js';
 import { Annotorious } from '@recogito/annotorious';
+import Loading from "vue-loading-overlay";
 
 const rectangleRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?,(?<w>\d+)(?:\.\d+)?,(?<h>\d+)(?:\.\d+)?/);
 const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
@@ -66,8 +68,12 @@ const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
 export default Vue.extend({
     mixins: [BasePanel, AnnoPanel],
     props: ['fullsizeimage'],
-    data: {
+    data() { return {
         imageLoaded: false,
+        isWorking: false
+    };},
+    components: {
+        loading: Loading,
     },
     computed: {
         imageSrc() {
@@ -89,11 +95,12 @@ export default Vue.extend({
             if (n && n != o) {
                 if (this.anno) {
                     this.imageLoaded = false;
-                    // reload annotations with updated img size when img is loaded
-                    this.anno.clearAnnotations();
                 }
             }
         }
+    },
+    beforeDestroy: function() {
+        this.anno.destroy();
     },
     mounted: function() {
         this.$parent.zoom.register(
@@ -108,25 +115,37 @@ export default Vue.extend({
         );
 
         this.initAnnotations();
+        this.fetchAnnotations();
     },
     methods: {
         async rotate(angle) {
-            await this.$store.dispatch('parts/rotate', angle);
+            try {
+                this.isWorking = true;
+                await this.$store.dispatch('parts/rotate', angle);
+                this.loadAnnotations();
+            } catch {
+                // oh well
+            } finally {
+                this.isWorking = false;
+            }
         },
 
-        onImageLoaded() {
+        async onImageLoaded() {
             this.imageLoaded = true;
             this.loadAnnotations();
         },
 
         getCoordinatesFromW3C(annotation) {
             var coordinates = [];
-            if (annotation.taxonomy.marker_type == 'Rectangle') {
+            if (annotation.target.selector.type == 'FragmentSelector') {
                 // looks like xywh=pixel:133.98072814941406,144.94607543945312,169.30674743652344,141.2919921875"
                 let m = annotation.target.selector.value.match(rectangleRegExp).groups;
                 coordinates = [[parseInt(m.x), parseInt(m.y)],
-                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)]];
-            } else if (annotation.taxonomy.marker_type == 'Polygon') {
+                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)],
+                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)],
+                               [parseInt(m.x), parseInt(m.y)+parseInt(m.h)]
+                              ];
+            } else if (annotation.target.selector.type == 'SvgSelector') {
                 // looks like <svg><polygon points=\"168.08567810058594,230.20848083496094 422.65484619140625,242.38882446289062 198.5365447998047,361.75616455078125\"></polygon></svg>
                 let matches = annotation.target.selector.value.matchAll(polygonRegExp);
                 for (let m of matches) {
@@ -154,7 +173,12 @@ export default Vue.extend({
             });
         },
 
-        async initAnnotations() {
+        async fetchAnnotations() {
+            await this.$store.dispatch('imageAnnotations/fetch');
+            if (this.imageLoaded) this.loadAnnotations();
+        },
+
+        initAnnotations() {
             if (document.getElementById('anno-taxonomies-styles') == null)
                 this.makeTaxonomiesStyles();
 
@@ -199,9 +223,6 @@ export default Vue.extend({
             const editorObserver = new MutationObserver(isEditorOpen);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
-            await this.$store.dispatch('imageAnnotations/fetch');
-            this.loadAnnotations();
-
             this.anno.on('createAnnotation', async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
                 let body = this.getAPIAnnotationBody(annotation);
@@ -218,8 +239,12 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                this.enableTaxonomy(annotation.taxonomy);
-                this.setAnnoTaxonomy(annotation.taxonomy);
+                if (this.currentTaxonomy != annotation.taxonomy) {
+                    this.toggleTaxonomy(annotation.taxonomy);
+                    // have to use this trick to make it editable..
+                    this.anno.selectAnnotation();
+                    this.anno.selectAnnotation(annotation);
+                }
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
@@ -249,6 +274,7 @@ export default Vue.extend({
         },
 
         loadAnnotations() {
+            this.anno.clearAnnotations();
             const annos = this.$store.state.imageAnnotations.all;
             annos.forEach(function(annotation) {
                 // ugly way to deep copy so that we don't modify data in the store

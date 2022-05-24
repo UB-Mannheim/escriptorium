@@ -31,8 +31,8 @@ class UserViewSetTestCase(CoreFactoryTestCase):
     def test_onboarding(self):
         user = self.factory.make_user()
         self.client.force_login(user)
-        uri = reverse('api:user-onboarding')
-        resp = self.client.put(uri, {
+        uri = reverse('api:user-detail', kwargs={'pk': user.pk})
+        resp = self.client.patch(uri, {
             'onboarding': 'False',
         }, content_type='application/json')
 
@@ -179,21 +179,23 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list_document_with_tasks(self):
         # Creating a new Document that self.doc.owner shouldn't see
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
-        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
-        report.start()
+        report1 = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report1.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(6):
             resp = self.client.get(reverse('api:document-tasks'))
 
-        self.assertEqual(resp.status_code, 200)
         json = resp.json()
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(json['count'], 1)
         self.assertEqual(json['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -204,6 +206,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
         report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
         report.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(8):
@@ -224,7 +228,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 'pk': self.doc.pk,
                 'name': self.doc.name,
                 'owner': self.doc.owner.username,
-                'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
         ])
@@ -243,6 +247,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
         report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
         report.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(6):
@@ -256,7 +262,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -381,7 +387,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -409,7 +415,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 0, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
         model.refresh_from_db()
@@ -440,7 +446,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -468,7 +474,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 0, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
         model.refresh_from_db()
@@ -523,7 +529,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(26):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(

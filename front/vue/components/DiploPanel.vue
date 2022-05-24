@@ -124,6 +124,9 @@ export default Vue.extend({
                     vm.onDraggingEnd(evt);
                 }
             });
+
+            // update heights and set ratio
+            this.refresh();
         }.bind(this));
 
         this.initAnnotations();
@@ -216,23 +219,6 @@ export default Vue.extend({
                 formatter: textAnnoFormatter.bind(this)
             });
 
-            // deal with annotation disappearing (user deleted the whole text)
-            const annotatonHighlighRemove = function(mutationsList, observer) {
-                for (let mutation of mutationsList) {
-                    if (mutation.removedNodes) {
-                        for (let node of mutation.removedNodes) {
-                            if (node.classList && node.classList.contains('r6o-annotation')) {
-                                if (this.$store.state.transcriptions && this.$store.state.transcriptions.transcriptionsLoaded) {
-                                   this.$store.dispatch('textAnnotations/delete', node.dataset.id);
-                                }
-                            }
-                        }
-                    }
-                }
-            }.bind(this);
-            const observer = new MutationObserver(annotatonHighlighRemove);
-            observer.observe(this.$refs.diplomaticLines, {childList: true, subtree: true});
-
             const isEditorOpen = function(mutationsList, observer) {
                 // let's hope for no race condition with the contenteditable focusin/out...
                 for (let mutation of mutationsList) {
@@ -246,13 +232,15 @@ export default Vue.extend({
             const editorObserver = new MutationObserver(isEditorOpen);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
-            this.anno.on('createAnnotation', async function(annotation) {
+            this.anno.on('createAnnotation', async function(annotation, overrideId) {
                 annotation.taxonomy = this.currentTaxonomy;
                 let offsets = annotation.target.selector.find(e => e.type == 'TextPositionSelector');
                 let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.transcription = this.$store.state.transcriptions.selectedTranscription;
                 const newAnno = await this.$store.dispatch('textAnnotations/create', body);
+                // updates actual object (annotation is just a copy)
                 annotation.id = newAnno.pk;
+                this.anno.addAnnotation(annotation);
             }.bind(this));
 
             this.anno.on('updateAnnotation', function(annotation) {
@@ -263,8 +251,9 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on('selectAnnotation', function(annotation) {
-                this.enableTaxonomy(annotation.taxonomy);
-                this.setTextAnnoTaxonomy(annotation.taxonomy);
+                if (this.currentTaxonomy != annotation.taxonomy) {
+                    this.toggleTaxonomy(annotation.taxonomy);
+                }
             }.bind(this));
 
             this.anno.on('deleteAnnotation', function(annotation) {
@@ -413,12 +402,20 @@ export default Vue.extend({
             /*
                if some lines are modified add them to updatedlines,
                new lines add them to createdLines then save
-             */
+            */
             this.$refs.saveNotif.classList.add('hide');
             this.addToList();
-            this.bulkUpdate();
+            var updated = this.bulkUpdate();
             this.bulkCreate();
-            this.recalculateAnnotationSelectors();
+            updated.then(function(value) {
+                if (value > 0) this.recalculateAnnotationSelectors();
+            }.bind(this));
+
+            // check if some annotations were completely deleted by the erasing the text
+            for (let annotation of this.$store.state.textAnnotations.all) {
+                let annoEl = document.querySelector('.r6o-annotation[data-id="'+annotation.pk+'"]');
+                if (annoEl === null) this.$store.dispatch('textAnnotations/delete', annotation.pk);
+            }
         },
 
         focusNextLine(sel, line) {
@@ -620,14 +617,16 @@ export default Vue.extend({
         },
 
         async bulkUpdate() {
-            if(this.updatedLines.length){
+            var toUpdate = this.updatedLines.length;
+            if(toUpdate) {
                 await this.$store.dispatch('transcriptions/bulkUpdate', this.updatedLines);
                 this.updatedLines = [];
             }
+            return toUpdate;
         },
 
         async bulkCreate() {
-            if(this.createdLines.length){
+            if(this.createdLines.length) {
                 await this.$store.dispatch('transcriptions/bulkCreate', this.createdLines);
                 this.createdLines = [];
             }

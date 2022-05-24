@@ -16,6 +16,29 @@ from users.models import User
 logger = logging.getLogger("es_indexing")
 logger.setLevel(logging.ERROR)
 
+INDEX_MAPPING = {
+    "properties": {
+        "bounding_box": {"type": "long"},
+        "context": {"type": "text"},
+        "context_after": {"type": "text"},
+        "context_before": {"type": "text"},
+        "document_archived": {"type": "boolean"},
+        "document_id": {"type": "long"},
+        "document_name": {"type": "keyword"},
+        "document_part_id": {"type": "long"},
+        "have_access": {"type": "long"},
+        "image_height": {"type": "long"},
+        "image_url": {"type": "keyword"},
+        "image_width": {"type": "long"},
+        "line_number": {"type": "long"},
+        "part_title": {"type": "keyword"},
+        "project_id": {"type": "long"},
+        "raw_content": {"type": "text"},
+        "transcription_id": {"type": "long"},
+        "transcription_name": {"type": "keyword"},
+    }
+}
+
 
 class Command(BaseCommand):
     help = "Index projects by creating one Elasticsearch document for each LineTranscription."
@@ -39,6 +62,11 @@ class Command(BaseCommand):
             type=int,
             help="Specify a few part PKs to index. If unset, all parts will be indexed by default.",
         )
+        parser.add_argument(
+            "--drop",
+            help="Drop the existing search index before reindexing",
+            action="store_true",
+        )
 
     def handle(self, *args, **options):
         if options["verbosity"] > 1:
@@ -59,11 +87,32 @@ class Command(BaseCommand):
 
         # Creating the common index if it doesn't exist
         indices = IndicesClient(self.es_client)
+
+        if options.get("drop"):
+            # ignore_unavailable prevents an error from being raised if the index doesn't exist yet
+            indices.delete(
+                index=settings.ELASTICSEARCH_COMMON_INDEX, ignore_unavailable=True
+            )
+
         if not indices.exists(index=settings.ELASTICSEARCH_COMMON_INDEX):
             indices.create(index=settings.ELASTICSEARCH_COMMON_INDEX)
             logger.info(
                 f"Created a new index named {settings.ELASTICSEARCH_COMMON_INDEX}"
             )
+
+        try:
+            # Explicitly set the index mapping
+            indices.put_mapping(INDEX_MAPPING, index=settings.ELASTICSEARCH_COMMON_INDEX)
+
+            # Assert that the current index mapping really match INDEX_MAPPING constant
+            real_index_mapping = (
+                indices.get_mapping(index=settings.ELASTICSEARCH_COMMON_INDEX)
+                .get(settings.ELASTICSEARCH_COMMON_INDEX, {})
+                .get("mappings", {})
+            )
+            assert real_index_mapping == INDEX_MAPPING
+        except Exception:
+            raise Exception(f"The index named {settings.ELASTICSEARCH_COMMON_INDEX} has an internal mapping that conflicts from the one defined in the constant INDEX_MAPPING, please use the --drop option to clean the data and reindex everything.")
 
         extras = {}
         # Index all projects by default
@@ -144,47 +193,65 @@ class Command(BaseCommand):
         scale_factors = [thumbnail.width / part.image.width, thumbnail.height / part.image.height] * 2
 
         to_insert = []
-        previous_contents = {}
-        previous_index = {}
-        for line in part.lines.all().order_by("order"):
-            for line_transcription in line.transcriptions.all():
-                tr_id = line_transcription.transcription.id
+        # Iterate on all DocumentPart regions and also on None to retrieve lines that aren't associated to one
+        for block in [*part.blocks.all().order_by("order"), None]:
+            if block:
+                lines = block.lines.all()
+            else:
+                lines = part.lines.filter(block__isnull=True)
 
-                if previous_index.get(tr_id) is not None:
-                    # Enhance the previous ES document for this Transcription with the content of its next neighbor
-                    to_insert[previous_index[tr_id]][
-                        "content"
-                    ] += f" {line_transcription.content}"
+            # Reset the context "cache" for each region to avoid connecting lines from different regions
+            previous_contents = {}
+            previous_index = {}
+            for line in lines.order_by("order"):
+                for line_transcription in line.transcriptions.all():
+                    tr_id = line_transcription.transcription.id
 
-                to_insert.append(
-                    {
-                        "_index": settings.ELASTICSEARCH_COMMON_INDEX,
-                        "_id": f"{line_transcription.id}",
-                        "project_id": project.id,
-                        "document_id": document.id,
-                        "document_name": document.name,
-                        "document_part_id": part.id,
-                        "part_title": part.title,
-                        "image_url": thumbnail.url,
-                        "image_width": thumbnail.width,
-                        "image_height": thumbnail.height,
-                        "transcription_id": tr_id,
-                        "transcription_name": line_transcription.transcription.name,
-                        "line_number": line.order + 1,
-                        # Build the enhanced LineTranscription content by adding the last LineTranscription content for this Transcription
-                        "content": f"{previous_contents[tr_id]} {line_transcription.content}"
-                        if previous_contents.get(tr_id) is not None
-                        else line_transcription.content,
-                        # Rescaling the line bbox to match the thumbnail if necessary
-                        "bounding_box": [ceil(value * factor) for value, factor in zip(line.get_box(), scale_factors)],
-                        "have_access": list(set(allowed_users)),
-                    }
-                )
+                    if previous_index.get(tr_id) is not None:
+                        # Enhance the previous ES document for this Transcription with the content of its next neighbor
+                        to_insert[previous_index[tr_id]][
+                            "context"
+                        ] += f" {line_transcription.content}"
 
-                previous_contents[tr_id] = line_transcription.content
-                previous_index[tr_id] = len(to_insert) - 1
+                        to_insert[previous_index[tr_id]][
+                            "context_after"
+                        ] = line_transcription.content
 
-        to_insert = [entry for entry in to_insert if entry["content"]]
+                    line_box = line.get_box()
+                    # If you change the document structure here, don't forget to update the INDEX_MAPPING constant
+                    to_insert.append(
+                        {
+                            "_index": settings.ELASTICSEARCH_COMMON_INDEX,
+                            "_id": f"{line_transcription.id}",
+                            "project_id": project.id,
+                            "document_id": document.id,
+                            "document_name": document.name,
+                            "document_archived": document.is_archived,
+                            "document_part_id": part.id,
+                            "part_title": part.title,
+                            "image_url": thumbnail.url,
+                            "image_width": thumbnail.width,
+                            "image_height": thumbnail.height,
+                            "transcription_id": tr_id,
+                            "transcription_name": line_transcription.transcription.name,
+                            "line_number": line.order + 1,
+                            "raw_content": line_transcription.content,
+                            # Build the enhanced LineTranscription context by adding the last LineTranscription content for this Transcription
+                            "context_before": previous_contents.get(tr_id),
+                            "context_after": None,
+                            "context": f"{previous_contents[tr_id]} {line_transcription.content}"
+                            if tr_id in previous_contents
+                            else line_transcription.content,
+                            # Rescaling the line bbox to match the thumbnail if necessary
+                            "bounding_box": [ceil(value * factor) for value, factor in zip(line_box, scale_factors)] if line_box else None,
+                            "have_access": list(set(allowed_users)),
+                        }
+                    )
+
+                    previous_contents[tr_id] = line_transcription.content
+                    previous_index[tr_id] = len(to_insert) - 1
+
+        to_insert = [entry for entry in to_insert if entry["raw_content"]]
 
         nb_inserted, _ = es_bulk(self.es_client, to_insert, stats_only=True)
         return nb_inserted

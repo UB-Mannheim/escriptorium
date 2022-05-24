@@ -129,10 +129,6 @@ export default Vue.extend({
                 return 'lightgrey';
             }
         },
-        maskPoints() {
-            if (this.line == null || !this.line.mask) return '';
-            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
-        },
         fakeBaseline() {
             // create a fake path based on the mask,
             var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);

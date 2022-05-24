@@ -1,4 +1,5 @@
 from escriptorium.settings import *
+from django.utils.translation import gettext_lazy as _
 
 DEBUG = True
 
@@ -13,7 +14,12 @@ DATABASES = {
     }
 }
 
-ESC_LANGUAGES = os.getenv('ESC_LANGUAGES', 'en,fr,de')
+# enable french and german
+LANGUAGES = [
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('de', _('German'))
+]
 
 INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
 MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']

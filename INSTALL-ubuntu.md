@@ -12,13 +12,13 @@ Ubuntu 18.04:
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa # needed to get python > 3.7
 sudo apt update
-sudo apt install postgresql postgresql-contrib redis-server netcat-traditional jpegoptim pngcrush build-essential python3.8 python-dev python3-dev python3-virtualenv
+sudo apt install postgresql postgresql-contrib redis-server git libvips42 netcat-traditional jpegoptim pngcrush build-essential python3.8 python-dev python3-dev python3-virtualenv
 ```
 
 Ubuntu 20.04:
 ```
 sudo apt update
-sudo apt install postgresql postgresql-contrib redis-server netcat-traditional jpegoptim pngcrush build-essential python3.8 python3.8-dev python3-virtualenv npm
+sudo apt install postgresql postgresql-contrib redis-server git libvips42 netcat-traditional jpegoptim pngcrush build-essential python3.8 python3.8-dev python3-virtualenv npm
 ```
 
 Then:
@@ -36,8 +36,8 @@ git clone https://gitlab.com/scripta/escriptorium.git # will by default get you 
   cd escriptorium
   virtualenv env -p python3.8
   source env/bin/activate
-  curl -sS https://bootstrap.pypa.io/get-pip.py | python3.8
-  python3.8 -m pip install -r app/requirements.txt
+  curl -sS https://bootstrap.pypa.io/get-pip.py | python
+  python -m pip install -r app/requirements.txt
   cp app/escriptorium/local_settings.py{.example,}
   (
     cd front
@@ -57,7 +57,7 @@ Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comm
 ```bash
 (
   cd escriptorium/app
-  python3.8 manage.py check
+  python manage.py check
 )
 ```
 
@@ -66,8 +66,8 @@ Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comm
 ```bash
 (
   cd escriptorium/app
-  python3.8 manage.py migrate
-  python3.8 manage.py createsuperuser # follow the prompts along
+  python manage.py migrate
+  python manage.py createsuperuser # follow the prompts along
 )
 ```
 
@@ -77,6 +77,6 @@ Now edit `escriptorium/app/escriptorium/local_settings.py` and at least out-comm
 (
   cd escriptorium/app
   celery -A escriptorium worker -l INFO &
-  python3.8 manage.py runserver
+  python manage.py runserver
 )
 ```
