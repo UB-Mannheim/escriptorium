@@ -259,14 +259,15 @@ class DocumentViewSet(ModelViewSet):
         if count:
             try:
                 # send a single websocket message for all parts
-                send_event('document', document.pk, 'parts:workflow', {
-                    'parts': [{
-                        'id': report.document_part.pk,
-                        'process': task_name,
-                        'status': 'error',
-                        'reason': _('Canceled.')
-                    } for report in reports]
-                })
+                if report.document_part:
+                    send_event('document', document.pk, 'parts:workflow', {
+                        'parts': [{
+                            'id': report.document_part.pk,
+                            'process': task_name,
+                            'status': 'error',
+                            'reason': _('Canceled.')
+                        } for report in reports]
+                    })
             except Exception as e:
                 # don't crash on websocket error
                 logger.exception(e)
