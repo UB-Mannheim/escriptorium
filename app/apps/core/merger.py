@@ -5,10 +5,10 @@ from math import sqrt
 from typing import Any, Dict, List, Tuple
 
 from django.db.models import prefetch_related_objects
+from shapely.geometry import LineString, Polygon
 
 from api.serializers import DetailedLineSerializer
 from core.models import Block, Line
-from shapely.geometry import LineString, Polygon
 
 __all__ = ['merge_lines', 'MAX_MERGE_SIZE']
 MAX_MERGE_SIZE = 8  # Maximum numbers of segments we can merge
@@ -109,6 +109,7 @@ def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
 
     return result
 
+
 def find_block(baseline: str, regions: List[Block]):
     center = LineString(baseline).interpolate(0.5, normalized=True)
     region = next(
@@ -116,6 +117,7 @@ def find_block(baseline: str, regions: List[Block]):
     )
 
     return region.pk if region is not None else None
+
 
 def merge_lines(lines: List[Line]):
     if len(lines) > MAX_MERGE_SIZE:
