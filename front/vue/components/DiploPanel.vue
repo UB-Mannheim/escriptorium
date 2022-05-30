@@ -136,10 +136,10 @@ export default Vue.extend({
 
     methods: {
         empty() {
+            this.anno.clearAnnotations();
             while (this.$refs.diplomaticLines.hasChildNodes()) {
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
-            this.anno.clearAnnotations();
         },
 
         getAPITextAnnotationBody(annotation, offsets) {
