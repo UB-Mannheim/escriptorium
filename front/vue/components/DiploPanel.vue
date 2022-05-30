@@ -602,7 +602,7 @@ export default Vue.extend({
         },
 
         showOverlay(ev) {
-            let target = ev.target.nodeType==Node.TEXT_NODE?ev.target.parentNode:ev.target;
+            let target = ev.target.closest('div');
             let index = Array.prototype.indexOf.call(target.parentNode.children, target);
             if (index > -1 && index < this.$children.length) {
                 let diploLine = this.$children.find(dl=>dl.line.order==index);
