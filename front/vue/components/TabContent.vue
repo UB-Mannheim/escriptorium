@@ -34,23 +34,26 @@
             </div>
         </div>
 
-        <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
-                     v-bind:fullsizeimage="fullsizeimage"
-                     ref="sourcePanel">
-        </SourcePanel>
+        <keep-alive>
+            <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
+                         v-bind:fullsizeimage="fullsizeimage"
+                         ref="sourcePanel">
+            </SourcePanel>
+        </keep-alive>
+
 
         <keep-alive>
             <SegPanel v-if="visible_panels.segmentation && $store.state.parts.loaded"
-                               v-bind:fullsizeimage="fullsizeimage"
-                               id="segmentation-panel"
-                               ref="segPanel">
+                      v-bind:fullsizeimage="fullsizeimage"
+                      id="segmentation-panel"
+                      ref="segPanel">
             </SegPanel>
         </keep-alive>
 
         <keep-alive>
             <VisuPanel v-if="visible_panels.visualisation && $store.state.parts.loaded"
-                    id="transcription-panel"
-                    ref="visuPanel">
+                       id="transcription-panel"
+                       ref="visuPanel">
             </VisuPanel>
         </keep-alive>
 
@@ -145,7 +148,7 @@ export default {
     },
     methods: {
         prefetchImage(src, callback) {
-            // this is the panel's responsibility to call this!
+            // It is the panel's responsibility to call this!
             let img = new Image();
             img.addEventListener('load', function() {
                 if (callback) callback(src);
