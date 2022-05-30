@@ -326,7 +326,10 @@ export default Vue.extend({
         },
 
         constrainLineNumber() {
-            // add lines until we have enough of them
+            // Removes any rogue 'br' added by the browser
+            this.$refs.diplomaticLines.querySelectorAll(':scope > br').forEach(n => n.remove());
+
+            // Add lines until we have enough of them
             while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
                 this.appendLine();
             }
