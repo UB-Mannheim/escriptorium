@@ -429,6 +429,7 @@ i.panel-icon {
 
 .js-zoom-target {
     box-shadow: 1px 0 4px 1px rgba(0,0,0,0.1);
+    display: inline-block;
 }
 
 #zoom-range {

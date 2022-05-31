@@ -161,8 +161,8 @@ export class WheelZoom {
     }
 
     zoomTo(target, delta) {
-        let oldScale = this.scale;
-        this.scale += delta;
+        var oldScale = this.scale;
+        this.scale *= Math.exp(delta);
 	if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 
@@ -179,8 +179,8 @@ export class WheelZoom {
         if (this.disabled) return null;
         e.preventDefault();
 
-	var delta = e.delta || e.wheelDelta;
-	if (delta === undefined) {
+        var delta = e.delta || e.wheelDelta;
+        if (delta === undefined) {
 	    //we are on firefox
 	    delta = -e.detail;
 	}
@@ -211,22 +211,24 @@ export class WheelZoom {
             }
         }
 	// Make sure the slide stays in its container area when zooming in/out
-        if (this.scale > 1) {
+        if (target.element.clientWidth * this.scale > ts.width) {
             if (this.pos.x > 0) { this.pos.x = 0; }
             if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth * this.scale;
             }
-
-            if (this.pos.y > 0) { this.pos.y = 0; }
-	    // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
-            //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
-            // }
         } else {
             if (this.pos.x < 0) { this.pos.x = 0; }
 	    if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth *  this.scale;
             }
+        }
 
+        if (target.element.clientHeight * this.scale > ts.height) {
+            if (this.pos.y > 0) { this.pos.y = 0; }
+	    if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
+                this.pos.y = ts.height - target.element.clientHeight * this.scale;
+            }
+        } else {
             if (this.pos.y < 0) { this.pos.y = 0; }
             if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
                 this.pos.y = ts.height - target.element.clientHeight *  this.scale;

@@ -138,7 +138,7 @@ export default {
                 return this.zoom.scale || 1;
             },
             set(newValue) {
-                let target = {
+                var target = {
                     x: this.$parent.$el.clientWidth/this.openedPanels.length/2-this.zoom.pos.x,
                     y: this.$parent.$el.clientHeight/this.openedPanels.length/2-this.zoom.pos.y
                 };
