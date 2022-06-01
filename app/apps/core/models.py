@@ -228,15 +228,20 @@ class Annotation(models.Model):
             AnnotationTaxonomy.MARKER_TYPE_BOLD,
             AnnotationTaxonomy.MARKER_TYPE_ITALIC,
         ]:
+
             start = (
                 LineTranscription.objects.filter(
-                    line__order__lt=self.start_line.order, line__document_part=self.part
+                    line__order__lt=self.start_line.order,
+                    line__document_part=self.part,
+                    transcription=self.transcription,
                 ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.start_offset
             )
             end = (
                 LineTranscription.objects.filter(
-                    line__order__lt=self.end_line.order, line__document_part=self.part
+                    line__order__lt=self.end_line.order,
+                    line__document_part=self.part,
+                    transcription=self.transcription
                 ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.end_offset
             )

@@ -228,6 +228,10 @@ export default Vue.extend({
 
         this.timeZone = moment.tz.guess();
     },
+    deactivated() {
+        // make sure the modal is cleanly closed when the panel is hidden
+        $(this.$refs.transModal).modal('hide');
+    },
     destroyed() {
         // unbind all events to avoid duplicating them
         $(document).off('hide.bs.modal');
