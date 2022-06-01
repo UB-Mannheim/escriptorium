@@ -5,9 +5,10 @@ from math import sqrt
 from typing import Any, Dict, List, Tuple
 
 from django.db.models import prefetch_related_objects
+from shapely.geometry import LineString, Polygon
 
 from api.serializers import DetailedLineSerializer
-from core.models import Line
+from core.models import Block, Line
 
 __all__ = ['merge_lines', 'MAX_MERGE_SIZE']
 MAX_MERGE_SIZE = 8  # Maximum numbers of segments we can merge
@@ -109,6 +110,15 @@ def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
     return result
 
 
+def find_block(baseline: str, regions: List[Block]):
+    center = LineString(baseline).interpolate(0.5, normalized=True)
+    region = next(
+        (r for r in regions if Polygon(r.box).contains(center)), None
+    )
+
+    return region.pk if region is not None else None
+
+
 def merge_lines(lines: List[Line]):
     if len(lines) > MAX_MERGE_SIZE:
         raise ValueError(f"Can't merge {len(lines)} lines, can only merge up to {MAX_MERGE_SIZE} lines")
@@ -129,7 +139,11 @@ def merge_lines(lines: List[Line]):
 
     ordered_lines = [lines[order[i]] for i in range(len(lines))]
     merged_json['baseline'] = merge_baseline(ordered_lines)
-    merged_json['typology'] = find_typology(ordered_lines)
+    typology = find_typology(ordered_lines)
+    merged_json['typology'] = typology.pk if typology else None
     merged_json['transcriptions'] = merge_transcriptions(ordered_lines)
+
+    blocks = ordered_lines[0].document_part.blocks.all()
+    merged_json['region'] = find_block(merged_json['baseline'], blocks)
 
     return merged_json
