@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 120
-exclude=.cache,.eggs,.git
+exclude=.cache,.eggs,.git,env
 # Flake8 ignores multiple errors by default;
 # the only interesting ignore is W503, which goes against PEP8.
 # See https://lintlyci.github.io/Flake8Rules/rules/W503.html
