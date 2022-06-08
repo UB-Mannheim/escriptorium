@@ -22,30 +22,33 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.factory.make_content(self.part, transcription=self.transcription)
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
+        self.n_gram = 4
+
+        ppk = self.part.pk
+        tpk = self.transcription.pk
+        dpk = self.part.document.pk
+        wpk = self.witness.pk
+        self.outdir = f"{settings.MEDIA_ROOT}/alignments/document-{dpk}/p{ppk}-t{tpk}+w{wpk}-{self.n_gram}gram"
 
     @patch("core.models.subprocess")
     def test_align(self, mock_subprocess):
         """Unit tests for DocumentPart text alignment function"""
         self.makeTranscriptionContent()
 
-        # should call subprocess.check_call with passim (seriatim), n-gram of 2, correct input
+        # should call subprocess.check_call with passim (seriatim), n-gram of 4, correct input
         # file/output directory
-        self.part.align(self.transcription.pk, self.witness.pk, 4)
-        partpk = self.part.pk
-        transpk = self.transcription.pk
-        docpk = self.part.document.pk
-        outdir = f"{settings.MEDIA_ROOT}/alignments/document-{docpk}/docpart-{partpk}-transc-{transpk}"
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
         mock_subprocess.check_call.assert_called_with([
             "seriatim",
             "--linewise",
             "--floating-ngrams",
-            "-n", "4",
+            "-n", f"{self.n_gram}",
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
-            f"{outdir}.json",
-            outdir,
+            f"{self.outdir}.json",
+            self.outdir,
         ])
 
         # mock file cleanup-related modules so we can read the input json
@@ -53,7 +56,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             with patch("core.models.shutil") as mock_shutil:
                 # should produce an input json file (json.load will error otherwise)
                 self.part.align(self.transcription.pk, self.witness.pk, 4)
-                infile = open(f"{outdir}.json")
+                infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
                 # should be a list of length 31 (30 transcription lines + witness txt)
@@ -65,9 +68,9 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 self.assertEqual(witness_dict["text"], f.read())
 
                 # should remove the input json
-                mock_remove.assert_called_with(f"{outdir}.json")
+                mock_remove.assert_called_with(f"{self.outdir}.json")
                 # should remove the output directory
-                mock_shutil.rmtree.assert_called_with(outdir)
+                mock_shutil.rmtree.assert_called_with(self.outdir)
 
         # should create a new transcription layer--will raise error if not
         new_trans = Transcription.objects.get(
@@ -106,15 +109,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         """Unit tests for DocumentPart text alignment with real output data from passim"""
         self.makeTranscriptionContent()
 
-        partpk = self.part.pk
-        transpk = self.transcription.pk
-        docpk = self.part.document.pk
-        outdir = f"{settings.MEDIA_ROOT}/alignments/document-{docpk}/docpart-{partpk}-transc-{transpk}"
-
         # save some real passim output from our fixture into the outdir
         alignment = os.path.join(os.path.dirname(__file__), "assets", "alignment/out.json")
-        os.makedirs(f"{outdir}/out.json")
-        copyfile(alignment, f"{outdir}/out.json/out.json")  # mimicking actual passim output format
+        os.makedirs(f"{self.outdir}/out.json")
+        copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # re-run the alignment with the real passim output
         self.part.align(self.transcription.pk, self.witness.pk, 4)
@@ -129,3 +127,21 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertEqual(new_lt.content, "NoSAYQctujgZ! eAiFtfdymtfsX REKIA P g jm naYstrtUuCqsaiCNXaHR")
+
+    @patch("core.models.subprocess")
+    def test_align_exception(self, mock_subprocess):
+        """Test exception raised during subprocess"""
+        self.makeTranscriptionContent()
+
+        mock_subprocess.check_call.side_effect = Exception("error")
+
+        # should cleanup files on exception
+        with patch("core.models.remove") as mock_remove:
+            with patch("core.models.shutil") as mock_shutil:
+                with self.assertRaises(Exception):
+                    # should still raise the exception
+                    self.part.align(self.transcription.pk, self.witness.pk, 4)
+                # should remove the input json
+                mock_remove.assert_called_with(f"{self.outdir}.json")
+                # should remove the output directory
+                mock_shutil.rmtree.assert_called_with(self.outdir)

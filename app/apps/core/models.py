@@ -1196,7 +1196,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
         outdir = path.join(
             settings.MEDIA_ROOT,
-            f"alignments/document-{self.document.pk}/docpart-{self.pk}-transc-{transcription_pk}",
+            f"alignments/document-{self.document.pk}/p{self.pk}-t{transcription_pk}+w{witness_pk}-{n_gram}gram",
         )
         # get relevant LineTranscriptions
         line_transcriptions = LineTranscription.objects.filter(
@@ -1230,17 +1230,23 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         with open(infile, "w", encoding="utf-8") as file:
             json.dump(input_list, file, ensure_ascii=False)
 
-        # call passim
-        subprocess.check_call([
-            "seriatim",  # Passim call
-            "--linewise",
-            "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
-            "-n", str(n_gram),  # index n-grams
-            "--fields", "ref",
-            "--filterpairs", "ref = 1 AND ref2 = 0",
-            infile,
-            outdir,
-        ])
+        try:
+            # call passim
+            subprocess.check_call([
+                "seriatim",  # Passim call
+                "--linewise",
+                "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
+                "-n", str(n_gram),  # index n-grams
+                "--fields", "ref",
+                "--filterpairs", "ref = 1 AND ref2 = 0",
+                infile,
+                outdir,
+            ])
+        except Exception as e:
+            # cleanup in case of exception
+            remove(infile)
+            shutil.rmtree(outdir)
+            raise e
 
         # get the output json file(s)
         out_json = glob(f"{outdir}/out.json/*.json")
