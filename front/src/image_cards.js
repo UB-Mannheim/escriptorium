@@ -120,11 +120,13 @@ class partCard {
                 partCard.refreshSelectedCount();
                 openWizard('transcribe');
             }, this));
-            this.alignButton.click($.proxy(function(ev) {
-                this.select();
-                partCard.refreshSelectedCount();
-                openWizard('align');
-            }, this));
+            if (this.alignButton) {
+                this.alignButton.click($.proxy(function(ev) {
+                    this.select();
+                    partCard.refreshSelectedCount();
+                    openWizard('align');
+                }, this));
+            }
         }
 
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -223,10 +225,10 @@ class partCard {
             ['align', this.alignButton]];
         for (var i=0; i < map.length; i++) {
             var proc = map[i][0], btn = map[i][1];
-            if (this.workflow[proc] == undefined) {
+            if (btn && this.workflow[proc] == undefined) {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.attr('title', btn.data('title'));
-            } else {
+            } else if (btn) {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.addClass(this.workflow[proc]);
                 btn.attr('title', btn.data('title') + ' ('+this.workflow[proc]+')');

@@ -108,7 +108,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'escriptorium.context_processors.enable_cookie_consent',
                 'escriptorium.context_processors.custom_homepage',
-                'escriptorium.context_processors.disable_search'
+                'escriptorium.context_processors.disable_search',
+                'escriptorium.context_processors.enable_text_alignment',
             ],
         },
     },
@@ -429,3 +430,6 @@ EXPORT_OPENITI_MARKDOWN_ENABLED = os.getenv('EXPORT_OPENITI_MARKDOWN', "False").
 
 # Boolean used to enable the OpenITI TEI XML export mode
 EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("false", "0")
+
+# Boolean used to enable text alignment with Passim
+TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("false", "0")
