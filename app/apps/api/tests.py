@@ -16,6 +16,7 @@ from core.models import (
     DocumentMetadata,
     Line,
     LineTranscription,
+    LineType,
     Metadata,
     OcrModel,
     Transcription,
@@ -667,18 +668,19 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.block = Block.objects.create(
-            box=[10, 10, 200, 200],
+            box=[[10, 10], [10, 200], [200, 200], [200, 10]],
             document_part=self.part)
+        self.line_type = LineType.objects.create(name='linetype')
         self.line = Line.objects.create(
-            mask=[60, 10, 100, 50],
+            baseline=[[0, 0], [10, 10], [20, 20]],
             document_part=self.part,
-            block=self.block)
+            block=self.block,
+            typology=self.line_type)
         self.line2 = Line.objects.create(
-            mask=[90, 10, 70, 50],
             document_part=self.part,
             block=self.block)
         self.orphan = Line.objects.create(
-            mask=[0, 0, 10, 10],
+            baseline=[[30, 30], [40, 40], [50, 50]],
             document_part=self.part,
             block=None)
 
@@ -741,6 +743,31 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.line2.refresh_from_db()
         self.assertEqual(self.line.mask, '[[60, 40], [60, 50], [90, 50], [90, 40]]')
         self.assertEqual(self.line2.mask, '[[50, 40], [50, 30], [70, 30], [70, 40]]')
+
+    def test_merge(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-merge',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+
+        # First merge will fail, because line2 doesn't have a baseline
+        body = {'lines': [self.line.pk, self.line2.pk, self.orphan.pk]}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        # Second merge should succeed
+        body = {'lines': [self.line.pk, self.orphan.pk]}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        created_pk = resp.data['lines']['created']['pk']
+        created = Line.objects.get(pk=created_pk)
+        self.assertEqual(created.typology.pk, self.line_type.pk)
+        self.assertEqual(created.block.pk, self.block.pk)
+        self.assertEqual(created.baseline, self.line.baseline + self.orphan.baseline)
+
+        self.assertIsNone(Line.objects.filter(pk=self.line.pk).first())
+        self.assertIsNone(Line.objects.filter(pk=self.orphan.pk).first())
+        self.assertIsNotNone(Line.objects.filter(pk=self.line2.pk).first())
 
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):

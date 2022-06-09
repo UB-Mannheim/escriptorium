@@ -1,6 +1,5 @@
 import itertools
 import sys
-from collections import Counter
 from math import sqrt
 from typing import Any, Dict, List, Tuple
 
@@ -65,14 +64,8 @@ def merge_baseline(ordered_lines: List[Line]) -> List[Tuple[int, int]]:
 
 
 def find_typology(lines):
-    types = [line.typology for line in lines]
-    ctr = Counter(types)
-    common = ctr.most_common(2)
-
-    if len(common) == 1 or common[1][1] < common[0][1]:
-        return common[0][0]
-
-    return lines[0].typology  # If there is no majority, return the typology of the first line
+    types = (line.typology for line in lines if line.typology is not None)
+    return next(types, None)
 
 
 def merge_transcriptions(ordered_lines: List[Line]) -> List[Dict[str, Any]]:
