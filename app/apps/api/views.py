@@ -687,6 +687,10 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 
         lines = list(Line.objects.filter(pk__in=original_lines))
+        for line in lines:
+            if not line.baseline:
+                return Response(dict(status='error', error="Lines without a baseline cannot be merged"), status=status.HTTP_400_BAD_REQUEST)
+                
         original_serializer = DetailedLineSerializer(lines, many=True)
         deleted_json = original_serializer.data
 
