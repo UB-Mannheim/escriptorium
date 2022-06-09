@@ -55,7 +55,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         with patch("core.models.remove") as mock_remove:
             with patch("core.models.shutil") as mock_shutil:
                 # should produce an input json file (json.load will error otherwise)
-                self.part.align(self.transcription.pk, self.witness.pk, 4)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
                 infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
@@ -96,7 +96,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         # LineTranscription for that line to an empty string
         lt_to_remove = LineTranscription.objects.get(line=self.part.lines.first(), transcription=self.transcription)
         lt_to_remove.delete()
-        self.part.align(self.transcription.pk, self.witness.pk, 4)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
@@ -115,11 +115,11 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # re-run the alignment with the real passim output
-        self.part.align(self.transcription.pk, self.witness.pk, 4)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
 
         # line we know should have changed content based on witness.txt and out.json
         new_trans = Transcription.objects.get(
-            name="Aligned: fake_textual_witness + test trans",
+            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
         )
         line = self.part.lines.get(pk=30)
@@ -140,7 +140,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             with patch("core.models.shutil") as mock_shutil:
                 with self.assertRaises(Exception):
                     # should still raise the exception
-                    self.part.align(self.transcription.pk, self.witness.pk, 4)
+                    self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
                 # should remove the input json
                 mock_remove.assert_called_with(f"{self.outdir}.json")
                 # should remove the output directory
