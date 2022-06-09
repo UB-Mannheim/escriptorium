@@ -19,6 +19,7 @@ from core.models import (
     OcrModelRight,
     Project,
     Script,
+    TextualWitness,
 )
 
 
@@ -104,3 +105,4 @@ admin.site.register(AnnotationType)
 admin.site.register(AnnotationTaxonomy)
 admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)
+admin.site.register(TextualWitness)
