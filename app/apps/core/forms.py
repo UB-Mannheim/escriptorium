@@ -666,6 +666,13 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         help_text=_("Length of token sequences to compare; leave default if unsure."),
     )
 
+    merge = forms.BooleanField(
+        label=_("Merge aligned text with existing transcription"),
+        required=False,
+        initial=False,
+        help_text=_("If checked, the new layer will use the text of the original transcription when alignment could not be performed. If left unchecked, those lines will be empty."),
+    )
+
     def __init__(self, *args, **kwargs):
         """Refine querysets to filter transcription and witness on document"""
         super().__init__(*args, **kwargs)
@@ -699,6 +706,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
         n_gram = self.cleaned_data.get("n_gram", 4)
+        merge = self.cleaned_data.get("merge")
 
         if existing_witness:
             witness = existing_witness
@@ -718,6 +726,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 transcription_pk=transcription.pk,
                 witness_pk=witness.pk,
                 n_gram=int(n_gram),
+                merge=merge,
             )
 
 

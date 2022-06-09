@@ -561,7 +561,7 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None, n_gram=4, **kwargs):
+def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None, n_gram=4, merge=False, **kwargs):
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
@@ -581,7 +581,7 @@ def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None
         user = None
 
     try:
-        part.align(transcription_pk, witness_pk, n_gram)
+        part.align(transcription_pk, witness_pk, n_gram, merge)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the alignment!"),

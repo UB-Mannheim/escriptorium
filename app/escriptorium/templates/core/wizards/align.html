@@ -16,6 +16,10 @@
     {% render_field align_form.existing_witness class="js-proc-settings" data_document=document.pk %}
   </div>
   <div class="form-group">
+    <h5>{% trans "Merge with existing transcription" %}</h5>
+    {% render_field align_form.merge class="js-proc-settings" data_document=document.pk %}
+  </div>
+  <div class="form-group">
     <h5>{% trans "N-gram" %}</h5>
     {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}
   </div>

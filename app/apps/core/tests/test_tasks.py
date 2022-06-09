@@ -161,14 +161,14 @@ class TasksTestCase(CoreFactoryTestCase):
                 get_user_model_mock.assert_called()
                 get_user_model_mock.return_value.objects.get.assert_called_with(pk=2)
 
-                # should call part.align with transcription, witness pks (and default n-gram of 4)
+                # should call part.align with transcription, witness pks (and default n-gram of 4, merge=False)
                 align(instance_pk=1, user_pk=2, transcription_pk=3, witness_pk=4)
                 part = apps_mock.get_model.return_value.objects.get.return_value
-                part.align.assert_called_with(3, 4, 4)
+                part.align.assert_called_with(3, 4, 4, False)
 
                 # should call part.align with set n-gram value
                 align(instance_pk=1, user_pk=2, transcription_pk=3, witness_pk=4, n_gram=2)
-                part.align.assert_called_with(3, 4, 2)
+                part.align.assert_called_with(3, 4, 2, False)
 
                 # when part.align raises an exception:
                 part.align.side_effect = Exception

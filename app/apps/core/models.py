@@ -1189,7 +1189,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk, n_gram):
+    def align(self, transcription_pk, witness_pk, n_gram, merge):
         """Use subprocess call to Passim to align transcription with textual witness"""
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
@@ -1279,8 +1279,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 # use matches[0]["alg"] instead for forced alignment with dashes
                 # lt.content = matches[0]["alg"]
                 lt.content = matches[0]["text"]
-            # if this line is not present, get content from original transcription
-            else:
+            # if "merge" is checked and this line is not present, get content from original transcription
+            elif merge:
                 try:
                     old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
                     lt.content = old_lt.content
