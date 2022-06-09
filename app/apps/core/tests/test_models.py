@@ -74,7 +74,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
 
         # should create a new transcription layer--will raise error if not
         new_trans = Transcription.objects.get(
-            name="Aligned: fake_textual_witness + test trans",
+            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
         )
 
@@ -98,7 +98,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         lt_to_remove.delete()
         self.part.align(self.transcription.pk, self.witness.pk, self.n_gram)
         new_trans = Transcription.objects.get(
-            name="Aligned: fake_textual_witness + test trans",
+            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
         )
         new_lt = LineTranscription.objects.get(line=self.part.lines.first(), transcription=new_trans)
@@ -122,6 +122,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
         )
+        for transcription in Transcription.objects.all():
+            print(transcription.name)
         line = self.part.lines.get(pk=30)
         new_lt = LineTranscription.objects.get(line=line, transcription=new_trans)
         old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
