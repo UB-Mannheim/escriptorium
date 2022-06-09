@@ -1263,7 +1263,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         # build the new transcription layer
         original_trans = Transcription.objects.get(pk=transcription_pk)
         trans, created = Transcription.objects.get_or_create(
-            name="Aligned: " + witness.name + " + " + original_trans.name,
+            name=f"Aligned: {witness.name} + {original_trans.name} ({n_gram}gram)",
             document=self.document,
         )
         lines = self.lines.all()

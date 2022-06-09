@@ -663,7 +663,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         coerce=int,
         required=True,
         initial=4,
-        help_text=_("Length of sequences to compare; leave default if unsure."),
+        help_text=_("Length of token sequences to compare; leave default if unsure."),
     )
 
     def __init__(self, *args, **kwargs):
