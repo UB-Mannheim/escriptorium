@@ -672,7 +672,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
             document_part=self.part)
         self.line_type = LineType.objects.create(name='linetype')
         self.line = Line.objects.create(
-            baseline=[[0,0], [10, 10], [20, 20]],
+            baseline=[[0, 0], [10, 10], [20, 20]],
             document_part=self.part,
             block=self.block,
             typology=self.line_type)
@@ -680,7 +680,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
             document_part=self.part,
             block=self.block)
         self.orphan = Line.objects.create(
-            baseline=[[30,30], [40, 40], [50, 50]],
+            baseline=[[30, 30], [40, 40], [50, 50]],
             document_part=self.part,
             block=None)
 
