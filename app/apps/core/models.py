@@ -1205,15 +1205,24 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         )
 
         # build the JSON input for passim
-        input_list = []
+        line_ids = []
+        line_start = 0
+        text = ""
         for lt in line_transcriptions:
             # prep the line transcription to serialize to json
             line_dict = {
-                "id": lt.line.pk,
-                "text": lt.content,
-                "ref": 0,  # distinguishes OCR from witness
+                "id": str(lt.line.pk),
+                "start": line_start,
             }
-            input_list.append(line_dict)
+            text = text + lt.content + "\n"
+            line_ids.append(line_dict)
+            line_start = line_start + len(lt.content + "\n")
+        input_list = [{
+            "text": text,
+            "id": self.pk,
+            "lineIDs": line_ids,
+            "ref": 0,  # distinguishes OCR from witness
+        }]
         witness = TextualWitness.objects.get(pk=witness_pk)
         f = witness.file.open('r')
         txt = f.read()
@@ -1234,7 +1243,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             # call passim
             subprocess.check_call([
                 "seriatim",  # Passim call
-                "--linewise",
+                "--docwise",
                 "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
                 "-n", str(n_gram),  # index n-grams
                 "--fields", "ref",
@@ -1255,10 +1264,20 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             # handle multi-part output
             for json_part in out_json:
                 json_file = open(json_part, "r", encoding="utf-8")
-                json_lines = json_file.readlines()
-                # the whole file is not valid json, but each line is
-                for line in json_lines:
-                    aligned_lines.append(json.loads(line))
+                json_content = json_file.read()
+                if json_content:
+                    out_dict = json.loads(json_content)
+                    # iterate through lines in output with "wits" entries
+                    for line in out_dict.get("lines", []):
+                        for match in line.get("wits", []):
+                            # TODO: if match["matches"]/len(line["text"]) is >= threshold:
+                            # find the matching line id in line_ids based on character position
+                            match_line_id = next((ln for ln in line_ids if ln["start"] == line["begin"]), {})
+                            aligned_lines.append({
+                                "id": match_line_id.get("id", -1),
+                                "text": match.get("text", ""),
+                                "alg": match.get("alg", ""),
+                            })
 
         # build the new transcription layer
         original_trans = Transcription.objects.get(pk=transcription_pk)
@@ -1268,8 +1287,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         )
         lines = self.lines.all()
         for line in lines:
-            # find this line by "id2" key in the output json
-            matches = list(filter(lambda alg: int(alg["id2"]) == line.pk, aligned_lines))
+            # find this line by "id" key in the output
+            matches = list(filter(lambda alg: int(alg["id"]) == line.pk, aligned_lines))
 
             # build LineTranscription
             lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)

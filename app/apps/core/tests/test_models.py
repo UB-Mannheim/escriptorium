@@ -42,7 +42,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         # use real passim output later
         mock_subprocess.check_call.assert_called_with([
             "seriatim",
-            "--linewise",
+            "--docwise",
             "--floating-ngrams",
             "-n", f"{self.n_gram}",
             "--fields", "ref",
@@ -59,8 +59,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
-                # should be a list of length 31 (30 transcription lines + witness txt)
-                self.assertEqual(len(in_json), 31)
+                # should be a list of length 2 (1 input document + 1 witness txt)
+                self.assertEqual(len(in_json), 2)
 
                 # should have an entry with id "witness" and text of witness txt
                 witness_dict = next(filter(lambda d: d["id"] == "witness", in_json))
@@ -140,12 +140,12 @@ class DocumentPartTestCase(CoreFactoryTestCase):
 
         # run the alignment with the real passim output, and merge = False
         self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False)
-        # line we know should have NO content based on witness.txt and out.json
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
         )
-        line = self.part.lines.get(pk=1)
+        # line we know should have NO content based on witness.txt and out.json
+        line = self.part.lines.get(pk=23)
         new_lt = LineTranscription.objects.get(line=line, transcription=new_trans)
         old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
         self.assertNotEqual(new_lt.content, old_lt.content)
