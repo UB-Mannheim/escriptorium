@@ -460,6 +460,9 @@ class LineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Line
         fields = ('pk', 'document_part', 'external_id', 'order', 'region', 'baseline', 'mask', 'typology')
+        extra_kwargs = {
+            'order': {'read_only': False, 'required': False}
+        }
         list_serializer_class = LineListSerializer
 
 

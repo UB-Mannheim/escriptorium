@@ -744,6 +744,23 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(self.line.mask, '[[60, 40], [60, 50], [90, 50], [90, 40]]')
         self.assertEqual(self.line2.mask, '[[50, 40], [50, 30], [70, 30], [70, 40]]')
 
+    def test_bulk_update_order(self):
+        order1, order2 = self.line.order, self.line2.order
+        self.client.force_login(self.user)
+
+        uri = reverse('api:line-bulk-update',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        resp = self.client.put(uri, {'lines': [
+            {'pk': self.line.pk, 'order': order2},
+            {'pk': self.line2.pk, 'order': order1}
+        ]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        self.line.refresh_from_db()
+        self.line2.refresh_from_db()
+        self.assertEqual(self.line.order, order2)
+        self.assertEqual(self.line2.order, order1)
+
     def test_merge(self):
         self.client.force_login(self.user)
         uri = reverse('api:line-merge',
