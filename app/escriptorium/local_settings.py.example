@@ -69,3 +69,6 @@ DEBUG_TOOLBAR_PANELS = [
 
 # Uncomment the following line to enable text alignment with Passim
 # TEXT_ALIGNMENT_ENABLED = True
+
+# Uncomment the following line to disable alignment tempfile cleanup (will use extra space)
+# KEEP_ALIGNMENT_TEMPFILES = True

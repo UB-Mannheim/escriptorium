@@ -433,3 +433,6 @@ EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("f
 
 # Boolean used to enable text alignment with Passim
 TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("false", "0")
+
+# Debug for text alignment process (will use extra space by not cleaning up tempfiles)
+KEEP_ALIGNMENT_TEMPFILES = os.getenv('KEEP_ALIGNMENT_TEMPFILES', "False").lower() not in ("false", "0")

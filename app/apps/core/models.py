@@ -1313,11 +1313,16 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     lt.content = old_lt.content
                 except LineTranscription.DoesNotExist:
                     lt.content = ""
+            # if "merge" is NOT checked and this line is not present, ensure its content is empty
+            else:
+                lt.content = ""
 
             lt.save()
+
         # clean up temp files
-        remove(infile)
-        shutil.rmtree(outdir)
+        if not settings.KEEP_ALIGNMENT_TEMPFILES:
+            remove(infile)
+            shutil.rmtree(outdir)
 
         self.workflow_state = self.WORKFLOW_STATE_ALIGNED
         self.save()
