@@ -101,9 +101,14 @@ class partCard {
 
         // show avg confidence on the card
         let avgConfidenceElement = $(".avg-confidence", this.$element);
+        let avgConfidenceToggle = $('input#show-confidence');
         if (this.avgConfidence) {
             avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
             avgConfidenceElement.attr('title', this.avgConfidenceModel);
+            if (avgConfidenceToggle.attr('disabled')) {
+                // if any card has average confidence, enable toggle switch
+                avgConfidenceToggle.attr('disabled', false);
+            }
         }
         // start with avg confidence disabled
         avgConfidenceElement.hide();
@@ -647,7 +652,8 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
     });
 
     // "Show OCR confidence" toggle switch
-    let avgConfidenceToggle = $('input[type="checkbox"]#show-confidence');
+    let avgConfidenceToggle = $('input#show-confidence');
+
     avgConfidenceToggle.on('change', function() {
         if (avgConfidenceToggle.prop('checked')) {
             $('.avg-confidence').show();
