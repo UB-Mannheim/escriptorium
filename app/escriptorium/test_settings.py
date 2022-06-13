@@ -39,7 +39,7 @@ def build_tracer_patched(name, task, *args, **kwargs):
 
     def trace_task_patched(uuid, args, kwargs, request=None):
         if before_task_publish_receivers:
-            create_task_reporting(sender=task, body=(args, kwargs), headers={"id": uuid})
+            create_task_reporting(sender=name, body=(args, kwargs), headers={"id": uuid})
         return old_trace_task(uuid, args, kwargs, request)
 
     return trace_task_patched

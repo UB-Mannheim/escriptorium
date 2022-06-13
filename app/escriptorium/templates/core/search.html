@@ -16,6 +16,7 @@
   <h2>{% trans "Search text in projects" %}</h2>
   <form method="get" class="mt-3">
     <div>{% render_field form.document %}</div>
+    <div>{% render_field form.transcription %}</div>
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
       <div class="col">{% render_field form.query group=True %}</div>
@@ -49,8 +50,15 @@
   {% else %}
     {% if form.cleaned_data.document %}
     <div class="alert alert-primary" role="alert">
-      {% blocktrans with name=form.cleaned_data.document.name %}Currently searching entered text in the document named <strong>{{ name }}</strong>.{% endblocktrans %}
-      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">Click here to remove this filter.</a>
+      {% blocktrans with name=form.cleaned_data.document.name %}
+        Currently searching entered text in the document named <strong>{{ name }}</strong>.
+      {% endblocktrans %}
+      {% if form.cleaned_data.transcription %}
+        {% blocktrans with name=form.cleaned_data.transcription.name %}And on the transcription level <strong>{{ name }}</strong>.{% endblocktrans %}
+      {% endif %}
+      <a href="{% url 'search' %}?query={{ request.GET.query }}&project={{ request.GET.project }}">
+        Click here to remove {% if form.cleaned_data.transcription %}these filters{% else %}this filter{% endif %}.
+      </a>
     </div>
     {% endif %}
 
@@ -70,27 +78,70 @@
       </tr>
     </thead>
     <tbody>
-      {% for content, line_number, transcription_name, part_title, part_pk, document_name, document_pk, score, img_url, img_w, img_h, viewbox, larger in page_obj %}
+      {% for result in page_obj %}
       <tr>
-        <td title="{% trans 'Line transcription enhanced content' %}">
-          {{ content|safe }}
+        <td>
+          {% if result.context_before %}
+          <small class="context" title="{% trans "Previous line" %}">
+            {% for content in result.context_before %}{{ content|safe }}{% endfor %}
+          </small>
+          <br/>
+          {% endif %}
+
+          {% if result.content %}
+          <big title="{% trans "Line transcription" %}">
+            {% for content in result.content %}{{ content|safe }}{% endfor %}
+          </big>
+          {% else %}
+          <small class="text-muted text-sm">
+            {% trans "Search terms found in previous or next line." %}
+          </small>
+          {% endif %}
+
+          {% if result.context_after %}
+          <br/>
+          <small class="context" title="{% trans "Next line" %}">
+            {% for content in result.context_after %}{{ content|safe }}{% endfor %}
+          </small>
+          {% endif %}
           <br/>
           <small class="text-muted text-sm align-bottom">
-            {% blocktrans with line=line_number part=part_title doc=document_name trans=transcription_name %}
-            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document <strong>{{ doc }}</strong> ({{ trans }})
+            {% blocktrans with line=result.line_number part=result.part_title %}
+            Line <strong>#{{ line }}</strong> of <strong>{{ part }}</strong> in document
             {% endblocktrans %}
+            <strong>
+              <a
+                title="{% trans 'Filter results by this document' %}"
+                href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ result.document_pk }}"
+              >
+                {{ result.document_name }}
+              </a>
+            </strong>
+
+            <a
+              title="{% trans 'Filter results by this transcription level' %}"
+              href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ result.document_pk }}&transcription={{ result.transcription_pk }}"
+            >
+              ({{ result.transcription_name }})
+            </a>
           </small>
         </td>
         <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
-          <svg viewBox="{{ viewbox }}" class="lazy {% if larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
-            <image x="0" y="0" width="{{ img_w }}" height="{{ img_h }}" data-src="{{ img_url }}">
+          {% if result.viewbox %}
+          <svg viewBox="{{ result.viewbox }}" class="lazy {% if result.larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
+            <image x="0" y="0" width="{{ result.img_w }}" height="{{ result.img_h }}" data-src="{{ result.img_url }}">
           </svg>
+          {% else %}
+          <div class="alert alert-warning pl-3 pr-3 pt-2 pb-2 d-inline-block" role="alert">
+            {% trans "Image preview is not available for this search result" %}
+          </div>
+          {% endif %}
         </td>
         {% if debug %}
-        <td title="{% trans 'Search score' %}">{{ score }}</td>
+        <td title="{% trans 'Search score' %}">{{ result.score }}</td>
         {% endif %}
         <td title="{% trans 'Go to document part editing page' %}">
-          <a class="btn btn-primary" target="_blank" href="{% url 'document-part-edit' pk=document_pk part_pk=part_pk %}">
+          <a class="btn btn-primary" target="_blank" href="{% url 'document-part-edit' pk=result.document_pk part_pk=result.part_pk %}">
             <i class="fas fa-external-link-square-alt"></i>
           </a>
         </td>

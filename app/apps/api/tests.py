@@ -16,6 +16,7 @@ from core.models import (
     DocumentMetadata,
     Line,
     LineTranscription,
+    LineType,
     Metadata,
     OcrModel,
     Transcription,
@@ -31,8 +32,8 @@ class UserViewSetTestCase(CoreFactoryTestCase):
     def test_onboarding(self):
         user = self.factory.make_user()
         self.client.force_login(user)
-        uri = reverse('api:user-onboarding')
-        resp = self.client.put(uri, {
+        uri = reverse('api:user-detail', kwargs={'pk': user.pk})
+        resp = self.client.patch(uri, {
             'onboarding': 'False',
         }, content_type='application/json')
 
@@ -179,21 +180,23 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list_document_with_tasks(self):
         # Creating a new Document that self.doc.owner shouldn't see
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
-        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
-        report.start()
+        report1 = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report1.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(6):
             resp = self.client.get(reverse('api:document-tasks'))
 
-        self.assertEqual(resp.status_code, 200)
         json = resp.json()
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(json['count'], 1)
         self.assertEqual(json['results'], [{
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -204,6 +207,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
         report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
         report.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(8):
@@ -224,7 +229,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 'pk': self.doc.pk,
                 'name': self.doc.name,
                 'owner': self.doc.owner.username,
-                'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+                'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
                 'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
         ])
@@ -243,6 +248,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
         report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
         report.start()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
 
         self.client.force_login(self.doc.owner)
         with self.assertNumQueries(6):
@@ -256,7 +263,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 0, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -381,7 +388,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -409,7 +416,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 0, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
         model.refresh_from_db()
@@ -440,7 +447,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 6, 'Canceled': 0},
+            'tasks_stats': {'Queued': 1, 'Running': 1, 'Crashed': 0, 'Finished': 0, 'Canceled': 0},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
 
@@ -468,7 +475,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'pk': self.doc.pk,
             'name': self.doc.name,
             'owner': self.doc.owner.username,
-            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 6, 'Canceled': 2},
+            'tasks_stats': {'Queued': 0, 'Running': 0, 'Crashed': 0, 'Finished': 0, 'Canceled': 2},
             'last_started_task': self.doc.reports.filter(started_at__isnull=False).latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }])
         model.refresh_from_db()
@@ -523,7 +530,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(44):
+        with self.assertNumQueries(18):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -661,18 +668,19 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.part = self.factory.make_part()
         self.user = self.part.document.owner
         self.block = Block.objects.create(
-            box=[10, 10, 200, 200],
+            box=[[10, 10], [10, 200], [200, 200], [200, 10]],
             document_part=self.part)
+        self.line_type = LineType.objects.create(name='linetype')
         self.line = Line.objects.create(
-            mask=[60, 10, 100, 50],
+            baseline=[[0, 0], [10, 10], [20, 20]],
             document_part=self.part,
-            block=self.block)
+            block=self.block,
+            typology=self.line_type)
         self.line2 = Line.objects.create(
-            mask=[90, 10, 70, 50],
             document_part=self.part,
             block=self.block)
         self.orphan = Line.objects.create(
-            mask=[0, 0, 10, 10],
+            baseline=[[30, 30], [40, 40], [50, 50]],
             document_part=self.part,
             block=None)
 
@@ -735,6 +743,48 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.line2.refresh_from_db()
         self.assertEqual(self.line.mask, '[[60, 40], [60, 50], [90, 50], [90, 40]]')
         self.assertEqual(self.line2.mask, '[[50, 40], [50, 30], [70, 30], [70, 40]]')
+
+    def test_bulk_update_order(self):
+        order1, order2 = self.line.order, self.line2.order
+        self.client.force_login(self.user)
+
+        uri = reverse('api:line-bulk-update',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        resp = self.client.put(uri, {'lines': [
+            {'pk': self.line.pk, 'order': order2},
+            {'pk': self.line2.pk, 'order': order1}
+        ]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        self.line.refresh_from_db()
+        self.line2.refresh_from_db()
+        self.assertEqual(self.line.order, order2)
+        self.assertEqual(self.line2.order, order1)
+
+    def test_merge(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-merge',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+
+        # First merge will fail, because line2 doesn't have a baseline
+        body = {'lines': [self.line.pk, self.line2.pk, self.orphan.pk]}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        # Second merge should succeed
+        body = {'lines': [self.line.pk, self.orphan.pk]}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        created_pk = resp.data['lines']['created']['pk']
+        created = Line.objects.get(pk=created_pk)
+        self.assertEqual(created.typology.pk, self.line_type.pk)
+        self.assertEqual(created.block.pk, self.block.pk)
+        self.assertEqual(created.baseline, self.line.baseline + self.orphan.baseline)
+
+        self.assertIsNone(Line.objects.filter(pk=self.line.pk).first())
+        self.assertIsNone(Line.objects.filter(pk=self.orphan.pk).first())
+        self.assertIsNotNone(Line.objects.filter(pk=self.line2.pk).first())
 
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):

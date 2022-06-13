@@ -56,7 +56,9 @@
             <form method="get" action="{% url 'search' %}">
               {% block searchbar_hidden_inputs %}{% endblock %}
               <div class="input-group">
+                {% block searchbar_transcription_filter %}{% endblock %}
                 <input
+                  id="navbar-searchbox"
                   name="query"
                   type="text"
                   class="form-control form-control-sm"
@@ -115,18 +117,20 @@
           </li>
           {% endif %}
 
-          {% get_language_info_list for ESC_LANGUAGES as languages %}
+          {% get_available_languages as languages %}
           {% if languages|length > 1 %}
           <li class="nav-item dropdown">
             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"> {% flags_for_language 1 LANGUAGE_CODE %} <span class="caret"></span></a>
             <form action="{% url 'set_language' %}" method="post">
               {% csrf_token %}
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                {% for language in languages %}
+                {% for lang_code, lang_name in languages %}
                 <li>
-	          <button class="btn" type="submit" name="language" title="{{ language.name_local }}" value="{{ language.code }}">
-                    {% flags_for_language 1 language.code %} <span class="{% if language.code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ language.name }}</span>
+                  {% language lang_code %}
+	          <button class="btn" type="submit" name="language" title="{{ lang_name }}" value="{{ lang_code }}">
+                    {% flags_for_language 1 lang_code %} <span class="{% if lang_code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ lang_name }}</span>
                   </button>
+                  {% endlanguage %}
                 </li>
                 {% endfor %}
               </ul>
@@ -165,7 +169,8 @@
       {% endif %}
       {% if ENABLE_COOKIE_CONSENT %}
       <script>
-          userProfile.getCookieConsent();
+        userProfile.setUserId({{ request.user.id }});
+        userProfile.getCookieConsent();
       </script>
       {% endif %}
       {% endif %}

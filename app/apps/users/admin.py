@@ -38,7 +38,7 @@ class MyUserCreationForm(UserCreationForm):
 class MyUserAdmin(UserAdmin):
     form = MyUserChangeForm
     add_form = MyUserCreationForm
-    list_display = UserAdmin.list_display + ('last_login', 'quota_disk_storage', 'quota_cpu', 'quota_gpu')
+    list_display = UserAdmin.list_display + ('is_active', 'last_login', 'date_joined', 'quota_disk_storage', 'quota_cpu', 'quota_gpu')
     fieldsets = UserAdmin.fieldsets + (
         (None, {'fields': ('fields', 'onboarding')}),  # second fields refers to research fields
         ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
@@ -49,6 +49,17 @@ class MyUserAdmin(UserAdmin):
          ),
         ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
+
+    actions = ['disable']
+
+    def disable(self, request, queryset):
+        queryset.update(is_active=False)
+        count = queryset.count()
+        self.message_user(request, ngettext(
+            '%d user disabled.',
+            '%d users disabled.',
+            count,
+        ) % count, messages.SUCCESS)
 
 
 class InvitationAdmin(admin.ModelAdmin):

@@ -123,30 +123,32 @@
                             class="card history-block mt-2">
                         <div class="card-header">
                             <a href="#"
-                                class="card-toggle"
+                                class="card-toggle collapsed"
                                 data-toggle="collapse"
                                 data-target=".compare-show">
                                 <span>Toggle transcription comparison</span>
                             </a>
 
-                            <button  title="Help."
-                                        data-toggle="collapse"
-                                        data-target="#compare-help"
-                                        class="btn btn-info fas fa-question help nav-item ml-2"></button>
+                            <button title="Help."
+                                    data-toggle="collapse"
+                                    data-target="#compare-help"
+                                    class="btn btn-info fas fa-question help nav-item ml-2"></button>
                             <div id="compare-help" class="alert alert-primary help-text collapse">
                                 <HelpCompareTranscriptions></HelpCompareTranscriptions>
                             </div>
                         </div>
-                        <div class="d-table card-body compare-show collapse show">
+                        <div id="comparison" class="compare-show card-body collapse">
+                          <div class="d-table">
                             <div v-for="trans in otherTranscriptions"
-                                    v-bind:key="'TrC' + trans.pk"
-                                    class="d-table-row">
-                                <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
-                                <div class="d-table-cell text-muted text-nowrap col" title="Transcription name"><small>
+                                 v-bind:key="'TrC' + trans.pk"
+                                 class="d-table-row">
+                              <div class="d-table-cell col" v-html="comparedContent(trans.content)"></div>
+                              <div class="d-table-cell text-muted text-nowrap col" title="Transcription name"><small>
                                     {{ trans.name }}
-                                    <span v-if="trans.pk == $store.state.transcriptions.selectedTranscription">(current)</span></small>
-                                </div>
+                                <span v-if="trans.pk == $store.state.transcriptions.selectedTranscription">(current)</span></small>
+                              </div>
                             </div>
+                          </div>
                         </div>
                     </div>
 
@@ -164,8 +166,7 @@
                                     data-toggle="collapse"
                                     data-target="#versions-help"
                                     class="btn btn-info fas fa-question help nav-item ml-2 collapsed"></button>
-                            <div id="versions-help"
-                                    class="alert alert-primary help-text collapse">
+                            <div id="versions-help" class="alert alert-primary help-text collapse">
                                 <HelpVersions></HelpVersions>
                             </div>
                         </div>
@@ -226,6 +227,10 @@ export default Vue.extend({
         }.bind(this));
 
         this.timeZone = moment.tz.guess();
+    },
+    deactivated() {
+        // make sure the modal is cleanly closed when the panel is hidden
+        $(this.$refs.transModal).modal('hide');
     },
     destroyed() {
         // unbind all events to avoid duplicating them

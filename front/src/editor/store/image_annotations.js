@@ -32,6 +32,7 @@ export const mutations = {
 
 export const actions = {
     async fetch({commit, dispatch, rootState}) {
+        commit('reset')
         let next = true, page = 1
         let data = []
         while (next != null) {

@@ -80,9 +80,17 @@ class SearchForm(BootstrapFormMixin, forms.Form):
         obj_class=Document,
         obj_name="document"
     )
+    transcription = SearchModelChoiceField(
+        queryset=Transcription.objects.none(),
+        label="",
+        required=False,
+        widget=forms.HiddenInput,
+        obj_class=Transcription,
+        obj_name="transcription level"
+    )
 
     class Meta:
-        fields = ['query', 'project', 'document']
+        fields = ['query', 'project', 'document', 'transcription']
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
@@ -100,9 +108,18 @@ class SearchForm(BootstrapFormMixin, forms.Form):
                 pass
         self.fields['document'].queryset = doc_qs
 
+        document = self.data.get('document')
+        if document:
+            try:
+                document = int(document)
+                self.fields['transcription'].queryset = Transcription.objects.filter(document_id=document)
+            except ValueError:
+                pass
+
     def search(self, page, paginate_by):
         projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
         documents = [self.cleaned_data['document'].id] if self.cleaned_data['document'] else None
+        transcriptions = [self.cleaned_data['transcription'].id] if self.cleaned_data['transcription'] else None
 
         return search_content(
             page,
@@ -110,7 +127,8 @@ class SearchForm(BootstrapFormMixin, forms.Form):
             self.user.id,
             self.cleaned_data['query'],
             projects=projects,
-            documents=documents
+            documents=documents,
+            transcriptions=transcriptions
         )
 
 

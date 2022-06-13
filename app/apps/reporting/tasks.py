@@ -97,7 +97,6 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     # If the reporting is disabled for this task we don't need to execute following code
     if task.name in settings.REPORTING_TASKS_BLACKLIST:
         return
-
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
     try:

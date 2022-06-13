@@ -215,33 +215,33 @@ export const actions = {
 
     async bulkDelete({state, dispatch, commit, rootState}, pks) {
         const resp = await api.bulkDeleteLines(rootState.document.id, rootState.parts.pk, {lines: pks})
-        const deletedLines = resp.data.lines;
+        const deletedLines = resp.data.lines
 
-        let deletedPKs = [];
+        let deletedPKs = []
         for (let i=0; i<pks.length; i++) {
             let index = state.all.findIndex(l=>l.pk==pks[i])
             if (index != -1) {
-                deletedPKs.push(pks[i]);
-                commit('remove', index);
+                deletedPKs.push(pks[i])
+                commit('remove', index)
             }
         }
 
-        await dispatch('recalculateOrdering');
+        await dispatch('recalculateOrdering')
 
-        return { deletedPKs, deletedLines };
+        return { deletedPKs, deletedLines }
     },
 
     async merge({state, dispatch, commit, rootState}, {pks, transcription}) {
         const resp = await api.mergeLines(rootState.document.id, rootState.parts.pk, { lines: pks })
-        const deletedLines = resp.data.lines.deleted;
-        const createdLine = resp.data.lines.created;
+        const deletedLines = resp.data.lines.deleted
+        const createdLine = resp.data.lines.created
 
-        const deletedPKs = [];
+        const deletedPKs = []
         for (let i=0; i<pks.length; i++) {
             let index = state.all.findIndex(l=>l.pk==pks[i])
             if (index != -1) {
-                deletedPKs.push(pks[i]);
-                commit('remove', index);
+                deletedPKs.push(pks[i])
+                commit('remove', index)
             }
         }
 
@@ -267,7 +267,7 @@ export const actions = {
             await dispatch('recalculateMasks', createdLine.pk)
         }
 
-        return { createdLine, deletedPKs, deletedLines };
+        return { createdLine, deletedPKs, deletedLines }
     },
 
     async move({commit, rootState}, movedLines) {

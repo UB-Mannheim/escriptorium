@@ -211,19 +211,7 @@ class Annotation(models.Model):
         abstract = True
 
     def as_w3c(self):
-        if self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_RECTANGLE:
-            selector = {
-                "conformsTo": "http://www.w3.org/TR/media-frags/",
-                "type": "FragmentSelector",
-                "value": "xywh=pixel:{x},{y},{w},{h}".format(
-                    x=self.coordinates[0][0],
-                    y=self.coordinates[0][1],
-                    w=self.coordinates[1][0] - self.coordinates[0][0],
-                    h=self.coordinates[1][1] - self.coordinates[0][1],
-                ),
-            }
-
-        elif self.taxonomy.marker_type == AnnotationTaxonomy.MARKER_TYPE_POLYGON:
+        if self.taxonomy.marker_type in [AnnotationTaxonomy.MARKER_TYPE_RECTANGLE, AnnotationTaxonomy.MARKER_TYPE_POLYGON]:
             selector = {
                 'type': 'SvgSelector',
                 'value': '<svg><polygon points="{pts}"></polygon></svg>'.format(
@@ -237,15 +225,20 @@ class Annotation(models.Model):
             AnnotationTaxonomy.MARKER_TYPE_BOLD,
             AnnotationTaxonomy.MARKER_TYPE_ITALIC,
         ]:
+
             start = (
                 LineTranscription.objects.filter(
-                    line__order__lt=self.start_line.order, line__document_part=self.part
+                    line__order__lt=self.start_line.order,
+                    line__document_part=self.part,
+                    transcription=self.transcription,
                 ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.start_offset
             )
             end = (
                 LineTranscription.objects.filter(
-                    line__order__lt=self.end_line.order, line__document_part=self.part
+                    line__order__lt=self.end_line.order,
+                    line__document_part=self.part,
+                    transcription=self.transcription
                 ).aggregate(res=Coalesce(Sum(Length("content")), 0))["res"]
                 + self.end_offset
             )
@@ -1142,6 +1135,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             or "horizontal-lr"
         )
 
+        if (self.document.main_script
+            and (self.document.main_script.text_direction == 'horizontal-rl'
+                 or self.document.main_script.text_direction == 'vertical-rl')):
+            reorder = 'R'
+        else:
+            reorder = 'L'
+
         with Image.open(self.image.file.name) as im:
             line_confidences = []
             for line in lines:
@@ -1166,12 +1166,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         "type": "baselines",
                         # 'selfcript_detection': True
                     }
+
                 it = rpred.rpred(
                     model_,
                     im,
                     bounds=bounds,
                     pad=16,  # TODO: % of the image?
-                    bidi_reordering=True,
+                    bidi_reordering=reorder
                 )
                 lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=trans
@@ -1275,7 +1276,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
         return to_calc
 
-    def rotate(self, angle):
+    def rotate(self, angle, user=None):
         """
         Rotates everything in this document part around the center by a given angle (in degrees):
         images, lines and regions.
@@ -1327,9 +1328,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
         self.save()
 
+        # we need this one right away
         get_thumbnailer(self.image).get_thumbnail(
             settings.THUMBNAIL_ALIASES[""]["large"]
         )
+        generate_part_thumbnails.delay(instance_pk=self.pk)
 
         # rotate lines
         for line in self.lines.all():
@@ -1354,6 +1357,16 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 for x, y in poly.exterior.coords
             ]
             region.save()
+
+        # rotate img annotations
+        for annotation in self.imageannotation_set.prefetch_related('taxonomy'):
+            poly = affinity.rotate(Polygon(annotation.coordinates), angle, origin=center)
+            annotation.coordinates = [
+                (int(x - offset[0]), int(y - offset[1]))
+                for x, y in poly.exterior.coords
+            ]
+
+            annotation.save()
 
     def crop(self, x1, y1, x2, y2):
         """
@@ -1560,6 +1573,10 @@ class Line(OrderedModel):  # Versioned,
         return super().save(*args, **kwargs)
 
 
+class ProtectedObjectException(Exception):
+    pass
+
+
 class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     name = models.CharField(max_length=512)
     document = models.ForeignKey(
@@ -1580,8 +1597,17 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
         return self.name
 
     def archive(self):
-        self.archived = True
-        self.save()
+        if self.name == self.DEFAULT_NAME:
+            raise ProtectedObjectException
+        else:
+            self.archived = True
+            self.save()
+
+    def delete(self):
+        if self.name == self.DEFAULT_NAME:
+            raise ProtectedObjectException
+        else:
+            super().delete()
 
 
 class LineTranscription(

@@ -96,7 +96,7 @@ export const actions = {
             if (data.next) await fetchPage(page+1)
         }
         await fetchPage(1)
-        commit('hasLoadedTranscriptions', true);
+        commit('hasLoadedTranscriptions', true)
     },
 
     async updateLineTranscriptionVersion({commit, dispatch, rootState}, {line, content}) {
@@ -125,7 +125,7 @@ export const actions = {
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
             commit('lines/updateCurrentTrans', resp.data.transcription, {root: true})
         } catch (err) {
-            console.log('couldnt create transcription!', err);
+            console.log('couldnt create transcription!', err)
         }
     },
 
@@ -135,17 +135,15 @@ export const actions = {
             commit('lines/setTranscriptions', { pk: currentTransLine, transcription: resp.data }, {root: true})
             commit('lines/updateCurrentTrans', resp.data.transcription, {root: true})
         } catch (err) {
-            console.log('couldnt update transcription!', err);
+            console.log('couldnt update transcription!', err)
         }
     },
 
     async archive({commit, rootState}, transPk) {
-        try {
-            await api.archiveTranscription(rootState.document.id, transPk)
+        await api.archiveTranscription(rootState.document.id, transPk)
+        .then(resp => {
             commit('remove', transPk)
-        } catch (err) {
-            console.log('couldnt archive transcription #', transPk, err)
-        }
+        })
     },
 
     getComparisonContent({state, dispatch}) {
@@ -157,7 +155,7 @@ export const actions = {
     },
 
     async getCurrentContent({state, commit, dispatch}, transcription) {
-        commit('hasLoadedTranscriptions', false);
+        commit('hasLoadedTranscriptions', false)
         await dispatch('fetchContent', transcription)
         commit('lines/updateCurrentTrans', state.selectedTranscription, {root: true})
     },

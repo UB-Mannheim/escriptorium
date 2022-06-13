@@ -50,8 +50,8 @@
          userProfile.set('onboarding_models', false);
 
          $.ajax({
-             type: 'PUT',
-             url: "{% url 'api:user-onboarding' %}",
+             type: 'PATCH',
+             url: "{% url 'api:user-detail' request.user.id %}",
              contentType: "application/json; charset=utf-8",
              data: JSON.stringify({
                  onboarding: "True",
