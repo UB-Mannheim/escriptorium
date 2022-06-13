@@ -31,7 +31,8 @@ redis_ = get_redis_connection()
 STATE_TASKS = [
     'core.tasks.binarize',
     'core.tasks.segment',
-    'core.tasks.transcribe'
+    'core.tasks.transcribe',
+    'core.tasks.align'
 ]
 
 
