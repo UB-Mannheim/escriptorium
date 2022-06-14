@@ -171,8 +171,26 @@ export class WheelZoom {
         this.pos.y -= Math.round((target.y - target.y / diff.scale)*diff.scale);
 
         this.updateStyle(diff);
-        this.targets[0].showMap(this.pos, this.scale);
+        for (let itarget of this.targets) {
+            itarget.showMap(this.pos, this.scale);
+        }
         return diff;
+    }
+
+    zoomIn() {
+        var target = {
+            x: this.targets[0].element.clientWidth/2-this.pos.x,
+            y: this.targets[0].element.clientHeight/2-this.pos.y
+        };
+        this.zoomTo(target, 0.1);
+    }
+
+    zoomOut() {
+        var target = {
+            x: this.targets[0].element.clientWidth/2-this.pos.x,
+            y: this.targets[0].element.clientHeight/2-this.pos.y
+        };
+        this.zoomTo(target, -0.1);
     }
 
     scrolled(e) {
