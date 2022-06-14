@@ -1,6 +1,5 @@
 <template>
   <div class="col panel">
-    <loading :active.sync="isWorking" :is-full-page="false" />
     <div class="tools">
       <i title="Segmentation Panel" class="panel-icon fas fa-align-left"></i>
       <div class="btn-group">
@@ -174,7 +173,7 @@
 
     <div id="info-tooltip"></div>
 
-    <div class="content-conta">
+    <div class="content-container">
       <div id="seg-zoom-container" ref="segZoomContainer" class="content">
         <div id="seg-data-binding" v-if="loaded">
           <segregion
@@ -193,7 +192,7 @@
 
         <img class="panel-img" ref="img" />
         <!-- TODO: make line overlay component -->
-        <div id="segmentation-overlay" class="overlay panel-overlay">
+        <div id="segmentation-overlay" class="overlay panel-overlay" :class="{show: isWorking}">
           <svg width="100%" height="100%">
             <defs>
               <mask id="seg-overlay">
@@ -226,7 +225,6 @@ import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
 import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
-import Loading from "vue-loading-overlay";
 
 export default Vue.extend({
   mixins: [BasePanel],
@@ -243,8 +241,7 @@ export default Vue.extend({
   components: {
     segline: SegLine,
     segregion: SegRegion,
-    help: Help,
-    loading: Loading,
+    help: Help
   },
   mounted() {
     // wait for the element to be rendered

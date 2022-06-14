@@ -136,10 +136,10 @@ export default Vue.extend({
 
     methods: {
         empty() {
+            this.anno.clearAnnotations();
             while (this.$refs.diplomaticLines.hasChildNodes()) {
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
-            this.anno.clearAnnotations();
         },
 
         getAPITextAnnotationBody(annotation, offsets) {
@@ -326,7 +326,10 @@ export default Vue.extend({
         },
 
         constrainLineNumber() {
-            // add lines until we have enough of them
+            // Removes any rogue 'br' added by the browser
+            this.$refs.diplomaticLines.querySelectorAll(':scope > br').forEach(n => n.remove());
+
+            // Add lines until we have enough of them
             while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
                 this.appendLine();
             }
@@ -602,7 +605,7 @@ export default Vue.extend({
         },
 
         showOverlay(ev) {
-            let target = ev.target.nodeType==Node.TEXT_NODE?ev.target.parentNode:ev.target;
+            let target = ev.target.closest('div');
             let index = Array.prototype.indexOf.call(target.parentNode.children, target);
             if (index > -1 && index < this.$children.length) {
                 let diploLine = this.$children.find(dl=>dl.line.order==index);

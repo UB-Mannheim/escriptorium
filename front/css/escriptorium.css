@@ -42,12 +42,6 @@ body {
     margin: 0;
 }
 
-/* .container { */
-/*   margin-right: auto; */
-/*   margin-left: auto; */
-/*   max-width: 90%; */
-/* } */
-
 /* alerts */
 
 #alerts-container {
@@ -429,6 +423,7 @@ i.panel-icon {
 
 .js-zoom-target {
     box-shadow: 1px 0 4px 1px rgba(0,0,0,0.1);
+    display: inline-block;
 }
 
 #zoom-range {
@@ -446,6 +441,16 @@ i.panel-icon {
 .zoom-container {
     position: relative;
     width: 100%;
+}
+
+.panel .overlay {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.panel .overlay.show {
+    opacity: 1;
+    cursor: wait;
 }
 
 .overlay {
@@ -483,10 +488,6 @@ i.panel-icon {
 
 .panel .panel-img {
     width: 100%;
-}
-
-.panel .overlay {
-    display: none;
 }
 
 #modal-img-container {

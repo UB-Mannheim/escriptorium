@@ -20,37 +20,45 @@
                         @click="resetZoom"
                         class="btn btn-sm btn-info"
                         title="Reset zoom. (Ctrl+Backspace)">
-                    <i class="fas fa-search-minus"></i>
+                    <i class="fas fa-search"></i>
                 </button>
-                <input id="zoom-range"
-                       type="range"
-                       name="zoom-range"
-                       class="form-control-range mt-1"
-                       orient="vertical"
-                       v-bind:min="zoom.minScale"
-                       v-bind:max="zoom.maxScale"
-                       v-model="zoomScale"
-                       step="0.3">
+
+                <button id="zoom-in"
+                        @click="zoomIn"
+                        class="btn btn-sm btn-info mt-2"
+                        title="Zoom in. (mousewheel up)">
+                    <i class="fa fa-search-plus"></i>
+                </button>
+                <button id="zoom-out"
+                        @click="zoomOut"
+                        class="btn btn-sm btn-info mt-1"
+                        title="Zoom out. (mousewheel down)">
+                    <i class="fa fa-search-minus"></i>
+                </button>
+
             </div>
         </div>
 
-        <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
-                     v-bind:fullsizeimage="fullsizeimage"
-                     ref="sourcePanel">
-        </SourcePanel>
+        <keep-alive>
+            <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
+                         v-bind:fullsizeimage="fullsizeimage"
+                         ref="sourcePanel">
+            </SourcePanel>
+        </keep-alive>
+
 
         <keep-alive>
             <SegPanel v-if="visible_panels.segmentation && $store.state.parts.loaded"
-                               v-bind:fullsizeimage="fullsizeimage"
-                               id="segmentation-panel"
-                               ref="segPanel">
+                      v-bind:fullsizeimage="fullsizeimage"
+                      id="segmentation-panel"
+                      ref="segPanel">
             </SegPanel>
         </keep-alive>
 
         <keep-alive>
             <VisuPanel v-if="visible_panels.visualisation && $store.state.parts.loaded"
-                    id="transcription-panel"
-                    ref="visuPanel">
+                       id="transcription-panel"
+                       ref="visuPanel">
             </VisuPanel>
         </keep-alive>
 
@@ -130,22 +138,10 @@ export default {
                     this.visible_panels.segmentation,
                     this.visible_panels.visualisation].filter(p=>p===true);
         },
-        zoomScale: {
-            get() {
-                return this.zoom.scale || 1;
-            },
-            set(newValue) {
-                let target = {
-                    x: this.$parent.$el.clientWidth/this.openedPanels.length/2-this.zoom.pos.x,
-                    y: this.$parent.$el.clientHeight/this.openedPanels.length/2-this.zoom.pos.y
-                };
-                this.zoom.zoomTo(target, parseFloat(newValue)-this.zoom.scale);
-            }
-        }
     },
     methods: {
         prefetchImage(src, callback) {
-            // this is the panel's responsibility to call this!
+            // It is the panel's responsibility to call this!
             let img = new Image();
             img.addEventListener('load', function() {
                 if (callback) callback(src);
@@ -155,6 +151,12 @@ export default {
         },
         resetZoom() {
             this.zoom.reset();
+        },
+        zoomIn() {
+            this.zoom.zoomIn();
+        },
+        zoomOut() {
+            this.zoom.zoomOut();
         },
         async getPrevious(ev) {
             await this.$store.dispatch('parts/loadPart', 'previous');

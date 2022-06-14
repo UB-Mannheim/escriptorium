@@ -27,6 +27,14 @@ User = get_user_model()
 redis_ = get_redis_connection()
 
 
+# tasks for which to keep track of the state and update the front end
+STATE_TASKS = [
+    'core.tasks.binarize',
+    'core.tasks.segment',
+    'core.tasks.transcribe'
+]
+
+
 def update_client_state(part_id, task, status, task_id=None, data=None):
     DocumentPart = apps.get_model('core', 'DocumentPart')
     part = DocumentPart.objects.get(pk=part_id)
@@ -567,7 +575,7 @@ def check_signal_order(old_signal, new_signal):
 
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
-    if not sender.startswith('core.tasks') or sender.endswith('train'):
+    if sender not in STATE_TASKS:
         return
     instance_id = body[1]["instance_pk"]
     data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
@@ -597,7 +605,7 @@ def before_publish_state(sender=None, body=None, **kwargs):
 @task_success.connect
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
-    if not sender.name.startswith('core.tasks') or sender.name.endswith('train'):
+    if sender.name not in STATE_TASKS:
         return
     instance_id = sender.request.kwargs["instance_pk"]
 

@@ -4,13 +4,13 @@ from math import ceil
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import Elasticsearch
 from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk as es_bulk
 
-from core.models import Project
+from core.models import LineTranscription, Project
 from users.models import User
 
 logger = logging.getLogger("es_indexing")
@@ -161,7 +161,7 @@ class Command(BaseCommand):
                 if filter_parts
                 else document.parts.all()
             )
-            for part in parts:
+            for part in parts.iterator():
                 try:
                     total_inserted += self.ingest_document_part(
                         project, document, part, allowed_users
@@ -183,14 +183,19 @@ class Command(BaseCommand):
     def ingest_document_part(self, project, document, part, allowed_users):
         thumbnailer = get_thumbnailer(part.image)
         try:
-            thumbnail = thumbnailer.get_thumbnail(settings.THUMBNAIL_ALIASES['']['large'])
+            thumbnail = thumbnailer.get_thumbnail(
+                settings.THUMBNAIL_ALIASES[""]["large"], generate=False
+            )
             assert thumbnail
         except Exception:
             thumbnail = part.image
             pass
 
         # Factors to scale line bboxes if necessary
-        scale_factors = [thumbnail.width / part.image.width, thumbnail.height / part.image.height] * 2
+        scale_factors = [
+            thumbnail.width / part.image.width,
+            thumbnail.height / part.image.height,
+        ] * 2
 
         to_insert = []
         # Iterate on all DocumentPart regions and also on None to retrieve lines that aren't associated to one
@@ -203,7 +208,20 @@ class Command(BaseCommand):
             # Reset the context "cache" for each region to avoid connecting lines from different regions
             previous_contents = {}
             previous_index = {}
-            for line in lines.order_by("order"):
+            for line in lines.prefetch_related(
+                Prefetch(
+                    "transcriptions",
+                    queryset=LineTranscription.objects.select_related("transcription"),
+                )
+            ).order_by("order"):
+                line_box = line.get_box()
+                bounding_box = None
+                if line_box:
+                    bounding_box = [
+                        ceil(value * factor)
+                        for value, factor in zip(line_box, scale_factors)
+                    ]
+
                 for line_transcription in line.transcriptions.all():
                     tr_id = line_transcription.transcription.id
 
@@ -217,7 +235,6 @@ class Command(BaseCommand):
                             "context_after"
                         ] = line_transcription.content
 
-                    line_box = line.get_box()
                     # If you change the document structure here, don't forget to update the INDEX_MAPPING constant
                     to_insert.append(
                         {
@@ -243,7 +260,7 @@ class Command(BaseCommand):
                             if tr_id in previous_contents
                             else line_transcription.content,
                             # Rescaling the line bbox to match the thumbnail if necessary
-                            "bounding_box": [ceil(value * factor) for value, factor in zip(line_box, scale_factors)] if line_box else None,
+                            "bounding_box": bounding_box,
                             "have_access": list(set(allowed_users)),
                         }
                     )
@@ -268,7 +285,7 @@ class Command(BaseCommand):
             ).values_list("id", flat=True)
         )
 
-        if document.owner:
-            shared_with_users.append(document.owner.id)
+        if document.owner_id:
+            shared_with_users.append(document.owner_id)
 
         return shared_with_users

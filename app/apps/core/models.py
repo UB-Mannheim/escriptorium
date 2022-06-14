@@ -1126,6 +1126,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             or "horizontal-lr"
         )
 
+        if (self.document.main_script
+            and (self.document.main_script.text_direction == 'horizontal-rl'
+                 or self.document.main_script.text_direction == 'vertical-rl')):
+            reorder = 'R'
+        else:
+            reorder = 'L'
+
         with Image.open(self.image.file.name) as im:
             for line in lines:
                 if not line.baseline:
@@ -1148,12 +1155,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         "type": "baselines",
                         # 'selfcript_detection': True
                     }
+
                 it = rpred.rpred(
                     model_,
                     im,
                     bounds=bounds,
                     pad=16,  # TODO: % of the image?
-                    bidi_reordering=True,
+                    bidi_reordering=reorder
                 )
                 lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=trans
