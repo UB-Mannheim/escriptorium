@@ -42,12 +42,6 @@ body {
     margin: 0;
 }
 
-/* .container { */
-/*   margin-right: auto; */
-/*   margin-left: auto; */
-/*   max-width: 90%; */
-/* } */
-
 /* alerts */
 
 #alerts-container {
@@ -448,6 +442,16 @@ i.panel-icon {
     width: 100%;
 }
 
+.panel .overlay {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.panel .overlay.show {
+    opacity: 1;
+    cursor: wait;
+}
+
 .overlay {
     top: 0;
     left: 0;
@@ -483,10 +487,6 @@ i.panel-icon {
 
 .panel .panel-img {
     width: 100%;
-}
-
-.panel .overlay {
-    display: none;
 }
 
 #modal-img-container {
