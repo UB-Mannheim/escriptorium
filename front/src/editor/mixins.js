@@ -46,9 +46,10 @@ export var LineBase = {
             if (this.line && this.line.mask) {
                 Array.from(document.querySelectorAll('.panel-overlay')).map(
                     function(e) {
-                        // TODO: transition
-                        e.style.display = 'block';
-                        e.querySelector('polygon').setAttribute('points', this.maskPoints);
+                        e.classList.add('show');
+                        if (this.maskPoints) {
+                            e.querySelector('polygon').setAttribute('points', this.maskPoints);
+                        }
                     }.bind(this)
                 );
             }
@@ -56,7 +57,7 @@ export var LineBase = {
         hideOverlay() {
             Array.from(document.querySelectorAll('.panel-overlay')).map(
                 function(e) {
-                    e.style.display = 'none';
+                    e.classList.remove('show');
                 }
             );
         },
