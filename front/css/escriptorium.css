@@ -450,6 +450,10 @@ i.panel-icon {
 
 .panel .overlay.show {
     opacity: 1;
+}
+
+.panel .overlay.working {
+    opacity: 1;
     cursor: wait;
 }
 

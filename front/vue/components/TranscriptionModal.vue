@@ -456,10 +456,10 @@ export default Vue.extend({
                 overlay.style.height = this.$store.state.parts.image.size[1]*ratio+'px';
                 overlay.style.transformOrigin = transformOrigin;
                 overlay.style.transform = transform;
-                overlay.style.display = 'block';
+                overlay.classList.add('show');
             } else {
                 // TODO: fake mask?!
-                overlay.style.display = 'none';
+                overlay.classList.remove('show');
             }
         },
 
