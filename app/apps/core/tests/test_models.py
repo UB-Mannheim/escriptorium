@@ -16,10 +16,12 @@ class DocumentPartTestCase(CoreFactoryTestCase):
     def makeTranscriptionContent(self):
         """Set up transcription content, witness"""
         self.part = self.factory.make_part()
-        self.factory.make_part(document=self.part.document)
-        self.factory.make_part(document=self.part.document)
+        self.part_2 = self.factory.make_part(document=self.part.document)
+        self.part_3 = self.factory.make_part(document=self.part.document)
         self.transcription = self.factory.make_transcription(document=self.part.document)
         self.factory.make_content(self.part, transcription=self.transcription)
+        self.factory.make_content(self.part_2, transcription=self.transcription)
+        self.factory.make_content(self.part_3, transcription=self.transcription)
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
         self.n_gram = 4
@@ -37,7 +39,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
 
         # should call subprocess.check_call with passim (seriatim), n-gram of 4, correct input
         # file/output directory
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False)
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
         mock_subprocess.check_call.assert_called_with([
@@ -55,12 +57,18 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         with patch("core.models.remove") as mock_remove:
             with patch("core.models.shutil") as mock_shutil:
                 # should produce an input json file (json.load will error otherwise)
-                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False)
                 infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
                 # should be a list of length 2 (1 input document + 1 witness txt)
                 self.assertEqual(len(in_json), 2)
+
+                # since full_doc = False, should have 30 lines (1980 chars) from only single page
+                for entry in in_json:
+                    if entry["id"] != "witness":
+                        self.assertEqual(len(entry["lineIDs"]), 30)
+                        self.assertEqual(len(entry["text"]), 1980)
 
                 # should have an entry with id "witness" and text of witness txt
                 witness_dict = next(filter(lambda d: d["id"] == "witness", in_json))
@@ -96,7 +104,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         # LineTranscription for that line to an empty string
         lt_to_remove = LineTranscription.objects.get(line=self.part.lines.first(), transcription=self.transcription)
         lt_to_remove.delete()
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -115,7 +123,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # re-run the alignment with the real passim output
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False)
 
         # line we know should have changed content based on witness.txt and out.json
         new_trans = Transcription.objects.get(
@@ -139,7 +147,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # run the alignment with the real passim output, and merge = False
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -163,8 +171,27 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             with patch("core.models.shutil") as mock_shutil:
                 with self.assertRaises(Exception):
                     # should still raise the exception
-                    self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True)
+                    self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False)
                 # should remove the input json
                 mock_remove.assert_called_with(f"{self.outdir}.json")
                 # should remove the output directory
                 mock_shutil.rmtree.assert_called_with(self.outdir)
+
+    @patch("core.models.subprocess")
+    def test_align_fulldoc(self, _):
+        """Test alignment using the full document transcription instead of each page in Passim"""
+        self.makeTranscriptionContent()
+
+        # mock file cleanup-related modules so we can read the input json
+        with patch("core.models.remove"):
+            with patch("core.models.shutil"):
+                # should produce an input json file (json.load will error otherwise)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True)
+                infile = open(f"{self.outdir}.json")
+                in_json = json.load(infile)
+
+                # since full_doc = False, should have 90 lines, 5940 chars, combining pages from whole document
+                for entry in in_json:
+                    if entry["id"] != "witness":
+                        self.assertEqual(len(entry["lineIDs"]), 90)
+                        self.assertEqual(len(entry["text"]), 5940)

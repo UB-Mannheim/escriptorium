@@ -1197,7 +1197,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk, n_gram, merge):
+    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc):
         """Use subprocess call to Passim to align transcription with textual witness"""
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
@@ -1208,8 +1208,16 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         )
         # get relevant LineTranscriptions
         line_transcriptions = LineTranscription.objects.filter(
-            line__document_part__pk=self.pk,    # has lines related to this DocumentPart,
             transcription__pk=transcription_pk  # transcription matches the filter
+        )
+        if not full_doc:
+            line_transcriptions = line_transcriptions.filter(
+                line__document_part__pk=self.pk,  # has lines related to this DocumentPart
+            )
+
+        # ensure lines are in order
+        line_transcriptions = line_transcriptions.order_by(
+            "line__document_part", "line__document_part__order", "line__order"
         )
 
         # build the JSON input for passim

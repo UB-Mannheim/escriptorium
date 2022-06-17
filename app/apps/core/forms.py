@@ -673,6 +673,13 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         help_text=_("If checked, the new layer will use the text of the original transcription when alignment could not be performed. If left unchecked, those lines will be empty."),
     )
 
+    full_doc = forms.BooleanField(
+        label=_("Use full transcribed document"),
+        required=False,
+        initial=True,
+        help_text=_("If checked, the alignment tool will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the witness separately."),
+    )
+
     def __init__(self, *args, **kwargs):
         """Refine querysets to filter transcription and witness on document"""
         super().__init__(*args, **kwargs)
@@ -707,6 +714,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         existing_witness = self.cleaned_data.get("existing_witness")
         n_gram = self.cleaned_data.get("n_gram", 4)
         merge = self.cleaned_data.get("merge")
+        full_doc = self.cleaned_data.get("full_doc", True)
 
         if existing_witness:
             witness = existing_witness
@@ -726,7 +734,8 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 transcription_pk=transcription.pk,
                 witness_pk=witness.pk,
                 n_gram=int(n_gram),
-                merge=merge,
+                merge=bool(merge),
+                full_doc=bool(full_doc),
             )
 
 
