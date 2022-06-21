@@ -1197,7 +1197,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc):
+    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold):
         """Use subprocess call to Passim to align transcription with textual witness"""
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
@@ -1286,14 +1286,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     # iterate through lines in output with "wits" entries
                     for line in out_dict.get("lines", []):
                         for match in line.get("wits", []):
-                            # TODO: if match["matches"]/len(line["text"]) is >= threshold:
-                            # find the matching line id in line_ids based on character position
-                            match_line_id = next((ln for ln in line_ids if ln["start"] == line["begin"]), {})
-                            aligned_lines.append({
-                                "id": match_line_id.get("id", -1),
-                                "text": match.get("text", ""),
-                                "alg": match.get("alg", ""),
-                            })
+                            match_text = match.get("text", "")
+                            n_matches = float(match.get("matches", 0))
+                            # if the % of matches is greater than or equal to threshold:
+                            if (n_matches / max(len(line.get("text", "")), len(match_text))) >= threshold:
+                                # find the matching line id in line_ids based on character position
+                                match_line_id = next((ln for ln in line_ids if ln["start"] == line["begin"]), {})
+                                aligned_lines.append({
+                                    "id": match_line_id.get("id", -1),
+                                    "text": match_text,
+                                    "alg": match.get("alg", ""),
+                                })
 
         # build the new transcription layer
         original_trans = Transcription.objects.get(pk=transcription_pk)

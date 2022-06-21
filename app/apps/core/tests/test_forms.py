@@ -75,6 +75,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "parts": [self.part],
             "merge": False,
             "full_doc": True,
+            "threshold": 0.8,
         }
 
         align_form.process()
@@ -88,6 +89,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             n_gram=2,
             merge=False,
             full_doc=True,
+            threshold=0.8,
         )
 
         # should create a new textual witness from a passed file
@@ -99,6 +101,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "parts": [self.part],
             "merge": False,
             "full_doc": True,
+            "threshold": 0.8,
         }
         align_form.process()
         mock_textualwitness_class.assert_called_with(
@@ -114,6 +117,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "existing_witness": self.witness,
             "parts": [self.part],
             "merge": False,
+            "threshold": 0.8,
         }
         align_form.process()
         mock_task.assert_called_with(
@@ -124,4 +128,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             n_gram=4,
             merge=False,
             full_doc=True,
+            threshold=0.8,
         )

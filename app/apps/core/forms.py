@@ -677,7 +677,17 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         label=_("Use full transcribed document"),
         required=False,
         initial=True,
-        help_text=_("If checked, the alignment tool will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the witness separately."),
+        help_text=_("If checked, the alignment tool will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the reference text separately."),
+    )
+
+    threshold = forms.FloatField(
+        label=_("Line length match threshold"),
+        help_text=_("Threshold (0.0–1.0) for the proportion of aligned line length to original transcription, below which matches will be ignored. When set to 0.0, all matches will be accepted, which may result in increased bad matches."),
+        widget=forms.NumberInput(attrs={"step": "0.1"}),
+        required=True,
+        initial=0.8,
+        min_value=0.0,
+        max_value=1.0,
     )
 
     def __init__(self, *args, **kwargs):
@@ -715,6 +725,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         n_gram = self.cleaned_data.get("n_gram", 4)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
+        threshold = self.cleaned_data.get("threshold", 0.8)
 
         if existing_witness:
             witness = existing_witness
@@ -736,6 +747,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 n_gram=int(n_gram),
                 merge=bool(merge),
                 full_doc=bool(full_doc),
+                threshold=float(threshold),
             )
 
 
