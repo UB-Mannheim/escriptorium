@@ -8,19 +8,24 @@
                    type="checkbox"
                    title="Toggle confidence visualization"
                    v-on:click="toggleConfidence"
-                   v-bind:disabled="!hasConfidence && !$store.state.document.confidenceVisible" />
-            <label for="toggle-confidence" class="ml-3">
-                <span>Show OCR confidence</span>
+                   v-if="hasConfidence" />
+            <label for="toggle-confidence"
+                   class="ml-3"
+                   v-if="hasConfidence"
+                   title="Show the average confidence of automatic transcription (OCR/HTR) per line"
+            >
+                <span>Show confidence</span>
             </label>
             <input
                 type="range"
                 class="custom-range"
                 min="1"
-                max="8"
+                max="10"
                 id="confidence-range"
                 step="0.1"
                 v-on:input="changeConfidenceScale"
-                v-bind:disabled="!hasConfidence || !$store.state.document.confidenceVisible"
+                v-if="hasConfidence"
+                v-bind:disabled="!$store.state.document.confidenceVisible"
                 v-model="confidenceScale"
             >
         </div>

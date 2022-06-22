@@ -684,7 +684,7 @@ i.panel-icon {
 
 input[type="range"]#confidence-range {
     padding-top: 10px;
-    margin-left: 175px;
+    margin-left: 135px;
     width: 20%;
 }
 /* "Show confidence" toggle
@@ -711,6 +711,7 @@ input[type="checkbox"].toggle-switch + label {
     border-radius: 20em;
     vertical-align: middle;
     margin-bottom: 0;
+    margin-left: -4rem;
 }
 input[type="checkbox"].toggle-switch + label:before, input[type=checkbox].toggle-switch + label:after {
     position: absolute;
@@ -729,6 +730,15 @@ input[type="checkbox"].toggle-switch + label:before {
     margin: 0.1875em;
     border-radius: 50%;
     z-index: 5;
+}
+input[type="checkbox"].toggle-switch:disabled + label {
+    cursor: default;
+}
+input[type="checkbox"].toggle-switch:disabled + label:before {
+    background: rgba(0, 0, 0, 0.15);
+}
+input[type="checkbox"].toggle-switch:disabled + label span {
+    opacity: 0.5;
 }
 input[type="checkbox"].toggle-switch + label:after {
     color: #fff;

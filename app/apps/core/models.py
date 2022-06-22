@@ -1191,7 +1191,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     line_confidences.append(line_avg_confidence)
                 lt.save()
         if line_confidences:
-            # calculate and set all avg OCR confidence values on models
+            # calculate and set all avg confidence values on models
             avg_line_confidence = mean(line_confidences)
             # store max avg confidence on the page
             if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:

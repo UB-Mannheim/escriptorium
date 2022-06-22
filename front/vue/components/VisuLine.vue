@@ -114,7 +114,7 @@ export default Vue.extend({
         computeConfidence() {
             // compute the average confidence for this line
             if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
-                const confidence =  `Confidence: ${(this.lineAvgConfidence * 100).toFixed(2)}%`;
+                const confidence =  `Confidence: ${(this.lineAvgConfidence * 100).toFixed(1)}%`;
                 // add confidence to bootstrap title related attributes
                 this.$refs.textElement.setAttribute('title' ,confidence);
                 this.$refs.textElement.setAttribute('data-original-title', confidence);

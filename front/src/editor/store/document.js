@@ -24,7 +24,7 @@ export const initialState = () => ({
     // Confidence overlay visibility
     confidenceVisible: false,
     // exponential scale factor for confidence overlay
-    confidenceScale: 2.5,
+    confidenceScale: 4,
 
     enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })

@@ -103,12 +103,19 @@ class partCard {
         let avgConfidenceElement = $(".avg-confidence", this.$element);
         let avgConfidenceToggle = $('input#show-confidence');
         if (this.avgConfidence) {
-            avgConfidenceElement.text(`OCR confidence: ${(this.avgConfidence * 100).toFixed(2)}%`);
+            avgConfidenceElement.text(`Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
             avgConfidenceElement.attr('title', this.avgConfidenceModel);
+
+            const hue = Math.pow(this.avgConfidence, 4) * 120;
+            avgConfidenceElement.css('background-color', `hsl(${hue}, 100%, 50%, 50%)`);
             if (avgConfidenceToggle.attr('disabled')) {
                 // if any card has average confidence, enable toggle switch
                 avgConfidenceToggle.attr('disabled', false);
             }
+        } else {
+            // otherwise, hide toggle switch entirely
+            avgConfidenceToggle.hide();
+            $('input#show-confidence + label').hide();
         }
         // start with avg confidence disabled
         avgConfidenceElement.hide();
@@ -651,7 +658,7 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
         });
     });
 
-    // "Show OCR confidence" toggle switch
+    // "Show confidence" toggle switch
     let avgConfidenceToggle = $('input#show-confidence');
 
     avgConfidenceToggle.on('change', function() {

@@ -27,9 +27,9 @@
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
     <span>{% trans "Selected" %} <span id="selected-counter"></span></span>
-    <div class="ml-auto mr-auto" role="group">
+    <div class="ml-auto mr-auto" role="group" title="{% trans "Show the highest average confidence of automatic transcription (OCR/HTR) per page" %}">
       <input type="checkbox" id="show-confidence" name="show-confidence" class="toggle-switch" disabled />
-      <label for="show-confidence"><span>{% trans "Show OCR confidence" %}</span></label>
+      <label for="show-confidence"><span>{% trans "Show confidence" %}</span></label>
     </div>
     <div class="btn-group ml-auto mr-1" role="group">
       <button

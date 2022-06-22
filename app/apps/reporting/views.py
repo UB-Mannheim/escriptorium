@@ -252,5 +252,5 @@ class DocumentReport(LoginRequiredMixin, DetailView):
         ).distinct().count()
 
     def get_ocr_confidence(self):
-        """Compute the average OCR confidence for selected transcription(s)"""
+        """Compute the average confidence for selected transcription(s)"""
         return self.transcriptions.aggregate(avg=Avg("avg_confidence")).get("avg")
