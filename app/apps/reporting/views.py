@@ -233,7 +233,16 @@ class DocumentReport(LoginRequiredMixin, DetailView):
         context['part_count'] = self.object.parts.count()
         context['transcribed_part_count'] = self.get_transcribed_part_count()
         context['avg_ocr_confidence'] = self.get_ocr_confidence()
+        context['part_lines_transcriptions'] = self.get_part_lines_transcriptions()
+        context['vocabulary'] = self.request.GET.get('vocabulary')
         return context
+
+    def get_part_lines_transcriptions(self):
+        document_list = Document.objects.filter(pk=self.object.pk)
+        document_list = document_list.annotate(
+            part_lines_transcriptions=StringAgg('parts__lines__transcriptions__content', delimiter=' ', filter=Q(parts__lines__transcriptions__transcription__in=self.transcriptions)),
+        )
+        return document_list.aggregate(data=StringAgg("part_lines_transcriptions", delimiter=' ')).get('data')
 
     def get_transcribed_part_count(self):
         """Count the number of document parts in selected transcription(s)"""
