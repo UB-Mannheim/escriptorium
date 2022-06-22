@@ -670,14 +670,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         label=_("Merge aligned text with existing transcription"),
         required=False,
         initial=False,
-        help_text=_("If checked, the new layer will use the text of the original transcription when alignment could not be performed. If left unchecked, those lines will be empty."),
+        help_text=_("If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."),
     )
 
     full_doc = forms.BooleanField(
         label=_("Use full transcribed document"),
         required=False,
         initial=True,
-        help_text=_("If checked, the alignment tool will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the reference text separately."),
+        help_text=_("If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."),
     )
 
     threshold = forms.FloatField(
@@ -690,8 +690,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         max_value=1.0,
     )
 
+    region_types = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        help_text=_("Region types to include in the alignment."),
+    )
+
     def __init__(self, *args, **kwargs):
-        """Refine querysets to filter transcription and witness on document"""
+        """Refine querysets to filter transcription, witness, and region types on document"""
         super().__init__(*args, **kwargs)
 
         self.fields["transcription"].queryset = self.fields["transcription"].queryset.filter(
@@ -702,6 +708,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
             owner=self.user,
             document=self.document,
         ).distinct()
+
+        # region types choices population, adapted from ExportForm
+        choices = [
+            (rt.id, rt.name)
+            for rt in self.document.valid_block_types.all()
+        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+        self.fields['region_types'].choices = choices
+        self.fields['region_types'].initial = [c[0] for c in choices]
 
     def clean(self):
         """Validate such that exactly one of the witness fields is present"""
@@ -717,6 +731,10 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 _("You may only supply one witness text (file upload or existing text).")
             )
 
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
+            raise forms.ValidationError(_("You don't have any CPU minutes left."))
+
     def process(self):
         """Instantiate or set the witness to use, then enqueue the task(s)"""
         transcription = self.cleaned_data.get("transcription")
@@ -726,6 +744,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold", 0.8)
+        region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
 
         if existing_witness:
             witness = existing_witness
@@ -748,6 +767,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
                 merge=bool(merge),
                 full_doc=bool(full_doc),
                 threshold=float(threshold),
+                region_types=region_types,
             )
 
 

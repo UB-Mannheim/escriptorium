@@ -18,7 +18,9 @@
   <div class="form-group">
     <h5>{% trans "Settings" %}</h5>
     {% render_field align_form.full_doc class="js-proc-settings" data_document=document.pk %}
-    {{ align_form.threshold.label }}
+    <label>{{ align_form.region_types.label }}</label>
+    {% render_field align_form.region_types class="js-proc-settings" data_document=document.pk %}
+    <label>{{ align_form.threshold.label }}</label>
     {% render_field align_form.threshold class="js-proc-settings" data_document=document.pk %}
     {% render_field align_form.merge class="js-proc-settings" data_document=document.pk %}
     {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}

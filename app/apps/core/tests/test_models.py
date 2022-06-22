@@ -25,6 +25,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
         self.n_gram = 4
+        self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
 
         ppk = self.part.pk
         tpk = self.transcription.pk
@@ -39,7 +40,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
 
         # should call subprocess.check_call with passim (seriatim), n-gram of 4, correct input
         # file/output directory
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
         mock_subprocess.check_call.assert_called_with([
@@ -57,7 +58,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         with patch("core.models.remove") as mock_remove:
             with patch("core.models.shutil") as mock_shutil:
                 # should produce an input json file (json.load will error otherwise)
-                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
                 infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
@@ -104,7 +105,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         # LineTranscription for that line to an empty string
         lt_to_remove = LineTranscription.objects.get(line=self.part.lines.first(), transcription=self.transcription)
         lt_to_remove.delete()
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -123,7 +124,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # re-run the alignment with the real passim output
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
 
         # line we know should have changed content based on witness.txt and out.json
         new_trans = Transcription.objects.get(
@@ -147,7 +148,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # run the alignment with the real passim output, and merge = False
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.0)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.0, region_types=self.region_types)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -171,7 +172,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             with patch("core.models.shutil") as mock_shutil:
                 with self.assertRaises(Exception):
                     # should still raise the exception
-                    self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0)
+                    self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
                 # should remove the input json
                 mock_remove.assert_called_with(f"{self.outdir}.json")
                 # should remove the output directory
@@ -186,7 +187,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         with patch("core.models.remove"):
             with patch("core.models.shutil"):
                 # should produce an input json file (json.load will error otherwise)
-                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True, threshold=0.0)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True, threshold=0.0, region_types=self.region_types)
                 infile = open(f"{self.outdir}.json")
                 in_json = json.load(infile)
 
@@ -207,7 +208,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
 
         # run the alignment with the real passim output, and threshold = 0.8
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.8)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.8, region_types=self.region_types)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -224,7 +225,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         copyfile(alignment, f"{self.outdir}/out.json/out.json")
 
         # run the alignment with threshold = 0.2
-        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.2)
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.2, region_types=self.region_types)
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -235,3 +236,36 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertNotEqual(new_lt.content, "")
+
+    @patch("core.models.subprocess")
+    def test_region_filters(self, _):
+        """Test region filters in alignment function"""
+        self.makeTranscriptionContent()
+
+        # mock file cleanup-related modules so we can read the input json
+        with patch("core.models.remove"):
+            with patch("core.models.shutil"):
+                # when region_types is empty, should have 0 lines (exclude all region types)
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True, threshold=0.0, region_types=[])
+                infile = open(f"{self.outdir}.json")
+                in_json = json.load(infile)
+                for entry in in_json:
+                    if entry["id"] != "witness":
+                        self.assertEqual(len(entry["lineIDs"]), 0)
+
+                # when region_types includes exactly one of the three we created in
+                # makeTranscriptionContent, should have 30 lines
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True, threshold=0.0, region_types=[self.part.document.valid_block_types.first().id])
+                infile = open(f"{self.outdir}.json")
+                in_json = json.load(infile)
+                for entry in in_json:
+                    if entry["id"] != "witness":
+                        self.assertEqual(len(entry["lineIDs"]), 30)
+
+                # when region_types is all the valid ones for the document, should have 90 lines
+                self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=True, threshold=0.0, region_types=self.region_types)
+                infile = open(f"{self.outdir}.json")
+                in_json = json.load(infile)
+                for entry in in_json:
+                    if entry["id"] != "witness":
+                        self.assertEqual(len(entry["lineIDs"]), 90)

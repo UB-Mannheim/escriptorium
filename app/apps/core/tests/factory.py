@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 from core.models import (
     Block,
+    BlockType,
     Document,
     DocumentPart,
     Line,
@@ -142,11 +143,17 @@ class CoreFactory():
 
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
+        block_type = BlockType.objects.create(name="blocktype", public=True, default=True)
+        part.document.valid_block_types.add(block_type)
         for i in range(amount):
-            block = Block.objects.create(document_part=part, box=[
-                line_margin, i * line_height - line_margin,
-                line_margin + line_width, i * line_height - line_margin
-            ])
+            block = Block.objects.create(
+                document_part=part,
+                typology=block_type,
+                box=[
+                    line_margin, i * line_height - line_margin,
+                    line_margin + line_width, i * line_height - line_margin
+                ],
+            )
             line = Line.objects.create(document_part=part,
                                        baseline=[
                                            [line_margin, i * line_height],

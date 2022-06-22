@@ -1197,15 +1197,35 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold):
+    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types):
         """Use subprocess call to Passim to align transcription with textual witness"""
+        # set workflow state
         self.workflow_state = self.WORKFLOW_STATE_ALIGNING
         self.save()
 
+        # set output directory
         outdir = path.join(
             settings.MEDIA_ROOT,
             f"alignments/document-{self.document.pk}/p{self.pk}-t{transcription_pk}+w{witness_pk}-{n_gram}gram",
         )
+
+        # create region type filters; adapted from BaseExporter
+        include_orphans = False
+        if "Orphan" in region_types:
+            include_orphans = True
+            region_types.remove("Orphan")
+        include_undefined = False
+        if "Undefined" in region_types:
+            include_undefined = True
+            region_types.remove("Undefined")
+        region_filters = Q(line__block__typology_id__in=region_types)
+        if include_orphans:
+            region_filters |= Q(line__block__isnull=True)
+        if include_undefined:
+            region_filters |= Q(
+                line__block__isnull=False, line__block__typology_id__isnull=True
+            )
+
         # get relevant LineTranscriptions
         line_transcriptions = LineTranscription.objects.filter(
             transcription__pk=transcription_pk  # transcription matches the filter
@@ -1214,6 +1234,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             line_transcriptions = line_transcriptions.filter(
                 line__document_part__pk=self.pk,  # has lines related to this DocumentPart
             )
+
+        # filter by region type
+        line_transcriptions = line_transcriptions.filter(region_filters)
 
         # ensure lines are in order
         line_transcriptions = line_transcriptions.order_by(

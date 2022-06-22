@@ -76,6 +76,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "merge": False,
             "full_doc": True,
             "threshold": 0.8,
+            "region_types": ["Orphan", "Undefined"],
         }
 
         align_form.process()
@@ -90,6 +91,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=True,
             threshold=0.8,
+            region_types=["Orphan", "Undefined"],
         )
 
         # should create a new textual witness from a passed file
@@ -102,6 +104,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "merge": False,
             "full_doc": True,
             "threshold": 0.8,
+            "region_types": ["Orphan", "Undefined"],
         }
         align_form.process()
         mock_textualwitness_class.assert_called_with(
@@ -111,7 +114,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             owner=self.user,
         )
 
-        # should call align task with default n_gram (4) and full_doc (True) when none provided
+        # should call align task with default n_gram (4), full_doc (True), and region_types when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
@@ -129,4 +132,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=True,
             threshold=0.8,
+            region_types=["Orphan", "Undefined"],
         )
