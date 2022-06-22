@@ -197,7 +197,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         self.assertEqual(len(entry["text"]), 5940)
 
     @patch("core.models.subprocess")
-    def test_align_threshold(self, mock_subprocess):
+    def test_align_threshold(self, _):
         """Test alignment with a threshold higher than 0.0 for match length comparisons"""
         self.makeTranscriptionContent()
 
@@ -218,3 +218,20 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertEqual(new_lt.content, "")
+
+        # re-copy real alignment output for second alignment
+        os.makedirs(f"{self.outdir}/out.json")
+        copyfile(alignment, f"{self.outdir}/out.json/out.json")
+
+        # run the alignment with threshold = 0.2
+        self.part.align(self.transcription.pk, self.witness.pk, self.n_gram, merge=False, full_doc=False, threshold=0.2)
+        new_trans = Transcription.objects.get(
+            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            document=self.part.document,
+        )
+        # the same line should now have some content based on the lowered threshold
+        line = self.part.lines.get(pk=7)
+        new_lt = LineTranscription.objects.get(line=line, transcription=new_trans)
+        old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
+        self.assertNotEqual(new_lt.content, old_lt.content)
+        self.assertNotEqual(new_lt.content, "")
