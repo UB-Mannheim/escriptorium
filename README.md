@@ -33,5 +33,5 @@ See [Contributing to eScriptorium](https://gitlab.inria.fr/scripta/escriptorium/
 - [Institut national de recherche en sciences et technologies du numérique (INRIA)](https://inria.fr/en)
 - [Archives nationales de France](https://www.archives-nationales.culture.gouv.fr/)
 - [L’Institut de recherche et d’histoire des textes](https://www.irht.cnrs.fr/)
-- [Open Islamicate Texts Initiative (OpenITI)](https://www.openiti.org/)
+- [Open Islamicate Texts Initiative (OpenITI)](https://openiti.org/)
 - [The Andrew W. Mellon Foundation](https://mellon.org/grants/)
