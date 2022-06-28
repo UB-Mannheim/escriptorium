@@ -11,7 +11,7 @@ export const initialState = () => ({
     lastChecked: null,
     allProjectTags: [],
     tagColor: null,
-    TagsListPerDocument: [],
+    TagsListPerDocument: []
 })
 
 export const mutations = {
@@ -144,7 +144,7 @@ export const actions = {
                 commit('setTagsListPerDocument', {pk: state.checkboxList[i], tags: _tagsId});
             }
         }
-    },
+    }
 }
 
 export default {
