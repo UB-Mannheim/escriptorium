@@ -27,7 +27,13 @@
                 v-if="hasConfidence"
                 v-bind:disabled="!$store.state.document.confidenceVisible"
                 v-model="confidenceScale"
+                title="Scale the color range for average confidence visualizations"
             >
+            <label for="confidence-range"
+                   class="ml-1"
+                   v-if="hasConfidence">
+                <span>Scale colors</span>
+            </label>
         </div>
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
