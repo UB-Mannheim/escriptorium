@@ -16,6 +16,6 @@ export var doclistVM = new Vue({
         'tagsmodal': TagsModal,
         'checkboxlistdocument': CheckboxListDocument,
         'tagsmanagement': TagsManagement,
-        'listtagsdocument': ListTagsDocument,
+        'listtagsdocument': ListTagsDocument
     }
 });
