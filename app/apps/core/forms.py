@@ -745,6 +745,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold", 0.8)
         region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
+        parts = self.cleaned_data.get("parts")
 
         if existing_witness:
             witness = existing_witness
@@ -757,18 +758,18 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
             )
             witness.save()
 
-        for part in self.cleaned_data.get("parts"):
-            part.task(
-                "align",
-                user_pk=self.user.pk,
-                transcription_pk=transcription.pk,
-                witness_pk=witness.pk,
-                n_gram=int(n_gram),
-                merge=bool(merge),
-                full_doc=bool(full_doc),
-                threshold=float(threshold),
-                region_types=region_types,
-            )
+        document = parts.first().document
+        document.queue_alignment(
+            parts_qs=parts,
+            user_pk=self.user.pk,
+            transcription_pk=transcription.pk,
+            witness_pk=witness.pk,
+            n_gram=int(n_gram),
+            merge=bool(merge),
+            full_doc=bool(full_doc),
+            threshold=float(threshold),
+            region_types=region_types,
+        )
 
 
 class TrainMixin():

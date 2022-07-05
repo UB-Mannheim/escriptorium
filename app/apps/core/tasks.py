@@ -28,12 +28,14 @@ redis_ = get_redis_connection()
 
 
 # tasks for which to keep track of the state and update the front end
-STATE_TASKS = [
-    'core.tasks.binarize',
-    'core.tasks.segment',
-    'core.tasks.transcribe',
-    'core.tasks.align'
-]
+# options:
+#   multipart - set True if task uses array of part_pks instead of instance_pk of a single part
+STATE_TASKS = {
+    'core.tasks.binarize': {'multipart': False},
+    'core.tasks.segment': {'multipart': False},
+    'core.tasks.transcribe': {'multipart': False},
+    'core.tasks.align': {'multipart': True},
+}
 
 
 def update_client_state(part_id, task, status, task_id=None, data=None):
@@ -569,13 +571,14 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
                         level='success')
 
 
-@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None, n_gram=4, merge=False, full_doc=True, threshold=0.8, region_types=["Orphan", "Undefined"], **kwargs):
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def align(task, document_pk=None, part_pks=[], user_pk=None, transcription_pk=None, witness_pk=None, n_gram=4, merge=False, full_doc=True, threshold=0.8, region_types=["Orphan", "Undefined"], **kwargs):
+    """Start document alignment on the passed parts, using the passed settings"""
     try:
-        DocumentPart = apps.get_model('core', 'DocumentPart')
-        part = DocumentPart.objects.get(pk=instance_pk)
-    except DocumentPart.DoesNotExist:
-        logger.error('Trying to align text with non-existent DocumentPart : %d', instance_pk)
+        Document = apps.get_model('core', 'Document')
+        doc = Document.objects.get(pk=document_pk)
+    except Document.DoesNotExist:
+        logger.error('Trying to align text on non-existent Document: %d', document_pk)
         return
 
     if user_pk:
@@ -589,14 +592,20 @@ def align(instance_pk=None, user_pk=None, transcription_pk=None, witness_pk=None
     else:
         user = None
 
+    # set redis alignment task data
+    redis_.set('align-%d' % document_pk, json.dumps({'task_id': task.request.id}))
+
     try:
-        part.align(transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types)
+        doc.align(part_pks, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the alignment!"),
                         id="alignment-error", level='danger')
-        part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
-        part.save()
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        parts = DocumentPart.objects.filter(pk__in=part_pks)
+        for part in parts:
+            part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
         logger.exception(e)
         raise e
     else:
@@ -613,10 +622,17 @@ def check_signal_order(old_signal, new_signal):
 
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
-    if sender not in STATE_TASKS:
+    if sender not in STATE_TASKS.keys():
         return
-    instance_id = body[1]["instance_pk"]
-    data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    if STATE_TASKS[sender]["multipart"] is True:
+        # multipart will have array of part_pks instead of instance_pk
+        instance_ids = body[1]["part_pks"]
+    else:
+        instance_pk = body[1]["instance_pk"]
+        instance_ids = [instance_pk]
+
+    for instance_id in instance_ids:
+        data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
 
     signal_name = kwargs['signal'].name
 
@@ -632,23 +648,30 @@ def before_publish_state(sender=None, body=None, **kwargs):
         "task_id": kwargs['headers']['id'],
         "status": 'before_task_publish'
     }
-    redis_.set('process-%d' % instance_id, json.dumps(data))
-    try:
-        update_client_state(instance_id, sender, 'pending')
-    except NameError:
-        pass
+    for instance_id in instance_ids:
+        redis_.set('process-%d' % instance_id, json.dumps(data))
+        try:
+            update_client_state(instance_id, sender, 'pending')
+        except NameError:
+            pass
 
 
 @task_prerun.connect
 @task_success.connect
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
-    if sender.name not in STATE_TASKS:
+    if sender.name not in STATE_TASKS.keys():
         return
-    instance_id = sender.request.kwargs["instance_pk"]
+    if STATE_TASKS[sender.name]["multipart"] is True:
+        # multipart will have array of part_pks instead of instance_pk
+        instance_ids = sender.request.kwargs["part_pks"]
+    else:
+        instance_pk = sender.request.kwargs["instance_pk"]
+        instance_ids = [instance_pk]
 
     try:
-        data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+        for instance_id in instance_ids:
+            data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
     except TypeError as e:
         logger.exception(e)
         return
@@ -675,10 +698,13 @@ def done_state(sender=None, body=None, **kwargs):
     if status == 'error':
         # remove any pending task down the chain
         data = {k: v for k, v in data.items() if v['status'] != 'pending'}
-    redis_.set('process-%d' % instance_id, json.dumps(data))
+    for instance_id in instance_ids:
+        redis_.set('process-%d' % instance_id, json.dumps(data))
 
     if status == 'done':
         result = kwargs.get('result', None)
     else:
         result = None
-    update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)
+
+    for instance_id in instance_ids:
+        update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)

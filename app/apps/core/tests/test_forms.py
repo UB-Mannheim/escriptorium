@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.forms import ValidationError
 
 from core.forms import AlignForm
+from core.models import DocumentPart
 from core.tests.factory import CoreFactoryTestCase
 
 
@@ -61,18 +62,19 @@ class AlignFormTestCase(CoreFactoryTestCase):
             align_form.clean()
 
     @patch("core.forms.TextualWitness")
-    @patch("core.forms.DocumentPart.task")
+    @patch("core.forms.Document.queue_alignment")
     def test_process(self, mock_task, mock_textualwitness_class):
         """Test form processing"""
         self.makeTranscriptionContent()
 
         align_form = AlignForm(document=self.part.document, user=self.user)
+        parts_qs = DocumentPart.objects.filter(pk=self.part.pk)
 
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
             "n_gram": 2,
-            "parts": [self.part],
+            "parts": parts_qs,
             "merge": False,
             "full_doc": True,
             "threshold": 0.8,
@@ -83,7 +85,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
 
         # should call align task with passed user, transcription, and witness, and set n_gram
         mock_task.assert_called_with(
-            "align",
+            parts_qs=parts_qs,
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
@@ -100,7 +102,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "transcription": self.transcription,
             "witness_file": file,
             "n_gram": 2,
-            "parts": [self.part],
+            "parts": parts_qs,
             "merge": False,
             "full_doc": True,
             "threshold": 0.8,
@@ -118,13 +120,13 @@ class AlignFormTestCase(CoreFactoryTestCase):
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
-            "parts": [self.part],
+            "parts": parts_qs,
             "merge": False,
             "threshold": 0.8,
         }
         align_form.process()
         mock_task.assert_called_with(
-            "align",
+            parts_qs=parts_qs,
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,

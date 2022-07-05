@@ -313,8 +313,19 @@ class partCard {
 
     cancelTasks() {
         $.post(this.api + 'cancel/', {}).done($.proxy(function(data){
-            this.workflow = data.workflow;
-            this.updateWorkflowIcons();
+            if (data.workflow.align !== this.workflow.align) {
+                // update alignment workflow for all affected parts
+                $('#cards-container .card').each(function(i, el) {
+                    let ic = $(el).data('partCard');
+                    if (ic.workflow.align === 'ongoing') {
+                        ic.workflow = data.workflow;
+                        ic.updateWorkflowIcons();
+                    }
+                });
+            } else {
+                this.workflow = data.workflow;
+                this.updateWorkflowIcons();
+            }
         }, this)).fail($.proxy(function(data){console.log("Couldn't cancel the task.");}));
     }
 

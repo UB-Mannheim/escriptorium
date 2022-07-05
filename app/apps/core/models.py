@@ -575,6 +575,239 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
     def training_model(self):
         return self.ocr_models.filter(training=True).first()
 
+    def tasks_finished(self):
+        """Return False if alignment or other tasks are still happening"""
+        if self.parts.filter(workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING).count() == 0:
+            for part in self.parts.all():
+                if not part.tasks_finished():
+                    return False
+            return True
+        return False
+
+    def build_alignment_input_dict(self, line_transcriptions, pk):
+        """Helper function for alignment to create a dict of lines for Passim input"""
+        line_ids = []
+        line_start = 0
+        text = ""
+        for lt in line_transcriptions:
+            # prep the line transcription to serialize to json
+            line_dict = {
+                "id": str(lt.line.pk),
+                "start": line_start,
+            }
+            text = text + lt.content + "\n"
+            line_ids.append(line_dict)
+            line_start = line_start + len(lt.content + "\n")
+        return {
+            "text": text,
+            "id": pk,
+            "lineIDs": line_ids,
+            "ref": 0,  # distinguishes OCR from witness
+        }
+
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types):
+        """Use subprocess call to Passim to align transcription with textual witness"""
+        parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
+
+        for part in parts:
+            # set workflow state
+            part.workflow_state = part.WORKFLOW_STATE_ALIGNING
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
+        # set output directory
+        outdir = path.join(
+            settings.MEDIA_ROOT,
+            f"alignments/document-{self.pk}/t{transcription_pk}+w{witness_pk}-{n_gram}gram",
+        )
+
+        # create region type filters; adapted from BaseExporter
+        include_orphans = False
+        if "Orphan" in region_types:
+            include_orphans = True
+            region_types.remove("Orphan")
+        include_undefined = False
+        if "Undefined" in region_types:
+            include_undefined = True
+            region_types.remove("Undefined")
+        region_filters = Q(line__block__typology_id__in=region_types)
+        if include_orphans:
+            region_filters |= Q(line__block__isnull=True)
+        if include_undefined:
+            region_filters |= Q(
+                line__block__isnull=False, line__block__typology_id__isnull=True
+            )
+
+        # get relevant LineTranscriptions
+        all_line_transcriptions = LineTranscription.objects.filter(
+            transcription__pk=transcription_pk  # transcription matches the filter
+        )
+        # filter by region type
+        all_line_transcriptions = all_line_transcriptions.filter(region_filters)
+
+        # ensure lines are in order
+        all_line_transcriptions = all_line_transcriptions.order_by(
+            "line__document_part", "line__document_part__order", "line__order"
+        )
+
+        # build the JSON input for passim
+        input_list = []
+        if not full_doc:
+            for part in parts:
+                line_transcriptions = all_line_transcriptions.filter(
+                    line__document_part=part,  # has lines related to this DocumentPart
+                ).order_by(
+                    "line__document_part", "line__document_part__order", "line__order"
+                )
+                input_list.append(self.build_alignment_input_dict(line_transcriptions, part.pk))
+        else:
+            input_list.append(self.build_alignment_input_dict(all_line_transcriptions, self.pk))
+
+        witness = TextualWitness.objects.get(pk=witness_pk)
+        f = witness.file.open('r')
+        txt = f.read()
+        witness_dict = {
+            "id": "witness",
+            "text": txt,
+            "ref": 1,  # distinguishes witness from OCR
+        }
+        input_list.append(witness_dict)
+        # save to a file
+        infile = f"{outdir}.json"
+        if not path.exists(outdir):
+            makedirs(outdir)
+        with open(infile, "w", encoding="utf-8") as file:
+            json.dump(input_list, file, ensure_ascii=False)
+
+        try:
+            # call passim
+            subprocess.check_call([
+                "seriatim",  # Passim call
+                "--docwise",
+                "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
+                "-n", str(n_gram),  # index n-grams
+                "--fields", "ref",
+                "--filterpairs", "ref = 1 AND ref2 = 0",
+                infile,
+                outdir,
+            ])
+        except Exception as e:
+            # cleanup in case of exception
+            remove(infile)
+            shutil.rmtree(outdir)
+            raise e
+
+        # get the output json file(s)
+        out_json = glob(f"{outdir}/out.json/*.json")
+        aligned_lines = []
+        if out_json:
+            # handle multi-part output
+            for json_part in out_json:
+                json_file = open(json_part, "r", encoding="utf-8")
+                for line in json_file.readlines():
+                    # iterate through lines in output with "wits" entries
+                    out_dict = json.loads(line)
+                    for line in out_dict.get("lines", []):
+                        for match in line.get("wits", []):
+                            match_text = match.get("text", "")
+                            n_matches = float(match.get("matches", 0))
+                            # if the % of matches is greater than or equal to threshold:
+                            if (
+                                n_matches / max(len(line.get("text", "")), len(match_text))
+                            ) >= threshold:
+                                # find the matching line id in line_ids based on character position
+                                match_line_id = next((
+                                    identified_line for identified_line in out_dict.get("lineIDs", [])
+                                    if identified_line["start"] == line["begin"]
+                                ), {})
+                                aligned_lines.append({
+                                    "id": match_line_id.get("id", -1),
+                                    "text": match_text,
+                                    "alg": match.get("alg", ""),
+                                })
+
+        # build the new transcription layer
+        original_trans = Transcription.objects.get(pk=transcription_pk)
+        trans, created = Transcription.objects.get_or_create(
+            name=f"Aligned: {witness.name} + {original_trans.name} ({n_gram}gram)",
+            document=self,
+        )
+        for part in parts:
+            lines = part.lines.all()
+            for line in lines:
+                # find this line by "id" key in the output
+                matches = list(filter(lambda alg: int(alg["id"]) == line.pk, aligned_lines))
+
+                # build LineTranscription
+                lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
+
+                # if this line is present in the aligned output, set its content to aligned text
+                if matches:
+                    # use matches[0]["alg"] instead for forced alignment with dashes
+                    # lt.content = matches[0]["alg"]
+                    lt.content = matches[0]["text"]
+                # if "merge" is checked and this line is not present, get content from original transcription
+                elif merge:
+                    try:
+                        old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
+                        lt.content = old_lt.content
+                    except LineTranscription.DoesNotExist:
+                        lt.content = ""
+                # if "merge" is NOT checked and this line is not present, ensure its content is empty
+                else:
+                    lt.content = ""
+
+                lt.save()
+
+        # clean up temp files
+        if not settings.KEEP_ALIGNMENT_TEMPFILES:
+            remove(infile)
+            shutil.rmtree(outdir)
+
+        for part in parts:
+            # set workflow state
+            part.workflow_state = part.WORKFLOW_STATE_ALIGNED
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
+    def queue_alignment(self, parts_qs, **kwargs):
+        if not self.tasks_finished():
+            raise AlreadyProcessingException
+        align.delay(
+            document_pk=self.pk,
+            part_pks=list(parts_qs.values_list('pk', flat=True)),
+            **kwargs,
+        )
+
+    def cancel_alignment(self, revoke_task=True):
+        """Cancel the alignment task; adapted from OcrModel"""
+        task_id = None
+
+        # We don't need to search for the task_id if the alignment task was already revoked
+        if revoke_task:
+            try:
+                task_id = json.loads(redis_.get('align-%d' % self.pk))['task_id']
+            except (TypeError, KeyError):
+                raise ProcessFailureException(_("Couldn't find the alignment task."))
+
+        if task_id:
+            revoke(task_id, terminate=True)
+
+        # set all aligning parts to a canceled workflow state
+        parts = DocumentPart.objects.filter(document=self, workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING)
+        for part in parts:
+            try:
+                send_event("document", self.pk, "part:workflow", {
+                    "id": part.pk,
+                    "process": "align",
+                    "status": "canceled",
+                    "task_id": task_id,
+                })
+                redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
+                part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+            except Exception as e:
+                # don't crash on websocket error
+                logger.exception(e)
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
 
 def document_images_path(instance, filename):
     return "documents/{0}/{1}".format(instance.document.pk, filename)
@@ -902,6 +1135,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTED
             self.save()
+        elif self.workflow_state == self.WORKFLOW_STATE_ALIGNING:
+            # handle alignment cancellation on the entire document
+            self.document.cancel_alignment()
+            return
 
         for task_name, task in self.tasks.items():
             if (task_name not in uncancelable
@@ -1197,170 +1434,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.calculate_progress()
         self.save()
 
-    def align(self, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types):
-        """Use subprocess call to Passim to align transcription with textual witness"""
-        # set workflow state
-        self.workflow_state = self.WORKFLOW_STATE_ALIGNING
-        self.save()
-
-        # set output directory
-        outdir = path.join(
-            settings.MEDIA_ROOT,
-            f"alignments/document-{self.document.pk}/p{self.pk}-t{transcription_pk}+w{witness_pk}-{n_gram}gram",
-        )
-
-        # create region type filters; adapted from BaseExporter
-        include_orphans = False
-        if "Orphan" in region_types:
-            include_orphans = True
-            region_types.remove("Orphan")
-        include_undefined = False
-        if "Undefined" in region_types:
-            include_undefined = True
-            region_types.remove("Undefined")
-        region_filters = Q(line__block__typology_id__in=region_types)
-        if include_orphans:
-            region_filters |= Q(line__block__isnull=True)
-        if include_undefined:
-            region_filters |= Q(
-                line__block__isnull=False, line__block__typology_id__isnull=True
-            )
-
-        # get relevant LineTranscriptions
-        line_transcriptions = LineTranscription.objects.filter(
-            transcription__pk=transcription_pk  # transcription matches the filter
-        )
-        if not full_doc:
-            line_transcriptions = line_transcriptions.filter(
-                line__document_part__pk=self.pk,  # has lines related to this DocumentPart
-            )
-
-        # filter by region type
-        line_transcriptions = line_transcriptions.filter(region_filters)
-
-        # ensure lines are in order
-        line_transcriptions = line_transcriptions.order_by(
-            "line__document_part", "line__document_part__order", "line__order"
-        )
-
-        # build the JSON input for passim
-        line_ids = []
-        line_start = 0
-        text = ""
-        for lt in line_transcriptions:
-            # prep the line transcription to serialize to json
-            line_dict = {
-                "id": str(lt.line.pk),
-                "start": line_start,
-            }
-            text = text + lt.content + "\n"
-            line_ids.append(line_dict)
-            line_start = line_start + len(lt.content + "\n")
-        input_list = [{
-            "text": text,
-            "id": self.pk,
-            "lineIDs": line_ids,
-            "ref": 0,  # distinguishes OCR from witness
-        }]
-        witness = TextualWitness.objects.get(pk=witness_pk)
-        f = witness.file.open('r')
-        txt = f.read()
-        witness_dict = {
-            "id": "witness",
-            "text": txt,
-            "ref": 1,  # distinguishes witness from OCR
-        }
-        input_list.append(witness_dict)
-        # save to a file
-        infile = f"{outdir}.json"
-        if not path.exists(outdir):
-            makedirs(outdir)
-        with open(infile, "w", encoding="utf-8") as file:
-            json.dump(input_list, file, ensure_ascii=False)
-
-        try:
-            # call passim
-            subprocess.check_call([
-                "seriatim",  # Passim call
-                "--docwise",
-                "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
-                "-n", str(n_gram),  # index n-grams
-                "--fields", "ref",
-                "--filterpairs", "ref = 1 AND ref2 = 0",
-                infile,
-                outdir,
-            ])
-        except Exception as e:
-            # cleanup in case of exception
-            remove(infile)
-            shutil.rmtree(outdir)
-            raise e
-
-        # get the output json file(s)
-        out_json = glob(f"{outdir}/out.json/*.json")
-        aligned_lines = []
-        if out_json:
-            # handle multi-part output
-            for json_part in out_json:
-                json_file = open(json_part, "r", encoding="utf-8")
-                json_content = json_file.read()
-                if json_content:
-                    out_dict = json.loads(json_content)
-                    # iterate through lines in output with "wits" entries
-                    for line in out_dict.get("lines", []):
-                        for match in line.get("wits", []):
-                            match_text = match.get("text", "")
-                            n_matches = float(match.get("matches", 0))
-                            # if the % of matches is greater than or equal to threshold:
-                            if (n_matches / max(len(line.get("text", "")), len(match_text))) >= threshold:
-                                # find the matching line id in line_ids based on character position
-                                match_line_id = next((ln for ln in line_ids if ln["start"] == line["begin"]), {})
-                                aligned_lines.append({
-                                    "id": match_line_id.get("id", -1),
-                                    "text": match_text,
-                                    "alg": match.get("alg", ""),
-                                })
-
-        # build the new transcription layer
-        original_trans = Transcription.objects.get(pk=transcription_pk)
-        trans, created = Transcription.objects.get_or_create(
-            name=f"Aligned: {witness.name} + {original_trans.name} ({n_gram}gram)",
-            document=self.document,
-        )
-        lines = self.lines.all()
-        for line in lines:
-            # find this line by "id" key in the output
-            matches = list(filter(lambda alg: int(alg["id"]) == line.pk, aligned_lines))
-
-            # build LineTranscription
-            lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
-
-            # if this line is present in the aligned output, set its content to aligned text
-            if matches:
-                # use matches[0]["alg"] instead for forced alignment with dashes
-                # lt.content = matches[0]["alg"]
-                lt.content = matches[0]["text"]
-            # if "merge" is checked and this line is not present, get content from original transcription
-            elif merge:
-                try:
-                    old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
-                    lt.content = old_lt.content
-                except LineTranscription.DoesNotExist:
-                    lt.content = ""
-            # if "merge" is NOT checked and this line is not present, ensure its content is empty
-            else:
-                lt.content = ""
-
-            lt.save()
-
-        # clean up temp files
-        if not settings.KEEP_ALIGNMENT_TEMPFILES:
-            remove(infile)
-            shutil.rmtree(outdir)
-
-        self.workflow_state = self.WORKFLOW_STATE_ALIGNED
-        self.save()
-
     def chain_tasks(self, *tasks):
         redis_.set(
             "process-%d" % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}})
@@ -1402,13 +1475,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             tasks.append(transcribe.si(instance_pk=self.pk,
                                        report_label='Transcribe in %s' % self.document.name,
                                        **kwargs))
-
-        if task_name == 'align':
-            tasks.append(align.si(
-                instance_pk=self.pk,
-                report_label='Align in %s' % self.document.name,
-                **kwargs,
-            ))
 
         if commit:
             self.chain_tasks(*tasks)
