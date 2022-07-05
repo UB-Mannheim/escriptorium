@@ -17,7 +17,6 @@ from kraken.lib.exceptions import KrakenInvalidModelException
 from PIL import Image
 
 from core.models import (
-    AlreadyProcessingException,
     AnnotationComponent,
     AnnotationTaxonomy,
     AnnotationType,
@@ -653,37 +652,50 @@ class TrainMixin():
         cleaned_data = super().clean()
 
         model = cleaned_data['model']
-        if model and model.training:
-            raise AlreadyProcessingException
-
         override = cleaned_data['override']
-        if model and model.owner != self.user and override:
-            raise forms.ValidationError(
-                "You can't overwrite the existing file of a model you don't own."
-            )
+        model_name = cleaned_data['model_name']
 
-        # TODO: Should be created by the task too to prevent creating empty OcrModel instances ?!
-        if not model:
-            cleaned_data['model'] = OcrModel.objects.create(
-                owner=self.user,
-                name=self.cleaned_data.get('model_name'),
-                job=self.model_job,
-                file_size=0)
-        elif not override:
-            cleaned_data['model'] = model.clone_for_training(
-                self.user, name=self.cleaned_data.get('model_name'))
+        error_dict = {}
+
+        if model and model.training:
+            error_dict['model'] = _("The model is already training.")
+
+        if model_name == "" and override is False:
+            error_dict['model_name'] = _("Either choose a model name or overwrite an existing one.")
+
+        if override is True and model is None:
+            error_dict['model'] = _("You need to choose a model to override if the override option is checked.")
+
+        if model and model.owner != self.user and override:
+            error_dict['model'] = _("You can't overwrite the existing file of a model you don't own.")
+
+        if error_dict:
+            raise forms.ValidationError(error_dict)
 
         return cleaned_data
 
     def process(self):
+        model = self.cleaned_data['model']
+        if not model:
+            model = OcrModel.objects.create(
+                owner=self.user,
+                name=self.cleaned_data.get('model_name'),
+                job=self.model_job,
+                file_size=0)
+        elif not self.cleaned_data['override']:
+            model = model.clone_for_training(
+                self.user, name=self.cleaned_data.get('model_name'))
+
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
-            ocr_model=self.cleaned_data.get('model'),
+            ocr_model=model,
             defaults={'trained_on': timezone.now()}
         )
         if not created:
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
+
+        return model
 
 
 class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
@@ -704,11 +716,10 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
         return cleaned_data
 
     def process(self):
-        model = self.cleaned_data.get('model')
+        model = super().process()
         model.segtrain(self.document,
                        self.cleaned_data.get('parts'),
                        user=self.user)
-        super().process()
 
 
 class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
@@ -727,11 +738,19 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
         return OcrModel.MODEL_JOB_RECOGNIZE
 
     def process(self):
-        model = self.cleaned_data.get('model')
+        model = super().process()
         model.train(self.cleaned_data.get('parts'),
                     self.cleaned_data['transcription'],
                     user=self.user)
-        super().process()
+
+    def clean(self):
+        # validate that we have some data
+        cleaned_data = super().clean()
+        transcription = cleaned_data['transcription']
+        if (transcription.linetranscription_set.exclude(
+                Q(content='') | Q(content=None)).count() == 0):
+            raise forms.ValidationError(_("Empty Ground Truth data."))
+        return cleaned_data
 
 
 class UploadImageForm(BootstrapFormMixin, forms.ModelForm):

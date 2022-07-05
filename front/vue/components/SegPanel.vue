@@ -192,7 +192,7 @@
 
         <img class="panel-img" ref="img" />
         <!-- TODO: make line overlay component -->
-        <div id="segmentation-overlay" class="overlay panel-overlay" :class="{show: isWorking}">
+        <div id="segmentation-overlay" class="overlay panel-overlay" :class="{working: isWorking}">
           <svg width="100%" height="100%">
             <defs>
               <mask id="seg-overlay">
