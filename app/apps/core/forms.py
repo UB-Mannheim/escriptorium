@@ -53,7 +53,7 @@ class SearchModelChoiceField(forms.ModelChoiceField):
             try:
                 obj_pk = int(value)
                 obj = self.obj_class.objects.get(pk=obj_pk)
-                if obj not in self.queryset:
+                if not self.queryset.contains(obj):
                     raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} you don't have access to."))
             except (ValueError, self.obj_class.DoesNotExist):
                 raise forms.ValidationError(_(f"You requested to search text in a {self.obj_name} that doesn't exist."))

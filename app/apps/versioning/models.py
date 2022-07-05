@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime, timezone
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 
@@ -52,7 +51,7 @@ class Versioned(models.Model):
 
     # this is a stack, more recents to the top
     # on postgres it's stored as jsonb, super fast and indexable!
-    versions = JSONField(editable=False, default=list)
+    versions = models.JSONField(editable=False, default=list)
     version_ignore_fields = ()
     version_history_max_length = 20
 
