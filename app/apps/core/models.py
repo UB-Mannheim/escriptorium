@@ -20,7 +20,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import Prefetch, Q, Sum
+from django.db.models import Avg, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -1197,9 +1197,23 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
                 self.max_avg_confidence = avg_line_confidence
                 self.best_transcription = trans
+
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
         self.save()
+
+        # overall avg recalculations; may use DB aggregation so run after self.save()
+        if line_confidences and not created:
+            # if new line_confidences have been added to existing transcription,
+            # then recalculate average confidence across the transcription
+            lines_with_confidence = trans.linetranscription_set.filter(avg_confidence__isnull=False)
+            trans.avg_confidence = lines_with_confidence.aggregate(avg=Avg("avg_confidence")).get("avg")
+            trans.save()
+        elif line_confidences:
+            # if this is a new transcription, its avg confidence will be the avg of lines
+            # transcribed here
+            trans.avg_confidence = avg_line_confidence
+            trans.save()
 
     def chain_tasks(self, *tasks):
         redis_.set(
