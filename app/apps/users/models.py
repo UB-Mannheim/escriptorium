@@ -161,7 +161,7 @@ class Invitation(models.Model):
                                               editable=False)
 
     class Meta:
-        ordering = ('-created_at',)
+        ordering = ['-created_at']
 
     def __str__(self):
         return '%s -> %s' % (self.sender, self.recipient_email)
