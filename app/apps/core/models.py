@@ -676,7 +676,9 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         if not path.exists(outdir):
             makedirs(outdir)
         with open(infile, "w", encoding="utf-8") as file:
-            json.dump(input_list, file, ensure_ascii=False)
+            for entry in input_list:  # dump to JSONL
+                json.dump(entry, file, ensure_ascii=False)
+                file.write("\n")
 
         try:
             # call passim

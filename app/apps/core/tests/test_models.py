@@ -77,7 +77,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types
                 )
                 infile = open(f"{self.outdir}.json")
-                in_json = json.load(infile)
+                in_lines = infile.readlines()
+                in_json = []
+                for line in in_lines:
+                    in_json.append(json.loads(line))
 
                 # should be a list of length 2 (1 input document + 1 witness txt)
                 self.assertEqual(len(in_json), 2)
@@ -243,7 +246,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types
                 )
                 infile = open(f"{self.outdir}.json")
-                in_json = json.load(infile)
+                in_lines = infile.readlines()
+                in_json = []
+                for line in in_lines:
+                    in_json.append(json.loads(line))
 
                 # since full_doc = False, should have 90 lines, 5940 chars, combining pages from whole document
                 for entry in in_json:
@@ -329,7 +335,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=[]
                 )
                 infile = open(f"{self.outdir}.json")
-                in_json = json.load(infile)
+                in_lines = infile.readlines()
+                in_json = []
+                for line in in_lines:
+                    in_json.append(json.loads(line))
                 for entry in in_json:
                     if entry["id"] != "witness":
                         self.assertEqual(len(entry["lineIDs"]), 0)
@@ -347,7 +356,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=[self.part.document.valid_block_types.first().id]
                 )
                 infile = open(f"{self.outdir}.json")
-                in_json = json.load(infile)
+                in_lines = infile.readlines()
+                in_json = []
+                for line in in_lines:
+                    in_json.append(json.loads(line))
                 for entry in in_json:
                     if entry["id"] != "witness":
                         self.assertEqual(len(entry["lineIDs"]), 30)
@@ -364,7 +376,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types
                 )
                 infile = open(f"{self.outdir}.json")
-                in_json = json.load(infile)
+                in_lines = infile.readlines()
+                in_json = []
+                for line in in_lines:
+                    in_json.append(json.loads(line))
                 for entry in in_json:
                     if entry["id"] != "witness":
                         self.assertEqual(len(entry["lineIDs"]), 90)
