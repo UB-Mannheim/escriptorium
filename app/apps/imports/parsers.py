@@ -216,7 +216,6 @@ class ZipParser(ParserDocument):
 
 class XMLParser(ParserDocument):
     ACCEPTED_SCHEMAS = ()
-    all_line_confidences = []
 
     def __init__(self, document, file_handler, report, transcription_name=None, xml_root=None):
         super().__init__(document,
@@ -241,6 +240,9 @@ class XMLParser(ParserDocument):
                 self.root = etree.parse(self.file).getroot()
             except (AttributeError, etree.XMLSyntaxError) as e:
                 raise ParseError("Invalid XML. %s" % e.args[0])
+        # instance attribute storing all line confidences, for computing the average at the end
+        # of the import
+        self.all_line_confidences = []
 
     def validate(self):
         if self.schema_location in self.ACCEPTED_SCHEMAS:
