@@ -22,8 +22,9 @@
     {% render_field align_form.region_types class="js-proc-settings" data_document=document.pk %}
     <label>{{ align_form.threshold.label }}</label>
     {% render_field align_form.threshold class="js-proc-settings" data_document=document.pk %}
+    <label>{{ align_form.max_offset.label }}</label>
+    {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
     {% render_field align_form.merge class="js-proc-settings" data_document=document.pk %}
-    {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}
   </div>
 {% endblock %}
 

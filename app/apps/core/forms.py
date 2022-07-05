@@ -657,29 +657,33 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         (3, _("Trigram (3-gram)")),
         (4, _("4-gram")),
     )
-    # Configuration of n-gram vale to pass to passim
     n_gram = forms.TypedChoiceField(
         choices=N_GRAM_CHOICES,
         coerce=int,
-        required=True,
+        required=False,
         initial=4,
         help_text=_("Length of token sequences to compare; leave default if unsure."),
     )
-
+    max_offset = forms.IntegerField(
+        label=_("Max offset"),
+        help_text=_("Maximum number of characters difference between the aligned witness text and the original transcription."),
+        required=True,
+        initial=20,
+        min_value=20,
+        max_value=80,
+    )
     merge = forms.BooleanField(
         label=_("Merge aligned text with existing transcription"),
         required=False,
         initial=False,
         help_text=_("If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."),
     )
-
     full_doc = forms.BooleanField(
         label=_("Use full transcribed document"),
         required=False,
         initial=True,
         help_text=_("If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."),
     )
-
     threshold = forms.FloatField(
         label=_("Line length match threshold"),
         help_text=_("Threshold (0.0–1.0) for the proportion of aligned line length to original transcription, below which matches will be ignored. When set to 0.0, all matches will be accepted, which may result in increased bad matches."),
@@ -689,7 +693,6 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         min_value=0.0,
         max_value=1.0,
     )
-
     region_types = forms.MultipleChoiceField(
         widget=forms.CheckboxSelectMultiple,
         required=True,
@@ -740,6 +743,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         transcription = self.cleaned_data.get("transcription")
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
+        max_offset = self.cleaned_data.get("max_offset", 20)
         n_gram = self.cleaned_data.get("n_gram", 4)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
@@ -764,10 +768,11 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
-            n_gram=int(n_gram),
+            n_gram=int(n_gram or 4),
+            max_offset=int(max_offset or 20),
             merge=bool(merge),
             full_doc=bool(full_doc),
-            threshold=float(threshold),
+            threshold=float(threshold or 0.8),
             region_types=region_types,
         )
 

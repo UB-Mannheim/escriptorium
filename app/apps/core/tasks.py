@@ -572,7 +572,21 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def align(task, document_pk=None, part_pks=[], user_pk=None, transcription_pk=None, witness_pk=None, n_gram=4, merge=False, full_doc=True, threshold=0.8, region_types=["Orphan", "Undefined"], **kwargs):
+def align(
+    task,
+    document_pk=None,
+    part_pks=[],
+    user_pk=None,
+    transcription_pk=None,
+    witness_pk=None,
+    n_gram=4,
+    max_offset=20,
+    merge=False,
+    full_doc=True,
+    threshold=0.8,
+    region_types=["Orphan", "Undefined"],
+    **kwargs
+):
     """Start document alignment on the passed parts, using the passed settings"""
     try:
         Document = apps.get_model('core', 'Document')
@@ -596,7 +610,7 @@ def align(task, document_pk=None, part_pks=[], user_pk=None, transcription_pk=No
     redis_.set('align-%d' % document_pk, json.dumps({'task_id': task.request.id}))
 
     try:
-        doc.align(part_pks, transcription_pk, witness_pk, n_gram, merge, full_doc, threshold, region_types)
+        doc.align(part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types)
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the alignment!"),

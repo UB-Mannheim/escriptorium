@@ -75,6 +75,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "existing_witness": self.witness,
             "n_gram": 2,
             "parts": parts_qs,
+            "max_offset": 20,
             "merge": False,
             "full_doc": True,
             "threshold": 0.8,
@@ -90,6 +91,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
             n_gram=2,
+            max_offset=20,
             merge=False,
             full_doc=True,
             threshold=0.8,
@@ -102,6 +104,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "transcription": self.transcription,
             "witness_file": file,
             "n_gram": 2,
+            "max_offset": 20,
             "parts": parts_qs,
             "merge": False,
             "full_doc": True,
@@ -116,7 +119,8 @@ class AlignFormTestCase(CoreFactoryTestCase):
             owner=self.user,
         )
 
-        # should call align task with default n_gram (4), full_doc (True), and region_types when none provided
+        # should call align task with default n_gram (4), full_doc (True), max_offset (20), and
+        # region_types when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
@@ -131,6 +135,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
             n_gram=4,
+            max_offset=20,
             merge=False,
             full_doc=True,
             threshold=0.8,

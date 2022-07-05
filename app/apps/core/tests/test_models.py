@@ -25,6 +25,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
         self.n_gram = 4
+        self.max_offset = 20
         self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
 
         tpk = self.transcription.pk
@@ -44,6 +45,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.transcription.pk,
             self.witness.pk,
             self.n_gram,
+            self.max_offset,
             merge=True,
             full_doc=False,
             threshold=0.0,
@@ -55,7 +57,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             "seriatim",
             "--docwise",
             "--floating-ngrams",
-            "-n", f"{self.n_gram}",
+            "-n", str(self.n_gram),
+            "--max-offset", str(self.max_offset),
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
             f"{self.outdir}.json",
@@ -71,6 +74,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     self.transcription.pk,
                     self.witness.pk,
                     self.n_gram,
+                    self.max_offset,
                     merge=True,
                     full_doc=False,
                     threshold=0.0,
@@ -126,7 +130,17 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         # LineTranscription for that line to an empty string
         lt_to_remove = LineTranscription.objects.get(line=self.part.lines.first(), transcription=self.transcription)
         lt_to_remove.delete()
-        self.part.document.align([self.part.pk], self.transcription.pk, self.witness.pk, self.n_gram, merge=True, full_doc=False, threshold=0.0, region_types=self.region_types)
+        self.part.document.align(
+            [self.part.pk],
+            self.transcription.pk,
+            self.witness.pk,
+            self.n_gram,
+            self.max_offset,
+            merge=True,
+            full_doc=False,
+            threshold=0.0,
+            region_types=self.region_types
+        )
         new_trans = Transcription.objects.get(
             name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
             document=self.part.document,
@@ -150,6 +164,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.transcription.pk,
             self.witness.pk,
             self.n_gram,
+            self.max_offset,
             merge=True,
             full_doc=False,
             threshold=0.0,
@@ -183,6 +198,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.transcription.pk,
             self.witness.pk,
             self.n_gram,
+            self.max_offset,
             merge=False,
             full_doc=False,
             threshold=0.0,
@@ -216,6 +232,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         self.transcription.pk,
                         self.witness.pk,
                         self.n_gram,
+                        self.max_offset,
                         merge=True,
                         full_doc=False,
                         threshold=0.0,
@@ -240,6 +257,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     self.transcription.pk,
                     self.witness.pk,
                     self.n_gram,
+                    self.max_offset,
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
@@ -273,6 +291,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.transcription.pk,
             self.witness.pk,
             self.n_gram,
+            self.max_offset,
             merge=False,
             full_doc=False,
             threshold=0.8,
@@ -299,6 +318,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.transcription.pk,
             self.witness.pk,
             self.n_gram,
+            self.max_offset,
             merge=False,
             full_doc=False,
             threshold=0.2,
@@ -329,6 +349,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     self.transcription.pk,
                     self.witness.pk,
                     self.n_gram,
+                    self.max_offset,
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
@@ -350,6 +371,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     self.transcription.pk,
                     self.witness.pk,
                     self.n_gram,
+                    self.max_offset,
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
@@ -370,6 +392,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     self.transcription.pk,
                     self.witness.pk,
                     self.n_gram,
+                    self.max_offset,
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
