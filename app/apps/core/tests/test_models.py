@@ -4,6 +4,7 @@ from shutil import copyfile
 from unittest.mock import patch
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from core.models import LineTranscription, Transcription
 from core.tests.factory import CoreFactoryTestCase
@@ -31,12 +32,16 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         tpk = self.transcription.pk
         dpk = self.part.document.pk
         wpk = self.witness.pk
-        self.outdir = f"{settings.MEDIA_ROOT}/alignments/document-{dpk}/t{tpk}+w{wpk}-{self.n_gram}gram"
+        self.outdir = f"{settings.MEDIA_ROOT}/alignments/document-{dpk}/t{tpk}+w{wpk}"
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align(self, mock_subprocess):
+    def test_align(self, mock_subprocess, mock_hex):
         """Unit tests for DocumentPart text alignment function"""
         self.makeTranscriptionContent()
+
+        # mock hex output so that we can get consistent file naming
+        mock_hex.return_value = "0x1"
 
         # should call subprocess.check_call with passim (seriatim), n-gram of 4, correct input
         # file/output directory
@@ -49,7 +54,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=True,
             full_doc=False,
             threshold=0.0,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -61,8 +67,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             "--max-offset", str(self.max_offset),
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
-            f"{self.outdir}.json",
-            self.outdir,
+            f"{self.outdir}-1.json",
+            f"{self.outdir}-1",
         ])
 
         # mock file cleanup-related modules so we can read the input json
@@ -78,9 +84,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     merge=True,
                     full_doc=False,
                     threshold=0.0,
-                    region_types=self.region_types
+                    region_types=self.region_types,
+                    layer_name=None,
                 )
-                infile = open(f"{self.outdir}.json")
+                infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
                 in_json = []
                 for line in in_lines:
@@ -101,13 +108,13 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 self.assertEqual(witness_dict["text"], f.read())
 
                 # should remove the input json
-                mock_remove.assert_called_with(f"{self.outdir}.json")
+                mock_remove.assert_called_with(f"{self.outdir}-1.json")
                 # should remove the output directory
-                mock_shutil.rmtree.assert_called_with(self.outdir)
+                mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
 
         # should create a new transcription layer--will raise error if not
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
 
@@ -139,24 +146,27 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=True,
             full_doc=False,
             threshold=0.0,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
         new_lt = LineTranscription.objects.get(line=self.part.lines.first(), transcription=new_trans)
         self.assertEqual(new_lt.content, "")
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align_real_data(self, _):
+    def test_align_real_data(self, _, mock_hex):
         """Unit tests for DocumentPart text alignment with real output data from passim"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         # save some real passim output from our fixture into the outdir
         alignment = os.path.join(os.path.dirname(__file__), "assets", "alignment/out.json")
-        os.makedirs(f"{self.outdir}/out.json")
-        copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
+        os.makedirs(f"{self.outdir}-1/out.json")
+        copyfile(alignment, f"{self.outdir}-1/out.json/out.json")  # mimicking actual passim output format
 
         # re-run the alignment with the real passim output
         self.part.document.align(
@@ -168,12 +178,13 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=True,
             full_doc=False,
             threshold=0.0,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
 
         # line we know should have changed content based on witness.txt and out.json
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
         line = self.part.lines.get(pk=30)
@@ -182,15 +193,17 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertEqual(new_lt.content, "NoSAYQctujgZ! eAiFtfdymtfsX REKIA P g jm naYstrtUuCqsaiCNXaHR")
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align_no_merge(self, _):
+    def test_align_no_merge(self, _, mock_hex):
         """Test alignment without merging original transcription (i.e. not using original text for non-matching lines)"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         # save some real passim output from our fixture into the outdir
         alignment = os.path.join(os.path.dirname(__file__), "assets", "alignment/out.json")
-        os.makedirs(f"{self.outdir}/out.json")
-        copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
+        os.makedirs(f"{self.outdir}-1/out.json")
+        copyfile(alignment, f"{self.outdir}-1/out.json/out.json")  # mimicking actual passim output format
 
         # run the alignment with the real passim output, and merge = False
         self.part.document.align(
@@ -202,10 +215,11 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=False,
             threshold=0.0,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
         # line we know should have NO content based on witness.txt and out.json
@@ -215,10 +229,12 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertEqual(new_lt.content, "")
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align_exception(self, mock_subprocess):
+    def test_align_exception(self, mock_subprocess, mock_hex):
         """Test exception raised during subprocess"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         mock_subprocess.check_call.side_effect = Exception("error")
 
@@ -236,17 +252,20 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         merge=True,
                         full_doc=False,
                         threshold=0.0,
-                        region_types=self.region_types
+                        region_types=self.region_types,
+                        layer_name=None,
                     )
                 # should remove the input json
-                mock_remove.assert_called_with(f"{self.outdir}.json")
+                mock_remove.assert_called_with(f"{self.outdir}-1.json")
                 # should remove the output directory
-                mock_shutil.rmtree.assert_called_with(self.outdir)
+                mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align_fulldoc(self, _):
+    def test_align_fulldoc(self, _, mock_hex):
         """Test alignment using the full document transcription instead of each page in Passim"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         # mock file cleanup-related modules so we can read the input json
         with patch("core.models.remove"):
@@ -261,9 +280,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
-                    region_types=self.region_types
+                    region_types=self.region_types,
+                    layer_name=None,
                 )
-                infile = open(f"{self.outdir}.json")
+                infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
                 in_json = []
                 for line in in_lines:
@@ -275,15 +295,17 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         self.assertEqual(len(entry["lineIDs"]), 90)
                         self.assertEqual(len(entry["text"]), 5940)
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_align_threshold(self, _):
+    def test_align_threshold(self, _, mock_hex):
         """Test alignment with a threshold higher than 0.0 for match length comparisons"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         # save some real passim output from our fixture into the outdir
         alignment = os.path.join(os.path.dirname(__file__), "assets", "alignment/out.json")
-        os.makedirs(f"{self.outdir}/out.json")
-        copyfile(alignment, f"{self.outdir}/out.json/out.json")  # mimicking actual passim output format
+        os.makedirs(f"{self.outdir}-1/out.json")
+        copyfile(alignment, f"{self.outdir}-1/out.json/out.json")  # mimicking actual passim output format
 
         # run the alignment with the real passim output, and threshold = 0.8
         self.part.document.align(
@@ -295,10 +317,11 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=False,
             threshold=0.8,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
         # line we know should have NO content based on the match threshold (its length in witness.txt is much shorter)
@@ -309,8 +332,8 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.assertEqual(new_lt.content, "")
 
         # re-copy real alignment output for second alignment
-        os.makedirs(f"{self.outdir}/out.json")
-        copyfile(alignment, f"{self.outdir}/out.json/out.json")
+        os.makedirs(f"{self.outdir}-1/out.json")
+        copyfile(alignment, f"{self.outdir}-1/out.json/out.json")
 
         # run the alignment with threshold = 0.2
         self.part.document.align(
@@ -322,10 +345,11 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=False,
             threshold=0.2,
-            region_types=self.region_types
+            region_types=self.region_types,
+            layer_name=None,
         )
         new_trans = Transcription.objects.get(
-            name=f"Aligned: fake_textual_witness + test trans ({self.n_gram}gram)",
+            name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
         # the same line should now have some content based on the lowered threshold
@@ -335,10 +359,12 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.assertNotEqual(new_lt.content, old_lt.content)
         self.assertNotEqual(new_lt.content, "")
 
+    @patch("core.models.hex")
     @patch("core.models.subprocess")
-    def test_region_filters(self, _):
+    def test_region_filters(self, _, mock_hex):
         """Test region filters in alignment function"""
         self.makeTranscriptionContent()
+        mock_hex.return_value = "0x1"
 
         # mock file cleanup-related modules so we can read the input json
         with patch("core.models.remove"):
@@ -353,9 +379,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
-                    region_types=[]
+                    region_types=[],
+                    layer_name=None,
                 )
-                infile = open(f"{self.outdir}.json")
+                infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
                 in_json = []
                 for line in in_lines:
@@ -375,9 +402,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
-                    region_types=[self.part.document.valid_block_types.first().id]
+                    region_types=[self.part.document.valid_block_types.first().id],
+                    layer_name=None,
                 )
-                infile = open(f"{self.outdir}.json")
+                infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
                 in_json = []
                 for line in in_lines:
@@ -396,9 +424,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     merge=True,
                     full_doc=True,
                     threshold=0.0,
-                    region_types=self.region_types
+                    region_types=self.region_types,
+                    layer_name=None,
                 )
-                infile = open(f"{self.outdir}.json")
+                infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
                 in_json = []
                 for line in in_lines:
@@ -406,3 +435,34 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 for entry in in_json:
                     if entry["id"] != "witness":
                         self.assertEqual(len(entry["lineIDs"]), 90)
+
+    @patch("core.models.subprocess")
+    def test_layer_name(self, _):
+        """Unit test for text alignment layer name setting"""
+        self.makeTranscriptionContent()
+
+        self.part.document.align(
+            [self.part.pk],
+            self.transcription.pk,
+            self.witness.pk,
+            self.n_gram,
+            self.max_offset,
+            merge=True,
+            full_doc=False,
+            threshold=0.0,
+            region_types=self.region_types,
+            layer_name="test layer",
+        )
+
+        # Should not use default naming scheme
+        with self.assertRaises(ObjectDoesNotExist):
+            Transcription.objects.get(
+                name="Aligned: fake_textual_witness + test trans",
+                document=self.part.document,
+            )
+
+        # should use specified layer name and not raise error
+        Transcription.objects.get(
+            name="test layer",
+            document=self.part.document,
+        )

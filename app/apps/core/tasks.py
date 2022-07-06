@@ -585,6 +585,7 @@ def align(
     full_doc=True,
     threshold=0.8,
     region_types=["Orphan", "Undefined"],
+    layer_name=None,
     **kwargs
 ):
     """Start document alignment on the passed parts, using the passed settings"""
@@ -610,7 +611,18 @@ def align(
     redis_.set('align-%d' % document_pk, json.dumps({'task_id': task.request.id}))
 
     try:
-        doc.align(part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types)
+        doc.align(
+            part_pks,
+            transcription_pk,
+            witness_pk,
+            n_gram,
+            max_offset,
+            merge,
+            full_doc,
+            threshold,
+            region_types,
+            layer_name,
+        )
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the alignment!"),

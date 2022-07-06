@@ -605,7 +605,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             "ref": 0,  # distinguishes OCR from witness
         }
 
-    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types):
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name):
         """Use subprocess call to Passim to align transcription with textual witness"""
         parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
 
@@ -617,7 +617,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         # set output directory
         outdir = path.join(
             settings.MEDIA_ROOT,
-            f"alignments/document-{self.pk}/t{transcription_pk}+w{witness_pk}-{n_gram}gram",
+            f"alignments/document-{self.pk}/t{transcription_pk}+w{witness_pk}-{hex(int(time.time()))[2:]}",
         )
 
         # create region type filters; adapted from BaseExporter
@@ -730,8 +730,11 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
 
         # build the new transcription layer
         original_trans = Transcription.objects.get(pk=transcription_pk)
+        if not layer_name:
+            # if the user did not provide a new layer name, use generated format
+            layer_name = f"Aligned: {witness.name} + {original_trans.name}"
         trans, created = Transcription.objects.get_or_create(
-            name=f"Aligned: {witness.name} + {original_trans.name} ({n_gram}gram)",
+            name=layer_name,
             document=self,
         )
         for part in parts:

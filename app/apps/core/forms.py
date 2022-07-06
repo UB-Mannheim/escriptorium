@@ -698,6 +698,11 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         required=True,
         help_text=_("Region types to include in the alignment."),
     )
+    layer_name = forms.CharField(
+        required=True,
+        label=_("Layer name"),
+        help_text=_("Name for the new transcription layer produced by this alignment. If you reuse an existing layer name, the layer will be overwritten; use caution."),
+    )
 
     def __init__(self, *args, **kwargs):
         """Refine querysets to filter transcription, witness, and region types on document"""
@@ -721,7 +726,8 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         self.fields['region_types'].initial = [c[0] for c in choices]
 
     def clean(self):
-        """Validate such that exactly one of the witness fields is present"""
+        """Validate such that exactly one of the witness fields is present, and the new layer name
+        is distinct from the original transcription layer name."""
         cleaned_data = super().clean()
         witness_file = cleaned_data.get("witness_file")
         existing_witness = cleaned_data.get("existing_witness")
@@ -732,6 +738,13 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         elif witness_file and existing_witness:
             raise forms.ValidationError(
                 _("You may only supply one witness text (file upload or existing text).")
+            )
+        # ensure that layer name is not the same as transcription name
+        layer_name = self.cleaned_data.get("layer_name")
+        transcription = self.cleaned_data.get("transcription")
+        if layer_name == transcription.name:
+            raise forms.ValidationError(
+                _("Alignment layer name cannot be the same as the transcription you are trying to align.")
             )
 
         # If quotas are enforced, assert that the user still has free CPU minutes
@@ -750,6 +763,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
         threshold = self.cleaned_data.get("threshold", 0.8)
         region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
         parts = self.cleaned_data.get("parts")
+        layer_name = self.cleaned_data.get("layer_name")
 
         if existing_witness:
             witness = existing_witness
@@ -774,6 +788,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
             full_doc=bool(full_doc),
             threshold=float(threshold or 0.8),
             region_types=region_types,
+            layer_name=layer_name,
         )
 
 

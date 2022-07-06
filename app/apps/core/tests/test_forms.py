@@ -44,22 +44,43 @@ class AlignFormTestCase(CoreFactoryTestCase):
         align_form = AlignForm(document=self.part.document, user=self.user)
 
         # should not raise error with witness_file only
-        align_form.cleaned_data = {"witness_file": "test.txt"}
+        align_form.cleaned_data = {"witness_file": "test.txt", "transcription": self.transcription}
         align_form.clean()
 
         # should not raise error with existing_witness only
-        align_form.cleaned_data = {"existing_witness": self.witness}
+        align_form.cleaned_data = {"existing_witness": self.witness, "transcription": self.transcription}
         align_form.clean()
 
         # should raise error with existing_witness and witness_file
-        align_form.cleaned_data = {"witness_file": "test.txt", "existing_witness": self.witness}
+        align_form.cleaned_data = {
+            "witness_file": "test.txt",
+            "existing_witness": self.witness,
+            "transcription": self.transcription,
+        }
         with self.assertRaises(ValidationError):
             align_form.clean()
 
         # should raise error with neither
-        align_form.cleaned_data = {}
+        align_form.cleaned_data = {"transcription": self.transcription}
         with self.assertRaises(ValidationError):
             align_form.clean()
+
+        # should raise error when layer name == transcription name
+        align_form.cleaned_data = {
+            "witness_file": "test.txt",
+            "transcription": self.transcription,
+            "layer_name": self.transcription.name,
+        }
+        with self.assertRaises(ValidationError):
+            align_form.clean()
+
+        # should not raise error when layer name != transcription name
+        align_form.cleaned_data = {
+            "witness_file": "test.txt",
+            "transcription": self.transcription,
+            "layer_name": "example",
+        }
+        align_form.clean()
 
     @patch("core.forms.TextualWitness")
     @patch("core.forms.Document.queue_alignment")
@@ -80,6 +101,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "full_doc": True,
             "threshold": 0.8,
             "region_types": ["Orphan", "Undefined"],
+            "layer_name": "example",
         }
 
         align_form.process()
@@ -96,6 +118,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             full_doc=True,
             threshold=0.8,
             region_types=["Orphan", "Undefined"],
+            layer_name="example",
         )
 
         # should create a new textual witness from a passed file
@@ -110,6 +133,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "full_doc": True,
             "threshold": 0.8,
             "region_types": ["Orphan", "Undefined"],
+            "layer_name": "example",
         }
         align_form.process()
         mock_textualwitness_class.assert_called_with(
@@ -119,8 +143,8 @@ class AlignFormTestCase(CoreFactoryTestCase):
             owner=self.user,
         )
 
-        # should call align task with default n_gram (4), full_doc (True), max_offset (20), and
-        # region_types when none provided
+        # should call align task with default n_gram (4), full_doc (True), max_offset (20),
+        # region_types, and layer_name (None) when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
@@ -140,4 +164,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             full_doc=True,
             threshold=0.8,
             region_types=["Orphan", "Undefined"],
+            layer_name=None,
         )
