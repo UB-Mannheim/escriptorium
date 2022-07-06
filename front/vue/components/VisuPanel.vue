@@ -118,7 +118,7 @@ export default Vue.extend({
         hasConfidence() {
             return this.$store.state.lines.all.some(line => (
                 line.currentTrans?.graphs?.length || line.currentTrans?.avg_confidence
-            ))
+            )) && this.$store.state.document.confidenceVizGloballyEnabled
         },
     }
 });

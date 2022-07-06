@@ -297,7 +297,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
-                  'main_script', 'read_direction', 'line_offset',
+                  'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
                   'created_at', 'updated_at')
 

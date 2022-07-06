@@ -492,6 +492,15 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         LineType, blank=True, related_name="valid_in"
     )
 
+    # Temporary stopgap before redesign of confidence visualization tools
+    show_confidence_viz = models.BooleanField(
+        verbose_name=_("Show confidence visualizations"),
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("If checked, enable toggling on and off colorized overlays for automatic transcription (OCR/HTR) confidences."),
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

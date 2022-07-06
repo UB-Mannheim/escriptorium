@@ -25,4 +25,9 @@ class Migration(migrations.Migration):
             name="max_avg_confidence",
             field=models.FloatField(blank=True, null=True),
         ),
+        migrations.AddField(
+            model_name='document',
+            name='show_confidence_viz',
+            field=models.BooleanField(default=False, help_text='If checked, enable toggling on and off colorized overlays for automatic transcription (OCR/HTR) confidences.', verbose_name='Show confidence visualizations'),
+        ),
     ]

@@ -22,6 +22,7 @@ export const initialState = () => ({
     },
 
     // Confidence overlay visibility
+    confidenceVizGloballyEnabled: false,
     confidenceVisible: false,
     // exponential scale factor for confidence overlay
     confidenceScale: 4,
@@ -66,6 +67,9 @@ export const mutations = {
     setConfidenceScale(state, scale) {
         state.confidenceScale = scale;
     },
+    setConfidenceVizGloballyEnabled(state, enabled) {
+        state.confidenceVizGloballyEnabled = enabled;
+    },
     toggleConfidenceVisible(state) {
         state.confidenceVisible = !state.confidenceVisible;
     },
@@ -81,6 +85,7 @@ export const actions = {
         commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
+        commit('setConfidenceVizGloballyEnabled', data.show_confidence_viz)
 
         let page=1;
         var img_taxos = [];
