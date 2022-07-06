@@ -101,7 +101,9 @@ class partCard {
             document.location.replace(url);
         });
         this.cancelTasksButton.click($.proxy(function(ev) {
-            this.cancelTasks();
+            if (!['ongoing', 'pending'].includes(this.workflow['align']) || window.confirm("This will stop ALL alignment tasks on this document. Are you sure you want to stop alignment?")) {
+                this.cancelTasks();
+            }
         }, this));
 
         if (cpuMinutesLeft !== "False") {
