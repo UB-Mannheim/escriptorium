@@ -55,7 +55,6 @@ class partCard {
         this.progress = part.transcription_progress;
         this.locked = false;
         this.avgConfidence = part.max_avg_confidence;
-        this.avgConfidenceModel = part.best_transcription_name;
 
         this.api = API.part.replace('{part_pk}', this.pk);
 
@@ -104,7 +103,6 @@ class partCard {
         let avgConfidenceToggle = $('input#show-confidence');
         if (this.avgConfidence) {
             avgConfidenceElement.text(`Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
-            avgConfidenceElement.attr('title', this.avgConfidenceModel);
 
             const hue = Math.pow(this.avgConfidence, 4) * 120;
             avgConfidenceElement.css('background-color', `hsl(${hue}, 100%, 50%, 50%)`);

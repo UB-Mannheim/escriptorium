@@ -606,7 +606,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     updated_at = models.DateTimeField(auto_now=True)
     # average confidence for lines on this part (page), from the transcription whose confidence is the best
     max_avg_confidence = models.FloatField(null=True, blank=True)
-    best_transcription = models.ForeignKey("Transcription", null=True, blank=True, on_delete=models.SET_NULL)
 
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
@@ -1196,7 +1195,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             # store max avg confidence on the page
             if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
                 self.max_avg_confidence = avg_line_confidence
-                self.best_transcription = trans
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()

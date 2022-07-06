@@ -428,7 +428,6 @@ class XMLParser(ParserDocument):
                         part_avg_confidence = mean(part_line_confidences)
                         if not max_avg_confidence or (max_avg_confidence and part_avg_confidence > max_avg_confidence):
                             part.max_avg_confidence = part_avg_confidence
-                            part.best_transcription = self.transcription
 
                 # TODO: store glyphs too
                 logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))

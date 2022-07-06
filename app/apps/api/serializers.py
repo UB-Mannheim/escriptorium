@@ -371,7 +371,6 @@ class PartSerializer(serializers.ModelSerializer):
     bw_image = ImageField(thumbnails=['large'], required=False)
     workflow = serializers.JSONField(read_only=True)
     transcription_progress = serializers.IntegerField(read_only=True)
-    best_transcription_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DocumentPart
@@ -390,7 +389,6 @@ class PartSerializer(serializers.ModelSerializer):
             'transcription_progress',
             'source',
             'max_avg_confidence',
-            'best_transcription_name',
         )
 
     def create(self, data):
@@ -406,9 +404,6 @@ class PartSerializer(serializers.ModelSerializer):
         # generate card thumbnail right away since we need it
         get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
         return obj
-
-    def get_best_transcription_name(self, part):
-        return part.best_transcription.name if part.best_transcription else ""
 
 
 class BlockSerializer(serializers.ModelSerializer):
