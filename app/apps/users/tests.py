@@ -128,7 +128,7 @@ class InvitationTestCase(TestCase):
             response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(8):
             response = self.client.post(url, {
                 'email': invitation.recipient_email,
                 'username': 'jimd',
@@ -179,7 +179,7 @@ class TeamTestCase(TestCase):
 
         self.client.force_login(self.invitee)
         url = reverse('accept-group-invitation', kwargs={'slug': invitation.token})
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(8):
             response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
 

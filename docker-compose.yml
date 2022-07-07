@@ -31,7 +31,7 @@ services:
     env_file: variables.env
 
   redis:
-    image: docker.io/sickp/alpine-redis:4.0.6
+    image: "redis:alpine"
 
   nginx:
     image: registry.gitlab.com/scripta/escriptorium/nginx

@@ -16,11 +16,11 @@ from celery import chain
 from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import Avg, Prefetch, Q, Sum
+from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -37,7 +37,7 @@ from kraken.lib import models as kraken_models
 from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
 from kraken.lib.util import is_bitonal
-from ordered_model.models import OrderedModel
+from ordered_model.models import OrderedModel, OrderedModelManager
 from PIL import Image
 from shapely import affinity
 from shapely.geometry import LineString, Polygon
@@ -123,7 +123,7 @@ class DocumentTag(Tag):
     )
 
     class Meta:
-        unique_together = ("project", "name")
+        unique_together = ["project", "name"]
 
 
 # class DocumentPartTag(Tag):
@@ -304,7 +304,7 @@ class Metadata(ExportModelOperationsMixin("Metadata"), models.Model):
     public = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ("name",)
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -332,7 +332,7 @@ class Script(ExportModelOperationsMixin("Script"), models.Model):
     blank_char = models.CharField(max_length=1, default=' ', blank=True)  # Blank character in script
 
     class Meta:
-        ordering = ("name",)
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -398,7 +398,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
     objects = ProjectManager()
 
     class Meta:
-        ordering = ("-updated_at",)
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return self.name
@@ -528,7 +528,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
     objects = DocumentManager()
 
     class Meta:
-        ordering = ("-updated_at",)
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return self.name
@@ -1505,7 +1505,7 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
         return super().save(*args, **kwargs)
 
 
-class LineManager(models.Manager):
+class LineManager(OrderedModelManager):
     def prefetch_transcription(self, transcription):
         return (self.get_queryset().order_by('order')
                 .prefetch_related(
@@ -1611,8 +1611,8 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     DEFAULT_NAME = "manual"
 
     class Meta:
-        ordering = ("-updated_at",)
-        unique_together = (("name", "document"),)
+        ordering = ["-updated_at"]
+        unique_together = ["name", "document"]
 
     def __str__(self):
         return self.name
@@ -1684,7 +1684,7 @@ class LineTranscription(
     version_ignore_fields = ("line", "transcription")
 
     class Meta:
-        unique_together = (("line", "transcription"),)
+        unique_together = ["line", "transcription"]
 
     @property
     def text(self):
@@ -1741,7 +1741,7 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        ordering = ("-version_updated_at",)
+        ordering = ["-version_updated_at"]
         permissions = (("can_train", "Can train models"),)
 
     def __str__(self):
@@ -1851,7 +1851,7 @@ class OcrModelDocument(models.Model):
     executed_on = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        unique_together = (("document", "ocr_model"),)
+        unique_together = ["document", "ocr_model"]
 
 
 class OcrModelRight(models.Model):
