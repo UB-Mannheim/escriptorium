@@ -3,7 +3,7 @@ from statistics import mean
 
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
-from django.db.models import Avg
+from django.db.models import Avg, FloatField
 from django.db.models.functions import Coalesce
 
 from core.models import DocumentPart, LineTranscription, Transcription
@@ -95,7 +95,7 @@ class Command(BaseCommand):
                                       # transcriptions, and is only linked to lines, we have to
                                       # group lines by transcription.
                 ).annotate(
-                    avg=Coalesce(Avg("avg_confidence"), -1),  # Average "avg_confidence" for lines
+                    avg=Coalesce(Avg("avg_confidence"), -1, output_field=FloatField()),  # Average "avg_confidence" for lines
                 ).order_by("-avg")
                 if avg_qs.count():
                     max_avg = avg_qs[0]
