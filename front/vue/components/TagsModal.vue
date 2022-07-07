@@ -69,7 +69,7 @@ export default {
     mounted(){
         $(this.$refs.tagsModal).on("hide.bs.modal", this.hideModal);
         $(this.$refs.tagsModal).on("show.bs.modal", this.populateItems);
-        this.$store.commit('documentslist/settagColor');
+        this.$store.commit('documentslist/setTagColor');
     },
     updated: function(){
         this.$nextTick(function(){

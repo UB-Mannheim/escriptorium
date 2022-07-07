@@ -633,11 +633,13 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
         ev.preventDefault();
         var $form = $(ev.target);
         var proc = $form.data('proc');
-        $('#'+proc+'-wizard').modal('hide');
 
         let data = new FormData($form.get(0));
         data.set('document', DOCUMENT_ID);
         partCard.getSelectedPks().forEach(v => data.append('parts', v));
+
+        // remove previous errors
+        $('div.field-error', $form).remove();
 
         $.ajax({
             url : $form.attr('action'),
@@ -650,11 +652,22 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             if (proc == 'import-xml' || proc == 'import-iiif') {
                 $('#import-counter').text('Queued.').show().parent().addClass('ongoing');;
             } else if (proc == 'train') {
-                $('#train-selected').addClass('blink');
+                $('#train-selected').addClass('blink').removeClass('btn-danger');
             }
+
+            $('#'+proc+'-wizard').modal('hide');
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
-            if (data.status == 'error') { alert(data.error); }
+            if (data.status == 'error') {
+                var errors = JSON.parse(data.error);
+                $('#'+proc+'-wizard #wizard-form-error').text(errors.__all__);
+                for (let input_name in errors) {
+                    let input = $('#'+proc+'-wizard #id_'+input_name);
+                    let errorNode = $('<div class="error field-error">');
+                    errorNode.text(errors[input_name]);
+                    input.parent().append(errorNode);
+                }
+            }
             if (DEBUG) console.log(xhr);
         });
     });

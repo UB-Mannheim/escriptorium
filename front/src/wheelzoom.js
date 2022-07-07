@@ -161,8 +161,8 @@ export class WheelZoom {
     }
 
     zoomTo(target, delta) {
-        let oldScale = this.scale;
-        this.scale += delta;
+        var oldScale = this.scale;
+        this.scale *= Math.exp(delta);
 	if(this.minScale !== null) this.scale = Math.max(this.minScale, this.scale);
         if(this.maxScale !== null) this.scale = Math.min(this.maxScale, this.scale);
 
@@ -171,16 +171,34 @@ export class WheelZoom {
         this.pos.y -= Math.round((target.y - target.y / diff.scale)*diff.scale);
 
         this.updateStyle(diff);
-        this.targets[0].showMap(this.pos, this.scale);
+        for (let itarget of this.targets) {
+            itarget.showMap(this.pos, this.scale);
+        }
         return diff;
+    }
+
+    zoomIn() {
+        var target = {
+            x: this.targets[0].element.clientWidth/2-this.pos.x,
+            y: this.targets[0].element.clientHeight/2-this.pos.y
+        };
+        this.zoomTo(target, 0.1);
+    }
+
+    zoomOut() {
+        var target = {
+            x: this.targets[0].element.clientWidth/2-this.pos.x,
+            y: this.targets[0].element.clientHeight/2-this.pos.y
+        };
+        this.zoomTo(target, -0.1);
     }
 
     scrolled(e) {
         if (this.disabled) return null;
         e.preventDefault();
 
-	var delta = e.delta || e.wheelDelta;
-	if (delta === undefined) {
+        var delta = e.delta || e.wheelDelta;
+        if (delta === undefined) {
 	    //we are on firefox
 	    delta = -e.detail;
 	}
@@ -211,22 +229,24 @@ export class WheelZoom {
             }
         }
 	// Make sure the slide stays in its container area when zooming in/out
-        if (this.scale > 1) {
+        if (target.element.clientWidth * this.scale > ts.width) {
             if (this.pos.x > 0) { this.pos.x = 0; }
             if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth * this.scale;
             }
-
-            if (this.pos.y > 0) { this.pos.y = 0; }
-	    // if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
-            //     this.pos.y = ts.height - target.element.clientHeight * this.scale;
-            // }
         } else {
             if (this.pos.x < 0) { this.pos.x = 0; }
 	    if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
                 this.pos.x = ts.width - target.element.clientWidth *  this.scale;
             }
+        }
 
+        if (target.element.clientHeight * this.scale > ts.height) {
+            if (this.pos.y > 0) { this.pos.y = 0; }
+	    if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
+                this.pos.y = ts.height - target.element.clientHeight * this.scale;
+            }
+        } else {
             if (this.pos.y < 0) { this.pos.y = 0; }
             if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
                 this.pos.y = ts.height - target.element.clientHeight *  this.scale;

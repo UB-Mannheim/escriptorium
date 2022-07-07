@@ -1,6 +1,5 @@
 <template>
     <div class="col panel">
-        <loading :active.sync="isWorking" :is-full-page="false" />
         <div class="tools">
             <i title="Source Panel" class="panel-icon fas fa-eye"></i>
             <a v-bind:href="$store.state.parts.image.uri" target="_blank">
@@ -60,7 +59,6 @@ import { assign } from 'lodash'
 import { BasePanel } from '../../src/editor/mixins.js';
 import { AnnoPanel } from '../../src/editor/mixins.js';
 import { Annotorious } from '@recogito/annotorious';
-import Loading from "vue-loading-overlay";
 
 const rectangleRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?,(?<w>\d+)(?:\.\d+)?,(?<h>\d+)(?:\.\d+)?/);
 const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
@@ -72,9 +70,6 @@ export default Vue.extend({
         imageLoaded: false,
         isWorking: false
     };},
-    components: {
-        loading: Loading,
-    },
     computed: {
         imageSrc() {
             let src = !this.fullsizeimage

@@ -400,7 +400,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(12):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {
@@ -459,7 +459,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(11):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {

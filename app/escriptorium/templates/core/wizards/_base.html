@@ -26,6 +26,9 @@
             {% block wizard_help %}{% endblock %}
           </div>
           <input type="hidden" name="task" value="{{ proc }}"/>
+
+          <p id="wizard-form-error" class="error"></p>
+
           {% block wizard_fields %}{% endblock %}
         </div>
         <div class="modal-footer">

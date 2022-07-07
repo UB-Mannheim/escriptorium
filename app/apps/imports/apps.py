@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class ImportConfig(AppConfig):
-    name = 'import'
+class ImportsConfig(AppConfig):
+    name = 'imports'
