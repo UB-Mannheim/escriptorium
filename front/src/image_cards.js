@@ -110,10 +110,6 @@ class partCard {
                 // if any card has average confidence, enable toggle switch
                 avgConfidenceToggle.attr('disabled', false);
             }
-        } else {
-            // otherwise, hide toggle switch entirely
-            avgConfidenceToggle.hide();
-            $('input#show-confidence + label').hide();
         }
         // start with avg confidence disabled
         avgConfidenceElement.hide();
