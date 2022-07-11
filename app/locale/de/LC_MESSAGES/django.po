@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-16 11:35+0200\n"
+"POT-Creation-Date: 2022-07-11 14:31+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -177,6 +177,33 @@ msgid ""
 msgstr ""
 "Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
 "damit verbundene Transkriptionen</b> zuerst gelöscht!"
+
+#: apps/core/forms.py
+msgid "The model is already training."
+msgstr ""
+
+#: apps/core/forms.py
+#, fuzzy
+#| msgid ""
+#| "Either use model_name to create a new model, or add a model pk to retrain "
+#| "an existing one."
+msgid "Either choose a model name or overwrite an existing one."
+msgstr ""
+"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
+"fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
+
+#: apps/core/forms.py
+msgid ""
+"You need to choose a model to override if the override option is checked."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Empty Ground Truth data."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
@@ -1478,7 +1505,8 @@ msgid ""
 "%(name)s</strong>.\n"
 "      "
 msgstr ""
-"Momentan wird der eingegebene Text im Dokument <strong>%(name)s</strong> "
+"\n"
+"        Momentan wird der eingegebene Text im Dokument <strong>%(name)s</strong> "
 "gesucht.\n"
 "      "
 
