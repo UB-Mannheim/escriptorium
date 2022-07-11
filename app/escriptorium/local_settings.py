@@ -5,7 +5,7 @@ import os
 from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
-CSRF_TRUSTED_ORIGINS = ['ocr-bw.bib.uni-mannheim.de']
+CSRF_TRUSTED_ORIGINS = ['https://ocr-bw.bib.uni-mannheim.de']
 
 # In the format [('Full Name', 'email@example.com'), ('Full Name', 'anotheremail@example.com')]
 ADMINS = [
