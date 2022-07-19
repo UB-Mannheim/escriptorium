@@ -27,12 +27,6 @@
     <button id="unselect-all" class="btn btn-sm btn-info mr-1">{% trans "Unselect all" %}</button>
     <span>{% trans "Loading" %} <span id="loading-counter"></span>...</span>
     <span>{% trans "Selected" %} <span id="selected-counter"></span></span>
-    {% if document.show_confidence_viz %}
-      <div class="ml-auto mr-auto" role="group" title="{% trans "Show the highest average confidence of automatic transcription (OCR/HTR) per page" %}">
-        <input type="checkbox" id="show-confidence" name="show-confidence" class="toggle-switch" disabled />
-        <label for="show-confidence"><span>{% trans "Show confidence" %}</span></label>
-      </div>
-    {% endif %}
     <div class="btn-group ml-auto mr-1" role="group">
       <button
         id="import-selected"
@@ -203,9 +197,6 @@
           <span class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
         </span>
       </div>
-      <div class="d-flex mt-2 justify-content-center">
-        <span class="avg-confidence text-center small"></span>
-      </div>
     </div>
   </div>
   <div class="droppable js-drop"></div>
@@ -237,7 +228,7 @@
   $(document).ready(function() {
     // join the ws room
     joinDocumentRoom('{{document.pk}}');
-    bootImageCards(DOCUMENT_ID, '{{has_disk_storage_left}}', '{{has_cpu_minutes_left}}');
+    bootImageCards(DOCUMENT_ID, '{{has_disk_storage_left}}', '{{has_cpu_minutes_left}}', {{document.show_confidence_viz|lower}});
     bootLazyload();
     bootHelp();
   });

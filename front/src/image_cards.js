@@ -40,7 +40,7 @@ function openWizard(proc) {
 }
 
 class partCard {
-    constructor(part, cpuMinutesLeft) {
+    constructor(part, cpuMinutesLeft, showConfidenceViz) {
         this.pk = part.pk;
         this.order = part.order;
         this.name = part.name;
@@ -99,24 +99,13 @@ class partCard {
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
 
         // show avg confidence on the card
-        let avgConfidenceElement = $(".avg-confidence", this.$element);
-        let avgConfidenceToggle = $('input#show-confidence');
-        if (this.avgConfidence) {
-            avgConfidenceElement.text(`Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
+        var avgConfidenceElement = this.progressBar;
+        if (this.avgConfidence && showConfidenceViz) {
+            avgConfidenceElement.attr('title', `Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
 
             const hue = Math.pow(this.avgConfidence, 4) * 120;
             avgConfidenceElement.css('background-color', `hsl(${hue}, 100%, 50%, 50%)`);
-            if (avgConfidenceToggle.attr('disabled')) {
-                // if any card has average confidence, enable toggle switch
-                avgConfidenceToggle.attr('disabled', false);
-            }
-        } else {
-            // otherwise, hide toggle switch entirely
-            avgConfidenceToggle.hide();
-            $('input#show-confidence + label').hide();
         }
-        // start with avg confidence disabled
-        avgConfidenceElement.hide();
 
         this.editButton.click(function(ev) {
             document.location.replace(url);
@@ -363,7 +352,7 @@ class partCard {
 }
 
 
-export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
+export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, showConfidenceViz) {
     DOCUMENT_ID = documentId;
     API = {
         'document': '/api/documents/' + DOCUMENT_ID,
@@ -669,17 +658,6 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
         });
     });
 
-    // "Show confidence" toggle switch
-    let avgConfidenceToggle = $('input#show-confidence');
-
-    avgConfidenceToggle.on('change', function() {
-        if (avgConfidenceToggle.prop('checked')) {
-            $('.avg-confidence').show();
-        } else {
-            $('.avg-confidence').hide();
-        }
-    });
-
     /* Select card if coming from edit page */
     var tabUrl = new URL(window.location);
     var select = tabUrl.searchParams.get('select');
@@ -692,7 +670,7 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
-                var pc = new partCard(data.results[i], cpuMinutesLeft);
+                var pc = new partCard(data.results[i], cpuMinutesLeft, showConfidenceViz);
                 if (select == pc.pk) pc.select();
             }
             if (data.next) {

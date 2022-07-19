@@ -22,7 +22,6 @@ export const initialState = () => ({
     },
 
     // Confidence overlay visibility
-    confidenceVizGloballyEnabled: false,
     confidenceVisible: false,
     // exponential scale factor for confidence overlay
     confidenceScale: 4,
@@ -68,10 +67,7 @@ export const mutations = {
         state.confidenceScale = scale;
     },
     setConfidenceVizGloballyEnabled(state, enabled) {
-        state.confidenceVizGloballyEnabled = enabled;
-    },
-    toggleConfidenceVisible(state) {
-        state.confidenceVisible = !state.confidenceVisible;
+        state.confidenceVisible = enabled;
     },
     reset (state) {
         Object.assign(state, initialState())
@@ -116,10 +112,6 @@ export const actions = {
 
         // Persist final value in user profile
         userProfile.set('visible-panels', state.visible_panels)
-    },
-
-    async toggleConfidence ({ commit }) {
-        commit('toggleConfidenceVisible');
     },
 
     async scaleConfidence({ commit }, scale) {
