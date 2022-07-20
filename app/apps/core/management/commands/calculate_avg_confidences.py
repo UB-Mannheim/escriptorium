@@ -95,11 +95,17 @@ class Command(BaseCommand):
                                       # transcriptions, and is only linked to lines, we have to
                                       # group lines by transcription.
                 ).annotate(
-                    avg=Coalesce(Avg("avg_confidence"), -1, output_field=FloatField()),  # Average "avg_confidence" for lines
+                    avg=Coalesce(Avg("avg_confidence"), -1.0, output_field=FloatField()),  # Average "avg_confidence" for lines
                 ).order_by("-avg")
                 if avg_qs.count():
                     max_avg = avg_qs[0]
-                    part.max_avg_confidence = max_avg["avg"]
+                    # the max will only be negative if Avg could not be calculated, i.e. part has
+                    # manual transcriptions only
+                    if max_avg["avg"] >= 0:
+                        part.max_avg_confidence = max_avg["avg"]
+                    else:
+                        # in that case, it should not have max avg confidence; nullify if present
+                        part.max_avg_confidence = None
                     updates.append(part)
 
             DocumentPart.objects.bulk_update(updates, ["max_avg_confidence"])
