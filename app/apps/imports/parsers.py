@@ -167,7 +167,8 @@ class ZipParser(ParserDocument):
                     continue
                 with zfh.open(finfo) as zipedfh:
                     try:
-                        file_extension = os.path.splitext(zipedfh.name)[1][1:]
+                        filename = os.path.basename(zipedfh.name)
+                        file_extension = os.path.splitext(filename)[1][1:]
                         # image
                         if file_extension.lower() in get_available_image_extensions():
                             # If quotas are enforced, assert that the user still has free disk storage
@@ -178,15 +179,15 @@ class ZipParser(ParserDocument):
                             try:
                                 part = DocumentPart.objects.filter(
                                     document=self.document,
-                                    original_filename=zipedfh.name
+                                    original_filename=filename
                                 )[0]
                             except IndexError:
                                 part = DocumentPart(
                                     document=self.document,
-                                    original_filename=zipedfh.name
+                                    original_filename=filename
                                 )
                             part.image_file_size = 0
-                            part.image.save(zipedfh.name, ContentFile(zipedfh.read()))
+                            part.image.save(filename, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
@@ -205,7 +206,7 @@ class ZipParser(ParserDocument):
                     except ParseError as e:
                         # we let go to try other documents
                         msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
-                            filename=self.file.name, xmlfile=zipedfh.name, error=e.args[0]
+                            filename=self.file.name, xmlfile=filename, error=e.args[0]
                         )
                         logger.warning(msg)
                         if self.report:
