@@ -620,28 +620,12 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             f"alignments/document-{self.pk}/t{transcription_pk}+w{witness_pk}-{hex(int(time.time()))[2:]}",
         )
 
-        # create region type filters; adapted from BaseExporter
-        include_orphans = False
-        if "Orphan" in region_types:
-            include_orphans = True
-            region_types.remove("Orphan")
-        include_undefined = False
-        if "Undefined" in region_types:
-            include_undefined = True
-            region_types.remove("Undefined")
-        region_filters = Q(line__block__typology_id__in=region_types)
-        if include_orphans:
-            region_filters |= Q(line__block__isnull=True)
-        if include_undefined:
-            region_filters |= Q(
-                line__block__isnull=False, line__block__typology_id__isnull=True
-            )
-
         # get relevant LineTranscriptions
         all_line_transcriptions = LineTranscription.objects.filter(
             transcription__pk=transcription_pk  # transcription matches the filter
         )
         # filter by region type
+        region_filters = Block.get_filters(block_types=region_types, filtering_lines=True)
         all_line_transcriptions = all_line_transcriptions.filter(region_filters)
 
         # ensure lines are in order
@@ -1713,6 +1697,33 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
     @property
     def height(self):
         return self.coordinates_box[3] - self.coordinates_box[1]
+
+    def get_filters(block_types, filtering_lines=False):
+        """
+        Helper method to get filters for block types. By default, assumes filters are built for
+        a QuerySet of Blocks. Set filtering_lines param to True to filter on LineTranscriptions
+        instead.
+        """
+        # check for oprhan and undefined
+        include_orphans = False
+        if "Orphan" in block_types:
+            include_orphans = True
+            block_types.remove("Orphan")
+        include_undefined = False
+        if "Undefined" in block_types:
+            include_undefined = True
+            block_types.remove("Undefined")
+
+        # build filters
+        filters = Q(line__block__typology_id__in=block_types) if filtering_lines else Q(typology_id__in=block_types)
+        if include_orphans and filtering_lines:
+            # this filter is only applicable to LineTranscriptions
+            filters |= Q(line__block__isnull=True)
+        if include_undefined:
+            filters |= Q(
+                line__block__isnull=False, line__block__typology_id__isnull=True
+            ) if filtering_lines else Q(typology_id__isnull=True)
+        return filters
 
     def make_external_id(self):
         self.external_id = "eSc_textblock_%s" % str(uuid.uuid4())[:8]
