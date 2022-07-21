@@ -478,22 +478,21 @@ class RegionTypesFormMixin(forms.Form):
 
         # forms extending this mixin should set self.document before calling super().__init__
         # (if they extend DocumentProcessFormBase, they do)
-        if not self.document and kwargs.get("document", None):
+        if kwargs.get("document", None):
             self.document = kwargs.pop("document")
 
         super().__init__(*args, **kwargs)
 
-        if self.document:
-            # get (value, label) tuples from self.document.valid_block_types
-            choices = [
-                (rt.id, rt.name)
-                for rt in self.document.valid_block_types.all()
-                # include undefined and orphaned line region types
-            ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
-            self.fields['region_types'].choices = choices
+        # get (value, label) tuples from self.document.valid_block_types
+        choices = [
+            (rt.id, rt.name)
+            for rt in self.document.valid_block_types.all()
+            # include undefined and orphaned line region types
+        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+        self.fields['region_types'].choices = choices
 
-            # set all region types to be selected by default, allowing user to opt out
-            self.fields['region_types'].initial = [c[0] for c in choices]
+        # set all region types to be selected by default, allowing user to opt out
+        self.fields['region_types'].initial = [c[0] for c in choices]
 
 
 class DocumentProcessFormBase(forms.Form):
