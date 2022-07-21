@@ -106,7 +106,9 @@ export const actions = {
         let data = {
             content: l.currentTrans.content,
             line: l.currentTrans.line,
-            transcription: l.currentTrans.transcription
+            transcription: l.currentTrans.transcription,
+            avg_confidence: null,
+            graphs: null,
         }
         if (rootState.lines.editedLine) {
             commit('lines/setEditedLine', l, {root: true})

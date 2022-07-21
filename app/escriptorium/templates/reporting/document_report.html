@@ -1,0 +1,114 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n static report bootstrap pagination cache %}
+{% block head_title %}{% trans "Document report" %}{% endblock %}
+
+{% block nav-reports-active %}active{% endblock %}
+
+{% block extra_nav %}
+{% endblock %}
+
+{% block tab_content %}
+    <div id="doc_report">
+        <div class="row">
+            <div class="col-2" id="document_list">
+                <span>Transcription</span>
+                <form method="GET">
+                    <select id="document-transcriptions"
+                            name="transcription"
+                            title="Transcription"
+                            class="form-control custom-select"
+                            onchange="this.form.submit()">
+                        <option value="all">All</option>
+                        {% for transcription in all_transcriptions %}
+                            <option
+                                value="{{ transcription.pk }}"
+                                {% if selected_transcription and selected_transcription.pk == transcription.pk %}selected{% endif %}>
+                                {{ transcription.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            <div class="col-10">
+                <div class="mb-4 row justify-content-center"><h4>{% trans 'Data metrics' %}</h4></div>
+                <div class="mb-4 row">
+                    <div class="col">
+                        <div class="card border-primary text-center h-100">
+                            <i class="far fa-file-image card-header"></i>
+                            <div class="card-body">
+                                <h5 class="card-title">{% trans 'Total number of document parts' %}</h5>
+                                <h2 class="card-title">{{ part_count|default:"0" }}</h2>
+                                <p class="card-text">{% trans 'A document part corresponds to one image loaded within a document.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card border-primary text-center h-100">
+                            <i class="far fa-file-image card-header"></i>
+                            <div class="card-body">
+                                <h5 class="card-title">{% trans 'Transcribed document parts' %}</h5>
+                                <h2 class="card-title">{{ transcribed_part_count|default:"0" }}/{{ part_count|default:"0" }}</h2>
+                                <p class="card-text">{% trans 'The number of transcribed images in the selected transcription(s).' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card border-primary text-center h-100">
+                            <i class="fas fa-stream card-header"></i>
+                            <div class="card-body">
+                                <h5 class="card-title">{% trans 'Average transcription confidence' %}</h5>
+                                <h2 class="card-title">{{ avg_ocr_confidence|default:0|floatformat:2 }}</h2>
+                                <p class="card-text">{% trans 'Confidence is an estimate of the automatic transcription model to approximate its own accuracy per character.' %}</p>
+                                <p class="card-text">{% trans 'The validity of this figure will depend on specific cases and models and is not necessarily an indication of result quality.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="card border-primary text-center">
+                            <i class="fa fa-tags card-header"></i>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {% trans 'Vocabulary' %}
+                                    <a class="btn btn-primary fas fa-sync" title="{% trans 'Reload vocabulary' %}" href="?{% url_replace request 'vocabulary' 1 %}"></a>
+                                </h5>
+                                {% if vocabulary == "1" and part_lines_transcriptions|length > 0 %}
+                                <table class="table">
+                                    <tbody>
+                                        <tr class="row">
+                                            {% for item_v in part_lines_transcriptions|chunk_dict %}
+                                                <td class="col">
+                                                    {% for key, value in item_v.items %}
+                                                        <table>
+                                                            <tr>
+                                                                {% for char, frequency in value %}
+                                                                    <td>{{ char }}</td>
+                                                                    <td>
+                                                                    {% if frequency < 50 %}
+                                                                        <span style="color: red;">{{ frequency }}</span>
+                                                                    {% else %}
+                                                                        <span>{{ frequency }}</span>
+                                                                    {% endif %}
+                                                                    </td>
+                                                                {% endfor %}
+                                                            </tr>
+                                                        </table>
+                                                    {% endfor %}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    <tbody>
+                                </table>
+                                {% elif vocabulary == "1" and part_lines_transcriptions|length == 0 %}
+                                <p class="card-text">{% trans 'No vocabulary found in the selected transcription(s).' %}</p>
+                                {% endif %}
+                                <p class="card-text">{% trans 'The vocabulary is the list of all the characters currently used in the transcription of the document along with their frequency.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

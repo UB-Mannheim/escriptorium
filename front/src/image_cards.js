@@ -40,7 +40,7 @@ function openWizard(proc) {
 }
 
 class partCard {
-    constructor(part, cpuMinutesLeft) {
+    constructor(part, cpuMinutesLeft, showConfidenceViz) {
         this.pk = part.pk;
         this.order = part.order;
         this.name = part.name;
@@ -54,6 +54,7 @@ class partCard {
         this.task_ids = {};  // helps preventing card status race conditions
         this.progress = part.transcription_progress;
         this.locked = false;
+        this.avgConfidence = part.max_avg_confidence;
 
         this.api = API.part.replace('{part_pk}', this.pk);
 
@@ -96,6 +97,16 @@ class partCard {
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+
+        // show avg confidence on the card
+        var avgConfidenceElement = this.progressBar;
+        if (this.avgConfidence && showConfidenceViz) {
+            avgConfidenceElement.attr('title', `Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
+
+            const hue = Math.pow(this.avgConfidence, 4) * 120;
+            avgConfidenceElement.css('background-color', `hsl(${hue}, 100%, 50%, 50%)`);
+        }
+
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
@@ -341,7 +352,7 @@ class partCard {
 }
 
 
-export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
+export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, showConfidenceViz) {
     DOCUMENT_ID = documentId;
     API = {
         'document': '/api/documents/' + DOCUMENT_ID,
@@ -659,7 +670,7 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
-                var pc = new partCard(data.results[i], cpuMinutesLeft);
+                var pc = new partCard(data.results[i], cpuMinutesLeft, showConfidenceViz);
                 if (select == pc.pk) pc.select();
             }
             if (data.next) {

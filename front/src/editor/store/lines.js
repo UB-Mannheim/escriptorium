@@ -142,6 +142,7 @@ export const actions = {
             let newLine = l
 
             newLine.currentTrans = {
+                avg_confidence: null,
                 line: newLine.pk,
                 transcription: transcription,
                 content: '',
