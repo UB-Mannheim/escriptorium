@@ -468,6 +468,34 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         model.save()
 
 
+class RegionTypesFormMixin(forms.Form):
+    """Mixin for forms needing a list of choices for valid region types on a document"""
+
+    region_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
+
+    def __init__(self, *args, **kwargs):
+        """Populate region types field with values and labels"""
+
+        # forms extending this mixin should set self.document before calling super().__init__
+        # (if they extend DocumentProcessFormBase, they do)
+        if not self.document and kwargs.get("document", None):
+            self.document = kwargs.pop("document")
+
+        super().__init__(*args, **kwargs)
+
+        if self.document:
+            # get (value, label) tuples from self.document.valid_block_types
+            choices = [
+                (rt.id, rt.name)
+                for rt in self.document.valid_block_types.all()
+                # include undefined and orphaned line region types
+            ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+            self.fields['region_types'].choices = choices
+
+            # set all region types to be selected by default, allowing user to opt out
+            self.fields['region_types'].initial = [c[0] for c in choices]
+
+
 class DocumentProcessFormBase(forms.Form):
     CHECK_GPU_QUOTA = False
     CHECK_DISK_QUOTA = False
@@ -634,7 +662,7 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
                       model_pk=model.pk)
 
 
-class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
+class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixin):
     """Form to perform text alignment by passing a transcription and textual witness"""
     transcription = forms.ModelChoiceField(
         queryset=Transcription.objects.filter(archived=False),
@@ -716,13 +744,8 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase):
             document=self.document,
         ).distinct()
 
-        # region types choices population, adapted from ExportForm
-        choices = [
-            (rt.id, rt.name)
-            for rt in self.document.valid_block_types.all()
-        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
-        self.fields['region_types'].choices = choices
-        self.fields['region_types'].initial = [c[0] for c in choices]
+        self.fields["region_types"].required = True
+        self.fields["region_types"].help_text = _("Region types to include in the alignment.")
 
     def clean(self):
         """Validate such that exactly one of the witness fields is present, and the new layer name

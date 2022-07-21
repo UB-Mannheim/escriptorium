@@ -4,9 +4,31 @@ from unittest.mock import patch
 
 from django.forms import ValidationError
 
-from core.forms import AlignForm
-from core.models import DocumentPart
+from core.forms import AlignForm, RegionTypesFormMixin
+from core.models import BlockType, DocumentPart
 from core.tests.factory import CoreFactoryTestCase
+
+
+class RegionTypesFormMixinTestCase(CoreFactoryTestCase):
+    """Unit tests for region types form mixin"""
+
+    def make_doc_and_block(self):
+        self.document = self.factory.make_document(name="document")
+        self.block_type = BlockType.objects.create(name="Block", public=True, default=True)
+        self.document.valid_block_types.add(self.block_type)
+
+    def test_init(self):
+        """Should initialize region types choices, selection"""
+        self.make_doc_and_block()
+
+        form_mixin = RegionTypesFormMixin(document=self.document)
+
+        # should set choices from document's valid region types
+        assert (self.block_type.id, "Block") in form_mixin.fields["region_types"].choices
+        # should include undefined choice
+        assert ('Undefined', '(Undefined region type)') in form_mixin.fields["region_types"].choices
+        # should set all checked by default
+        assert self.block_type.id in form_mixin.fields["region_types"].initial
 
 
 class AlignFormTestCase(CoreFactoryTestCase):
