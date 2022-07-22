@@ -728,25 +728,22 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 matches = list(filter(lambda alg: int(alg["id"]) == line.pk, aligned_lines))
 
                 # build LineTranscription
-                lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
-
                 # if this line is present in the aligned output, set its content to aligned text
                 if matches:
+                    lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
                     # use matches[0]["alg"] instead for forced alignment with dashes
                     # lt.content = matches[0]["alg"]
                     lt.content = matches[0]["text"]
+                    lt.save()
                 # if "merge" is checked and this line is not present, get content from original transcription
                 elif merge:
                     try:
                         old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
+                        lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
                         lt.content = old_lt.content
+                        lt.save()
                     except LineTranscription.DoesNotExist:
-                        lt.content = ""
-                # if "merge" is NOT checked and this line is not present, ensure its content is empty
-                else:
-                    lt.content = ""
-
-                lt.save()
+                        pass
 
         # clean up temp files
         if not settings.KEEP_ALIGNMENT_TEMPFILES:
