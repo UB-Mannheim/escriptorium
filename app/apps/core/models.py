@@ -746,7 +746,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                         pass
 
         # clean up temp files
-        if not settings.get("KEEP_ALIGNMENT_TEMPFILES", None):
+        if not getattr(settings, "KEEP_ALIGNMENT_TEMPFILES", None):
             remove(infile)
             shutil.rmtree(outdir)
 
