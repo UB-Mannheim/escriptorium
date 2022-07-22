@@ -106,7 +106,7 @@ class PartMoveSerializer(serializers.ModelSerializer):
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription
-        fields = ('pk', 'name', 'archived')
+        fields = ('pk', 'name', 'archived', 'avg_confidence')
 
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
@@ -297,7 +297,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
-                  'main_script', 'read_direction', 'line_offset',
+                  'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
                   'created_at', 'updated_at')
 
@@ -387,7 +387,8 @@ class PartSerializer(serializers.ModelSerializer):
             'order',
             'recoverable',
             'transcription_progress',
-            'source'
+            'source',
+            'max_avg_confidence',
         )
 
     def create(self, data):
@@ -419,7 +420,7 @@ class BlockSerializer(serializers.ModelSerializer):
 class LineTranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineTranscription
-        fields = ('pk', 'line', 'transcription', 'content', 'graphs',
+        fields = ('pk', 'line', 'transcription', 'content', 'graphs', 'avg_confidence',
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
     def cleanup(self, data):

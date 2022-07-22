@@ -142,7 +142,7 @@ class ProjectForm(BootstrapFormMixin, forms.ModelForm):
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script']
+        fields = ['project', 'name', 'read_direction', 'line_offset', 'main_script', 'show_confidence_viz']
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')

@@ -556,6 +556,7 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
         part.transcribe(model)
+
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),

@@ -342,7 +342,11 @@ LOGGING = {
         },
         'es_indexing': {
             'handlers': ['console_info'],
-        }
+        },
+        'avg_confidence': {
+            'handlers': ['console_info'],
+            'level': 'INFO',
+        },
     },
 }
 

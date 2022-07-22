@@ -3,6 +3,18 @@
         <div class="tools">
             <i title="Visual Transcription Panel"
                 class="panel-icon fas fa-language"></i>
+            <input
+                type="range"
+                class="custom-range ml-2"
+                min="1"
+                max="10"
+                id="confidence-range"
+                step="0.1"
+                v-on:input="changeConfidenceScale"
+                v-if="hasConfidence"
+                v-model="confidenceScale"
+                title="Scale the color range for average confidence visualizations"
+            >
         </div>
         <div class="content-container">
             <div id="visu-zoom-container" class="content">
@@ -36,6 +48,11 @@ export default Vue.extend({
         'visuline': VisuLine,
         TranscriptionModal,
     },
+    data() {
+        return {
+            confidenceScale: this.$store.state.document.confidenceScale,
+        }
+    },
     mounted() {
         // wait for the element to be rendered
         Vue.nextTick(function() {
@@ -43,6 +60,10 @@ export default Vue.extend({
                                        {map: true});
             this.refresh();
         }.bind(this));
+
+        if (this.hasConfidence) {
+           $('[data-toggle="tooltip"]').tooltip();
+        }
     },
     methods: {
         resetLines() {
@@ -57,7 +78,17 @@ export default Vue.extend({
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));
+        },
+        changeConfidenceScale(e) {
+            this.$store.dispatch('document/scaleConfidence', e.target.value);
         }
+    },
+    computed: {
+        hasConfidence() {
+            return this.$store.state.lines.all.some(line => (
+                line.currentTrans?.graphs?.length || line.currentTrans?.avg_confidence
+            )) && this.$store.state.document.confidenceVisible
+        },
     }
 });
 </script>

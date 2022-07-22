@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime
 from glob import glob
 from os import makedirs, path, remove
+from statistics import mean
 
 import numpy as np
 from celery import chain
@@ -22,7 +23,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import JSONField, Prefetch, Q, Sum
+from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -495,6 +496,15 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         LineType, blank=True, related_name="valid_in"
     )
 
+    # Temporary stopgap before redesign of confidence visualization tools
+    show_confidence_viz = models.BooleanField(
+        verbose_name=_("Show confidence visualizations"),
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("If checked, enable toggling on and off colorized overlays for automatic transcription (OCR/HTR) confidences."),
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -827,6 +837,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # average confidence for lines on this part (page), from the transcription whose confidence is the best
+    max_avg_confidence = models.FloatField(null=True, blank=True)
 
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
@@ -1340,9 +1352,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
+                    try:
+                        bl_type = line["script"]
+                    except KeyError:
+                        # changed in kraken 4.0
+                        bl_type = line["tags"]["type"]
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(line["script"]),
+                        typology=line_types.get(bl_type),
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -1375,6 +1392,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             reorder = 'L'
 
         with Image.open(self.image.file.name) as im:
+            line_confidences = []
             for line in lines:
                 if not line.baseline:
                     bounds = {
@@ -1391,6 +1409,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                 "boundary": line.mask,
                                 "text_direction": text_direction,
                                 "script": "default",
+                                "tags": {"type": "default"},  # needed for kraken 4.0
                             }
                         ],  # self.document.main_script.name
                         "type": "baselines",
@@ -1415,11 +1434,34 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         'confidence': float(confidence)
                     } for letter, poly, confidence in zip(
                         pred.prediction, pred.cuts, pred.confidences)]
+                if lt.graphs:
+                    line_avg_confidence = mean([graph['confidence'] for graph in lt.graphs if "confidence" in graph])
+                    lt.avg_confidence = line_avg_confidence
+                    line_confidences.append(line_avg_confidence)
                 lt.save()
+        if line_confidences:
+            # calculate and set all avg confidence values on models
+            avg_line_confidence = mean(line_confidences)
+            # store max avg confidence on the page
+            if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
+                self.max_avg_confidence = avg_line_confidence
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
         self.save()
+
+        # overall avg recalculations; may use DB aggregation so run after self.save()
+        if line_confidences and not created:
+            # if new line_confidences have been added to existing transcription,
+            # then recalculate average confidence across the transcription
+            lines_with_confidence = trans.linetranscription_set.filter(avg_confidence__isnull=False)
+            trans.avg_confidence = lines_with_confidence.aggregate(avg=Avg("avg_confidence")).get("avg")
+            trans.save()
+        elif line_confidences:
+            # if this is a new transcription, its avg confidence will be the avg of lines
+            # transcribed here
+            trans.avg_confidence = avg_line_confidence
+            trans.save()
 
     def chain_tasks(self, *tasks):
         redis_.set(
@@ -1832,6 +1874,7 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     archived = models.BooleanField(default=False)
+    avg_confidence = models.FloatField(null=True, blank=True)
 
     DEFAULT_NAME = "manual"
 
@@ -1898,6 +1941,9 @@ class LineTranscription(
     # on postgres this maps to the jsonb type!
     graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
+
+    # average confidence for graphs in the line
+    avg_confidence = models.FloatField(null=True, blank=True)
 
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(

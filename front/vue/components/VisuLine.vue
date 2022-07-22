@@ -2,7 +2,7 @@
     <g @mouseover="showOverlay"
         @mouseleave="hideOverlay"
         @click="edit">
-        <polygon fill="transparent"
+        <polygon    v-bind:fill="$store.state.document.confidenceVisible ? maskFillColor : 'transparent'"
                     v-bind:stroke="maskStrokeColor"
                     v-bind:points="maskPoints"/>
         <path v-bind:id="textPathId"
@@ -14,6 +14,7 @@
         <text :text-anchor="$store.state.document.defaultTextDirection == 'rtl' ? 'end' : ''"
                 ref="textElement"
                 lengthAdjust="spacingAndGlyphs"
+                data-toggle="tooltip"
                 v-if="$store.state.document.mainTextDirection != 'ttb'">
             <textPath v-bind:href="'#' + textPathId"
                         v-if="line.currentTrans">
@@ -25,6 +26,7 @@
                 ref="textElement"
                 rotate="-90"
                 font-size="1em"
+                data-toggle="tooltip"
                 v-else>
             <textPath v-bind:href="'#' + textPathId"
                         v-if="line.currentTrans">
@@ -109,13 +111,26 @@ export default Vue.extend({
                 }
             }
         },
-
+        computeConfidence() {
+            // compute the average confidence for this line
+            if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
+                const confidence =  `Confidence: ${(this.lineAvgConfidence * 100).toFixed(1)}%`;
+                // add confidence to bootstrap title related attributes
+                this.$refs.textElement.setAttribute('title' ,confidence);
+                this.$refs.textElement.setAttribute('data-original-title', confidence);
+            } else {
+                // remove confidence from title attributes
+                this.$refs.textElement.setAttribute('title', '');
+                this.$refs.textElement.setAttribute('data-original-title', '');
+            }
+        },
         edit() {
             this.$store.dispatch('lines/toggleLineEdition', this.line);
         },
         reset() {
             this.computeLineHeight();
             this.computeTextLength();
+            this.computeConfidence();
         },
     },
     computed: {
@@ -128,6 +143,28 @@ export default Vue.extend({
             } else {
                 return 'lightgrey';
             }
+        },
+        lineAvgConfidence() {
+            // compute the average confidence for the current line
+            if (this.line.currentTrans.avg_confidence) {
+                return this.line.currentTrans.avg_confidence;
+            } else if (this.line.currentTrans?.graphs?.length) {
+                const lineConfidences = this.line.currentTrans.graphs.map(g => g.confidence);
+                return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
+            }
+        },
+        maskFillColor() {
+            if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
+                // convert the avg confidence to hue (0 = red, 120 = green)
+                // use a slight curve so that values are more easily red/yellow
+                const hue = Math.pow(this.lineAvgConfidence, this.$store.state.document.confidenceScale) * 120;
+                return `hsl(${hue}, 100%, 50%, 50%)`;
+            }
+            return 'transparent';
+        },
+        maskPoints() {
+            if (this.line == null || !this.line.mask) return '';
+            return this.line.mask.map(pt => Math.round(pt[0]*this.ratio)+','+Math.round(pt[1]*this.ratio)).join(' ');
         },
         fakeBaseline() {
             // create a fake path based on the mask,

@@ -21,6 +21,11 @@ export const initialState = () => ({
         diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
     },
 
+    // Confidence overlay visibility
+    confidenceVisible: false,
+    // exponential scale factor for confidence overlay
+    confidenceScale: 4,
+
     enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })
 
@@ -58,6 +63,12 @@ export const mutations = {
     setEnabledVKs(state, vks) {
         state.enabledVKs = Object.assign([], state.enabledVKs, vks)
     },
+    setConfidenceScale(state, scale) {
+        state.confidenceScale = scale;
+    },
+    setConfidenceVizGloballyEnabled(state, enabled) {
+        state.confidenceVisible = enabled;
+    },
     reset (state) {
         Object.assign(state, initialState())
     }
@@ -70,6 +81,7 @@ export const actions = {
         commit('transcriptions/set', data.transcriptions, {root: true})
         commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
         commit('setPartsCount', data.parts_count)
+        commit('setConfidenceVizGloballyEnabled', data.show_confidence_viz)
 
         let page=1;
         var img_taxos = [];
@@ -100,6 +112,10 @@ export const actions = {
 
         // Persist final value in user profile
         userProfile.set('visible-panels', state.visible_panels)
+    },
+
+    async scaleConfidence({ commit }, scale) {
+        commit('setConfidenceScale', scale);
     }
 }
 
