@@ -175,7 +175,6 @@ class CoreFactory():
         # text of transcription with random minor changes
         f = open(os.path.join(os.path.dirname(__file__), "assets", "alignment/witness.txt"), "rb")
         attrs = kwargs.copy()
-        attrs["document"] = attrs.get("document") or self.make_document()
         attrs["owner"] = attrs.get("owner") or self.make_user()
         attrs["name"] = attrs.get("name") or "fake_textual_witness"
         return TextualWitness.objects.create(

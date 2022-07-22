@@ -42,8 +42,8 @@ class AlignFormTestCase(CoreFactoryTestCase):
         self.transcription = self.factory.make_transcription(document=self.part.document)
         self.transcription_2 = self.factory.make_transcription(document=self.document_2)
         self.user = self.factory.make_user()
-        self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
-        self.witness_2 = self.factory.make_witness(document=self.document_2, owner=self.user)
+        self.witness = self.factory.make_witness(owner=self.user)
+        self.witness_2 = self.factory.make_witness(owner=self.user)
 
     def test_init(self):
         """Test form initialization"""
@@ -54,10 +54,6 @@ class AlignFormTestCase(CoreFactoryTestCase):
         # queryset should only include transcriptions on self.part.document
         assert self.transcription in align_form.fields["transcription"].queryset.all()
         assert self.transcription_2 not in align_form.fields["transcription"].queryset.all()
-
-        # queryset should only include witnesses on self.part.document
-        assert self.witness in align_form.fields["existing_witness"].queryset.all()
-        assert self.witness_2 not in align_form.fields["existing_witness"].queryset.all()
 
     def test_clean(self):
         """Test form validation"""

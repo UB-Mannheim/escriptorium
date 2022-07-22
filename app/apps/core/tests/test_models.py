@@ -24,7 +24,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.factory.make_content(self.part_2, transcription=self.transcription)
         self.factory.make_content(self.part_3, transcription=self.transcription)
         self.user = self.factory.make_user()
-        self.witness = self.factory.make_witness(document=self.part.document, owner=self.user)
+        self.witness = self.factory.make_witness(owner=self.user)
         self.n_gram = 4
         self.max_offset = 20
         self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]

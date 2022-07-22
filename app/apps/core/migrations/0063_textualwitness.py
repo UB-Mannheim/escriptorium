@@ -20,7 +20,6 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('file', models.FileField(upload_to='witnesses/', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['mlmodel'])])),
                 ('name', models.CharField(max_length=256)),
-                ('document', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='witnesses', to='core.Document')),
                 ('owner', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
         ),

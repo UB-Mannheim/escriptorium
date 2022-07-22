@@ -740,7 +740,6 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
 
         self.fields["existing_witness"].queryset = self.fields["existing_witness"].queryset.filter(
             owner=self.user,
-            document=self.document,
         ).distinct()
 
         self.fields["region_types"].required = True
