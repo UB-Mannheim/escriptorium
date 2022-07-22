@@ -153,8 +153,9 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
-        new_lt = LineTranscription.objects.get(line=self.part.lines.first(), transcription=new_trans)
-        self.assertEqual(new_lt.content, "")
+        with self.assertRaises(LineTranscription.DoesNotExist):
+            # should not have created a LineTranscription for the missing line
+            LineTranscription.objects.get(line=self.part.lines.first(), transcription=new_trans)
 
     @patch("core.models.hex")
     @patch("core.models.subprocess")
@@ -222,12 +223,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
-        # line we know should have NO content based on witness.txt and out.json
+        # line we know should have NO transcription based on witness.txt and out.json
         line = self.part.lines.get(pk=23)
-        new_lt = LineTranscription.objects.get(line=line, transcription=new_trans)
-        old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
-        self.assertNotEqual(new_lt.content, old_lt.content)
-        self.assertEqual(new_lt.content, "")
+        with self.assertRaises(LineTranscription.DoesNotExist):
+            LineTranscription.objects.get(line=line, transcription=new_trans)
 
     @patch("core.models.hex")
     @patch("core.models.subprocess")
@@ -324,12 +323,10 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             name="Aligned: fake_textual_witness + test trans",
             document=self.part.document,
         )
-        # line we know should have NO content based on the match threshold (its length in witness.txt is much shorter)
+        # line we know should not get transcription based on the match threshold (its length in witness.txt is much shorter)
         line = self.part.lines.get(pk=7)
-        new_lt = LineTranscription.objects.get(line=line, transcription=new_trans)
-        old_lt = LineTranscription.objects.get(line=line, transcription=self.transcription)
-        self.assertNotEqual(new_lt.content, old_lt.content)
-        self.assertEqual(new_lt.content, "")
+        with self.assertRaises(LineTranscription.DoesNotExist):
+            LineTranscription.objects.get(line=line, transcription=new_trans)
 
         # re-copy real alignment output for second alignment
         os.makedirs(f"{self.outdir}-1/out.json")
