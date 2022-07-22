@@ -791,18 +791,14 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         # set all aligning parts to a canceled workflow state
         parts = DocumentPart.objects.filter(document=self, workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING)
         for part in parts:
-            try:
-                send_event("document", self.pk, "part:workflow", {
-                    "id": part.pk,
-                    "process": "align",
-                    "status": "canceled",
-                    "task_id": task_id,
-                })
-                redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
-                part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
-            except Exception as e:
-                # don't crash on websocket error
-                logger.exception(e)
+            send_event("document", self.pk, "part:workflow", {
+                "id": part.pk,
+                "process": "align",
+                "status": "canceled",
+                "task_id": task_id,
+            })
+            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
+            part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
         DocumentPart.objects.bulk_update(parts, ["workflow_state"])
 
 
