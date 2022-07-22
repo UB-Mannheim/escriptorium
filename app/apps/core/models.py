@@ -746,7 +746,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                         pass
 
         # clean up temp files
-        if not settings.KEEP_ALIGNMENT_TEMPFILES:
+        if not settings.get("KEEP_ALIGNMENT_TEMPFILES", None):
             remove(infile)
             shutil.rmtree(outdir)
 
@@ -2127,9 +2127,6 @@ class TextualWitness(models.Model):
         max_length=256,
         null=False,
         blank=False,
-    )
-    document = models.ForeignKey(
-        Document, on_delete=models.CASCADE, related_name="witnesses"
     )
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
