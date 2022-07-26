@@ -17,8 +17,9 @@ drf-nested-routers==0.91
 easy-thumbnails==2.8.1
 elasticsearch==7.17.0
 kombu==4.6.11
-kraken==3.0.13
-numpy>=1.17
+# git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
+kraken==4.1.2
+# numpy>=1.17
 oitei==1.0.0
 Pillow>=5.4.1
 protobuf==3.20.0  # important: get rid of that line when using kraken4
@@ -26,6 +27,6 @@ psycopg2-binary<2.9
 pyvips~=2.1.12
 redis~=4.3.3
 requests==2.21.0
-scikit-learn==1.0.2
-scipy==1.5.4
+# scikit-learn==1.0.2
+# scipy==1.5.4
 uWSGI~=2.0.20

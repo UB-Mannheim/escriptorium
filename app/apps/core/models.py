@@ -33,6 +33,7 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import models as kraken_models
 from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
@@ -1053,7 +1054,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if model:
             model_path = model.file.path
         else:
-            model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            model_path = SEGMENTATION_DEFAULT_MODEL
         model_ = vgsl.TorchVGSLModel.load_model(model_path)
 
         # TODO: check model_type [None, 'recognition', 'segmentation']
@@ -1111,14 +1112,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
-                    try:
-                        bl_type = line["script"]
-                    except KeyError:
-                        # changed in kraken 4.0
-                        bl_type = line["tags"]["type"]
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(bl_type),
+                        typology=line_types.get(line["tags"].get("type")),
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -1167,8 +1163,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                 "baseline": line.baseline,
                                 "boundary": line.mask,
                                 "text_direction": text_direction,
-                                "script": "default",
-                                "tags": {"type": "default"},  # needed for kraken 4.0
+                                "tags": {'type': line.typology and line.typology.name or 'default'},
                             }
                         ],  # self.document.main_script.name
                         "type": "baselines",
