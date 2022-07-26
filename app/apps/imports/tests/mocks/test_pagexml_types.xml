@@ -21,10 +21,10 @@ TRP</Creator>
             </TextLine>
         </TextRegion>
 
-        <TextRegion id="r2" custom="readingOrder {index:1;} structure {type: test_block_type;}">
+        <TextRegion id="r2" custom="readingOrder {index:1;} structure {type: test-non-word-block-type;}">
             <Coords points="113,29 113,1021 697,1021 697,29"/>
 
-            <TextLine id="r2l1" custom="readingOrder {index:0;} structure {type: test_line_type;}">
+            <TextLine id="r2l1" custom="readingOrder {index:0;} structure {type: test-non-word_line_type;}">
                 <Coords points="50,64 346,60 425,81 460,60"/>
                 <Baseline points="155,55 180,55 206,55 231,55 257,55 283,55 308,55 334,56 359,56 385,56 411,56 436,56 462,56 487,56 513,55 539,55 564,55 590,54 616,53"/>
                 <TextEquiv>
