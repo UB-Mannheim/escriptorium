@@ -724,7 +724,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
               .filter(line__document_part=self.kwargs['part_pk'])
               .filter(line__document_part__document=self.kwargs['document_pk'])
               .select_related('line', 'transcription')
-              .order_by('line__order'))
+              .order_by('line__order', 'id'))
         transcription = self.request.GET.get('transcription')
         if transcription:
             qs = qs.filter(transcription=transcription)
