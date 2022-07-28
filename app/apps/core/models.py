@@ -535,10 +535,21 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        created = not self.pk
         res = super().save(*args, **kwargs)
-        Transcription.objects.get_or_create(
-            document=self, name=_(Transcription.DEFAULT_NAME)
-        )
+        if created:
+            Transcription.objects.get_or_create(
+                document=self, name=_(Transcription.DEFAULT_NAME)
+            )
+            self.valid_block_types.through.objects.bulk_create(
+                [Document.valid_block_types.through(document_id=self.id, blocktype_id=type_.id)
+                 for type_ in BlockType.objects.filter(public=True, default=True)]
+            )
+            self.valid_line_types.through.objects.bulk_create(
+                [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
+                 for type_ in LineType.objects.filter(public=True, default=True)]
+            )
+
         return res
 
     @property
