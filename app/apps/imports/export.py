@@ -109,7 +109,10 @@ class XMLTemplateExporter(BaseExporter):
             region_filters |= Q(typology_id__isnull=True)
 
         with ZipFile(self.filepath, "w") as zip_:
-            for part in parts:
+            mets_elements = []
+            for index, part in enumerate(parts, start=1):
+                mets_element = {"id": index, "page": None, "image": None}
+
                 render_orphans = (
                     {}
                     if not self.include_orphans
@@ -123,6 +126,8 @@ class XMLTemplateExporter(BaseExporter):
                 if self.include_images:
                     # Note adds image before the xml file
                     zip_.write(part.image.path, part.filename)
+                    mets_element["image"] = part.filename
+
                 try:
                     Line = apps.get_model("core", "Line")
                     page = tplt.render(
@@ -153,7 +158,16 @@ class XMLTemplateExporter(BaseExporter):
                         )
                     )
                 else:
-                    zip_.writestr("%s.xml" % os.path.splitext(part.filename)[0], page)
+                    filename = "%s.xml" % os.path.splitext(part.filename)[0]
+                    zip_.writestr(filename, page)
+                    mets_element["page"] = filename
+
+                mets_elements.append(mets_element)
+
+            # Adding METS file in the archive
+            mets_template = loader.get_template("export/METS.xml")
+            mets = mets_template.render({"elements": mets_elements, "include_images": any([element["image"] for element in mets_elements])})
+            zip_.writestr("METS.xml", mets)
 
             zip_.close()
 
