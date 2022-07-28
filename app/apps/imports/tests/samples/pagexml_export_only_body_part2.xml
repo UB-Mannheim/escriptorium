@@ -1,19 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"  standalone="yes"?>
-<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
   <Metadata>
-\t<Creator>escriptorium</Creator>
-\t<Created>2022-01-01T00:00:00</Created>
-        <LastChange>2022-01-01T00:00:00</LastChange>
-
+    <Creator>escriptorium</Creator>
+    <Created>2022-01-01T00:00:00</Created>
+    <LastChange>2022-01-01T00:00:00</LastChange>
   </Metadata>
   <Page imageFilename="default2.png" imageWidth="747" imageHeight="212">
-
-    
-    <TextRegion id="eSc_textblock_12"  custom="structure {type:body;}">
+    <TextRegion id="eSc_textblock_12" custom="structure {type:body;}">
       <Coords points="90,125 560,215"/>
-      
-      
-      <TextLine id="eSc_line_12" >
+      <TextLine id="eSc_line_12">
         <Coords points="100,130 550,130 550,150 100,150"/>
         <Baseline points="100,140 550,140"/>
         <TextEquiv>
@@ -21,9 +17,7 @@
         </TextEquiv>
       </TextLine>
 
-      
-      
-      <TextLine id="eSc_line_13" >
+      <TextLine id="eSc_line_13">
         <Coords points="100,160 550,160 550,180 100,180"/>
         <Baseline points="100,170 550,170"/>
         <TextEquiv>
@@ -31,20 +25,13 @@
         </TextEquiv>
       </TextLine>
 
-      
-      
-      <TextLine id="eSc_line_14" >
+      <TextLine id="eSc_line_14">
         <Coords points="100,190 550,190 550,210 100,210"/>
         <Baseline points="100,200 550,200"/>
         <TextEquiv>
           <Unicode>More text to be exported during a document_export Celery task.</Unicode>
         </TextEquiv>
       </TextLine>
-
-      
     </TextRegion>
-    
-
-    
   </Page>
 </PcGts>
