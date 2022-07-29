@@ -1,6 +1,7 @@
 import os.path
+import time
+import zipfile
 from datetime import datetime
-from zipfile import ZipFile
 
 import oitei
 from django.apps import apps
@@ -15,6 +16,15 @@ ALTO_FORMAT = "alto"
 OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
 TEI_XML_FORMAT = "teixml"
 
+class EsZipFile(zipfile.ZipFile):
+    def writestr(self, arcname, data,
+                 compress_type=None, compresslevel=None):
+        zinfo = zipfile.ZipInfo(filename=arcname,
+                                date_time=time.localtime(time.time())[:6])
+        zinfo.compress_type = self.compression
+        zinfo._compresslevel = self.compresslevel
+        zinfo.external_attr = 0o644 << 16
+        return super().writestr(zinfo, data, compress_type, compresslevel)
 
 class BaseExporter:
     def __init__(
@@ -108,7 +118,7 @@ class XMLTemplateExporter(BaseExporter):
         if self.include_undefined:
             region_filters |= Q(typology_id__isnull=True)
 
-        with ZipFile(self.filepath, "w") as zip_:
+        with EsZipFile(self.filepath, "w") as zip_:
             mets_elements = []
             for index, part in enumerate(parts, start=1):
                 mets_element = {"id": index, "page": None, "image": None}
@@ -218,7 +228,7 @@ class OpenITIMARkdownExporter(BaseExporter):
                 line__block__isnull=False, line__block__typology_id__isnull=True
             )
 
-        with ZipFile(self.filepath, "w") as zip_:
+        with EsZipFile(self.filepath, "w") as zip_:
             for part in parts:
                 if self.include_images:
                     # Note adds image before the mARkdown file
