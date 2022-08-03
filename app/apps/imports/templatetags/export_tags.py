@@ -10,11 +10,6 @@ def current_time():
 
 
 @register.simple_tag
-def line_break(lines):
-    return "{} \n".format(lines)
-
-
-@register.simple_tag
 def pagexml_points(points):
     return ' '.join(','.join(map(lambda x: str(int(x)), pt)) for pt in points)
 
