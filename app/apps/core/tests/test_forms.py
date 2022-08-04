@@ -180,7 +180,6 @@ class AlignFormTestCase(CoreFactoryTestCase):
         mock_textualwitness_class.assert_called_with(
             file=file,
             name=splitext(file.name)[0],
-            document=self.part.document,
             owner=self.user,
         )
 
