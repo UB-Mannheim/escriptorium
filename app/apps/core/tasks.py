@@ -587,6 +587,7 @@ def align(
     threshold=0.8,
     region_types=["Orphan", "Undefined"],
     layer_name=None,
+    beam_size=0,
     **kwargs
 ):
     """Start document alignment on the passed parts, using the passed settings"""
@@ -623,6 +624,7 @@ def align(
             threshold,
             region_types,
             layer_name,
+            beam_size,
         )
     except Exception as e:
         if user:

@@ -27,6 +27,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.witness = self.factory.make_witness(owner=self.user)
         self.n_gram = 4
         self.max_offset = 20
+        self.beam_size = 10
         self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
 
         tpk = self.transcription.pk
@@ -56,6 +57,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.0,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -86,6 +88,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     threshold=0.0,
                     region_types=self.region_types,
                     layer_name=None,
+                    beam_size=0,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -148,6 +151,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.0,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -181,6 +185,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.0,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
 
         # line we know should have changed content based on witness.txt and out.json
@@ -218,6 +223,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.0,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -253,6 +259,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         threshold=0.0,
                         region_types=self.region_types,
                         layer_name=None,
+                        beam_size=0,
                     )
                 # should remove the input json
                 mock_remove.assert_called_with(f"{self.outdir}-1.json")
@@ -281,6 +288,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     threshold=0.0,
                     region_types=self.region_types,
                     layer_name=None,
+                    beam_size=0,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -318,6 +326,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.8,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -344,6 +353,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.2,
             region_types=self.region_types,
             layer_name=None,
+            beam_size=0,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -378,6 +388,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     threshold=0.0,
                     region_types=[],
                     layer_name=None,
+                    beam_size=0,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -401,6 +412,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     threshold=0.0,
                     region_types=[self.part.document.valid_block_types.first().id],
                     layer_name=None,
+                    beam_size=0,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -423,6 +435,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     threshold=0.0,
                     region_types=self.region_types,
                     layer_name=None,
+                    beam_size=0,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -449,6 +462,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             threshold=0.0,
             region_types=self.region_types,
             layer_name="test layer",
+            beam_size=0,
         )
 
         # Should not use default naming scheme
@@ -463,3 +477,40 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             name="test layer",
             document=self.part.document,
         )
+
+    @patch("core.models.hex")
+    @patch("core.models.subprocess")
+    def test_beam_size(self, mock_subprocess, mock_hex):
+        """Unit tests for DocumentPart text alignment function"""
+        self.makeTranscriptionContent()
+
+        # mock hex output so that we can get consistent file naming
+        mock_hex.return_value = "0x1"
+
+        # should call subprocess.check_call with the correct beam_size and ignore max_offset
+        self.part.document.align(
+            [self.part.pk],
+            self.transcription.pk,
+            self.witness.pk,
+            self.n_gram,
+            self.max_offset,
+            merge=True,
+            full_doc=False,
+            threshold=0.0,
+            region_types=self.region_types,
+            layer_name=None,
+            beam_size=self.beam_size,
+        )
+        # mocking subprocess because we don't expect test runner to run java, but this test will
+        # use real passim output later
+        mock_subprocess.check_call.assert_called_with([
+            "seriatim",
+            "--docwise",
+            "--floating-ngrams",
+            "-n", str(self.n_gram),
+            "--beam", str(self.beam_size),
+            "--fields", "ref",
+            "--filterpairs", "ref = 1 AND ref2 = 0",
+            f"{self.outdir}-1.json",
+            f"{self.outdir}-1",
+        ])

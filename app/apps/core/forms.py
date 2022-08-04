@@ -693,10 +693,16 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
     max_offset = forms.IntegerField(
         label=_("Max offset"),
         help_text=_("Maximum number of characters difference between the aligned witness text and the original transcription."),
-        required=True,
-        initial=20,
+        required=False,
         min_value=20,
         max_value=80,
+    )
+    beam_size = forms.IntegerField(
+        label=_("Beam size"),
+        help_text=_("Enables beam search and disables max-offset. Higher beam size will result in slower computation but more accurate results."),
+        required=False,
+        min_value=0,
+        max_value=100,
     )
     merge = forms.BooleanField(
         label=_("Merge aligned text with existing transcription"),
@@ -746,9 +752,10 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         self.fields["region_types"].help_text = _("Region types to include in the alignment.")
 
     def clean(self):
-        """Validate such that exactly one of the witness fields is present, and the new layer name
-        is distinct from the original transcription layer name."""
+        """Validate the form on various criteria"""
         cleaned_data = super().clean()
+
+        # ensure exactly one of the witness fields is present
         witness_file = cleaned_data.get("witness_file")
         existing_witness = cleaned_data.get("existing_witness")
         if not witness_file and not existing_witness:
@@ -759,13 +766,20 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             raise forms.ValidationError(
                 _("You may only supply one witness text (file upload or existing text).")
             )
-        # ensure that layer name is not the same as transcription name
+
+        # ensure layer name is not the same as original transcription name
         layer_name = self.cleaned_data.get("layer_name")
         transcription = self.cleaned_data.get("transcription")
         if layer_name == transcription.name:
             raise forms.ValidationError(
                 _("Alignment layer name cannot be the same as the transcription you are trying to align.")
             )
+
+        # ensure max offset and beam size not both set
+        max_offset = self.cleaned_data.get("max_offset")
+        beam_size = self.cleaned_data.get("beam_size")
+        if max_offset and int(max_offset) != 0 and beam_size and int(beam_size) != 0:
+            raise forms.ValidationError(_("Max offset and beam size cannot both be non-zero."))
 
         # If quotas are enforced, assert that the user still has free CPU minutes
         if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
@@ -777,6 +791,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
         max_offset = self.cleaned_data.get("max_offset", 20)
+        beam_size = self.cleaned_data.get("beam_size", 0)
         n_gram = self.cleaned_data.get("n_gram", 4)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
@@ -808,6 +823,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             threshold=float(threshold or 0.8),
             region_types=region_types,
             layer_name=layer_name,
+            beam_size=int(beam_size or 0),
         )
 
 

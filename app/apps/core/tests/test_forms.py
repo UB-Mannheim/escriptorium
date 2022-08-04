@@ -100,6 +100,27 @@ class AlignFormTestCase(CoreFactoryTestCase):
         }
         align_form.clean()
 
+        # should raise error when max offset and beam size both present and > 0
+        align_form.cleaned_data = {
+            "witness_file": "test.txt",
+            "transcription": self.transcription,
+            "layer_name": "example",
+            "max_offset": 20,
+            "beam_size": 10,
+        }
+        with self.assertRaises(ValidationError):
+            align_form.clean()
+
+        # should not raise error when max offset and beam size both present, but beam_size is 0
+        align_form.cleaned_data = {
+            "witness_file": "test.txt",
+            "transcription": self.transcription,
+            "layer_name": "example",
+            "max_offset": 20,
+            "beam_size": 0,
+        }
+        align_form.clean()
+
     @patch("core.forms.TextualWitness")
     @patch("core.forms.Document.queue_alignment")
     def test_process(self, mock_task, mock_textualwitness_class):
@@ -120,11 +141,12 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "threshold": 0.8,
             "region_types": ["Orphan", "Undefined"],
             "layer_name": "example",
+            "beam_size": 10,
         }
 
         align_form.process()
 
-        # should call align task with passed user, transcription, and witness, and set n_gram
+        # should call align task with passed user, transcription, witness, n_gram, etc
         mock_task.assert_called_with(
             parts_qs=parts_qs,
             user_pk=self.user.pk,
@@ -137,6 +159,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             threshold=0.8,
             region_types=["Orphan", "Undefined"],
             layer_name="example",
+            beam_size=10,
         )
 
         # should create a new textual witness from a passed file
@@ -162,7 +185,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
         )
 
         # should call align task with default n_gram (4), full_doc (True), max_offset (20),
-        # region_types, and layer_name (None) when none provided
+        # region_types, layer_name (None), and beam_size (0) when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
@@ -183,4 +206,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             threshold=0.8,
             region_types=["Orphan", "Undefined"],
             layer_name=None,
+            beam_size=0,
         )

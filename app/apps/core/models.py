@@ -615,7 +615,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             "ref": 0,  # distinguishes OCR from witness
         }
 
-    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name):
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size):
         """Use subprocess call to Passim to align transcription with textual witness"""
         parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
 
@@ -674,6 +674,11 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 json.dump(entry, file, ensure_ascii=False)
                 file.write("\n")
 
+        # set beam size if present and > 0, otherwise set max-offset
+        offset_beam = ("--beam", str(beam_size)) if (
+            beam_size and int(beam_size) > 0
+        ) else ("--max-offset", str(max_offset))
+
         try:
             # call passim
             subprocess.check_call([
@@ -681,7 +686,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 "--docwise",  # docwise mode (instead of linewise/pairwise)
                 "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
                 "-n", str(n_gram),  # index n-grams
-                "--max-offset", str(max_offset),  # absolute max chars difference
+                offset_beam[0], offset_beam[1],
                 "--fields", "ref",
                 "--filterpairs", "ref = 1 AND ref2 = 0",
                 infile,
