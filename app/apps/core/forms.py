@@ -791,7 +791,6 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             witness = TextualWitness(
                 file=witness_file,
                 name=splitext(witness_file.name)[0],
-                document=self.document,
                 owner=self.user,
             )
             witness.save()
