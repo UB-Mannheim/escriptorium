@@ -36,6 +36,7 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import models as kraken_models
 from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
@@ -538,10 +539,21 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        created = not self.pk
         res = super().save(*args, **kwargs)
-        Transcription.objects.get_or_create(
-            document=self, name=_(Transcription.DEFAULT_NAME)
-        )
+        if created:
+            Transcription.objects.get_or_create(
+                document=self, name=_(Transcription.DEFAULT_NAME)
+            )
+            self.valid_block_types.through.objects.bulk_create(
+                [Document.valid_block_types.through(document_id=self.id, blocktype_id=type_.id)
+                 for type_ in BlockType.objects.filter(public=True, default=True)]
+            )
+            self.valid_line_types.through.objects.bulk_create(
+                [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
+                 for type_ in LineType.objects.filter(public=True, default=True)]
+            )
+
         return res
 
     @property
@@ -1295,7 +1307,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if model:
             model_path = model.file.path
         else:
-            model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            model_path = SEGMENTATION_DEFAULT_MODEL
         model_ = vgsl.TorchVGSLModel.load_model(model_path)
 
         # TODO: check model_type [None, 'recognition', 'segmentation']
@@ -1353,14 +1365,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
-                    try:
-                        bl_type = line["script"]
-                    except KeyError:
-                        # changed in kraken 4.0
-                        bl_type = line["tags"]["type"]
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(bl_type),
+                        typology=line_types.get(line["tags"].get("type")),
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -1409,8 +1416,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                 "baseline": line.baseline,
                                 "boundary": line.mask,
                                 "text_direction": text_direction,
-                                "script": "default",
-                                "tags": {"type": "default"},  # needed for kraken 4.0
+                                "tags": {'type': line.typology and line.typology.name or 'default'},
                             }
                         ],  # self.document.main_script.name
                         "type": "baselines",

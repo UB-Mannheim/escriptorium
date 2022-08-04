@@ -15,7 +15,6 @@ import sys
 
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
-from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from pkg_resources import get_distribution
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -388,7 +387,6 @@ IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
 KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
-KRAKEN_DEFAULT_SEGMENTATION_MODEL = SEGMENTATION_DEFAULT_MODEL
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

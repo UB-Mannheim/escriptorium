@@ -363,12 +363,15 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part3.lines.count(), 19)
 
     def test_pagexml_types(self):
-        bt = BlockType.objects.create(name="test_block_type")
-        bt2 = BlockType.objects.create(name="heading")
-        lt = LineType.objects.create(name="test_line_type")
-        self.document.valid_block_types.add(bt)
-        self.document.valid_block_types.add(bt2)
-        self.document.valid_line_types.add(lt)
+        non_word_block_type = "test-non-word-block-type"
+        word_block_type = 'heading'
+        non_word_line_type = 'test-non-word_line_type'
+        bt_head = BlockType.objects.create(name=word_block_type)
+        bt_non_word = BlockType.objects.create(name=non_word_block_type)
+        lt_non_word = LineType.objects.create(name=non_word_line_type)
+        self.document.valid_block_types.add(bt_head)
+        self.document.valid_block_types.add(bt_non_word)
+        self.document.valid_line_types.add(lt_non_word)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_pagexml_types.xml'
@@ -385,13 +388,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(DocumentImport.objects.first().workflow_state,
                          DocumentImport.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 4)
-        self.part1.blocks.all()[0].typology = None
-        self.part1.blocks.all()[1].typology.name = 'test_block_type'
-        self.part1.blocks.all()[2].typology.name = 'heading'
-        self.part1.blocks.all()[3].typology = None  # invalid
-        self.part1.lines.all()[0].typology = None
-        self.part1.lines.all()[1].typology.name = 'test_line_type'
-        self.part1.lines.all()[2].typology = None  # invalid
+        self.assertEqual(self.part1.blocks.all()[0].typology, None)
+        self.assertEqual(self.part1.blocks.all()[1].typology.name, non_word_block_type)
+        self.assertEqual(self.part1.blocks.all()[2].typology.name, word_block_type)
+        self.assertEqual(self.part1.blocks.all()[3].typology, None)  # invalid
+        self.assertEqual(self.part1.lines.all()[0].typology, None)
+        self.assertEqual(self.part1.lines.all()[1].typology.name, non_word_line_type)
+        self.assertEqual(self.part1.lines.all()[2].typology, None)  # invalid
         self.assertEqual(self.part1.lines.count(), 3)
 
     def test_iiif(self):

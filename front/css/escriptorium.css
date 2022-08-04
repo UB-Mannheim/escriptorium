@@ -426,6 +426,11 @@ i.panel-icon {
     display: inline-block;
 }
 
+#transcription-panel .js-zoom-target {
+    width: 100%;
+}
+
+
 #zoom-range {
     height: 200px;
 }

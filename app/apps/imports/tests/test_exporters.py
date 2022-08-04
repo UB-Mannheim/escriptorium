@@ -5,6 +5,7 @@ from unittest.mock import patch
 from zipfile import ZipFile
 
 from django.test import override_settings
+from lxml import etree
 
 from core.models import Block, BlockType, Line, LineTranscription
 from core.tests.factory import CoreFactoryTestCase
@@ -35,6 +36,19 @@ CONTENTS = [
         "signature": "Another beautiful signature",
     },
 ]
+
+xml_parser = etree.XMLParser(remove_blank_text=True)
+
+
+def get_xml_str(file_content):
+    return etree.tostring(etree.XML(file_content, parser=xml_parser))
+
+
+def format_xml_contents(generated_content, expected_filename):
+    return [
+        get_xml_str(generated_content),
+        get_xml_str(open(f"{SAMPLES_DIR}/{expected_filename}", "rb").read()),
+    ]
 
 
 @patch(
@@ -198,20 +212,20 @@ class ExportersTestCase(CoreFactoryTestCase):
         with ZipFile(exporter.filepath, "r") as archive:
             self.assertListEqual(
                 archive.namelist(),
-                [self.part_xml_export_filename, self.part2_xml_export_filename],
+                [self.part_xml_export_filename, self.part2_xml_export_filename, "METS.xml"],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "pagexml_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_full_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "pagexml_export_full_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_without_images.xml"
+            ))
 
     def test_pagexml_exporter_render_only_one_part(self, timezone_mock):
         parts_pk = [self.part.pk]
@@ -221,13 +235,15 @@ class ExportersTestCase(CoreFactoryTestCase):
         exporter.render()
 
         with ZipFile(exporter.filepath, "r") as archive:
-            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename])
-            self.assertEqual(
+            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename, "METS.xml"])
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "pagexml_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_only_part1_without_images.xml"
+            ))
 
     def test_pagexml_exporter_render_only_one_region(self, timezone_mock):
         region_types = [self.body.pk]
@@ -239,20 +255,20 @@ class ExportersTestCase(CoreFactoryTestCase):
         with ZipFile(exporter.filepath, "r") as archive:
             self.assertListEqual(
                 archive.namelist(),
-                [self.part_xml_export_filename, self.part2_xml_export_filename],
+                [self.part_xml_export_filename, self.part2_xml_export_filename, "METS.xml"],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_only_body_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "pagexml_export_only_body_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_only_body_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "pagexml_export_only_body_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_without_images.xml"
+            ))
 
     def test_pagexml_exporter_render_with_images(self, timezone_mock):
         include_images = True
@@ -269,20 +285,21 @@ class ExportersTestCase(CoreFactoryTestCase):
                     self.part_xml_export_filename,
                     self.part2.filename,
                     self.part2_xml_export_filename,
+                    "METS.xml"
                 ],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "pagexml_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/pagexml_export_full_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "pagexml_export_full_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_with_images.xml"
+            ))
 
     def test_alto_exporter_render(self, timezone_mock):
         exporter = AltoExporter(
@@ -296,20 +313,20 @@ class ExportersTestCase(CoreFactoryTestCase):
         with ZipFile(exporter.filepath, "r") as archive:
             self.assertListEqual(
                 archive.namelist(),
-                [self.part_xml_export_filename, self.part2_xml_export_filename],
+                [self.part_xml_export_filename, self.part2_xml_export_filename, "METS.xml"],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "alto_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_full_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "alto_export_full_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_without_images.xml"
+            ))
 
     def test_alto_exporter_render_only_one_part(self, timezone_mock):
         parts_pk = [self.part.pk]
@@ -319,13 +336,15 @@ class ExportersTestCase(CoreFactoryTestCase):
         exporter.render()
 
         with ZipFile(exporter.filepath, "r") as archive:
-            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename])
-            self.assertEqual(
+            self.assertListEqual(archive.namelist(), [self.part_xml_export_filename, "METS.xml"])
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "alto_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_only_part1_without_images.xml"
+            ))
 
     def test_alto_exporter_render_only_one_region(self, timezone_mock):
         region_types = [self.body.pk]
@@ -337,20 +356,20 @@ class ExportersTestCase(CoreFactoryTestCase):
         with ZipFile(exporter.filepath, "r") as archive:
             self.assertListEqual(
                 archive.namelist(),
-                [self.part_xml_export_filename, self.part2_xml_export_filename],
+                [self.part_xml_export_filename, self.part2_xml_export_filename, "METS.xml"],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_only_body_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "alto_export_only_body_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_only_body_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "alto_export_only_body_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_without_images.xml"
+            ))
 
     def test_alto_exporter_render_with_images(self, timezone_mock):
         include_images = True
@@ -367,20 +386,21 @@ class ExportersTestCase(CoreFactoryTestCase):
                     self.part_xml_export_filename,
                     self.part2.filename,
                     self.part2_xml_export_filename,
+                    "METS.xml"
                 ],
             )
-            self.assertEqual(
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_full_part1.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
-            self.assertEqual(
+                "alto_export_full_part1.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
                 archive.read(self.part2_xml_export_filename),
-                open(f"{SAMPLES_DIR}/alto_export_full_part2.xml", "rb")
-                .read()
-                .replace(b"\\t", b"\t"),
-            )
+                "alto_export_full_part2.xml"
+            ))
+            self.assertEqual(*format_xml_contents(
+                archive.read("METS.xml"),
+                "mets_with_images.xml"
+            ))
 
     @override_settings(VERSION_DATE="1.0.0-testing")
     def test_openiti_markdown_exporter_render(self, timezone_mock):

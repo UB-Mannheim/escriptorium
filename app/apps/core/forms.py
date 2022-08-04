@@ -1,5 +1,5 @@
 import logging
-from os.path import splitext
+from os.path import basename, splitext
 
 from bootstrap.forms import BootstrapFormMixin
 from django import forms
@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.forms.models import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import vgsl
 from kraken.lib.exceptions import KrakenInvalidModelException
 from PIL import Image
@@ -547,7 +548,8 @@ class BinarizeForm(BootstrapFormMixin, DocumentProcessFormBase):
             raise forms.ValidationError(_("Uploaded image should be black and white."))
         isize = (self.cleaned_data.get('parts')[0].image.width, self.parts[0].image.height)
         if fh.size != isize:
-            raise forms.ValidationError(_("Uploaded image should be the same size as original image {size}.").format(size=isize))
+            raise forms.ValidationError(
+                _("Uploaded image should be the same size as original image {size}.").format(size=isize))
         return img
 
     def process(self):
@@ -566,8 +568,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(
         queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
         label=_("Model"),
-        empty_label="default ({name})".format(
-            name=settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL.rsplit('/')[-1]),
+        empty_label="default ({name})".format(name=basename(SEGMENTATION_DEFAULT_MODEL)),
         required=False)
 
     SEGMENTATION_STEPS_CHOICES = (
