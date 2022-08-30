@@ -791,12 +791,12 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         transcription = self.cleaned_data.get("transcription")
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
-        max_offset = self.cleaned_data.get("max_offset")
-        beam_size = self.cleaned_data.get("beam_size")
-        n_gram = self.cleaned_data.get("n_gram")
+        max_offset = self.cleaned_data.get("max_offset", 20)
+        beam_size = self.cleaned_data.get("beam_size", 0)
+        n_gram = self.cleaned_data.get("n_gram", 4)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
-        threshold = self.cleaned_data.get("threshold")
+        threshold = self.cleaned_data.get("threshold", 0.8)
         region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
         parts = self.cleaned_data.get("parts")
         layer_name = self.cleaned_data.get("layer_name")
@@ -817,14 +817,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
-            n_gram=int(n_gram or 4),
-            max_offset=int(max_offset or 20),
+            n_gram=int(n_gram),
+            max_offset=int(max_offset),
             merge=bool(merge),
             full_doc=bool(full_doc),
-            threshold=float(threshold if (threshold or threshold == 0.0) else 0.8),
+            threshold=float(threshold),
             region_types=region_types,
             layer_name=layer_name,
-            beam_size=int(beam_size or 0),
+            beam_size=int(beam_size),
         )
 
 

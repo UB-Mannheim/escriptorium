@@ -184,13 +184,12 @@ class AlignFormTestCase(CoreFactoryTestCase):
         )
 
         # should call align task with default n_gram (4), full_doc (True), max_offset (20),
-        # region_types, layer_name (None), and beam_size (0) when none provided
+        # region_types, layer_name (None), threshold (0.8), and beam_size (0) when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
             "parts": parts_qs,
             "merge": False,
-            "threshold": 0.8,
         }
         align_form.process()
         mock_task.assert_called_with(
@@ -203,6 +202,30 @@ class AlignFormTestCase(CoreFactoryTestCase):
             merge=False,
             full_doc=True,
             threshold=0.8,
+            region_types=["Orphan", "Undefined"],
+            layer_name=None,
+            beam_size=0,
+        )
+
+        # should respect threshold of 0.0 and not revert to default 0.8
+        align_form.cleaned_data = {
+            "transcription": self.transcription,
+            "existing_witness": self.witness,
+            "parts": parts_qs,
+            "merge": False,
+            "threshold": 0.0,
+        }
+        align_form.process()
+        mock_task.assert_called_with(
+            parts_qs=parts_qs,
+            user_pk=self.user.pk,
+            transcription_pk=self.transcription.pk,
+            witness_pk=self.witness.pk,
+            n_gram=4,
+            max_offset=20,
+            merge=False,
+            full_doc=True,
+            threshold=0.0,
             region_types=["Orphan", "Undefined"],
             layer_name=None,
             beam_size=0,
