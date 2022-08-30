@@ -795,7 +795,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         beam_size = self.cleaned_data.get("beam_size")
         n_gram = self.cleaned_data.get("n_gram")
         merge = self.cleaned_data.get("merge")
-        full_doc = self.cleaned_data.get("full_doc")
+        full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold")
         region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
         parts = self.cleaned_data.get("parts")
