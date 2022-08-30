@@ -16,6 +16,7 @@ ALTO_FORMAT = "alto"
 OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
 TEI_XML_FORMAT = "teixml"
 
+
 class EsZipFile(zipfile.ZipFile):
     def writestr(self, arcname, data,
                  compress_type=None, compresslevel=None):
@@ -25,6 +26,7 @@ class EsZipFile(zipfile.ZipFile):
         zinfo._compresslevel = self.compresslevel
         zinfo.external_attr = 0o644 << 16
         return super().writestr(zinfo, data, compress_type, compresslevel)
+
 
 class BaseExporter:
     def __init__(
