@@ -47,6 +47,12 @@ class ImageField(serializers.ImageField):
         self.thumbnails = thumbnails
         super().__init__(*args, **kwargs)
 
+    def to_internal_value(self, data):
+        if data.content_type == 'application/pdf':
+            raise serializers.ValidationError(_("PDF is not a valid image, please use the dedicated Import function."))
+
+        return super().to_internal_value(data)
+
     def to_representation(self, img):
         if img:
             data = {'uri': img.url}
@@ -391,11 +397,13 @@ class PartSerializer(serializers.ModelSerializer):
             'max_avg_confidence',
         )
 
-    def create(self, data):
+    def validate(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
         if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
             raise serializers.ValidationError(_("You don't have any disk storage left."))
+        return data
 
+    def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
