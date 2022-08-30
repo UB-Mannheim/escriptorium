@@ -22,7 +22,7 @@ kraken==4.1.2
 # numpy>=1.17
 oitei==1.0.0
 # passim, "seriatim" branch
-git+https://github.com/dasmiq/passim.git@afed68cad266474b6176e2fa4107f81bbaab106b#egg=passim
+git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
 Pillow>=5.4.1
 protobuf==3.20.0  # important: get rid of that line when using kraken4
 psycopg2-binary<2.9
