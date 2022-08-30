@@ -156,7 +156,8 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
-        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+        self.fields['transcription'].queryset = Transcription.objects.filter(archived=False,
+                                                                             document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
         choices = [
             (rt.id, rt.name)
