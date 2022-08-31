@@ -670,14 +670,14 @@ def align(
         parts = DocumentPart.objects.filter(pk__in=part_pks)
         for part in parts:
             part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+            send_event("document", document_pk, "part:workflow", {
+                "id": part.pk,
+                "process": "align",
+                "status": "canceled",
+                "task_id": task.request.id,
+            })
+            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
         DocumentPart.objects.bulk_update(parts, ["workflow_state"])
-        send_event("document", document_pk, "part:workflow", {
-            "id": part.pk,
-            "process": "align",
-            "status": "canceled",
-            "task_id": task.request.id,
-        })
-        redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
         logger.exception(e)
         raise e
     else:
