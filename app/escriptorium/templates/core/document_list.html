@@ -71,7 +71,7 @@
             <td onclick="document.location='{% url 'document-images' pk=document.pk %}'" style="cursor: pointer">
               {% with part=document.parts.first %}
               {% if part %}
-              <img src="{{ part.image|thumbnail_url:'list' }}" />
+              <img alt="" src="{{ part.image|thumbnail_url:'list' }}" />
               {% endif %}
               {% endwith %}
             </td>
