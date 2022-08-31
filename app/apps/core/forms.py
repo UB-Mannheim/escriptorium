@@ -680,22 +680,23 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         help_text=_("Reuse a previously-uploaded reference text."),
     )
     n_gram = forms.IntegerField(
-        required=False,
+        label=_("N-gram"),
+        required=True,
         min_value=2,
-        max_value=50,
+        max_value=25,
         initial=25,
-        help_text=_("Length of token sequences to compare; leave default if unsure."),
+        help_text=_("Length (2–25) of token sequences to compare; reduce for noisier transcriptions and lower precision results."),
     )
     max_offset = forms.IntegerField(
         label=_("Max offset"),
-        help_text=_("Maximum number of characters difference between the aligned witness text and the original transcription."),
+        help_text=_("Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."),
         required=False,
         min_value=20,
         max_value=80,
     )
     beam_size = forms.IntegerField(
         label=_("Beam size"),
-        help_text=_("Enables beam search and disables max-offset. Higher beam size will result in slower computation but more accurate results."),
+        help_text=_("Enables beam search and disables max-offset. Higher beam size (1-100) will result in slower computation but more accurate results."),
         required=False,
         min_value=0,
         max_value=100,
@@ -714,7 +715,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
     )
     threshold = forms.FloatField(
         label=_("Line length match threshold"),
-        help_text=_("Threshold (0.0–1.0) for the proportion of aligned line length to original transcription, below which matches will be ignored. When set to 0.0, all matches will be accepted, which may result in increased bad matches."),
+        help_text=_("Minimum proportion (0.0–1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted."),
         widget=forms.NumberInput(attrs={"step": "0.1"}),
         required=True,
         initial=0.8,
