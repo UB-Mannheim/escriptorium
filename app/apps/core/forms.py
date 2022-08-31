@@ -11,6 +11,7 @@ from django.core.validators import (
 )
 from django.db.models import Q
 from django.forms.models import BaseInlineFormSet, inlineformset_factory
+from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
@@ -812,20 +813,25 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             witness.save()
 
         document = parts.first().document
-        document.queue_alignment(
-            parts_qs=parts,
-            user_pk=self.user.pk,
-            transcription_pk=transcription.pk,
-            witness_pk=witness.pk,
-            n_gram=int(n_gram),
-            max_offset=int(max_offset),
-            merge=bool(merge),
-            full_doc=bool(full_doc),
-            threshold=float(threshold),
-            region_types=region_types,
-            layer_name=layer_name,
-            beam_size=int(beam_size),
-        )
+        try:
+            document.queue_alignment(
+                parts_qs=parts,
+                user_pk=self.user.pk,
+                transcription_pk=transcription.pk,
+                witness_pk=witness.pk,
+                n_gram=int(n_gram),
+                # handle empty strings for textbox fields
+                max_offset=int(max_offset if max_offset != '' else 20),
+                merge=bool(merge),
+                full_doc=bool(full_doc),
+                threshold=float(threshold if threshold != '' else 0.8),
+                region_types=region_types,
+                layer_name=layer_name,
+                beam_size=int(beam_size if beam_size != '' else 0),
+            )
+        except ValueError:
+            # useful for API calls to handle this properly instead of raising 500
+            raise HttpResponseBadRequest("Bad request")
 
 
 class TrainMixin():
