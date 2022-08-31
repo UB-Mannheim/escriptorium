@@ -2184,7 +2184,7 @@ class TextualWitness(models.Model):
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (id: {self.pk})"
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid="thumbnails_delete_signal")
