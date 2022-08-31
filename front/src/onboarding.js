@@ -139,12 +139,9 @@ export function bootOnboarding() {
 }
 
 function exitOnboarding() {
-    const path_components = location.pathname.split("/", 2);
-    const prefix = path_components[1];
-    const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
     $.ajax({
         type: 'PATCH',
-        url: SCRIPT_NAME + '/api/users/' + userProfile.userId,
+        url: scriptName() + '/api/users/' + userProfile.userId,
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
             onboarding: "False",
