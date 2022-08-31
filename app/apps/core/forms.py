@@ -679,16 +679,11 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         required=False,
         help_text=_("Reuse a previously-uploaded reference text."),
     )
-    N_GRAM_CHOICES = (
-        (2, _("Bigram (2-gram)")),
-        (3, _("Trigram (3-gram)")),
-        (4, _("4-gram")),
-    )
-    n_gram = forms.TypedChoiceField(
-        choices=N_GRAM_CHOICES,
-        coerce=int,
+    n_gram = forms.IntegerField(
         required=False,
-        initial=4,
+        min_value=2,
+        max_value=50,
+        initial=25,
         help_text=_("Length of token sequences to compare; leave default if unsure."),
     )
     max_offset = forms.IntegerField(
@@ -793,7 +788,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         existing_witness = self.cleaned_data.get("existing_witness")
         max_offset = self.cleaned_data.get("max_offset", 20)
         beam_size = self.cleaned_data.get("beam_size", 0)
-        n_gram = self.cleaned_data.get("n_gram", 4)
+        n_gram = self.cleaned_data.get("n_gram", 25)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold", 0.8)
@@ -817,11 +812,11 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
-            n_gram=int(n_gram),
-            # handle empty strings for textbox fields
+            # handle empty strings
+            n_gram=int(n_gram if n_gram != '' else 25),
             max_offset=int(max_offset if max_offset != '' else 20),
             merge=bool(merge),
-            full_doc=bool(full_doc),
+            full_doc=bool(full_doc if full_doc != '' else True),
             threshold=float(threshold if threshold != '' else 0.8),
             region_types=region_types,
             layer_name=layer_name,

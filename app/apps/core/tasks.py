@@ -616,7 +616,7 @@ def align(
     user_pk=None,
     transcription_pk=None,
     witness_pk=None,
-    n_gram=4,
+    n_gram=25,
     max_offset=20,
     merge=False,
     full_doc=True,

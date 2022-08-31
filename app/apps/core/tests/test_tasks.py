@@ -164,7 +164,7 @@ class TasksTestCase(CoreFactoryTestCase):
                 # should call part.align with transcription, witness pks (and default no parts [], n-gram of 4, merge=False)
                 align.delay(document_pk=1, user_pk=2, transcription_pk=3, witness_pk=4)
                 doc = apps_mock.get_model.return_value.objects.get.return_value
-                doc.align.assert_called_with([], 3, 4, 4, 20, False, True, 0.8, ["Orphan", "Undefined"], None, 0)
+                doc.align.assert_called_with([], 3, 4, 25, 20, False, True, 0.8, ["Orphan", "Undefined"], None, 0)
 
                 # should call part.align with set n-gram value
                 align.delay(document_pk=1, user_pk=2, transcription_pk=3, witness_pk=4, n_gram=2)

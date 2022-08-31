@@ -183,7 +183,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             owner=self.user,
         )
 
-        # should call align task with default n_gram (4), full_doc (True), max_offset (20),
+        # should call align task with default n_gram (25), full_doc (True), max_offset (20),
         # region_types, layer_name (None), threshold (0.8), and beam_size (0) when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
@@ -197,7 +197,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
-            n_gram=4,
+            n_gram=25,
             max_offset=20,
             merge=False,
             full_doc=True,
@@ -221,7 +221,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
-            n_gram=4,
+            n_gram=25,
             max_offset=20,
             merge=False,
             full_doc=True,
