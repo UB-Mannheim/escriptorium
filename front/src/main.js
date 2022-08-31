@@ -1,3 +1,15 @@
+function scriptName() {
+    const path_components = location.pathname.split("/", 2);
+    const prefix = path_components[1];
+    return (prefix.length > 0 ? "/" + prefix : "");
+}
+
+console.log('protocol=', location.protocol);
+console.log('host    =', location.host);
+console.log('href    =', location.href);
+console.log('pathname=', location.pathname);
+console.log('SCRIPT_NAME=', scriptName());
+
 import '../css/escriptorium.css';
 import '../css/rtl.css';
 import '../css/ttb.css';
