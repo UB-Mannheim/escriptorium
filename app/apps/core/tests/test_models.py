@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 from shutil import copyfile
 from unittest.mock import patch
 
@@ -241,7 +242,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.makeTranscriptionContent()
         mock_hex.return_value = "0x1"
 
-        mock_subprocess.check_call.side_effect = Exception("error")
+        mock_subprocess.check_call.side_effect = subprocess.CalledProcessError(2, "test")
 
         # should cleanup files on exception
         with patch("core.models.remove") as mock_remove:
