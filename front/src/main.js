@@ -1,3 +1,11 @@
+function scriptName() {
+    const path_components = location.pathname.split("/", 2);
+    const prefix = path_components[1];
+    return (prefix.length > 0 ? "/" + prefix : "");
+}
+
+// alert("SCRIPT_NAME=" + scriptName());
+
 import '../css/escriptorium.css';
 import '../css/rtl.css';
 import '../css/ttb.css';
