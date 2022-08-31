@@ -812,15 +812,15 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
-            # handle empty strings
-            n_gram=int(n_gram if n_gram != '' else 25),
-            max_offset=int(max_offset if max_offset != '' else 20),
+            # handle empty strings, NoneType; allow some values that could be falsy
+            n_gram=int(n_gram if n_gram else 25),
+            max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 20),
             merge=bool(merge),
-            full_doc=bool(full_doc if full_doc != '' else True),
-            threshold=float(threshold if threshold != '' else 0.8),
+            full_doc=bool(full_doc if (full_doc is not None and full_doc != '') else True),
+            threshold=float(threshold if (threshold is not None and threshold != '') else 0.8),
             region_types=region_types,
             layer_name=layer_name,
-            beam_size=int(beam_size if beam_size != '' else 0),
+            beam_size=int(beam_size if beam_size else 0),
         )
 
 
