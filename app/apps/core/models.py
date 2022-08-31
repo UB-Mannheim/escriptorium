@@ -704,7 +704,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 infile,
                 outdir,
             ])
-        except (Exception, subprocess.CalledProcessError) as e:
+        except Exception as e:
             # cleanup in case of exception
             remove(infile)
             shutil.rmtree(outdir)
