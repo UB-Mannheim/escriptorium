@@ -1,6 +1,6 @@
 albumentations
 beautifulsoup4==4.7.1
-bleach==3.1.5
+bleach==5.0.1
 celery~=4.4.0  # for python 3.5+ you need recent versions of celery (> 4.2)
 channels==3.0.4
 channels-redis~=3.4.0
