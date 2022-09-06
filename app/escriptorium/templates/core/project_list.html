@@ -14,7 +14,7 @@
     <table id="project-list" class="table table-hover">
         <tbody>
             {% for project in project_list %}
-            <tr onclick="document.location='{% url 'documents-list' slug=project.slug %}'" role="button">
+            <tr onclick="document.location='{% url 'documents-list' slug=project.slug %}'">
                 <td><a href="{% url 'documents-list' slug=project.slug %}">{{project.name}}</a></td>
                 <td title="{% trans "Owner" %}">{{project.owner}}</td>
                 <td>{% blocktrans count n=project.documents_count %}1 document.{% plural %}{{ n }} documents.{% endblocktrans %}</td>

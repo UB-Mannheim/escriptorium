@@ -47,7 +47,7 @@
       <span class="training-done text-success {% if model.training %}hide{% endif %}" title="{% trans "Is done training" %}">✓</span>
       <span class="training-error text-danger hide">X</span>
       <span title="{% trans "Gathering data" %}" class="training-gathering progress hide">
-        <div class="progress-bar" role="progressbar"></div>
+        <span class="progress-bar" role="progressbar"></span>
       </span>
       <form method="POST" class="inline-form" action="{% url 'model-cancel-training' model.pk %}?next={{request.path}}">
         {% csrf_token %}
@@ -103,14 +103,12 @@
         {% endif %}
         {% else %}
         {% if model.owner == request.user and not model.training %}
-        <span title="{% trans "Delete model" %}">
-          <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-danger">
-              <i class="fas fa-trash"></i>
-            </button>
-          </form>
-        </span>
+        <form method="POST" class="inline-form" action="{% url 'model-delete' model.pk %}?next={{request.path}}" title="{% trans "Delete model" %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
         {% endif %}
         {% endif %}
     </td>
@@ -136,10 +134,9 @@
       {% endif %}
     </td>
     <td>
-      <a href="{{ version.file.url }}">
-        <button type="button" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
-            <i class="fas fa-file-download"></i>
-        </button>
+      <a href="{{ version.file.url }}" class="btn btn-sm btn-primary" title="{% trans "Download" %}">
+        <i class="fas fa-file-download"></i>
+      </a>
     </td>
   </tr>
   {% endfor %}

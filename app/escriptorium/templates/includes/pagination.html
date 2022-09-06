@@ -26,7 +26,7 @@
 
     {% if page_obj.number > 1 %}
     <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-      <a class="page-link" href="{% if page_obj.has_previous %}?{% url_replace request 'page' page_obj.previous_page_number %}{% else %}#{% endif %}" tabindex="-1"><span aria-hidden="true">&#139;</span> <span class="sr-only">{% trans "Previous" %}</span></a>
+      <a class="page-link" href="{% if page_obj.has_previous %}?{% url_replace request 'page' page_obj.previous_page_number %}{% else %}#{% endif %}" tabindex="-1"><span aria-hidden="true">&lsaquo;</span> <span class="sr-only">{% trans "Previous" %}</span></a>
     </li>
     {% endif %}
 
@@ -52,7 +52,7 @@
 
     {% if page_obj.number < page_obj.paginator.num_pages %}
     <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-      <a class="page-link" href="{% if page_obj.has_next %}?{% url_replace request 'page' page_obj.next_page_number %}{% else %}#{% endif %}"><span aria-hidden="true">&#155;</span> <span class="sr-only">{% trans "Next" %}</span></a>
+      <a class="page-link" href="{% if page_obj.has_next %}?{% url_replace request 'page' page_obj.next_page_number %}{% else %}#{% endif %}"><span aria-hidden="true">&rsaquo;</span> <span class="sr-only">{% trans "Next" %}</span></a>
     </li>
     {% endif %}
 
