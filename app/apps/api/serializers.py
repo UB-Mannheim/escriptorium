@@ -614,7 +614,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_SEGMENT)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def process(self):
@@ -651,7 +651,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = self.document.ocr_models.filter(
+        self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).filter(
             Q(public=True) | Q(owner=self.user)
@@ -724,7 +724,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = self.document.ocr_models.filter(
+        self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
         ).filter(
             Q(public=True) | Q(owner=self.user)
@@ -786,7 +786,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def process(self):
