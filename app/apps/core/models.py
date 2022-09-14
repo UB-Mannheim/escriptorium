@@ -627,7 +627,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             "ref": 0,  # distinguishes OCR from witness
         }
 
-    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size):
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size, gap):
         """Use subprocess call to Passim to align transcription with textual witness"""
         parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
 
@@ -699,6 +699,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
                 "-n", str(n_gram),  # index n-grams
                 offset_beam[0], offset_beam[1],
+                "--gap", str(gap),
                 "--fields", "ref",
                 "--filterpairs", "ref = 1 AND ref2 = 0",
                 infile,

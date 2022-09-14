@@ -24,27 +24,38 @@
     {% render_field align_form.region_types class="js-proc-settings" data_document=document.pk %}
   </div>
   <div class="form-row">
-    <div class="form-group col-md-6">
-      <label>{{ align_form.threshold.label }}</label>
-      {% render_field align_form.threshold class="js-proc-settings" data_document=document.pk %}
-    </div>
-    <div class="form-group col-md-6">
-      <label>{{ align_form.n_gram.label }}</label>
-      {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label>{{ align_form.max_offset.label }}</label>
-      {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
-    </div>
-    <div class="form-group col-md-6">
-      <label>{{ align_form.beam_size.label }}</label>
-      {% render_field align_form.beam_size class="js-proc-settings" data_document=document.pk %}
-    </div>
-  </div>
-  <div class="form-row">
     {% render_field align_form.merge class="js-proc-settings" data_document=document.pk %}
+  </div>
+  <a class="btn btn-link mb-2" data-toggle="collapse" href="#advanced-settings" role="button" aria-expanded="false" aria-controls="advanced-settings">
+    Show/hide advanced settings
+  </a>
+  <div class="collapse" id="advanced-settings">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label>{{ align_form.threshold.label }}</label>
+        {% render_field align_form.threshold class="js-proc-settings" data_document=document.pk %}
+      </div>
+      <div class="form-group col-md-6">
+        <label>{{ align_form.n_gram.label }}</label>
+        {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label>{{ align_form.max_offset.label }}</label>
+        {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
+      </div>
+      <div class="form-group col-md-6">
+        <label>{{ align_form.beam_size.label }}</label>
+        {% render_field align_form.beam_size class="js-proc-settings" data_document=document.pk %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md-12">
+        <label>{{ align_form.gap.label }}</label>
+        {% render_field align_form.gap class="js-proc-settings" data_document=document.pk %}
+      </div>
+    </div>
   </div>
   {# small JS to enable/disable max-offset field based on beam-size #}
   <script type="text/javascript">
