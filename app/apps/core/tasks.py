@@ -617,13 +617,13 @@ def align(
     transcription_pk=None,
     witness_pk=None,
     n_gram=25,
-    max_offset=20,
+    max_offset=0,
     merge=False,
     full_doc=True,
     threshold=0.8,
     region_types=["Orphan", "Undefined"],
     layer_name=None,
-    beam_size=0,
+    beam_size=20,
     gap=600,
     **kwargs
 ):

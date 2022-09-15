@@ -13,8 +13,20 @@ export function bootAlignForm() {
       maxOffsetField.removeAttribute("disabled");
     }
   });
-  // ensure max offset re-enabled on modal close
-  const enableMaxOffset = () => maxOffsetField.removeAttribute("disabled");
-  form.querySelector('button[data-dismiss="modal"]').addEventListener("click", enableMaxOffset);
-  form.querySelector('input[type="submit"]').addEventListener("click", enableMaxOffset);
+  maxOffsetField.addEventListener("input", (e) => {
+    if (e.currentTarget.value && e.currentTarget.value !== "" && e.currentTarget.value !== "0") {
+      beamSizeField.setAttribute("disabled", "true");
+      beamSizeField.setAttribute("value", "");
+      beamSizeField.value = "";
+    } else {
+      beamSizeField.removeAttribute("disabled");
+    }
+  });
+  // ensure fields re-enabled on modal close
+  const reEnableFields = () => {
+    maxOffsetField.removeAttribute("disabled");
+    beamSizeField.removeAttribute("disabled");
+  }
+  form.querySelector('button[data-dismiss="modal"]').addEventListener("click", reEnableFields);
+  form.querySelector('input[type="submit"]').addEventListener("click", reEnableFields);
 }

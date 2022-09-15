@@ -689,14 +689,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
     )
     max_offset = forms.IntegerField(
         label=_("Max offset"),
-        help_text=_("Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."),
+        help_text=_("Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."),
         required=False,
-        min_value=20,
+        min_value=0,
         max_value=80,
     )
     beam_size = forms.IntegerField(
         label=_("Beam size"),
-        help_text=_("Enables beam search and disables max-offset. Higher beam size (1-100) will result in slower computation but more accurate results."),
+        help_text=_("Enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size (1-100) will result in slower computation but more accurate results."),
         required=False,
         min_value=0,
         max_value=100,
@@ -795,8 +795,8 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         transcription = self.cleaned_data.get("transcription")
         witness_file = self.cleaned_data.get("witness_file")
         existing_witness = self.cleaned_data.get("existing_witness")
-        max_offset = self.cleaned_data.get("max_offset", 20)
-        beam_size = self.cleaned_data.get("beam_size", 0)
+        max_offset = self.cleaned_data.get("max_offset", 0)
+        beam_size = self.cleaned_data.get("beam_size", 20)
         n_gram = self.cleaned_data.get("n_gram", 25)
         gap = self.cleaned_data.get("gap", 600)
         merge = self.cleaned_data.get("merge")
@@ -824,13 +824,13 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             witness_pk=witness.pk,
             # handle empty strings, NoneType; allow some values that could be falsy
             n_gram=int(n_gram if n_gram else 25),
-            max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 20),
+            max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 0),
             merge=bool(merge),
             full_doc=bool(full_doc if (full_doc is not None and full_doc != '') else True),
             threshold=float(threshold if (threshold is not None and threshold != '') else 0.8),
             region_types=region_types,
             layer_name=layer_name,
-            beam_size=int(beam_size if beam_size else 0),
+            beam_size=int(beam_size if (beam_size is not None and beam_size != '') else 20),
             gap=int(gap if gap else 600),
         )
 

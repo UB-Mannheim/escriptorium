@@ -42,12 +42,12 @@
     </div>
     <div class="form-row">
       <div class="form-group col-md-6">
-        <label>{{ align_form.max_offset.label }}</label>
-        {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
-      </div>
-      <div class="form-group col-md-6">
         <label>{{ align_form.beam_size.label }}</label>
         {% render_field align_form.beam_size class="js-proc-settings" data_document=document.pk %}
+      </div>
+      <div class="form-group col-md-6">
+        <label>{{ align_form.max_offset.label }}</label>
+        {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
       </div>
     </div>
     <div class="form-row">
