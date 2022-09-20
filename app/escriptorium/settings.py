@@ -217,6 +217,7 @@ CELERY_TASK_QUEUES = (
     Queue('live', routing_key='live'),  # for everything that needs to be done on the spot to update the ui
     Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
+    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 # When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
@@ -226,6 +227,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
+    'core.tasks.align': {'queue': 'jvm'},
     # 'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     'users.tasks.async_email': {'queue': 'low-priority'},
