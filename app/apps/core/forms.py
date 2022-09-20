@@ -1,5 +1,5 @@
 import logging
-import os.path
+from os.path import basename, splitext
 
 from bootstrap.forms import BootstrapFormMixin
 from django import forms
@@ -32,6 +32,7 @@ from core.models import (
     OcrModelDocument,
     OcrModelRight,
     Project,
+    TextualWitness,
     Transcription,
 )
 from core.search import search_content
@@ -468,6 +469,33 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         model.save()
 
 
+class RegionTypesFormMixin(forms.Form):
+    """Mixin for forms needing a list of choices for valid region types on a document"""
+
+    region_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
+
+    def __init__(self, *args, **kwargs):
+        """Populate region types field with values and labels"""
+
+        # forms extending this mixin should set self.document before calling super().__init__
+        # (if they extend DocumentProcessFormBase, they do)
+        if kwargs.get("document", None):
+            self.document = kwargs.pop("document")
+
+        super().__init__(*args, **kwargs)
+
+        # get (value, label) tuples from self.document.valid_block_types
+        choices = [
+            (rt.id, rt.name)
+            for rt in self.document.valid_block_types.all()
+            # include undefined and orphaned line region types
+        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
+        self.fields['region_types'].choices = choices
+
+        # set all region types to be selected by default, allowing user to opt out
+        self.fields['region_types'].initial = [c[0] for c in choices]
+
+
 class DocumentProcessFormBase(forms.Form):
     CHECK_GPU_QUOTA = False
     CHECK_DISK_QUOTA = False
@@ -540,7 +568,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(
         queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
         label=_("Model"),
-        empty_label="default ({name})".format(name=os.path.basename(SEGMENTATION_DEFAULT_MODEL)),
+        empty_label="default ({name})".format(name=basename(SEGMENTATION_DEFAULT_MODEL)),
         required=False)
 
     SEGMENTATION_STEPS_CHOICES = (
@@ -632,6 +660,169 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
             part.task('transcribe',
                       user_pk=self.user.pk,
                       model_pk=model.pk)
+
+
+class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixin):
+    """Form to perform text alignment by passing a transcription and textual witness"""
+    transcription = forms.ModelChoiceField(
+        queryset=Transcription.objects.filter(archived=False),
+        required=True,
+        help_text=_("The transcription on which to perform alignment."),
+    )
+    witness_file = forms.FileField(
+        validators=[FileExtensionValidator(allowed_extensions=["txt"])],
+        required=False,
+        help_text=_("The reference text for alignment; must be a .txt file."),
+    )
+    existing_witness = forms.ModelChoiceField(
+        queryset=TextualWitness.objects.all(),
+        required=False,
+        help_text=_("Reuse a previously-uploaded reference text."),
+    )
+    n_gram = forms.IntegerField(
+        label=_("N-gram"),
+        required=True,
+        min_value=2,
+        max_value=25,
+        initial=25,
+        help_text=_("Length (2–25) of token sequences to compare; reduce for noisier transcriptions and lower precision results."),
+    )
+    max_offset = forms.IntegerField(
+        label=_("Max offset"),
+        help_text=_("Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."),
+        required=False,
+        min_value=0,
+        max_value=80,
+    )
+    beam_size = forms.IntegerField(
+        label=_("Beam size"),
+        help_text=_("Enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size (1-100) will result in slower computation but more accurate results."),
+        required=False,
+        min_value=0,
+        max_value=100,
+    )
+    merge = forms.BooleanField(
+        label=_("Merge aligned text with existing transcription"),
+        required=False,
+        initial=False,
+        help_text=_("If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."),
+    )
+    full_doc = forms.BooleanField(
+        label=_("Use full transcribed document"),
+        required=False,
+        initial=True,
+        help_text=_("If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."),
+    )
+    threshold = forms.FloatField(
+        label=_("Line length match threshold"),
+        help_text=_("Minimum proportion (0.0–1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted."),
+        widget=forms.NumberInput(attrs={"step": "0.1"}),
+        required=True,
+        initial=0.8,
+        min_value=0.0,
+        max_value=1.0,
+    )
+    region_types = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        help_text=_("Region types to include in the alignment."),
+    )
+    layer_name = forms.CharField(
+        required=True,
+        label=_("Layer name"),
+        help_text=_("Name for the new transcription layer produced by this alignment. If you reuse an existing layer name, the layer will be overwritten; use caution."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Refine querysets to filter transcription, witness, and region types on document"""
+        super().__init__(*args, **kwargs)
+
+        self.fields["transcription"].queryset = self.fields["transcription"].queryset.filter(
+            document=self.document
+        ).distinct()
+
+        self.fields["existing_witness"].queryset = self.fields["existing_witness"].queryset.filter(
+            owner=self.user,
+        ).distinct()
+
+        self.fields["region_types"].required = True
+        self.fields["region_types"].help_text = _("Region types to include in the alignment.")
+
+    def clean(self):
+        """Validate the form on various criteria"""
+        cleaned_data = super().clean()
+
+        # ensure exactly one of the witness fields is present
+        witness_file = cleaned_data.get("witness_file")
+        existing_witness = cleaned_data.get("existing_witness")
+        if not witness_file and not existing_witness:
+            raise forms.ValidationError(
+                _("You must supply a textual witness (reference text).")
+            )
+        elif witness_file and existing_witness:
+            raise forms.ValidationError(
+                _("You may only supply one witness text (file upload or existing text).")
+            )
+
+        # ensure layer name is not the same as original transcription name
+        layer_name = self.cleaned_data.get("layer_name")
+        transcription = self.cleaned_data.get("transcription")
+        if layer_name == transcription.name:
+            raise forms.ValidationError(
+                _("Alignment layer name cannot be the same as the transcription you are trying to align.")
+            )
+
+        # ensure max offset and beam size not both set
+        max_offset = self.cleaned_data.get("max_offset")
+        beam_size = self.cleaned_data.get("beam_size")
+        if max_offset and int(max_offset) != 0 and beam_size and int(beam_size) != 0:
+            raise forms.ValidationError(_("Max offset and beam size cannot both be non-zero."))
+
+        # If quotas are enforced, assert that the user still has free CPU minutes
+        if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
+            raise forms.ValidationError(_("You don't have any CPU minutes left."))
+
+    def process(self):
+        """Instantiate or set the witness to use, then enqueue the task(s)"""
+        transcription = self.cleaned_data.get("transcription")
+        witness_file = self.cleaned_data.get("witness_file")
+        existing_witness = self.cleaned_data.get("existing_witness")
+        max_offset = self.cleaned_data.get("max_offset", 0)
+        beam_size = self.cleaned_data.get("beam_size", 20)
+        n_gram = self.cleaned_data.get("n_gram", 25)
+        merge = self.cleaned_data.get("merge")
+        full_doc = self.cleaned_data.get("full_doc", True)
+        threshold = self.cleaned_data.get("threshold", 0.8)
+        region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
+        parts = self.cleaned_data.get("parts")
+        layer_name = self.cleaned_data.get("layer_name")
+
+        if existing_witness:
+            witness = existing_witness
+        else:
+            witness = TextualWitness(
+                file=witness_file,
+                name=splitext(witness_file.name)[0],
+                owner=self.user,
+            )
+            witness.save()
+
+        document = parts.first().document
+        document.queue_alignment(
+            parts_qs=parts,
+            user_pk=self.user.pk,
+            transcription_pk=transcription.pk,
+            witness_pk=witness.pk,
+            # handle empty strings, NoneType; allow some values that could be falsy
+            n_gram=int(n_gram if n_gram else 25),
+            max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 0),
+            merge=bool(merge),
+            full_doc=bool(full_doc if (full_doc is not None and full_doc != '') else True),
+            threshold=float(threshold if (threshold is not None and threshold != '') else 0.8),
+            region_types=region_types,
+            layer_name=layer_name,
+            beam_size=int(beam_size if (beam_size is not None and beam_size != '') else 20),
+        )
 
 
 class TrainMixin():

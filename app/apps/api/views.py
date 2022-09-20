@@ -445,7 +445,10 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         part.cancel_tasks()
         part.refresh_from_db()
-        del part.tasks  # reset cache
+        try:
+            del part.tasks  # reset cache, if present
+        except AttributeError:
+            pass
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
     @action(detail=True, methods=['post'])

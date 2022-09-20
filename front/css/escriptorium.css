@@ -799,3 +799,8 @@ input[type="checkbox"].toggle-switch + label span {
 small.context {
     opacity: 0.5;
 }
+
+/* force transcription names to wrap in transcriptions management modal */
+.transcription-name {
+    word-break: break-all;
+}

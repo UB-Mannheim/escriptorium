@@ -6,9 +6,11 @@ from datetime import datetime
 import oitei
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Avg, Prefetch, Q
+from django.db.models import Avg, Prefetch
 from django.template import loader
 from django.utils.text import slugify
+
+from core.models import Block
 
 TEXT_FORMAT = "text"
 PAGEXML_FORMAT = "pagexml"
@@ -50,18 +52,6 @@ class BaseExporter:
         self.prepare_for_rendering()
 
     def prepare_for_rendering(self):
-        # Check if we have to include orphan lines
-        self.include_orphans = False
-        if "Orphan" in self.region_types:
-            self.include_orphans = True
-            self.region_types.remove("Orphan")
-
-        # Check if we have to include lines with an undefined region type
-        self.include_undefined = False
-        if "Undefined" in self.region_types:
-            self.include_undefined = True
-            self.region_types.remove("Undefined")
-
         base_filename = "export_doc%d_%s_%s_%s" % (
             self.document.pk,
             slugify(self.document.name).replace("-", "_")[:32],
@@ -80,13 +70,7 @@ class TextExporter(BaseExporter):
     file_extension = "txt"
 
     def render(self):
-        region_filters = Q(line__block__typology_id__in=self.region_types)
-        if self.include_orphans:
-            region_filters |= Q(line__block__isnull=True)
-        if self.include_undefined:
-            region_filters |= Q(
-                line__block__isnull=False, line__block__typology_id__isnull=True
-            )
+        region_filters = Block.get_filters(block_types=self.region_types, filtering_lines=True)
 
         LineTranscription = apps.get_model("core", "LineTranscription")
         lines = (
@@ -116,9 +100,13 @@ class XMLTemplateExporter(BaseExporter):
             document=self.document, pk__in=self.part_pks
         )
 
-        region_filters = Q(typology_id__in=self.region_types)
-        if self.include_undefined:
-            region_filters |= Q(typology_id__isnull=True)
+        # since this is filtering Blocks and not LineTranscriptions, it needs to handle orphans
+        # separately
+        include_orphans = False
+        if "Orphan" in self.region_types:
+            include_orphans = True
+            self.region_types.remove("Orphan")
+        region_filters = Block.get_filters(block_types=self.region_types, filtering_lines=False)
 
         with EsZipFile(self.filepath, "w") as zip_:
             mets_elements = []
@@ -127,7 +115,7 @@ class XMLTemplateExporter(BaseExporter):
 
                 render_orphans = (
                     {}
-                    if not self.include_orphans
+                    if not include_orphans
                     else {
                         "orphan_lines": part.lines.prefetch_transcription(
                             self.transcription
@@ -222,13 +210,7 @@ class OpenITIMARkdownExporter(BaseExporter):
             document=self.document, pk__in=self.part_pks
         )
 
-        region_filters = Q(line__block__typology_id__in=self.region_types)
-        if self.include_orphans:
-            region_filters |= Q(line__block__isnull=True)
-        if self.include_undefined:
-            region_filters |= Q(
-                line__block__isnull=False, line__block__typology_id__isnull=True
-            )
+        region_filters = Block.get_filters(block_types=self.region_types, filtering_lines=True)
 
         with EsZipFile(self.filepath, "w") as zip_:
             for part in parts:

@@ -144,6 +144,19 @@
         title="{% trans 'Start transcribing selected images.' %}"
       {% endif %}
     ><i class="fas fa-language mr-1"></i>{% trans "Transcribe" %}</button>
+    {% if TEXT_ALIGNMENT_ENABLED %}
+      <button
+        id="align-selected"
+        class="btn btn-sm btn-primary mr-1 js-proc-selected"
+        data-proc="align"
+        {% if not has_cpu_minutes_left %}
+          disabled
+          title="{% trans "You don't have any CPU minutes left" %}"
+        {% else %}
+          title="{% trans 'Align transcribed images to a textual witness (reference text).' %}"
+        {% endif %}
+      ><i class="fas fa-file-alt mr-1"></i>{% trans "Align" %}</button>
+    {% endif %}
   </div>
 </div>
 
@@ -196,6 +209,16 @@
         >
           <span class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</span>
         </span>
+        {% if TEXT_ALIGNMENT_ENABLED %}
+          <span
+            class="btn proc js-align {% if not has_cpu_minutes_left %}disabled{% endif %}"
+            {% if not has_cpu_minutes_left %}
+              data-title="{% trans "You don't have any CPU minutes left" %}"
+            {% else %}
+              data-title="{% trans 'Align' %}"
+            {% endif %}
+          ><i class="fas fa-file-alt"></i></span>
+        {% endif%}
       </div>
     </div>
   </div>
@@ -212,6 +235,7 @@
 {% include 'core/wizards/segtrain.html' with proc='segtrain' %}
 {% include 'core/wizards/train.html' with proc='train' %}
 {% include 'core/wizards/transcribe.html' with proc='transcribe' %}
+{% include 'core/wizards/align.html' with proc='align' %}
 {% endblock %}
 
 {% block scripts %}

@@ -66,3 +66,9 @@ DEBUG_TOOLBAR_PANELS = [
 
 # Set this variable to define the common ES index (defaults to 'es-transcriptions')
 # ELASTICSEARCH_COMMON_INDEX = <common_index_name>
+
+# Uncomment the following line to enable text alignment with Passim
+# TEXT_ALIGNMENT_ENABLED = True
+
+# Uncomment the following line to disable alignment tempfile cleanup (will use extra space)
+# KEEP_ALIGNMENT_TEMPFILES = True
