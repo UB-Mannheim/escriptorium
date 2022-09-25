@@ -92,14 +92,12 @@
 
         {% if unbind_model %}
         {% if document.owner == request.user %}
-        <span title="{% trans "Unbind model from the document" %}">
-          <form method="POST" class="inline-form" action="{% url 'model-unbind' model.pk document.pk %}?next={{request.path}}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-warning">
-              <i class="fas fa-trash"></i>
-            </button>
-          </form>
-        </span>
+        <form method="POST" class="inline-form" action="{% url 'model-unbind' model.pk document.pk %}?next={{request.path}}" title="{% trans "Unbind model from the document" %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-warning">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
         {% endif %}
         {% else %}
         {% if model.owner == request.user and not model.training %}
