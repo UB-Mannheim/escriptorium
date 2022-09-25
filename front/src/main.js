@@ -4,11 +4,13 @@ function scriptName() {
     return (prefix.length > 0 ? "/" + prefix : "");
 }
 
+const SCRIPT_NAME = scriptName();
+
 console.log('protocol=', location.protocol);
 console.log('host    =', location.host);
 console.log('href    =', location.href);
 console.log('pathname=', location.pathname);
-console.log('SCRIPT_NAME=', scriptName());
+console.log('SCRIPT_NAME=', SCRIPT_NAME);
 
 import '../css/escriptorium.css';
 import '../css/rtl.css';
