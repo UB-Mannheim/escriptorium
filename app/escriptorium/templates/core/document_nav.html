@@ -18,7 +18,7 @@
 
         <a href="{% if object %}{% url 'document-update' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-doc-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Description" %}</a>
 
-        <a href="{% if object %}{% url 'document-ontology' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-onto-active %}{% endblock %}" id="nav-doc-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Ontology" %}</a>
+        <a href="{% if object %}{% url 'document-ontology' pk=document.pk %}{% endif %}" class="nav-item nav-link {% block nav-onto-active %}{% endblock %}" id="nav-ontology-tab" role="tab" aria-controls="nav-doc" aria-selected="true">{% trans "Ontology" %}</a>
 
         <a href="{% if object %}{% url 'document-images' pk=document.pk %}{% else %}#{% endif %}" class="nav-item nav-link {% if not object %}disabled{% endif %} {% block nav-images-active %}{% endblock %}" id="nav-img-tab" role="tab" aria-controls="nav-img" aria-selected="true">{% trans "Images" %}</a>
 
