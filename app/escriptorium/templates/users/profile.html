@@ -8,8 +8,8 @@
             <a class="nav-link {% block infos-tab-active %}active{% endblock %}" id="nav-infos-tab" href="{% url 'profile' %}" role="tab">{% trans "Information" %}</a>
             <a class="nav-link {% block key-tab-active %}{% endblock %}" id="nav-key-tab"  href="{% url 'profile-api-key' %}" role="tab">{% trans "API key" %}</a>
             <a class="nav-link {% block files-tab-active %}{% endblock %}" id="nav-files-tab" href="{% url 'profile-files' %}" role="tab">{% trans "Files" %}</a>
-            <a class="nav-link {% block team-tab-active %}{% endblock %}" id="nav-infos-tab" href="{% url 'profile-team-list' %}" role="tab">{% trans "Teams" %}</a>
-            <a class="nav-link {% block invites-tab-active %}{% endblock %}" id="nav-infos-tab" href="{% url 'profile-invites-list' %}" role="tab">{% trans "Invitations" %}</a>
+            <a class="nav-link {% block team-tab-active %}{% endblock %}" id="nav-team-tab" href="{% url 'profile-team-list' %}" role="tab">{% trans "Teams" %}</a>
+            <a class="nav-link {% block invites-tab-active %}{% endblock %}" id="nav-invites-tab" href="{% url 'profile-invites-list' %}" role="tab">{% trans "Invitations" %}</a>
         </div>
 
         <div class="col-md-8 tab-content" id="v-pills-tabContent">
