@@ -113,3 +113,9 @@ ELASTICSEARCH_URL = 'http://localhost:9200'
 # ELASTICSEARCH_COMMON_INDEX = <common_index_name>
 # if USE_OPENSEARCH:
 #    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
+
+# Uncomment the following line to enable text alignment with Passim
+TEXT_ALIGNMENT_ENABLED = True
+
+# Uncomment the following line to disable alignment tempfile cleanup (will use extra space)
+# KEEP_ALIGNMENT_TEMPFILES = True
