@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-11 14:31+0200\n"
+"POT-Creation-Date: 2022-09-25 17:04+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -25,6 +25,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: apps/api/serializers.py
+msgid "PDF is not a valid image, please use the dedicated Import function."
+msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 #: escriptorium/templates/core/document_images.html
@@ -179,6 +183,122 @@ msgstr ""
 "damit verbundene Transkriptionen</b> zuerst gelöscht!"
 
 #: apps/core/forms.py
+#, fuzzy
+#| msgid "Line transcription enhanced content"
+msgid "The transcription on which to perform alignment."
+msgstr "Zeilentranskription hat Inhalt erweitert"
+
+#: apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "N-gram"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; reduce for noisier "
+"transcriptions and lower precision results."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Max offset"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Beam size"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will "
+"be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+
+#: apps/core/forms.py
+#, fuzzy
+#| msgid "Beware that re-segmenting will delete any existing transcriptions!"
+msgid "Merge aligned text with existing transcription"
+msgstr ""
+"Achtung - eine Re-Segmentierung wird alle bestehenden Transkriptionen "
+"löschen!"
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text separately."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Line length match threshold"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr ""
+
+#: apps/core/forms.py
+#, fuzzy
+#| msgid "Username"
+msgid "Layer name"
+msgstr "Benutzername"
+
+#: apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
+msgstr ""
+
+#: apps/core/forms.py
 msgid "The model is already training."
 msgstr ""
 
@@ -293,6 +413,22 @@ msgid "The position of the line relative to the polygon."
 msgstr "Die Position der Zeile in Abhängigkeit vom Polygon."
 
 #: apps/core/models.py
+msgid "Show confidence visualizations"
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"If checked, enable toggling on and off colorized overlays for automatic "
+"transcription (OCR/HTR) confidences."
+msgstr ""
+
+#: apps/core/models.py
+#, fuzzy
+#| msgid "Couldn't find the training task."
+msgid "Couldn't find the alignment task."
+msgstr "Konnte die Trainings-Aufgabe nicht finden."
+
+#: apps/core/models.py
 msgid "Binarized image needs to be the same size as original image."
 msgstr ""
 "Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
@@ -320,6 +456,14 @@ msgstr "Segmentiert"
 #: apps/core/models.py
 msgid "Transcribing"
 msgstr "Transkribiere"
+
+#: apps/core/models.py
+msgid "Aligning"
+msgstr ""
+
+#: apps/core/models.py
+msgid "Aligned"
+msgstr ""
 
 #: apps/core/models.py
 msgid "Element"
@@ -397,6 +541,18 @@ msgstr "Während der Transkription ist etwas schiefgelaufen!"
 #: apps/core/tasks.py
 msgid "Transcription done!"
 msgstr "Transkription abgeschlossen!"
+
+#: apps/core/tasks.py
+#, fuzzy
+#| msgid "Something went wrong during the import!"
+msgid "Something went wrong during the alignment!"
+msgstr "Etwas ist während des Imports schiefgelaufen!"
+
+#: apps/core/tasks.py
+#, fuzzy
+#| msgid "Segmentation done!"
+msgid "Alignment done!"
+msgstr "Segmentierung abgeschlossen!"
 
 #: apps/core/views.py
 msgid "Project created successfully!"
@@ -1026,6 +1182,15 @@ msgid "Transcribe"
 msgstr "Transkribieren"
 
 #: escriptorium/templates/core/document_images.html
+msgid "Align transcribed images to a textual witness (reference text)."
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
+#: escriptorium/templates/core/wizards/align.html
+msgid "Align"
+msgstr ""
+
+#: escriptorium/templates/core/document_images.html
 msgid "Delete this image and all its data (segmentation, transcriptions)"
 msgstr ""
 "Dieses Bild und alle zugehörigen Daten (Segmentierung, Transkriptionen) "
@@ -1067,9 +1232,46 @@ msgid "Filters"
 msgstr "Filter"
 
 #: escriptorium/templates/core/document_list.html
+#, fuzzy
+#| msgid "Selected"
+msgid "Select"
+msgstr "Ausgewählt"
+
+#: escriptorium/templates/core/document_list.html
+#, fuzzy
+#| msgid "Previous"
+msgid "Preview"
+msgstr "Vorherige"
+
+#: escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Name"
+msgstr "Name"
+
+#: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/core/project_list.html
 msgid "Owner"
 msgstr "Besitzer"
+
+#: escriptorium/templates/core/document_list.html
+#, fuzzy
+#| msgid "Last modified on"
+msgid "Last modified"
+msgstr "Letzte Änderung am"
+
+#: escriptorium/templates/core/document_list.html
+msgid "Image count"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+msgid "Tags"
+msgstr ""
+
+#: escriptorium/templates/core/document_list.html
+#, fuzzy
+#| msgid "Annotations:"
+msgid "Actions"
+msgstr "Transkriptionen:"
 
 #: escriptorium/templates/core/document_list.html
 msgid "Shared with"
@@ -1118,6 +1320,11 @@ msgstr "Bilder"
 #: escriptorium/templates/core/document_nav.html
 msgid "Models"
 msgstr "Modelle"
+
+#: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
+msgid "Reports"
+msgstr "Berichte"
 
 #: escriptorium/templates/core/document_nav.html
 msgid "Select a specific transcription to search in."
@@ -1308,10 +1515,6 @@ msgid "shares"
 msgstr "Anteile"
 
 #: escriptorium/templates/core/models_list/rights/main.html
-msgid "Name"
-msgstr "Name"
-
-#: escriptorium/templates/core/models_list/rights/main.html
 msgid "Full name or identifier"
 msgstr "Vollständiger Name oder Kennung"
 
@@ -1464,10 +1667,6 @@ msgstr "Wollen Sie das Projekt wirklich von Ihrer Liste entfernen?"
 msgid "Documents"
 msgstr "Dokumente"
 
-#: escriptorium/templates/core/project_nav.html
-msgid "Reports"
-msgstr "Berichte"
-
 #: escriptorium/templates/core/search.html
 msgid "Search in projects"
 msgstr "Suche in Projekten"
@@ -1506,8 +1705,8 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Momentan wird der eingegebene Text im Dokument <strong>%(name)s</strong> "
-"gesucht.\n"
+"        Momentan wird der eingegebene Text im Dokument <strong>%(name)s</"
+"strong> gesucht.\n"
 "      "
 
 #: escriptorium/templates/core/search.html
@@ -1609,6 +1808,28 @@ msgstr "Teilen"
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
 msgstr "ausgewählte(s) Bild(er)."
+
+#: escriptorium/templates/core/wizards/align.html
+msgid ""
+"Choose a transcription and a textual witness (reference text) to align to "
+"the transcription."
+msgstr ""
+
+#: escriptorium/templates/core/wizards/align.html
+#, fuzzy
+#| msgid "Line transcription"
+msgid "Select a transcription"
+msgstr "Beschreibung der Zeile"
+
+#: escriptorium/templates/core/wizards/align.html
+msgid "Upload or select a textual witness"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/align.html
+#, fuzzy
+#| msgid "Segmenting"
+msgid "Settings"
+msgstr "Segmentiere"
 
 #: escriptorium/templates/core/wizards/binarize.html
 msgid ""
@@ -2129,21 +2350,81 @@ msgstr "E-Mail-Adresse:"
 msgid "Reset my password"
 msgstr "Mein Passwort zurücksetzen"
 
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Project reports"
-msgstr "Projektberichte"
+#: escriptorium/templates/reporting/document_report.html
+#, fuzzy
+#| msgid "Documents"
+msgid "Document report"
+msgstr "Dokumente"
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Data metrics"
 msgstr "Datenmetriken"
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Total number of document parts"
 msgstr "Gesamtzahl der Dokumentteile"
 
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "A document part corresponds to one image loaded within a document."
 msgstr "Ein Dokumentteil entspricht einem Bild innerhalb eines Dokumentes."
+
+#: escriptorium/templates/reporting/document_report.html
+#, fuzzy
+#| msgid "Total number of document parts"
+msgid "Transcribed document parts"
+msgstr "Gesamtzahl der Dokumentteile"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "The number of transcribed images in the selected transcription(s)."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#, fuzzy
+#| msgid "Transcription done!"
+msgid "Average transcription confidence"
+msgstr "Transkription abgeschlossen!"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"Confidence is an estimate of the automatic transcription model to "
+"approximate its own accuracy per character."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+msgid ""
+"The validity of this figure will depend on specific cases and models and is "
+"not necessarily an indication of result quality."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Vocabulary"
+msgstr "Zeichensatz"
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Reload vocabulary"
+msgstr "Zeichensatz neu laden"
+
+#: escriptorium/templates/reporting/document_report.html
+msgid "No vocabulary found in the selected transcription(s)."
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
+#: escriptorium/templates/reporting/project_reports.html
+msgid ""
+"The vocabulary is the list of all the characters currently used in the "
+"transcription of the document along with their frequency."
+msgstr ""
+"Der Zeichensatz ist die Liste aller Zeichen, die momentan in der "
+"Transkription verwendet werden, mit zugehöriger Vorkommenshäufigkeit."
+
+#: escriptorium/templates/reporting/project_reports.html
+msgid "Project reports"
+msgstr "Projektberichte"
 
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Total number of regions"
@@ -2193,22 +2474,6 @@ msgid ""
 msgstr ""
 "Ein Zeichen ist ein beliebiges Symbol, das in der Transkription verwendet "
 "wird, inklusive Satzzeichen, aber ausgenommen Leerzeichen."
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Vocabulary"
-msgstr "Zeichensatz"
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid "Reload vocabulary"
-msgstr "Zeichensatz neu laden"
-
-#: escriptorium/templates/reporting/project_reports.html
-msgid ""
-"The vocabulary is the list of all the characters currently used in the "
-"transcription of the document along with their frequency."
-msgstr ""
-"Der Zeichensatz ist die Liste aller Zeichen, die momentan in der "
-"Transkription verwendet werden, mit zugehöriger Vorkommenshäufigkeit."
 
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Annotation"
@@ -2586,6 +2851,3 @@ msgstr "Datenschutzerklärung"
 #: homepage/additional_heading.html
 msgid "eScriptorium for OCR-BW"
 msgstr "eScriptorium für OCR-BW"
-
-#~ msgid "Line transcription enhanced content"
-#~ msgstr "Zeilentranskription hat Inhalt erweitert"
