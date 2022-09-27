@@ -16,6 +16,7 @@ from core.models import (
     DocumentPart,
     Line,
     LineTranscription,
+    Metadata,
     OcrModel,
     Project,
     TextualWitness,
@@ -88,6 +89,13 @@ class CoreFactory():
         part = DocumentPart.objects.create(**attrs)
         self.cleanup_registry.append(part)
         return part
+
+    def make_part_metadata(self, part, **kwargs):
+        attrs = kwargs.copy()
+        if 'name' not in kwargs:
+            attrs['name'] = 'testmd'
+        key = Metadata.objects.create(**attrs)
+        return part.metadata.create(key=key, value='testmdvalue')
 
     def make_transcription(self, **kwargs):
         attrs = kwargs.copy()
