@@ -19,7 +19,7 @@ def backward(apps, se):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0063_linetranscription_avg_confidence'),
+        ('core', '0065_alter_documentpart_workflow_state_and_more'),
     ]
 
     operations = [
