@@ -25,6 +25,7 @@ repos:
         args: ['--django']
         exclude: '^app\/apps\/core\/tests\/factory\.py$'
       - id: check-json
+        exclude: '^app\/apps\/core\/tests\/assets\/alignment\/out\.json$'
       - id: requirements-txt-fixer
       - id: end-of-file-fixer
         exclude: '^app\/escriptorium\/templates\/export\/openiti_markdown\.mARkdown$'

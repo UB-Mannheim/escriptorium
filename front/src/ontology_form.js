@@ -67,6 +67,19 @@ export function bootOntologyForm() {
         }
     });
 
+    document.getElementById("add-part-type-btn").addEventListener("click", function(ev) {
+        ev.preventDefault();
+        let input = document.getElementById("add-part-type-input");
+        if (input.value) {
+            pushType('part', input.value)
+                .then((response) => response.json())
+                .then(function (data) {
+                    addTypeOption('#part-types', data.pk, data.name);
+                    input.value = '';  // empty the input for future use
+                });
+        }
+    });
+
     /*** Annotations ***/
     setupFormSet(document.getElementById('ontology-form'));
 }

@@ -1,6 +1,14 @@
 <template>
     <div class="nav-item ml-auto" id="toggle-panels">
         <button type="button"
+                id="meta-panel-btn"
+                v-on:click="onPushPanelBtn"
+                data-target="metadata"
+                class="open-panel nav-item btn"
+                v-bind:class="[ visible_panels.metadata ? 'btn-primary' : 'btn-secondary' ]"
+                title="Text (Ctrl+5)"><i class="click-through fas fa-table"></i></button>
+
+        <button type="button"
                 id="source-panel-btn"
                 v-on:click="onPushPanelBtn"
                 data-target="source"

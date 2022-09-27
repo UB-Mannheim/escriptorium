@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
+from core.forms import RegionTypesFormMixin
 from core.models import DocumentPart, Transcription
 from imports.export import ALTO_FORMAT, ENABLED_EXPORTERS
 from imports.models import DocumentImport
@@ -138,7 +139,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         })
 
 
-class ExportForm(BootstrapFormMixin, forms.Form):
+class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
     FORMAT_CHOICES = (
         (export_format, export["label"])
         for export_format, export in ENABLED_EXPORTERS.items()
@@ -150,20 +151,14 @@ class ExportForm(BootstrapFormMixin, forms.Form):
         initial=False, required=False,
         label=_('Include images'),
         help_text=_("Will significantly increase the time to produce and download the export."))
-    region_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         super().__init__(*args, **kwargs)
-        self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
+        self.fields['transcription'].queryset = Transcription.objects.filter(archived=False,
+                                                                             document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
-        choices = [
-            (rt.id, rt.name)
-            for rt in self.document.valid_block_types.all()
-        ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
-        self.fields['region_types'].choices = choices
-        self.fields['region_types'].initial = [c[0] for c in choices]
 
     def clean_parts(self):
         parts = self.cleaned_data['parts']

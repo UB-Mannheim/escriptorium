@@ -46,7 +46,7 @@ class DocumentImport(models.Model):
     total = models.PositiveIntegerField(default=None, null=True, blank=True)
 
     class Meta:
-        ordering = ('-started_on',)
+        ordering = ['-started_on']
 
     @property
     def filename(self):

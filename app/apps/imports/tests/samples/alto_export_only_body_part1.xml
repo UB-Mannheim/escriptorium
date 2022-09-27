@@ -1,88 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xmlns="http://www.loc.gov/standards/alto/ns-v4#"
-      xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd">
+  xmlns="http://www.loc.gov/standards/alto/ns-v4#" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd">
   <Description>
     <MeasurementUnit>pixel</MeasurementUnit>
     <sourceImageInformation>
       <fileName>default.png</fileName>
-      
     </sourceImageInformation>
   </Description>
-  
+
   <Layout>
-    <Page WIDTH="864"
-          HEIGHT="206"
-          PHYSICAL_IMG_NR="0"
-          ID="eSc_dummypage_">
-      <PrintSpace HPOS="0"
-                  VPOS="0"
-                  WIDTH="864"
-                  HEIGHT="206">
-        
-        <TextBlock HPOS="90"
-                   VPOS="125"
-                   WIDTH="470"
-                   HEIGHT="90"
-                   ID="eSc_textblock_02"
-                   TAGREFS="BT2">
-          <Shape><Polygon POINTS="90 125 560 215"/></Shape>
-          
-          
-          <TextLine ID="eSc_line_02"
-                    
-                    BASELINE="100 140 550 140" 
-                    HPOS="100"
-                    VPOS="130"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 130 550 130 550 150 100 150"/></Shape>
-\t    <String CONTENT="Some text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="130"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+    <Page WIDTH="864" HEIGHT="206" PHYSICAL_IMG_NR="0" ID="eSc_dummypage_">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="864" HEIGHT="206">
+        <TextBlock HPOS="90" VPOS="125" WIDTH="470" HEIGHT="90" ID="eSc_textblock_02" TAGREFS="BT2">
+          <Shape>
+            <Polygon POINTS="90 125 560 215"/>
+          </Shape>
+
+          <TextLine ID="eSc_line_02" BASELINE="100 140 550 140" HPOS="100" VPOS="130" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 130 550 130 550 150 100 150"/>
+            </Shape>
+            <String CONTENT="Some text to be exported during a document_export Celery task." HPOS="100" VPOS="130" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
 
-          
-          
-          <TextLine ID="eSc_line_03"
-                    
-                    BASELINE="100 170 550 170" 
-                    HPOS="100"
-                    VPOS="160"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 160 550 160 550 180 100 180"/></Shape>
-\t    <String CONTENT="Some text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="160"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+          <TextLine ID="eSc_line_03" BASELINE="100 170 550 170" HPOS="100" VPOS="160" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 160 550 160 550 180 100 180"/>
+            </Shape>
+            <String CONTENT="Some text to be exported during a document_export Celery task." HPOS="100" VPOS="160" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
 
-          
-          
-          <TextLine ID="eSc_line_04"
-                    
-                    BASELINE="100 200 550 200" 
-                    HPOS="100"
-                    VPOS="190"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 190 550 190 550 210 100 210"/></Shape>
-\t    <String CONTENT="Some text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="190"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+          <TextLine ID="eSc_line_04" BASELINE="100 200 550 200" HPOS="100" VPOS="190" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 190 550 190 550 210 100 210"/>
+            </Shape>
+            <String CONTENT="Some text to be exported during a document_export Celery task." HPOS="100" VPOS="190" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
-
-          
         </TextBlock>
-        
-
-        
       </PrintSpace>
     </Page>
   </Layout>

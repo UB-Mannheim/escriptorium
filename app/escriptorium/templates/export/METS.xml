@@ -1,0 +1,30 @@
+<mets xmlns="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <fileSec>
+    {% if include_images %}
+    <fileGrp USE="image">
+      {% for element in elements %}
+        {% if element.image %}<file ID="image{{ element.id }}">
+          <FLocat xlink:href="{{ element.image }}"/>
+        </file>{% endif %}
+      {% endfor %}
+    </fileGrp>
+    {% endif %}
+    <fileGrp USE="export">
+      {% for element in elements %}
+        {% if element.page %}<file ID="export{{ element.id }}">
+          <FLocat xlink:href="{{ element.page }}"/>
+        </file>{% endif %}
+      {% endfor %}
+    </fileGrp>
+  </fileSec>
+  <structMap TYPE="physical">
+    <div TYPE="document">
+      {% for element in elements %}
+      <div TYPE="page">
+        {% if element.image %}<fptr FILEID="image{{ element.id }}"/>{% endif %}
+        {% if element.page %}<fptr FILEID="export{{ element.id }}"/>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </structMap>
+</mets>

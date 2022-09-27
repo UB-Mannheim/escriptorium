@@ -1,0 +1,23 @@
+<mets xmlns="http://www.loc.gov/METS/"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+  <fileSec>
+    <fileGrp USE="export">
+      <file ID="export1">
+        <FLocat xlink:href="default.xml"/>
+      </file>
+      <file ID="export2">
+        <FLocat xlink:href="default2.xml"/>
+      </file>
+    </fileGrp>
+  </fileSec>
+  <structMap TYPE="physical">
+    <div TYPE="document">
+      <div TYPE="page">
+        <fptr FILEID="export1"/>
+      </div>
+      <div TYPE="page">
+        <fptr FILEID="export2"/>
+      </div>
+    </div>
+  </structMap>
+</mets>

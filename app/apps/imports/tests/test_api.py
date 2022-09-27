@@ -80,7 +80,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(59):
+            with self.assertNumQueries(60):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -104,7 +104,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single_baselines.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(45):
+            with self.assertNumQueries(44):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -153,7 +153,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_composedblock.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(71):
+            with self.assertNumQueries(72):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -345,7 +345,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_pagexml.zip'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(418):  # there's a lot of lines in there
+            with self.assertNumQueries(412):  # there's a lot of lines in there
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -363,18 +363,21 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part3.lines.count(), 19)
 
     def test_pagexml_types(self):
-        bt = BlockType.objects.create(name="test_block_type")
-        bt2 = BlockType.objects.create(name="heading")
-        lt = LineType.objects.create(name="test_line_type")
-        self.document.valid_block_types.add(bt)
-        self.document.valid_block_types.add(bt2)
-        self.document.valid_line_types.add(lt)
+        non_word_block_type = "test-non-word-block-type"
+        word_block_type = 'heading'
+        non_word_line_type = 'test-non-word_line_type'
+        bt_head = BlockType.objects.create(name=word_block_type)
+        bt_non_word = BlockType.objects.create(name=non_word_block_type)
+        lt_non_word = LineType.objects.create(name=non_word_line_type)
+        self.document.valid_block_types.add(bt_head)
+        self.document.valid_block_types.add(bt_non_word)
+        self.document.valid_line_types.add(lt_non_word)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_pagexml_types.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(79):
+            with self.assertNumQueries(80):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -385,13 +388,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(DocumentImport.objects.first().workflow_state,
                          DocumentImport.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 4)
-        self.part1.blocks.all()[0].typology = None
-        self.part1.blocks.all()[1].typology.name = 'test_block_type'
-        self.part1.blocks.all()[2].typology.name = 'heading'
-        self.part1.blocks.all()[3].typology = None  # invalid
-        self.part1.lines.all()[0].typology = None
-        self.part1.lines.all()[1].typology.name = 'test_line_type'
-        self.part1.lines.all()[2].typology = None  # invalid
+        self.assertEqual(self.part1.blocks.all()[0].typology, None)
+        self.assertEqual(self.part1.blocks.all()[1].typology.name, non_word_block_type)
+        self.assertEqual(self.part1.blocks.all()[2].typology.name, word_block_type)
+        self.assertEqual(self.part1.blocks.all()[3].typology, None)  # invalid
+        self.assertEqual(self.part1.lines.all()[0].typology, None)
+        self.assertEqual(self.part1.lines.all()[1].typology.name, non_word_line_type)
+        self.assertEqual(self.part1.lines.all()[2].typology, None)  # invalid
         self.assertEqual(self.part1.lines.count(), 3)
 
     def test_iiif(self):
@@ -473,7 +476,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(21):
+        with self.assertNumQueries(22):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -487,7 +490,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(31):
+        with self.assertNumQueries(32):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -512,7 +515,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
         self.client.force_login(self.user)
-        with self.assertNumQueries(21):
+        with self.assertNumQueries(22):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,

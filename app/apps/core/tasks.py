@@ -16,7 +16,10 @@ from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
-from kraken.lib import train as kraken_train
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
+from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPER_PARAMS
+from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
+from pytorch_lightning.callbacks import Callback
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -28,11 +31,14 @@ redis_ = get_redis_connection()
 
 
 # tasks for which to keep track of the state and update the front end
-STATE_TASKS = [
-    'core.tasks.binarize',
-    'core.tasks.segment',
-    'core.tasks.transcribe'
-]
+# options:
+#   multipart - set True if task uses array of part_pks instead of instance_pk of a single part
+STATE_TASKS = {
+    'core.tasks.binarize': {'multipart': False},
+    'core.tasks.segment': {'multipart': False},
+    'core.tasks.transcribe': {'multipart': False},
+    'core.tasks.align': {'multipart': True},
+}
 
 
 def update_client_state(part_id, task, status, task_id=None, data=None):
@@ -146,7 +152,7 @@ def binarize(instance_pk=None, user_pk=None, binarizer=None, threshold=None, **k
 def make_segmentation_training_data(part):
     data = {
         'image': part.image.path,
-        'baselines': [{'script': line.typology and line.typology.name or 'default',
+        'baselines': [{'tags': {'type': line.typology and line.typology.name or 'default'},
                        'baseline': line.baseline}
                       for line in part.lines.only('baseline', 'typology')
                       if line.baseline],
@@ -156,6 +162,37 @@ def make_segmentation_training_data(part):
             key=lambda reg: reg.typology and reg.typology.name or 'default')}
     }
     return data
+
+
+class FrontendFeedback(Callback):
+    """
+    Callback that sends websocket messages to the front for feedback display
+    """
+    def __init__(self, es_model, model_directory, document_pk, *args, **kwargs):
+        self.es_model = es_model
+        self.model_directory = model_directory
+        self.document_pk = document_pk
+        super().__init__(*args, **kwargs)
+
+    def on_train_epoch_end(self, trainer, pl_module) -> None:
+        self.es_model.refresh_from_db()
+        self.es_model.training_epoch = trainer.current_epoch
+        val_metric = float(trainer.logged_metrics['val_metric'])
+        self.es_model.training_accuracy = val_metric
+        # model.training_total = chars
+        # model.training_errors = error
+        relpath = os.path.relpath(self.model_directory, settings.MEDIA_ROOT)
+        self.es_model.new_version(file=f'{relpath}/version_{trainer.current_epoch}.mlmodel')
+        self.es_model.save()
+
+        send_event('document', self.document_pk, "training:eval", {
+            "id": self.es_model.pk,
+            'versions': self.es_model.versions,
+            'epoch': trainer.current_epoch,
+            'accuracy': val_metric
+            # 'chars': chars,
+            # 'error': error
+        })
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -194,7 +231,7 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
     try:
         load = model.file.path
     except ValueError:  # model is empty
-        load = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+        load = SEGMENTATION_DEFAULT_MODEL
         model.file = model.file.field.upload_to(model, slugify(model.name) + '.mlmodel')
 
     model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
@@ -228,48 +265,46 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
         for part in qs[:partition]:
             evaluation_data.append(make_segmentation_training_data(part))
 
-        DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+        if device_ == 'cpu':
+            device = None
+        elif device_.startswith('cuda'):
+            device = [int(device_.split(':')[-1])]
+
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
-        trainer = kraken_train.KrakenTrainer.segmentation_train_gen(
-            message=msg,
-            output=os.path.join(model_dir, 'version'),
-            format_type=None,
-            device=DEVICE,
-            load=load,
-            training_data=training_data,
-            evaluation_data=evaluation_data,
-            threads=LOAD_THREADS,
-            augment=True,
-            resize='both',
-            hyper_params={'epochs': 30},
-            load_hyper_parameters=True,
-            topline=topline
-        )
 
-        def _print_eval(epoch=0, accuracy=0, mean_acc=0, mean_iu=0, freq_iu=0,
-                        val_metric=0):
-            model.refresh_from_db()
-            model.training_epoch = epoch
-            model.training_accuracy = float(val_metric)
-            # model.training_total = chars
-            # model.training_errors = error
-            relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
-            model.new_version(file=f'{relpath}/version_{epoch}.mlmodel')
-            model.save()
+        kraken_model = SegmentationModel(SEGMENTATION_HYPER_PARAMS,
+                                         output=os.path.join(model_dir, 'version'),
+                                         # spec=spec,
+                                         model=load,
+                                         format_type=None,
+                                         training_data=training_data,
+                                         evaluation_data=evaluation_data,
+                                         partition=partition,
+                                         num_workers=LOAD_THREADS,
+                                         load_hyper_parameters=True,
+                                         # force_binarization=force_binarization,
+                                         # suppress_regions=suppress_regions,
+                                         # suppress_baselines=suppress_baselines,
+                                         # valid_regions=valid_regions,
+                                         # valid_baselines=valid_baselines,
+                                         # merge_regions=merge_regions,
+                                         # merge_baselines=merge_baselines,
+                                         # bounding_regions=bounding_regions,
+                                         resize='both',
+                                         topline=topline)
 
-            send_event('document', document_pk, "training:eval", {
-                "id": model.pk,
-                'versions': model.versions,
-                'epoch': epoch,
-                'accuracy': float(val_metric)
-                # 'chars': chars,
-                # 'error': error
-            })
+        trainer = KrakenTrainer(gpus=device,
+                                # max_epochs=2,
+                                # min_epochs=5,
+                                enable_progress_bar=False,
+                                val_check_interval=1,
+                                callbacks=[FrontendFeedback(model, model_dir, document_pk)])
 
-        trainer.run(_print_eval)
+        trainer.fit(kraken_model)
 
         best_version = os.path.join(model_dir,
-                                    f'version_{trainer.stopper.best_epoch}.mlmodel')
+                                    f'version_{kraken_model.best_epoch}.mlmodel')
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
@@ -288,13 +323,14 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
         logger.exception(e)
         raise e
     else:
+        model.file_size = model.file.size
+
         if user:
             user.notify(_("Training finished!"),
                         id="training-success",
                         level='success')
     finally:
         model.training = False
-        model.file_size = model.file.size
         model.save()
 
         send_event('document', document_pk, "training:done", {
@@ -417,50 +453,51 @@ def train_(qs, document, transcription, model=None, user=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    DEVICE = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
+    if device_ == 'cpu':
+        device = None
+    elif device_.startswith('cuda'):
+        device = [int(device_.split(':')[-1])]
+
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+
     if (document.main_script
         and (document.main_script.text_direction == 'horizontal-rl'
              or document.main_script.text_direction == 'vertical-rl')):
         reorder = 'R'
     else:
         reorder = 'L'
-    trainer = (kraken_train.KrakenTrainer
-               .recognition_train_gen(device=DEVICE,
-                                      load=load,
-                                      output=os.path.join(model_dir, 'version'),
-                                      format_type=None,
-                                      training_data=training_data,
-                                      evaluation_data=evaluation_data,
-                                      resize='add',
-                                      threads=LOAD_THREADS,
-                                      augment=True,
-                                      hyper_params={'batch_size': 1},
-                                      load_hyper_parameters=True,
-                                      reorder=reorder))
 
-    def _print_eval(epoch=0, accuracy=0, chars=0, error=0, val_metric=0):
-        model.refresh_from_db()
-        model.training_epoch = epoch
-        model.training_accuracy = float(accuracy.item())
-        model.training_total = int(chars)
-        model.training_errors = int(error)
-        relpath = os.path.relpath(model_dir, settings.MEDIA_ROOT)
-        model.new_version(file=f'{relpath}/version_{epoch}.mlmodel')
-        model.save()
+    kraken_model = RecognitionModel(hyper_params=RECOGNITION_HYPER_PARAMS,
+                                    output=os.path.join(model_dir, 'version'),
+                                    # spec=spec,
+                                    # append=append,
+                                    model=load,
+                                    reorder=reorder,
+                                    format_type=None,
+                                    training_data=training_data,
+                                    evaluation_data=evaluation_data,
+                                    partition=partition,
+                                    # binary_dataset_split=fixed_splits,
+                                    num_workers=LOAD_THREADS,
+                                    load_hyper_parameters=True,
+                                    repolygonize=False,
+                                    # force_binarization=force_binarization,
+                                    # codec=codec,
+                                    resize='add')
 
-        send_event('document', document.pk, "training:eval", {
-            "id": model.pk,
-            'versions': model.versions,
-            'epoch': epoch,
-            'accuracy': float(accuracy.item()),
-            'chars': int(chars),
-            'error': int(error)})
+    trainer = KrakenTrainer(gpus=device,
+                            # max_epochs=,
+                            # min_epochs=hyper_params['min_epochs'],
+                            enable_progress_bar=False,
+                            val_check_interval=1,
+                            # deterministic=ctx.meta['deterministic'],
+                            callbacks=[FrontendFeedback(model, model_dir, document.pk)])
 
-    trainer.run(_print_eval)
+    trainer.fit(kraken_model)
 
-    if trainer.stopper.best_epoch != 0:
-        best_version = os.path.join(model_dir, f'version_{trainer.stopper.best_epoch}.mlmodel')
+    if kraken_model.best_epoch != 0:
+        best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
         shutil.copy(best_version, model.file.path)
     else:
         raise ValueError('No model created.')
@@ -505,6 +542,7 @@ def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **
               .exclude(Q(content='') | Q(content=None)))
         train_(qs, document, transcription, model=model, user=user)
     except Exception as e:
+        # TODO: catch KrakenInputException specificely?
         send_event('document', document.pk, "training:error", {
             "id": model.pk,
         })
@@ -513,13 +551,14 @@ def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **
                         id="training-error", level='danger')
         logger.exception(e)
     else:
+        model.file_size = model.file.size
+
         if user:
             user.notify(_("Training finished!"),
                         id="training-success",
                         level='success')
     finally:
         model.training = False
-        model.file_size = model.file.size
         model.save()
 
         send_event('document', document.pk, "training:done", {
@@ -553,6 +592,7 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
         part.transcribe(model)
+
     except Exception as e:
         if user:
             user.notify(_("Something went wrong during the transcription!"),
@@ -568,6 +608,85 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
                         level='success')
 
 
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def align(
+    task,
+    document_pk=None,
+    part_pks=[],
+    user_pk=None,
+    transcription_pk=None,
+    witness_pk=None,
+    n_gram=25,
+    max_offset=0,
+    merge=False,
+    full_doc=True,
+    threshold=0.8,
+    region_types=["Orphan", "Undefined"],
+    layer_name=None,
+    beam_size=20,
+    **kwargs
+):
+    """Start document alignment on the passed parts, using the passed settings"""
+    try:
+        Document = apps.get_model('core', 'Document')
+        doc = Document.objects.get(pk=document_pk)
+    except Document.DoesNotExist:
+        logger.error('Trying to align text on non-existent Document: %d', document_pk)
+        return
+
+    if user_pk:
+        try:
+            user = get_user_model().objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes
+            if not settings.DISABLE_QUOTAS and user.cpu_minutes_limit() is not None:
+                assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    # set redis alignment task data
+    redis_.set('align-%d' % document_pk, json.dumps({'task_id': task.request.id}))
+
+    try:
+        doc.align(
+            part_pks,
+            transcription_pk,
+            witness_pk,
+            n_gram,
+            max_offset,
+            merge,
+            full_doc,
+            threshold,
+            region_types,
+            layer_name,
+            beam_size,
+        )
+    except Exception as e:
+        if user:
+            user.notify(_("Something went wrong during the alignment!"),
+                        id="alignment-error", level='danger')
+        DocumentPart = apps.get_model('core', 'DocumentPart')
+        parts = DocumentPart.objects.filter(pk__in=part_pks)
+        for part in parts:
+            part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+            send_event("document", document_pk, "part:workflow", {
+                "id": part.pk,
+                "process": "align",
+                "status": "canceled",
+                "task_id": task.request.id,
+            })
+            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+        logger.exception(e)
+        raise e
+    else:
+        if user:
+            user.notify(_("Alignment done!"),
+                        id="alignment-success",
+                        level='success')
+
+
 def check_signal_order(old_signal, new_signal):
     SIGNAL_ORDER = ['before_task_publish', 'task_prerun', 'task_failure', 'task_success']
     return SIGNAL_ORDER.index(old_signal) < SIGNAL_ORDER.index(new_signal)
@@ -575,10 +694,17 @@ def check_signal_order(old_signal, new_signal):
 
 @before_task_publish.connect
 def before_publish_state(sender=None, body=None, **kwargs):
-    if sender not in STATE_TASKS:
+    if sender not in STATE_TASKS.keys():
         return
-    instance_id = body[1]["instance_pk"]
-    data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+    if STATE_TASKS[sender]["multipart"] is True:
+        # multipart will have array of part_pks instead of instance_pk
+        instance_ids = body[1]["part_pks"]
+    else:
+        instance_pk = body[1]["instance_pk"]
+        instance_ids = [instance_pk]
+
+    for instance_id in instance_ids:
+        data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
 
     signal_name = kwargs['signal'].name
 
@@ -594,23 +720,30 @@ def before_publish_state(sender=None, body=None, **kwargs):
         "task_id": kwargs['headers']['id'],
         "status": 'before_task_publish'
     }
-    redis_.set('process-%d' % instance_id, json.dumps(data))
-    try:
-        update_client_state(instance_id, sender, 'pending')
-    except NameError:
-        pass
+    for instance_id in instance_ids:
+        redis_.set('process-%d' % instance_id, json.dumps(data))
+        try:
+            update_client_state(instance_id, sender, 'pending')
+        except NameError:
+            pass
 
 
 @task_prerun.connect
 @task_success.connect
 @task_failure.connect
 def done_state(sender=None, body=None, **kwargs):
-    if sender.name not in STATE_TASKS:
+    if sender.name not in STATE_TASKS.keys():
         return
-    instance_id = sender.request.kwargs["instance_pk"]
+    if STATE_TASKS[sender.name]["multipart"] is True:
+        # multipart will have array of part_pks instead of instance_pk
+        instance_ids = sender.request.kwargs["part_pks"]
+    else:
+        instance_pk = sender.request.kwargs["instance_pk"]
+        instance_ids = [instance_pk]
 
     try:
-        data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
+        for instance_id in instance_ids:
+            data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
     except TypeError as e:
         logger.exception(e)
         return
@@ -637,10 +770,13 @@ def done_state(sender=None, body=None, **kwargs):
     if status == 'error':
         # remove any pending task down the chain
         data = {k: v for k, v in data.items() if v['status'] != 'pending'}
-    redis_.set('process-%d' % instance_id, json.dumps(data))
+    for instance_id in instance_ids:
+        redis_.set('process-%d' % instance_id, json.dumps(data))
 
     if status == 'done':
         result = kwargs.get('result', None)
     else:
         result = None
-    update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)
+
+    for instance_id in instance_ids:
+        update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)

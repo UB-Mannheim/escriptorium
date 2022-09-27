@@ -28,6 +28,8 @@ from api.serializers import (
     BlockTypeSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
+    DocumentPartMetadataSerializer,
+    DocumentPartTypeSerializer,
     DocumentSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
@@ -61,6 +63,8 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
+    DocumentPartType,
     DocumentTag,
     ImageAnnotation,
     Line,
@@ -396,6 +400,20 @@ class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
         return context
 
 
+class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = DocumentPartMetadata.objects.all().select_related('part')
+    serializer_class = DocumentPartMetadataSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(part=self.kwargs.get('part_pk'))
+        return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
+        return context
+
+
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
 
@@ -403,7 +421,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         qs = super().get_queryset()
         qs = qs.filter(document=self.kwargs.get('document_pk'))
         if self.action == 'retrieve':
-            return qs.prefetch_related('lines', 'blocks')
+            return qs.prefetch_related('lines', 'blocks', 'metadata')
         else:
             return qs
 
@@ -445,7 +463,10 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
         part.cancel_tasks()
         part.refresh_from_db()
-        del part.tasks  # reset cache
+        try:
+            del part.tasks  # reset cache, if present
+        except AttributeError:
+            pass
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
     @action(detail=True, methods=['post'])
@@ -527,6 +548,11 @@ class LineTypeViewSet(ModelViewSet):
 class AnnotationTypeViewSet(ModelViewSet):
     queryset = AnnotationType.objects.filter(public=True)
     serializer_class = AnnotationTypeSerializer
+
+
+class DocumentPartTypeViewSet(ModelViewSet):
+    queryset = DocumentPartType.objects.filter(public=True)
+    serializer_class = DocumentPartTypeSerializer
 
 
 class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -724,7 +750,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
               .filter(line__document_part=self.kwargs['part_pk'])
               .filter(line__document_part__document=self.kwargs['document_pk'])
               .select_related('line', 'transcription')
-              .order_by('line__order'))
+              .order_by('line__order', 'id'))
         transcription = self.request.GET.get('transcription')
         if transcription:
             qs = qs.filter(transcription=transcription)

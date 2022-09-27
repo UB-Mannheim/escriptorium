@@ -104,7 +104,7 @@ services:
     # example values here are given for 16 cores and 16g of memory keeping 2 cores and 1g of memory at all time
     # for http & db assuming a low amount of concurrent users <50
 
-    celery-main:
+    celery-main: &celery-main
       restart: always
       # deploy:
       #   mode: replicated
@@ -165,8 +165,20 @@ services:
     #    environment:
     #       - KRAKEN_TRAINING_DEVICE=cuda:1
 
-  # celerybeat:
-     #   restart: always
+    # Needed to enable text alignment with passim!
+    # unfortunately need to replicate everything because docker-compose only understands one level of inheritance..
+    # celery-jvm:
+    #   image: registry.gitlab.com/scripta/escriptorium:latest
+    #   build:
+    #     context: .
+    #   env_file: variables.env
+    #   volumes:
+    #     - static:/usr/src/app/static
+    #     - media:/usr/src/app/media
+    #   command: "celery worker -l INFO -E -A escriptorium -Ofair --prefetch-multiplier 1 -Q jvm -c 1 --max-tasks-per-child=1"
+
+    # celerybeat:
+      # restart: always
 
   prometheus:
     image: prom/prometheus:v2.1.0

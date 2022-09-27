@@ -39,3 +39,6 @@ window.bootImageCards = bootImageCards;
 
 import { bootModels } from './models.js';
 window.bootModels = bootModels;
+
+import { bootAlignForm } from './align_form.js';
+window.bootAlignForm = bootAlignForm;

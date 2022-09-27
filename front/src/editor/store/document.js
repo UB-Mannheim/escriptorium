@@ -18,8 +18,14 @@ export const initialState = () => ({
         source: userProfile.get('visible-panels')?userProfile.get('visible-panels').source:false,
         segmentation: userProfile.get('visible-panels')?userProfile.get('visible-panels').segmentation:true,
         visualisation: userProfile.get('visible-panels')?userProfile.get('visible-panels').visualisation:true,
-        diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
+        diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false,
+        metadata: userProfile.get('visible-panels')?userProfile.get('visible-panels').metadata:false
     },
+
+    // Confidence overlay visibility
+    confidenceVisible: false,
+    // exponential scale factor for confidence overlay
+    confidenceScale: 4,
 
     enabledVKs: userProfile.get('VK-enabled')? userProfile.get('VK-enabled'):[]
 })
@@ -58,6 +64,12 @@ export const mutations = {
     setEnabledVKs(state, vks) {
         state.enabledVKs = Object.assign([], state.enabledVKs, vks)
     },
+    setConfidenceScale(state, scale) {
+        state.confidenceScale = scale;
+    },
+    setConfidenceVizGloballyEnabled(state, enabled) {
+        state.confidenceVisible = enabled;
+    },
     reset (state) {
         Object.assign(state, initialState())
     }
@@ -67,9 +79,16 @@ export const actions = {
     async fetchDocument ({state, commit}) {
         const resp = await api.retrieveDocument(state.id)
         let data = resp.data
+        var valid_part_types = data.valid_part_types
+        valid_part_types.unshift({pk: null, name: 'Element'})
+
         commit('transcriptions/set', data.transcriptions, {root: true})
-        commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
+        commit('setTypes', { 'regions': data.valid_block_types,
+                             'lines': data.valid_line_types,
+                             'parts': valid_part_types
+                           })
         commit('setPartsCount', data.parts_count)
+        commit('setConfidenceVizGloballyEnabled', data.show_confidence_viz)
 
         let page=1;
         var img_taxos = [];
@@ -100,6 +119,10 @@ export const actions = {
 
         // Persist final value in user profile
         userProfile.set('visible-panels', state.visible_panels)
+    },
+
+    async scaleConfidence({ commit }, scale) {
+        commit('setConfidenceScale', scale);
     }
 }
 

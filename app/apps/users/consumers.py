@@ -1,8 +1,11 @@
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from channels.layers import get_channel_layer
+
+logger = logging.getLogger(__name__)
 
 
 def get_group_name(user_pk):
@@ -15,22 +18,30 @@ def get_room_name(cls, pk):
 
 def send_event(cls, pk, event_name, data):
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        get_room_name(cls, pk),
-        {'type': 'notification_event',
-         'name': event_name,
-         'data': data})
+    try:
+        async_to_sync(channel_layer.group_send)(
+            get_room_name(cls, pk),
+            {'type': 'notification_event',
+             'name': event_name,
+             'data': data})
+    except Exception as e:
+        # channel fails shouldn't crash the calling process
+        logger.exception(e)
 
 
 def send_notification(user_pk, message, id=None, level='info', links=None):
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        get_group_name(user_pk),
-        {'type': 'notification_message',
-         'id': id,
-         'level': level,
-         'text': message,
-         'links': links or []})
+    try:
+        async_to_sync(channel_layer.group_send)(
+            get_group_name(user_pk),
+            {'type': 'notification_message',
+             'id': id,
+             'level': level,
+             'text': message,
+             'links': links or []})
+    except Exception as e:
+        # channel fails shouldn't crash the calling process
+        logger.exception(e)
 
 
 class NotificationConsumer(WebsocketConsumer):

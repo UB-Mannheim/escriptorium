@@ -15,6 +15,9 @@ export const initialState = () => ({
     transcription_progress: null,
     typology: null,
     workflow: {},
+    metadata: null,
+    typologies: null,
+    comments: null
 })
 
 export const mutations = {
@@ -24,6 +27,9 @@ export const mutations = {
     load (state, part) {
         assign(state, part)
         state.loaded = true
+    },
+    setMetadata(state, metadata) {
+        state.metadata = metadata
     },
     reset (state) {
         assign(state, initialState())
@@ -61,6 +67,11 @@ export const actions = {
         delete data.regions
 
         commit('load', data)
+    },
+
+    async updatePart({state, commit, dispatch, rootState}, data) {
+        const resp = await api.updatePart(rootState.document.id, state.pk, data)
+        commit('load', resp.data)
     },
 
     async rotate({state, commit, dispatch, rootState}, angle) {
@@ -105,6 +116,20 @@ export const actions = {
         } catch (err) {
             console.log('couldnt fetch part data!', err)
         }
+    },
+    async createPartMetadata({state, commit, rootState}, data) {
+        await api.createPartMetadata(rootState.document.id, state.pk, data)
+        const resp = await api.retrievePartMetadata(rootState.document.id, state.pk)
+        commit('setMetadata', resp.data.results)
+    },
+    async updatePartMetadata({state, commit, rootState}, {pk, data}) {
+        await api.updatePartMetadata(rootState.document.id, state.pk, pk, data)
+    },
+    async deletePartMetadata({state, commit, rootState}, rowPk) {
+        await api.deletePartMetadata(rootState.document.id, state.pk, rowPk)
+        var metadata = state.metadata;
+        const idx = metadata.findIndex(md => md.id == rowPk);
+        metadata.splice(idx, 1);
     },
 }
 

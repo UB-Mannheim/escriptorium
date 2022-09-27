@@ -1,142 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xmlns="http://www.loc.gov/standards/alto/ns-v4#"
-      xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd">
+  xmlns="http://www.loc.gov/standards/alto/ns-v4#" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd">
   <Description>
     <MeasurementUnit>pixel</MeasurementUnit>
     <sourceImageInformation>
       <fileName>default2.png</fileName>
-      
     </sourceImageInformation>
   </Description>
-  
+
   <Layout>
-    <Page WIDTH="747"
-          HEIGHT="212"
-          PHYSICAL_IMG_NR="1"
-          ID="eSc_dummypage_">
-      <PrintSpace HPOS="0"
-                  VPOS="0"
-                  WIDTH="747"
-                  HEIGHT="212">
-        
-        <TextBlock HPOS="190"
-                   VPOS="25"
-                   WIDTH="320"
-                   HEIGHT="40"
-                   ID="eSc_textblock_11"
-                   TAGREFS="BT1">
-          <Shape><Polygon POINTS="190 25 510 65"/></Shape>
-          
-          
-          <TextLine ID="eSc_line_11"
-                    
-                    BASELINE="200 45 500 45" 
-                    HPOS="200"
-                    VPOS="30"
-                    WIDTH="300"
-                    HEIGHT="30">
-            <Shape><Polygon POINTS="200 30 500 30 500 60 200 60"/></Shape>
-\t    <String CONTENT="Another simple test for eScriptorium"
-                    HPOS="200"
-                    VPOS="30"
-                    WIDTH="300"
-                    HEIGHT="30"></String>
-          </TextLine>
+    <Page WIDTH="747" HEIGHT="212" PHYSICAL_IMG_NR="1" ID="eSc_dummypage_">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="747" HEIGHT="212">
+        <TextBlock HPOS="190" VPOS="25" WIDTH="320" HEIGHT="40" ID="eSc_textblock_11" TAGREFS="BT1">
+          <Shape>
+            <Polygon POINTS="190 25 510 65"/>
+          </Shape>
 
-          
+          <TextLine ID="eSc_line_11" BASELINE="200 45 500 45" HPOS="200" VPOS="30" WIDTH="300" HEIGHT="30">
+            <Shape>
+              <Polygon POINTS="200 30 500 30 500 60 200 60"/>
+            </Shape>
+            <String CONTENT="Another simple test for eScriptorium" HPOS="200" VPOS="30" WIDTH="300" HEIGHT="30"></String>
+          </TextLine>
         </TextBlock>
-        
-        <TextBlock HPOS="90"
-                   VPOS="125"
-                   WIDTH="470"
-                   HEIGHT="90"
-                   ID="eSc_textblock_12"
-                   TAGREFS="BT2">
-          <Shape><Polygon POINTS="90 125 560 215"/></Shape>
-          
-          
-          <TextLine ID="eSc_line_12"
-                    
-                    BASELINE="100 140 550 140" 
-                    HPOS="100"
-                    VPOS="130"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 130 550 130 550 150 100 150"/></Shape>
-\t    <String CONTENT="More text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="130"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+
+        <TextBlock HPOS="90" VPOS="125" WIDTH="470" HEIGHT="90" ID="eSc_textblock_12" TAGREFS="BT2">
+          <Shape>
+            <Polygon POINTS="90 125 560 215"/>
+          </Shape>
+
+          <TextLine ID="eSc_line_12" BASELINE="100 140 550 140" HPOS="100" VPOS="130" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 130 550 130 550 150 100 150"/>
+            </Shape>
+            <String CONTENT="More text to be exported during a document_export Celery task." HPOS="100" VPOS="130" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
 
-          
-          
-          <TextLine ID="eSc_line_13"
-                    
-                    BASELINE="100 170 550 170" 
-                    HPOS="100"
-                    VPOS="160"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 160 550 160 550 180 100 180"/></Shape>
-\t    <String CONTENT="More text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="160"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+          <TextLine ID="eSc_line_13" BASELINE="100 170 550 170" HPOS="100" VPOS="160" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 160 550 160 550 180 100 180"/>
+            </Shape>
+            <String CONTENT="More text to be exported during a document_export Celery task." HPOS="100" VPOS="160" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
 
-          
-          
-          <TextLine ID="eSc_line_14"
-                    
-                    BASELINE="100 200 550 200" 
-                    HPOS="100"
-                    VPOS="190"
-                    WIDTH="450"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="100 190 550 190 550 210 100 210"/></Shape>
-\t    <String CONTENT="More text to be exported during a document_export Celery task."
-                    HPOS="100"
-                    VPOS="190"
-                    WIDTH="450"
-                    HEIGHT="20"></String>
+          <TextLine ID="eSc_line_14" BASELINE="100 200 550 200" HPOS="100" VPOS="190" WIDTH="450" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="100 190 550 190 550 210 100 210"/>
+            </Shape>
+            <String CONTENT="More text to be exported during a document_export Celery task." HPOS="100" VPOS="190" WIDTH="450" HEIGHT="20"></String>
           </TextLine>
-
-          
         </TextBlock>
-        
-        <TextBlock HPOS="390"
-                   VPOS="245"
-                   WIDTH="220"
-                   HEIGHT="30"
-                   ID="eSc_textblock_13"
-                   TAGREFS="BT3">
-          <Shape><Polygon POINTS="390 245 610 275"/></Shape>
-          
-          
-          <TextLine ID="eSc_line_15"
-                    
-                    BASELINE="400 260 600 260" 
-                    HPOS="400"
-                    VPOS="250"
-                    WIDTH="200"
-                    HEIGHT="20">
-            <Shape><Polygon POINTS="400 250 600 250 600 270 400 270"/></Shape>
-\t    <String CONTENT="Another beautiful signature"
-                    HPOS="400"
-                    VPOS="250"
-                    WIDTH="200"
-                    HEIGHT="20"></String>
+
+        <TextBlock HPOS="390" VPOS="245" WIDTH="220" HEIGHT="30" ID="eSc_textblock_13" TAGREFS="BT3">
+          <Shape>
+            <Polygon POINTS="390 245 610 275"/>
+          </Shape>
+
+          <TextLine ID="eSc_line_15" BASELINE="400 260 600 260" HPOS="400" VPOS="250" WIDTH="200" HEIGHT="20">
+            <Shape>
+              <Polygon POINTS="400 250 600 250 600 270 400 270"/>
+            </Shape>
+            <String CONTENT="Another beautiful signature" HPOS="400" VPOS="250" WIDTH="200" HEIGHT="20"></String>
           </TextLine>
-
-          
         </TextBlock>
-        
-
-        
       </PrintSpace>
     </Page>
   </Layout>

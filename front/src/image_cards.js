@@ -40,7 +40,7 @@ function openWizard(proc) {
 }
 
 class partCard {
-    constructor(part, cpuMinutesLeft) {
+    constructor(part, cpuMinutesLeft, showConfidenceViz) {
         this.pk = part.pk;
         this.order = part.order;
         this.name = part.name;
@@ -54,6 +54,7 @@ class partCard {
         this.task_ids = {};  // helps preventing card status race conditions
         this.progress = part.transcription_progress;
         this.locked = false;
+        this.avgConfidence = part.max_avg_confidence;
 
         this.api = API.part.replace('{part_pk}', this.pk);
 
@@ -91,16 +92,29 @@ class partCard {
         this.binarizedButton = $('.js-binarized', this.$element);
         this.segmentedButton = $('.js-segmented', this.$element);
         this.transcribeButton = $('.js-trans-progress', this.$element);
+        this.alignButton = $('.js-align', this.$element);
         this.progressBar = $('.progress-bar', this.transcribeButton);
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
         var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+
+        // show avg confidence on the card
+        var avgConfidenceElement = this.progressBar;
+        if (this.avgConfidence && showConfidenceViz) {
+            avgConfidenceElement.attr('title', `Confidence: ${(this.avgConfidence * 100).toFixed(1)}%`);
+
+            const hue = Math.pow(this.avgConfidence, 4) * 120;
+            avgConfidenceElement.css('background-color', `hsl(${hue}, 100%, 50%, 50%)`);
+        }
+
         this.editButton.click(function(ev) {
             document.location.replace(url);
         });
         this.cancelTasksButton.click($.proxy(function(ev) {
-            this.cancelTasks();
+            if (!['ongoing', 'pending'].includes(this.workflow['align']) || window.confirm("This will stop ALL alignment tasks on this document. Are you sure you want to stop alignment?")) {
+                this.cancelTasks();
+            }
         }, this));
 
         if (cpuMinutesLeft !== "False") {
@@ -119,6 +133,13 @@ class partCard {
                 partCard.refreshSelectedCount();
                 openWizard('transcribe');
             }, this));
+            if (this.alignButton) {
+                this.alignButton.click($.proxy(function(ev) {
+                    this.select();
+                    partCard.refreshSelectedCount();
+                    openWizard('align');
+                }, this));
+            }
         }
 
         this.index = $('.card', '#cards-container').index(this.$element);
@@ -172,7 +193,8 @@ class partCard {
         return ((this.workflow['convert'] == 'pending' ||
                  this.workflow['binarize'] == 'pending' ||
                  this.workflow['segment'] == 'pending' ||
-                 this.workflow['transcribe'] == 'pending') &&
+                 this.workflow['transcribe'] == 'pending' ||
+                 this.workflow['align'] == 'pending') &&
                 !this.working());
     }
 
@@ -180,16 +202,18 @@ class partCard {
         return (this.workflow['convert'] == 'ongoing' ||
                 this.workflow['binarize'] == 'ongoing' ||
                 this.workflow['segment'] == 'ongoing' ||
-                this.workflow['transcribe'] == 'ongoing');
+                this.workflow['transcribe'] == 'ongoing' ||
+                this.workflow['align'] == 'ongoing');
     }
 
     isCancelable() {
-        return (this.workflow['binarize'] == 'ongoing' ||
-                this.workflow['segment'] == 'ongoing' ||
-                this.workflow['transcribe'] == 'ongoing' ||
-                this.workflow['binarize'] == 'pending' ||
-                this.workflow['segment'] == 'pending' ||
-                this.workflow['transcribe'] == 'pending');
+        const workflows = [
+            this.workflow['align'],
+            this.workflow['binarize'],
+            this.workflow['segment'],
+            this.workflow['transcribe'],
+        ]
+        return workflows.some(workflow => ['ongoing', 'pending'].includes(workflow));
     }
 
     updateThumbnail() {
@@ -210,13 +234,14 @@ class partCard {
             ['convert', this.convertIcon],
             ['binarize', this.binarizedButton],
             ['segment', this.segmentedButton],
-            ['transcribe', this.transcribeButton]];
+            ['transcribe', this.transcribeButton],
+            ['align', this.alignButton]];
         for (var i=0; i < map.length; i++) {
             var proc = map[i][0], btn = map[i][1];
-            if (this.workflow[proc] == undefined) {
+            if (btn && this.workflow[proc] == undefined) {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.attr('title', btn.data('title'));
-            } else {
+            } else if (btn) {
                 btn.removeClass('pending').removeClass('ongoing').removeClass('error').removeClass('done');
                 btn.addClass(this.workflow[proc]);
                 btn.attr('title', btn.data('title') + ' ('+this.workflow[proc]+')');
@@ -301,8 +326,19 @@ class partCard {
 
     cancelTasks() {
         $.post(this.api + 'cancel/', {}).done($.proxy(function(data){
-            this.workflow = data.workflow;
-            this.updateWorkflowIcons();
+            if (data.workflow.align !== this.workflow.align) {
+                // update alignment workflow for all affected parts
+                $('#cards-container .card').each(function(i, el) {
+                    let ic = $(el).data('partCard');
+                    if (ic.workflow.align === 'ongoing') {
+                        ic.workflow = data.workflow;
+                        ic.updateWorkflowIcons();
+                    }
+                });
+            } else {
+                this.workflow = data.workflow;
+                this.updateWorkflowIcons();
+            }
         }, this)).fail($.proxy(function(data){console.log("Couldn't cancel the task.");}));
     }
 
@@ -341,7 +377,7 @@ class partCard {
 }
 
 
-export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
+export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, showConfidenceViz) {
     DOCUMENT_ID = documentId;
     API = {
         'document': '/api/documents/' + DOCUMENT_ID,
@@ -555,7 +591,21 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
         timeout: 0,
         // chunking: true,
         // retryChunks: true,
-        parallelUploads: 1  // ! important or the 'order' field gets duplicates
+        parallelUploads: 1,  // ! important or the 'order' field gets duplicates
+        error: (file, message) => {
+            if (file.previewElement) {
+                file.previewElement.classList.add("dz-error");
+                if (typeof message !== "string" && message.image) {
+                    message = message.image.toString();
+                }
+                for (let node of file.previewElement.querySelectorAll(
+                    "[data-dz-errormessage]"
+                )) {
+                    node.textContent = message;
+                }
+            }
+
+        }
     });
 
     //************* New card creation **************
@@ -659,7 +709,7 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft) {
             counter += data.results.length;
             $('#loading-counter').html(counter+'/'+data.count);
             for (var i=0; i<data.results.length; i++) {
-                var pc = new partCard(data.results[i], cpuMinutesLeft);
+                var pc = new partCard(data.results[i], cpuMinutesLeft, showConfidenceViz);
                 if (select == pc.pk) pc.select();
             }
             if (data.next) {

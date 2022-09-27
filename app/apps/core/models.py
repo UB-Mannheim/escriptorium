@@ -5,21 +5,25 @@ import logging
 import math
 import os
 import re
+import shutil
 import subprocess
 import time
 import uuid
 from datetime import datetime
+from glob import glob
+from os import makedirs, path, remove
+from statistics import mean
 
 import numpy as np
 from celery import chain
 from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import Prefetch, Q, Sum
+from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -32,11 +36,12 @@ from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
+from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import models as kraken_models
 from kraken.lib import vgsl
 from kraken.lib.segmentation import calculate_polygonal_environment
 from kraken.lib.util import is_bitonal
-from ordered_model.models import OrderedModel
+from ordered_model.models import OrderedModel, OrderedModelManager
 from PIL import Image
 from shapely import affinity
 from shapely.geometry import LineString, Polygon
@@ -44,6 +49,7 @@ from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
 
 from core.tasks import (
+    align,
     binarize,
     convert,
     generate_part_thumbnails,
@@ -122,7 +128,7 @@ class DocumentTag(Tag):
     )
 
     class Meta:
-        unique_together = ("project", "name")
+        unique_together = ["project", "name"]
 
 
 # class DocumentPartTag(Tag):
@@ -303,7 +309,7 @@ class Metadata(ExportModelOperationsMixin("Metadata"), models.Model):
     public = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ("name",)
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -331,7 +337,7 @@ class Script(ExportModelOperationsMixin("Script"), models.Model):
     blank_char = models.CharField(max_length=1, default=' ', blank=True)  # Blank character in script
 
     class Meta:
-        ordering = ("name",)
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -344,6 +350,15 @@ class DocumentMetadata(ExportModelOperationsMixin("DocumentMetadata"), models.Mo
 
     def __str__(self):
         return "%s:%s" % (self.document.name, self.key.name)
+
+
+class DocumentPartMetadata(models.Model):
+    part = models.ForeignKey("core.DocumentPart", on_delete=models.CASCADE, related_name="metadata")
+    key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
+    value = models.CharField(max_length=512)
+
+    def __str__(self):
+        return "%s:%s" % (self.part.name, self.key.name)
 
 
 class ProjectManager(models.Manager):
@@ -397,7 +412,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
     objects = ProjectManager()
 
     class Meta:
-        ordering = ("-updated_at",)
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return self.name
@@ -490,6 +505,18 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
     valid_line_types = models.ManyToManyField(
         LineType, blank=True, related_name="valid_in"
     )
+    valid_part_types = models.ManyToManyField(
+        DocumentPartType, blank=True, related_name="valid_in"
+    )
+
+    # Temporary stopgap before redesign of confidence visualization tools
+    show_confidence_viz = models.BooleanField(
+        verbose_name=_("Show confidence visualizations"),
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("If checked, enable toggling on and off colorized overlays for automatic transcription (OCR/HTR) confidences."),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -518,16 +545,27 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
     objects = DocumentManager()
 
     class Meta:
-        ordering = ("-updated_at",)
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
+        created = not self.pk
         res = super().save(*args, **kwargs)
-        Transcription.objects.get_or_create(
-            document=self, name=_(Transcription.DEFAULT_NAME)
-        )
+        if created:
+            Transcription.objects.get_or_create(
+                document=self, name=_(Transcription.DEFAULT_NAME)
+            )
+            self.valid_block_types.through.objects.bulk_create(
+                [Document.valid_block_types.through(document_id=self.id, blocktype_id=type_.id)
+                 for type_ in BlockType.objects.filter(public=True, default=True)]
+            )
+            self.valid_line_types.through.objects.bulk_create(
+                [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
+                 for type_ in LineType.objects.filter(public=True, default=True)]
+            )
+
         return res
 
     @property
@@ -571,6 +609,227 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
     def training_model(self):
         return self.ocr_models.filter(training=True).first()
 
+    def tasks_finished(self):
+        """Return False if alignment or other tasks are still happening"""
+        if self.parts.filter(workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING).count() == 0:
+            for part in self.parts.all():
+                if not part.tasks_finished():
+                    return False
+            return True
+        return False
+
+    def build_alignment_input_dict(self, line_transcriptions, pk):
+        """Helper function for alignment to create a dict of lines for Passim input"""
+        line_ids = []
+        line_start = 0
+        text = ""
+        for lt in line_transcriptions:
+            # prep the line transcription to serialize to json
+            line_dict = {
+                "id": str(lt.line.pk),
+                "start": line_start,
+            }
+            text = text + lt.content + "\n"
+            line_ids.append(line_dict)
+            line_start = line_start + len(lt.content + "\n")
+        return {
+            "text": text,
+            "id": pk,
+            "lineIDs": line_ids,
+            "ref": 0,  # distinguishes OCR from witness
+        }
+
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size):
+        """Use subprocess call to Passim to align transcription with textual witness"""
+        parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
+
+        for part in parts:
+            # set workflow state
+            part.workflow_state = part.WORKFLOW_STATE_ALIGNING
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
+        # set output directory
+        outdir = path.join(
+            settings.MEDIA_ROOT,
+            f"alignments/document-{self.pk}/t{transcription_pk}+w{witness_pk}-{hex(int(time.time()))[2:]}",
+        )
+
+        # get relevant LineTranscriptions
+        all_line_transcriptions = LineTranscription.objects.filter(
+            transcription__pk=transcription_pk  # transcription matches the filter
+        )
+        # filter by region type
+        region_filters = Block.get_filters(block_types=region_types, filtering_lines=True)
+        all_line_transcriptions = all_line_transcriptions.filter(region_filters)
+
+        # ensure lines are in order
+        all_line_transcriptions = all_line_transcriptions.order_by(
+            "line__document_part", "line__document_part__order", "line__order"
+        )
+
+        # build the JSON input for passim
+        input_list = []
+        if not full_doc:
+            for part in parts:
+                line_transcriptions = all_line_transcriptions.filter(
+                    line__document_part=part,  # has lines related to this DocumentPart
+                ).order_by(
+                    "line__document_part", "line__document_part__order", "line__order"
+                )
+                input_list.append(self.build_alignment_input_dict(line_transcriptions, part.pk))
+        else:
+            input_list.append(self.build_alignment_input_dict(all_line_transcriptions, self.pk))
+
+        witness = TextualWitness.objects.get(pk=witness_pk)
+        f = witness.file.open('r')
+        txt = f.read()
+        witness_dict = {
+            "id": "witness",
+            "text": txt,
+            "ref": 1,  # distinguishes witness from OCR
+        }
+        input_list.append(witness_dict)
+        # save to a file
+        infile = f"{outdir}.json"
+        if not path.exists(outdir):
+            makedirs(outdir)
+        with open(infile, "w", encoding="utf-8") as file:
+            for entry in input_list:  # dump to JSONL
+                json.dump(entry, file, ensure_ascii=False)
+                file.write("\n")
+
+        # set beam size if present and > 0, otherwise set max-offset
+        offset_beam = ("--beam", str(beam_size)) if (
+            beam_size and int(beam_size) > 0
+        ) else ("--max-offset", str(max_offset))
+
+        try:
+            # call passim
+            subprocess.check_call([
+                "seriatim",  # Passim call
+                "--docwise",  # docwise mode (instead of linewise/pairwise)
+                "--floating-ngrams",  # allow n-gram matches anywhere, not just at word boundaries
+                "-n", str(n_gram),  # index n-grams
+                offset_beam[0], offset_beam[1],
+                "--fields", "ref",
+                "--filterpairs", "ref = 1 AND ref2 = 0",
+                infile,
+                outdir,
+            ])
+        except Exception as e:
+            # cleanup in case of exception
+            remove(infile)
+            shutil.rmtree(outdir)
+            raise e
+
+        # get the output json file(s)
+        out_json = glob(f"{outdir}/out.json/*.json")
+        aligned_lines = []
+        if out_json:
+            # handle multi-part output
+            for json_part in out_json:
+                json_file = open(json_part, "r", encoding="utf-8")
+                for line in json_file.readlines():
+                    # iterate through lines in output with "wits" entries
+                    out_dict = json.loads(line)
+                    for line in out_dict.get("lines", []):
+                        for match in line.get("wits", []):
+                            match_text = match.get("text", "")
+                            n_matches = float(match.get("matches", 0))
+                            # if the % of matches is greater than or equal to threshold:
+                            if (
+                                n_matches / max(len(line.get("text", "")), len(match_text))
+                            ) >= threshold:
+                                # find the matching line id in line_ids based on character position
+                                match_line_id = next((
+                                    identified_line for identified_line in out_dict.get("lineIDs", [])
+                                    if identified_line["start"] == line["begin"]
+                                ), {})
+                                aligned_lines.append({
+                                    "id": match_line_id.get("id", -1),
+                                    "text": match_text,
+                                    "alg": match.get("alg", ""),
+                                })
+
+        # build the new transcription layer
+        original_trans = Transcription.objects.get(pk=transcription_pk)
+        if not layer_name:
+            # if the user did not provide a new layer name, use generated format
+            layer_name = f"Aligned: {witness.name} + {original_trans.name}"
+        trans, created = Transcription.objects.get_or_create(
+            name=layer_name,
+            document=self,
+        )
+        for part in parts:
+            lines = part.lines.all()
+            for line in lines:
+                # find this line by "id" key in the output
+                matches = list(filter(lambda alg: int(alg["id"]) == line.pk, aligned_lines))
+
+                # build LineTranscription
+                # if this line is present in the aligned output, set its content to aligned text
+                if matches:
+                    lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
+                    # use matches[0]["alg"] instead for forced alignment with dashes
+                    # lt.content = matches[0]["alg"]
+                    lt.content = matches[0]["text"]
+                    lt.save()
+                # if "merge" is checked and this line is not present, get content from original transcription
+                elif merge:
+                    try:
+                        old_lt = LineTranscription.objects.get(line=line, transcription=original_trans)
+                        lt, created = LineTranscription.objects.get_or_create(line=line, transcription=trans)
+                        lt.content = old_lt.content
+                        lt.save()
+                    except LineTranscription.DoesNotExist:
+                        pass
+
+        # clean up temp files
+        if not getattr(settings, "KEEP_ALIGNMENT_TEMPFILES", None):
+            remove(infile)
+            shutil.rmtree(outdir)
+
+        for part in parts:
+            # set workflow state
+            part.workflow_state = part.WORKFLOW_STATE_ALIGNED
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
+    def queue_alignment(self, parts_qs, **kwargs):
+        if not self.tasks_finished():
+            raise AlreadyProcessingException
+        align.delay(
+            document_pk=self.pk,
+            part_pks=list(parts_qs.values_list('pk', flat=True)),
+            **kwargs,
+        )
+
+    def cancel_alignment(self, revoke_task=True):
+        """Cancel the alignment task; adapted from OcrModel"""
+        task_id = None
+
+        # We don't need to search for the task_id if the alignment task was already revoked
+        if revoke_task:
+            try:
+                task_id = json.loads(redis_.get('align-%d' % self.pk))['task_id']
+            except (TypeError, KeyError):
+                raise ProcessFailureException(_("Couldn't find the alignment task."))
+
+        if task_id:
+            revoke(task_id, terminate=True)
+
+        # set all aligning parts to a canceled workflow state
+        parts = DocumentPart.objects.filter(document=self, workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING)
+        for part in parts:
+            send_event("document", self.pk, "part:workflow", {
+                "id": part.pk,
+                "process": "align",
+                "status": "canceled",
+                "task_id": task_id,
+            })
+            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
+            part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
+        DocumentPart.objects.bulk_update(parts, ["workflow_state"])
+
 
 def document_images_path(instance, filename):
     return "documents/{0}/{1}".format(instance.document.pk, filename)
@@ -601,8 +860,12 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     )
     order_with_respect_to = "document"
 
+    comments = models.TextField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # average confidence for lines on this part (page), from the transcription whose confidence is the best
+    max_avg_confidence = models.FloatField(null=True, blank=True)
 
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_CONVERTING = 1
@@ -612,6 +875,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     WORKFLOW_STATE_SEGMENTING = 5
     WORKFLOW_STATE_SEGMENTED = 6
     WORKFLOW_STATE_TRANSCRIBING = 7
+    WORKFLOW_STATE_ALIGNING = 8
+    WORKFLOW_STATE_ALIGNED = 9
     WORKFLOW_STATE_CHOICES = (
         (WORKFLOW_STATE_CREATED, _("Created")),
         (WORKFLOW_STATE_CONVERTING, _("Converting")),
@@ -619,6 +884,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         (WORKFLOW_STATE_SEGMENTING, _("Segmenting")),
         (WORKFLOW_STATE_SEGMENTED, _("Segmented")),
         (WORKFLOW_STATE_TRANSCRIBING, _("Transcribing")),
+        (WORKFLOW_STATE_ALIGNING, _("Aligning")),
+        (WORKFLOW_STATE_ALIGNED, _("Aligned")),
     )
     workflow_state = models.PositiveSmallIntegerField(
         choices=WORKFLOW_STATE_CHOICES, default=WORKFLOW_STATE_CREATED
@@ -844,12 +1111,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             w["segment"] = "done"
         if self.workflow_state == self.WORKFLOW_STATE_TRANSCRIBING:
             w["transcribe"] = "done"
+        if self.workflow_state == self.WORKFLOW_STATE_ALIGNING:
+            w["align"] = "ongoing"
+        if self.workflow_state == self.WORKFLOW_STATE_ALIGNED:
+            w["align"] = "done"
 
         # check on redis for reruns
         for task_name in [
             "core.tasks.binarize",
             "core.tasks.segment",
             "core.tasks.transcribe",
+            "core.tasks.align",
         ]:
             if task_name in self.tasks:
                 if self.tasks[task_name]["status"] == "pending":
@@ -889,6 +1161,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if self.workflow_state == self.WORKFLOW_STATE_SEGMENTING:
             self.workflow_state = self.WORKFLOW_STATE_CONVERTED
             self.save()
+        elif self.workflow_state == self.WORKFLOW_STATE_ALIGNING:
+            # handle alignment cancellation on the entire document
+            self.document.cancel_alignment()
+            return
 
         for task_name, task in self.tasks.items():
             if (task_name not in uncancelable
@@ -946,6 +1222,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             "core.tasks.transcribe": (
                 self.WORKFLOW_STATE_TRANSCRIBING,
                 self.WORKFLOW_STATE_SEGMENTED,
+            ),
+            "core.tasks.align": (
+                self.WORKFLOW_STATE_ALIGNING,
+                self.WORKFLOW_STATE_TRANSCRIBING,
             ),
         }
         for task_name in tasks_map:
@@ -1041,7 +1321,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if model:
             model_path = model.file.path
         else:
-            model_path = settings.KRAKEN_DEFAULT_SEGMENTATION_MODEL
+            model_path = SEGMENTATION_DEFAULT_MODEL
         model_ = vgsl.TorchVGSLModel.load_model(model_path)
 
         # TODO: check model_type [None, 'recognition', 'segmentation']
@@ -1101,7 +1381,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(line["script"]),
+                        typology=line_types.get(line["tags"].get("type")),
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -1134,6 +1414,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             reorder = 'L'
 
         with Image.open(self.image.file.name) as im:
+            line_confidences = []
             for line in lines:
                 if not line.baseline:
                     bounds = {
@@ -1149,7 +1430,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                                 "baseline": line.baseline,
                                 "boundary": line.mask,
                                 "text_direction": text_direction,
-                                "script": "default",
+                                "tags": {'type': line.typology and line.typology.name or 'default'},
                             }
                         ],  # self.document.main_script.name
                         "type": "baselines",
@@ -1174,11 +1455,34 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         'confidence': float(confidence)
                     } for letter, poly, confidence in zip(
                         pred.prediction, pred.cuts, pred.confidences)]
+                if lt.graphs:
+                    line_avg_confidence = mean([graph['confidence'] for graph in lt.graphs if "confidence" in graph])
+                    lt.avg_confidence = line_avg_confidence
+                    line_confidences.append(line_avg_confidence)
                 lt.save()
+        if line_confidences:
+            # calculate and set all avg confidence values on models
+            avg_line_confidence = mean(line_confidences)
+            # store max avg confidence on the page
+            if not self.max_avg_confidence or avg_line_confidence > self.max_avg_confidence:
+                self.max_avg_confidence = avg_line_confidence
 
         self.workflow_state = self.WORKFLOW_STATE_TRANSCRIBING
         self.calculate_progress()
         self.save()
+
+        # overall avg recalculations; may use DB aggregation so run after self.save()
+        if line_confidences and not created:
+            # if new line_confidences have been added to existing transcription,
+            # then recalculate average confidence across the transcription
+            lines_with_confidence = trans.linetranscription_set.filter(avg_confidence__isnull=False)
+            trans.avg_confidence = lines_with_confidence.aggregate(avg=Avg("avg_confidence")).get("avg")
+            trans.save()
+        elif line_confidences:
+            # if this is a new transcription, its avg confidence will be the avg of lines
+            # transcribed here
+            trans.avg_confidence = avg_line_confidence
+            trans.save()
 
     def chain_tasks(self, *tasks):
         redis_.set(
@@ -1454,6 +1758,33 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
     def height(self):
         return self.coordinates_box[3] - self.coordinates_box[1]
 
+    def get_filters(block_types, filtering_lines=False):
+        """
+        Helper method to get filters for block types. By default, assumes filters are built for
+        a QuerySet of Blocks. Set filtering_lines param to True to filter on LineTranscriptions
+        instead.
+        """
+        # check for oprhan and undefined
+        include_orphans = False
+        if "Orphan" in block_types:
+            include_orphans = True
+            block_types.remove("Orphan")
+        include_undefined = False
+        if "Undefined" in block_types:
+            include_undefined = True
+            block_types.remove("Undefined")
+
+        # build filters
+        filters = Q(line__block__typology_id__in=block_types) if filtering_lines else Q(typology_id__in=block_types)
+        if include_orphans and filtering_lines:
+            # this filter is only applicable to LineTranscriptions
+            filters |= Q(line__block__isnull=True)
+        if include_undefined:
+            filters |= Q(
+                line__block__isnull=False, line__block__typology_id__isnull=True
+            ) if filtering_lines else Q(typology_id__isnull=True)
+        return filters
+
     def make_external_id(self):
         self.external_id = "eSc_textblock_%s" % str(uuid.uuid4())[:8]
 
@@ -1463,7 +1794,7 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, models.Model):
         return super().save(*args, **kwargs)
 
 
-class LineManager(models.Manager):
+class LineManager(OrderedModelManager):
     def prefetch_transcription(self, transcription):
         return (self.get_queryset().order_by('order')
                 .prefetch_related(
@@ -1564,12 +1895,13 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     archived = models.BooleanField(default=False)
+    avg_confidence = models.FloatField(null=True, blank=True)
 
     DEFAULT_NAME = "manual"
 
     class Meta:
-        ordering = ("-updated_at",)
-        unique_together = (("name", "document"),)
+        ordering = ["-updated_at"]
+        unique_together = ["name", "document"]
 
     def __str__(self):
         return self.name
@@ -1631,6 +1963,9 @@ class LineTranscription(
     graphs = JSONField(null=True, blank=True,
                        validators=[JSONSchemaValidator(limit_value=graphs_schema)])
 
+    # average confidence for graphs in the line
+    avg_confidence = models.FloatField(null=True, blank=True)
+
     # nullable in case we re-segment ?? for now we lose data.
     line = models.ForeignKey(
         Line, null=True, on_delete=models.CASCADE, related_name="transcriptions"
@@ -1638,7 +1973,7 @@ class LineTranscription(
     version_ignore_fields = ("line", "transcription")
 
     class Meta:
-        unique_together = (("line", "transcription"),)
+        unique_together = ["line", "transcription"]
 
     @property
     def text(self):
@@ -1695,7 +2030,7 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        ordering = ("-version_updated_at",)
+        ordering = ["-version_updated_at"]
         permissions = (("can_train", "Can train models"),)
 
     def __str__(self):
@@ -1805,7 +2140,7 @@ class OcrModelDocument(models.Model):
     executed_on = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        unique_together = (("document", "ocr_model"),)
+        unique_together = ["document", "ocr_model"]
 
 
 class OcrModelRight(models.Model):
@@ -1842,6 +2177,28 @@ class OcrModelRight(models.Model):
                 )
             )
         ]
+
+
+class TextualWitness(models.Model):
+    """
+    A known reference text to use in text alignment along with an automated or uncertain transcription.
+    """
+
+    # This model is needed so that we can pass the uploaded file through Celery's JSON serialization.
+    file = models.FileField(
+        upload_to="witnesses/",
+        null=False,
+        validators=[FileExtensionValidator(allowed_extensions=["txt"])],
+    )
+    name = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+    )
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return f"{self.name} (id: {self.pk})"
 
 
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid="thumbnails_delete_signal")

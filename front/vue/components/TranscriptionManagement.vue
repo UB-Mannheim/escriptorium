@@ -8,7 +8,7 @@
         <option v-for="transcription in $store.state.transcriptions.all"
                 v-if="transcription.archived == false"
                 v-bind:key="transcription.pk"
-                v-bind:value="transcription.pk">{{ transcription.name }}</option>
+                v-bind:value="transcription.pk">{{ transcription.name|truncate(48, "...") }}</option>
       </select>
       <button type="button"
               class="btn btn-primary fas fa-cog ml-1"
@@ -43,7 +43,7 @@
                        v-model="$store.state.transcriptions.comparedTranscriptions"
                        v-bind:value="trans.pk" />
                 <label v-bind:for="'opt'+trans.pk"
-                       class="form-check-label col">{{ trans.name }}</label>
+                       class="form-check-label col transcription-name">{{ trans.name }}</label>
                 <button v-bind:data-trPk="trans.pk"
                         v-if="trans.name!='manual' && trans.pk != $store.state.transcriptions.selectedTranscription"
                         @click="deleteTranscription"
@@ -73,6 +73,15 @@ export default {
                 .catch(err => {
                     console.log('couldnt archive transcription #', transcription, err)
                 })
+            }
+        },
+    },
+    filters: {
+        truncate: function (text, length, suffix) {
+            if (text.length > length) {
+                return text.substring(0, length) + suffix;
+            } else {
+                return text;
             }
         },
     }

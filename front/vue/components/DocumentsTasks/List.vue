@@ -70,12 +70,12 @@
     <ul class="pagination justify-content-end">
       <li class="page-item">
         <template v-if="$store.state.documentsTasks && $store.state.documentsTasks.previous">
-            <a class="page-link" @click="loadPrev()"><span aria-hidden="true">&#139;</span></a>
+            <a class="page-link" @click="loadPrev()"><span aria-hidden="true">&lsaquo;</span></a>
         </template>
       </li>
       <li class="page-item">
         <template v-if="$store.state.documentsTasks && $store.state.documentsTasks.next">
-            <a class="page-link" @click="loadNext()"><span aria-hidden="true">&#155;</span></a>
+            <a class="page-link" @click="loadNext()"><span aria-hidden="true">&rsaquo;</span></a>
         </template>
       </li>
     </ul>

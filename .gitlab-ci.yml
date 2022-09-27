@@ -15,7 +15,15 @@ lint:
 
 tests:
   stage: test
-  image: registry.gitlab.com/scripta/escriptorium/base:0.12.2-languages2
+  image: registry.gitlab.com/scripta/escriptorium/base:kraken42
+
+  # Skip tests for base tags since the tests are likely to fail if any api
+  # of one of the modules changed
+  # and the tests will be run on the actual build anyway
+  rules:
+    - if: '$CI_COMMIT_TAG !~ /^base-.*/'
+      when: on_success
+    - when: never
 
   services:
     - postgres:13-alpine
@@ -37,8 +45,8 @@ tests:
     paths:
       - .cache/pip
 
-  except:
-    - schedules
+  # except:
+  #   - schedules
 
   script:
     - python app/manage.py test -v 2 users api versioning imports core

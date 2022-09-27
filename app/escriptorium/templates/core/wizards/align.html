@@ -1,0 +1,55 @@
+{% extends 'core/wizards/_base.html' %}
+{% load i18n bootstrap %}
+
+{% block wizard_help %}
+<p>{% trans "Choose a transcription and a textual witness (reference text) to align to the transcription." %}
+{% endblock %}
+
+{% block wizard_fields %}
+  <div class="form-group">
+    <h5>{% trans "Select a transcription" %}</h5>
+    {% render_field align_form.transcription class="js-proc-settings" data_document=document.pk %}
+  </div>
+  <div class="form-group">
+    <h5>{% trans "Upload or select a textual witness" %}</h5>
+    {% render_field align_form.witness_file class="js-proc-settings" data_document=document.pk %}
+    {% render_field align_form.existing_witness class="js-proc-settings" data_document=document.pk %}
+  </div>
+  <div class="form-group">
+    <h5>{% trans "Settings" %}</h5>
+    <label>{{ align_form.layer_name.label }}</label>
+    {% render_field align_form.layer_name class="js-proc-settings" data_document=document.pk %}
+    {% render_field align_form.full_doc class="js-proc-settings" data_document=document.pk %}
+    <label>{{ align_form.region_types.label }}</label>
+    {% render_field align_form.region_types class="js-proc-settings" data_document=document.pk %}
+  </div>
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label>{{ align_form.threshold.label }}</label>
+      {% render_field align_form.threshold class="js-proc-settings" data_document=document.pk %}
+    </div>
+    <div class="form-group col-md-6">
+      <label>{{ align_form.n_gram.label }}</label>
+      {% render_field align_form.n_gram class="js-proc-settings" data_document=document.pk %}
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label>{{ align_form.beam_size.label }}</label>
+      {% render_field align_form.beam_size class="js-proc-settings" data_document=document.pk %}
+    </div>
+    <div class="form-group col-md-6">
+      <label>{{ align_form.max_offset.label }}</label>
+      {% render_field align_form.max_offset class="js-proc-settings" data_document=document.pk %}
+    </div>
+  </div>
+  <div class="form-row">
+    {% render_field align_form.merge class="js-proc-settings" data_document=document.pk %}
+  </div>
+  {# small JS to enable/disable max-offset field based on beam-size #}
+  <script type="text/javascript">
+    window.onload = () => window.bootAlignForm();
+  </script>
+{% endblock %}
+
+{% block wizard_submit %}{% trans "Align" %}{% endblock %}
