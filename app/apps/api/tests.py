@@ -76,7 +76,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-list')
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(16):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -84,7 +84,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -512,7 +512,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -971,3 +971,61 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:project-list')
         resp = self.client.post(uri, {'name': 'test proj'})
         self.assertEqual(resp.status_code, 201)
+
+
+class DocumentPartMetadataTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.part = self.factory.make_part()
+        self.user = self.part.document.owner
+
+    def test_create(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:partmetadata-list',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        with self.assertNumQueries(9):
+            resp = self.client.post(uri, {'key': {'name': 'testname', 'cidoc': 'testcidoc'},
+                                          'value': 'testvalue'},
+                                    content_type='application/json')
+        mds = self.part.metadata.all()
+        self.assertEqual(resp.status_code, 201, resp.content)
+        self.assertEqual(mds[0].key.name, "testname")
+        self.assertEqual(mds[0].value, "testvalue")
+
+    def test_update_key(self):
+        md = self.factory.make_part_metadata(self.part)
+        self.client.force_login(self.user)
+        uri = reverse('api:partmetadata-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': md.pk})
+        with self.assertNumQueries(9):
+            resp = self.client.patch(uri, {'key': {'name': 'testname2'}},
+                                     content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mds = self.part.metadata.all()
+        self.assertEqual(mds[0].key.name, "testname2")
+
+    def test_update_value(self):
+        self.client.force_login(self.user)
+        md = self.factory.make_part_metadata(self.part)
+        uri = reverse('api:partmetadata-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': md.pk})
+        with self.assertNumQueries(7):
+            resp = self.client.patch(uri, {'value': 'testvalue2'},
+                                     content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mds = self.part.metadata.all()
+        self.assertEqual(mds[0].value, "testvalue2")
+
+    def test_delete(self):
+        self.client.force_login(self.user)
+        md = self.factory.make_part_metadata(self.part)
+        uri = reverse('api:partmetadata-detail',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk, 'pk': md.pk})
+        with self.assertNumQueries(5):
+            resp = self.client.delete(uri)
+        self.assertEqual(resp.status_code, 204, resp.content)
+        self.assertEqual(self.part.metadata.count(), 0)

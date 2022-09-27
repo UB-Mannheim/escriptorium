@@ -20,6 +20,8 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
+    DocumentPartType,
     DocumentTag,
     ImageAnnotation,
     ImageAnnotationComponentValue,
@@ -142,6 +144,12 @@ class BlockTypeSerializer(serializers.ModelSerializer):
 class LineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineType
+        fields = ('pk', 'name')
+
+
+class DocumentPartTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentPartType
         fields = ('pk', 'name')
 
 
@@ -296,6 +304,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
+    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True)
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
@@ -304,8 +313,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
-                  'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
-                  'created_at', 'updated_at')
+                  'valid_block_types', 'valid_line_types', 'valid_part_types',
+                  'parts_count', 'tags', 'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -370,6 +379,35 @@ class DocumentMetadataSerializer(serializers.ModelSerializer):
         return dmd
 
 
+class DocumentPartMetadataSerializer(serializers.ModelSerializer):
+    key = MetadataSerializer()
+
+    class Meta:
+        model = DocumentPartMetadata
+        fields = ('pk', 'key', 'value')
+
+    def create(self, validated_data):
+        key = validated_data.pop('key')
+        md, created = Metadata.objects.get_or_create(**key)
+        pmd = DocumentPartMetadata.objects.create(
+            part=self.context['part'],
+            key=md,
+            **validated_data)
+        return pmd
+
+    def update(self, instance, validated_data):
+        instance.value = validated_data.get('value', instance.value)
+        instance.save()
+
+        if "key" in validated_data:
+            new_key = validated_data.get('key')
+            nested_serializer = self.fields['key']
+            nested_instance = instance.key
+            nested_serializer.update(nested_instance, new_key)
+
+        return instance
+
+
 class PartSerializer(serializers.ModelSerializer):
     image = ImageField(required=False, thumbnails=['card', 'large'])
     image_file_size = serializers.IntegerField(required=False)
@@ -395,6 +433,7 @@ class PartSerializer(serializers.ModelSerializer):
             'transcription_progress',
             'source',
             'max_avg_confidence',
+            'comments'
         )
 
     def validate(self, data):
@@ -520,6 +559,7 @@ class DetailedLineSerializer(LineSerializer):
 class PartDetailSerializer(PartSerializer):
     regions = BlockSerializer(many=True, source='blocks')
     lines = LineSerializer(many=True)
+    metadata = DocumentPartMetadataSerializer(many=True)
     previous = serializers.SerializerMethodField(source='get_previous')
     next = serializers.SerializerMethodField(source='get_next')
 
@@ -528,6 +568,7 @@ class PartDetailSerializer(PartSerializer):
             'regions',
             'lines',
             'previous',
+            'metadata',
             'next')
 
     def get_previous(self, instance):

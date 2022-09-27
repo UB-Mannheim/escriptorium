@@ -40,6 +40,13 @@
         </div>
 
         <keep-alive>
+            <PartMetadataPanel id="metadata-panel"
+                        v-if="visible_panels.metadata && $store.state.parts.loaded"
+                        ref="metadataPanel">
+            </PartMetadataPanel>
+        </keep-alive>
+
+        <keep-alive>
             <SourcePanel v-if="visible_panels.source && $store.state.parts.loaded"
                          v-bind:fullsizeimage="fullsizeimage"
                          ref="sourcePanel">
@@ -95,6 +102,7 @@ import SourcePanel from './SourcePanel.vue';
 import SegPanel from './SegPanel.vue';
 import VisuPanel from './VisuPanel.vue';
 import DiploPanel from './DiploPanel.vue';
+import PartMetadataPanel from './PartMetadataPanel.vue';
 
 export default {
     data: function() {
@@ -108,6 +116,7 @@ export default {
         SegPanel,
         VisuPanel,
         DiploPanel,
+        PartMetadataPanel,
     },
     created() {
         document.addEventListener('keydown', function(event) {
