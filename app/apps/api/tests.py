@@ -983,7 +983,7 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:partmetadata-list',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {'key': {'name': 'testname', 'cidoc': 'testcidoc'},
                                           'value': 'testvalue'},
                                     content_type='application/json')
@@ -1016,7 +1016,7 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk,
                               'pk': md.pk})
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(8):
             resp = self.client.patch(uri, {'key': {'name': 'testname2'}},
                                      content_type='application/json')
         self.assertEqual(resp.status_code, 200, resp.content)
