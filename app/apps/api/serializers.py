@@ -362,6 +362,10 @@ class MetadataSerializer(serializers.ModelSerializer):
         model = Metadata
         fields = ('name', 'cidoc_id')
 
+    def to_internal_value(self, validated_data):
+        instance, _ = Metadata.objects.get_or_create(**validated_data)
+        return instance
+
 
 class DocumentMetadataSerializer(serializers.ModelSerializer):
     key = MetadataSerializer()
@@ -388,10 +392,9 @@ class DocumentPartMetadataSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         key = validated_data.pop('key')
-        md, created = Metadata.objects.get_or_create(**key)
         pmd = DocumentPartMetadata.objects.create(
             part=self.context['part'],
-            key=md,
+            key=key,
             **validated_data)
         return pmd
 
