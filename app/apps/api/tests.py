@@ -595,7 +595,7 @@ class DocumentMetadataTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:metadata-list',
                       kwargs={'document_pk': self.doc.pk})
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {
                 'key': {'name': 'testnewkey'},
                 'value': 'testnewval'
