@@ -992,6 +992,23 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         self.assertEqual(mds[0].key.name, "testname")
         self.assertEqual(mds[0].value, "testvalue")
 
+    def test_create_existing_key(self):
+        self.client.force_login(self.user)
+        self.factory.make_part_metadata(self.part)
+        uri = reverse('api:partmetadata-list',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk})
+        with self.assertNumQueries(5):
+            resp = self.client.post(uri, {'key': {'name': 'testmd'},
+                                          'value': 'testvalue2'},
+                                    content_type='application/json')
+        mds = self.part.metadata.all().order_by('id')
+        self.assertEqual(resp.status_code, 201, resp.content)
+        self.assertEqual(mds[0].key.name, "testmd")
+        self.assertEqual(mds[0].value, "testmdvalue")
+        self.assertEqual(mds[1].key.name, "testmd")
+        self.assertEqual(mds[1].value, "testvalue2")
+
     def test_update_key(self):
         md = self.factory.make_part_metadata(self.part)
         self.client.force_login(self.user)
@@ -1024,7 +1041,9 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         md = self.factory.make_part_metadata(self.part)
         uri = reverse('api:partmetadata-detail',
-                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk, 'pk': md.pk})
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': md.pk})
         with self.assertNumQueries(5):
             resp = self.client.delete(uri)
         self.assertEqual(resp.status_code, 204, resp.content)
