@@ -74,6 +74,7 @@
 
          async updateKey(ev) {
              this.editInput(false);
+             if (this.metadata == null) return;
              if (ev.target.value != this.metadata.key.name) {
                  await this.$store.dispatch('parts/updatePartMetadata', {
                      pk: this.metadata.pk,
@@ -86,6 +87,7 @@
 
          async updateValue(ev) {
              this.editInput(false);
+             if (this.metadata == null) return;
              if (ev.target.value != this.metadata.value) {
                  await this.$store.dispatch('parts/updatePartMetadata', {
                      pk: this.metadata.pk,

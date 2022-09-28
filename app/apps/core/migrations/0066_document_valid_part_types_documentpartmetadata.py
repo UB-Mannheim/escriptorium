@@ -8,7 +8,7 @@ def forward(apps, se):
     DocumentPartType = apps.get_model('core', 'DocumentPartType')
     for type_ in ['Cover', 'Page']:
         DocumentPartType.objects.get_or_create(
-            DocumentPartType(name=type_, default=True, public=True)
+            name=type_, default=True, public=True
         )
 
 

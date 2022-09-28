@@ -358,9 +358,15 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
 
 
 class MetadataSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(validators=[])
+
     class Meta:
         model = Metadata
         fields = ('name', 'cidoc_id')
+
+    def create(self, validated_data):
+        instance, _ = Metadata.objects.get_or_create(**validated_data)
+        return instance
 
 
 class DocumentMetadataSerializer(serializers.ModelSerializer):
@@ -388,10 +394,10 @@ class DocumentPartMetadataSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         key = validated_data.pop('key')
-        md, created = Metadata.objects.get_or_create(**key)
+        mdkey = self.fields['key'].create(key)
         pmd = DocumentPartMetadata.objects.create(
             part=self.context['part'],
-            key=md,
+            key=mdkey,
             **validated_data)
         return pmd
 
