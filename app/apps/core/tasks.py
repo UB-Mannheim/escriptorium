@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import os.path
@@ -7,14 +6,12 @@ from itertools import groupby
 
 import numpy as np
 from celery import shared_task
-from celery.signals import before_task_publish, task_failure, task_prerun, task_success
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
-from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPER_PARAMS
@@ -27,31 +24,6 @@ from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-redis_ = get_redis_connection()
-
-
-# tasks for which to keep track of the state and update the front end
-# options:
-#   multipart - set True if task uses array of part_pks instead of instance_pk of a single part
-STATE_TASKS = {
-    'core.tasks.binarize': {'multipart': False},
-    'core.tasks.segment': {'multipart': False},
-    'core.tasks.transcribe': {'multipart': False},
-    'core.tasks.align': {'multipart': True},
-}
-
-
-def update_client_state(part_id, task, status, task_id=None, data=None):
-    DocumentPart = apps.get_model('core', 'DocumentPart')
-    part = DocumentPart.objects.get(pk=part_id)
-    task_name = task.split('.')[-1]
-    send_event('document', part.document.pk, "part:workflow", {
-        "id": part.pk,
-        "process": task_name,
-        "status": status,
-        "task_id": task_id,
-        "data": data or {}
-    })
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
@@ -195,8 +167,8 @@ class FrontendFeedback(Callback):
         })
 
 
-@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs):
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
+def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -216,11 +188,6 @@ def segtrain(task, model_pk, part_pks, document_pk=None, user_pk=None, **kwargs)
             user = None
     else:
         user = None
-
-    def msg(txt, fg=None, nl=False):
-        logger.info(txt)
-
-    redis_.set('segtrain-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
     Document = apps.get_model('core', 'Document')
     DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -503,8 +470,8 @@ def train_(qs, document, transcription, model=None, user=None):
         raise ValueError('No model created.')
 
 
-@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
-def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **kwargs):
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
+def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **kwargs):
     if user_pk:
         try:
             user = User.objects.get(pk=user_pk)
@@ -520,8 +487,6 @@ def train(task, transcription_pk, model_pk=None, part_pks=None, user_pk=None, **
             user = None
     else:
         user = None
-
-    redis_.set('training-%d' % model_pk, json.dumps({'task_id': task.request.id}))
 
     Transcription = apps.get_model('core', 'Transcription')
     LineTranscription = apps.get_model('core', 'LineTranscription')
@@ -645,9 +610,6 @@ def align(
     else:
         user = None
 
-    # set redis alignment task data
-    redis_.set('align-%d' % document_pk, json.dumps({'task_id': task.request.id}))
-
     try:
         doc.align(
             part_pks,
@@ -676,7 +638,10 @@ def align(
                 "status": "canceled",
                 "task_id": task.request.id,
             })
-            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
+            reports = part.reports.filter(method="core.tasks.align")
+            if reports.exists():
+                reports.last().cancel(None)
+
         DocumentPart.objects.bulk_update(parts, ["workflow_state"])
         logger.exception(e)
         raise e
@@ -685,98 +650,3 @@ def align(
             user.notify(_("Alignment done!"),
                         id="alignment-success",
                         level='success')
-
-
-def check_signal_order(old_signal, new_signal):
-    SIGNAL_ORDER = ['before_task_publish', 'task_prerun', 'task_failure', 'task_success']
-    return SIGNAL_ORDER.index(old_signal) < SIGNAL_ORDER.index(new_signal)
-
-
-@before_task_publish.connect
-def before_publish_state(sender=None, body=None, **kwargs):
-    if sender not in STATE_TASKS.keys():
-        return
-    if STATE_TASKS[sender]["multipart"] is True:
-        # multipart will have array of part_pks instead of instance_pk
-        instance_ids = body[1]["part_pks"]
-    else:
-        instance_pk = body[1]["instance_pk"]
-        instance_ids = [instance_pk]
-
-    for instance_id in instance_ids:
-        data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
-
-    signal_name = kwargs['signal'].name
-
-    try:
-        # protects against signal race condition
-        if (data[sender]['task_id'] == sender.request.id
-                and not check_signal_order(data[sender]['status'], signal_name)):
-            return
-    except (KeyError, AttributeError):
-        pass
-
-    data[sender] = {
-        "task_id": kwargs['headers']['id'],
-        "status": 'before_task_publish'
-    }
-    for instance_id in instance_ids:
-        redis_.set('process-%d' % instance_id, json.dumps(data))
-        try:
-            update_client_state(instance_id, sender, 'pending')
-        except NameError:
-            pass
-
-
-@task_prerun.connect
-@task_success.connect
-@task_failure.connect
-def done_state(sender=None, body=None, **kwargs):
-    if sender.name not in STATE_TASKS.keys():
-        return
-    if STATE_TASKS[sender.name]["multipart"] is True:
-        # multipart will have array of part_pks instead of instance_pk
-        instance_ids = sender.request.kwargs["part_pks"]
-    else:
-        instance_pk = sender.request.kwargs["instance_pk"]
-        instance_ids = [instance_pk]
-
-    try:
-        for instance_id in instance_ids:
-            data = json.loads(redis_.get('process-%d' % instance_id) or '{}')
-    except TypeError as e:
-        logger.exception(e)
-        return
-
-    signal_name = kwargs['signal'].name
-
-    try:
-        # protects against signal race condition
-        if (data[sender.name]['task_id'] == sender.request.id
-                and not check_signal_order(data[sender.name]['status'], signal_name)):
-            return
-    except KeyError:
-        pass
-
-    data[sender.name] = {
-        "task_id": sender.request.id,
-        "status": signal_name
-    }
-    status = {
-        'task_success': 'done',
-        'task_failure': 'error',
-        'task_prerun': 'ongoing'
-    }[signal_name]
-    if status == 'error':
-        # remove any pending task down the chain
-        data = {k: v for k, v in data.items() if v['status'] != 'pending'}
-    for instance_id in instance_ids:
-        redis_.set('process-%d' % instance_id, json.dumps(data))
-
-    if status == 'done':
-        result = kwargs.get('result', None)
-    else:
-        result = None
-
-    for instance_id in instance_ids:
-        update_client_state(instance_id, sender.name, status, task_id=sender.request.id, data=result)

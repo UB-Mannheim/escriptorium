@@ -7,8 +7,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import Document, DocumentPart
-
 User = get_user_model()
 
 
@@ -49,10 +47,13 @@ class TaskReport(models.Model):
     gpu_cost = models.FloatField(blank=True, null=True)
 
     document = models.ForeignKey(
-        Document, blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
+        "core.Document", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
     )
     document_part = models.ForeignKey(
-        DocumentPart, blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
+        "core.DocumentPart", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
+    )
+    ocr_model = models.ForeignKey(
+        "core.OcrModel", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
     )
 
     def append(self, text):
@@ -67,10 +68,15 @@ class TaskReport(models.Model):
         self.started_at = datetime.now(timezone.utc)
         self.save()
 
-    def cancel(self, user_email):
+    def cancel(self, username):
         self.workflow_state = self.WORKFLOW_STATE_CANCELED
         self.done_at = datetime.now(timezone.utc)
-        self.append(f"Canceled by user {user_email}")
+
+        canceled_by = "anonymous"
+        if username:
+            canceled_by = f"user {username}"
+        self.append(f"Canceled by {canceled_by}")
+
         revoke(self.task_id, terminate=True)
         self.save()
 
@@ -103,3 +109,6 @@ class TaskReport(models.Model):
         task_duration = (self.done_at - self.started_at).total_seconds()
         self.gpu_cost = (task_duration * settings.GPU_COST) / 60
         self.save()
+
+
+TASK_FINAL_STATES = [TaskReport.WORKFLOW_STATE_ERROR, TaskReport.WORKFLOW_STATE_DONE, TaskReport.WORKFLOW_STATE_CANCELED]
