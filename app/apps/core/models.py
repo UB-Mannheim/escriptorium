@@ -16,7 +16,6 @@ from statistics import mean
 
 import numpy as np
 from celery import chain
-from celery.task.control import inspect, revoke
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField
@@ -32,7 +31,6 @@ from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_prometheus.models import ExportModelOperationsMixin
-from django_redis import get_redis_connection
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
@@ -61,11 +59,11 @@ from core.tasks import (
 )
 from core.utils import ColorField
 from core.validators import JSONSchemaValidator
+from reporting.models import TASK_FINAL_STATES, TaskReport
 from users.consumers import send_event
 from users.models import User
 from versioning.models import Versioned
 
-redis_ = get_redis_connection()
 logger = logging.getLogger(__name__)
 
 
@@ -803,19 +801,19 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             **kwargs,
         )
 
-    def cancel_alignment(self, revoke_task=True):
+    def cancel_alignment(self, revoke_task=True, username=None):
         """Cancel the alignment task; adapted from OcrModel"""
         task_id = None
 
         # We don't need to search for the task_id if the alignment task was already revoked
         if revoke_task:
             try:
-                task_id = json.loads(redis_.get('align-%d' % self.pk))['task_id']
-            except (TypeError, KeyError):
+                report = self.reports.filter(document_pk=self.pk, method="core.tasks.align").last()
+                task_id = report.task_id
+            except AttributeError:
                 raise ProcessFailureException(_("Couldn't find the alignment task."))
-
-        if task_id:
-            revoke(task_id, terminate=True)
+            else:
+                report.cancel(username)
 
         # set all aligning parts to a canceled workflow state
         parts = DocumentPart.objects.filter(document=self, workflow_state=DocumentPart.WORKFLOW_STATE_ALIGNING)
@@ -826,7 +824,6 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
                 "status": "canceled",
                 "task_id": task_id,
             })
-            redis_.set('process-%d' % part.pk, json.dumps({"core.tasks.align": {"status": "canceled"}}))
             part.workflow_state = part.WORKFLOW_STATE_TRANSCRIBING
         DocumentPart.objects.bulk_update(parts, ["workflow_state"])
 
@@ -1087,16 +1084,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         return instance
 
     def delete(self, *args, **kwargs):
-        redis_.delete("process-%d" % self.pk)
         send_event("document", self.document.pk, "part:delete", {"id": self.pk})
         return super().delete(*args, **kwargs)
-
-    @cached_property
-    def tasks(self):
-        try:
-            return json.loads(redis_.get("process-%d" % self.pk) or "{}")
-        except json.JSONDecodeError:
-            return {}
 
     @property
     def workflow(self):
@@ -1116,25 +1105,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         if self.workflow_state == self.WORKFLOW_STATE_ALIGNED:
             w["align"] = "done"
 
-        # check on redis for reruns
-        for task_name in [
-            "core.tasks.binarize",
-            "core.tasks.segment",
-            "core.tasks.transcribe",
-            "core.tasks.align",
-        ]:
-            if task_name in self.tasks:
-                if self.tasks[task_name]["status"] == "pending":
-                    w[task_name.split(".")[-1]] = "pending"
-                elif self.tasks[task_name]["status"] in [
-                    "before_task_publish",
-                    "task_prerun",
-                ]:
-                    w[task_name.split(".")[-1]] = "ongoing"
-                elif self.tasks[task_name]["status"] == "canceled":
-                    w[task_name.split(".")[-1]] = "canceled"
-                elif self.tasks[task_name]["status"] in ["task_failure", "error"]:
-                    w[task_name.split(".")[-1]] = "error"
+        for report in self.reports.filter(method__in=["core.tasks.binarize", "core.tasks.segment", "core.tasks.transcribe", "core.tasks.align"]):
+            # Only the last registered state for each group of tasks will be kept
+            short_name = report.method.split(".")[-1]
+            if report.workflow_state == TaskReport.WORKFLOW_STATE_QUEUED:
+                w[short_name] = "pending"
+            elif report.workflow_state == TaskReport.WORKFLOW_STATE_STARTED:
+                w[short_name] = "ongoing"
+            elif report.workflow_state == TaskReport.WORKFLOW_STATE_ERROR:
+                w[short_name] = "canceled"
+            elif report.workflow_state == TaskReport.WORKFLOW_STATE_CANCELED:
+                w[short_name] = "error"
         return w
 
     def tasks_finished(self):
@@ -1144,15 +1125,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             return True
 
     def in_queue(self):
-        statuses = self.tasks.values()
         try:
-            return (len([t for t in statuses if t['status'] == 'ongoing']) == 0
-                    and len([t for t in statuses if t['status']
-                             in ['pending', 'before_task_publish']]) > 0)
+            return (self.reports.filter(workflow_state=TaskReport.WORKFLOW_STATE_STARTED).count() == 0
+                    and self.reports.filter(workflow_state=TaskReport.WORKFLOW_STATE_QUEUED).count() > 0)
         except (KeyError, TypeError):
             return False
 
-    def cancel_tasks(self):
+    def cancel_tasks(self, username=None):
         uncancelable = [
             "core.tasks.convert",
             "core.tasks.lossless_compression",
@@ -1163,53 +1142,35 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             self.save()
         elif self.workflow_state == self.WORKFLOW_STATE_ALIGNING:
             # handle alignment cancellation on the entire document
-            self.document.cancel_alignment()
+            self.document.cancel_alignment(username=username)
             return
 
-        for task_name, task in self.tasks.items():
-            if (task_name not in uncancelable
-                    and task['status'] not in ['canceled', 'error', 'done']):
-                if 'task_id' in task:  # if not, it is still pending
-                    revoke(task['task_id'], terminate=True)
+        for report in self.reports.all():
+            if report.method not in uncancelable and report.workflow_state not in TASK_FINAL_STATES:
+                if report.task_id:  # if not, it is still pending
+                    report.cancel(username)
 
                 try:
                     send_event('document', self.document.pk, 'part:workflow',
                                {'id': self.id,
-                                'process': task_name.split('.')[-1],
+                                'process': report.method.split('.')[-1],
                                 'status': 'error',
                                 'reason': _('Canceled.')})
                 except Exception as e:
                     # don't crash on websocket error
                     logger.exception(e)
 
-                redis_.set('process-%d' % self.pk, json.dumps({task_name: {"status": "canceled"}}))
-
     def recoverable(self):
         now = round(datetime.utcnow().timestamp())
         try:
-            return len([task for task in self.tasks
-                        if getattr(task, 'timestamp', 0)
+            return len([report for report in self.reports.all()
+                        if (int(report.started_at.strftime('%s')) if report.started_at else 0)
                         + getattr(settings, 'TASK_RECOVER_DELAY', 60 * 60 * 24) > now]) != 0
 
         except KeyError:
             return True  # probably old school stored task
 
     def recover(self):
-        i = inspect()
-        # Important: this is really slow!
-        queued = ([task['id'] for queue in i.scheduled().values() for task in queue]
-                  + [task['id'] for queue in i.active().values() for task in queue]
-                  + [task['id'] for queue in i.reserved().values() for task in queue])
-
-        data = self.tasks
-
-        for task_name in [
-            task_name for task_name in data.keys() if task_name not in queued
-        ]:
-            # redis seems desync, but it could really be pending!
-            # but if it is it doesn't really matter since state will be updated when the worker pick it up.
-            del data[task_name]
-
         tasks_map = {  # map a task to a workflow state it should go back to if failed
             "core.tasks.convert": (
                 self.WORKFLOW_STATE_CONVERTING,
@@ -1229,11 +1190,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             ),
         }
         for task_name in tasks_map:
-            if self.workflow_state == tasks_map[task_name][0] and task_name not in data:
-                data[task_name] = {"status": "error"}
+            if self.workflow_state == tasks_map[task_name][0] and self.reports.filter(method=task_name).exists():
+                report = self.reports.filter(method=task_name).last()
+                report.error("error")
                 self.workflow_state = tasks_map[task_name][1]
 
-        redis_.set("process-%d" % self.pk, json.dumps(data))
         self.save()
 
     def convert(self):
@@ -1485,9 +1446,6 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             trans.save()
 
     def chain_tasks(self, *tasks):
-        redis_.set(
-            "process-%d" % self.pk, json.dumps({tasks[-1].name: {"status": "pending"}})
-        )
         chain(*tasks).delay()
 
     def task(self, task_name, commit=True, **kwargs):
@@ -2067,32 +2025,24 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         return model
 
     def segtrain(self, document, parts_qs, user=None):
-        segtrain.delay(self.pk,
-                       list(parts_qs.values_list('pk', flat=True)),
+        segtrain.delay(model_pk=self.pk,
+                       part_pks=list(parts_qs.values_list('pk', flat=True)),
                        document_pk=document.pk,
                        user_pk=user and user.pk or None)
 
     def train(self, parts_qs, transcription, user=None):
-        train.delay(transcription.pk,
+        train.delay(transcription_pk=transcription.pk,
                     model_pk=self.pk,
                     part_pks=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
 
-    def cancel_training(self, revoke_task=True):
-        task_id = None
-
-        # We don't need to search for the task_id if the training task was already revoked
+    def cancel_training(self, revoke_task=True, username=None):
         if revoke_task:
-            try:
-                if self.job == self.MODEL_JOB_RECOGNIZE:
-                    task_id = json.loads(redis_.get('training-%d' % self.pk))['task_id']
-                elif self.job == self.MODEL_JOB_SEGMENT:
-                    task_id = json.loads(redis_.get('segtrain-%d' % self.pk))['task_id']
-            except (TypeError, KeyError):
+            report = self.reports.last()
+            if not report or not report.task_id or report.workflow_state in TASK_FINAL_STATES:
                 raise ProcessFailureException(_("Couldn't find the training task."))
 
-        if task_id:
-            revoke(task_id, terminate=True)
+            report.cancel(username)
 
         self.training = False
         self.save()

@@ -4,7 +4,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from core.models import Document
-from escriptorium.celery import app
 from imports.parsers import XML_EXTENSIONS, make_parser
 from reporting.models import TaskReport
 from users.models import User
@@ -63,12 +62,12 @@ class DocumentImport(models.Model):
     def is_cancelable(self):
         return self.workflow_state < self.WORKFLOW_STATE_DONE
 
-    def cancel(self, revoke_task=True):
+    def cancel(self, revoke_task=True, username=None):
         self.workflow_state = self.WORKFLOW_STATE_ERROR
         self.error_message = 'canceled'
         self.save()
         if revoke_task and self.report and self.report.task_id:
-            app.control.revoke(self.report.task_id, terminate=True)
+            self.report.cancel(username)
 
     def process(self, resume=True):
         try:

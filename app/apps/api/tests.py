@@ -494,7 +494,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(9):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -512,7 +512,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(11):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -530,7 +530,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(17):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -543,7 +543,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:part-detail',
                       kwargs={'document_pk': self.part.document.pk,
                               'pk': self.part.pk})
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(8):
             resp = self.client.patch(
                 uri, {'transcription_progress': 50},
                 content_type='application/json')

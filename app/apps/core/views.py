@@ -723,7 +723,7 @@ class ModelCancelTraining(LoginRequiredMixin, SuccessMessageMixin, DetailView):
     def post(self, request, *args, **kwargs):
         model = self.get_object()
         try:
-            model.cancel_training()
+            model.cancel_training(username=request.user.username)
         except Exception as e:
             logger.exception(e)
             return HttpResponse({'status': 'failed'}, status=400,
