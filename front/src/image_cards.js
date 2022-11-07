@@ -591,7 +591,21 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
         timeout: 0,
         // chunking: true,
         // retryChunks: true,
-        parallelUploads: 1  // ! important or the 'order' field gets duplicates
+        parallelUploads: 1,  // ! important or the 'order' field gets duplicates
+        error: (file, message) => {
+            if (file.previewElement) {
+                file.previewElement.classList.add("dz-error");
+                if (typeof message !== "string" && message.image) {
+                    message = message.image.toString();
+                }
+                for (let node of file.previewElement.querySelectorAll(
+                    "[data-dz-errormessage]"
+                )) {
+                    node.textContent = message;
+                }
+            }
+
+        }
     });
 
     //************* New card creation **************

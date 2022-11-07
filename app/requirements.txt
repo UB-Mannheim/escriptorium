@@ -1,6 +1,6 @@
 albumentations
 beautifulsoup4==4.7.1
-bleach==3.1.5
+bleach==5.0.1
 celery~=4.4.0  # for python 3.5+ you need recent versions of celery (> 4.2)
 channels==3.0.4
 channels-redis~=3.4.0
@@ -18,7 +18,7 @@ easy-thumbnails==2.8.1
 elasticsearch==7.17.0
 kombu==4.6.11
 # git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
-kraken==4.1.2
+kraken==4.2.0
 # numpy>=1.17
 oitei==1.0.0
 # passim, "seriatim" branch
@@ -31,4 +31,5 @@ redis~=4.3.3
 requests==2.21.0
 # scikit-learn==1.0.2
 # scipy==1.5.4
+sentry-sdk==1.10.1
 uWSGI~=2.0.20

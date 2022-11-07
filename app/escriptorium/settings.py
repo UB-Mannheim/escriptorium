@@ -217,6 +217,7 @@ CELERY_TASK_QUEUES = (
     Queue('live', routing_key='live'),  # for everything that needs to be done on the spot to update the ui
     Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
+    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 # When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
@@ -226,6 +227,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
+    'core.tasks.align': {'queue': 'jvm'},
     # 'escriptorium.celery.debug_task': '',
     'imports.tasks.*': {'queue': 'low-priority'},
     'users.tasks.async_email': {'queue': 'low-priority'},
@@ -439,3 +441,25 @@ EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("f
 
 # Boolean used to enable text alignment with Passim
 TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("false", "0")
+
+# Sentry support
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+ESCRIPTORIUM_ENV = os.getenv('ESCRIPTORIUM_ENV', 'dev')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=ESCRIPTORIUM_ENV,
+        release=VERSION_DATE,
+        debug=DEBUG,
+        send_default_pii=True,
+        integrations=[
+            DjangoIntegration(),
+            RedisIntegration(),
+            CeleryIntegration(),
+        ],
+    )

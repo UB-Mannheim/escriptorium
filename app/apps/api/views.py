@@ -9,7 +9,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django_redis import get_redis_connection
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -28,6 +27,8 @@ from api.serializers import (
     BlockTypeSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
+    DocumentPartMetadataSerializer,
+    DocumentPartTypeSerializer,
     DocumentSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
@@ -61,6 +62,8 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
+    DocumentPartType,
     DocumentTag,
     ImageAnnotation,
     Line,
@@ -83,7 +86,6 @@ from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
 
-redis_ = get_redis_connection()
 CLIENT_TASK_NAME_MAP = {
     'segtrain': 'training',
     'train': 'training',
@@ -239,22 +241,19 @@ class DocumentViewSet(ModelViewSet):
                                                TaskReport.WORKFLOW_STATE_STARTED]))
         count = len(reports)  # evaluate query
         for report in reports:
-            report.cancel(request.user.email)
+            report.cancel(request.user.username)
 
             method_name = report.method.split('.')[-1]
             task_name = CLIENT_TASK_NAME_MAP.get(method_name, method_name)
 
             if report.document_part:
-                # Some glue code from DocumentPart.cancel_tasks function is moved here to prevent performance issues
-                # update redis workflow state
-                redis_.set('process-%d' % report.document_part.pk, json.dumps({report.method: {"status": "canceled"}}))
-            else:
-                try:
-                    send_event('document', document.pk, f'{task_name}:error',
-                               {'reason': _('Canceled.')})
-                except Exception as e:
-                    # don't crash on websocket error
-                    logger.exception(e)
+                continue
+
+            try:
+                send_event('document', document.pk, f'{task_name}:error', {'reason': _('Canceled.')})
+            except Exception as e:
+                # don't crash on websocket error
+                logger.exception(e)
 
         if count:
             try:
@@ -276,10 +275,10 @@ class DocumentViewSet(ModelViewSet):
         # up-to-date with the real state of the app (e.g.: we stopped a training, we need to set
         # the model.training attribute to False)
         for model in document.ocr_models.filter(training=True):
-            model.cancel_training(revoke_task=False)  # We already revoked the Celery task
+            model.cancel_training(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
 
         for doc_import in document.documentimport_set.all():
-            doc_import.cancel(revoke_task=False)  # We already revoked the Celery task
+            doc_import.cancel(revoke_task=False, username=request.user.username)  # We already revoked the Celery task
 
         return Response({
             'status': 'canceled',
@@ -306,7 +305,7 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
         current_import = document.documentimport_set.order_by('started_on').last()
         if current_import.is_cancelable():
-            current_import.cancel()
+            current_import.cancel(username=request.user.username)
             return Response({'status': 'canceled'})
         else:
             return Response({'status': 'already stopped'}, status=400)
@@ -316,7 +315,7 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
         model = document.ocr_models.filter(training=True).last()
         try:
-            model.cancel_training()
+            model.cancel_training(username=request.user.username)
         except Exception as e:
             logger.exception(e)
             return Response({'status': 'failed'}, status=400)
@@ -396,6 +395,20 @@ class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
         return context
 
 
+class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = DocumentPartMetadata.objects.all().select_related('part')
+    serializer_class = DocumentPartMetadataSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(part=self.kwargs.get('part_pk'))
+        return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
+        return context
+
+
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
 
@@ -403,7 +416,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         qs = super().get_queryset()
         qs = qs.filter(document=self.kwargs.get('document_pk'))
         if self.action == 'retrieve':
-            return qs.prefetch_related('lines', 'blocks')
+            return qs.prefetch_related('lines', 'blocks', 'metadata')
         else:
             return qs
 
@@ -443,12 +456,8 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=True, methods=['post'])
     def cancel(self, request, document_pk=None, pk=None):
         part = DocumentPart.objects.get(document=document_pk, pk=pk)
-        part.cancel_tasks()
+        part.cancel_tasks(username=self.request.user.username)
         part.refresh_from_db()
-        try:
-            del part.tasks  # reset cache, if present
-        except AttributeError:
-            pass
         return Response({'status': 'canceled', 'workflow': part.workflow})
 
     @action(detail=True, methods=['post'])
@@ -530,6 +539,11 @@ class LineTypeViewSet(ModelViewSet):
 class AnnotationTypeViewSet(ModelViewSet):
     queryset = AnnotationType.objects.filter(public=True)
     serializer_class = AnnotationTypeSerializer
+
+
+class DocumentPartTypeViewSet(ModelViewSet):
+    queryset = DocumentPartType.objects.filter(public=True)
+    serializer_class = DocumentPartTypeSerializer
 
 
 class AnnotationComponentViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -823,7 +837,7 @@ class OcrModelViewSet(ModelViewSet):
     def cancel_training(self, request, pk=None):
         model = self.get_object()
         try:
-            model.cancel_training()
+            model.cancel_training(username=request.user.username)
         except Exception as e:
             logger.exception(e)
             return Response({'status': 'failed'}, status=400)

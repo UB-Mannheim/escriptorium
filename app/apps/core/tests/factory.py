@@ -5,7 +5,6 @@ from io import BytesIO
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TransactionTestCase
-from django_redis import get_redis_connection
 from kraken.lib import vgsl
 from PIL import Image, ImageDraw
 
@@ -16,14 +15,13 @@ from core.models import (
     DocumentPart,
     Line,
     LineTranscription,
+    Metadata,
     OcrModel,
     Project,
     TextualWitness,
     Transcription,
 )
 from users.models import Group, User
-
-redis_ = get_redis_connection()
 
 
 class CoreFactory():
@@ -32,7 +30,6 @@ class CoreFactory():
     """
 
     def __init__(self):
-        redis_.flushall()
         self.cleanup_registry = []
 
     def cleanup(self):
@@ -88,6 +85,13 @@ class CoreFactory():
         part = DocumentPart.objects.create(**attrs)
         self.cleanup_registry.append(part)
         return part
+
+    def make_part_metadata(self, part, **kwargs):
+        attrs = kwargs.copy()
+        if 'name' not in kwargs:
+            attrs['name'] = 'testmd'
+        key = Metadata.objects.create(**attrs)
+        return part.metadata.create(key=key, value='testmdvalue')
 
     def make_transcription(self, **kwargs):
         attrs = kwargs.copy()

@@ -26,6 +26,7 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartType,
     LineType,
     Metadata,
     OcrModel,
@@ -230,10 +231,11 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
 class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['valid_block_types', 'valid_line_types']
+        fields = ['valid_block_types', 'valid_line_types', 'valid_part_types']
         widgets = {
             'valid_block_types': forms.CheckboxSelectMultiple,
-            'valid_line_types': forms.CheckboxSelectMultiple
+            'valid_line_types': forms.CheckboxSelectMultiple,
+            'valid_part_types': forms.CheckboxSelectMultiple
         }
 
     def __init__(self, *args, **kwargs):
@@ -245,19 +247,25 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
             # TODO: if the form has errors it show everything.. need to find a better solution
             block_qs = BlockType.objects.all()
             line_qs = LineType.objects.all()
+            part_qs = DocumentPartType.objects.all()
         elif self.instance.pk:
             block_qs = BlockType.objects.filter(
                 Q(public=True) | Q(valid_in=self.instance)).distinct()
             line_qs = LineType.objects.filter(
                 Q(public=True) | Q(valid_in=self.instance)).distinct()
+            part_qs = DocumentPartType.objects.filter(
+                Q(public=True) | Q(valid_in=self.instance)).distinct()
         else:
             block_qs = BlockType.objects.filter(public=True)
             line_qs = LineType.objects.filter(public=True)
+            part_qs = DocumentPartType.objects.filter(public=True)
             self.initial['valid_block_types'] = block_qs
             self.initial['valid_line_types'] = line_qs
+            self.initial['valid_part_types'] = part_qs
 
         self.fields['valid_block_types'].queryset = block_qs.order_by('name')
         self.fields['valid_line_types'].queryset = line_qs.order_by('name')
+        self.fields['valid_part_types'].queryset = part_qs.order_by('name')
 
         self.compo_form = ComponentFormSet(
             self.request.POST if self.request.method == 'POST' else None,

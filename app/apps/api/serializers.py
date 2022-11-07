@@ -20,6 +20,8 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
+    DocumentPartType,
     DocumentTag,
     ImageAnnotation,
     ImageAnnotationComponentValue,
@@ -46,6 +48,12 @@ class ImageField(serializers.ImageField):
     def __init__(self, *args, thumbnails=None, **kwargs):
         self.thumbnails = thumbnails
         super().__init__(*args, **kwargs)
+
+    def to_internal_value(self, data):
+        if data.content_type == 'application/pdf':
+            raise serializers.ValidationError(_("PDF is not a valid image, please use the dedicated Import function."))
+
+        return super().to_internal_value(data)
 
     def to_representation(self, img):
         if img:
@@ -136,6 +144,12 @@ class BlockTypeSerializer(serializers.ModelSerializer):
 class LineTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineType
+        fields = ('pk', 'name')
+
+
+class DocumentPartTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentPartType
         fields = ('pk', 'name')
 
 
@@ -290,6 +304,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
+    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True)
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
@@ -298,8 +313,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
-                  'valid_block_types', 'valid_line_types', 'parts_count', 'tags',
-                  'created_at', 'updated_at')
+                  'valid_block_types', 'valid_line_types', 'valid_part_types',
+                  'parts_count', 'tags', 'created_at', 'updated_at')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -343,9 +358,15 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
 
 
 class MetadataSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(validators=[])
+
     class Meta:
         model = Metadata
         fields = ('name', 'cidoc_id')
+
+    def create(self, validated_data):
+        instance, _ = Metadata.objects.get_or_create(**validated_data)
+        return instance
 
 
 class DocumentMetadataSerializer(serializers.ModelSerializer):
@@ -362,6 +383,35 @@ class DocumentMetadataSerializer(serializers.ModelSerializer):
                                               key=md,
                                               **validated_data)
         return dmd
+
+
+class DocumentPartMetadataSerializer(serializers.ModelSerializer):
+    key = MetadataSerializer()
+
+    class Meta:
+        model = DocumentPartMetadata
+        fields = ('pk', 'key', 'value')
+
+    def create(self, validated_data):
+        key = validated_data.pop('key')
+        mdkey = self.fields['key'].create(key)
+        pmd = DocumentPartMetadata.objects.create(
+            part=self.context['part'],
+            key=mdkey,
+            **validated_data)
+        return pmd
+
+    def update(self, instance, validated_data):
+        instance.value = validated_data.get('value', instance.value)
+        instance.save()
+
+        if "key" in validated_data:
+            new_key = validated_data.get('key')
+            nested_serializer = self.fields['key']
+            nested_instance = instance.key
+            nested_serializer.update(nested_instance, new_key)
+
+        return instance
 
 
 class PartSerializer(serializers.ModelSerializer):
@@ -389,13 +439,16 @@ class PartSerializer(serializers.ModelSerializer):
             'transcription_progress',
             'source',
             'max_avg_confidence',
+            'comments'
         )
 
-    def create(self, data):
+    def validate(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
         if not settings.DISABLE_QUOTAS and not self.context['request'].user.has_free_disk_storage():
             raise serializers.ValidationError(_("You don't have any disk storage left."))
+        return data
 
+    def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
         data['document'] = document
         data['original_filename'] = data['image'].name
@@ -512,6 +565,7 @@ class DetailedLineSerializer(LineSerializer):
 class PartDetailSerializer(PartSerializer):
     regions = BlockSerializer(many=True, source='blocks')
     lines = LineSerializer(many=True)
+    metadata = DocumentPartMetadataSerializer(many=True)
     previous = serializers.SerializerMethodField(source='get_previous')
     next = serializers.SerializerMethodField(source='get_next')
 
@@ -520,6 +574,7 @@ class PartDetailSerializer(PartSerializer):
             'regions',
             'lines',
             'previous',
+            'metadata',
             'next')
 
     def get_previous(self, instance):
@@ -606,7 +661,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_SEGMENT)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def process(self):
@@ -643,7 +698,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = self.document.ocr_models.filter(
+        self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).filter(
             Q(public=True) | Q(owner=self.user)
@@ -695,8 +750,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        segtrain.delay(model.pk if model else None,
-                       [part.pk for part in self.validated_data.get('parts')],
+        segtrain.delay(model_pk=model.pk if model else None,
+                       part_pks=[part.pk for part in self.validated_data.get('parts')],
                        document_pk=self.document.pk,
                        user_pk=self.user.pk)
 
@@ -716,7 +771,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = self.document.ocr_models.filter(
+        self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
         ).filter(
             Q(public=True) | Q(owner=self.user)
@@ -763,8 +818,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        train.delay(self.validated_data['transcription'].pk,
-                    model.pk if model else None,
+        train.delay(transcription_pk=self.validated_data['transcription'].pk,
+                    model_pk=model.pk if model else None,
                     part_pks=[part.pk for part in self.validated_data.get('parts')],
                     user_pk=self.user.pk)
 
@@ -778,7 +833,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = self.document.ocr_models.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def process(self):

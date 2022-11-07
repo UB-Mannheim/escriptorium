@@ -71,6 +71,23 @@
                 </div>
               </div>
 
+              <!-- Part typology-->
+              <div id="part-types">
+                <div class="mt-4">{% trans "Part types" %}</div>
+                {% render_field form.valid_part_types group=True %}
+                <div class="form-row">
+                  <div class="col">
+                    <input class="form-control form-control-sm"
+                           id="add-part-type-input"
+                           placeholder="{% trans "Add a part type" %}" />
+                  </div>
+                  <div class="col-auto">
+                    <button id="add-part-type-btn"
+                            class="btn btn-success fas fa-plus"></button>
+                  </div>
+                </div>
+              </div>
+
               <div id="components" class="js-compos-form">
                   <div class="mt-4">{% trans "Annotations components" %}</div>
                   {{ form.compo_form.management_form}}

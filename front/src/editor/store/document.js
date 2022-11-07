@@ -18,7 +18,8 @@ export const initialState = () => ({
         source: userProfile.get('visible-panels')?userProfile.get('visible-panels').source:false,
         segmentation: userProfile.get('visible-panels')?userProfile.get('visible-panels').segmentation:true,
         visualisation: userProfile.get('visible-panels')?userProfile.get('visible-panels').visualisation:true,
-        diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false
+        diplomatic: userProfile.get('visible-panels')?userProfile.get('visible-panels').diplomatic:false,
+        metadata: userProfile.get('visible-panels')?userProfile.get('visible-panels').metadata:false
     },
 
     // Confidence overlay visibility
@@ -78,8 +79,14 @@ export const actions = {
     async fetchDocument ({state, commit}) {
         const resp = await api.retrieveDocument(state.id)
         let data = resp.data
+        var valid_part_types = data.valid_part_types
+        valid_part_types.unshift({pk: null, name: 'Element'})
+
         commit('transcriptions/set', data.transcriptions, {root: true})
-        commit('setTypes', { 'regions': data.valid_block_types, 'lines': data.valid_line_types })
+        commit('setTypes', { 'regions': data.valid_block_types,
+                             'lines': data.valid_line_types,
+                             'parts': valid_part_types
+                           })
         commit('setPartsCount', data.parts_count)
         commit('setConfidenceVizGloballyEnabled', data.show_confidence_viz)
 

@@ -159,7 +159,7 @@ export default Vue.extend({
                 if(body.start_line && body.end_line) break;
                 total += content.length;
             }
-            return body
+            return body;
         },
 
         makeTaxonomiesStyles() {
