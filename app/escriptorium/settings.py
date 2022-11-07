@@ -441,3 +441,25 @@ EXPORT_TEI_XML_ENABLED = os.getenv('EXPORT_TEI_XML', "False").lower() not in ("f
 
 # Boolean used to enable text alignment with Passim
 TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("false", "0")
+
+# Sentry support
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+ESCRIPTORIUM_ENV = os.getenv('ESCRIPTORIUM_ENV', 'dev')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=ESCRIPTORIUM_ENV,
+        release=VERSION_DATE,
+        debug=DEBUG,
+        send_default_pii=True,
+        integrations=[
+            DjangoIntegration(),
+            RedisIntegration(),
+            CeleryIntegration(),
+        ],
+    )
