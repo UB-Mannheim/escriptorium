@@ -5,7 +5,7 @@ celery~=4.4.0  # for python 3.5+ you need recent versions of celery (> 4.2)
 channels==3.0.4
 channels-redis~=3.4.0
 daphne==3.0.2
-Django==4.0.5
+Django==4.0.8
 django-cleanup==5.1.0
 django-country-and-language-flags
 django-ordered-model==3.6
