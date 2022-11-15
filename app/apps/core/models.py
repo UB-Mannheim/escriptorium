@@ -1302,7 +1302,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         #     im = Image.open(self.image.file.name)
 
         options = {
-            "device": getattr(settings, "KRAKEN_TRAINING_DEVICE", "cpu"),
+            "device": "cpu",
             "model": model_,
         }
         if text_direction:
