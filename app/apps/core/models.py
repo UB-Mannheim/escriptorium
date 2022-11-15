@@ -11,7 +11,7 @@ import time
 import uuid
 from datetime import datetime
 from glob import glob
-from os import makedirs, path, remove
+from os import makedirs, path
 from statistics import mean
 
 import numpy as np
@@ -679,14 +679,15 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             input_list.append(self.build_alignment_input_dict(all_line_transcriptions, self.pk))
 
         witness = TextualWitness.objects.get(pk=witness_pk)
-        f = witness.file.open('r')
-        txt = f.read()
-        witness_dict = {
-            "id": "witness",
-            "text": txt,
-            "ref": 1,  # distinguishes witness from OCR
-        }
-        input_list.append(witness_dict)
+        with witness.file.open('r') as f:
+            txt = f.read()
+            witness_dict = {
+                "id": "witness",
+                "text": txt,
+                "ref": 1,  # distinguishes witness from OCR
+            }
+            input_list.append(witness_dict)
+
         # save to a file
         infile = f"{outdir}.json"
         if not path.exists(outdir):
@@ -717,8 +718,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             ])
         except Exception as e:
             # cleanup in case of exception
-            remove(infile)
-            shutil.rmtree(outdir)
+            shutil.rmtree(outdir, ignore_errors=True)
             raise e
 
         # get the output json file(s)
@@ -785,8 +785,7 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
 
         # clean up temp files
         if not getattr(settings, "KEEP_ALIGNMENT_TEMPFILES", None):
-            remove(infile)
-            shutil.rmtree(outdir)
+            shutil.rmtree(outdir, ignore_errors=True)
 
         for part in parts:
             # set workflow state
