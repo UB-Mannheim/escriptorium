@@ -265,7 +265,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
                                 # max_epochs=2,
                                 # min_epochs=5,
                                 enable_progress_bar=False,
-                                val_check_interval=1,
+                                val_check_interval=1.0,
                                 callbacks=[FrontendFeedback(model, model_dir, document_pk)])
 
         trainer.fit(kraken_model)
@@ -457,7 +457,7 @@ def train_(qs, document, transcription, model=None, user=None):
                             # max_epochs=,
                             # min_epochs=hyper_params['min_epochs'],
                             enable_progress_bar=False,
-                            val_check_interval=1,
+                            val_check_interval=1.0,
                             # deterministic=ctx.meta['deterministic'],
                             callbacks=[FrontendFeedback(model, model_dir, document.pk)])
 
