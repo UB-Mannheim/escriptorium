@@ -29,6 +29,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.n_gram = 4
         self.max_offset = 20
         self.beam_size = 10
+        self.gap = 600
         self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
 
         tpk = self.transcription.pk
@@ -59,6 +60,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -68,6 +70,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             "--floating-ngrams",
             "-n", str(self.n_gram),
             "--max-offset", str(self.max_offset),
+            "--gap", str(self.gap),
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
             f"{self.outdir}-1.json",
@@ -90,6 +93,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types,
                     layer_name=None,
                     beam_size=0,
+                    gap=self.gap,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -153,6 +157,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -187,6 +192,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
 
         # line we know should have changed content based on witness.txt and out.json
@@ -225,6 +231,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -261,6 +268,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                         region_types=self.region_types,
                         layer_name=None,
                         beam_size=0,
+                        gap=self.gap,
                     )
                 # should remove the input json
                 mock_remove.assert_called_with(f"{self.outdir}-1.json")
@@ -290,6 +298,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types,
                     layer_name=None,
                     beam_size=0,
+                    gap=self.gap,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -328,6 +337,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -355,6 +365,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=0,
+            gap=self.gap,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -390,6 +401,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=[],
                     layer_name=None,
                     beam_size=0,
+                    gap=self.gap,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -414,6 +426,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=[self.part.document.valid_block_types.first().id],
                     layer_name=None,
                     beam_size=0,
+                    gap=self.gap,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -437,6 +450,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     region_types=self.region_types,
                     layer_name=None,
                     beam_size=0,
+                    gap=self.gap,
                 )
                 infile = open(f"{self.outdir}-1.json")
                 in_lines = infile.readlines()
@@ -464,6 +478,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name="test layer",
             beam_size=0,
+            gap=self.gap,
         )
 
         # Should not use default naming scheme
@@ -501,6 +516,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             region_types=self.region_types,
             layer_name=None,
             beam_size=self.beam_size,
+            gap=self.gap,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -510,6 +526,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             "--floating-ngrams",
             "-n", str(self.n_gram),
             "--beam", str(self.beam_size),
+            "--gap", str(self.gap),
             "--fields", "ref",
             "--filterpairs", "ref = 1 AND ref2 = 0",
             f"{self.outdir}-1.json",
