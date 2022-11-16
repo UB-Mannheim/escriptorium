@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-25 17:04+0200\n"
+"POT-Creation-Date: 2022-11-03 17:30+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/"
@@ -1320,6 +1320,14 @@ msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Add a line type"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Part types"
+msgstr ""
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a part type"
 msgstr ""
 
 #: escriptorium/templates/core/document_ontology.html
