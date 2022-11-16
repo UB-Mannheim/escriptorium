@@ -115,7 +115,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             self.assertEqual(witness_dict["text"], f.read())
 
             # should remove the output directory
-            mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
+            mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1", ignore_errors=True)
 
         # should create a new transcription layer--will raise error if not
         new_trans = Transcription.objects.get(
@@ -249,28 +249,25 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         mock_subprocess.check_call.side_effect = subprocess.CalledProcessError(2, "test")
 
         # should cleanup files on exception
-        with patch("core.models.remove") as mock_remove:
-            with patch("core.models.shutil") as mock_shutil:
-                with self.assertRaises(Exception):
-                    # should still raise the exception
-                    self.part.document.align(
-                        [self.part.pk],
-                        self.transcription.pk,
-                        self.witness.pk,
-                        self.n_gram,
-                        self.max_offset,
-                        merge=True,
-                        full_doc=False,
-                        threshold=0.0,
-                        region_types=self.region_types,
-                        layer_name=None,
-                        beam_size=0,
-                        gap=self.gap,
-                    )
-                # should remove the input json
-                mock_remove.assert_called_with(f"{self.outdir}-1.json")
-                # should remove the output directory
-                mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
+        with patch("core.models.shutil") as mock_shutil:
+            with self.assertRaises(Exception):
+                # should still raise the exception
+                self.part.document.align(
+                    [self.part.pk],
+                    self.transcription.pk,
+                    self.witness.pk,
+                    self.n_gram,
+                    self.max_offset,
+                    merge=True,
+                    full_doc=False,
+                    threshold=0.0,
+                    region_types=self.region_types,
+                    layer_name=None,
+                    beam_size=0,
+                    gap=self.gap,
+                )
+            # should remove the output directory
+            mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1", ignore_errors=True)
 
     @patch("core.models.hex")
     @patch("core.models.subprocess")
@@ -280,34 +277,33 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         mock_hex.return_value = "0x1"
 
         # mock file cleanup-related modules so we can read the input json
-        with patch("core.models.remove"):
-            with patch("core.models.shutil"):
-                # should produce an input json file (json.load will error otherwise)
-                self.part.document.align(
-                    [self.part.pk],
-                    self.transcription.pk,
-                    self.witness.pk,
-                    self.n_gram,
-                    self.max_offset,
-                    merge=True,
-                    full_doc=True,
-                    threshold=0.0,
-                    region_types=self.region_types,
-                    layer_name=None,
-                    beam_size=0,
-                    gap=self.gap,
-                )
-                infile = open(f"{self.outdir}-1.json")
-                in_lines = infile.readlines()
-                in_json = []
-                for line in in_lines:
-                    in_json.append(json.loads(line))
+        with patch("core.models.shutil"):
+            # should produce an input json file (json.load will error otherwise)
+            self.part.document.align(
+                [self.part.pk],
+                self.transcription.pk,
+                self.witness.pk,
+                self.n_gram,
+                self.max_offset,
+                merge=True,
+                full_doc=True,
+                threshold=0.0,
+                region_types=self.region_types,
+                layer_name=None,
+                beam_size=0,
+                gap=self.gap,
+            )
+            infile = open(f"{self.outdir}-1.json")
+            in_lines = infile.readlines()
+            in_json = []
+            for line in in_lines:
+                in_json.append(json.loads(line))
 
-                # since full_doc = False, should have 90 lines, 5940 chars, combining pages from whole document
-                for entry in in_json:
-                    if entry["id"] != "witness":
-                        self.assertEqual(len(entry["lineIDs"]), 90)
-                        self.assertEqual(len(entry["text"]), 5940)
+            # since full_doc = False, should have 90 lines, 5940 chars, combining pages from whole document
+            for entry in in_json:
+                if entry["id"] != "witness":
+                    self.assertEqual(len(entry["lineIDs"]), 90)
+                    self.assertEqual(len(entry["text"]), 5940)
 
     @patch("core.models.hex")
     @patch("core.models.subprocess")
@@ -383,80 +379,79 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         mock_hex.return_value = "0x1"
 
         # mock file cleanup-related modules so we can read the input json
-        with patch("core.models.remove"):
-            with patch("core.models.shutil"):
-                # when region_types is empty, should have 0 lines (exclude all region types)
-                self.part.document.align(
-                    [self.part.pk],
-                    self.transcription.pk,
-                    self.witness.pk,
-                    self.n_gram,
-                    self.max_offset,
-                    merge=True,
-                    full_doc=True,
-                    threshold=0.0,
-                    region_types=[],
-                    layer_name=None,
-                    beam_size=0,
-                    gap=self.gap,
-                )
-                infile = open(f"{self.outdir}-1.json")
-                in_lines = infile.readlines()
-                in_json = []
-                for line in in_lines:
-                    in_json.append(json.loads(line))
-                for entry in in_json:
-                    if entry["id"] != "witness":
-                        self.assertEqual(len(entry["lineIDs"]), 0)
+        with patch("core.models.shutil"):
+            # when region_types is empty, should have 0 lines (exclude all region types)
+            self.part.document.align(
+                [self.part.pk],
+                self.transcription.pk,
+                self.witness.pk,
+                self.n_gram,
+                self.max_offset,
+                merge=True,
+                full_doc=True,
+                threshold=0.0,
+                region_types=[],
+                layer_name=None,
+                beam_size=0,
+                gap=self.gap,
+            )
+            infile = open(f"{self.outdir}-1.json")
+            in_lines = infile.readlines()
+            in_json = []
+            for line in in_lines:
+                in_json.append(json.loads(line))
+            for entry in in_json:
+                if entry["id"] != "witness":
+                    self.assertEqual(len(entry["lineIDs"]), 0)
 
-                # when region_types includes exactly one of the three we created in
-                # makeTranscriptionContent, should have 30 lines
-                self.part.document.align(
-                    [self.part.pk],
-                    self.transcription.pk,
-                    self.witness.pk,
-                    self.n_gram,
-                    self.max_offset,
-                    merge=True,
-                    full_doc=True,
-                    threshold=0.0,
-                    region_types=[self.part.document.valid_block_types.first().id],
-                    layer_name=None,
-                    beam_size=0,
-                    gap=self.gap,
-                )
-                infile = open(f"{self.outdir}-1.json")
-                in_lines = infile.readlines()
-                in_json = []
-                for line in in_lines:
-                    in_json.append(json.loads(line))
-                for entry in in_json:
-                    if entry["id"] != "witness":
-                        self.assertEqual(len(entry["lineIDs"]), 30)
+            # when region_types includes exactly one of the three we created in
+            # makeTranscriptionContent, should have 30 lines
+            self.part.document.align(
+                [self.part.pk],
+                self.transcription.pk,
+                self.witness.pk,
+                self.n_gram,
+                self.max_offset,
+                merge=True,
+                full_doc=True,
+                threshold=0.0,
+                region_types=[self.part.document.valid_block_types.first().id],
+                layer_name=None,
+                beam_size=0,
+                gap=self.gap,
+            )
+            infile = open(f"{self.outdir}-1.json")
+            in_lines = infile.readlines()
+            in_json = []
+            for line in in_lines:
+                in_json.append(json.loads(line))
+            for entry in in_json:
+                if entry["id"] != "witness":
+                    self.assertEqual(len(entry["lineIDs"]), 30)
 
-                # when region_types is all the valid ones for the document, should have 90 lines
-                self.part.document.align(
-                    [self.part.pk],
-                    self.transcription.pk,
-                    self.witness.pk,
-                    self.n_gram,
-                    self.max_offset,
-                    merge=True,
-                    full_doc=True,
-                    threshold=0.0,
-                    region_types=self.region_types,
-                    layer_name=None,
-                    beam_size=0,
-                    gap=self.gap,
-                )
-                infile = open(f"{self.outdir}-1.json")
-                in_lines = infile.readlines()
-                in_json = []
-                for line in in_lines:
-                    in_json.append(json.loads(line))
-                for entry in in_json:
-                    if entry["id"] != "witness":
-                        self.assertEqual(len(entry["lineIDs"]), 90)
+            # when region_types is all the valid ones for the document, should have 90 lines
+            self.part.document.align(
+                [self.part.pk],
+                self.transcription.pk,
+                self.witness.pk,
+                self.n_gram,
+                self.max_offset,
+                merge=True,
+                full_doc=True,
+                threshold=0.0,
+                region_types=self.region_types,
+                layer_name=None,
+                beam_size=0,
+                gap=self.gap,
+            )
+            infile = open(f"{self.outdir}-1.json")
+            in_lines = infile.readlines()
+            in_json = []
+            for line in in_lines:
+                in_json.append(json.loads(line))
+            for entry in in_json:
+                if entry["id"] != "witness":
+                    self.assertEqual(len(entry["lineIDs"]), 90)
 
     @patch("core.models.subprocess")
     def test_layer_name(self, _):
