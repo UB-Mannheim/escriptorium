@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-03 20:29+0000\n"
+"POT-Creation-Date: 2022-11-16 17:14+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English <https://hosted.weblate.org/projects/escriptorium/>\n"
@@ -23,10 +23,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Weblate 4.14-dev\n"
-
-#: apps/api/serializers.py
-msgid "PDF is not a valid image, please use the dedicated Import function."
-msgstr ""
 
 #: apps/api/serializers.py
 msgid "PDF is not a valid image, please use the dedicated Import function."
@@ -187,8 +183,8 @@ msgstr ""
 
 #: apps/core/forms.py
 msgid ""
-"Length (2–25) of token sequences to compare; reduce for noisier "
-"transcriptions and lower precision results."
+"Length (2–25) of token sequences to compare; 25 should work well for at "
+"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
 msgstr ""
 
 #: apps/core/forms.py
@@ -211,6 +207,17 @@ msgid ""
 "Enables beam search; if this and max offset are left unset, beam search will "
 "be on and beam size set to 20. Higher beam size (1-100) will result in "
 "slower computation but more accurate results."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Gap"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"The distance between matching unique n-grams; 600 should work well for clean "
+"OCR or texts where passages align to different portions of the witness text. "
+"To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr ""
 
 #: apps/core/forms.py
@@ -2566,6 +2573,18 @@ msgstr ""
 msgid "You didn't send any invitations yet."
 msgstr ""
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
 msgstr ""
