@@ -78,47 +78,44 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         ])
 
         # mock file cleanup-related modules so we can read the input json
-        with patch("core.models.remove") as mock_remove:
-            with patch("core.models.shutil") as mock_shutil:
-                # should produce an input json file (json.load will error otherwise)
-                self.part.document.align(
-                    [self.part.pk],
-                    self.transcription.pk,
-                    self.witness.pk,
-                    self.n_gram,
-                    self.max_offset,
-                    merge=True,
-                    full_doc=False,
-                    threshold=0.0,
-                    region_types=self.region_types,
-                    layer_name=None,
-                    beam_size=0,
-                    gap=self.gap,
-                )
-                infile = open(f"{self.outdir}-1.json")
-                in_lines = infile.readlines()
-                in_json = []
-                for line in in_lines:
-                    in_json.append(json.loads(line))
+        with patch("core.models.shutil") as mock_shutil:
+            # should produce an input json file (json.load will error otherwise)
+            self.part.document.align(
+                [self.part.pk],
+                self.transcription.pk,
+                self.witness.pk,
+                self.n_gram,
+                self.max_offset,
+                merge=True,
+                full_doc=False,
+                threshold=0.0,
+                region_types=self.region_types,
+                layer_name=None,
+                beam_size=0,
+                gap=self.gap,
+            )
+            infile = open(f"{self.outdir}-1.json")
+            in_lines = infile.readlines()
+            in_json = []
+            for line in in_lines:
+                in_json.append(json.loads(line))
 
-                # should be a list of length 2 (1 input document + 1 witness txt)
-                self.assertEqual(len(in_json), 2)
+            # should be a list of length 2 (1 input document + 1 witness txt)
+            self.assertEqual(len(in_json), 2)
 
-                # since full_doc = False, should have 30 lines (1980 chars) from only single page
-                for entry in in_json:
-                    if entry["id"] != "witness":
-                        self.assertEqual(len(entry["lineIDs"]), 30)
-                        self.assertEqual(len(entry["text"]), 1980)
+            # since full_doc = False, should have 30 lines (1980 chars) from only single page
+            for entry in in_json:
+                if entry["id"] != "witness":
+                    self.assertEqual(len(entry["lineIDs"]), 30)
+                    self.assertEqual(len(entry["text"]), 1980)
 
-                # should have an entry with id "witness" and text of witness txt
-                witness_dict = next(filter(lambda d: d["id"] == "witness", in_json))
-                f = open(os.path.join(os.path.dirname(__file__), "assets", "alignment/witness.txt"), "r")
-                self.assertEqual(witness_dict["text"], f.read())
+            # should have an entry with id "witness" and text of witness txt
+            witness_dict = next(filter(lambda d: d["id"] == "witness", in_json))
+            f = open(os.path.join(os.path.dirname(__file__), "assets", "alignment/witness.txt"), "r")
+            self.assertEqual(witness_dict["text"], f.read())
 
-                # should remove the input json
-                mock_remove.assert_called_with(f"{self.outdir}-1.json")
-                # should remove the output directory
-                mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
+            # should remove the output directory
+            mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1")
 
         # should create a new transcription layer--will raise error if not
         new_trans = Transcription.objects.get(
