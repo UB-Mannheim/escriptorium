@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-25 17:04+0200\n"
+"POT-Creation-Date: 2022-11-03 17:30+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -183,10 +183,8 @@ msgstr ""
 "damit verbundene Transkriptionen</b> zuerst gelöscht!"
 
 #: apps/core/forms.py
-#, fuzzy
-#| msgid "Line transcription enhanced content"
 msgid "The transcription on which to perform alignment."
-msgstr "Zeilentranskription hat Inhalt erweitert"
+msgstr "Transkription für die Alignierung"
 
 #: apps/core/forms.py
 msgid "The reference text for alignment; must be a .txt file."
@@ -229,12 +227,8 @@ msgid ""
 msgstr ""
 
 #: apps/core/forms.py
-#, fuzzy
-#| msgid "Beware that re-segmenting will delete any existing transcriptions!"
 msgid "Merge aligned text with existing transcription"
-msgstr ""
-"Achtung - eine Re-Segmentierung wird alle bestehenden Transkriptionen "
-"löschen!"
+msgstr "Mische alignierten Text mit vorhandener Transkription"
 
 #: apps/core/forms.py
 msgid ""
@@ -269,10 +263,8 @@ msgid "Region types to include in the alignment."
 msgstr ""
 
 #: apps/core/forms.py
-#, fuzzy
-#| msgid "Username"
 msgid "Layer name"
-msgstr "Benutzername"
+msgstr "Name der Ebene"
 
 #: apps/core/forms.py
 msgid ""
@@ -303,14 +295,8 @@ msgid "The model is already training."
 msgstr ""
 
 #: apps/core/forms.py
-#, fuzzy
-#| msgid ""
-#| "Either use model_name to create a new model, or add a model pk to retrain "
-#| "an existing one."
 msgid "Either choose a model name or overwrite an existing one."
-msgstr ""
-"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
-"fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
+msgstr "Wählen Sie entweder einen Modellnamen oder überschreiben Sie ein existierendes."
 
 #: apps/core/forms.py
 msgid ""
@@ -423,10 +409,8 @@ msgid ""
 msgstr ""
 
 #: apps/core/models.py
-#, fuzzy
-#| msgid "Couldn't find the training task."
 msgid "Couldn't find the alignment task."
-msgstr "Konnte die Trainings-Aufgabe nicht finden."
+msgstr "Konnte die Alignierungs-Aufgabe nicht finden."
 
 #: apps/core/models.py
 msgid "Binarized image needs to be the same size as original image."
@@ -543,16 +527,12 @@ msgid "Transcription done!"
 msgstr "Transkription abgeschlossen!"
 
 #: apps/core/tasks.py
-#, fuzzy
-#| msgid "Something went wrong during the import!"
 msgid "Something went wrong during the alignment!"
-msgstr "Etwas ist während des Imports schiefgelaufen!"
+msgstr "Etwas ist während des Alignierens schiefgelaufen!"
 
 #: apps/core/tasks.py
-#, fuzzy
-#| msgid "Segmentation done!"
 msgid "Alignment done!"
-msgstr "Segmentierung abgeschlossen!"
+msgstr "Alignierung abgeschlossen!"
 
 #: apps/core/views.py
 msgid "Project created successfully!"
@@ -1188,7 +1168,7 @@ msgstr ""
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/wizards/align.html
 msgid "Align"
-msgstr ""
+msgstr "Ausrichten"
 
 #: escriptorium/templates/core/document_images.html
 msgid "Delete this image and all its data (segmentation, transcriptions)"
@@ -1232,16 +1212,12 @@ msgid "Filters"
 msgstr "Filter"
 
 #: escriptorium/templates/core/document_list.html
-#, fuzzy
-#| msgid "Selected"
 msgid "Select"
-msgstr "Ausgewählt"
+msgstr "Wähle aus"
 
 #: escriptorium/templates/core/document_list.html
-#, fuzzy
-#| msgid "Previous"
 msgid "Preview"
-msgstr "Vorherige"
+msgstr "Vorschau"
 
 #: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -1254,10 +1230,8 @@ msgid "Owner"
 msgstr "Besitzer"
 
 #: escriptorium/templates/core/document_list.html
-#, fuzzy
-#| msgid "Last modified on"
 msgid "Last modified"
-msgstr "Letzte Änderung am"
+msgstr "Zuletzt geändert"
 
 #: escriptorium/templates/core/document_list.html
 msgid "Image count"
@@ -1268,10 +1242,8 @@ msgid "Tags"
 msgstr ""
 
 #: escriptorium/templates/core/document_list.html
-#, fuzzy
-#| msgid "Annotations:"
 msgid "Actions"
-msgstr "Transkriptionen:"
+msgstr "Aktionen"
 
 #: escriptorium/templates/core/document_list.html
 msgid "Shared with"
@@ -1405,6 +1377,14 @@ msgstr "Zeilentypen"
 #: escriptorium/templates/core/document_ontology.html
 msgid "Add a line type"
 msgstr "Einen Zeilentyp hinzufügen"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Part types"
+msgstr "Teiletypen"
+
+#: escriptorium/templates/core/document_ontology.html
+msgid "Add a part type"
+msgstr "Einen Teiletyp hinzufügen"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Annotations components"
@@ -1816,20 +1796,16 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/wizards/align.html
-#, fuzzy
-#| msgid "Line transcription"
 msgid "Select a transcription"
-msgstr "Beschreibung der Zeile"
+msgstr "Wählen Sie eine Transkription aus"
 
 #: escriptorium/templates/core/wizards/align.html
 msgid "Upload or select a textual witness"
 msgstr ""
 
 #: escriptorium/templates/core/wizards/align.html
-#, fuzzy
-#| msgid "Segmenting"
 msgid "Settings"
-msgstr "Segmentiere"
+msgstr "Einstellungen"
 
 #: escriptorium/templates/core/wizards/binarize.html
 msgid ""
@@ -2351,10 +2327,8 @@ msgid "Reset my password"
 msgstr "Mein Passwort zurücksetzen"
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Documents"
 msgid "Document report"
-msgstr "Dokumente"
+msgstr "Dokumentenbericht"
 
 #: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
@@ -2372,20 +2346,16 @@ msgid "A document part corresponds to one image loaded within a document."
 msgstr "Ein Dokumentteil entspricht einem Bild innerhalb eines Dokumentes."
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Total number of document parts"
 msgid "Transcribed document parts"
-msgstr "Gesamtzahl der Dokumentteile"
+msgstr "Transkribierte Dokumentteile"
 
 #: escriptorium/templates/reporting/document_report.html
 msgid "The number of transcribed images in the selected transcription(s)."
 msgstr ""
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Transcription done!"
 msgid "Average transcription confidence"
-msgstr "Transkription abgeschlossen!"
+msgstr "Durchschnittliche Transkriptionssicherheit"
 
 #: escriptorium/templates/reporting/document_report.html
 msgid ""
