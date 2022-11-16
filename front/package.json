@@ -28,7 +28,7 @@
     "mathjs": "^7.0.0",
     "moment": "^2.23.0",
     "moment-timezone": "^0.5.23",
-    "paper": "^0.12.11",
+    "paper": "^0.12.16",
     "popper.js": "^1.15.0",
     "reconnectingwebsocket": "^1.0.0",
     "sortablejs": "^1.10.2",

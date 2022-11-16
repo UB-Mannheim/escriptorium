@@ -7,7 +7,29 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from users.consumers import send_event
+
 logger = logging.getLogger(__name__)
+
+
+def update_client_state(task_kwargs, task_name, status, task_id=None, data=None):
+    part_pks = []
+    if task_kwargs.get("instance_pk"):
+        part_pks = [task_kwargs["instance_pk"]]
+    elif task_kwargs.get("part_pks"):
+        part_pks = task_kwargs["part_pks"]
+
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+
+    for part_pk in part_pks:
+        part = DocumentPart.objects.get(pk=part_pk)
+        send_event('document', part.document.pk, "part:workflow", {
+            "id": part.pk,
+            "process": task_name.split('.')[-1],
+            "status": status,
+            "task_id": task_id,
+            "data": data or {}
+        })
 
 
 @before_task_publish.connect
@@ -23,6 +45,7 @@ def create_task_reporting(sender, body, **kwargs):
     DocumentImport = apps.get_model('imports', 'DocumentImport')
     Document = apps.get_model('core', 'Document')
     DocumentPart = apps.get_model('core', 'DocumentPart')
+    OcrModel = apps.get_model('core', 'OcrModel')
     TaskReport = apps.get_model('reporting', 'TaskReport')
 
     if task_kwargs.get("user_pk"):
@@ -39,7 +62,13 @@ def create_task_reporting(sender, body, **kwargs):
 
     document = None
     part = None
-    if task_kwargs.get("document_pk"):
+    model = None
+    if task_kwargs.get("model_pk"):
+        try:
+            model = OcrModel.objects.get(pk=task_kwargs["model_pk"])
+        except OcrModel.DoesNotExist:
+            pass
+    elif task_kwargs.get("document_pk"):
         try:
             document = Document.objects.get(pk=task_kwargs["document_pk"])
         except Document.DoesNotExist:
@@ -63,6 +92,9 @@ def create_task_reporting(sender, body, **kwargs):
                       .get(pk=task_kwargs["part_pks"][0]))
         document = first_part.document
 
+    # Update the frontend display consequently
+    update_client_state(task_kwargs, sender, "pending")
+
     # TODO: Define an explicit "report_label" kwarg on all tasks
     default_report_label = f"Report for celery task {task_id} of type {sender}"
     TaskReport.objects.create(
@@ -70,6 +102,7 @@ def create_task_reporting(sender, body, **kwargs):
         label=task_kwargs.get("report_label", default_report_label),
         document=document,
         document_part=part,
+        ocr_model=model,
         task_id=task_id,
         method=sender
     )
@@ -91,6 +124,9 @@ def start_task_reporting(task_id, task, *args, **kwargs):
 
     report.start()
 
+    # Update the frontend display consequently
+    update_client_state(kwargs.get("kwargs", {}), task.name, "ongoing", task_id=task_id)
+
 
 @task_postrun.connect
 def end_task_reporting(task_id, task, *args, **kwargs):
@@ -107,15 +143,22 @@ def end_task_reporting(task_id, task, *args, **kwargs):
 
     # Checking if the report wasn't already ended by tasks like "document_export" or "document_import"
     # or canceled by the Document.cancel_tasks API endpoint
-    if (
-        report.workflow_state != report.WORKFLOW_STATE_ERROR
-        and report.workflow_state != report.WORKFLOW_STATE_DONE
-        and report.workflow_state != report.WORKFLOW_STATE_CANCELED
-    ):
+    from reporting.models import TASK_FINAL_STATES
+
+    if report.workflow_state not in TASK_FINAL_STATES:
         if kwargs.get("state") == states.SUCCESS:
             report.end()
         else:
             report.error(str(kwargs.get("retval")))
+
+    # Update the frontend display consequently
+    client_status_mapping = {
+        TaskReport.WORKFLOW_STATE_ERROR: 'error',
+        TaskReport.WORKFLOW_STATE_DONE: 'done'
+    }
+
+    if report.workflow_state in client_status_mapping:
+        update_client_state(kwargs.get("kwargs", {}), task.name, client_status_mapping[report.workflow_state], task_id=task_id, data=kwargs.get('result'))
 
     report.calc_cpu_cost(os.cpu_count())
     # Listing tasks parametrized to run on 'gpu' Celery queue

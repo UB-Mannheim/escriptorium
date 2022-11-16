@@ -65,10 +65,25 @@ class MyUserAdmin(UserAdmin):
 class InvitationAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     list_filter = ('workflow_state', 'group')
-    list_display = ('recipient_email', 'recipient_last_name', 'recipient_first_name',
-                    'sender', 'workflow_state')
+    list_display = ('recipient_email_', 'recipient_last_name_', 'recipient_first_name_',
+                    'group', 'sender', 'workflow_state')
     readonly_fields = ('sender', 'recipient', 'token', 'created_at', 'sent_at', 'workflow_state')
+    search_fields = ('recipient_email', 'recipient__username',
+                     'recipient_last_name', 'recipient_first_name',
+                     'recipient__last_name', 'recipient__first_name')
     actions = ['resend']
+
+    @admin.display(description='Recipient Email')
+    def recipient_email_(self, obj):
+        return obj.recipient.email if obj.recipient else obj.recipient_email
+
+    @admin.display(description='Recipient last name')
+    def recipient_last_name_(self, obj):
+        return obj.recipient.last_name if obj.recipient else obj.recipient_last_name
+
+    @admin.display(description='Recipient first name')
+    def recipient_first_name_(self, obj):
+        return obj.recipient.first_name if obj.recipient else obj.recipient_first_name
 
     def save_model(self, request, obj, form, change):
         obj.sender = request.user

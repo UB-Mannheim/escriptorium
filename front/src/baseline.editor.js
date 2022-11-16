@@ -862,13 +862,10 @@ export class Segmenter {
             this.orderingLayer.bringToFront();
         }
 
-        this.refresh();
-
         // make sure we capture clicks before the img
         this.canvas.style.zIndex = this.img.style.zIndex + 1;
 
-        this.canvas.style.width = this.img.width;
-        this.canvas.style.height = this.img.height;
+        this.refresh();
 
         var tool = new Tool();
         this.setColors(this.img);
@@ -1461,6 +1458,10 @@ export class Segmenter {
             console.warn('segmenter.refresh called with an empty image');
             return;
         }
+
+        this.canvas.width = this.img.width;
+        this.canvas.height = this.img.height;
+
         if (paper.view) {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);

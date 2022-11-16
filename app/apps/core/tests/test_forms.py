@@ -142,6 +142,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "region_types": ["Orphan", "Undefined"],
             "layer_name": "example",
             "beam_size": 10,
+            "gap": 1000000,
         }
 
         align_form.process()
@@ -160,6 +161,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             region_types=["Orphan", "Undefined"],
             layer_name="example",
             beam_size=10,
+            gap=1000000,
         )
 
         # should create a new textual witness from a passed file
@@ -175,6 +177,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "threshold": 0.8,
             "region_types": ["Orphan", "Undefined"],
             "layer_name": "example",
+            "gap": 600,
         }
         align_form.process()
         mock_textualwitness_class.assert_called_with(
@@ -184,7 +187,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
         )
 
         # should call align task with default n_gram (25), full_doc (True), max_offset (0),
-        # region_types, layer_name (None), threshold (0.8), and beam_size (20) when none provided
+        # region_types, layer_name (None), threshold (0.8), beam_size (20), and gap (600) when none provided
         align_form.cleaned_data = {
             "transcription": self.transcription,
             "existing_witness": self.witness,
@@ -205,6 +208,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             region_types=["Orphan", "Undefined"],
             layer_name=None,
             beam_size=20,
+            gap=600,
         )
 
         # should respect threshold of 0.0 and not revert to default 0.8
@@ -229,4 +233,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             region_types=["Orphan", "Undefined"],
             layer_name=None,
             beam_size=20,
+            gap=600,
         )

@@ -693,7 +693,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         min_value=2,
         max_value=25,
         initial=25,
-        help_text=_("Length (2–25) of token sequences to compare; reduce for noisier transcriptions and lower precision results."),
+        help_text=_("Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4."),
     )
     max_offset = forms.IntegerField(
         label=_("Max offset"),
@@ -708,6 +708,14 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         required=False,
         min_value=0,
         max_value=100,
+    )
+    gap = forms.IntegerField(
+        label=_("Gap"),
+        required=True,
+        min_value=1,
+        max_value=1000000,
+        initial=600,
+        help_text=_("The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000.")
     )
     merge = forms.BooleanField(
         label=_("Merge aligned text with existing transcription"),
@@ -798,6 +806,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         max_offset = self.cleaned_data.get("max_offset", 0)
         beam_size = self.cleaned_data.get("beam_size", 20)
         n_gram = self.cleaned_data.get("n_gram", 25)
+        gap = self.cleaned_data.get("gap", 600)
         merge = self.cleaned_data.get("merge")
         full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold", 0.8)
@@ -830,6 +839,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             region_types=region_types,
             layer_name=layer_name,
             beam_size=int(beam_size if (beam_size is not None and beam_size != '') else 20),
+            gap=int(gap if gap else 600),
         )
 
 

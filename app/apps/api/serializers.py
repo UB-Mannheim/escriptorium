@@ -750,8 +750,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        segtrain.delay(model.pk if model else None,
-                       [part.pk for part in self.validated_data.get('parts')],
+        segtrain.delay(model_pk=model.pk if model else None,
+                       part_pks=[part.pk for part in self.validated_data.get('parts')],
                        document_pk=self.document.pk,
                        user_pk=self.user.pk)
 
@@ -818,8 +818,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.trained_on = timezone.now()
             ocr_model_document.save()
 
-        train.delay(self.validated_data['transcription'].pk,
-                    model.pk if model else None,
+        train.delay(transcription_pk=self.validated_data['transcription'].pk,
+                    model_pk=model.pk if model else None,
                     part_pks=[part.pk for part in self.validated_data.get('parts')],
                     user_pk=self.user.pk)
 

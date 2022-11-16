@@ -164,15 +164,15 @@ class TasksTestCase(CoreFactoryTestCase):
                 # should call part.align with transcription, witness pks (and default no parts [], n-gram of 4, merge=False)
                 align.delay(document_pk=1, user_pk=2, transcription_pk=3, witness_pk=4)
                 doc = apps_mock.get_model.return_value.objects.get.return_value
-                doc.align.assert_called_with([], 3, 4, 25, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20)
+                doc.align.assert_called_with([], 3, 4, 25, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20, 600)
 
                 # should call part.align with set n-gram value
                 align.delay(document_pk=1, user_pk=2, transcription_pk=3, witness_pk=4, n_gram=2)
-                doc.align.assert_called_with([], 3, 4, 2, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20)
+                doc.align.assert_called_with([], 3, 4, 2, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20, 600)
 
                 # should call part.align with set parts
                 align.delay(document_pk=1, part_pks=[1], user_pk=2, transcription_pk=3, witness_pk=4, n_gram=2)
-                doc.align.assert_called_with([1], 3, 4, 2, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20)
+                doc.align.assert_called_with([1], 3, 4, 2, 0, False, True, 0.8, ["Orphan", "Undefined"], None, 20, 600)
 
                 # when part.align raises an exception:
                 doc.align.side_effect = Exception
