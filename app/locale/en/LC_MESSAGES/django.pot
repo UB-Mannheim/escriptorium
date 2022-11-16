@@ -28,6 +28,10 @@ msgstr ""
 msgid "PDF is not a valid image, please use the dedicated Import function."
 msgstr ""
 
+#: apps/api/serializers.py
+msgid "PDF is not a valid image, please use the dedicated Import function."
+msgstr ""
+
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 #: escriptorium/templates/core/document_images.html
 msgid "You don't have any disk storage left."
