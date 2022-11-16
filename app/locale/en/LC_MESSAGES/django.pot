@@ -1,10 +1,10 @@
 # English translations for eScriptorium.
-# Copyright (C) 2022
+# Copyright (C) 2022–2023
 # This file is distributed under the same license as the eScriptorium package.
 # Stefan Weil <sw@weilnetz.de, 2022
 #
 # This file was created like this:
-# django-admin makemessages -l en
+# django-admin makemessages -l en --add-location file
 #
 # To update all translations, run
 # django-admin makemessages --all --add-location file
@@ -2658,6 +2658,18 @@ msgstr ""
 msgid "You didn't send any invitations yet."
 msgstr ""
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
 msgstr ""
