@@ -1459,9 +1459,6 @@ export class Segmenter {
             return;
         }
 
-        this.canvas.width = this.img.width;
-        this.canvas.height = this.img.height;
-
         if (paper.view) {
             let bounds = this.img.getBoundingClientRect();
             let imgRatio = (bounds.width / this.img.naturalWidth);
@@ -1471,8 +1468,10 @@ export class Segmenter {
                 paper.view.viewSize = [bounds.width, bounds.height];
                 paper.view.scale(ratio, [0, 0]);
             }
-            // recalculate average line heights for lines without masks
-            this.resetLineHeights();
+
+            this.canvas.width = bounds.width;
+            this.canvas.height = bounds.height;
+
             this.applyRegionMode();
         }
     }
