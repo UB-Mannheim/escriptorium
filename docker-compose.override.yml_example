@@ -1,10 +1,11 @@
 version: "3.9"
 
+### to customize the homepage, uncomment this
+#x-app:
+#  volumes:
+#    - $PWD/app/homepage
+
 services:
-    ### to customize the homepage, uncomment this
-    #app:
-      # volumes:
-      #   - $PWD/app/homepage
 
     web: &web
       restart: always
@@ -54,7 +55,7 @@ services:
     #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     #     - discovery.type=single-node
     #   volumes:
-    #     - esdata/:/usr/share/elasticsearch/data
+    #     - esdata:/usr/share/elasticsearch/data
 
     nginx:
       restart: always

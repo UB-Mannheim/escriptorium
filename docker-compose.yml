@@ -1,16 +1,18 @@
 version: "3.9"
 
+x-app:
+  &app
+  image: registry.gitlab.com/scripta/escriptorium:latest
+  build:
+    context: .
+  env_file: variables.env
+  volumes:
+    # - ./app/:/usr/src/app/
+    - static:/usr/src/app/static
+    - media:/usr/src/app/media
+  command: /bin/true
+
 services:
-  app: &app
-    image: registry.gitlab.com/scripta/escriptorium:latest
-    build:
-      context: .
-    env_file: variables.env
-    volumes:
-      # - ./app/:/usr/src/app/
-      - static:/usr/src/app/static
-      - media:/usr/src/app/media
-    command: /bin/true
 
   web:
     <<: *app
