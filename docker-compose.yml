@@ -1,16 +1,18 @@
 version: "3.9"
 
+x-app:
+  &app
+  image: registry.gitlab.com/scripta/escriptorium:latest
+  build:
+    context: .
+  env_file: variables.env
+  volumes:
+    # - ./app/:/usr/src/app/
+    - static:/usr/src/app/static
+    - media:/usr/src/app/media
+  command: /bin/true
+
 services:
-  app: &app
-    image: registry.gitlab.com/scripta/escriptorium:latest
-    build:
-      context: .
-    env_file: variables.env
-    volumes:
-      # - ./app/:/usr/src/app/
-      - static:/usr/src/app/static
-      - media:/usr/src/app/media
-    command: /bin/true
 
   web:
     <<: *app
@@ -70,7 +72,7 @@ services:
 
   flower:
     image: docker.io/mher/flower
-    command: ["celery", "flower", "--broker=redis://redis:6379/0", "--port=5555"]
+    command: ["celery", "--broker=redis://redis:6379/0", "flower", "--port=5555"]
     ports:
       - 5555:5555
 

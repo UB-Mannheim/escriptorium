@@ -449,7 +449,8 @@ export default Vue.extend({
       // Note: vue.js doesn't have super call wtf we need to copy the code :(
       let src =
         (!this.fullsizeimage &&
-          this.$store.state.parts.image.thumbnails.large) ||
+         this.$store.state.parts.image.thumbnails !== undefined &&
+         this.$store.state.parts.image.thumbnails.large) ||
         this.$store.state.parts.image.uri;
 
       let bwSrc =
@@ -525,7 +526,7 @@ export default Vue.extend({
     refreshSegmenter() {
       Vue.nextTick(
         function () {
-          if (this.$img.naturalWidth === 0) {
+          if (!this.$store.state.parts.image || this.$img.naturalWidth === 0) {
             console.warn("refreshSegmenter called with no image");
             return;
           }
@@ -542,7 +543,6 @@ export default Vue.extend({
     updateZoom(zoom) {
       // might not be mounted yet
       if (this.segmenter && this.$img.complete) {
-        // var zoom = this.$parent.zoom;
         this.segmenter.canvas.style.top = zoom.pos.y + "px";
         this.segmenter.canvas.style.left = zoom.pos.x + "px";
         this.segmenter.refresh();
