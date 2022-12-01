@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets xmlns="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <fileSec>
+    <fileGrp USE="binarized">
+      <file ID="binarized1"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000005.png"/></file>
+      <file ID="binarized2"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000006.png"/></file>
+      <file ID="binarized3"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000007.png"/></file>
+      <file ID="binarized4"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000008.png"/></file>
+      <file NOID="yes"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000009.png"/></file>
+    </fileGrp>
+    <fileGrp USE="transcript">
+      <file ID="transcript1"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000005.xml"/></file>
+      <file ID="transcript2"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000006.xml"/></file>
+      <file ID="transcript3"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000007.xml"/></file>
+      <file ID="transcript4"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000008.xml"/></file>
+      <file NOID="yes"><FLocat xlink:href="Kifayat_al-ghulam.pdf_000009.xml"/></file>
+    </fileGrp>
+  </fileSec>
+  <structMap TYPE="physical">
+    <div TYPE="book">
+      <div TYPE="page">
+        <fptr FILEID="binarized1"/>
+        <fptr FILEID="transcript1"/>
+      </div>
+      <div TYPE="prefix-page">
+        <fptr FILEID="binarized2"/>
+        <fptr FILEID="transcript2"/>
+      </div>
+      <div TYPE="page-suffix">
+        <fptr FILEID="binarized3"/>
+        <fptr FILEID="transcript3"/>
+      </div>
+      <div TYPE="prefix-page-suffix">
+        <fptr FILEID="binarized4"/>
+        <fptr FILEID="transcript4"/>
+      </div>
+      <div TYPE="wrongType">
+        <fptr FILEID="binarized5"/>
+        <fptr FILEID="transcript5"/>
+      </div>
+    </div>
+  </structMap>
+</mets>
