@@ -28,6 +28,7 @@ from core.models import (
     Transcription,
 )
 from core.tasks import generate_part_thumbnails
+from imports.mets import METSProcessor
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class ParserDocument:
         # should return the number of elements returned by parse()
         raise NotImplementedError
 
-    def parse(self, start_index=0, override=False, user=None):
+    def parse(self, start_at=0, override=False, user=None):
         # iterator over created document parts
         raise NotImplementedError
 
@@ -213,6 +214,99 @@ class ZipParser(ParserDocument):
                             self.report.append(msg)
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
+
+
+class METSZipParser(ZipParser):
+    DEFAULT_NAME = _("METS Import")
+
+    def __init__(self, document, file_handler, report, transcription_name=None):
+        self.mets_pages = []
+        super().__init__(document, file_handler, report, transcription_name)
+
+    @property
+    def total(self):
+        return len(self.mets_pages)
+
+    def parse(self, start_at=0, override=False, user=None):
+        # Searching for the METS file in the archive
+        with zipfile.ZipFile(self.file) as archive:
+            xml_filenames = [filename for filename in archive.namelist() if os.path.splitext(filename)[1][1:] == "xml"]
+
+            mets_file_content = None
+            for xml_filename in xml_filenames:
+                with archive.open(xml_filename) as ziped_file:
+                    try:
+                        root = etree.parse(ziped_file).getroot()
+                        schemas = root.nsmap.values()
+                    except (etree.XMLSyntaxError, KeyError):
+                        logger.debug(f"Skipping file {xml_filename} in archive as it isn't a METS file")
+                        continue
+
+                    if METSProcessor.NAMESPACES["mets"] in schemas:
+                        mets_file_content = root
+                        break
+
+        # If we didn't find a METS file in the archive after browsing everything, something is wrong
+        if mets_file_content is None:
+            raise ParseError(
+                "Couldn't find the METS file that should be there to define the archive."
+            )
+
+        # Retrieving all the pages described by the METS file
+        try:
+            self.mets_pages = METSProcessor(mets_file_content, archive=self.file).process()
+        except ParseError:
+            raise
+        except Exception as e:
+            raise ParseError(f"An error occurred during the processing of the METS file contained in the archive: {e}")
+
+        with zipfile.ZipFile(self.file) as archive:
+            for index, mets_page in enumerate(self.mets_pages):
+                if mets_page.image:
+                    with archive.open(mets_page.image) as ziped_image:
+                        filename = os.path.basename(ziped_image.name)
+
+                        # If quotas are enforced, assert that the user still has free disk storage
+                        if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+                            raise DiskQuotaReachedError(
+                                _(f"You ran out of disk storage. {self.total - index} METS pages were left to import (over {self.total - start_at})")
+                            )
+
+                        try:
+                            part = DocumentPart.objects.filter(
+                                document=self.document,
+                                original_filename=filename
+                            )[0]
+                        except IndexError:
+                            part = DocumentPart(
+                                document=self.document,
+                                original_filename=filename
+                            )
+                        part.image_file_size = 0
+                        part.image.save(filename, ContentFile(ziped_image.read()))
+                        part.image_file_size = part.image.size
+                        part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
+                        part.save()
+                        generate_part_thumbnails.si(instance_pk=part.pk)
+
+                for layer_name, source in mets_page.sources.items():
+                    with archive.open(source) as ziped_source:
+                        filename = os.path.basename(ziped_source.name)
+
+                        try:
+                            parser = make_parser(self.document, ziped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
+                            for part in parser.parse(override=override, user=user):
+                                yield part
+                        except (ValueError, ParseError) as e:
+                            # We let go to try other sources
+                            msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                                filename=self.file.name, xmlfile=filename, error=e.args[0]
+                            )
+                            logger.warning(msg)
+                            if self.report:
+                                self.report.append(msg)
+                            if user:
+                                user.notify(msg, id="import:warning", level="warning")
 
 
 class XMLParser(ParserDocument):
