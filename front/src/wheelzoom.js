@@ -29,7 +29,7 @@ class zoomTarget {
         // container.style.height = '100%';
         domElement.style.transformOrigin = '0 0';
         domElement.style.transition = 'scale 0.3s';
-        domElement.style.display = 'block';
+        // domElement.style.display = 'block';
         domElement.classList.add('js-zoom-target');
         this.container = container;
         //this.rotationContainer = rotationContainer;

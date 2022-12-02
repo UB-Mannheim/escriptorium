@@ -300,6 +300,7 @@ export default Vue.extend({
             this.updateZoom(e.detail);
           }.bind(this)
         );
+        this.updateZoom(zoom);
 
         this.segmenter.events.addEventListener(
           "baseline-editor:settings",

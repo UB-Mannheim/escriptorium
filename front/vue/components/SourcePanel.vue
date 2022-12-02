@@ -72,9 +72,11 @@ export default Vue.extend({
     };},
     computed: {
         imageSrc() {
-            let src = !this.fullsizeimage
-                   && this.$store.state.parts.image.thumbnails.large
-                   || this.$store.state.parts.image.uri;
+            let src =
+                (!this.fullsizeimage &&
+                 this.$store.state.parts.image.thumbnails !== undefined &&
+                 this.$store.state.parts.image.thumbnails.large) ||
+                this.$store.state.parts.image.uri;
             return src;
         },
         groupedTaxonomies() {
