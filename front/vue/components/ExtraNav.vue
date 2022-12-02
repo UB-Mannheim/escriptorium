@@ -6,7 +6,7 @@
                 data-target="metadata"
                 class="open-panel nav-item btn"
                 v-bind:class="[ visible_panels.metadata ? 'btn-primary' : 'btn-secondary' ]"
-                title="Text (Ctrl+5)"><i class="click-through fas fa-table"></i></button>
+                title="Metadata (Ctrl+1)"><i class="click-through fas fa-table"></i></button>
 
         <button type="button"
                 id="source-panel-btn"
@@ -14,21 +14,21 @@
                 data-target="source"
                 class="open-panel nav-item btn"
                 v-bind:class="[ visible_panels.source ? 'btn-primary' : 'btn-secondary' ]"
-                title="Source Image (Ctrl+1)"><i class="click-through fas fa-eye"></i></button>
+                title="Source Image (Ctrl+2)"><i class="click-through fas fa-eye"></i></button>
         <button type="button"
                 id="seg-panel-btn"
                 v-on:click="onPushPanelBtn"
                 data-target="segmentation"
                 class="open-panel nav-item btn"
                 v-bind:class="[ visible_panels.segmentation ? 'btn-primary' : 'btn-secondary' ]"
-                title="Segmentation (Ctrl+2)"><i class="click-through fas fa-align-left"></i></button>
+                title="Segmentation (Ctrl+3)"><i class="click-through fas fa-align-left"></i></button>
         <button type="button"
                 id="trans-panel-btn"
                 v-on:click="onPushPanelBtn"
                 data-target="visualisation"
                 class="open-panel nav-item btn"
                 v-bind:class="[ visible_panels.visualisation ? 'btn-primary' : 'btn-secondary' ]"
-                title="Transcription (Ctrl+3)"><i class="click-through fas fa-language"></i></button>
+                title="Transcription (Ctrl+4)"><i class="click-through fas fa-language"></i></button>
         <button type="button"
                 id="diplo-panel-btn"
                 v-on:click="onPushPanelBtn"
@@ -36,7 +36,7 @@
                 class="open-panel nav-item btn"
                 v-bind:class="[ visible_panels.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
 
-                title="Text (Ctrl+4)"><i class="click-through fas fa-list-ol"></i></button>
+                title="Text (Ctrl+5)"><i class="click-through fas fa-list-ol"></i></button>
     </div>
 </template>
 
