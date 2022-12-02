@@ -123,6 +123,9 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+
 WSGI_APPLICATION = 'escriptorium.wsgi.application'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
