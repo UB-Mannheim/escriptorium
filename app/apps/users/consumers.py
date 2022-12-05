@@ -62,7 +62,6 @@ class NotificationConsumer(WebsocketConsumer):
                 async_to_sync(self.channel_layer.group_discard)(
                     self.room,
                     self.channel_name)
-            self.close()
 
     def receive(self, text_data):
         msg = json.loads(text_data)
