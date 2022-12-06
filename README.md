@@ -23,7 +23,7 @@ eScriptorium needs either Linux, Mac OS or (WSL on windows).
 
 
 ## Contributing
-See [Contributing to eScriptorium](https://gitlab.inria.fr/scripta/escriptorium/-/wikis/contributing).
+See [Contributing to eScriptorium](https://gitlab.com/scripta/escriptorium/-/wikis/contributing).
 
 ## Current financial and technical contributors include:
 - [École Pratique des Hautes Études (EPHE)](https://www.ephe.psl.eu)
