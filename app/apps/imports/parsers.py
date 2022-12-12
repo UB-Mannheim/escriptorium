@@ -219,17 +219,10 @@ class ZipParser(ParserDocument):
 class METSZipParser(ZipParser):
     DEFAULT_NAME = _("METS Import")
 
-    def __init__(self, document, file_handler, report, transcription_name=None):
-        self.mets_pages = []
-        super().__init__(document, file_handler, report, transcription_name)
-
-    @property
-    def total(self):
-        return len(self.mets_pages)
-
     def parse(self, start_at=0, override=False, user=None):
         # Searching for the METS file in the archive
         with zipfile.ZipFile(self.file) as archive:
+            total = len(archive.infolist())
             xml_filenames = [filename for filename in archive.namelist() if os.path.splitext(filename)[1][1:] == "xml"]
 
             mets_file_content = None
@@ -254,22 +247,27 @@ class METSZipParser(ZipParser):
 
         # Retrieving all the pages described by the METS file
         try:
-            self.mets_pages = METSProcessor(mets_file_content, archive=self.file).process()
+            mets_pages = METSProcessor(mets_file_content, archive=self.file).process()
         except ParseError:
             raise
         except Exception as e:
             raise ParseError(f"An error occurred during the processing of the METS file contained in the archive: {e}")
 
         with zipfile.ZipFile(self.file) as archive:
-            for index, mets_page in enumerate(self.mets_pages):
+            info_list = [info.filename for info in archive.infolist()]
+
+            for index, mets_page in enumerate(mets_pages):
                 if mets_page.image:
+                    if info_list.index(mets_page.image) < start_at:
+                        continue
+
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
 
                         # If quotas are enforced, assert that the user still has free disk storage
                         if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
                             raise DiskQuotaReachedError(
-                                _(f"You ran out of disk storage. {self.total - index} METS pages were left to import (over {self.total - start_at})")
+                                _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
                             )
 
                         try:
@@ -289,13 +287,17 @@ class METSZipParser(ZipParser):
                         part.save()
                         generate_part_thumbnails.si(instance_pk=part.pk)
 
-                for layer_name, source in mets_page.sources.items():
+                for index, (layer_name, source) in enumerate(mets_page.sources.items()):
+                    if info_list.index(source) < start_at:
+                        continue
+
                     with archive.open(source) as ziped_source:
                         filename = os.path.basename(ziped_source.name)
 
                         try:
                             parser = make_parser(self.document, ziped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
-                            for part in parser.parse(override=override, user=user):
+                            # We only want to override for the first imported source if there are multiple ones
+                            for part in parser.parse(override=(override and index == 0), user=user):
                                 yield part
                         except (ValueError, ParseError) as e:
                             # We let go to try other sources
@@ -945,7 +947,7 @@ class TranskribusPageXmlParser(PagexmlParser):
         ]
 
 
-def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True):
+def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True, mets_describer=False):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -982,7 +984,10 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
     elif zip_allowed and ext == "zip":
-        return ZipParser(document, file_handler, report, transcription_name=name)
+        if mets_describer:
+            return METSZipParser(document, file_handler, report, transcription_name=name)
+        else:
+            return ZipParser(document, file_handler, report, transcription_name=name)
     elif pdf_allowed and ext == "pdf":
         return PdfParser(document, file_handler, report)
     else:

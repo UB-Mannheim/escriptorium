@@ -37,6 +37,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         label=_("Resume previous import"),
         initial=True)
+    mets = forms.BooleanField(
+        required=False,
+        widget=forms.HiddenInput(),
+        initial=True)
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
@@ -122,6 +126,8 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                     ContentFile(content))
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
+                if self.cleaned_data.get('mets'):
+                    imp.with_mets = True
 
             imp.save()
             self.instance = imp
