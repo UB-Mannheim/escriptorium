@@ -50,6 +50,9 @@
         <span>
           <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">Transcriptions (XML)</a>
         </span>
+        <span {% if not has_disk_storage_left %}title="You don't have any disk storage left"{% endif %}>
+          <a data-proc="import-mets" class="js-proc-selected dropdown-item {% if not has_disk_storage_left %}disabled{% endif %}" href="#">METS archive (ZIP)</a>
+        </span>
       </div>
     </div>
     {% with import=import_form.current_import %}
@@ -229,6 +232,7 @@
 {% include 'core/wizards/import_iiif.html' with proc='import-iiif' %}
 {% include 'core/wizards/import_file.html' with proc='import-xml' %}
 {% include 'core/wizards/import_pdf.html' with proc='import-pdf' %}
+{% include 'core/wizards/import_mets.html' with proc='import-mets' %}
 {% include 'core/wizards/export.html' with proc='export' %}
 {% include 'core/wizards/binarize.html' with proc='binarize' %}
 {% include 'core/wizards/segment.html' with proc='segment' %}
