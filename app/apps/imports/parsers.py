@@ -216,7 +216,99 @@ class ZipParser(ParserDocument):
                             user.notify(msg, id="import:warning", level="warning")
 
 
-class METSZipParser(ZipParser):
+class METSBaseParser():
+    def parse_image(self, user, total, index, start_at, filename, image):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+            raise DiskQuotaReachedError(
+                _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
+            )
+
+        try:
+            part = DocumentPart.objects.filter(
+                document=self.document,
+                original_filename=filename
+            )[0]
+        except IndexError:
+            part = DocumentPart(
+                document=self.document,
+                original_filename=filename
+            )
+        part.image_file_size = 0
+        part.image.save(filename, ContentFile(image.read()))
+        part.image_file_size = part.image.size
+        part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
+        part.save()
+        generate_part_thumbnails.si(instance_pk=part.pk)
+
+
+class METSRemoteParser(ParserDocument, METSBaseParser):
+    DEFAULT_NAME = _("METS Import")
+
+    def __init__(self, document, file_handler, report, xml_root, mets_base_uri, transcription_name=None):
+        self.mets_file_content = xml_root
+        self.mets_base_uri = mets_base_uri
+        self.mets_pages = []
+        super().__init__(document, file_handler, report, transcription_name=transcription_name)
+
+    @property
+    def total(self):
+        total = 0
+        for page in self.mets_pages:
+            if page.image:
+                total += 1
+            if page.sources:
+                total += len(page.sources.keys())
+        return total
+
+    def validate(self):
+        pass
+
+    def parse(self, start_at=0, override=False, user=None):
+        # Retrieving all the pages described by the METS file
+        try:
+            self.mets_pages = METSProcessor(self.mets_file_content, mets_base_uri=self.mets_base_uri).process()
+        except ParseError:
+            raise
+        except Exception as e:
+            raise ParseError(f"An error occurred during the processing of the remote METS file: {e}")
+
+        total = self.total
+        global_index = 0
+        for index, mets_page in enumerate(self.mets_pages):
+            if mets_page.image:
+                if global_index < start_at:
+                    global_index += 1 + len(mets_page.sources.keys())
+                    continue
+
+                filename = mets_page.image.name
+                self.parse_image(user, total, index, start_at, filename, mets_page.image)
+
+            for index, (layer_name, source) in enumerate(mets_page.sources.items()):
+                if global_index < start_at:
+                    global_index += 1 + len(mets_page.sources.keys())
+                    continue
+
+                filename = source.name
+
+                try:
+                    parser = make_parser(self.document, source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
+                    # We only want to override for the first imported source if there are multiple ones
+                    for part in parser.parse(override=(override and index == 0), user=user):
+                        yield part
+                except (ValueError, ParseError) as e:
+                    # We let go to try other sources
+                    msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                        filename=self.file.name, xmlfile=filename, error=e.args[0]
+                    )
+                    logger.warning(msg)
+                    if self.report:
+                        self.report.append(msg)
+                    if user:
+                        user.notify(msg, id="import:warning", level="warning")
+
+
+class METSZipParser(ZipParser, METSBaseParser):
     DEFAULT_NAME = _("METS Import")
 
     def parse(self, start_at=0, override=False, user=None):
@@ -263,29 +355,7 @@ class METSZipParser(ZipParser):
 
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
-
-                        # If quotas are enforced, assert that the user still has free disk storage
-                        if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
-                            raise DiskQuotaReachedError(
-                                _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
-                            )
-
-                        try:
-                            part = DocumentPart.objects.filter(
-                                document=self.document,
-                                original_filename=filename
-                            )[0]
-                        except IndexError:
-                            part = DocumentPart(
-                                document=self.document,
-                                original_filename=filename
-                            )
-                        part.image_file_size = 0
-                        part.image.save(filename, ContentFile(ziped_image.read()))
-                        part.image_file_size = part.image.size
-                        part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
-                        part.save()
-                        generate_part_thumbnails.si(instance_pk=part.pk)
+                        self.parse_image(user, total, index, start_at, filename, ziped_image)
 
                 for index, (layer_name, source) in enumerate(mets_page.sources.items()):
                     if info_list.index(source) < start_at:
@@ -365,7 +435,7 @@ class XMLParser(ParserDocument):
                         self.report.append("Document didn't validate. %s, %s" % (e.args[0], OWN_RISK))
         else:
             if self.report:
-                self.report.append("Document Schema %s is not in the accepted escriptiium list. Valid schemas are: %s, %s" %
+                self.report.append("Document Schema %s is not in the accepted escriptorium list. Valid schemas are: %s, %s" %
                                    (self.schema_location, self.ACCEPTED_SCHEMAS, OWN_RISK))
 
     def get_filename(self, pageTag):
@@ -947,7 +1017,7 @@ class TranskribusPageXmlParser(PagexmlParser):
         ]
 
 
-def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True, mets_describer=False):
+def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True, mets_describer=False, mets_base_uri=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -957,6 +1027,7 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
             raise ParseError(e.msg)
         try:
             schema = root.nsmap[None]
+            schemas = root.nsmap.values()
         except KeyError:
             raise ParseError(
                 "Couldn't determine xml schema, xmlns attribute missing on root element."
@@ -976,6 +1047,8 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
                 return PagexmlParser(
                     document, file_handler, report, transcription_name=name, xml_root=root
                 )
+        elif METSProcessor.NAMESPACES["mets"] in schemas:
+            return METSRemoteParser(document, file_handler, report, root, mets_base_uri, transcription_name=name)
 
         else:
             raise ParseError(
