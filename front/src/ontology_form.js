@@ -3,7 +3,10 @@
 export function bootOntologyForm() {
     /*** Region/Line types ***/
     function pushType(type, name) {
-        let uri = '/api/types/'+type+'/';
+        const path_components = location.pathname.split("/", 2);
+        const prefix = path_components[1];
+        const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+        let uri = SCRIPT_NAME + '/api/types/'+type+'/';
         return fetch(uri, {
             method: "post",
             credentials: "same-origin",
