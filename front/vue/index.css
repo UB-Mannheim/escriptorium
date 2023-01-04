@@ -1,7 +1,6 @@
 /* Root styles for the entire application. */
 :root {
     --primary: #28A696;
-    --secondary: #4F96E8;
     --tertiary: #5869FC;
     --alert: #E84F4F;
     --button-text: #FFFFFF;
@@ -19,16 +18,18 @@
     --tag-12: #F2A7C3;
     --tag-text: #212323;
 }
-html.light-mode {
+.light-mode {
     --background1: #FFFFFF;
     --background2: #E9E9E9;
+    --secondary: #1761B5;
     --text1: #212323;
     --text2: #666768;
     --text3: #A7A8A9;
 }
-html.dark-mode {
+.dark-mode {
     --background1: #2F3132;
     --background2: #3E4142;
+    --secondary: #4F96E8;
     --text1: #FFFFFF;
     --text2: #A7A8A9;
     --text3: #717373;

@@ -5,8 +5,14 @@ module.exports = {
   ],
   "addons": [
     "@storybook/addon-links",
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions"
+    {
+      name: '@storybook/addon-essentials',
+      options: {
+        backgrounds: false,
+      }
+    },
+    "@storybook/addon-interactions",
+    "storybook-addon-themes"
   ],
   "framework": "@storybook/vue",
   "core": {
