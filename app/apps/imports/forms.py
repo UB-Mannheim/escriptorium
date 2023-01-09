@@ -1,5 +1,6 @@
 import io
 import json
+import os
 
 import requests
 from bootstrap.forms import BootstrapFormMixin
@@ -15,6 +16,27 @@ from imports.models import DocumentImport
 from imports.parsers import ParseError, make_parser
 from imports.tasks import document_export, document_import
 from users.consumers import send_event
+
+
+def clean_uri(uri, document, tempfile):
+    try:
+        resp = requests.get(uri)
+        content = resp.content
+        buf = io.BytesIO(content)
+        buf.name = tempfile
+        parser = make_parser(document, buf)
+        parser.validate()
+        total = parser.total
+        return content, total
+    except requests.exceptions.RequestException:
+        raise forms.ValidationError(_("The document is unreachable, unreadable or the host timed out."))
+    except json.decoder.JSONDecodeError:
+        raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+    except ParseError as e:
+        msg = _("Couldn't parse the given file or its validation failed")
+        if len(e.args):
+            msg += ": %s" % e.args[0]
+        raise forms.ValidationError(msg)
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
@@ -41,11 +63,15 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         required=False,
         widget=forms.HiddenInput(),
         initial=True)
+    mets_uri = forms.URLField(
+        required=False,
+        label=_("METS file URI"))
 
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
         self.current_import = self.document.documentimport_set.order_by('started_on').last()
+        self.mets_uri = None
         super().__init__(*args, **kwargs)
 
         if not settings.DISABLE_QUOTAS and not self.user.has_free_disk_storage():
@@ -54,24 +80,17 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
         if uri:
-            try:
-                resp = requests.get(uri)
-                content = resp.content
-                buf = io.BytesIO(content)
-                buf.name = 'tmp.json'
-                parser = make_parser(self.document, buf)
-                parser.validate()
-                self.cleaned_data['total'] = parser.total
-                return content
-            except requests.exceptions.RequestException:
-                raise forms.ValidationError(_("The document is unreachable, unreadable or the host timed out."))
-            except json.decoder.JSONDecodeError:
-                raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
-            except ParseError as e:
-                msg = _("Couldn't parse the given file or its validation failed")
-                if len(e.args):
-                    msg += ": %s" % e.args[0]
-                raise forms.ValidationError(msg)
+            content, total = clean_uri(uri, self.document, 'tmp.json')
+            self.cleaned_data['total'] = total
+            return content
+
+    def clean_mets_uri(self):
+        uri = self.cleaned_data.get('mets_uri')
+        self.mets_uri = os.path.dirname(uri)
+        if uri:
+            content, total = clean_uri(uri, self.document, 'tmp.xml')
+            self.cleaned_data['total'] = total
+            return content
 
     def clean_upload_file(self):
         upload_file = self.cleaned_data.get('upload_file')
@@ -102,9 +121,12 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             ):
                 raise forms.ValidationError(_("You don't have any disk storage left."))
 
-        if (not cleaned_data['resume_import']
+        if (
+            not cleaned_data['resume_import']
             and not cleaned_data.get('upload_file')
-                and not cleaned_data.get('iiif_uri')):
+            and not cleaned_data.get('iiif_uri')
+            and not cleaned_data.get('mets_uri')
+        ):
             raise forms.ValidationError(_("Choose one type of import."))
 
         return cleaned_data
@@ -124,6 +146,12 @@ class ImportForm(BootstrapFormMixin, forms.Form):
                 imp.import_file.save(
                     'iiif_manifest.json',
                     ContentFile(content))
+            elif self.cleaned_data.get('mets_uri'):
+                content = self.cleaned_data.get('mets_uri')
+                imp.import_file.save(
+                    'mets.xml',
+                    ContentFile(content))
+                imp.mets_base_uri = self.mets_uri
             elif self.cleaned_data.get('upload_file'):
                 imp.import_file = self.cleaned_data.get('upload_file')
                 if self.cleaned_data.get('mets'):
