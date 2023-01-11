@@ -1,7 +1,6 @@
 /* tags */
 .escr-tag {
     color: var(--tag-text);
-    font-family: 'Noto Sans', sans-serif;
     font-weight: 600;
     font-size: 12px;
     border-radius: 16px;
