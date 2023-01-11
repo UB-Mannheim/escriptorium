@@ -1,20 +1,20 @@
-import TagFilterComponent from "../../vue/components/TagFilter/TagFilter.vue";
+import TagFilter from "../../vue/components/TagFilter/TagFilter.vue";
 
 import { ManyTags } from "./Tags.stories";
 
 export default {
     title: "Components/Tag Filter",
-    component: TagFilterComponent,
+    component: TagFilter,
 };
 
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
-    components: { TagFilterComponent },
+    components: { TagFilter },
     template: `
-        <TagFilterComponent v-bind="$props" />
+        <TagFilter v-bind="$props" />
     `,
 });
-export const TagFilter = Template.bind({});
-TagFilter.args = {
+export const TagFilterModal = Template.bind({});
+TagFilterModal.args = {
     tags: ManyTags.args.tags,
 };
