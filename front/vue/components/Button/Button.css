@@ -1,0 +1,49 @@
+.escr-button {
+    border: none;
+    color: var(--button-text);
+    border-radius: 5px;
+    padding: 0px 10px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+.escr-button--small {
+    min-height: 32px;
+}
+.escr-button--large {
+    min-height: 38px;
+    padding: 0px 16px;
+}
+.escr-button--primary {
+    background-color: var(--primary);
+}
+.escr-button--secondary {
+    background-color: var(--secondary);
+}
+.escr-button--tertiary {
+    background-color: var(--tertiary);
+}
+.escr-button--danger {
+    background-color: var(--alert);
+}
+.escr-button--outline-primary {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+.escr-button--outline-secondary {
+    background-color: transparent;
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+}
+.escr-button--outline-tertiary {
+    background-color: transparent;
+    border: 1px solid var(--tertiary);
+    color: var(--tertiary);
+}
+.escr-button--outline-danger {
+    background-color: transparent;
+    border: 1px solid var(--alert);
+    color: var(--alert);
+}

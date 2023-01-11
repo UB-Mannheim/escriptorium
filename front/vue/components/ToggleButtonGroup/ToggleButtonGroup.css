@@ -1,0 +1,43 @@
+.escr-toggle-button-group {
+    display: flex;
+    flex-flow: row nowrap;
+}
+.escr-toggle-button-group .escr-button {
+    font-size: 12px;
+    transition: all 0.2s;
+    min-height: 32px;
+    height: 32px;
+}
+/* separation and border radius */
+.escr-toggle-button-group .escr-button:not(:last-of-type) {
+    margin-right: 1px;
+}
+.escr-toggle-button-group .escr-button:first-of-type {
+    border-radius: 5px 0px 0px 5px;
+}
+.escr-toggle-button-group .escr-button:last-of-type {
+    border-radius: 0px 5px 5px 0px;
+}
+.escr-toggle-button-group .escr-button:not(:first-of-type):not(:last-of-type) {
+    border-radius: 0px;
+}
+.escr-toggle-button-group .escr-button:first-of-type:last-of-type {
+    border-radius: 5px;
+}
+/* inactive button(s) */
+.escr-toggle-button-group .escr-button:not(.escr-button--active) {
+    color: var(--text2);
+    background-color: var(--background2);
+    font-weight: 400;
+}
+/* active button */
+.escr-toggle-button-group .escr-button--active {
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+}
+.escr-toggle-button-group--primary .escr-button--active {
+    background-color: var(--primary);
+}
+.escr-toggle-button-group--secondary .escr-button--active {
+    background-color: var(--secondary);
+}
