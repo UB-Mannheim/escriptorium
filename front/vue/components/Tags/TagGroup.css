@@ -1,0 +1,35 @@
+/* tag groups */
+.escr-tag-group {
+    display: flex;
+    white-space: nowrap;
+}
+.escr-tag-group .escr-tag:not(:last-of-type) {
+    margin-right: 4px;
+}
+.escr-tag-group-wrapped {
+    flex-flow: row wrap;
+}
+.escr-tag-group-wrapped .escr-tag {
+    margin-bottom: 4px;
+}
+/* tag overflow (non-wrapping) */
+.escr-tag-overflow-toggle {
+    cursor: default;
+    position: relative;
+}
+.escr-tag-overflow {
+    position: absolute;
+    display: flex;
+    flex-flow: column;
+    padding: 16px;
+    background: var(--background1);
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
+    border-radius: 15px;
+    align-items: flex-start;
+    left: 0px;
+    top: 32px;
+    z-index: 2;
+}
+.escr-tag-overflow .escr-tag:not(:last-of-type) {
+    margin-bottom: 10px;
+}
