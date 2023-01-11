@@ -1,0 +1,35 @@
+/* Filter modal */
+.escr-tag-filter {
+    background-color: var(--background1);
+    padding: 8px 16px 16px;
+    border-radius: 15px;
+    width: 360px;
+    filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.15))
+        drop-shadow(-1px -1px 2px rgba(0, 0, 0, 0.15));
+}
+
+/* Tags list with checkboxes */
+.escr-tag-filter-group {
+    display: flex;
+    flex-flow: row wrap;
+}
+.escr-tag-filter-group .escr-tag {
+    margin-right: 7px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    height: 25px;
+    box-sizing: border-box;
+}
+.escr-tag-filter-group input[type="checkbox"] {
+    display: none;
+}
+.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag {
+    border: 1px solid var(--text1);
+}
+
+/* Checkmark for checked box */
+/* TODO: Replace with real icon */
+.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag span:after {
+    display: inline;
+    content: " \2713";
+}
