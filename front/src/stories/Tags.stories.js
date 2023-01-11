@@ -10,7 +10,7 @@ export default {
     },
 };
 
-const GroupTemplate = (args, { argTypes }) => ({
+const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { Tags },
     template: `
@@ -20,7 +20,7 @@ const GroupTemplate = (args, { argTypes }) => ({
     `,
 });
 
-export const SingleTag = GroupTemplate.bind({});
+export const SingleTag = Template.bind({});
 SingleTag.args = {
     tags: [
         {
@@ -29,7 +29,7 @@ SingleTag.args = {
         },
     ],
 };
-export const MultipleTags = GroupTemplate.bind({});
+export const MultipleTags = Template.bind({});
 MultipleTags.args = {
     tags: [
         ...SingleTag.args.tags,
@@ -44,7 +44,7 @@ MultipleTags.args = {
     ],
 };
 
-export const ManyTags = GroupTemplate.bind({});
+export const ManyTags = Template.bind({});
 ManyTags.args = {
     tags: [
         ...MultipleTags.args.tags,
@@ -68,7 +68,7 @@ ManyTags.args = {
     wrap: false,
 };
 
-export const ManyTagsWrapped = GroupTemplate.bind({});
+export const ManyTagsWrapped = Template.bind({});
 ManyTagsWrapped.args = {
     tags: ManyTags.args.tags,
     wrap: true,
