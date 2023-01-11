@@ -43,9 +43,9 @@ export default {
          * Helper function to render a checkbox input and label
          * for a given tag.
          */
-        renderTagOption: function (createElement, tag) {
+        renderTagOption: function (h, tag) {
             return [
-                createElement(
+                h(
                     'input',
                     {
                         domProps: {
@@ -55,7 +55,7 @@ export default {
                         },
                     },
                 ),
-                createElement(
+                h(
                     'label',
                     {
                         class: this.tagClasses(tag.variant),
@@ -63,7 +63,7 @@ export default {
                             htmlFor: `filter-tag-${tag.name}`,
                         },
                     },
-                    [createElement('span', tag.name)],
+                    [h('span', tag.name)],
                 ),
             ]
         }
@@ -77,25 +77,22 @@ export default {
      * - A checkbox input for "without tag"
      * - Buttons to cancel and apply the filter
      */
-    render: function (createElement) {
-        return createElement(
+    render: function (h) {
+        return h(
             'div',
             { class: 'escr-tag-filter' },
             [
-                createElement('h3', 'Filter Tags'),
-                createElement('h4', 'Tags'),
-                // createElement('button', 'Select All'),
-                // createElement('button', 'Select None'),
-                createElement(
+                h('h3', 'Filter Tags'),
+                h('h4', 'Tags'),
+                // h('button', 'Select All'),
+                // h('button', 'Select None'),
+                h(
                     'div',
                     { class: 'escr-tag-filter-group' },
-                    this.tags.map((tag) => this.renderTagOption(
-                        createElement,
-                        tag,
-                    )),
+                    this.tags.map((tag) => this.renderTagOption(h, tag)),
                 ),
-                createElement('hr'),
-                createElement(
+                h('hr'),
+                h(
                     'input',
                     {
                         domProps: {
@@ -104,7 +101,7 @@ export default {
                         },
                     },
                 ),
-                createElement(
+                h(
                     'label',
                     {
                         domProps: {
