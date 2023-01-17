@@ -15,6 +15,7 @@ export default {
                 "outline-secondary",
                 "outline-tertiary",
                 "outline-danger",
+                "link-primary",
             ],
         },
         size: {

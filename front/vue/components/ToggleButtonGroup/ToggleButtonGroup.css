@@ -7,6 +7,7 @@
     transition: all 0.2s;
     min-height: 32px;
     height: 32px;
+    flex: 1 0;
 }
 /* separation and border radius */
 .escr-toggle-button-group .escr-button:not(:last-of-type) {

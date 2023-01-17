@@ -47,3 +47,11 @@
     border: 1px solid var(--alert);
     color: var(--alert);
 }
+.escr-button--link-primary {
+    background-color: transparent;
+    border: none;
+    color: var(--primary);
+}
+.escr-button--link-primary.escr-button--small {
+    font-size: 12px;
+}

@@ -43,12 +43,24 @@ export default {
                 return Array.isArray(opts) && opts.length > 0 && Object.hasOwn(opts[0], 'value')
             }
         },
+        /**
+         * Function that executes when the selection is changed. Should accept
+         * a string (with the option's `value`) as the sole parameter.
+         */
+        onChangeSelection: {
+            type: Function,
+            required: true,
+        }
     },
     data: function () {
+        let selectedOption = '';
+        if (Array.isArray(this.options) && this.options.length > 0) {
+            selectedOption = this.options.find(
+                (opt) => opt.selected === true
+            )?.value || this.options[0].value;
+        }
         return {
-            selectedOption: Array.isArray(this.options) && this.options.length > 0
-                ? this.options[0].value
-                : '',
+            selectedOption,
         }
     },
     computed: {
@@ -63,6 +75,7 @@ export default {
     methods: {
         onClick: function (e) {
             this.selectedOption = e.target.value;
+            this.onChangeSelection(e.target.value);
         },
         optionClasses: function (option) {
             return {
