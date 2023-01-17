@@ -17,4 +17,5 @@ const Template = (args, { argTypes }) => ({
 export const TagFilterModal = Template.bind({});
 TagFilterModal.args = {
     tags: ManyTags.args.tags,
+    selected: ["Third tag", "Fifth tag"],
 };
