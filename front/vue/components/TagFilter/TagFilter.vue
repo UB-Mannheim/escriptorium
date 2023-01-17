@@ -226,6 +226,7 @@ export default {
                                     color: 'link-primary',
                                     size: 'small',
                                     onClick: this.selectAllTags,
+                                    disabled: this.selectedTags.length === this.tags.length,
                                 },
                             }),
                             h(Button, {
@@ -234,6 +235,7 @@ export default {
                                     color: 'link-primary',
                                     size: 'small',
                                     onClick: this.selectNoTags,
+                                    disabled: this.selectedTags.length === 0,
                                 },
                             }),
                         ])

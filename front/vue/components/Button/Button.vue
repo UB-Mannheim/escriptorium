@@ -1,5 +1,5 @@
 <template>
-    <button type="button" :class="classes" @click="onClick">{{ label }}</button>
+    <button type="button" :class="classes" @click="onClick" :disabled="disabled">{{ label }}</button>
 </template>
 
 <script>
@@ -53,6 +53,13 @@ export default {
                 return ['small', 'large'].indexOf(value) !== -1;
             },
         },
+        /**
+         * Whether or not this button is disabled
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
+        }
     },
 
     computed: {

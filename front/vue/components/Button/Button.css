@@ -52,6 +52,11 @@
     border: none;
     color: var(--primary);
 }
+.escr-button:disabled {
+    color: var(--text3);
+    cursor: default;
+    pointer-events: none;
+}
 .escr-button--link-primary.escr-button--small {
     font-size: 12px;
 }
