@@ -1,0 +1,9 @@
+.escr-text-field {
+    background-color: var(--background2);
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 8px 0;
+}

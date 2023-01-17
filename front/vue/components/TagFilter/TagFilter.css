@@ -17,6 +17,7 @@
 .escr-tag-filter-group {
     display: flex;
     flex-flow: row wrap;
+    margin-top: 8px;
 }
 .escr-tag-filter-group .escr-tag {
     margin-right: 7px;
@@ -40,6 +41,9 @@
 }
 
 /* additional layout elements */
+.escr-tag-filter .escr-text-field {
+    margin-top: -16px;
+}
 .escr-tag-filter hr {
     margin: 16px 0;
 }

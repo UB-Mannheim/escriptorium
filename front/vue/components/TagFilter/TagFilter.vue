@@ -1,8 +1,9 @@
 <script>
 import '../Tags/Tag.css';
 import './TagFilter.css';
-import Tags from '../Tags/Tags.vue';
 import Button from '../Button/Button.vue';
+import Tags from '../Tags/Tags.vue';
+import TextField from '../TextField/TextField.vue';
 import ToggleButtonGroup from '../ToggleButtonGroup/ToggleButtonGroup.vue';
 
 export default {
@@ -67,8 +68,9 @@ export default {
     },
     data: function () {
         return {
-            selectedTags: this.selected,
             selectedOperator: this.operator,
+            selectedTags: this.selected,
+            stringFilter: "",
             withoutTag: this.withoutTagSelected,
         };
     },
@@ -101,6 +103,22 @@ export default {
          */
         toggleWithoutTag: function (e) {
             this.withoutTag = e.target.checked;
+        },
+        /**
+         * Use the text input to filter the tags by string
+         */
+        filterByString: function (e) {
+            this.stringFilter = e.target.value;
+        },
+        /**
+         * Get the resulting tags after applying the string filter
+         */
+        getFilteredTags() {
+            return this.tags.filter(
+                (tag) =>
+                    !this.stringFilter ||
+                    tag.name.toLowerCase().includes(this.stringFilter.toLowerCase()),
+            );
         },
         /**
          * Helper method to render a checkbox input and label
@@ -182,12 +200,39 @@ export default {
                 ]
             );
         },
+        /**
+         * Helper method to render notice about tags hidden by string filter
+         */
+        renderFilteredTagNotice(h) {
+            const filteredTags = this.getFilteredTags();
+            const hiddenSelectedTagCount = this.tags.filter(
+                (tag) =>
+                    this.selectedTags.includes(tag.name) &&
+                    !filteredTags.some((t) => t.name === tag.name),
+            ).length;
+            if (filteredTags.length === 0) {
+                return h(
+                    "div",
+                    `No matching tags. ${this.tags.length} tag${this.tags.length !== 1 ? "s" : ""
+                    } hidden, including ${hiddenSelectedTagCount} selected.`,
+                );
+            } else if (filteredTags.length < this.tags.length) {
+                const hiddenTagCount = this.tags.length - filteredTags.length;
+                return h(
+                    "div",
+                    `+ ${hiddenTagCount
+                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${hiddenSelectedTagCount
+                    } selected tag${hiddenSelectedTagCount !== 1 ? "s" : ""}`,
+                );
+            }
+            return [];
+        },
     },
     /**
      * Render the entire tag filter:
      * - And/or selector
      * - Buttons for select/deselect all
-     * - TODO: Text input to filter tags by name
+     * - Text input to filter tags by name
      * - A label and checkbox input for each tag
      * - A checkbox input for "without tag"
      * - Buttons to cancel and apply the filter
@@ -242,10 +287,23 @@ export default {
                     ]
                 ),
                 h(
+                    TextField,
+                    {
+                        props: {
+                            ariaLabel: "Find tag",
+                            onInput: this.filterByString,
+                            placeholder: "Find tag",
+                        },
+                    }
+                ),
+                h(
                     'div',
                     { class: 'escr-tag-filter-group' },
-                    this.tags.map((tag) => this.renderTagOption(h, tag)),
+                    this.getFilteredTags().map(
+                        (tag) => this.renderTagOption(h, tag)
+                    ),
                 ),
+                this.renderFilteredTagNotice(h),
                 h('hr'),
                 h(
                     'label',

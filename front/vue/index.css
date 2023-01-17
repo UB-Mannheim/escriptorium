@@ -36,7 +36,8 @@
 }
 
 /* Typography */
-body {
+body,
+input[type="text"] {
     font-family: "Noto Sans", sans-serif;
     font-size: 14px;
     color: var(--text1);
