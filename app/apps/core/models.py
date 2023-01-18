@@ -2154,6 +2154,6 @@ class TextualWitness(models.Model):
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid="thumbnails_delete_signal")
 def delete_thumbnails(sender, instance, using, **kwargs):
     thumbnailer = get_thumbnailer(instance.image)
-    thumbnailer.delete_thumbnails()
+    thumbnailer.delete()
     thumbnailer = get_thumbnailer(instance.bw_image)
-    thumbnailer.delete_thumbnails()
+    thumbnailer.delete()

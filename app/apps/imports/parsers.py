@@ -1,6 +1,6 @@
 import json
 import logging
-import os.path
+import os
 import re
 import time
 import uuid
@@ -78,6 +78,11 @@ class ParserDocument:
         )
         return transcription
 
+    def clean(self):
+        # remove import file if everything went well and any left over
+        # this is only called if the import went to completion.
+        raise NotImplementedError
+
 
 class PdfParser(ParserDocument):
     def __init__(self, document, file_handler, report):
@@ -114,17 +119,27 @@ class PdfParser(ParserDocument):
                                                    page=page_nb,
                                                    dpi=300,
                                                    access='sequential')
-                part = DocumentPart(document=self.document)
                 fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb + 1)
+                try:
+                    part = DocumentPart.objects.get(
+                        document=self.document,
+                        original_filename=fname
+                    )
+                except DocumentPart.DoesNotExist:
+                    part = DocumentPart(
+                        document=self.document,
+                        original_filename=fname
+                    )
+
                 part.image_file_size = 0
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
-                part.original_filename = fname
                 part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
-                generate_part_thumbnails.si(instance_pk=part.pk)
+                generate_part_thumbnails.delay(instance_pk=part.pk)
                 yield part
                 page_nb = page_nb + 1
+
         except pyvips.error.Error as e:
             msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
                 filename=self.file.name, page=page_nb + 1, error=e.args[0]
@@ -132,6 +147,10 @@ class PdfParser(ParserDocument):
             logger.warning(msg)
             if self.report:
                 self.report.append(msg)
+
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
 
 
 class ZipParser(ParserDocument):
@@ -178,11 +197,11 @@ class ZipParser(ParserDocument):
                                     _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
                                 )
                             try:
-                                part = DocumentPart.objects.filter(
+                                part = DocumentPart.objects.get(
                                     document=self.document,
                                     original_filename=filename
-                                )[0]
-                            except IndexError:
+                                )
+                            except DocumentPart.DoesNotExist:
                                 part = DocumentPart(
                                     document=self.document,
                                     original_filename=filename
@@ -192,7 +211,7 @@ class ZipParser(ParserDocument):
                             part.image_file_size = part.image.size
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
-                            generate_part_thumbnails.si(instance_pk=part.pk)
+                            generate_part_thumbnails.delay(instance_pk=part.pk)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
@@ -215,6 +234,10 @@ class ZipParser(ParserDocument):
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
 
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
+
 
 class METSBaseParser():
     def parse_image(self, user, total, index, start_at, filename, image):
@@ -225,11 +248,11 @@ class METSBaseParser():
             )
 
         try:
-            part = DocumentPart.objects.filter(
+            part = DocumentPart.objects.get(
                 document=self.document,
                 original_filename=filename
-            )[0]
-        except IndexError:
+            )
+        except DocumentPart.DoesNotExist:
             part = DocumentPart(
                 document=self.document,
                 original_filename=filename
@@ -239,7 +262,7 @@ class METSBaseParser():
         part.image_file_size = part.image.size
         part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
         part.save()
-        generate_part_thumbnails.si(instance_pk=part.pk)
+        generate_part_thumbnails.delay(instance_pk=part.pk)
 
 
 class METSRemoteParser(ParserDocument, METSBaseParser):
@@ -379,6 +402,10 @@ class METSZipParser(ZipParser, METSBaseParser):
                                 self.report.append(msg)
                             if user:
                                 user.notify(msg, id="import:warning", level="warning")
+
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
 
 
 class XMLParser(ParserDocument):
@@ -976,7 +1003,14 @@ class IIIFManifestParser(ParserDocument):
                 # us important things about the supported file types and the available sizing.
                 r = self.get_image(url)
 
-                part = DocumentPart(document=self.document, source=url)
+                try:
+                    part = DocumentPart.objects.get(
+                        document=self.document,
+                        source=url)
+                except DocumentPart.DoesNotExist:
+                    part = DocumentPart(
+                        document=self.document,
+                        source=url)
                 if "label" in resource:
                     part.name = resource["label"]
                 # iiif file names are always default.jpg or close to
@@ -986,8 +1020,11 @@ class IIIFManifestParser(ParserDocument):
                 part.image.save(name, ContentFile(r.content), save=False)
                 part.image_file_size = part.image.size
                 part.save()
+                generate_part_thumbnails.delay(instance_pk=part.pk)
+
                 yield part
                 time.sleep(0.1)  # avoid being throttled
+
             except (KeyError, IndexError, DownloadError) as e:
                 if self.report:
                     self.report.append(_('Error while fetching {filename}: {error}').format(
