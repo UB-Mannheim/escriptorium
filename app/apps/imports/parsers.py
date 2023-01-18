@@ -537,7 +537,7 @@ class XMLParser(ParserDocument):
                 if self.report:
                     self.report.append(
                         _("No match found for file {} with filename \"{}\".").format(
-                            self.file.name, filename
+                            os.path.basename(self.file.name), filename
                         )
                     )
             else:

@@ -62,7 +62,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
         # import was created since the form validated
         imp = DocumentImport.objects.first()
-        self.assertTrue(imp.report.messages.startswith('No match found for file import_src/{0}/test_single_'.format(self.part1.document.id)))
+        self.assertTrue(imp.report.messages.startswith('No match found for file test_single_'))
 
     def test_alto_invalid_xml(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
