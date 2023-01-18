@@ -290,7 +290,8 @@ export default {
                     TextField,
                     {
                         props: {
-                            ariaLabel: "Find tag",
+                            label: "Find tag",
+                            labelVisible: false,
                             onInput: this.filterByString,
                             placeholder: "Find tag",
                         },
