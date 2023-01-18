@@ -81,7 +81,7 @@ class ParserDocument:
     def clean(self):
         # remove import file if everything went well and any left over
         # this is only called if the import went to completion.
-        raise NotImplementedError
+        pass
 
 
 class PdfParser(ParserDocument):
