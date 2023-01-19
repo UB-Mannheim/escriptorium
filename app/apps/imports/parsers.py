@@ -124,8 +124,10 @@ class PdfParser(ParserDocument):
                     part = DocumentPart.objects.get(
                         document=self.document,
                         original_filename=fname
-                    )
-                except DocumentPart.DoesNotExist:
+                    )[0]
+                except IndexError:
+                    # we do not use DoesNotExist because documents could have
+                    # duplicate image names at some point.
                     part = DocumentPart(
                         document=self.document,
                         original_filename=fname
@@ -200,8 +202,10 @@ class ZipParser(ParserDocument):
                                 part = DocumentPart.objects.get(
                                     document=self.document,
                                     original_filename=filename
-                                )
-                            except DocumentPart.DoesNotExist:
+                                )[0]
+                            except IndexError:
+                                # we do not use DoesNotExist because documents could have
+                                # duplicate image names at some point.
                                 part = DocumentPart(
                                     document=self.document,
                                     original_filename=filename
@@ -251,8 +255,10 @@ class METSBaseParser():
             part = DocumentPart.objects.get(
                 document=self.document,
                 original_filename=filename
-            )
-        except DocumentPart.DoesNotExist:
+            )[0]
+        except IndexError:
+            # we do not use DoesNotExist because documents could have
+            # duplicate image names at some point.
             part = DocumentPart(
                 document=self.document,
                 original_filename=filename
@@ -533,7 +539,6 @@ class XMLParser(ParserDocument):
                     document=self.document, original_filename=filename
                 )[0]
             except IndexError:
-                # TODO: check for the image in the zip
                 if self.report:
                     self.report.append(
                         _("No match found for file {} with filename \"{}\".").format(
@@ -1006,8 +1011,10 @@ class IIIFManifestParser(ParserDocument):
                 try:
                     part = DocumentPart.objects.get(
                         document=self.document,
-                        source=url)
-                except DocumentPart.DoesNotExist:
+                        source=url)[0]
+                except IndexError:
+                    # we do not use DoesNotExist because documents could have
+                    # duplicate image names at some point.
                     part = DocumentPart(
                         document=self.document,
                         source=url)
