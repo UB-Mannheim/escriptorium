@@ -456,15 +456,18 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
 
     $('#alerts-container').on('part:new', function(ev, data) {
         var card = partCard.fromPk(data.id);
-        if (!card) {
-            var uri = API.part.replace('{part_pk}', data.id);
-            $.get(uri, function(data) {
+        var uri = API.part.replace('{part_pk}', data.id);
+        $.get(uri, function(data) {
+            if (!card) {
                 new partCard(data, cpuMinutesLeft);
                 partCard.refreshSelectedCount();
-            });
-        } else {
-            card.domElement.scrollIntoView(false);
-        }
+            } else {
+                if (!card.image.thumbnails) card.image.thumbnails = {};
+                card.image.thumbnails['card'] = data['image']['thumbnails']['card'];
+                card.updateThumbnail();
+                card.domElement.scrollIntoView(false);
+            }
+        });
     });
     $('#alerts-container').on('part:delete', function(ev, data) {
         var card = partCard.fromPk(data.id);

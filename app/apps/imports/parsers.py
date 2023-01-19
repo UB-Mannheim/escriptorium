@@ -16,6 +16,7 @@ from django.db import transaction
 from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from easy_thumbnails.files import get_thumbnailer
 from lxml import etree
 
 from core.models import (
@@ -27,8 +28,8 @@ from core.models import (
     Metadata,
     Transcription,
 )
-from core.tasks import generate_part_thumbnails
 from imports.mets import METSProcessor
+from users.consumers import send_event
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,19 @@ class ParserDocument:
         # remove import file if everything went well and any left over
         # this is only called if the import went to completion.
         pass
+
+    def post_process_image(self, part):
+        # generate the card thumbnail right away to show the image card
+        if getattr(settings, 'THUMBNAIL_ENABLE', True):
+            get_thumbnailer(part.image).get_thumbnail(
+                settings.THUMBNAIL_ALIASES[""]["card"]
+            )
+        send_event("document", part.document.pk, "part:new", {
+            "id": part.pk
+        })
+        part.task(
+            "convert",
+            user_pk=part.document.owner and part.document.owner.pk or None)
 
 
 class PdfParser(ParserDocument):
@@ -140,7 +154,8 @@ class PdfParser(ParserDocument):
                 part.source = f"pdf//{pdfname}"
                 part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
-                generate_part_thumbnails.delay(instance_pk=part.pk)
+                self.post_process_image(part)
+
                 yield part
                 page_nb = page_nb + 1
 
@@ -221,7 +236,7 @@ class ZipParser(ParserDocument):
                             )
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
-                            generate_part_thumbnails.delay(instance_pk=part.pk)
+                            self.post_process_image(part)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
@@ -275,7 +290,7 @@ class METSBaseParser():
         part.source = source
         part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
         part.save()
-        generate_part_thumbnails.delay(instance_pk=part.pk)
+        self.post_process_image(part)
 
 
 class METSRemoteParser(ParserDocument, METSBaseParser):
@@ -933,7 +948,7 @@ class IIIFManifestParser(ParserDocument):
         try:
             return self.manifest["sequences"][0]["canvases"]
         except (KeyError, IndexError):
-            return 0
+            return []
 
     def validate(self):
         if len(self.canvases) < 1:
@@ -1039,7 +1054,7 @@ class IIIFManifestParser(ParserDocument):
                 part.image.save(name, ContentFile(r.content), save=False)
                 part.image_file_size = part.image.size
                 part.save()
-                generate_part_thumbnails.delay(instance_pk=part.pk)
+                self.post_process_image(part)
 
                 yield part
                 time.sleep(0.1)  # avoid being throttled

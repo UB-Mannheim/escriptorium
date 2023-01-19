@@ -58,6 +58,7 @@ class TaskReport(models.Model):
 
     def append(self, text):
         self.messages += text + '\n'
+        self.save()
 
     @property
     def uri(self):
