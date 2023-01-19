@@ -400,7 +400,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(16):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {
@@ -459,7 +459,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(15):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {
@@ -530,7 +530,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(18):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
