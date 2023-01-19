@@ -974,13 +974,20 @@ class IIIFManifestParser(ParserDocument):
         while current_retry < retry_limit:
             time.sleep(0.1 * current_retry)  # avoid being throttled; add a little backoff
             try:
-                r = requests.get(url, stream=True, verify=False, timeout=10)
-                r.raise_for_status()
-                return r
+                response = requests.get(url, stream=True, verify=False, timeout=10)
+                response.raise_for_status()
+                return response
 
             except requests.exceptions.HTTPError as http_error:
                 # retry on transient 5XX errors, but keep a record of the retry count
                 if http_error.response.status_code in [500, 502, 503, 504, 507, 508]:
+                    current_retry = current_retry + 1
+                    continue
+
+                if http_error.response.status_code == 429:
+                    # the server might tell us when we are free to go, if not let's wait 1s
+                    sleep_time = http_error.response.headers.get('Retry-After', 1)
+                    time.sleep(sleep_time)
                     current_retry = current_retry + 1
                     continue
 
