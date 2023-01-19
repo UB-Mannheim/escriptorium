@@ -1073,13 +1073,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     def save(self, *args, **kwargs):
         new = self.pk is None
         instance = super().save(*args, **kwargs)
-        if new:
-            self.task(
-                "convert",
-                user_pk=self.document.owner and self.document.owner.pk or None,
-            )
-            send_event("document", self.document.pk, "part:new", {"id": self.pk})
-        else:
+        if not new:
             self.calculate_progress()
         return instance
 
@@ -1241,6 +1235,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 raise e
         else:
             os.rename(opti_name, self.image.file.name)
+            self.image_file_size = self.image.size
+            self.save()
 
     def binarize(self, threshold=None):
         fname = os.path.basename(self.image.file.name)

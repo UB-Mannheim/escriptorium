@@ -455,16 +455,16 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
     });
 
     $('#alerts-container').on('part:new', function(ev, data) {
-        setTimeout(function() {  // really ugly: but avoid a race condition against dropzone
-            var card = partCard.fromPk(data.id);
-            if (!card) {
-                var uri = API.part.replace('{part_pk}', data.id);
-                $.get(uri, function(data) {
-                    new partCard(data, cpuMinutesLeft);
-                    partCard.refreshSelectedCount();
-                });
-            }
-        }, 5000);
+        var card = partCard.fromPk(data.id);
+        if (!card) {
+            var uri = API.part.replace('{part_pk}', data.id);
+            $.get(uri, function(data) {
+                new partCard(data, cpuMinutesLeft);
+                partCard.refreshSelectedCount();
+            });
+        } else {
+            card.domElement.scrollIntoView(false);
+        }
     });
     $('#alerts-container').on('part:delete', function(ev, data) {
         var card = partCard.fromPk(data.id);
@@ -610,8 +610,6 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
 
     //************* New card creation **************
     imageDropzone.on("success", function(file, data) {
-        var card = new partCard(data, cpuMinutesLeft);
-        card.domElement.scrollIntoView(false);
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {  // a bit arbitrary, depends on the screen but oh well
             for (var i=0; i < imageDropzone.files.length - 7; i++) {
