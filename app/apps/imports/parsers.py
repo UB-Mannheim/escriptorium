@@ -1065,7 +1065,7 @@ class IIIFManifestParser(ParserDocument):
                         filename=name, error=e))
                 if isinstance(e, DownloadError):
                     error_msg = f"Could not download image: {url}"
-                    user.notify(error_msg)
+                    user.notify(error_msg, level="warning", id="import:warning")
                     self.report.append(error_msg)
 
 

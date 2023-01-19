@@ -47,7 +47,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(25):
+            with self.assertNumQueries(26):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -271,7 +271,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'pagexml_test.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(25):
+            with self.assertNumQueries(26):
                 response = self.client.post(uri, {'upload_file': SimpleUploadedFile(filename,
                                                                                     fh.read())})
                 # Note: the ParseError is raised by the processing of the import,
