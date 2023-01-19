@@ -8,6 +8,10 @@ export default {
     title: "Components/Tag Filter",
     component: TagFilter,
     subcomponents: { FilterButton, TagIcon },
+    argTypes: {
+        onClick: { action: "clicked" },
+        onClear: { action: "cleared" },
+    },
 };
 
 const Template = (args, { argTypes }) => ({
@@ -39,6 +43,4 @@ TagFilterButton.args = {
     active: true,
     count: 2,
     label: "Tags",
-    onClear: () => {},
-    onClick: () => {},
 };
