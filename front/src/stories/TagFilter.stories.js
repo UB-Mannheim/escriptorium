@@ -25,7 +25,7 @@ TagFilterModal.args = {
 
 const WithButtonTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
-    components: { TagFilter, FilterButton, TagIcon },
+    components: { FilterButton, TagIcon },
     template: `
         <FilterButton v-bind="$props">
             <template v-slot:filter-icon="{active}">
