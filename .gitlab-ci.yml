@@ -97,3 +97,24 @@ docker-build-base:
 
   script:
     - ci/build-base.sh
+
+pages:
+  stage: deploy
+  image: node:latest
+  rules:
+    # run this job on push to develop when frontend related stuff changes
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - front/**/*
+    # or on manual trigger in GitLab web ui
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  script:
+    # install npm deps and build storybook
+    - cd front
+    - npm install
+    - npm run build-storybook -- -o ../public
+  artifacts:
+    # save storybook build as an artifact
+    untracked: true
+    paths:
+      - public
