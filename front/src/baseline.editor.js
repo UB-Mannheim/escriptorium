@@ -1459,18 +1459,18 @@ export class Segmenter {
             return;
         }
 
+        var bounds = this.img.getBoundingClientRect();
+        this.canvas.width = bounds.width;
+        this.canvas.height = bounds.height;
+
         if (paper.view) {
-            let bounds = this.img.getBoundingClientRect();
-            let imgRatio = (bounds.width / this.img.naturalWidth);
-            let ratio = imgRatio/paper.view.zoom*this.scale;
+            var imgRatio = (bounds.width / this.img.naturalWidth);
+            var ratio = imgRatio/paper.view.zoom*this.scale;
             if (paper.view.viewSize[0] != bounds.width &&
                 paper.view.viewSize[1] != bounds.height) {
                 paper.view.viewSize = [bounds.width, bounds.height];
                 paper.view.scale(ratio, [0, 0]);
             }
-
-            this.canvas.width = bounds.width;
-            this.canvas.height = bounds.height;
 
             this.applyRegionMode();
         }
