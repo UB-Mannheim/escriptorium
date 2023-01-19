@@ -119,9 +119,10 @@ class PdfParser(ParserDocument):
                                                    page=page_nb,
                                                    dpi=300,
                                                    access='sequential')
-                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb + 1)
+                pdfname = os.path.basename(self.file.name)
+                fname = '%s_page_%d.png' % (pdfname, page_nb + 1)
                 try:
-                    part = DocumentPart.objects.get(
+                    part = DocumentPart.objects.filter(
                         document=self.document,
                         original_filename=fname
                     )[0]
@@ -136,6 +137,7 @@ class PdfParser(ParserDocument):
                 part.image_file_size = 0
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
+                part.source = f"pdf//{pdfname}"
                 part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
                 generate_part_thumbnails.delay(instance_pk=part.pk)
@@ -199,7 +201,7 @@ class ZipParser(ParserDocument):
                                     _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
                                 )
                             try:
-                                part = DocumentPart.objects.get(
+                                part = DocumentPart.objects.filter(
                                     document=self.document,
                                     original_filename=filename
                                 )[0]
@@ -213,6 +215,10 @@ class ZipParser(ParserDocument):
                             part.image_file_size = 0
                             part.image.save(filename, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
+                            part.source = "zip//{0}/{1}".format(
+                                os.path.basename(self.file.name),
+                                filename
+                            )
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
                             generate_part_thumbnails.delay(instance_pk=part.pk)
@@ -244,7 +250,7 @@ class ZipParser(ParserDocument):
 
 
 class METSBaseParser():
-    def parse_image(self, user, total, index, start_at, filename, image):
+    def parse_image(self, user, total, index, start_at, filename, image, source):
         # If quotas are enforced, assert that the user still has free disk storage
         if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
             raise DiskQuotaReachedError(
@@ -252,7 +258,7 @@ class METSBaseParser():
             )
 
         try:
-            part = DocumentPart.objects.get(
+            part = DocumentPart.objects.filter(
                 document=self.document,
                 original_filename=filename
             )[0]
@@ -266,6 +272,7 @@ class METSBaseParser():
         part.image_file_size = 0
         part.image.save(filename, ContentFile(image.read()))
         part.image_file_size = part.image.size
+        part.source = source
         part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
         part.save()
         generate_part_thumbnails.delay(instance_pk=part.pk)
@@ -311,7 +318,8 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
                     continue
 
                 filename = mets_page.image.name
-                self.parse_image(user, total, index, start_at, filename, mets_page.image)
+                self.parse_image(user, total, index, start_at, filename,
+                                 mets_page.image, self.mets_base_uri)
 
             for index, (layer_name, source) in enumerate(mets_page.sources.items()):
                 if global_index < start_at:
@@ -384,7 +392,11 @@ class METSZipParser(ZipParser, METSBaseParser):
 
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
-                        self.parse_image(user, total, index, start_at, filename, ziped_image)
+                        image_source = "mets//{0}/{1}".format(
+                            os.path.basename(self.file),
+                            filename)
+                        self.parse_image(user, total, index, start_at, filename,
+                                         ziped_image, image_source)
 
                 for index, (layer_name, source) in enumerate(mets_page.sources.items()):
                     if info_list.index(source) < start_at:
@@ -1009,7 +1021,7 @@ class IIIFManifestParser(ParserDocument):
                 r = self.get_image(url)
 
                 try:
-                    part = DocumentPart.objects.get(
+                    part = DocumentPart.objects.filter(
                         document=self.document,
                         source=url)[0]
                 except IndexError:
