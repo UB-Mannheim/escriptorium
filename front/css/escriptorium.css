@@ -399,9 +399,9 @@ form.inline-form {
 
 
 .tools {
-    height: 45px;
+    min-height: 45px;
     margin-bottom: 5px;
-    /* overflow: hidden; */
+    overflow: scroll;
 }
 
 .tools .fas {
