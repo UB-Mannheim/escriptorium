@@ -1460,15 +1460,18 @@ export class Segmenter {
         }
 
         var bounds = this.img.getBoundingClientRect();
-        this.canvas.width = bounds.width;
-        this.canvas.height = bounds.height;
+        // Note: need to cast to int to deal with a floating display bug in paper.js on some systems
+        var boundsWidth = parseInt(bounds.width);
+        var boundsHeight = parseInt(bounds.height);
+        this.canvas.width = boundsWidth;
+        this.canvas.height = boundsHeight;
 
         if (paper.view) {
-            var imgRatio = (bounds.width / this.img.naturalWidth);
-            var ratio = imgRatio/paper.view.zoom*this.scale;
-            if (paper.view.viewSize[0] != bounds.width &&
-                paper.view.viewSize[1] != bounds.height) {
-                paper.view.viewSize = [bounds.width, bounds.height];
+            var imgRatio = (boundsWidth / this.img.naturalWidth);
+            var ratio = imgRatio / paper.view.zoom * this.scale;
+            if (paper.view.viewSize[0] != boundsWidth &&
+                paper.view.viewSize[1] != boundsHeight) {
+                paper.view.viewSize = [boundsWidth, boundsHeight];
                 paper.view.scale(ratio, [0, 0]);
             }
 
