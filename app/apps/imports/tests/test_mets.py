@@ -47,6 +47,22 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertTrue(isinstance(file, io.IOBase))
         file.close()
 
+    def test_get_document_metadata_no_mets_header(self):
+        root = etree.Element("mets")
+        processor = METSProcessor(root)
+        metadata = processor.get_document_metadata()
+        self.assertDictEqual(metadata, {})
+
+    def test_get_document_metadata(self):
+        processor = METSProcessor(self.root)
+        metadata = processor.get_document_metadata()
+        self.assertDictEqual(metadata, {
+            "mets-header/adm-id": "digSig",
+            "mets-header/created": "2023-01-17T11:35:00",
+            "mets-header/status": "Validated",
+            "mets-header/agent-role-CREATOR-type-ORGANIZATION": "eScriptorium testing",
+        })
+
     def test_get_files_from_file_sec_no_section(self):
         root = etree.Element("mets")
 
@@ -85,6 +101,35 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         for page in pages:
             self.assertTrue(etree.iselement(page))
             self.assertTrue(page.tag == "{http://www.loc.gov/METS/}div")
+
+    def test_get_page_metadata_no_dmdid(self):
+        processor = METSProcessor(self.root)
+        pages = processor.get_pages_from_struct_map()
+
+        metadata = processor.get_page_metadata(pages[2])
+        self.assertDictEqual(metadata, {})
+
+    def test_get_page_metadata_no_mods_sec(self):
+        processor = METSProcessor(self.root)
+        pages = processor.get_pages_from_struct_map()
+
+        metadata = processor.get_page_metadata(pages[1])
+        self.assertDictEqual(metadata, {})
+
+    def test_get_page_metadata(self):
+        processor = METSProcessor(self.root)
+        pages = processor.get_pages_from_struct_map()
+
+        metadata = processor.get_page_metadata(pages[0])
+        self.assertDictEqual(metadata, {
+            "mods/page-index": "1",
+            "mods/item-physical-form": None,
+            "mods/item-reel-number": "123456789",
+            "mods/item-reel-sequence-number": "001",
+            "mods/item-physical-location": "eSc testing",
+            "mods/agency-responsible-for-reproduction": "eSc testing",
+            "mods/note-about-reproduction": "Present",
+        })
 
     def test_get_file_pointers(self):
         processor = METSProcessor(self.root)
@@ -171,45 +216,39 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(uri, "https://somethingelse.com/a-simple-image.png")
 
     @patch("requests.head")
-    def test_check_is_image_true_and_already_exists(self, mock_head):
+    def test_check_is_image_true(self, mock_head):
         mock_head.return_value = Mock(headers={"content-type": "image/png"}, status_code=200)
         processor = METSProcessor(self.root)
-        is_image, stop = processor.check_is_image("https://whatever.com/a-simple-image.png", True)
+        is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-image.png")
         self.assertTrue(is_image)
-        self.assertTrue(stop)
-
-    @patch("requests.head")
-    def test_check_is_image_true_and_do_not_exists(self, mock_head):
-        mock_head.return_value = Mock(headers={"content-type": "image/png"}, status_code=200)
-        processor = METSProcessor(self.root)
-        is_image, stop = processor.check_is_image("https://whatever.com/a-simple-image.png", False)
-        self.assertTrue(is_image)
-        self.assertFalse(stop)
+        self.assertEqual(content_type, "image/png")
 
     @patch("requests.head")
     def test_check_is_image_false(self, mock_head):
         mock_head.return_value = Mock(headers={"content-type": "text/xml"}, status_code=200)
         processor = METSProcessor(self.root)
-        is_image, stop = processor.check_is_image("https://whatever.com/a-simple-xml.xml", True)
+        is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-xml.xml")
         self.assertFalse(is_image)
-        self.assertFalse(stop)
+        self.assertEqual(content_type, "text/xml")
 
     def test_process_single_page_no_file_pointers(self):
         processor = METSProcessor(self.root)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
         for pointer in page.findall("mets:fptr", namespaces=processor.NAMESPACES):
             page.remove(pointer)
 
         mets_page = processor.process_single_page(page, files)
-        self.assertEqual(mets_page, METSPage(image=None, sources={}))
+        self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 
     def test_process_single_page_missing_file_location(self):
         processor = METSProcessor(self.root)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
         for pointer in page.findall("mets:fptr", namespaces=processor.NAMESPACES):
             file = files[pointer.get("FILEID")]
             location = file.find("mets:FLocat", namespaces=processor.NAMESPACES)
@@ -227,16 +266,19 @@ class METSProcessorTestCase(CoreFactoryTestCase):
 
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
-        mets_page = processor.process_single_page(pages[0], files)
+        page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
+        mets_page = processor.process_single_page(page, files)
 
         # Using the default name "Layer 1"
-        self.assertEqual(mets_page, METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"Layer 1": "Kifayat_al-ghulam.pdf_000005.xml"}))
+        self.assertEqual(mets_page, METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"Layer 1": "Kifayat_al-ghulam.pdf_000005.xml"}, metadata={}))
 
     def test_process_single_page_archive_file_not_found(self):
         processor = METSProcessor(self.root, archive=self.archive_path)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
         for pointer in page.findall("mets:fptr", namespaces=processor.NAMESPACES):
             file = files[pointer.get("FILEID")]
             location = file.find("mets:FLocat", namespaces=processor.NAMESPACES)
@@ -251,18 +293,19 @@ class METSProcessorTestCase(CoreFactoryTestCase):
             'ERROR:imports.mets:File not found in the provided archive: "There is no item named \'not_in_archive.file\' in the archive"',
             'ERROR:imports.mets:File not found in the provided archive: "There is no item named \'not_in_archive.file\' in the archive"',
         ])
-        self.assertEqual(mets_page, METSPage(image=None, sources={}))
+        self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 
     @patch("requests.get")
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_process_single_page_remote_file_not_found(self, mock_check_is_image, mock_get):
         mock_get.side_effect = RequestException("Uhoh, something went wrong.")
-        mock_check_is_image.side_effect = [(True, False), (False, False)]
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")]
 
         processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
         for pointer in page.findall("mets:fptr", namespaces=processor.NAMESPACES):
             file = files[pointer.get("FILEID")]
             location = file.find("mets:FLocat", namespaces=processor.NAMESPACES)
@@ -277,7 +320,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
             'ERROR:imports.mets:File not found on remote URI https://a-file-that-does-not-exists.com/: Uhoh, something went wrong.',
             'ERROR:imports.mets:File not found on remote URI https://a-file-that-does-not-exists.com/: Uhoh, something went wrong.',
         ])
-        self.assertEqual(mets_page, METSPage(image=None, sources={}))
+        self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 
     def test_process_single_page_in_archive(self):
         processor = METSProcessor(self.root, archive=self.archive_path)
@@ -285,13 +328,21 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         pages = processor.get_pages_from_struct_map()
         mets_page = processor.process_single_page(pages[0], files)
 
-        self.assertEqual(mets_page, METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000005.xml"}))
+        self.assertEqual(mets_page, METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000005.xml"}, metadata={
+            "mods/page-index": "1",
+            "mods/item-physical-form": None,
+            "mods/item-reel-number": "123456789",
+            "mods/item-reel-sequence-number": "001",
+            "mods/item-physical-location": "eSc testing",
+            "mods/agency-responsible-for-reproduction": "eSc testing",
+            "mods/note-about-reproduction": "Present",
+        }))
 
     @patch("requests.get")
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_process_single_page_remote_file(self, mock_check_is_image, mock_get):
         mock_get.return_value = Mock(content=b"some content", status_code=200)
-        mock_check_is_image.side_effect = [(True, False), (False, False)]
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")]
 
         processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
         files = processor.get_files_from_file_sec()
@@ -306,6 +357,16 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(mets_page.sources["transcript"].name, "Kifayat_al-ghulam.pdf_000005.xml")
         self.assertTrue(isinstance(mets_page.sources["transcript"], io.BytesIO))
         self.assertEqual(mets_page.sources["transcript"].read(), b"some content")
+
+        self.assertDictEqual(mets_page.metadata, {
+            "mods/page-index": "1",
+            "mods/item-physical-form": None,
+            "mods/item-reel-number": "123456789",
+            "mods/item-reel-sequence-number": "001",
+            "mods/item-physical-location": "eSc testing",
+            "mods/agency-responsible-for-reproduction": "eSc testing",
+            "mods/note-about-reproduction": "Present",
+        })
 
     def test_process_no_file_sec(self):
         root = etree.Element("mets")
@@ -332,35 +393,54 @@ class METSProcessorTestCase(CoreFactoryTestCase):
 
         processor = METSProcessor(self.root)
         with self.assertLogs("imports.mets") as mock_log:
-            mets_pages = processor.process()
+            mets_pages, _ = processor.process()
 
         self.assertEqual(mock_log.output, [
-            "ERROR:imports.mets:An exception occurred while processing the page n°1 from the provided METS file: Uhoh, something went wrong.",
-            "ERROR:imports.mets:An exception occurred while processing the page n°2 from the provided METS file: Uhoh, something went wrong.",
-            "ERROR:imports.mets:An exception occurred while processing the page n°3 from the provided METS file: Uhoh, something went wrong.",
-            "ERROR:imports.mets:An exception occurred while processing the page n°4 from the provided METS file: Uhoh, something went wrong.",
+            "INFO:imports.mets:Processing the page n°1 from the provided METS file",
+            "ERROR:imports.mets:An exception occurred while processing the page: Uhoh, something went wrong.",
+            "INFO:imports.mets:Processing the page n°2 from the provided METS file",
+            "ERROR:imports.mets:An exception occurred while processing the page: Uhoh, something went wrong.",
+            "INFO:imports.mets:Processing the page n°3 from the provided METS file",
+            "ERROR:imports.mets:An exception occurred while processing the page: Uhoh, something went wrong.",
+            "INFO:imports.mets:Processing the page n°4 from the provided METS file",
+            "ERROR:imports.mets:An exception occurred while processing the page: Uhoh, something went wrong.",
         ])
         self.assertListEqual(mets_pages, [])
 
     def test_process_in_archive(self):
         processor = METSProcessor(self.root, archive=self.archive_path)
-        mets_pages = processor.process()
+        mets_pages, metadata = processor.process()
 
         self.assertListEqual(mets_pages, [
-            METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000005.xml"}),
-            METSPage(image="Kifayat_al-ghulam.pdf_000006.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000006.xml"}),
-            METSPage(image="Kifayat_al-ghulam.pdf_000007.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000007.xml"}),
-            METSPage(image="Kifayat_al-ghulam.pdf_000008.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000008.xml"}),
+            METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000005.xml"}, metadata={
+                "mods/page-index": "1",
+                "mods/item-physical-form": None,
+                "mods/item-reel-number": "123456789",
+                "mods/item-reel-sequence-number": "001",
+                "mods/item-physical-location": "eSc testing",
+                "mods/agency-responsible-for-reproduction": "eSc testing",
+                "mods/note-about-reproduction": "Present",
+            }),
+            METSPage(image="Kifayat_al-ghulam.pdf_000006.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000006.xml"}, metadata={}),
+            METSPage(image="Kifayat_al-ghulam.pdf_000007.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000007.xml"}, metadata={}),
+            METSPage(image="Kifayat_al-ghulam.pdf_000008.png", sources={"transcript": "Kifayat_al-ghulam.pdf_000008.xml"}, metadata={}),
         ])
+
+        self.assertDictEqual(metadata, {
+            "mets-header/adm-id": "digSig",
+            "mets-header/created": "2023-01-17T11:35:00",
+            "mets-header/status": "Validated",
+            "mets-header/agent-role-CREATOR-type-ORGANIZATION": "eScriptorium testing",
+        })
 
     @patch("requests.get")
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_process_remote_file(self, mock_check_is_image, mock_get):
         mock_get.return_value = Mock(content=b"some content", status_code=200)
-        mock_check_is_image.side_effect = [(True, False), (False, False)] * 4
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")] * 4
 
         processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
-        mets_pages = processor.process()
+        mets_pages, metadata = processor.process()
 
         names = [
             "Kifayat_al-ghulam.pdf_000005",
@@ -377,3 +457,21 @@ class METSProcessorTestCase(CoreFactoryTestCase):
             self.assertEqual(mets_page.sources["transcript"].name, f"{names[index]}.xml")
             self.assertTrue(isinstance(mets_page.sources["transcript"], io.BytesIO))
             self.assertEqual(mets_page.sources["transcript"].read(), b"some content")
+
+            if not index:
+                self.assertDictEqual(mets_page.metadata, {
+                    "mods/page-index": "1",
+                    "mods/item-physical-form": None,
+                    "mods/item-reel-number": "123456789",
+                    "mods/item-reel-sequence-number": "001",
+                    "mods/item-physical-location": "eSc testing",
+                    "mods/agency-responsible-for-reproduction": "eSc testing",
+                    "mods/note-about-reproduction": "Present",
+                })
+
+        self.assertDictEqual(metadata, {
+            "mets-header/adm-id": "digSig",
+            "mets-header/created": "2023-01-17T11:35:00",
+            "mets-header/status": "Validated",
+            "mets-header/agent-role-CREATOR-type-ORGANIZATION": "eScriptorium testing",
+        })
