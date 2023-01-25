@@ -26,11 +26,11 @@
     height: 25px;
     box-sizing: border-box;
 }
-.escr-tag-filter-group input[type="checkbox"] {
-    display: none;
-}
 .escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag {
     border: 1px solid var(--text1);
+}
+.escr-tag-filter-group input[type="checkbox"]:focus + .escr-tag {
+    box-shadow: 0 0 0 0.1rem var(--secondary-focus);
 }
 
 /* Checkmark for checked box */

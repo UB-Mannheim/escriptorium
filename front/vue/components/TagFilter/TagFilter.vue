@@ -129,6 +129,9 @@ export default {
                 h(
                     'input',
                     {
+                        class: {
+                            'sr-only': true
+                        },
                         domProps: {
                             id: `filter-tag-${tag.name}`,
                             name: `filter-tag-${tag.name}`,
