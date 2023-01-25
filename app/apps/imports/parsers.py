@@ -23,6 +23,7 @@ from core.models import (
     Block,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
     Line,
     LineTranscription,
     Metadata,
@@ -292,6 +293,22 @@ class METSBaseParser():
         part.save()
         self.post_process_image(part)
 
+        return part
+
+    def store_document_metadata(self, metadata):
+        for md_name, md_value in metadata.items():
+            if not md_value:
+                continue
+            md, created = Metadata.objects.get_or_create(name=md_name)
+            DocumentMetadata.objects.get_or_create(document=self.document, key=md, defaults={'value': md_value[:512]})
+
+    def store_part_metadata(self, metadata, part):
+        for md_name, md_value in metadata.items():
+            if not md_value:
+                continue
+            md, created = Metadata.objects.get_or_create(name=md_name)
+            DocumentPartMetadata.objects.get_or_create(part=part, key=md, defaults={'value': md_value[:512]})
+
 
 class METSRemoteParser(ParserDocument, METSBaseParser):
     DEFAULT_NAME = _("METS Import")
@@ -318,23 +335,32 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
     def parse(self, start_at=0, override=False, user=None):
         # Retrieving all the pages described by the METS file
         try:
-            self.mets_pages = METSProcessor(self.mets_file_content, mets_base_uri=self.mets_base_uri).process()
+            self.mets_pages, metadata = METSProcessor(self.mets_file_content, mets_base_uri=self.mets_base_uri).process()
         except ParseError:
             raise
         except Exception as e:
             raise ParseError(f"An error occurred during the processing of the remote METS file: {e}")
 
+        self.store_document_metadata(metadata)
+
         total = self.total
         global_index = 0
         for index, mets_page in enumerate(self.mets_pages):
+            metadata_already_stored = False
+
             if mets_page.image:
                 if global_index < start_at:
                     global_index += 1 + len(mets_page.sources.keys())
                     continue
 
                 filename = mets_page.image.name
-                self.parse_image(user, total, index, start_at, filename,
-                                 mets_page.image, self.mets_base_uri)
+                part = self.parse_image(user, total, index, start_at, filename,
+                                        mets_page.image, self.mets_base_uri)
+                # If we have a page with an image + multiple sources, we don't want to
+                # store the same metadata multiple times and spam the database for nothing
+                if not metadata_already_stored:
+                    self.store_part_metadata(mets_page.metadata, part)
+                    metadata_already_stored = True
 
             for index, (layer_name, source) in enumerate(mets_page.sources.items()):
                 if global_index < start_at:
@@ -347,6 +373,12 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
                     parser = make_parser(self.document, source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
                     # We only want to override for the first imported source if there are multiple ones
                     for part in parser.parse(override=(override and index == 0), user=user):
+                        # If we have a page with an image + multiple sources, we don't want to
+                        # store the same metadata multiple times and spam the database for nothing
+                        if not metadata_already_stored:
+                            self.store_part_metadata(mets_page.metadata, part)
+                            metadata_already_stored = True
+
                         yield part
                 except (ValueError, ParseError) as e:
                     # We let go to try other sources
@@ -391,27 +423,34 @@ class METSZipParser(ZipParser, METSBaseParser):
 
         # Retrieving all the pages described by the METS file
         try:
-            mets_pages = METSProcessor(mets_file_content, archive=self.file).process()
+            mets_pages, metadata = METSProcessor(mets_file_content, archive=self.file).process()
         except ParseError:
             raise
         except Exception as e:
             raise ParseError(f"An error occurred during the processing of the METS file contained in the archive: {e}")
 
+        self.store_document_metadata(metadata)
+
         with zipfile.ZipFile(self.file) as archive:
             info_list = [info.filename for info in archive.infolist()]
 
             for index, mets_page in enumerate(mets_pages):
+                metadata_already_stored = False
+
                 if mets_page.image:
                     if info_list.index(mets_page.image) < start_at:
                         continue
 
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
-                        image_source = "mets//{0}/{1}".format(
-                            os.path.basename(self.file),
-                            filename)
-                        self.parse_image(user, total, index, start_at, filename,
-                                         ziped_image, image_source)
+                        image_source = "mets//{0}/{1}".format(os.path.basename(self.file), filename)
+                        part = self.parse_image(user, total, index, start_at, filename,
+                                                ziped_image, image_source)
+                        # If we have a page with an image + multiple sources, we don't want to
+                        # store the same metadata multiple times and spam the database for nothing
+                        if not metadata_already_stored:
+                            self.store_part_metadata(mets_page.metadata, part)
+                            metadata_already_stored = True
 
                 for index, (layer_name, source) in enumerate(mets_page.sources.items()):
                     if info_list.index(source) < start_at:
@@ -424,6 +463,12 @@ class METSZipParser(ZipParser, METSBaseParser):
                             parser = make_parser(self.document, ziped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
                             # We only want to override for the first imported source if there are multiple ones
                             for part in parser.parse(override=(override and index == 0), user=user):
+                                # If we have a page with an image + multiple sources, we don't want to
+                                # store the same metadata multiple times and spam the database for nothing
+                                if not metadata_already_stored:
+                                    self.store_part_metadata(mets_page.metadata, part)
+                                    metadata_already_stored = True
+
                                 yield part
                         except (ValueError, ParseError) as e:
                             # We let go to try other sources
@@ -1112,7 +1157,7 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
             )
         # if 'abbyy' in schema:  # Not super robust
         #     return AbbyyParser(root, name=name)
-        if "alto" in schema:
+        if "alto" in schema.lower():
             return AltoParser(
                 document, file_handler, report, transcription_name=name, xml_root=root
             )

@@ -13,11 +13,32 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-METSPage = namedtuple('METSPage', ['image', 'sources'], defaults=[None, {}])
+DOCUMENT_METADATA_MAPPING = {
+    "ID": "mets-header/id",
+    "ADMID": "mets-header/adm-id",
+    "CREATEDATE": "mets-header/created",
+    "LASTMODDATE": "mets-header/last-modified",
+    "RECORDSTATUS": "mets-header/status",
+}
+
+PAGE_METADATA_MAPPING = {
+    "mods:part/mods:extent/mods:start": "mods/page-index",
+    "mods:relatedItem/mods:physicalDescription/mods:form": "mods/item-physical-form",
+    'mods:relatedItem/mods:identifier[@type="reel number"]': "mods/item-reel-number",
+    'mods:relatedItem/mods:identifier[@type="reel sequence number"]': "mods/item-reel-sequence-number",
+    "mods:relatedItem/mods:location/mods:physicalLocation": "mods/item-physical-location",
+    'mods:note[@type="agencyResponsibleForReproduction"]': "mods/agency-responsible-for-reproduction",
+    'mods:note[@type="noteAboutReproduction"]': "mods/note-about-reproduction",
+}
+
+# For consistency, we use mimetypes for both the remote and the archive parsings
+SUPPORTED_IMAGE_MIMETYPES = ["image/gif", "image/jpeg", "image/png", "image/jp2"]
+
+METSPage = namedtuple('METSPage', ['image', 'sources', 'metadata'], defaults=[None, {}, {}])
 
 
 class METSProcessor:
-    NAMESPACES = {"mets": "http://www.loc.gov/METS/"}
+    NAMESPACES = {"mets": "http://www.loc.gov/METS/", "mods": "http://www.loc.gov/mods/v3"}
 
     def __init__(self, mets_xml, archive=None, mets_base_uri=None):
         self.mets_xml = mets_xml
@@ -28,6 +49,37 @@ class METSProcessor:
     def retrieve_in_archive(self, filename):
         with zipfile.ZipFile(self.archive) as archive:
             return archive.open(filename)
+
+    def get_document_metadata(self):
+        metadata = {}
+
+        mets_header = self.mets_xml.find("mets:metsHdr", namespaces=self.NAMESPACES)
+        if mets_header is None:
+            return metadata
+
+        for mets_key, db_key in DOCUMENT_METADATA_MAPPING.items():
+            value = mets_header.get(mets_key)
+            if value:
+                metadata[db_key] = value
+
+        # Parse optional <agent/> metadata
+        agents = mets_header.findall("mets:agent", namespaces=self.NAMESPACES)
+        for agent in agents:
+            name = agent.find("mets:name", namespaces=self.NAMESPACES)
+            if name is None:
+                continue
+
+            db_key = "mets-header/agent"
+            if agent.get("ID"):
+                db_key += f'-id-{agent.get("ID")}'
+            if agent.get("ROLE"):
+                db_key += f'-role-{agent.get("ROLE")}'
+            if agent.get("TYPE"):
+                db_key += f'-type-{agent.get("TYPE")}'
+
+            metadata[db_key] = name.text
+
+        return metadata
 
     def get_files_from_file_sec(self):
         from imports.parsers import ParseError
@@ -55,6 +107,26 @@ class METSProcessor:
                 pages.append(element)
 
         return pages
+
+    def get_page_metadata(self, page):
+        metadata = {}
+
+        page_dmd_id = page.get("DMDID")
+        if not page_dmd_id:
+            return metadata
+
+        mods_sec = self.mets_xml.find(f'mets:dmdSec[@ID="{page_dmd_id}"]/mets:mdWrap/mets:xmlData/mods:mods', namespaces=self.NAMESPACES)
+        if mods_sec is None:
+            return metadata
+
+        for mets_path, db_key in PAGE_METADATA_MAPPING.items():
+            found = mods_sec.xpath(mets_path, namespaces=self.NAMESPACES)
+            if not found:
+                continue
+
+            metadata[db_key] = found[0].text
+
+        return metadata
 
     def get_file_pointers(self, page):
         file_pointers = []
@@ -92,9 +164,9 @@ class METSProcessor:
 
         try:
             # Testing if the retrieved file is an image
-            Image.open(file)
+            image = Image.open(file)
             # We only want to save the first provided image
-            if not mets_page_image:
+            if not mets_page_image and Image.MIME[image.format] in SUPPORTED_IMAGE_MIMETYPES:
                 mets_page_image = href
         except IOError:
             # If it's not an image then we can add it as a data source to be loaded
@@ -113,22 +185,17 @@ class METSProcessor:
         except ValidationError:
             return urljoin(f"{self.mets_base_uri}/", href.lstrip("/"))
 
-    def check_is_image(self, uri, mets_page_image):
+    def check_is_image(self, uri):
         head_resp = requests.head(uri)
         content_type = head_resp.headers["content-type"]
-
-        # Pointing towards an image but we already found one for this METS page, we can skip it
-        is_image = content_type in ["image/gif", "image/jpeg", "image/png", "image/tiff"]
-        if is_image and mets_page_image:
-            return is_image, True
-
-        return is_image, False
+        return content_type.startswith("image/"), content_type
 
     def handle_remote_pointer(self, href, mets_page_image, mets_page_sources, layer_name, layers_count):
         uri = self.build_remote_uri(href)
 
-        is_image, stop = self.check_is_image(uri, mets_page_image)
-        if stop:
+        is_image, content_type = self.check_is_image(uri)
+        # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
+        if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
             return mets_page_image, mets_page_sources, layers_count
 
         # Downloading the file content
@@ -152,6 +219,12 @@ class METSProcessor:
         return mets_page_image, mets_page_sources, layers_count
 
     def process_single_page(self, page, files):
+        try:
+            metadata = self.get_page_metadata(page)
+        except Exception as e:
+            logger.error(f"An exception occurred while retrieving metadata on the page: {e}")
+            metadata = {}
+
         mets_page_image = None
         mets_page_sources = {}
         layers_count = 1
@@ -167,21 +240,28 @@ class METSProcessor:
             else:
                 mets_page_image, mets_page_sources, layers_count = self.handle_remote_pointer(href, mets_page_image, mets_page_sources, layer_name, layers_count)
 
-        return METSPage(image=mets_page_image, sources=mets_page_sources)
+        return METSPage(image=mets_page_image, sources=mets_page_sources, metadata=metadata)
 
     def process(self):
+        try:
+            metadata = self.get_document_metadata()
+        except Exception as e:
+            logger.error(f"An exception occurred while retrieving metadata from the METS header: {e}")
+            metadata = {}
+
         mets_pages = []
         files = self.get_files_from_file_sec()
 
         pages = self.get_pages_from_struct_map()
         for index, page in enumerate(pages, start=1):
+            logger.info(f"Processing the page n°{index} from the provided METS file")
             try:
                 mets_page = self.process_single_page(page, files)
             # Catch any exception so that we don't fail when only one page is in error
             except Exception as e:
-                logger.error(f"An exception occurred while processing the page n°{index} from the provided METS file: {e}")
+                logger.error(f"An exception occurred while processing the page: {e}")
                 continue
 
             mets_pages.append(mets_page)
 
-        return mets_pages
+        return mets_pages, metadata

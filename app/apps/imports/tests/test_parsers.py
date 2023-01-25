@@ -5,7 +5,14 @@ from zipfile import ZipFile
 from lxml import etree
 from requests.exceptions import RequestException
 
-from core.models import Block, Line, LineTranscription
+from core.models import (
+    Block,
+    DocumentMetadata,
+    DocumentPartMetadata,
+    Line,
+    LineTranscription,
+    Metadata,
+)
 from core.tests.factory import CoreFactoryTestCase
 from imports.parsers import METSRemoteParser, METSZipParser, ParseError
 from reporting.models import TaskReport
@@ -67,11 +74,14 @@ class METSRemoteParserTestCase(CoreFactoryTestCase):
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_parse_mets_with_one_source(self, mock_check_is_image, mock_get):
         mock_get.side_effect = mocked_get
-        mock_check_is_image.side_effect = [(True, False), (False, False)] * 4
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")] * 4
 
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Metadata.objects.count(), 0)
+        self.assertEqual(DocumentMetadata.objects.count(), 0)
+        self.assertEqual(DocumentPartMetadata.objects.count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSRemoteParser(self.document, None, self.report, self.simple_root, "https://whatever.com")
         list(parser.parse())
 
@@ -85,19 +95,22 @@ class METSRemoteParserTestCase(CoreFactoryTestCase):
             "METS Import | transcript", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 11)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 65)
+        self.assertEqual(Metadata.objects.count(), 10)
+        self.assertEqual(DocumentMetadata.objects.count(), 4)
+        self.assertEqual(DocumentPartMetadata.objects.count(), 6)
+        self.assertEqual(Block.objects.count(), 11)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 65)
 
     @patch("requests.get")
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_parse_mets_with_tags_prefixed_by_namespace(self, mock_check_is_image, mock_get):
         mock_get.side_effect = mocked_get
-        mock_check_is_image.side_effect = [(True, False), (False, False)] * 4
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")] * 4
 
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSRemoteParser(self.document, None, self.report, self.simple_prefixed_root, "https://whatever.com")
         list(parser.parse())
 
@@ -111,19 +124,19 @@ class METSRemoteParserTestCase(CoreFactoryTestCase):
             "METS Import | Layer 1", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 11)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 65)
+        self.assertEqual(Block.objects.count(), 11)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 65)
 
     @patch("requests.get")
     @patch("imports.mets.METSProcessor.check_is_image")
     def test_parse_mets_with_multiple_sources(self, mock_check_is_image, mock_get):
         mock_get.side_effect = mocked_get
-        mock_check_is_image.side_effect = [(True, False), (False, False), (False, False)] * 4
+        mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml"), (False, "text/xml")] * 4
 
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSRemoteParser(self.document, None, self.report, self.complex_root, "https://whatever.com")
         list(parser.parse())
 
@@ -137,9 +150,9 @@ class METSRemoteParserTestCase(CoreFactoryTestCase):
             "METS Import | ocr", "METS Import | transcript", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 17)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 129)
+        self.assertEqual(Block.objects.count(), 17)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 129)
 
 
 class METSZipParserTestCase(CoreFactoryTestCase):
@@ -179,9 +192,12 @@ class METSZipParserTestCase(CoreFactoryTestCase):
         self.assertTrue("An error occurred during the processing of the METS file contained in the archive: Uhoh, something went wrong." in str(context.exception))
 
     def test_parse_mets_with_one_source(self):
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Metadata.objects.count(), 0)
+        self.assertEqual(DocumentMetadata.objects.count(), 0)
+        self.assertEqual(DocumentPartMetadata.objects.count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSZipParser(self.document, f"{SAMPLES_DIR}/simple_archive.zip", self.report)
         list(parser.parse())
 
@@ -195,14 +211,17 @@ class METSZipParserTestCase(CoreFactoryTestCase):
             "METS Import | transcript", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 11)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 65)
+        self.assertEqual(Metadata.objects.count(), 10)
+        self.assertEqual(DocumentMetadata.objects.count(), 4)
+        self.assertEqual(DocumentPartMetadata.objects.count(), 6)
+        self.assertEqual(Block.objects.count(), 11)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 65)
 
     def test_parse_mets_with_tags_prefixed_by_namespace(self):
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSZipParser(self.document, f"{SAMPLES_DIR}/simple_archive_prefixed.zip", self.report)
         list(parser.parse())
 
@@ -216,14 +235,14 @@ class METSZipParserTestCase(CoreFactoryTestCase):
             "METS Import | Layer 1", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 11)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 65)
+        self.assertEqual(Block.objects.count(), 11)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 65)
 
     def test_parse_mets_with_multiple_sources(self):
-        self.assertEqual(Block.objects.all().count(), 0)
-        self.assertEqual(Line.objects.all().count(), 0)
-        self.assertEqual(LineTranscription.objects.all().count(), 0)
+        self.assertEqual(Block.objects.count(), 0)
+        self.assertEqual(Line.objects.count(), 0)
+        self.assertEqual(LineTranscription.objects.count(), 0)
         parser = METSZipParser(self.document, f"{SAMPLES_DIR}/complex_archive.zip", self.report)
         list(parser.parse())
 
@@ -237,6 +256,6 @@ class METSZipParserTestCase(CoreFactoryTestCase):
             "METS Import | ocr", "METS Import | transcript", "manual"
         ])
         # Assert that it clearly imported some data
-        self.assertEqual(Block.objects.all().count(), 17)
-        self.assertEqual(Line.objects.all().count(), 66)
-        self.assertEqual(LineTranscription.objects.all().count(), 129)
+        self.assertEqual(Block.objects.count(), 17)
+        self.assertEqual(Line.objects.count(), 66)
+        self.assertEqual(LineTranscription.objects.count(), 129)
