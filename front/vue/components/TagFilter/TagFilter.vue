@@ -2,6 +2,7 @@
 import '../Tags/Tag.css';
 import './TagFilter.css';
 import Button from '../Button/Button.vue';
+import CheckIcon from '../Icons/CheckIcon/CheckIcon.vue';
 import Tags from '../Tags/Tags.vue';
 import TextField from '../TextField/TextField.vue';
 import SegmentedButtonGroup from '../SegmentedButtonGroup/SegmentedButtonGroup.vue';
@@ -162,7 +163,10 @@ export default {
                             htmlFor: `filter-tag-${tag.name}`,
                         },
                     },
-                    [h('span', tag.name)],
+                    [
+                        h('span', tag.name),
+                        h(CheckIcon)
+                    ],
                 ),
             ];
         },

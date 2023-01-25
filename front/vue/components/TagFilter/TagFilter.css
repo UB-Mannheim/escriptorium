@@ -35,10 +35,12 @@
 }
 
 /* Checkmark for checked box */
-/* TODO: Replace with real icon */
-.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag span:after {
+.escr-tag-filter-group input[type="checkbox"]:not(:checked) + .escr-tag svg {
+    display: none;
+}
+.escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag svg {
+    margin-left: 5px;
     display: inline;
-    content: " \2713";
 }
 
 /* additional layout elements */
