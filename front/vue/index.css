@@ -1,9 +1,19 @@
 /* Root styles for the entire application. */
 :root {
+    /* main colors */
     --primary: #28A696;
     --tertiary: #5869FC;
     --alert: #E84F4F;
+    /* button state colors */
+    --primary-dark: #229082;
+    --primary-darker: #1e8174;
+    --tertiary-dark: #2c41fb;
+    --tertiary-darker: #0f26fa;
+    --alert-dark: #e32b2b;
+    --alert-darker: #d61c1c;
+    /* text on all filled buttons */
     --button-text: #FFFFFF;
+    /* tag colors */
     --tag-1: #E0726E;
     --tag-2: #F78D8D;
     --tag-3: #FF9A6F;
@@ -19,17 +29,27 @@
     --tag-text: #212323;
 }
 .light-mode {
+    /* button colors */
+    --secondary: #1761B5;
+    --secondary-dark: #14549d;
+    --secondary-darker: #114b8d;
+    /* light mode backgrounds */
     --background1: #FFFFFF;
     --background2: #E9E9E9;
-    --secondary: #1761B5;
+    /* light mode text */
     --text1: #212323;
     --text2: #666768;
     --text3: #A7A8A9;
 }
 .dark-mode {
+    /* button colors */
+    --secondary: #4F96E8;
+    --secondary-dark: #2b80e3;
+    --secondary-darker:#1c72d6;
+    /* dark mode backgrounds */
     --background1: #2F3132;
     --background2: #3E4142;
-    --secondary: #4F96E8;
+    /* dark mode text */
     --text1: #FFFFFF;
     --text2: #A7A8A9;
     --text3: #717373;
