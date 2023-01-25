@@ -189,6 +189,7 @@ export default {
                             props: {
                                 color: 'primary',
                                 label: 'Apply Filter',
+                                disabled: !this.selectedTags?.length && !this.withoutTag,
                                 onClick: () => this.onApply({
                                     operator: this.selectedOperator,
                                     tags: this.selectedTags,
@@ -251,10 +252,11 @@ export default {
                             options: [{
                                 value: 'and',
                                 label: 'AND',
+                                selected: this.selectedOperator === "and",
                             }, {
                                 value: 'or',
                                 label: 'OR',
-                                selected: true,
+                                selected: this.selectedOperator === "or",
                             }],
                             onChangeSelection: this.setOperator,
                         }
@@ -320,7 +322,8 @@ export default {
                                 domProps: {
                                     type: 'checkbox',
                                     id: 'without-tag',
-                                    onchange: this.toggleWithoutTag
+                                    onchange: this.toggleWithoutTag,
+                                    checked: this.withoutTag,
                                 },
                             },
                         ),
