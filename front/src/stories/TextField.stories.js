@@ -16,6 +16,6 @@ const Template = (args, { argTypes }) => ({
 
 export const SingleTextField = Template.bind({});
 SingleTextField.args = {
-    label: "test",
-    placeholder: "test",
+    label: "Field label",
+    placeholder: "Type here...",
 };
