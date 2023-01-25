@@ -1,8 +1,8 @@
-import ToggleButtonGroup from "../../vue/components/ToggleButtonGroup/ToggleButtonGroup.vue";
+import SegmentedButtonGroup from "../../vue/components/SegmentedButtonGroup/SegmentedButtonGroup.vue";
 
 export default {
-    title: "Components/Toggle Button",
-    component: ToggleButtonGroup,
+    title: "Components/Segmented Button",
+    component: SegmentedButtonGroup,
     argTypes: {
         color: {
             control: { type: "select" },
@@ -16,8 +16,8 @@ export default {
 
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
-    components: { ToggleButtonGroup },
-    template: '<ToggleButtonGroup v-bind="$props" />',
+    components: { SegmentedButtonGroup },
+    template: '<SegmentedButtonGroup v-bind="$props" />',
 });
 
 

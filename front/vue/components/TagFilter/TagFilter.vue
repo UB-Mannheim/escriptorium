@@ -4,7 +4,7 @@ import './TagFilter.css';
 import Button from '../Button/Button.vue';
 import Tags from '../Tags/Tags.vue';
 import TextField from '../TextField/TextField.vue';
-import ToggleButtonGroup from '../ToggleButtonGroup/ToggleButtonGroup.vue';
+import SegmentedButtonGroup from '../SegmentedButtonGroup/SegmentedButtonGroup.vue';
 
 export default {
     name: 'escr-tag-filter',
@@ -245,7 +245,7 @@ export default {
             [
                 h('h3', 'Filter Tags'),
                 h(
-                    ToggleButtonGroup,
+                    SegmentedButtonGroup,
                     {
                         props: {
                             color: 'secondary',

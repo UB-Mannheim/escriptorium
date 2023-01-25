@@ -14,10 +14,10 @@
 
 <script>
 import '../Button/Button.css';
-import './ToggleButtonGroup.css';
+import './SegmentedButtonGroup.css';
 
 export default {
-    name: 'escr-toggle-button-group',
+    name: 'escr-segmented-button-group',
     props: {
         /**
          * Color of the selected button
@@ -66,9 +66,9 @@ export default {
     computed: {
         classes() {
             return {
-                'escr-toggle-button-group': true,
-                [`escr-toggle-button-group--${this.color}`]: true,
-                [`escr-toggle-button-group--${this.size}`]: true,
+                'escr-segmented-button-group': true,
+                [`escr-segmented-button-group--${this.color}`]: true,
+                [`escr-segmented-button-group--${this.size}`]: true,
             };
         },
     },
