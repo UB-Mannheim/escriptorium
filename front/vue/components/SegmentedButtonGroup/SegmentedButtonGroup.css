@@ -2,43 +2,51 @@
     display: flex;
     flex-flow: row nowrap;
 }
-.escr-segmented-button-group .escr-button {
-    font-size: 12px;
-    transition: all 0.2s;
+.escr-segmented-button-group label {
+    display: flex;
+    flex-flow: row nowrap;
+    flex: 1 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0px 10px;
     min-height: 32px;
     height: 32px;
-    flex: 1 0;
+    color: var(--button-text);
+    font-size: 12px;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
 }
 /* separation and border radius */
-.escr-segmented-button-group .escr-button:not(:last-of-type) {
+.escr-segmented-button-group label:not(:last-of-type) {
     margin-right: 1px;
 }
-.escr-segmented-button-group .escr-button:first-of-type {
+.escr-segmented-button-group label:first-of-type {
     border-radius: 5px 0px 0px 5px;
 }
-.escr-segmented-button-group .escr-button:last-of-type {
+.escr-segmented-button-group label:last-of-type {
     border-radius: 0px 5px 5px 0px;
 }
-.escr-segmented-button-group .escr-button:not(:first-of-type):not(:last-of-type) {
+.escr-segmented-button-group label:not(:first-of-type):not(:last-of-type) {
     border-radius: 0px;
 }
-.escr-segmented-button-group .escr-button:first-of-type:last-of-type {
+.escr-segmented-button-group label:first-of-type:last-of-type {
     border-radius: 5px;
 }
 /* inactive button(s) */
-.escr-segmented-button-group .escr-button:not(.escr-button--active) {
+.escr-segmented-button-group input:not(:checked) + label {
     color: var(--text2);
     background-color: var(--background2);
     font-weight: 400;
 }
 /* active button */
-.escr-segmented-button-group .escr-button--active {
+.escr-segmented-button-group input:checked + label {
     font-family: 'Noto Sans', sans-serif;
     font-weight: 600;
 }
-.escr-segmented-button-group--primary .escr-button--active {
+.escr-segmented-button-group--primary input:checked + label {
     background-color: var(--primary);
 }
-.escr-segmented-button-group--secondary .escr-button--active {
+.escr-segmented-button-group--secondary input:checked + label {
     background-color: var(--secondary);
 }

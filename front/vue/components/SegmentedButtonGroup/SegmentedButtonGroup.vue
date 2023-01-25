@@ -1,23 +1,9 @@
-<template>
-    <div role="group" :class="classes">
-        <button
-            v-for="option in options"
-            type="button"
-            :class="optionClasses(option)"
-            :value="option.value"
-            @click="onClick"
-        >
-            {{ option.label }}
-        </button>
-    </div>
-</template>
-
 <script>
-import '../Button/Button.css';
-import './SegmentedButtonGroup.css';
+import "./SegmentedButtonGroup.css";
 
 export default {
-    name: 'escr-segmented-button-group',
+    name: "escr-segmented-button-group",
+    functional: true,
     props: {
         /**
          * Color of the selected button
@@ -25,23 +11,32 @@ export default {
          */
         color: {
             type: String,
-            default: 'primary',
-            validator: function (value) {
-                return [
-                    'primary',
-                    'secondary',
-                ].indexOf(value) !== -1;
+            default: "primary",
+            validator: function(value) {
+                return ["primary", "secondary"].indexOf(value) !== -1;
             },
         },
         /**
-         * List of options, each of which should have a value and a label
+         * List of options, each of which should have a `value` and a `label`.
+         * Optionally, one may have a `selected` boolean.
          */
         options: {
             type: Array,
             required: true,
-            validator: function (opts) {
-                return Array.isArray(opts) && opts.length > 0 && Object.hasOwn(opts[0], 'value')
-            }
+            validator: function(opts) {
+                return (
+                    Array.isArray(opts) &&
+                    opts.length > 0 &&
+                    Object.hasOwn(opts[0], "value")
+                );
+            },
+        },
+        /**
+         * The name attribute of the radio input group
+         */
+        name: {
+            type: String,
+            required: true,
         },
         /**
          * Function that executes when the selection is changed. Should accept
@@ -50,44 +45,57 @@ export default {
         onChangeSelection: {
             type: Function,
             required: true,
-        }
-    },
-    data: function () {
-        let selectedOption = '';
-        if (Array.isArray(this.options) && this.options.length > 0) {
-            selectedOption = this.options.find(
-                (opt) => opt.selected === true
-            )?.value || this.options[0].value;
-        }
-        return {
-            selectedOption,
-        }
-    },
-    computed: {
-        classes() {
-            return {
-                'escr-segmented-button-group': true,
-                [`escr-segmented-button-group--${this.color}`]: true,
-                [`escr-segmented-button-group--${this.size}`]: true,
-            };
         },
     },
-    methods: {
-        onClick: function (e) {
-            this.selectedOption = e.target.value;
-            this.onChangeSelection(e.target.value);
-        },
-        optionClasses: function (option) {
-            return {
-                'escr-button': true,
-                'escr-button--large': true,
-                'escr-button--active': option.value === this.selectedOption,
-            };
-        },
+    render: (h, context) => {
+        /**
+         * Reusable function to render a single option's radio input and label
+         */
+        function renderOption(option) {
+            return [
+                h(
+                    "input",
+                    {
+                        domProps: {
+                            type: "radio",
+                            id: `${context.props.name}-${option.value}`,
+                            value: option.value,
+                            name: context.props.name,
+                            checked: option.selected,
+                        },
+                        class: {"sr-only": true },
+                        on: {
+                            change: () => context.props.onChangeSelection(option.value),
+                        },
+                    },
+                ),
+                h(
+                    "label",
+                    {
+                        domProps: {
+                            htmlFor: `${context.props.name}-${option.value}`,
+                        },
+                    },
+                    option.label,
+                ),
+            ]
+        };
+        /**
+         * Render the container div and radio children
+         */
+        return h(
+            "div",
+            {
+                class: {
+                    "escr-segmented-button-group": true,
+                    [`escr-segmented-button-group--${context.props.color}`]: true,
+                },
+                domProps: {
+                    role: "group",
+                }
+            },
+            context.props.options.map((option) => renderOption(option)),
+        );
     },
-    render: (h) => {
-        return h('div', this.$slots.default)
-    },
-}
-
+};
 </script>

@@ -249,6 +249,7 @@ export default {
                     {
                         props: {
                             color: 'secondary',
+                            name: 'tag-filter-operator',
                             options: [{
                                 value: 'and',
                                 label: 'AND',
