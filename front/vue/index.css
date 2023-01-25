@@ -40,6 +40,8 @@
     /* light mode backgrounds */
     --background1: #FFFFFF;
     --background2: #E9E9E9;
+    --background2-dark: #CACACA;
+    --background2-darker: #b5b5b5;
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
@@ -54,6 +56,8 @@
     /* dark mode backgrounds */
     --background1: #2F3132;
     --background2: #3E4142;
+    --background2-dark: #565a5b;
+    --background2-darker: #666a6c;
     /* dark mode text */
     --text1: #FFFFFF;
     --text2: #A7A8A9;
