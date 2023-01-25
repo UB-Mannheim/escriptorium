@@ -42,6 +42,7 @@
     --background2: #E9E9E9;
     --background2-dark: #CACACA;
     --background2-darker: #b5b5b5;
+    --background2-focus: rgb(202 202 202 / 50%);
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
@@ -58,6 +59,7 @@
     --background2: #3E4142;
     --background2-dark: #565a5b;
     --background2-darker: #666a6c;
+    --background2-focus: rgb(86 90 91 / 50%);
     /* dark mode text */
     --text1: #FFFFFF;
     --text2: #A7A8A9;

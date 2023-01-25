@@ -31,11 +31,13 @@ const WithButtonTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { FilterButton, TagIcon },
     template: `
-        <FilterButton v-bind="$props">
-            <template v-slot:filter-icon="{active}">
-                <TagIcon :active="active" />
-            </template>
-        </FilterButton>
+        <div style="width: 110px; background-color: var(--background1); padding: 20px;">
+            <FilterButton v-bind="$props">
+                <template v-slot:filter-icon="{active}">
+                    <TagIcon :active="active" />
+                </template>
+            </FilterButton>
+        </div>
     `,
 });
 export const TagFilterButton = WithButtonTemplate.bind({});
