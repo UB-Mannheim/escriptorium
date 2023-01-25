@@ -1,3 +1,4 @@
+/* overall */
 .escr-button {
     border: none;
     color: var(--button-text);
@@ -8,6 +9,7 @@
     font-size: 14px;
     cursor: pointer;
 }
+/* size */
 .escr-button--small {
     min-height: 32px;
 }
@@ -15,6 +17,7 @@
     min-height: 38px;
     padding: 0px 16px;
 }
+/* filled */
 .escr-button--primary {
     background-color: var(--primary);
 }
@@ -27,6 +30,7 @@
 .escr-button--danger {
     background-color: var(--alert);
 }
+/* outline */
 .escr-button--outline-primary {
     background-color: transparent;
     border: 1px solid var(--primary);
@@ -47,16 +51,25 @@
     border: 1px solid var(--alert);
     color: var(--alert);
 }
+/* link */
 .escr-button--link-primary {
     background-color: transparent;
     border: none;
     color: var(--primary);
 }
-.escr-button:disabled {
-    color: var(--text3);
-    cursor: default;
-    pointer-events: none;
-}
 .escr-button--link-primary.escr-button--small {
     font-size: 12px;
+}
+/* disabled */
+.escr-button:disabled {
+    pointer-events: none;
+    color: var(--text3);
+    background-color: var(--background2);
+}
+.escr-button:disabled[class*="escr-button--outline"] {
+    background-color: transparent;
+    border: 1px solid var(--text3);
+}
+.escr-button:disabled[class*="escr-button--link"] {
+    background-color: transparent;
 }
