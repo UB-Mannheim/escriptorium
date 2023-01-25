@@ -139,6 +139,9 @@
 .escr-button--link-primary:active {
     color: var(--primary-darker);
 }
+.escr-button--link-primary:focus {
+    text-decoration: underline;
+}
 .escr-button--link-primary.escr-button--small {
     font-size: 12px;
 }
