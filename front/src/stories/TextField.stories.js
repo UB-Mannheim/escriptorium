@@ -8,7 +8,7 @@ const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { TextField },
     template: `
-        <div style="width: 350px;">
+        <div style="width: 350px; background-color: var(--background1); padding: 20px;">
             <TextField v-bind="$props" />
         </div>
     `,
