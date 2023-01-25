@@ -25,12 +25,13 @@
     cursor: pointer;
     height: 25px;
     box-sizing: border-box;
+    transition: box-shadow 0.15s ease-in-out;
 }
 .escr-tag-filter-group input[type="checkbox"]:checked + .escr-tag {
     border: 1px solid var(--text1);
 }
 .escr-tag-filter-group input[type="checkbox"]:focus + .escr-tag {
-    box-shadow: 0 0 0 0.1rem var(--secondary-focus);
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
 }
 
 /* Checkmark for checked box */
