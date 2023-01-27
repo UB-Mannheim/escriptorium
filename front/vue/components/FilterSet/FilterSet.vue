@@ -15,7 +15,7 @@
         <TagFilter
             v-if="openFilter === 'tags'"
             :tags="tags"
-            :selected="selectedTags"
+            :selected="tagFilterSelectedTags"
             :operator="tagFilterOperator"
             :without-tag-selected="withoutTagSelected"
             :on-apply="toggleClosedAndFilter"
@@ -24,7 +24,7 @@
     </div>
 </template>
 <script>
-import { mapGetters, mapMutations, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import FilterButton from "../FilterButton/FilterButton.vue";
 import TagFilter from "../TagFilter/TagFilter.vue";
 import TagIcon from "../Icons/TagIcon/TagIcon.vue";
@@ -54,10 +54,10 @@ export default {
         }),
         ...mapGetters("filter", [
             "tagFilterActive",
-            "selectedTags",
             "tagCount",
             "tagFilter",
             "tagFilterOperator",
+            "tagFilterSelectedTags",
             "withoutTagSelected",
         ]),
     },
@@ -87,7 +87,7 @@ export default {
             this.openFilter = undefined;
             this.addFilter({ type: "tags", value });
         },
-        ...mapMutations("filter", [
+        ...mapActions("filter", [
             "addFilter",
             "removeFilter",
         ]),

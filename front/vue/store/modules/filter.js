@@ -44,16 +44,11 @@ const getters = {
         });
     },
     /**
-     * Tags currently selected in the tag filter.
-     */
-    selectedTags: (_, getters) => {
-        return getters.tagFilter?.value?.tags;
-    },
-    /**
      * Number of tags currently selected in the tag filter.
      */
     tagCount: (_, getters) => {
-        return getters.selectedTags?.length;
+        // console.log(getters.tagFilter);
+        return getters.tagFilterSelectedTags?.length;
     },
     /**
      * The tag filter object from the list of filters.
@@ -74,6 +69,12 @@ const getters = {
         return getters.tagFilter?.value?.operator;
     },
     /**
+     * Tags currently selected in the tag filter.
+     */
+    tagFilterSelectedTags: (_, getters) => {
+        return getters.tagFilter?.value?.tags;
+    },
+    /**
      * Whether or not "without tag" is checked in the current tag filter.
      */
     withoutTagSelected: (_, getters) => {
@@ -81,7 +82,14 @@ const getters = {
     },
 };
 
-const actions = {};
+const actions = {
+    addFilter({ _, commit }, params) {
+        commit("addFilter", params);
+    },
+    removeFilter({ _, commit }, params) {
+        commit("removeFilter", params);
+    },
+};
 
 const mutations = {
     /**
