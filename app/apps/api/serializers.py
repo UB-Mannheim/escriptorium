@@ -456,14 +456,19 @@ class PartSerializer(serializers.ModelSerializer):
         data['image_file_size'] = data['image'].size
 
         try:
-            part = DocumentPart.objects.filter(original_filename=data['image'].name)[0]
+            # check if the image already exists
+            part = DocumentPart.objects.filter(document=document,
+                                               original_filename=data['image'].name)[0]
             data['id'] = part.id
             part = super().update(part, data)
         except IndexError:
+            # it's new
             # Can't use DoesNotExist because of legacy documents with duplicate image names
             part = super().create(data)
-            # generate card thumbnail right away since we need it
-            get_thumbnailer(part.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
+
+        # generate card thumbnail right away since we need it
+        get_thumbnailer(part.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'],
+                                                  generate=True)
 
         send_event("document", part.document.pk, "part:new", {"id": part.pk})
         part.task(
