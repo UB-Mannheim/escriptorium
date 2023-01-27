@@ -8,6 +8,7 @@ module.exports = {
         "eslint:recommended",
         "plugin:import/recommended",
         "plugin:vue/recommended",
+        "plugin:storybook/recommended",
     ],
     rules: {
         "arrow-parens": ["error", "always"],
