@@ -1,0 +1,16 @@
+/* set of filters */
+.escr-filter-set {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    position: relative;
+}
+/* spacing between filters */
+.escr-filter-set .escr-filter-button {
+    margin-left: 16px;
+}
+/* open filter dialog */
+.escr-filter-set .escr-tag-filter {
+    position: absolute;
+    top: 42px;
+}
