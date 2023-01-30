@@ -40,8 +40,9 @@ METSPage = namedtuple('METSPage', ['image', 'sources', 'metadata'], defaults=[No
 class METSProcessor:
     NAMESPACES = {"mets": "http://www.loc.gov/METS/", "mods": "http://www.loc.gov/mods/v3"}
 
-    def __init__(self, mets_xml, archive=None, mets_base_uri=None):
+    def __init__(self, mets_xml, report, archive=None, mets_base_uri=None):
         self.mets_xml = mets_xml
+        self.report = report
         self.archive = archive
         self.mets_base_uri = mets_base_uri
         self.url_validator = URLValidator()
@@ -159,7 +160,7 @@ class METSProcessor:
         try:
             file = self.retrieve_in_archive(href)
         except KeyError as e:
-            logger.error(f"File not found in the provided archive: {e}")
+            self.report.append(f"File not found in the provided archive: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
 
         try:
@@ -206,7 +207,7 @@ class METSProcessor:
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
         except requests.exceptions.RequestException as e:
-            logger.error(f"File not found on remote URI {uri}: {e}")
+            self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
 
         if is_image:
@@ -222,7 +223,7 @@ class METSProcessor:
         try:
             metadata = self.get_page_metadata(page)
         except Exception as e:
-            logger.error(f"An exception occurred while retrieving metadata on the page: {e}")
+            self.report.append(f"An exception occurred while retrieving metadata on the page: {e}", logger_fct=logger.warning)
             metadata = {}
 
         mets_page_image = None
@@ -246,7 +247,7 @@ class METSProcessor:
         try:
             metadata = self.get_document_metadata()
         except Exception as e:
-            logger.error(f"An exception occurred while retrieving metadata from the METS header: {e}")
+            self.report.append(f"An exception occurred while retrieving metadata from the METS header: {e}", logger_fct=logger.warning)
             metadata = {}
 
         mets_pages = []
@@ -254,12 +255,12 @@ class METSProcessor:
 
         pages = self.get_pages_from_struct_map()
         for index, page in enumerate(pages, start=1):
-            logger.info(f"Processing the page n°{index} from the provided METS file")
+            self.report.append(f"Processing the page n°{index} from the provided METS file", logger_fct=logger.info)
             try:
                 mets_page = self.process_single_page(page, files)
             # Catch any exception so that we don't fail when only one page is in error
             except Exception as e:
-                logger.error(f"An exception occurred while processing the page: {e}")
+                self.report.append(f"An exception occurred while processing the page: {e}", logger_fct=logger.error)
                 continue
 
             mets_pages.append(mets_page)

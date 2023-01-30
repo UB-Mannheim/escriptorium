@@ -198,8 +198,9 @@ class METSZipParserTestCase(CoreFactoryTestCase):
         self.assertEqual(Block.objects.count(), 0)
         self.assertEqual(Line.objects.count(), 0)
         self.assertEqual(LineTranscription.objects.count(), 0)
-        parser = METSZipParser(self.document, f"{SAMPLES_DIR}/simple_archive.zip", self.report)
-        list(parser.parse())
+        with open(f"{SAMPLES_DIR}/simple_archive.zip", "rb") as file_handler:
+            parser = METSZipParser(self.document, file_handler, self.report)
+            list(parser.parse())
 
         self.assertListEqual(list(self.document.parts.values_list("original_filename", flat=True)), [
             "Kifayat_al-ghulam.pdf_000005.png",
@@ -222,8 +223,9 @@ class METSZipParserTestCase(CoreFactoryTestCase):
         self.assertEqual(Block.objects.count(), 0)
         self.assertEqual(Line.objects.count(), 0)
         self.assertEqual(LineTranscription.objects.count(), 0)
-        parser = METSZipParser(self.document, f"{SAMPLES_DIR}/simple_archive_prefixed.zip", self.report)
-        list(parser.parse())
+        with open(f"{SAMPLES_DIR}/simple_archive_prefixed.zip", "rb") as file_handler:
+            parser = METSZipParser(self.document, file_handler, self.report)
+            list(parser.parse())
 
         self.assertListEqual(list(self.document.parts.values_list("original_filename", flat=True)), [
             "Kifayat_al-ghulam.pdf_000005.png",
@@ -243,8 +245,9 @@ class METSZipParserTestCase(CoreFactoryTestCase):
         self.assertEqual(Block.objects.count(), 0)
         self.assertEqual(Line.objects.count(), 0)
         self.assertEqual(LineTranscription.objects.count(), 0)
-        parser = METSZipParser(self.document, f"{SAMPLES_DIR}/complex_archive.zip", self.report)
-        list(parser.parse())
+        with open(f"{SAMPLES_DIR}/complex_archive.zip", "rb") as file_handler:
+            parser = METSZipParser(self.document, file_handler, self.report)
+            list(parser.parse())
 
         self.assertListEqual(list(self.document.parts.values_list("original_filename", flat=True)), [
             "Kifayat_al-ghulam.pdf_000005.png",

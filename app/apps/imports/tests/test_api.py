@@ -17,6 +17,7 @@ from core.models import (
 from core.tests.factory import CoreFactoryTestCase
 from imports.models import DocumentImport
 from imports.parsers import AltoParser, IIIFManifestParser
+from reporting.models import TaskReport
 
 # DO NOT REMOVE THIS IMPORT, it will break a lot of tests
 # It is used to trigger Celery signals when running tests
@@ -405,7 +406,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
             imp = DocumentImport(
                 document=self.document,
                 name='test',
-                started_by=self.document.owner
+                started_by=self.document.owner,
+                report=TaskReport.objects.create(
+                    user=self.document.owner,
+                    label="Test import",
+                    document=self.document,
+                    method="imports.tasks.document_import",
+                )
             )
             imp.import_file.save(
                 'iiif_manifest.json',

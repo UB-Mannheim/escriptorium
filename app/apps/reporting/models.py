@@ -56,7 +56,10 @@ class TaskReport(models.Model):
         "core.OcrModel", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
     )
 
-    def append(self, text):
+    def append(self, text, logger_fct=None):
+        if logger_fct:
+            logger_fct(text)
+
         self.messages += text + '\n'
         self.save()
 
