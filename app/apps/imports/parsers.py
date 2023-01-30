@@ -119,6 +119,10 @@ class PdfParser(ParserDocument):
             return 0
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         buff = self.file.read()
         doc = pyvips.Image.pdfload_buffer(buff, n=-1, access='sequential')
         n_pages = doc.get('n-pages')
@@ -161,12 +165,12 @@ class PdfParser(ParserDocument):
                 page_nb = page_nb + 1
 
         except pyvips.error.Error as e:
-            msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
-                filename=self.file.name, page=page_nb + 1, error=e.args[0]
+            self.report.append(
+                _("Parse error in {filename}: {page}: {error}, skipping it.").format(
+                    filename=self.file.name, page=page_nb + 1, error=e.args[0]
+                ),
+                logger_fct=logger.warning,
             )
-            logger.warning(msg)
-            if self.report:
-                self.report.append(msg)
 
     def clean(self):
         # if the import went well we are safe to delete the file
@@ -200,6 +204,10 @@ class ZipParser(ParserDocument):
             return len(zfh.infolist())
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         with zipfile.ZipFile(self.file) as zfh:
             total = len(zfh.infolist())
             for index, finfo in enumerate(zfh.infolist()):
@@ -251,12 +259,12 @@ class ZipParser(ParserDocument):
                         pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                        msg = _(
+                            "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                        ).format(
                             filename=self.file.name, xmlfile=filename, error=e.args[0]
                         )
-                        logger.warning(msg)
-                        if self.report:
-                            self.report.append(msg)
+                        self.report.append(msg, logger_fct=logger.warning)
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
 
@@ -333,9 +341,13 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
         pass
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         # Retrieving all the pages described by the METS file
         try:
-            self.mets_pages, metadata = METSProcessor(self.mets_file_content, mets_base_uri=self.mets_base_uri).process()
+            self.mets_pages, metadata = METSProcessor(self.mets_file_content, report=self.report, mets_base_uri=self.mets_base_uri).process()
         except ParseError:
             raise
         except Exception as e:
@@ -382,12 +394,10 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
                         yield part
                 except (ValueError, ParseError) as e:
                     # We let go to try other sources
-                    msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
-                        filename=self.file.name, xmlfile=filename, error=e.args[0]
-                    )
-                    logger.warning(msg)
-                    if self.report:
-                        self.report.append(msg)
+                    msg = _(
+                        "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                    ).format(filename=self.file.name, xmlfile=filename, error=e.args[0])
+                    self.report.append(msg, logger_fct=logger.warning)
                     if user:
                         user.notify(msg, id="import:warning", level="warning")
 
@@ -396,6 +406,10 @@ class METSZipParser(ZipParser, METSBaseParser):
     DEFAULT_NAME = _("METS Import")
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         # Searching for the METS file in the archive
         with zipfile.ZipFile(self.file) as archive:
             total = len(archive.infolist())
@@ -423,7 +437,7 @@ class METSZipParser(ZipParser, METSBaseParser):
 
         # Retrieving all the pages described by the METS file
         try:
-            mets_pages, metadata = METSProcessor(mets_file_content, archive=self.file).process()
+            mets_pages, metadata = METSProcessor(mets_file_content, report=self.report, archive=self.file).process()
         except ParseError:
             raise
         except Exception as e:
@@ -443,7 +457,7 @@ class METSZipParser(ZipParser, METSBaseParser):
 
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
-                        image_source = "mets//{0}/{1}".format(os.path.basename(self.file), filename)
+                        image_source = "mets//{0}/{1}".format(os.path.basename(self.file.name), filename)
                         part = self.parse_image(user, total, index, start_at, filename,
                                                 ziped_image, image_source)
                         # If we have a page with an image + multiple sources, we don't want to
@@ -472,12 +486,14 @@ class METSZipParser(ZipParser, METSBaseParser):
                                 yield part
                         except (ValueError, ParseError) as e:
                             # We let go to try other sources
-                            msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
-                                filename=self.file.name, xmlfile=filename, error=e.args[0]
+                            msg = _(
+                                "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                            ).format(
+                                filename=self.file.name,
+                                xmlfile=filename,
+                                error=e.args[0],
                             )
-                            logger.warning(msg)
-                            if self.report:
-                                self.report.append(msg)
+                            self.report.append(msg, logger_fct=logger.warning)
                             if user:
                                 user.notify(msg, id="import:warning", level="warning")
 
@@ -598,6 +614,10 @@ class XMLParser(ParserDocument):
             lt.transcription.save()
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         pages = self.get_pages()
         n_pages = len(pages)
         n_blocks = 0
@@ -611,12 +631,11 @@ class XMLParser(ParserDocument):
                     document=self.document, original_filename=filename
                 )[0]
             except IndexError:
-                if self.report:
-                    self.report.append(
-                        _("No match found for file {} with filename \"{}\".").format(
-                            os.path.basename(self.file.name), filename
-                        )
+                self.report.append(
+                    _('No match found for file {} with filename "{}".').format(
+                        os.path.basename(self.file.name), filename
                     )
+                )
             else:
                 # if something fails, revert everything for this document part
                 with transaction.atomic():
@@ -647,10 +666,15 @@ class XMLParser(ParserDocument):
                                 try:
                                     block.full_clean()
                                 except ValidationError as e:
-                                    if self.report:
-                                        self.report.append(
-                                            _("Block in '{filen}' line N°{line} was skipped because: {error}").format(
-                                                filen=self.file.name, line=blockTag.sourceline, error=e))
+                                    self.report.append(
+                                        _(
+                                            "Block in '{filen}' line N°{line} was skipped because: {error}"
+                                        ).format(
+                                            filen=self.file.name,
+                                            line=blockTag.sourceline,
+                                            error=e,
+                                        )
+                                    )
                                 else:
                                     block.save()
                         else:
@@ -676,13 +700,16 @@ class XMLParser(ParserDocument):
                             try:
                                 line.full_clean()
                             except ValidationError as e:
-                                if self.report:
-                                    self.report.append(
-                                        _("Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}")
-                                        .format(filen=self.file.name,
-                                                line=blockTag.sourceline,
-                                                lineid=line_id,
-                                                error=e))
+                                self.report.append(
+                                    _(
+                                        "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
+                                    ).format(
+                                        filen=self.file.name,
+                                        line=blockTag.sourceline,
+                                        lineid=line_id,
+                                        error=e,
+                                    )
+                                )
                             else:
                                 line.save()
 
@@ -791,11 +818,14 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                     coords = tuple(map(float, baseline.split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = _("Invalid baseline {baseline} in {filen} line {linen}").format(
-                        baseline=baseline, filen=self.file.name, linen=lineTag.sourceline)
-                    logger.warning(msg)
-                    if self.report:
-                        self.report.append(msg)
+                    self.report.append(
+                        _("Invalid baseline {baseline} in {filen} line {linen}").format(
+                            baseline=baseline,
+                            filen=self.file.name,
+                            linen=lineTag.sourceline,
+                        ),
+                        logger_fct=logger.warning,
+                    )
         else:
             # extract it from <String>s then
             strings = lineTag.findall("String", self.root.nsmap)
@@ -810,10 +840,11 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                 coords = tuple(map(float, polygon.get("POINTS").split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                msg = "Invalid polygon %s in %s line %d" % (polygon, self.file.name, lineTag.sourceline)
-                logger.warning(msg)
-                if self.report:
-                    self.report.append(msg)
+                self.report.append(
+                    "Invalid polygon %s in %s line %d"
+                    % (polygon, self.file.name, lineTag.sourceline),
+                    logger_fct=logger.warning,
+                )
         else:
             line.box = [
                 int(float(lineTag.get("HPOS"))),
@@ -912,8 +943,11 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
             if baseline is not None:
                 line.baseline = self.clean_coords(baseline)
             else:
-                msg = _('Line without baseline in {filen} line #{linen}, very likely that it will not be usable!').format(filen=self.file.name, linen=lineTag.sourceline)
-                self.report.append(msg)
+                self.report.append(
+                    _(
+                        "Line without baseline in {filen} line #{linen}, very likely that it will not be usable!"
+                    ).format(filen=self.file.name, linen=lineTag.sourceline)
+                )
         except ParseError:
             #  to check if the baseline is good
             line.baseline = None
@@ -949,7 +983,8 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
             ]
         except (AttributeError, ValueError):
             msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
-                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline)
+                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline
+            )
             self.report.append(msg)
             raise ParseError(msg)
 
@@ -1050,6 +1085,10 @@ class IIIFManifestParser(ParserDocument):
                             f": {url}")
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         try:
             for metadata in self.manifest["metadata"]:
                 if metadata["value"]:
@@ -1112,9 +1151,11 @@ class IIIFManifestParser(ParserDocument):
                 time.sleep(0.1)  # avoid being throttled
 
             except (KeyError, IndexError, DownloadError) as e:
-                if self.report:
-                    self.report.append(_('Error while fetching {filename}: {error}').format(
-                        filename=name, error=e))
+                self.report.append(
+                    _("Error while fetching {filename}: {error}").format(
+                        filename=name, error=e
+                    )
+                )
                 if isinstance(e, DownloadError):
                     error_msg = f"Could not download image: {url}"
                     user.notify(error_msg, level="warning", id="import:warning")

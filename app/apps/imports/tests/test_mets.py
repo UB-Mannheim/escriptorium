@@ -9,6 +9,7 @@ from requests.exceptions import RequestException
 from core.tests.factory import CoreFactoryTestCase
 from imports.mets import METSPage, METSProcessor
 from imports.parsers import ParseError
+from reporting.models import TaskReport
 
 SAMPLES_DIR = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
@@ -22,6 +23,15 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
 
+        user = self.factory.make_user()
+        self.document = self.factory.make_document()
+        self.report = TaskReport.objects.create(
+            user=user,
+            label="METS import from an archive",
+            document=self.document,
+            method="imports.tasks.document_import",
+        )
+
         self.archive_path = SAMPLES_DIR + "/simple_archive.zip"
 
         with ZipFile(self.archive_path) as archive:
@@ -29,19 +39,19 @@ class METSProcessorTestCase(CoreFactoryTestCase):
                 self.root = etree.parse(mets).getroot()
 
     def test_retrieve_in_archive_no_archive(self):
-        processor = METSProcessor(None)
+        processor = METSProcessor(None, self.report)
         with self.assertRaises(AttributeError) as context:
             processor.retrieve_in_archive("simple_mets.xml")
 
         self.assertTrue("'NoneType' object has no attribute 'seek'" in str(context.exception))
 
     def test_retrieve_in_archive_not_in_archive(self):
-        processor = METSProcessor(None, archive=self.archive_path)
+        processor = METSProcessor(None, self.report, archive=self.archive_path)
         with self.assertRaises(KeyError):
             processor.retrieve_in_archive("not_my_mets.xml")
 
     def test_retrieve_in_archive(self):
-        processor = METSProcessor(None, archive=self.archive_path)
+        processor = METSProcessor(None, self.report, archive=self.archive_path)
         file = processor.retrieve_in_archive("simple_mets.xml")
 
         self.assertTrue(isinstance(file, io.IOBase))
@@ -49,12 +59,12 @@ class METSProcessorTestCase(CoreFactoryTestCase):
 
     def test_get_document_metadata_no_mets_header(self):
         root = etree.Element("mets")
-        processor = METSProcessor(root)
+        processor = METSProcessor(root, self.report)
         metadata = processor.get_document_metadata()
         self.assertDictEqual(metadata, {})
 
     def test_get_document_metadata(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         metadata = processor.get_document_metadata()
         self.assertDictEqual(metadata, {
             "mets-header/adm-id": "digSig",
@@ -66,14 +76,14 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def test_get_files_from_file_sec_no_section(self):
         root = etree.Element("mets")
 
-        processor = METSProcessor(root)
+        processor = METSProcessor(root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.get_files_from_file_sec()
 
         self.assertTrue("The file section <fileSec/> wasn't found in the METS file." in str(context.exception))
 
     def test_get_files_from_file_sec(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         files = processor.get_files_from_file_sec()
         self.assertListEqual(list(files.keys()), [
             "binarized1", "binarized2", "binarized3", "binarized4",
@@ -87,14 +97,14 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def test_get_pages_from_struct_map_no_mapping(self):
         root = etree.Element("mets")
 
-        processor = METSProcessor(root)
+        processor = METSProcessor(root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.get_pages_from_struct_map()
 
         self.assertTrue("The structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
 
     def test_get_pages_from_struct_map(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         pages = processor.get_pages_from_struct_map()
         self.assertEqual(len(pages), 4)
 
@@ -103,21 +113,21 @@ class METSProcessorTestCase(CoreFactoryTestCase):
             self.assertTrue(page.tag == "{http://www.loc.gov/METS/}div")
 
     def test_get_page_metadata_no_dmdid(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         pages = processor.get_pages_from_struct_map()
 
         metadata = processor.get_page_metadata(pages[2])
         self.assertDictEqual(metadata, {})
 
     def test_get_page_metadata_no_mods_sec(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         pages = processor.get_pages_from_struct_map()
 
         metadata = processor.get_page_metadata(pages[1])
         self.assertDictEqual(metadata, {})
 
     def test_get_page_metadata(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         pages = processor.get_pages_from_struct_map()
 
         metadata = processor.get_page_metadata(pages[0])
@@ -132,7 +142,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         })
 
     def test_get_file_pointers(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         pages = processor.get_pages_from_struct_map()
 
         pointers = processor.get_file_pointers(pages[0])
@@ -145,7 +155,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def test_get_file_location_no_location(self):
         file = etree.Element(f"{PFX}file")
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.get_file_location(file)
 
@@ -155,7 +165,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         file = etree.Element(f"{PFX}file")
         file.append(etree.Element(f"{PFX}FLocat"))
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.get_file_location(file)
 
@@ -165,13 +175,13 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         file = etree.Element(f"{PFX}file")
         file.append(etree.Element(f"{PFX}FLocat", href="path/file.txt"))
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         location = processor.get_file_location(file)
 
         self.assertEqual(location, "path/file.txt")
 
     def test_get_file_group_name_not_found(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         # No USE on file and no parent
         file = etree.Element(f"{PFX}file")
         group_name = processor.get_file_group_name(file)
@@ -193,7 +203,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         file_grp = etree.Element(f"{PFX}filegrp", USE="parent_transcription")
         file = etree.SubElement(file_grp, f"{PFX}file", USE="transcription")
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         group_name = processor.get_file_group_name(file)
         self.assertEqual(group_name, "transcription")
 
@@ -201,24 +211,24 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         file_grp = etree.Element(f"{PFX}filegrp", USE="parent_transcription")
         file = etree.SubElement(file_grp, f"{PFX}file")
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         group_name = processor.get_file_group_name(file)
         self.assertEqual(group_name, "parent_transcription")
 
     def test_build_remote_uri_relative_href(self):
-        processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
         uri = processor.build_remote_uri("path/to/a-simple-image.png")
         self.assertEqual(uri, "https://whatever.com/path/to/a-simple-image.png")
 
     def test_build_remote_uri_external_href(self):
-        processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
         uri = processor.build_remote_uri("https://somethingelse.com/a-simple-image.png")
         self.assertEqual(uri, "https://somethingelse.com/a-simple-image.png")
 
     @patch("requests.head")
     def test_check_is_image_true(self, mock_head):
         mock_head.return_value = Mock(headers={"content-type": "image/png"}, status_code=200)
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-image.png")
         self.assertTrue(is_image)
         self.assertEqual(content_type, "image/png")
@@ -226,13 +236,13 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     @patch("requests.head")
     def test_check_is_image_false(self, mock_head):
         mock_head.return_value = Mock(headers={"content-type": "text/xml"}, status_code=200)
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-xml.xml")
         self.assertFalse(is_image)
         self.assertEqual(content_type, "text/xml")
 
     def test_process_single_page_no_file_pointers(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
@@ -244,7 +254,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 
     def test_process_single_page_missing_file_location(self):
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
@@ -260,7 +270,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertTrue("Can't find a file location <FLocat/> holding a href attribute for the file" in str(context.exception))
 
     def test_process_single_page_no_group_name(self):
-        processor = METSProcessor(self.root, archive=self.archive_path)
+        processor = METSProcessor(self.root, self.report, archive=self.archive_path)
         for element in self.root.findall(".//mets:fileGrp", namespaces=processor.NAMESPACES):
             del element.attrib["USE"]
 
@@ -274,7 +284,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(mets_page, METSPage(image="Kifayat_al-ghulam.pdf_000005.png", sources={"Layer 1": "Kifayat_al-ghulam.pdf_000005.xml"}, metadata={}))
 
     def test_process_single_page_archive_file_not_found(self):
-        processor = METSProcessor(self.root, archive=self.archive_path)
+        processor = METSProcessor(self.root, self.report, archive=self.archive_path)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
@@ -301,7 +311,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         mock_get.side_effect = RequestException("Uhoh, something went wrong.")
         mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")]
 
-        processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         page = pages[0]
@@ -323,7 +333,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 
     def test_process_single_page_in_archive(self):
-        processor = METSProcessor(self.root, archive=self.archive_path)
+        processor = METSProcessor(self.root, self.report, archive=self.archive_path)
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         mets_page = processor.process_single_page(pages[0], files)
@@ -344,7 +354,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         mock_get.return_value = Mock(content=b"some content", status_code=200)
         mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")]
 
-        processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
         files = processor.get_files_from_file_sec()
         pages = processor.get_pages_from_struct_map()
         mets_page = processor.process_single_page(pages[0], files)
@@ -371,7 +381,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def test_process_no_file_sec(self):
         root = etree.Element("mets")
 
-        processor = METSProcessor(root)
+        processor = METSProcessor(root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.process()
 
@@ -381,7 +391,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         root = etree.Element("mets")
         root.append(etree.Element(f"{PFX}fileSec"))
 
-        processor = METSProcessor(root)
+        processor = METSProcessor(root, self.report)
         with self.assertRaises(ParseError) as context:
             processor.process()
 
@@ -391,7 +401,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
     def test_process_pages_in_error(self, mock_process_single_page):
         mock_process_single_page.side_effect = Exception("Uhoh, something went wrong.")
 
-        processor = METSProcessor(self.root)
+        processor = METSProcessor(self.root, self.report)
         with self.assertLogs("imports.mets") as mock_log:
             mets_pages, _ = processor.process()
 
@@ -408,7 +418,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertListEqual(mets_pages, [])
 
     def test_process_in_archive(self):
-        processor = METSProcessor(self.root, archive=self.archive_path)
+        processor = METSProcessor(self.root, self.report, archive=self.archive_path)
         mets_pages, metadata = processor.process()
 
         self.assertListEqual(mets_pages, [
@@ -439,7 +449,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         mock_get.return_value = Mock(content=b"some content", status_code=200)
         mock_check_is_image.side_effect = [(True, "image/png"), (False, "text/xml")] * 4
 
-        processor = METSProcessor(self.root, mets_base_uri="https://whatever.com")
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
         mets_pages, metadata = processor.process()
 
         names = [
