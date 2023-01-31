@@ -10,6 +10,14 @@
     cursor: pointer;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
         border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.escr-button svg {
+    fill: var(--button-text);
+    transition: fill 0.15s ease-in-out;
+    margin-right: 5px;
 }
 .escr-button:focus {
     outline: 0;
@@ -46,6 +54,9 @@
     border: 1px solid var(--primary);
     color: var(--primary);
 }
+.escr-button--outline-primary svg {
+    fill: var(--primary);
+}
 /* secondary, filled and outline */
 .escr-button--secondary,
 .escr-button--outline-secondary:hover {
@@ -69,6 +80,9 @@
     background-color: transparent;
     border: 1px solid var(--secondary);
     color: var(--secondary);
+}
+.escr-button--outline-secondary svg {
+    fill: var(--secondary);
 }
 /* tertiary, filled and outline */
 .escr-button--tertiary,
@@ -94,6 +108,9 @@
     border: 1px solid var(--tertiary);
     color: var(--tertiary);
 }
+.escr-button--outline-tertiary svg {
+    fill: var(--tertiary);
+}
 /* danger, filled and outline */
 .escr-button--danger,
 .escr-button--outline-danger:hover {
@@ -116,6 +133,9 @@
     border: 1px solid var(--alert);
     color: var(--alert);
 }
+.escr-button--outline-danger svg {
+    fill: var(--alert);
+}
 /* outline buttons get filled on hover/active, so use bright text */
 .escr-button--outline-primary:hover,
 .escr-button--outline-primary:active,
@@ -127,17 +147,36 @@
 .escr-button--outline-danger:active {
     color: var(--button-text);
 }
+.escr-button--outline-primary:hover svg,
+.escr-button--outline-primary:active svg,
+.escr-button--outline-secondary:hover svg,
+.escr-button--outline-secondary:active svg,
+.escr-button--outline-tertiary:hover svg,
+.escr-button--outline-tertiary:active svg,
+.escr-button--outline-danger:hover svg,
+.escr-button--outline-danger:active svg {
+    fill: var(--button-text);
+}
 /* link */
 .escr-button--link-primary {
     background-color: transparent;
     border: none;
     color: var(--primary);
 }
+.escr-button--link-primary svg {
+    fill: var(--primary);
+}
 .escr-button--link-primary:hover {
     color: var(--primary-dark);
 }
+.escr-button--link-primary:hover svg {
+    fill: var(--primary-dark);
+}
 .escr-button--link-primary:active {
     color: var(--primary-darker);
+}
+.escr-button--link-primary:active svg {
+    fill: var(--primary-darker);
 }
 .escr-button--link-primary:focus {
     text-decoration: underline;
@@ -151,6 +190,9 @@
     color: var(--text3);
     background-color: var(--background2);
     border-color: var(--background2);
+}
+.escr-button:disabled svg {
+    fill: var(--text3);
 }
 .escr-button:disabled[class*="escr-button--outline"] {
     background-color: transparent;

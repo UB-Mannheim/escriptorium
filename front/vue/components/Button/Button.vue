@@ -1,12 +1,21 @@
 <template>
-    <button type="button" :class="classes" @click="onClick" :disabled="disabled">{{ label }}</button>
+    <button
+        type="button"
+        :class="classes"
+        :disabled="disabled"
+        @click="onClick"
+    >
+        <!-- slot for an icon -->
+        <slot name="button-icon" />
+        <span v-if="label">{{ label }}</span>
+    </button>
 </template>
 
 <script>
-import './Button.css';
+import "./Button.css";
 
 export default {
-    name: 'escr-button',
+    name: "EscrButton",
 
     props: {
         /**
@@ -14,7 +23,7 @@ export default {
          */
         color: {
             type: String,
-            default: 'primary',
+            default: "primary",
             validator: function (value) {
                 return [
                     "primary",
@@ -34,6 +43,7 @@ export default {
          */
         label: {
             type: String,
+            default: "",
         },
         /**
          * Function called when the user clicks on the button
@@ -48,9 +58,9 @@ export default {
          */
         size: {
             type: String,
-            default: 'large',
+            default: "large",
             validator: function (value) {
-                return ['small', 'large'].indexOf(value) !== -1;
+                return ["small", "large"].indexOf(value) !== -1;
             },
         },
         /**
@@ -65,10 +75,9 @@ export default {
     computed: {
         classes() {
             return {
-                'escr-button': true,
+                "escr-button": true,
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
-                'escr-icon-button': !!this.icon,
             };
         },
     },
