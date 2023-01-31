@@ -1042,8 +1042,8 @@ class IIIFManifestParser(ParserDocument):
     def get_image(url: str, retry_limit: int = 4) -> requests.Response:
         """Retrieve a iiif image from a iiif server
 
-        This method will retry on certain 5XX errors that are likely to
-        be transient.  It will only retry a fixed number of times (default 10),
+        This method will retry on certain 5XX errors, network and timeout.
+        It will only retry a fixed number of times (default 3),
         and it backs off a little more on each retry. Failure to retrieve
         the image within the retry limit will result in a DownloadError
         being raised. All other unsuccessful requests will raise a
@@ -1052,6 +1052,7 @@ class IIIFManifestParser(ParserDocument):
 
         current_retry = 0
         while current_retry < retry_limit:
+            current_retry = current_retry + 1
             time.sleep(0.1 * current_retry)  # avoid being throttled; add a little backoff
             try:
                 response = requests.get(url, stream=True, verify=False, timeout=10)
@@ -1061,27 +1062,27 @@ class IIIFManifestParser(ParserDocument):
             except requests.exceptions.HTTPError as http_error:
                 # retry on transient 5XX errors, but keep a record of the retry count
                 if http_error.response.status_code in [500, 502, 503, 504, 507, 508]:
-                    current_retry = current_retry + 1
                     continue
 
                 if http_error.response.status_code == 429:
                     # the server might tell us when we are free to go, if not let's wait 1s
                     sleep_time = http_error.response.headers.get('Retry-After', 1)
                     time.sleep(sleep_time)
-                    current_retry = current_retry + 1
                     continue
 
                 # We probably got a 4XX error, but whatever it is just raise it
                 raise DownloadError(http_error)
 
-            except requests.exceptions.ConnectionError as connection_error:
-                raise DownloadError(connection_error)
+            except requests.exceptions.ConnectionError:
+                # network error, retry
+                continue
 
-            except requests.exceptions.Timeout as timeout_error:
-                raise DownloadError(timeout_error)
+            except requests.exceptions.Timeout:
+                # timeout, retry
+                continue
 
         # Max retries has been exceeded
-        raise DownloadError(f"After {current_retry + 1} tries, the server still errors out loading"
+        raise DownloadError(f"After {current_retry} tries, the server still errors out loading"
                             f": {url}")
 
     def parse(self, start_at=0, override=False, user=None):
