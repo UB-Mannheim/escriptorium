@@ -12,6 +12,10 @@
     align-items: center;
     justify-content: space-between;
 }
+.escr-tag-filter h4  div {
+    display: flex;
+    flex-flow: row nowrap;
+}
 
 /* Tags list with checkboxes */
 .escr-tag-filter-group {

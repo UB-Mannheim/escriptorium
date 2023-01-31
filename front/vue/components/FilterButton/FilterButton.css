@@ -11,6 +11,12 @@
     font-size: 12px;
     min-height: 36px;
 }
+.escr-filter-button .escr-button svg {
+    fill: var(--text1);
+}
+.escr-filter-button--active .escr-button svg {
+    fill: var(--primary);
+}
 .escr-filter-button .escr-button:hover {
     background-color: var(--background2-dark);
 }
