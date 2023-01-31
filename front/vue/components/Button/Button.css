@@ -14,13 +14,16 @@
     align-items: center;
     justify-content: center;
 }
+.escr-button:focus {
+    outline: 0;
+}
+/* icon */
 .escr-button svg {
     fill: var(--button-text);
     transition: fill 0.15s ease-in-out;
-    margin-right: 5px;
 }
-.escr-button:focus {
-    outline: 0;
+.escr-button svg + span {
+    margin-left: 5px;
 }
 /* size */
 .escr-button--small {
@@ -29,6 +32,15 @@
 .escr-button--large {
     min-height: 38px;
     padding: 0px 16px;
+}
+/* icon-only: should be square */
+.escr-button--icon-only.escr-button--small {
+    padding: 0;
+    min-width: 32px;
+}
+.escr-button--icon-only.escr-button--large {
+    padding: 0;
+    min-width: 38px;
 }
 /* primary, filled and outline */
 .escr-button--primary,

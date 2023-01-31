@@ -31,9 +31,6 @@
     flex-flow: row nowrap;
     align-items: center;
 }
-.escr-filter-button .escr-button .escr-tag-icon {
-    margin-right: 4px;
-}
 .escr-filter-button .escr-button .count {
     display: block;
     padding: 1px 1px 0 0;

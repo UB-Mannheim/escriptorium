@@ -1,5 +1,6 @@
 import Button from "../../vue/components/Button/Button.vue";
 import PlusIcon from "../../vue/components/Icons/PlusIcon/PlusIcon.vue";
+import ImagesIcon from "../../vue/components/Icons/ImagesIcon/ImagesIcon.vue";
 
 export default {
     title: "Components/Button",
@@ -153,4 +154,22 @@ DisabledWithIcon.args = {
     onClick: () => {},
     color: "secondary",
     disabled: true,
+};
+
+const IconOnlyTemplate = (args, { argTypes }) => ({
+    props: Object.keys(argTypes),
+    components: { Button, ImagesIcon },
+    template: `
+        <Button v-bind="$props">
+            <template v-slot:button-icon>
+                <ImagesIcon />
+            </template>
+        </Button>
+    `,
+});
+export const IconOnlyButton = IconOnlyTemplate.bind({});
+IconOnlyButton.args = {
+    onClick: () => {},
+    color: "primary",
+    size: "small",
 };

@@ -78,6 +78,7 @@ export default {
                 "escr-button": true,
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
+                "escr-button--icon-only": !this.label && this.$slots["button-icon"],
             };
         },
     },
