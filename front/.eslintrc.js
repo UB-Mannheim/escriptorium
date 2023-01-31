@@ -21,5 +21,9 @@ module.exports = {
         ],
         quotes: ["warn", "double"],
         "vue/html-indent": ["warn", 4],
+        "no-trailing-spaces": "error",
+        "multiline-ternary": ["error", "always-multiline"],
+        "max-len": ["warn", 100, { ignorePattern: "d=\"([\\s\\S]*?)\"" }],
+        "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
 };
