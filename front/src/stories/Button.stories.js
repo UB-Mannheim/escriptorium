@@ -1,4 +1,5 @@
 import Button from "../../vue/components/Button/Button.vue";
+import PlusIcon from "../../vue/components/Icons/PlusIcon/PlusIcon.vue";
 
 export default {
     title: "Components/Button",
@@ -28,7 +29,7 @@ export default {
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { Button },
-    template: '<Button v-bind="$props" />',
+    template: "<Button v-bind=\"$props\" />",
 });
 
 export const Primary = Template.bind({});
@@ -86,6 +87,21 @@ OutlineDanger.args = {
     color: "outline-danger",
 };
 
+export const Disabled = Template.bind({});
+Disabled.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "primary",
+    disabled: true,
+};
+export const DisabledOutline = Template.bind({});
+DisabledOutline.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "outline-primary",
+    disabled: true,
+};
+
 export const Small = Template.bind({});
 Small.args = {
     label: "Button",
@@ -99,4 +115,42 @@ SmallOutline.args = {
     onClick: () => {},
     color: "outline-primary",
     size: "small",
+};
+
+const IconTemplate = (args, { argTypes }) => ({
+    props: Object.keys(argTypes),
+    components: { Button, PlusIcon },
+    template: `
+        <Button v-bind="$props">
+            <template v-slot:button-icon>
+                <PlusIcon />
+            </template>
+        </Button>
+    `,
+});
+export const PrimaryWithIcon = IconTemplate.bind({});
+PrimaryWithIcon.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "primary",
+};
+export const OutlineWithIcon = IconTemplate.bind({});
+OutlineWithIcon.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "outline-primary",
+};
+export const SmallWithIcon = IconTemplate.bind({});
+SmallWithIcon.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "outline-danger",
+    size: "small",
+};
+export const DisabledWithIcon = IconTemplate.bind({});
+DisabledWithIcon.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "secondary",
+    disabled: true,
 };
