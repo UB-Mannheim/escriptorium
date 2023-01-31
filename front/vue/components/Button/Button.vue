@@ -35,6 +35,7 @@ export default {
                     "outline-tertiary",
                     "outline-danger",
                     "link-primary",
+                    "text",
                 ].indexOf(value) !== -1;
             },
         },

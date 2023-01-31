@@ -88,6 +88,21 @@ OutlineDanger.args = {
     color: "outline-danger",
 };
 
+export const Link = Template.bind({});
+Link.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "link-primary",
+};
+
+export const Text = Template.bind({});
+Text.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "text",
+};
+
+
 export const Disabled = Template.bind({});
 Disabled.args = {
     label: "Button",
@@ -167,9 +182,15 @@ const IconOnlyTemplate = (args, { argTypes }) => ({
         </Button>
     `,
 });
-export const IconOnlyButton = IconOnlyTemplate.bind({});
-IconOnlyButton.args = {
+export const IconOnlyButtonPrimary = IconOnlyTemplate.bind({});
+IconOnlyButtonPrimary.args = {
     onClick: () => {},
     color: "primary",
+    size: "small",
+};
+export const IconOnlyButtonText = IconOnlyTemplate.bind({});
+IconOnlyButtonText.args = {
+    onClick: () => {},
+    color: "text",
     size: "small",
 };

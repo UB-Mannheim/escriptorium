@@ -37,6 +37,7 @@
     --secondary-dark: #14549d;
     --secondary-darker: #114b8d;
     --secondary-focus: rgb(23 97 181 / 50%);
+    --secondary-hover: rgb(23 97 181 / 20%);
     /* light mode backgrounds */
     --background1: #FFFFFF;
     --background2: #E9E9E9;
@@ -54,6 +55,7 @@
     --secondary-dark: #2b80e3;
     --secondary-darker:#1c72d6;
     --secondary-focus: rgb(79 150 232 / 50%);
+    --secondary-hover: rgb(79 150 232 / 20%);
     /* dark mode backgrounds */
     --background1: #2F3132;
     --background2: #3E4142;
