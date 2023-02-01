@@ -1,0 +1,12 @@
+.escr-sort-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+.escr-sort-icon path {
+    fill: var(--text3);
+}
+.escr-sort-icon--asc path:first-of-type,
+.escr-sort-icon--desc path:last-of-type {
+    fill: var(--text1);
+}

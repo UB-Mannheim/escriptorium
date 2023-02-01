@@ -1,0 +1,55 @@
+.escr-table {
+    background-color: var(--background1);
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.escr-table tbody,
+.escr-table thead,
+.escr-table tr {
+    width: 100%;
+}
+/* header row */
+.escr-table thead tr {
+    font-size: 12px;
+    height: 32px;
+}
+.escr-table th {
+    font-weight: 600;
+    text-align: left;
+}
+.escr-table th div {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+.escr-table th,
+.escr-table td {
+    padding: 0 8px;
+}
+/* other rows */
+.escr-table tbody tr {
+    font-size: 14px;
+    height: 64px;
+    padding: 0 16px;
+    transition: background-color 0.15s ease-in-out;
+}
+.escr-table tbody tr:hover {
+    background-color: var(--background2);
+}
+/* sorting */
+.escr-table th button.escr-sort-button {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-flow: row nowrap;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 12px;
+    padding: 0;
+    transition: font-weight 0.15s ease-in-out;
+    font-weight: 600;
+}
+.escr-table th button.escr-sort-button svg {
+    margin-left: 2px;
+}
