@@ -11,7 +11,7 @@
                             {{ header.label }}
                         </span>
                         <button
-                            v-if="header.sortable"
+                            v-else
                             class="escr-sort-button"
                             @click="() => setSort(header)"
                         >
@@ -36,10 +36,19 @@
                 :key="item[itemKey]"
             >
                 <td
-                    v-for="header in headers"
+                    v-for="(header, index) in headers"
                     :key="header.value"
                 >
-                    {{ item[header.value] }}
+                    <a
+                        v-if="linkable && item.href && index == 0"
+                        class="row-link"
+                        :href="item.href"
+                    >
+                        <span class="sr-only">{{ item[header.value] }}</span>
+                    </a>
+                    <span>
+                        {{ item[header.value] }}
+                    </span>
                 </td>
             </tr>
         </tbody>
@@ -93,16 +102,18 @@ export default {
          * List of items that should appear in the table. Each item should be an object with
          * keys corresponding to each header's `value` in `headers`, as well as a unique value for
          * the `itemKey`.
+         *
+         * If any item has a `href` property and the `linkable` prop is set to `true`, that item's
+         * row will also be clickable to navigate to that URL.
          */
         items: {
             type: Array,
             required: true,
         },
         /**
-         * Boolean indicating whether or not to use the `onSort` prop to sort items externally,
-         * rather than on the frontend. Must be set `true` for the `onSort` prop to work.
+         * Boolean indicating whether or not an item's row should link to its `href` value.
          */
-        useOnSort: {
+        linkable: {
             type: Boolean,
             default: false,
         },
@@ -118,7 +129,15 @@ export default {
         onSort: {
             type: Function,
             default: () => {},
-        }
+        },
+        /**
+         * Boolean indicating whether or not to use the `onSort` prop to sort items externally,
+         * rather than on the frontend. Must be set `true` for the `onSort` prop to work.
+         */
+        useOnSort: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {

@@ -28,15 +28,13 @@ BasicTable.args = {
 
 export const SortableTable = Template.bind({});
 SortableTable.args = {
-    headers: [
-        { label: "Name", value: "name", sortable: true },
-        { label: "Owner", value: "owner", sortable: true },
-        { label: "Last updated", value: "updated", sortable: true },
-    ],
-    items: [
-        { id: 1, name: "Project Name", owner: "Ryuichi Sakamoto", updated: "2022-08-09" },
-        { id: 2, name: "Second Project", owner: "Haruomi Hosono", updated: "2023-01-31" },
-        { id: 3, name: "A Third Project", owner: "Yukihiro Takahashi", updated: "2022-01-09" },
-    ],
-    itemKey: "id"
+    ...BasicTable.args,
+    headers: BasicTable.args.headers.map((header) => ({ ...header, sortable: true })),
+};
+
+export const LinkableTable = Template.bind({});
+LinkableTable.args = {
+    ...SortableTable.args,
+    items: SortableTable.args.items.map((item) => ({ ...item, href: window.parent.location })),
+    linkable: true,
 };

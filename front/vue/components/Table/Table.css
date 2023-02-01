@@ -53,3 +53,19 @@
 .escr-table th button.escr-sort-button svg {
     margin-left: 2px;
 }
+/* linking */
+.escr-table tr {
+    position: relative;
+}
+.escr-table tr td a.row-link {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+.escr-table tbody tr:has(a:active),
+.escr-table tbody tr:focus-within {
+    background-color: var(--secondary-hover);
+}
