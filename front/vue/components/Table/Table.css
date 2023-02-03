@@ -46,6 +46,7 @@
     flex-flow: row nowrap;
     font-family: "Noto Sans", sans-serif;
     font-size: 12px;
+    color: var(--text1);
     padding: 0;
     transition: font-weight 0.15s ease-in-out;
     font-weight: 600;
