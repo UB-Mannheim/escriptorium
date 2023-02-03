@@ -1,4 +1,6 @@
+import Button from "../../vue/components/Button/Button.vue";
 import Table from "../../vue/components/Table/Table.vue";
+import TrashIcon from "../../vue/components/Icons/TrashIcon/TrashIcon.vue";
 
 export default {
     title: "Components/Table",
@@ -55,4 +57,28 @@ LinkableTable.args = {
     items: items.map((item) => ({ ...item, href: window.parent.location })),
     linkable: true,
     onSort,
+};
+
+const ActionsTemplate = (args, { argTypes }) => ({
+    props: Object.keys(argTypes),
+    components: { Button, Table, TrashIcon },
+    template: `
+        <Table v-bind="$props">
+            <template #actions>
+                <Button
+                    size="small"
+                    color="text"
+                    :onClick="() => {}"
+                >
+                    <template #button-icon>
+                        <TrashIcon />
+                    </template>
+                </Button>
+            </template>
+        </Table>
+    `,
+});
+export const TableWithActions = ActionsTemplate.bind({});
+TableWithActions.args = {
+    ...BasicTable.args,
 };

@@ -50,6 +50,14 @@
                         {{ item[header.value] }}
                     </span>
                 </td>
+                <td
+                    v-if="!!$slots['actions']"
+                    class="escr-row-actions"
+                >
+                    <div>
+                        <slot name="actions" />
+                    </div>
+                </td>
             </tr>
         </tbody>
     </table>

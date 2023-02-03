@@ -69,3 +69,19 @@
 .escr-table tbody tr:focus-within {
     background-color: var(--secondary-hover);
 }
+/* actions */
+.escr-table td.escr-row-actions * {
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+.escr-table tr:hover td.escr-row-actions *,
+.escr-table tr td.escr-row-actions:focus-within * {
+    opacity: 1;
+}
+.escr-table td.escr-row-actions div {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    margin-right: 18px;
+}
