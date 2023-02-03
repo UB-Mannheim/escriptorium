@@ -1,11 +1,12 @@
 <script>
-import "../Tags/Tag.css";
-import "./TagFilter.css";
 import Button from "../Button/Button.vue";
 import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
 import Tags from "../Tags/Tags.vue";
 import TextField from "../TextField/TextField.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
+import "../Common/Modal.css";
+import "../Tags/Tag.css";
+import "./TagFilter.css";
 
 export default {
     name: "EscrTagFilter",
@@ -192,7 +193,7 @@ export default {
             return h(
                 "div",
                 {
-                    class: "escr-filter-actions"
+                    class: "modal-actions"
                 },
                 [
                     h(
@@ -264,7 +265,7 @@ export default {
     render: function (h) {
         return h(
             "div",
-            { class: "escr-tag-filter" },
+            { class: "escr-tag-filter escr-modal" },
             [
                 h("h3", "Filter Tags"),
                 h(
