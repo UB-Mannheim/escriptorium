@@ -2298,7 +2298,7 @@ export class Segmenter {
     }
 
     changeHue(rgb, degree) {
-        // exepcts a string and returns an object
+        // expects a string and returns an object
         function rgbToHSL(rgb) {
             // strip the leading # if it's there
             rgb = rgb.replace(/^\s*#|\s*$/g, '');

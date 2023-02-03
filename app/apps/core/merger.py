@@ -128,7 +128,7 @@ def merge_lines(lines: List[Line]):
     # Clear fields we don't need
     unnecessary = ('pk', 'external_id', 'region',)
     for key in unnecessary:
-        del(merged_json[key])
+        del merged_json[key]
 
     ordered_lines = [lines[order[i]] for i in range(len(lines))]
     merged_json['baseline'] = merge_baseline(ordered_lines)

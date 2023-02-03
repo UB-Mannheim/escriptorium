@@ -997,7 +997,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             x_cluster, line_height_decrease = 0.1, 0.8
 
             origins_np = np.array(
-                list(map(lambda l: line_origin_pt(l, read_direction_), lines_in_block))
+                list(map(lambda line: line_origin_pt(line, read_direction_), lines_in_block))
             )
 
             # Devise the number of columns by performing DBSCAN clustering on x coordinate of line origins

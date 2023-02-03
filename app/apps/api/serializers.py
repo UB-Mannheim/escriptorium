@@ -549,7 +549,7 @@ class LineOrderListSerializer(serializers.ListSerializer):
         first_ = qs[0]
         down = first_.order < data_mapping[first_.pk]['order']
         lines = list(data_mapping.items())
-        lines.sort(key=lambda l: l[1]['order'])
+        lines.sort(key=lambda line: line[1]['order'])
         if down:
             # reverse to avoid pushing up already moved lines
             lines.reverse()
