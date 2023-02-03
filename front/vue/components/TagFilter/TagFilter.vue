@@ -1,14 +1,14 @@
 <script>
-import '../Tags/Tag.css';
-import './TagFilter.css';
-import Button from '../Button/Button.vue';
-import CheckIcon from '../Icons/CheckIcon/CheckIcon.vue';
-import Tags from '../Tags/Tags.vue';
-import TextField from '../TextField/TextField.vue';
-import SegmentedButtonGroup from '../SegmentedButtonGroup/SegmentedButtonGroup.vue';
+import "../Tags/Tag.css";
+import "./TagFilter.css";
+import Button from "../Button/Button.vue";
+import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
+import Tags from "../Tags/Tags.vue";
+import TextField from "../TextField/TextField.vue";
+import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 
 export default {
-    name: 'escr-tag-filter',
+    name: "EscrTagFilter",
     props: {
         /**
          * The list of tags, each an `Object` with a `name` (`String`) property
@@ -19,7 +19,7 @@ export default {
             default: () => [],
             required: true,
             validator: function (value) {
-                return value.length > 0 && value.every(t => t.name);
+                return value.length > 0 && value.every((t) => t.name);
             },
         },
         /**
@@ -34,7 +34,7 @@ export default {
          */
         operator: {
             type: String,
-            default: 'or',
+            default: "or",
         },
         /**
          * Boolean indicating whether or not "without tag" is already selected
@@ -70,10 +70,22 @@ export default {
     data: function () {
         return {
             selectedOperator: this.operator,
-            selectedTags: this.selected,
+            selectedTags: [...this.selected],
             stringFilter: "",
             withoutTag: this.withoutTagSelected,
         };
+    },
+    computed: {
+        // Boolean indicating whether or not filter has been changed
+        dirty() {
+            const tagsChanged = !(
+                this.selectedTags.every((tag) => this.selected.includes(tag))
+                && this.selected.every((tag) => this.selectedTags.includes(tag))
+            );
+            return this.selectedOperator !== this.operator
+                || this.withoutTag !== this.withoutTagSelected
+                || tagsChanged;
+        }
     },
     methods: {
         /**
@@ -88,10 +100,23 @@ export default {
             this.selectedOperator = operator;
         },
         /**
+         * add or remove tags from selected list
+         */
+        changeTagSelection: function (checked, tag) {
+            if (checked) {
+                this.selectedTags.push(tag.name);
+            } else {
+                this.selectedTags.splice(
+                    this.selectedTags.indexOf(tag.name),
+                    1,
+                );
+            }
+        },
+        /**
          * Select all tags after clicking "Select All"
          */
         selectAllTags: function () {
-            this.selectedTags = this.tags.map(t => t.name);
+            this.selectedTags = this.tags.map((t) => t.name);
         },
         /**
          * Select no tags after clicking "Select None"
@@ -128,35 +153,25 @@ export default {
         renderTagOption: function (h, tag) {
             return [
                 h(
-                    'input',
+                    "input",
                     {
                         class: {
-                            'sr-only': true
+                            "sr-only": true
                         },
                         domProps: {
                             id: `filter-tag-${tag.name}`,
                             name: `filter-tag-${tag.name}`,
-                            type: 'checkbox',
+                            type: "checkbox",
                             // ensure initial selections are checked on mount
                             checked: this.selectedTags.includes(tag.name),
                         },
                         on: {
-                            change: (e) => {
-                                // add or remove tags from selected list
-                                if (e.target.checked) {
-                                    this.selectedTags.push(tag.name);
-                                } else {
-                                    this.selectedTags.splice(
-                                        this.selectedTags.indexOf(tag.name),
-                                        1,
-                                    );
-                                }
-                            }
+                            change: (e) => this.changeTagSelection(e.target.checked, tag),
                         },
                     },
                 ),
                 h(
-                    'label',
+                    "label",
                     {
                         class: this.tagClasses(tag.variant),
                         domProps: {
@@ -164,7 +179,7 @@ export default {
                         },
                     },
                     [
-                        h('span', tag.name),
+                        h("span", tag.name),
                         h(CheckIcon)
                     ],
                 ),
@@ -175,17 +190,17 @@ export default {
          */
         renderFilterActions: function (h) {
             return h(
-                'div',
+                "div",
                 {
-                    class: 'escr-filter-actions'
+                    class: "escr-filter-actions"
                 },
                 [
                     h(
                         Button,
                         {
                             props: {
-                                color: 'outline-primary',
-                                label: 'Cancel',
+                                color: "outline-primary",
+                                label: "Cancel",
                                 onClick: this.onCancel,
                             }
                         }
@@ -194,9 +209,9 @@ export default {
                         Button,
                         {
                             props: {
-                                color: 'primary',
-                                label: 'Apply Filter',
-                                disabled: !this.selectedTags?.length && !this.withoutTag,
+                                color: "primary",
+                                label: "Apply Filter",
+                                disabled: !this.dirty,
                                 onClick: () => this.onApply({
                                     operator: this.selectedOperator,
                                     tags: this.selectedTags,
@@ -229,7 +244,8 @@ export default {
                 return h(
                     "div",
                     `+ ${hiddenTagCount
-                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${hiddenSelectedTagCount
+                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${
+                        hiddenSelectedTagCount
                     } selected tag${hiddenSelectedTagCount !== 1 ? "s" : ""}`,
                 );
             }
@@ -247,23 +263,23 @@ export default {
      */
     render: function (h) {
         return h(
-            'div',
-            { class: 'escr-tag-filter' },
+            "div",
+            { class: "escr-tag-filter" },
             [
-                h('h3', 'Filter Tags'),
+                h("h3", "Filter Tags"),
                 h(
                     SegmentedButtonGroup,
                     {
                         props: {
-                            color: 'secondary',
-                            name: 'tag-filter-operator',
+                            color: "secondary",
+                            name: "tag-filter-operator",
                             options: [{
-                                value: 'and',
-                                label: 'AND',
+                                value: "and",
+                                label: "AND",
                                 selected: this.selectedOperator === "and",
                             }, {
-                                value: 'or',
-                                label: 'OR',
+                                value: "or",
+                                label: "OR",
                                 selected: this.selectedOperator === "or",
                             }],
                             onChangeSelection: this.setOperator,
@@ -271,24 +287,24 @@ export default {
                     }
                 ),
                 h(
-                    'h4',
+                    "h4",
                     [
-                        h('span', 'Tags'),
-                        h('div', [
+                        h("span", "Tags"),
+                        h("div", [
                             h(Button, {
                                 props: {
-                                    label: 'Select All',
-                                    color: 'link-primary',
-                                    size: 'small',
+                                    label: "Select All",
+                                    color: "link-primary",
+                                    size: "small",
                                     onClick: this.selectAllTags,
                                     disabled: this.selectedTags.length === this.tags.length,
                                 },
                             }),
                             h(Button, {
                                 props: {
-                                    label: 'Select None',
-                                    color: 'link-primary',
-                                    size: 'small',
+                                    label: "Select None",
+                                    color: "link-primary",
+                                    size: "small",
                                     onClick: this.selectNoTags,
                                     disabled: this.selectedTags.length === 0,
                                 },
@@ -308,36 +324,36 @@ export default {
                     }
                 ),
                 h(
-                    'div',
-                    { class: 'escr-tag-filter-group' },
+                    "div",
+                    { class: "escr-tag-filter-group" },
                     this.getFilteredTags().map(
                         (tag) => this.renderTagOption(h, tag)
                     ),
                 ),
                 this.renderFilteredTagNotice(h),
-                h('hr'),
+                h("hr"),
                 h(
-                    'label',
+                    "label",
                     {
                         domProps: {
-                            htmlFor: 'without-tag',
+                            htmlFor: "without-tag",
                         }
                     },
                     [
                         h(
-                            'input',
+                            "input",
                             {
                                 domProps: {
-                                    type: 'checkbox',
-                                    id: 'without-tag',
+                                    type: "checkbox",
+                                    id: "without-tag",
                                     onchange: this.toggleWithoutTag,
                                     checked: this.withoutTag,
                                 },
                             },
                         ),
                         h(
-                            'span',
-                            'Without tag'
+                            "span",
+                            "Without tag"
                         )
                     ]
                 ),

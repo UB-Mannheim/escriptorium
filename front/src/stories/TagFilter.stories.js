@@ -1,6 +1,7 @@
 import TagFilter from "../../vue/components/TagFilter/TagFilter.vue";
 import FilterButton from "../../vue/components/FilterButton/FilterButton.vue";
 import TagIcon from "../../vue/components/Icons/TagIcon/TagIcon.vue";
+import FilterSet from "../../vue/components/FilterSet/FilterSet.vue";
 
 import { ManyTags } from "./Tags.stories";
 
@@ -27,7 +28,7 @@ TagFilterModal.args = {
     selected: ["Third tag", "Fifth tag"],
 };
 
-const WithButtonTemplate = (args, { argTypes }) => ({
+const ButtonTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { FilterButton, TagIcon },
     template: `
@@ -40,9 +41,21 @@ const WithButtonTemplate = (args, { argTypes }) => ({
         </div>
     `,
 });
-export const TagFilterButton = WithButtonTemplate.bind({});
+export const TagFilterButton = ButtonTemplate.bind({});
 TagFilterButton.args = {
     active: true,
     count: 2,
     label: "Tags",
+};
+
+const FilterSetTemplate = (args, { argTypes }) => ({
+    props: Object.keys(argTypes),
+    components: { FilterSet },
+    template: `
+        <FilterSet v-bind="$props" />
+    `,
+});
+export const TagFilterWithButton = FilterSetTemplate.bind({});
+TagFilterWithButton.args = {
+    tags: ManyTags.args.tags,
 };
