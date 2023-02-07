@@ -3,9 +3,10 @@ import logging
 import os
 import zipfile
 from collections import namedtuple
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from lxml import html
@@ -193,6 +194,11 @@ class METSProcessor:
 
     def handle_remote_pointer(self, href, mets_page_image, mets_page_sources, layer_name, layers_count):
         uri = self.build_remote_uri(href)
+
+        domain = urlparse(uri).netloc
+        if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
+            self.report.append(f'The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "{domain}".', logger_fct=logger.error)
+            return mets_page_image, mets_page_sources, layers_count
 
         is_image, content_type = self.check_is_image(uri)
         # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it

@@ -3,6 +3,7 @@ import os
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
+from django.test import override_settings
 from lxml import etree, html
 from requests.exceptions import RequestException
 
@@ -302,6 +303,29 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         self.assertEqual(mock_log.output, [
             'ERROR:imports.mets:File not found in the provided archive: "There is no item named \'not_in_archive.file\' in the archive"',
             'ERROR:imports.mets:File not found in the provided archive: "There is no item named \'not_in_archive.file\' in the archive"',
+        ])
+        self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
+
+    @override_settings(IMPORT_ALLOWED_DOMAINS=["whatever.com"])
+    def test_process_single_page_remote_file_unauthorized_domain(self):
+        processor = METSProcessor(self.root, self.report, mets_base_uri="https://whatever.com")
+        files = processor.get_files_from_file_sec()
+        pages = processor.get_pages_from_struct_map()
+        page = pages[0]
+        page.attrib["DMDID"] = "skipMDProcessing"
+        for pointer in page.findall("mets:fptr", namespaces=processor.NAMESPACES):
+            file = files[pointer.get("FILEID")]
+            location = file.find("mets:FLocat", namespaces=processor.NAMESPACES)
+            for attrib in location.attrib.keys():
+                if "href" in attrib:
+                    location.attrib[attrib] = "https://not-allowed-domain.com/myfile"
+
+        with self.assertLogs("imports.mets") as mock_log:
+            mets_page = processor.process_single_page(page, files)
+
+        self.assertEqual(mock_log.output, [
+            'ERROR:imports.mets:The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "not-allowed-domain.com".',
+            'ERROR:imports.mets:The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "not-allowed-domain.com".',
         ])
         self.assertEqual(mets_page, METSPage(image=None, sources={}, metadata={}))
 

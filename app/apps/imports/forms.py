@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from urllib.parse import urlparse
 
 import requests
 from bootstrap.forms import BootstrapFormMixin
@@ -80,6 +81,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
     def clean_iiif_uri(self):
         uri = self.cleaned_data.get('iiif_uri')
         if uri:
+            domain = urlparse(uri).netloc
+            if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
+                raise forms.ValidationError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
+
             content, total = clean_uri(uri, self.document, 'tmp.json')
             self.cleaned_data['total'] = total
             return content
@@ -88,6 +93,10 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         uri = self.cleaned_data.get('mets_uri')
         self.mets_uri = os.path.dirname(uri)
         if uri:
+            domain = urlparse(uri).netloc
+            if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
+                raise forms.ValidationError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
+
             content, total = clean_uri(uri, self.document, 'tmp.xml')
             self.cleaned_data['total'] = total
             return content
