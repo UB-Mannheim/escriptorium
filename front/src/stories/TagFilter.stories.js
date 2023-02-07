@@ -2,6 +2,7 @@ import TagFilter from "../../vue/components/TagFilter/TagFilter.vue";
 import FilterButton from "../../vue/components/FilterButton/FilterButton.vue";
 import TagIcon from "../../vue/components/Icons/TagIcon/TagIcon.vue";
 import FilterSet from "../../vue/components/FilterSet/FilterSet.vue";
+import "../../vue/components/Common/Card.css";
 
 import { ManyTags } from "./Tags.stories";
 
@@ -32,7 +33,7 @@ const ButtonTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { FilterButton, TagIcon },
     template: `
-        <div style="width: 110px; background-color: var(--background1); padding: 20px;">
+        <div style="width: 110px;" class="escr-card escr-card-padding">
             <FilterButton v-bind="$props">
                 <template v-slot:filter-icon="{active}">
                     <TagIcon :active="active" />
@@ -52,7 +53,9 @@ const FilterSetTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { FilterSet },
     template: `
-        <FilterSet v-bind="$props" />
+        <div class="escr-card escr-card-padding">
+            <FilterSet v-bind="$props" />
+        </div>
     `,
 });
 export const TagFilterWithButton = FilterSetTemplate.bind({});

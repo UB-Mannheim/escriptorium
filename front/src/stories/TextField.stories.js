@@ -1,4 +1,5 @@
 import TextField from "../../vue/components/TextField/TextField.vue";
+import "../../vue/components/Common/Card.css";
 
 export default {
     title: "Components/Forms",
@@ -8,7 +9,7 @@ const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { TextField },
     template: `
-        <div style="width: 350px; background-color: var(--background1); padding: 20px;">
+        <div style="width: 350px;" class="escr-card escr-card-padding">
             <TextField v-bind="$props" />
         </div>
     `,

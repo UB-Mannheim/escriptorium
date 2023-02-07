@@ -1,4 +1,5 @@
 import SegmentedButtonGroup from "../../vue/components/SegmentedButtonGroup/SegmentedButtonGroup.vue";
+import "../../vue/components/Common/Card.css";
 
 export default {
     title: "Components/Segmented Button",
@@ -6,10 +7,7 @@ export default {
     argTypes: {
         color: {
             control: { type: "select" },
-            options: [
-                "primary",
-                "secondary",
-            ],
+            options: ["primary", "secondary"],
         },
     },
 };
@@ -17,9 +15,12 @@ export default {
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { SegmentedButtonGroup },
-    template: '<div style="width: 350px;"><SegmentedButtonGroup v-bind="$props" /></div>',
+    template: `
+        <div style="width: 350px;" class="escr-card escr-card-padding">
+            <SegmentedButtonGroup v-bind="$props" />
+        </div>
+    `,
 });
-
 
 const buttons = [
     { label: "Regions", value: "regions", selected: true },

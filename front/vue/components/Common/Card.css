@@ -1,0 +1,7 @@
+.escr-card {
+    background: var(--background1);
+    border-radius: 15px;
+}
+.escr-card-padding {
+    padding: 1rem;
+}

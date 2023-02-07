@@ -68,6 +68,11 @@
     --text3: #717373;
 }
 
+/* Site-wide styles */
+body {
+    background-color: var(--background2);
+}
+
 /* Typography */
 body,
 input[type="text"] {
@@ -107,7 +112,6 @@ hr {
  * Improved screen reader only CSS class
  * @author Gaël Poupard
  */
-
 .sr-only {
     border: 0 !important;
     clip: rect(1px, 1px, 1px, 1px) !important;

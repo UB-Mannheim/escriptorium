@@ -1,6 +1,7 @@
 import Button from "../../vue/components/Button/Button.vue";
 import PlusIcon from "../../vue/components/Icons/PlusIcon/PlusIcon.vue";
 import ImagesIcon from "../../vue/components/Icons/ImagesIcon/ImagesIcon.vue";
+import "../../vue/components/Common/Card.css";
 
 export default {
     title: "Components/Button",
@@ -30,7 +31,11 @@ export default {
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { Button },
-    template: "<Button v-bind=\"$props\" />",
+    template: `
+        <div class="escr-card escr-card-padding">
+            <Button v-bind="$props" />
+        </div>
+    `,
 });
 
 export const Primary = Template.bind({});
@@ -137,11 +142,13 @@ const IconTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { Button, PlusIcon },
     template: `
-        <Button v-bind="$props">
-            <template v-slot:button-icon>
-                <PlusIcon />
-            </template>
-        </Button>
+        <div class="escr-card escr-card-padding">
+            <Button v-bind="$props">
+                <template v-slot:button-icon>
+                    <PlusIcon />
+                </template>
+            </Button>
+        </div>
     `,
 });
 export const PrimaryWithIcon = IconTemplate.bind({});
@@ -175,11 +182,13 @@ const IconOnlyTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { Button, ImagesIcon },
     template: `
-        <Button v-bind="$props">
-            <template v-slot:button-icon>
-                <ImagesIcon />
-            </template>
-        </Button>
+        <div class="escr-card escr-card-padding">
+            <Button v-bind="$props">
+                <template v-slot:button-icon>
+                    <ImagesIcon />
+                </template>
+            </Button>
+        </div>
     `,
 });
 export const IconOnlyButtonPrimary = IconOnlyTemplate.bind({});
