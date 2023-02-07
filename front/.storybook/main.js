@@ -12,7 +12,8 @@ module.exports = {
       }
     },
     "@storybook/addon-interactions",
-    "storybook-addon-themes"
+    "storybook-addon-themes",
+    "@storybook/addon-a11y",
   ],
   "framework": "@storybook/vue",
   "core": {

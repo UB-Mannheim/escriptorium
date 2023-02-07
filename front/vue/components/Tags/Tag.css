@@ -1,0 +1,47 @@
+/* tags */
+.escr-tag {
+    color: var(--tag-text);
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 16px;
+    padding: 4px 10px;
+    display: flex;
+    flex-flow: row nowrap;
+    white-space: nowrap;
+    align-items: center;
+    background-color: var(--tag-12);
+}
+/* tag color variants */
+.escr-tag--variant-1 {
+    background-color: var(--tag-1);
+}
+.escr-tag--variant-2 {
+    background-color: var(--tag-2);
+}
+.escr-tag--variant-3 {
+    background-color: var(--tag-3);
+}
+.escr-tag--variant-4 {
+    background-color: var(--tag-4);
+}
+.escr-tag--variant-5 {
+    background-color: var(--tag-5);
+}
+.escr-tag--variant-6 {
+    background-color: var(--tag-6);
+}
+.escr-tag--variant-7 {
+    background-color: var(--tag-7);
+}
+.escr-tag--variant-8 {
+    background-color: var(--tag-8);
+}
+.escr-tag--variant-9 {
+    background-color: var(--tag-9);
+}
+.escr-tag--variant-10 {
+    background-color: var(--tag-10);
+}
+.escr-tag--variant-11 {
+    background-color: var(--tag-11);
+}
