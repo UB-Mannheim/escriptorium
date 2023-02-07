@@ -464,3 +464,5 @@ if SENTRY_DSN:
             CeleryIntegration(),
         ],
     )
+
+IMPORT_ALLOWED_DOMAINS = os.getenv('IMPORT_ALLOWED_DOMAINS', '*').split(',')
