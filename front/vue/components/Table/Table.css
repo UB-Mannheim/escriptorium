@@ -13,6 +13,7 @@
 .escr-table thead tr {
     font-size: 12px;
     height: 32px;
+    border-bottom: 1px solid var(--background2);
 }
 .escr-table th {
     font-weight: 600;
@@ -31,8 +32,15 @@
 .escr-table tbody tr {
     font-size: 14px;
     height: 64px;
-    padding: 0 16px;
     transition: background-color 0.15s ease-in-out;
+}
+.escr-table tr td:first-of-type,
+.escr-table tr th:first-of-type {
+    padding: 0 0 0 16px;
+}
+.escr-table tr td:last-of-type,
+.escr-table tr th:last-of-type {
+    padding: 0 16px 0 0;
 }
 .escr-table tbody tr:hover {
     background-color: var(--background2);

@@ -44,9 +44,25 @@
                         class="row-link"
                         :href="item.href"
                     >
-                        <span class="sr-only">{{ item[header.value] }}</span>
+                        <component
+                            :is="header.component"
+                            v-if="header.component && item[header.value]"
+                            class="sr-only"
+                            v-bind="item[header.value]"
+                        />
+                        <span
+                            v-else
+                            class="sr-only"
+                        >
+                            {{ item[header.value] }}
+                        </span>
                     </a>
-                    <span>
+                    <component
+                        :is="header.component"
+                        v-if="header.component && item[header.value]"
+                        v-bind="item[header.value]"
+                    />
+                    <span v-else>
                         {{ item[header.value] }}
                     </span>
                 </td>
@@ -78,6 +94,10 @@ export default {
          *
          * When using sortable columns, data may be sorted by using the callback function prop
          * `onSort` to mutate the `items` prop.
+         *
+         * It is also possible to use a Vue component for table cells. To do this, add a `component`
+         * key to the header for that column and pass the component along. In the data, the item's
+         * value for that header name must be an object containing the props for that component.
          */
         headers: {
             type: Array,
@@ -117,12 +137,14 @@ export default {
          * A callback function for sorting, which may be used for frontend sorting or for API calls
          * to retrieve sorted data from a backend, and which should mutate the `items` prop.
          *
-         * Must be a function that accepts two params: `field`, a string for the field to sort
-         * on, and `direction`, which will be one of the numbers 0, -1, or 1.
+         * Must be a function that accepts a single object param with the following two keys:
+         * `field`, a string for the field to sort on, and
+         * `direction`, which will be one of the numbers 0, -1, or 1.
          */
         onSort: {
             type: Function,
-            default: () => {},
+            // eslint-disable-next-line no-unused-vars
+            default: ({ field, direction }) => {},
         },
     },
     data() {
@@ -148,7 +170,7 @@ export default {
                 direction: newDirection,
                 sortFn: this.sortState.sortFn || undefined,
             };
-            this.onSort(header.value, newDirection);
+            this.onSort({ field: header.value, direction: newDirection });
         },
     },
 }
