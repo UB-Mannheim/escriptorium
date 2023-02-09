@@ -97,13 +97,13 @@ export default {
         /**
          * Change the operator for the filter (and/or)
          */
-        setOperator: function (operator) {
+        setOperator(operator) {
             this.selectedOperator = operator;
         },
         /**
          * add or remove tags from selected list
          */
-        changeTagSelection: function (checked, tag) {
+        changeTagSelection(checked, tag) {
             if (checked) {
                 this.selectedTags.push(tag.name);
             } else {
@@ -116,25 +116,25 @@ export default {
         /**
          * Select all tags after clicking "Select All"
          */
-        selectAllTags: function () {
+        selectAllTags() {
             this.selectedTags = this.tags.map((t) => t.name);
         },
         /**
          * Select no tags after clicking "Select None"
          */
-        selectNoTags: function () {
+        selectNoTags() {
             this.selectedTags = [];
         },
         /**
          * Toggle "without tag" with the checkmark input
          */
-        toggleWithoutTag: function (e) {
+        toggleWithoutTag(e) {
             this.withoutTag = e.target.checked;
         },
         /**
          * Use the text input to filter the tags by string
          */
-        filterByString: function (e) {
+        filterByString(e) {
             this.stringFilter = e.target.value;
         },
         /**
@@ -151,7 +151,7 @@ export default {
          * Helper method to render a checkbox input and label
          * for a given tag.
          */
-        renderTagOption: function (h, tag) {
+        renderTagOption(h, tag) {
             return [
                 h(
                     "input",
@@ -189,7 +189,7 @@ export default {
         /**
          * Helper method to render cancel and apply buttons
          */
-        renderFilterActions: function (h) {
+        renderFilterActions(h) {
             return h(
                 "div",
                 {
@@ -262,7 +262,7 @@ export default {
      * - A checkbox input for "without tag"
      * - Buttons to cancel and apply the filter
      */
-    render: function (h) {
+    render(h) {
         return h(
             "div",
             { class: "escr-tag-filter escr-modal" },

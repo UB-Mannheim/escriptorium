@@ -13,4 +13,6 @@
 .escr-filter-set .escr-tag-filter {
     position: absolute;
     top: 42px;
+    right: 0;
+    z-index: 2;
 }

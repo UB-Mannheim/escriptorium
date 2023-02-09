@@ -29,7 +29,7 @@ BasicTable.args = {
     itemKey: "id"
 };
 
-const onSort = (field, direction) => {
+const onSort = ({ field, direction }) => {
     const alphabeticSort = (key) => (a, b) => {
         return a[key].toString().localeCompare(b[key].toString());
     };

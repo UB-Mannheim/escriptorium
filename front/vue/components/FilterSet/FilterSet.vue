@@ -36,11 +36,17 @@ export default {
     props: {
         /**
          * List of all tags on all [documents/projects/images] in view.
-         * TODO: Get this from the store instead.
          */
         tags: {
             type: Array,
-            default: () => []
+            default: () => [],
+        },
+        /**
+         * Optional callback function to be performed after filter state changes.
+         */
+        onFilter: {
+            type: Function,
+            default: () => {},
         },
     },
     data() {
@@ -68,6 +74,10 @@ export default {
         clearFilter(type) {
             this.openFilter = undefined;
             this.removeFilter(type);
+            if (type === "tags") {
+                this.removeFilter("withoutTag");
+            }
+            this.onFilter();
         },
         /**
          * Result of clicking on a filter button (open/close filter dialog)
@@ -83,9 +93,11 @@ export default {
          * Result of clicking "Submit" on a filter dialog: close the dialog
          * and apply the filter
          */
-        toggleClosedAndFilter(value) {
+        toggleClosedAndFilter({ operator, tags, withoutTag }) {
             this.openFilter = undefined;
-            this.addFilter({ type: "tags", value });
+            this.addFilter({ type: "tags", value: tags, operator });
+            this.addFilter({ type: "withoutTag", value: withoutTag });
+            this.onFilter();
         },
         ...mapActions("filter", [
             "addFilter",

@@ -3,46 +3,14 @@ const state = () => ({
     /**
      * filters: [{
      *     type: String,
-     *     value: any,
+     *     value: String | Array,
+     *     operator?: Boolean,
      * }]
      */
     filters: [],
 });
 
 const getters = {
-    /**
-     * WIP for getting filtered documents on the frontend.
-     */
-    filteredDocuments: (state, getters, rootState) => {
-        const conditions = [];
-        state.filters.forEach((filter) => {
-            switch (filter.type) {
-                case "tags":
-                    if (filter.value?.operator === "or") {
-                        conditions.push((doc) =>
-                            filter.value?.tags?.some((tag) =>
-                                doc.tags.includes(tag),
-                            ),
-                        );
-                    } else {
-                        conditions.push((doc) =>
-                            filter.value?.tags?.every((tag) =>
-                                doc.tags.includes(tag),
-                            ),
-                        );
-                    }
-                    if (filter.value?.withoutTag) {
-                        conditions.push((doc) => !doc.tags?.length);
-                    }
-                    break;
-            }
-        });
-        return rootState.documents.filter((document) => {
-            return conditions.every(
-                (condition) => condition(document) === true,
-            );
-        });
-    },
     /**
      * Number of tags currently selected in the tag filter.
      */
@@ -66,19 +34,19 @@ const getters = {
      * AND or OR operator currently applied to tag filter.
      */
     tagFilterOperator: (_, getters) => {
-        return getters.tagFilter?.value?.operator;
+        return getters.tagFilter?.operator;
     },
     /**
      * Tags currently selected in the tag filter.
      */
     tagFilterSelectedTags: (_, getters) => {
-        return getters.tagFilter?.value?.tags;
+        return getters.tagFilter?.value;
     },
     /**
      * Whether or not "without tag" is checked in the current tag filter.
      */
-    withoutTagSelected: (_, getters) => {
-        return getters.tagFilter?.value?.withoutTag;
+    withoutTagSelected: (state) => {
+        return state.filters.find((filter) => filter.type === "withoutTag")?.value;
     },
 };
 
