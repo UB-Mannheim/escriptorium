@@ -1,7 +1,20 @@
 .escr-card {
     background: var(--background1);
     border-radius: 15px;
+    padding-bottom: 1rem;
 }
 .escr-card-padding {
     padding: 1rem;
+}
+/* card header: should be comprised of one or two elements (left and, optionally, right) */
+.escr-card-header {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-card-actions {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
 }

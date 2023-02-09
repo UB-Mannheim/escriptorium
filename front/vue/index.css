@@ -72,6 +72,9 @@
 body {
     background-color: var(--background2);
 }
+.escr-page {
+    padding: 32px;
+}
 
 /* Typography */
 body,

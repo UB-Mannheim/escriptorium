@@ -53,6 +53,7 @@
     "@storybook/manager-webpack5": "^6.5.16",
     "@storybook/testing-library": "^0.0.13",
     "@storybook/vue": "^6.5.16",
+    "axios-mock-adapter": "^1.21.2",
     "babel-loader": "^8.3.0",
     "compression-webpack-plugin": "^7.1.1",
     "eslint": "^8.32.0",

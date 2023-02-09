@@ -16,6 +16,7 @@
                 color="primary"
                 label="Create"
                 :on-click="onCreate"
+                :disabled="createDisabled"
             />
         </div>
     </div>
@@ -45,6 +46,10 @@ export default {
         onInput: {
             type: Function,
             required: true,
+        },
+        createDisabled: {
+            type: Boolean,
+            default: false,
         },
     }
 };
