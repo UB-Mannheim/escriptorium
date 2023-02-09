@@ -8,7 +8,7 @@ def send_email(subject_template, txt_template, html_template,
                context=None,
                result_interface=None):
     """
-    Higher level interface to send a multipart/aternative email with text/plain + text/html
+    Higher level interface to send a multipart/alternative email with text/plain + text/html
 
     Send an email to the given recipient using given templates and context
     Queue with celery if settings.USE_CELERY == True
