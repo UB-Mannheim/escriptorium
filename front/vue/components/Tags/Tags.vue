@@ -9,7 +9,7 @@
         </span>
         <!-- Tag overflow toggle for non-wrapping tag group -->
         <div
-            v-if="!this.wrap && this.shouldOverflow"
+            v-if="!wrap && shouldOverflow"
             :class="tagClasses()"
             class="escr-tag-overflow-toggle"
             @mouseover="showOverflowed"
@@ -18,11 +18,11 @@
             <span>...</span>
             <!-- Tag overflow list -->
             <div
-                v-if="this.overflowVisible"
+                v-if="overflowVisible"
                 class="escr-tag-overflow"
             >
                 <span
-                    v-for="tag in this.overflowTags"
+                    v-for="tag in overflowTags"
                     :key="tag.name"
                     :class="tagClasses(tag.variant)"
                 >
@@ -33,17 +33,11 @@
     </div>
 </template>
 <script>
-import './Tag.css';
-import './TagGroup.css';
+import "./Tag.css";
+import "./TagGroup.css";
 
 export default {
-    name: 'escr-tags',
-
-    data: () => ({
-        shouldOverflow: false,
-        overflowVisible: false,
-        overflowTags: [],
-    }),
+    name: "EscrTags",
 
     props: {
         /**
@@ -54,8 +48,8 @@ export default {
             type: Array,
             default: () => [],
             required: true,
-            validator: function (value) {
-                return value.length > 0 && value.every(t => t.name);
+            validator(value) {
+                return value.length > 0 && value.every((t) => t.name);
             },
         },
         /**
@@ -67,11 +61,19 @@ export default {
         },
     },
 
+    data() {
+        return {
+            shouldOverflow: false,
+            overflowVisible: false,
+            overflowTags: [],
+        };
+    },
+
     computed: {
         classes() {
             return {
-                'escr-tag-group': true,
-                'escr-tag-group-wrapped': this.wrap,
+                "escr-tag-group": true,
+                "escr-tag-group-wrapped": this.wrap,
             };
         },
     },
@@ -80,7 +82,8 @@ export default {
      * need to go into the overflow menu, remove them from the visible portion,
      * and add them into the overflow tags list.
      */
-    mounted: function () {
+    async mounted() {
+        await this.$nextTick();
         if (!this.wrap) {
             const parentWidth = this.$el.parentElement.clientWidth;
             let childrenWidth = 0;
@@ -88,7 +91,7 @@ export default {
                 const childElement = this.$el.childNodes[i];
                 // add up each element's width + 4px margin per element
                 childrenWidth += childElement.scrollWidth + 4;
-                if (childrenWidth >= parentWidth) {
+                if ((childrenWidth + 36) >= parentWidth) {
                     // hide child element and add tag to list
                     childElement.style.display = "none";
                     this.shouldOverflow = true;
@@ -104,7 +107,7 @@ export default {
          */
         tagClasses(variant) {
             return {
-                'escr-tag': true,
+                "escr-tag": true,
                 [`escr-tag--variant-${variant || 12}`]: true,
             };
         },
