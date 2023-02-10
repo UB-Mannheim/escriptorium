@@ -2,7 +2,7 @@
       <TextLine id="{{ line.external_id }}" {% if line.typology %}custom="structure {type:{{line.typology.name}};}"{% endif %}>
         {% if line.mask %}<Coords points="{% pagexml_points line.mask %}"/>{% endif %}
         {% if line.baseline %}<Baseline points="{% pagexml_points line.baseline %}"/>{% endif %}
-        <TextEquiv{% if line.transcription.0.avg_confidence %}@conf="{{ line.transcription.0.avg_confidence }}"{% endif %}>
+        <TextEquiv{% if line.transcription.0.avg_confidence %} conf="{{ line.transcription.0.avg_confidence }}"{% endif %}>
           <Unicode>{{ line.transcription.0.content|default_if_none:"" }}</Unicode>
         </TextEquiv>
       </TextLine>
