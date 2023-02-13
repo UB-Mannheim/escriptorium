@@ -83,9 +83,6 @@
 body {
     background-color: var(--background);
 }
-.escr-page {
-    padding: 32px;
-}
 
 /* Typography */
 body,
