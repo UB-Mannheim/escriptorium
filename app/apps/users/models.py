@@ -255,23 +255,6 @@ class ContactUs(models.Model):
     def __str__(self):
         return "from {}({})".format(self.name, self.email)
 
-    def save(self, *args, **kwargs):
-        context = {
-            "sender_name": self.name,
-            "sender_email": self.email,
-            "message": self.message,
-        }
-
-        send_email(
-            'users/email/contactus_subject.txt',
-            'users/email/contactus_message.txt',
-            'users/email/contactus_html.html',
-            settings.ADMINS,
-            context=context,
-            result_interface=None
-        )
-        super().save(*args, **kwargs)
-
 
 class GroupOwner(models.Model):
     """
