@@ -4,7 +4,7 @@ import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
 import Tags from "../Tags/Tags.vue";
 import TextField from "../TextField/TextField.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
-import "../Common/Modal.css";
+import "../Modal/Modal.css";
 import "../Tags/Tag.css";
 import "./TagFilter.css";
 

@@ -1,12 +1,14 @@
 <template>
-    <div class="escr-modal escr-new-project">
-        <h2>Create New Project</h2>
-        <TextField
-            label="Name"
-            placeholder="Enter project name"
-            :on-input="onInput"
-        />
-        <div class="modal-actions">
+    <EscrModal class="escr-new-project">
+        <template #modal-content>
+            <h2>Create New Project</h2>
+            <TextField
+                label="Name"
+                placeholder="Enter project name"
+                :on-input="onInput"
+            />
+        </template>
+        <template #modal-actions>
             <EscrButton
                 color="outline-primary"
                 label="Cancel"
@@ -18,13 +20,13 @@
                 :on-click="onCreate"
                 :disabled="createDisabled"
             />
-        </div>
-    </div>
+        </template>
+    </EscrModal>
 </template>
 <script>
-import "../../components/Common/Modal.css";
 import "./ProjectsList.css";
 import EscrButton from "../../components/Button/Button.vue";
+import EscrModal from "../../components/Modal/Modal.vue";
 import TextField from "../../components/TextField/TextField.vue";
 
 
@@ -32,6 +34,7 @@ export default {
     name: "EscrNewProjectModal",
     components: {
         EscrButton,
+        EscrModal,
         TextField,
     },
     props: {

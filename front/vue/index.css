@@ -30,6 +30,14 @@
     --tag-11: #f2a7c3;
     --tag-12: #c6c4c4;
     --tag-text: #212323;
+    /* drop shadow */
+    --drop-shadow: rgba(0, 0, 0, 0.15);
+
+    /* z-index layers */
+    --segmented-button-focus-z: 1;
+    --taggroup-overflow-z: 2;
+    --modal-backdrop-z: 3;
+    --modal-z: 4;
 }
 .light-mode {
     /* button colors */
@@ -39,6 +47,7 @@
     --secondary-focus: rgb(23 97 181 / 50%);
     --secondary-hover: rgb(23 97 181 / 20%);
     /* light mode backgrounds */
+    --background: #F0F0F0;
     --background1: #ffffff;
     --background2: #e9e9e9;
     --background2-dark: #cacaca;
@@ -57,6 +66,7 @@
     --secondary-focus: rgb(79 150 232 / 50%);
     --secondary-hover: rgb(79 150 232 / 20%);
     /* dark mode backgrounds */
+    --background: #212323;
     --background1: #2f3132;
     --background2: #3e4142;
     --background2-dark: #565a5b;
@@ -70,7 +80,7 @@
 
 /* Site-wide styles */
 body {
-    background-color: var(--background2);
+    background-color: var(--background);
 }
 .escr-page {
     padding: 32px;

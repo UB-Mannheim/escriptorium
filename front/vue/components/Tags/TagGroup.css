@@ -28,7 +28,7 @@
     align-items: flex-start;
     left: 0px;
     top: 32px;
-    z-index: 2;
+    z-index: var(--taggroup-overflow-z);
 }
 .escr-tag-overflow .escr-tag:not(:last-of-type) {
     margin-bottom: 10px;
