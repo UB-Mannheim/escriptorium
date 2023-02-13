@@ -38,6 +38,7 @@
     --taggroup-overflow-z: 2;
     --modal-backdrop-z: 3;
     --modal-z: 4;
+    --toast-z: 5;
 }
 .light-mode {
     /* button colors */
