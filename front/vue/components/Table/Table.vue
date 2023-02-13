@@ -67,11 +67,14 @@
                     </span>
                 </td>
                 <td
-                    v-if="!!$slots['actions']"
+                    v-if="!!$scopedSlots['actions']"
                     class="escr-row-actions"
                 >
                     <div>
-                        <slot name="actions" />
+                        <slot
+                            name="actions"
+                            :item="item"
+                        />
                     </div>
                 </td>
             </tr>

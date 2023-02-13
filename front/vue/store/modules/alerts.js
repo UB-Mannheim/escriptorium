@@ -13,6 +13,17 @@ const actions = {
     add({ _, commit }, alert) {
         commit("addAlert", alert);
     },
+    /**
+     * Helper function to handle errors in particular
+     */
+    addError({ commit }, error) {
+        const { response, message } = error;
+        commit("addAlert", {
+            color: "alert",
+            message: response?.data?.message || message,
+        });
+        console.error(error);
+    },
     remove({ _, commit }, index) {
         commit("removeAlert", index);
     },

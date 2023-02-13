@@ -122,6 +122,7 @@ const filteredByTag = (items, tags, operator) => {
 const mock = new MockAdapter(axios);
 const projectsEndpoint = "/projects";
 const projectsTagsEndpoint = "/project_tags";
+const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
 
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
@@ -152,6 +153,11 @@ const PageTemplate = (args, { argTypes }) => ({
         mock.onGet(projectsTagsEndpoint).reply(200, { tags });
         // mock create project
         mock.onPost(projectsEndpoint).reply(200, { projects });
+        // mock delete project (throw an error, for fun!)
+        mock.onDelete(projectsIdEndpoint).reply(400, {
+            message:
+                "This is just a test environment, so you cannot delete a project.",
+        });
     },
 });
 export const ProjectsListPage = PageTemplate.bind({});

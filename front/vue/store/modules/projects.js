@@ -1,5 +1,6 @@
 import {
     createProject,
+    deleteProject,
     retrieveAllProjectTags,
     retrieveProjects,
 } from "../../../src/api";
@@ -7,6 +8,7 @@ import {
 // initial state
 const state = () => ({
     createModalOpen: false,
+    deleteModalOpen: false,
     newProjectName: "",
     /**
      * projects: [{
@@ -20,6 +22,7 @@ const state = () => ({
      * }]
      */
     projects: [],
+    projectToDelete: {},
     /**
      * sortState: {
      *     direction: Number,
@@ -39,6 +42,18 @@ const state = () => ({
 const getters = {};
 
 const actions = {
+    /**
+     * Close the "create project" modal.
+     */
+    closeCreateModal({ commit }) {
+        commit("setCreateModalOpen", false);
+    },
+    /**
+     * Close the "delete project" modal.
+     */
+    closeDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", false);
+    },
     /**
      * Create a new project with the project name from state; show error
      * alert on failure.
@@ -63,19 +78,30 @@ const actions = {
                 throw new Error("Unable to create project");
             }
         } catch (error) {
-            dispatch(
-                "alerts/add",
-                { color: "alert", message: error.message },
-                { root: true },
-            );
-            console.error(error);
+            dispatch("alerts/addError", error, { root: true });
         }
     },
-    /**
-     * Close the "create project" modal.
-     */
-    closeCreateModal({ commit }) {
-        commit("setCreateModalOpen", false);
+    async deleteProject({ dispatch, commit, state }) {
+        try {
+            const { data } = await deleteProject(state.projectToDelete.slug);
+            if (data?.projects) {
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: "Project deleted successfully",
+                    },
+                    { root: true },
+                );
+                commit("setProjects", data.projects);
+                commit("setDeleteModalOpen", false);
+            } else {
+                throw new Error("Unable to delete project");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
     },
     /**
      * Fetch the full list of tags across all projects for use in the tag filter.
@@ -118,6 +144,13 @@ const actions = {
         commit("setCreateModalOpen", true);
     },
     /**
+     * Open the "delete project" modal.
+     */
+    openDeleteModal({ commit }, project) {
+        commit("setProjectToDelete", project);
+        commit("setDeleteModalOpen", true);
+    },
+    /**
      * Set the sort state, then attempt to fetch projects with the sort applied, or
      * show an error toast on failure.
      */
@@ -126,12 +159,7 @@ const actions = {
         try {
             await dispatch("fetchProjects");
         } catch (error) {
-            dispatch(
-                "alerts/add",
-                { color: "alert", message: error.message },
-                { root: true },
-            );
-            console.error(error);
+            dispatch("alerts/addError", error, { root: true });
         }
     },
 };
@@ -143,8 +171,14 @@ const mutations = {
     setCreateModalOpen(state, open) {
         state.createModalOpen = open;
     },
+    setDeleteModalOpen(state, open) {
+        state.deleteModalOpen = open;
+    },
     setNewProjectName(state, input) {
         state.newProjectName = input;
+    },
+    setProjectToDelete(state, project) {
+        state.projectToDelete = project;
     },
     setTags(state, tags) {
         state.tags = tags;

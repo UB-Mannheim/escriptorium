@@ -1,5 +1,6 @@
 /* new project modal */
-.escr-new-project .escr-modal {
+.escr-new-project .escr-modal,
+.escr-delete-project .escr-modal {
     width: 400px;
     position: absolute;
     top: 25%;

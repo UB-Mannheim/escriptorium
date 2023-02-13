@@ -28,6 +28,30 @@
                         />
                     </div>
                 </div>
+                <EscrModal
+                    v-if="deleteModalOpen"
+                    class="escr-delete-project"
+                >
+                    <template #modal-content>
+                        <h2>Delete Project "{{ projectToDelete.name }}"</h2>
+                        <p>
+                            Are you sure you want to delete this project?
+                            This action cannot be undone.
+                        </p>
+                    </template>
+                    <template #modal-actions>
+                        <EscrButton
+                            color="outline-primary"
+                            label="Cancel"
+                            :on-click="() => closeDeleteModal()"
+                        />
+                        <EscrButton
+                            color="danger"
+                            label="Delete"
+                            :on-click="() => deleteProject()"
+                        />
+                    </template>
+                </EscrModal>
                 <EscrTable
                     v-if="projects.length"
                     :items="projects"
@@ -35,11 +59,12 @@
                     :headers="headers"
                     :on-sort="sortProjects"
                 >
-                    <template #actions>
+                    <template #actions="{ item }">
                         <EscrButton
                             size="small"
                             color="text"
-                            :on-click="(e) => {}"
+                            :on-click="() => openDeleteModal(item)"
+                            aria-label="Delete project"
                         >
                             <template #button-icon>
                                 <TrashIcon />
@@ -58,21 +83,23 @@
     </EscrPage>
 </template>
 <script>
+import { mapActions, mapState } from "vuex";
 import EscrButton from "../../components/Button/Button.vue";
+import EscrModal from "../../components/Modal/Modal.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
-import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
-import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
-import "./ProjectsList.css";
-import { mapActions, mapState } from "vuex";
 import NewProjectModal from "./NewProjectModal.vue";
+import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
+import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import "./ProjectsList.css";
 
 export default {
     name: "EscrProjectsListPage",
     components: {
         EscrButton,
+        EscrModal,
         EscrPage,
         EscrTable,
         // eslint-disable-next-line vue/no-unused-components
@@ -94,6 +121,7 @@ export default {
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
             newProjectName: (state) => state.projects.newProjectName,
             projects: (state) => state.projects.projects,
+            projectToDelete: (state) => state.projects.projectToDelete,
             tags: (state) => state.projects.tags,
         }),
         headers() {
@@ -111,23 +139,23 @@ export default {
             await this.fetchProjects();
             await this.fetchAllProjectTags();
         } catch (error) {
-            this.addAlert(
-                { color: "alert", message: error.message },
-            );
-            console.error(error);
+            this.addError(error);
         }
     },
     methods: {
         ...mapActions("projects", [
             "closeCreateModal",
+            "closeDeleteModal",
             "createNewProject",
+            "deleteProject",
             "fetchAllProjectTags",
             "fetchProjects",
             "handleNewProjectNameInput",
             "openCreateModal",
+            "openDeleteModal",
             "sortProjects",
         ]),
-        ...mapActions("alerts", { addAlert: "add" }),
+        ...mapActions("alerts", ["addError"]),
     },
 };
 </script>
