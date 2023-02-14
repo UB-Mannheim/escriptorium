@@ -2,9 +2,13 @@ import "../vue/index.css";
 import Vuex from "vuex";
 import Vue from "vue";
 import store from "../vue/store";
+import FloatingVue from "floating-vue";
+import "floating-vue/dist/style.css";
 
 Vue.use(Vuex);
 Vue.prototype.$store = store;
+
+Vue.use(FloatingVue);
 
 export const parameters = {
     actions: { argTypesRegex: "^on[A-Z].*" },

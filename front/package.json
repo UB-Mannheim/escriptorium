@@ -22,6 +22,7 @@
     "diff": "^4.0.1",
     "dropzone": "^5.9.2",
     "file-loader": "^6.2.0",
+    "floating-vue": "^1.0.0-beta.15",
     "intro.js": "^3.3.1",
     "jquery": "^3.3.1",
     "jquery-ui-dist": "^1.12.1",

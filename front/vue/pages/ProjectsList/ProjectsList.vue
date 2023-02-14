@@ -66,6 +66,7 @@
                 >
                     <template #actions="{ item }">
                         <EscrButton
+                            v-tooltip.bottom="'Delete'"
                             size="small"
                             color="text"
                             :on-click="() => openDeleteModal(item)"
