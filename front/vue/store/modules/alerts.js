@@ -8,13 +8,15 @@ const state = () => ({
      * }]
      */
     alerts: [],
+    // a counter of all alerts that have been created, to give each a unique id
+    count: 0,
 });
 const actions = {
     add({ _, commit }, alert) {
         commit("addAlert", alert);
     },
     /**
-     * Helper function to handle errors in particular
+     * Helper function to reuse common logic for errors
      */
     addError({ commit }, error) {
         const { response, message } = error;
@@ -30,17 +32,11 @@ const actions = {
 };
 const mutations = {
     /**
-     * Add an alert to the list, giving it an id of the highest id + 1;
+     * Add an alert to the list, giving it an id from the current counter
      */
     addAlert: (state, alert) => {
-        let id = 0;
-        if (state.alerts.length) {
-            const maxId = state.alerts.reduce((max, alert) =>
-                max.id > alert.id ? max : alert,
-            );
-            id = maxId.id + 1;
-        }
-        state.alerts.push({ ...alert, id });
+        state.alerts.push({ ...alert, id: state.count });
+        state.count += 1;
     },
     /**
      * Remove an alert from the list, by id.
