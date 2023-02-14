@@ -56,11 +56,16 @@
     font-size: 12px;
     color: var(--text1);
     padding: 0;
-    transition: font-weight 0.15s ease-in-out;
+    transition: font-weight 0.15s ease-in-out, color 0.15s ease-in-out;
     font-weight: 600;
 }
 .escr-table th button.escr-sort-button svg {
     margin-left: 2px;
+}
+.escr-table th button.escr-sort-button:disabled {
+    color: var(--text3);
+    pointer-events: none;
+    cursor: default;
 }
 /* linking */
 .escr-table tr {

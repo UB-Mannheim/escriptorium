@@ -13,6 +13,7 @@
                         <button
                             v-else
                             class="escr-sort-button"
+                            :disabled="sortDisabled"
                             @click="() => setSort(header)"
                         >
                             <span>
@@ -149,6 +150,14 @@ export default {
             // eslint-disable-next-line no-unused-vars
             default: ({ field, direction }) => {},
         },
+        /**
+         * Boolean indicating whether or not the sort buttons should be disabled, e.g. during
+         * loading.
+         */
+        sortDisabled: {
+            type: Boolean,
+            default: false,
+        }
     },
     data() {
         return {

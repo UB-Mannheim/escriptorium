@@ -130,7 +130,10 @@ const PageTemplate = (args, { argTypes }) => ({
     template: "<ProjectsList v-bind=\"$props\" />",
     setup() {
         // mock projects list
-        mock.onGet(projectsEndpoint).reply(function(config) {
+        mock.onGet(projectsEndpoint).reply(async function(config) {
+            // wait for 100-300 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
                 const { sort, dir, tags, tags_op } = config.params;
                 return [
@@ -152,11 +155,24 @@ const PageTemplate = (args, { argTypes }) => ({
         // mock tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { tags });
         // mock create project
-        mock.onPost(projectsEndpoint).reply(200, { projects });
+        mock.onPost(projectsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { projects }];
+        });
         // mock delete project (throw an error, for fun!)
-        mock.onDelete(projectsIdEndpoint).reply(400, {
-            message:
-                "This is just a test environment, so you cannot delete a project.",
+        mock.onDelete(projectsIdEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a project.",
+                },
+            ];
         });
     },
 });

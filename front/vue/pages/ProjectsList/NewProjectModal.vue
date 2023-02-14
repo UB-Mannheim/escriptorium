@@ -13,6 +13,7 @@
                 color="outline-primary"
                 label="Cancel"
                 :on-click="onCancel"
+                :disabled="cancelDisabled"
             />
             <EscrButton
                 color="primary"
@@ -38,6 +39,10 @@ export default {
         TextField,
     },
     props: {
+        cancelDisabled: {
+            type: Boolean,
+            default: false,
+        },
         onCancel: {
             type: Function,
             required: true,

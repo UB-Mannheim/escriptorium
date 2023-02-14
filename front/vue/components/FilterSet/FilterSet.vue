@@ -7,6 +7,7 @@
             label="Tags"
             :on-click="() => toggleOpen('tags')"
             :on-clear="() => clearFilter('tags')"
+            :disabled="disabled"
         >
             <template #filter-icon="{active}">
                 <TagIcon :active="active" />
@@ -34,6 +35,13 @@ export default {
     name: "EscrFilterSet",
     components: { TagFilter, TagIcon, FilterButton },
     props: {
+        /**
+         * Boolean indicating if the filter buttons should be disabled, e.g. during loading.
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
         /**
          * List of all tags on all [documents/projects/images] in view.
          */

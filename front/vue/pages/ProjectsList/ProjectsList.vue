@@ -7,13 +7,14 @@
                     <h2>Projects</h2>
                     <div class="escr-card-actions">
                         <FilterSet
+                            :disabled="loading"
                             :tags="tags"
                             :on-filter="async () => await fetchProjects()"
                         />
                         <EscrButton
                             label="Create New"
                             :on-click="openCreateModal"
-                            :disabled="createModalOpen"
+                            :disabled="loading || createModalOpen"
                         >
                             <template #button-icon>
                                 <PlusIcon />
@@ -21,7 +22,8 @@
                         </EscrButton>
                         <NewProjectModal
                             v-if="createModalOpen"
-                            :create-disabled="!newProjectName"
+                            :cancel-disabled="loading"
+                            :create-disabled="loading || !newProjectName"
                             :on-input="(e) => handleNewProjectNameInput(e.target.value)"
                             :on-create="() => createNewProject()"
                             :on-cancel="() => closeCreateModal()"
@@ -43,11 +45,13 @@
                         <EscrButton
                             color="outline-primary"
                             label="Cancel"
+                            :disabled="loading"
                             :on-click="() => closeDeleteModal()"
                         />
                         <EscrButton
                             color="danger"
                             label="Delete"
+                            :disabled="loading"
                             :on-click="() => deleteProject()"
                         />
                     </template>
@@ -58,12 +62,14 @@
                     item-key="slug"
                     :headers="headers"
                     :on-sort="sortProjects"
+                    :sort-disabled="loading"
                 >
                     <template #actions="{ item }">
                         <EscrButton
                             size="small"
                             color="text"
                             :on-click="() => openDeleteModal(item)"
+                            :disabled="loading"
                             aria-label="Delete project"
                         >
                             <template #button-icon>
@@ -73,10 +79,16 @@
                     </template>
                 </EscrTable>
                 <div
-                    v-else
+                    v-else-if="!loading"
                     class="escr-empty-msg"
                 >
                     There are no projects to display.
+                </div>
+                <div
+                    v-else
+                    class="escr-empty-msg"
+                >
+                    Loading...
                 </div>
             </div>
         </template>
@@ -119,6 +131,7 @@ export default {
         ...mapState({
             createModalOpen: (state) => state.projects.createModalOpen,
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
+            loading: (state) => state.projects.loading,
             newProjectName: (state) => state.projects.newProjectName,
             projects: (state) => state.projects.projects,
             projectToDelete: (state) => state.projects.projectToDelete,

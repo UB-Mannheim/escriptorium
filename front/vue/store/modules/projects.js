@@ -9,6 +9,7 @@ import {
 const state = () => ({
     createModalOpen: false,
     deleteModalOpen: false,
+    loading: false,
     newProjectName: "",
     /**
      * projects: [{
@@ -59,6 +60,7 @@ const actions = {
      * alert on failure.
      */
     async createNewProject({ dispatch, commit, state }) {
+        commit("setLoading", true);
         try {
             const { data } = await createProject(state.newProjectName);
             if (data?.projects) {
@@ -80,8 +82,10 @@ const actions = {
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
+        commit("setLoading", false);
     },
     async deleteProject({ dispatch, commit, state }) {
+        commit("setLoading", true);
         try {
             const { data } = await deleteProject(state.projectToDelete.slug);
             if (data?.projects) {
@@ -102,23 +106,27 @@ const actions = {
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
+        commit("setLoading", false);
     },
     /**
      * Fetch the full list of tags across all projects for use in the tag filter.
      */
     async fetchAllProjectTags({ commit }) {
+        commit("setLoading", true);
         const { data } = await retrieveAllProjectTags();
         if (data?.tags) {
             commit("setTags", data.tags);
         } else {
             throw new Error("Unable to retrieve project tags");
         }
+        commit("setLoading", false);
     },
     /**
      * Fetch the full list of projects, using currently applied sort and filters
      * from state.
      */
     async fetchProjects({ state, commit, rootState }) {
+        commit("setLoading", true);
         const { data } = await retrieveProjects({
             field: state?.sortState?.field,
             direction: state?.sortState?.direction,
@@ -129,6 +137,7 @@ const actions = {
         } else {
             throw new Error("Unable to retrieve projects");
         }
+        commit("setLoading", false);
     },
     /**
      * Set the new project name on the state.
@@ -173,6 +182,9 @@ const mutations = {
     },
     setDeleteModalOpen(state, open) {
         state.deleteModalOpen = open;
+    },
+    setLoading(state, loading) {
+        state.loading = loading;
     },
     setNewProjectName(state, input) {
         state.newProjectName = input;
