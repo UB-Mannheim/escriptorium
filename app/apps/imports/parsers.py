@@ -797,12 +797,12 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             type_ = None
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
-            if type_ in valid_types_mapping.keys():
-                block.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            block.typology = typo
+            if created:
+                self.report.append(
+                    _("Block type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("BASELINE")
@@ -860,12 +860,12 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             type_ = None
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
-            if type_ in valid_types_mapping.keys():
-                line.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            line.typology = typo
+            if created:
+                self.report.append(
+                    _("Line type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def get_transcription_content(self, lineTag):
         return " ".join(
@@ -930,12 +930,12 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
-            if type_ in valid_types_mapping.keys():
-                block.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            block.typology = typo
+            if created:
+                self.report.append(
+                    _("Block type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def update_line(self, line, lineTag):
         try:
@@ -968,12 +968,12 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
-            if type_ in valid_types_mapping.keys():
-                line.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            line.typology = typo
+            if created:
+                self.report.append(
+                    _("Line type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def clean_coords(self, coordTag):
         try:

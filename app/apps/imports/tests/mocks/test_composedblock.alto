@@ -18,7 +18,9 @@
 
   <Tags>
     <StructureTag ID="BT1" LABEL="test_block_type" DESCRIPTION="test block type"/>
+    <StructureTag ID="BT2" LABEL="new_block_type" DESCRIPTION="new block type"/>
     <OtherTag ID="LT1" LABEL="test_line_type" DESCRIPTION="test line type"/>
+    <OtherTag ID="LT2" LABEL="new_line_type" DESCRIPTION="new line type"/>
   </Tags>
 
   <Layout>
