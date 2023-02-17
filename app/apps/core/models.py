@@ -1313,18 +1313,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             res = blla.segment(im, **options)
 
             if steps in ["regions", "both"]:
-                block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res["regions"].items():
+                    typo, created = self.document.valid_block_types.get_or_create(name=region_type)
                     for region in regions:
                         Block.objects.create(
                             document_part=self,
-                            typology=block_types.get(region_type),
+                            typology=typo,
                             box=region,
                         )
 
             regions = self.blocks.all()
             if steps in ["lines", "both"]:
-                line_types = {t.name: t for t in self.document.valid_line_types.all()}
                 for line in res["lines"]:
                     mask = line["boundary"] if line["boundary"] is not None else None
                     baseline = line["baseline"]
@@ -1336,9 +1335,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
+                    typo, created = self.document.valid_line_types.get_or_create(
+                        name=line["tags"].get("type"))
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(line["tags"].get("type")),
+                        typology=typo,
                         block=region,
                         baseline=baseline,
                         mask=mask,
