@@ -778,7 +778,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         polygon = blockTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
             try:
-                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                coords = tuple(map(float, polygon.get("POINTS").strip().split(" ")))
                 block.box = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
                 logger.warning("Invalid polygon %s" % polygon)
@@ -790,7 +790,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             block.box = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
 
         try:
-            tag = blockTag.get("TAGREFS").split(" ")[0]
+            tag = blockTag.get("TAGREFS").strip().split(" ")[0]
             type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             # Index to catch empty tagrefs, Attribute to catch no tagrefs or invalid
@@ -815,7 +815,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             except ValueError:
                 # it's an expected polygon
                 try:
-                    coords = tuple(map(float, baseline.split(" ")))
+                    coords = tuple(map(float, baseline.strip().split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
                     self.report.append(
@@ -837,7 +837,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
             try:
-                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                coords = tuple(map(float, polygon.get("POINTS").strip().split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
                 self.report.append(
@@ -854,7 +854,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             ]
 
         try:
-            tag = lineTag.get("TAGREFS").split(" ")[0]
+            tag = lineTag.get("TAGREFS").strip().split(" ")[0]
             type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             type_ = None
@@ -919,7 +919,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
         #  for PAGE file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-        block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
+        block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.strip().split(" ")]
 
         type_ = blockTag.get("type")
         if not type_:
@@ -979,7 +979,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
         try:
             return [
                 list(map(int, pt.split(",")))
-                for pt in coordTag.get("points").split(" ")
+                for pt in coordTag.get("points").strip().split(" ")
             ]
         except (AttributeError, ValueError):
             msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
@@ -1178,7 +1178,7 @@ class TranskribusPageXmlParser(PagexmlParser):
     def clean_coords(self, coordTag):
         return [
             list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
-            for pt in coordTag.get("points").split(" ")
+            for pt in coordTag.get("points").strip().split(" ")
         ]
 
 
