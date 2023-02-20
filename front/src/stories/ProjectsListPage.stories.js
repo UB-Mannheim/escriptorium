@@ -93,7 +93,7 @@ const sorted = (items, { sort, dir }) => {
         } else if (sort) {
             sorted.sort(alphabeticSort(sort));
         }
-        if (dir === -1) {
+        if (dir === "desc") {
             sorted.reverse();
         }
         return sorted;

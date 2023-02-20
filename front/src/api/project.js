@@ -4,7 +4,11 @@ export const retrieveProjects = async ({ field, direction, filters }) => {
     let params = {};
     if (field && direction) {
         params.sort = field;
-        params.dir = direction;
+        if (direction == -1) {
+            params.dir = "desc";
+        } else if (direction == 1) {
+            params.dir = "asc";
+        }
     }
     if (filters) {
         filters.forEach((filter) => {
