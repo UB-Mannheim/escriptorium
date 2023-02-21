@@ -55,7 +55,11 @@
                             v-else
                             class="sr-only"
                         >
-                            {{ item[header.value] }}
+                            {{
+                                header.format
+                                    ? header.format(item[header.value])
+                                    : item[header.value]
+                            }}
                         </span>
                     </a>
                     <component
@@ -64,7 +68,11 @@
                         v-bind="item[header.value]"
                     />
                     <span v-else>
-                        {{ item[header.value] }}
+                        {{
+                            header.format
+                                ? header.format(item[header.value])
+                                : item[header.value]
+                        }}
                     </span>
                 </td>
                 <td
@@ -98,6 +106,9 @@ export default {
          *
          * When using sortable columns, data may be sorted by using the callback function prop
          * `onSort` to mutate the `items` prop.
+         *
+         * If you need to apply formatting to a column, you can provide a `format` function in
+         * the header object.
          *
          * It is also possible to use a Vue component for table cells. To do this, add a `component`
          * key to the header for that column and pass the component along. In the data, the item's

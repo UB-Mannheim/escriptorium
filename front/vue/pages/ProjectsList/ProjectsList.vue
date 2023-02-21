@@ -154,7 +154,15 @@ export default {
                 { label: "Project Tags", value: "tags", component: EscrTags },
                 { label: "# of Documents", value: "documents_count", sortable: true  },
                 { label: "Owner", value: "owner", sortable: true  },
-                { label: "Last Update", value: "updated_at", sortable: true  },
+                {
+                    label: "Last Update",
+                    value: "updated_at",
+                    sortable: true,
+                    format: (val) => new Date(val).toLocaleDateString(
+                        undefined,
+                        { year: "numeric", month: "long", day: "numeric" },
+                    ),
+                },
             ];
         },
     },

@@ -38,8 +38,7 @@
 .escr-table tr th:first-of-type {
     padding: 0 0 0 16px;
 }
-.escr-table tr td:last-of-type,
-.escr-table tr th:last-of-type {
+.escr-table tr td:last-of-type {
     padding: 0 16px 0 0;
 }
 .escr-table tbody tr:hover {
