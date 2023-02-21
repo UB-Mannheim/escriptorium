@@ -27,18 +27,22 @@ export const NewProjectModal = Template.bind({});
 const tags = [
     ...ManyTags.args.tags,
     {
+        pk: 7,
         name: "Tag",
         variant: 4,
     },
     {
+        pk: 8,
         name: "Tag tag",
         variant: 7,
     },
     {
+        pk: 9,
         name: "Other tag",
         variant: 8,
     },
     {
+        pk: 10,
         name: "A tag",
         variant: 6,
     },
@@ -111,11 +115,11 @@ const filteredByTag = (items, tags, operator) => {
         return items.filter((item) => {
             if (operator === "or") {
                 return item.tags?.tags?.some((itemTag) =>
-                    tags.includes(itemTag.name),
+                    tags.includes(itemTag.pk),
                 );
             } else {
                 return tags.every((tag) =>
-                    item.tags?.tags?.some((itemTag) => itemTag.name === tag),
+                    item.tags?.tags?.some((itemTag) => itemTag.pk === tag),
                 );
             }
         });
@@ -158,7 +162,7 @@ const PageTemplate = (args, { argTypes }) => ({
             }
         });
         // mock tags list
-        mock.onGet(projectsTagsEndpoint).reply(200, { tags });
+        mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
         // mock create project
         mock.onPost(projectsEndpoint).reply(async function() {
             // wait for 200-400 ms to mimic server-side loading
@@ -193,7 +197,7 @@ const PageTemplate = (args, { argTypes }) => ({
                             slug: "next-page-project",
                             name: "Fake project from next page",
                             owner: "John Smith",
-                            updated_at: "2023-02-20",
+                            updated_at: "2023-02-20T11:10:01.122122Z",
                             documents_count: 1,
                             tags: {
                                 tags: [tags[4]],

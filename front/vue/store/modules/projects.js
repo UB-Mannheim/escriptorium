@@ -39,6 +39,7 @@ const state = () => ({
     /**
      * tags: [{
      *     name: String,
+     *     pk: Number,
      *     variant: Number,
      * }]
      */
@@ -116,8 +117,9 @@ const actions = {
     async fetchAllProjectTags({ commit }) {
         commit("setLoading", true);
         const { data } = await retrieveAllProjectTags();
-        if (data?.tags) {
-            commit("setTags", data.tags);
+        if (data?.results) {
+            // TODO: Handle multiple pages of tags
+            commit("setTags", data.results);
         } else {
             commit("setLoading", false);
             throw new Error("Unable to retrieve project tags");

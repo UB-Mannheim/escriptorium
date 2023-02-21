@@ -12,15 +12,16 @@ export default {
     name: "EscrTagFilter",
     props: {
         /**
-         * The list of tags, each an `Object` with a `name` (`String`) property
-         * and a `variant` (`Number`) property, which must be between 1 and 12
+         * The list of tags, each an `Object` with a `name` (`String`) property,
+         * a `pk` (`Number`) property, and a `variant` (`Number`) property, which
+         * must be between 1 and 12
          */
         tags: {
             type: Array,
             default: () => [],
             required: true,
             validator: function (value) {
-                return value.length > 0 && value.every((t) => t.name);
+                return value.length > 0 && value.every((t) => t.pk || t.pk === 0);
             },
         },
         /**
@@ -105,10 +106,10 @@ export default {
          */
         changeTagSelection(checked, tag) {
             if (checked) {
-                this.selectedTags.push(tag.name);
+                this.selectedTags.push(tag.pk);
             } else {
                 this.selectedTags.splice(
-                    this.selectedTags.indexOf(tag.name),
+                    this.selectedTags.indexOf(tag.pk),
                     1,
                 );
             }
@@ -117,7 +118,7 @@ export default {
          * Select all tags after clicking "Select All"
          */
         selectAllTags() {
-            this.selectedTags = this.tags.map((t) => t.name);
+            this.selectedTags = this.tags.map((t) => t.pk);
         },
         /**
          * Select no tags after clicking "Select None"
@@ -160,11 +161,11 @@ export default {
                             "sr-only": true
                         },
                         domProps: {
-                            id: `filter-tag-${tag.name}`,
-                            name: `filter-tag-${tag.name}`,
+                            id: `filter-tag-${tag.pk}`,
+                            name: `filter-tag-${tag.pk}`,
                             type: "checkbox",
                             // ensure initial selections are checked on mount
-                            checked: this.selectedTags.includes(tag.name),
+                            checked: this.selectedTags.includes(tag.pk),
                         },
                         on: {
                             change: (e) => this.changeTagSelection(e.target.checked, tag),
@@ -176,7 +177,7 @@ export default {
                     {
                         class: this.tagClasses(tag.variant),
                         domProps: {
-                            htmlFor: `filter-tag-${tag.name}`,
+                            htmlFor: `filter-tag-${tag.pk}`,
                         },
                     },
                     [
@@ -231,8 +232,8 @@ export default {
             const filteredTags = this.getFilteredTags();
             const hiddenSelectedTagCount = this.tags.filter(
                 (tag) =>
-                    this.selectedTags.includes(tag.name) &&
-                    !filteredTags.some((t) => t.name === tag.name),
+                    this.selectedTags.includes(tag.pk) &&
+                    !filteredTags.some((t) => t.pk === tag.pk),
             ).length;
             if (filteredTags.length === 0) {
                 return h(

@@ -24,6 +24,7 @@ export const SingleTag = Template.bind({});
 SingleTag.args = {
     tags: [
         {
+            pk: 0,
             variant: 1,
             name: "Tag Name",
         },
@@ -34,10 +35,12 @@ MultipleTags.args = {
     tags: [
         ...SingleTag.args.tags,
         {
+            pk: 1,
             name: "Longer tag name",
             variant: 9,
         },
         {
+            pk: 2,
             name: "Third tag",
             variant: 5,
         },
@@ -49,18 +52,22 @@ ManyTags.args = {
     tags: [
         ...MultipleTags.args.tags,
         {
+            pk: 3,
             name: "Fourth tag",
             variant: 3,
         },
         {
+            pk: 4,
             name: "Fifth tag",
             variant: 6,
         },
         {
+            pk: 5,
             name: "Sixth tag",
             variant: 11,
         },
         {
+            pk: 6,
             name: "Long tag name 7",
             variant: 7,
         }

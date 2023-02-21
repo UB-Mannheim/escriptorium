@@ -15,7 +15,6 @@ const getters = {
      * Number of tags currently selected in the tag filter.
      */
     tagCount: (_, getters) => {
-        // console.log(getters.tagFilter);
         return getters.tagFilterSelectedTags?.length;
     },
     /**

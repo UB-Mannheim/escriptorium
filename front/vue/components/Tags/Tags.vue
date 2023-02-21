@@ -2,7 +2,7 @@
     <div :class="classes">
         <span
             v-for="tag in tags"
-            :key="tag.name"
+            :key="tag.pk"
             :class="tagClasses(tag.variant)"
         >
             {{ tag.name }}
@@ -23,7 +23,7 @@
             >
                 <span
                     v-for="tag in overflowTags"
-                    :key="tag.name"
+                    :key="tag.pk"
                     :class="tagClasses(tag.variant)"
                 >
                     {{ tag.name }}
@@ -41,15 +41,16 @@ export default {
 
     props: {
         /**
-         * The list of tags, each an `Object` with a `name` (`String`) property
-         * and a `variant` (`Number`) property, which must be between 1 and 12
+         * The list of tags, each an `Object` with a `name` (`String`) property,
+         * a `pk` (`Number`) property, and a `variant` (`Number`) property, which
+         * must be between 1 and 12
          */
         tags: {
             type: Array,
             default: () => [],
             required: true,
             validator(value) {
-                return value.length > 0 && value.every((t) => t.name);
+                return value.length > 0 && value.every((t) => t.pk || t.pk === 0);
             },
         },
         /**
