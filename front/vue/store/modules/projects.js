@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
     createProject,
     deleteProject,
@@ -11,6 +12,10 @@ const state = () => ({
     deleteModalOpen: false,
     loading: false,
     newProjectName: "",
+    /**
+     * If there are additional pages of results, the next one will go here
+     */
+    nextPage: "",
     /**
      * projects: [{
      *     name: String,
@@ -63,7 +68,7 @@ const actions = {
         commit("setLoading", true);
         try {
             const { data } = await createProject(state.newProjectName);
-            if (data?.projects) {
+            if (data) {
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
@@ -73,10 +78,10 @@ const actions = {
                     },
                     { root: true },
                 );
-                // TODO: redirect to the new project
-                commit("setProjects", data.projects);
+                // TODO: redirect to `/project/${data.slug}`
                 commit("setCreateModalOpen", false);
             } else {
+                commit("setLoading", false);
                 throw new Error("Unable to create project");
             }
         } catch (error) {
@@ -87,22 +92,19 @@ const actions = {
     async deleteProject({ dispatch, commit, state }) {
         commit("setLoading", true);
         try {
-            const { data } = await deleteProject(state.projectToDelete.slug);
-            if (data?.projects) {
-                // show toast alert on success
-                dispatch(
-                    "alerts/add",
-                    {
-                        color: "success",
-                        message: "Project deleted successfully",
-                    },
-                    { root: true },
-                );
-                commit("setProjects", data.projects);
-                commit("setDeleteModalOpen", false);
-            } else {
-                throw new Error("Unable to delete project");
-            }
+            await deleteProject(state.projectToDelete.id);
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Project deleted successfully",
+                },
+                { root: true },
+            );
+            commit("setDeleteModalOpen", false);
+            // fetch projects list again
+            dispatch("fetchProjects");
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -117,6 +119,7 @@ const actions = {
         if (data?.tags) {
             commit("setTags", data.tags);
         } else {
+            commit("setLoading", false);
             throw new Error("Unable to retrieve project tags");
         }
         commit("setLoading", false);
@@ -132,10 +135,34 @@ const actions = {
             direction: state?.sortState?.direction,
             filters: rootState?.filter?.filters,
         });
-        if (data?.projects) {
-            commit("setProjects", data.projects);
+        if (data?.results) {
+            commit("setProjects", data.results);
+            commit("setNextPage", data.next);
         } else {
+            commit("setLoading", false);
             throw new Error("Unable to retrieve projects");
+        }
+        commit("setLoading", false);
+    },
+    /**
+     * Fetch the next page of projects, retrieved from fetchProjects, and add
+     * all of its projects on the state.
+     */
+    async fetchNextPage({ state, commit, dispatch }) {
+        commit("setLoading", true);
+        try {
+            const { data } = await axios.get(state.nextPage);
+            if (data?.results) {
+                data.results.forEach((project) => {
+                    commit("addProject", project);
+                });
+                commit("setNextPage", data.next);
+            } else {
+                commit("setLoading", false);
+                throw new Error("Unable to retrieve projects");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
     },
@@ -174,6 +201,9 @@ const actions = {
 };
 
 const mutations = {
+    addProject(state, project) {
+        state.projects.push(project);
+    },
     setProjects(state, projects) {
         state.projects = projects;
     },
@@ -188,6 +218,9 @@ const mutations = {
     },
     setNewProjectName(state, input) {
         state.newProjectName = input;
+    },
+    setNextPage(state, nextPage) {
+        state.nextPage = nextPage;
     },
     setProjectToDelete(state, project) {
         state.projectToDelete = project;

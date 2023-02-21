@@ -91,6 +91,15 @@
                 >
                     Loading...
                 </div>
+                <EscrButton
+                    v-if="nextPage"
+                    label="Load more"
+                    class="escr-load-more-btn"
+                    color="outline-primary"
+                    size="small"
+                    :disabled="loading"
+                    :on-click="async () => await fetchNextPage()"
+                />
             </div>
         </template>
     </EscrPage>
@@ -134,6 +143,7 @@ export default {
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
             loading: (state) => state.projects.loading,
             newProjectName: (state) => state.projects.newProjectName,
+            nextPage: (state) => state.projects.nextPage,
             projects: (state) => state.projects.projects,
             projectToDelete: (state) => state.projects.projectToDelete,
             tags: (state) => state.projects.tags,
@@ -164,6 +174,7 @@ export default {
             "deleteProject",
             "fetchAllProjectTags",
             "fetchProjects",
+            "fetchNextPage",
             "handleNewProjectNameInput",
             "openCreateModal",
             "openDeleteModal",

@@ -46,30 +46,33 @@ const tags = [
 
 const projects = [
     {
-        slug: "0-project-name",
+        id: 0,
+        slug: "project-name",
         name: "Project Name",
         owner: "Ryuichi Sakamoto",
-        updated_at: "2022-08-09",
+        updated_at: "2022-08-09T09:01:12.145622Z",
         documents_count: 10,
         tags: {
             tags: tags.slice(0, 7),
         },
     },
     {
-        slug: "1-second-project",
+        id: 1,
+        slug: "second-project",
         name: "Second Project",
         owner: "Haruomi Hosono",
-        updated_at: "2023-01-31",
+        updated_at: "2023-01-31T12:14:32.004501Z",
         documents_count: 100,
         tags: {
             tags: [tags[5], ...tags.slice(7, 9)],
         },
     },
     {
-        slug: "2-a-third-project",
+        id: 2,
+        slug: "a-third-project",
         name: "A Third Project",
         owner: "Yukihiro Takahashi",
-        updated_at: "2022-01-09",
+        updated_at: "2022-01-09T17:24:40.044701Z",
         documents_count: 50,
         tags: {
             tags: [tags[7], tags[9], tags[10]],
@@ -77,23 +80,26 @@ const projects = [
     },
 ];
 
-const sorted = (items, { sort, dir }) => {
+const sorted = (items, { ordering }) => {
     const alphabeticSort = (key) => (a, b) => {
         return a[key].toString().localeCompare(b[key].toString());
     };
     const numericSort = (key) => (a, b) => {
         return a[key] - b[key];
     };
-    if (dir === 0) {
-        return [...items].sort(alphabeticSort("slug"));
+    if (!ordering) {
+        return [...items].sort(numericSort("id"));
     } else {
+        // handle ordering param ("sortfield" = asc, "-sortfield" = desc)
         let sorted = [...items];
-        if (sort === "documents_count") {
+        const split = ordering.split("-");
+        const sort = split.length == 1 ? split[0] : split[1];
+        if (ordering.includes("documents_count")) {
             sorted.sort(numericSort(sort));
-        } else if (sort) {
+        } else {
             sorted.sort(alphabeticSort(sort));
         }
-        if (dir === "desc") {
+        if (split.length == 2) {
             sorted.reverse();
         }
         return sorted;
@@ -102,7 +108,6 @@ const sorted = (items, { sort, dir }) => {
 
 const filteredByTag = (items, tags, operator) => {
     if (tags) {
-        console.log(tags);
         return items.filter((item) => {
             if (operator === "or") {
                 return item.tags?.tags?.some((itemTag) =>
@@ -135,21 +140,21 @@ const PageTemplate = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
-                const { sort, dir, tags, tags_op } = config.params;
+                const { ordering, tags, tags_op } = config.params;
                 return [
                     200,
                     {
-                        projects: sorted(
+                        results: sorted(
                             filteredByTag(projects, tags, tags_op),
                             {
-                                sort,
-                                dir,
+                                ordering
                             },
                         ),
+                        next: "fake-nextpage",
                     },
                 ];
             } else {
-                return [200, { projects }];
+                return [200, { results: projects, next: "fake-nextpage" }];
             }
         });
         // mock tags list
@@ -159,7 +164,7 @@ const PageTemplate = (args, { argTypes }) => ({
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
-            return [200, { projects }];
+            return [200, projects[0]];
         });
         // mock delete project (throw an error, for fun!)
         mock.onDelete(projectsIdEndpoint).reply(async function() {
@@ -171,6 +176,31 @@ const PageTemplate = (args, { argTypes }) => ({
                 {
                     message:
                         "This is just a test environment, so you cannot delete a project.",
+                },
+            ];
+        });
+        // send one more dummy project from next page
+        mock.onGet("fake-nextpage").reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                200,
+                {
+                    results: [
+                        {
+                            id: 3,
+                            slug: "next-page-project",
+                            name: "Fake project from next page",
+                            owner: "John Smith",
+                            updated_at: "2023-02-20",
+                            documents_count: 1,
+                            tags: {
+                                tags: [tags[4]],
+                            },
+                        },
+                    ],
+                    next: null,
                 },
             ];
         });

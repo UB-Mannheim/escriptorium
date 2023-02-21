@@ -2,12 +2,10 @@ import axios from "axios";
 
 export const retrieveProjects = async ({ field, direction, filters }) => {
     let params = {};
-    if (field && direction) {
-        params.sort = field;
+    if (field && direction && direction !== 0) {
+        params.ordering = field;
         if (direction == -1) {
-            params.dir = "desc";
-        } else if (direction == 1) {
-            params.dir = "asc";
+            params.ordering = `-${field}`;
         }
     }
     if (filters) {
@@ -19,7 +17,7 @@ export const retrieveProjects = async ({ field, direction, filters }) => {
     return await axios.get("/projects", { params });
 };
 export const createProject = async (name) =>
-    await axios.post("/projects", name);
+    await axios.post("/projects", { params: { name } });
 export const retrieveProject = async (projectId) =>
     await axios.get(`/projects/${projectId}`);
 export const retrieveAllProjectTags = async () =>

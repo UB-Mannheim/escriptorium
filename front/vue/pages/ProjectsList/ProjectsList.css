@@ -11,6 +11,9 @@
     text-align: center;
     padding: 0 1rem 1rem;
 }
+.escr-load-more-btn {
+    margin: 1rem auto;
+}
 /* constrain tags cells width */
 .escr-projects-list table td:nth-of-type(2) {
     width: 300px;
