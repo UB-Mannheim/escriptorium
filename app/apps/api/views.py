@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -136,7 +136,13 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
 
     def get_queryset(self):
-        return Project.objects.for_user_read(self.request.user)
+        return (Project.objects
+                .for_user_read(self.request.user)
+                .annotate(documents_count=Count(
+                    'documents',
+                    filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
+                    distinct=True))
+                .select_related('owner'))
 
 
 class TagViewSet(ModelViewSet):

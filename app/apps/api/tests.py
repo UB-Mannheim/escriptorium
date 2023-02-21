@@ -972,6 +972,14 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, {'name': 'test proj'})
         self.assertEqual(resp.status_code, 201)
 
+    def test_documents_count(self):
+        self.factory.make_document(project=self.project)
+        uri = reverse('api:project-list')
+        self.client.force_login(self.project.owner)
+        resp = self.client.get(uri)
+        resp_project = next(item for item in resp.json()['results'] if item["id"] == self.project.id)
+        self.assertGreaterEqual(resp_project['documents_count'], 1)
+
 
 class DocumentPartMetadataTestCase(CoreFactoryTestCase):
     def setUp(self):
