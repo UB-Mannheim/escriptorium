@@ -149,24 +149,12 @@
     fill: var(--alert);
 }
 /* outline buttons get filled on hover/active, so use bright text */
-.escr-button--outline-primary:hover,
-.escr-button--outline-primary:active,
-.escr-button--outline-secondary:hover,
-.escr-button--outline-secondary:active,
-.escr-button--outline-tertiary:hover,
-.escr-button--outline-tertiary:active,
-.escr-button--outline-danger:hover,
-.escr-button--outline-danger:active {
+[class*="escr-button--outline"]:hover,
+[class*="escr-button--outline"]:active {
     color: var(--button-text);
 }
-.escr-button--outline-primary:hover svg,
-.escr-button--outline-primary:active svg,
-.escr-button--outline-secondary:hover svg,
-.escr-button--outline-secondary:active svg,
-.escr-button--outline-tertiary:hover svg,
-.escr-button--outline-tertiary:active svg,
-.escr-button--outline-danger:hover svg,
-.escr-button--outline-danger:active svg {
+[class*="escr-button--outline"]:hover svg,
+[class*="escr-button--outline"]:active svg {
     fill: var(--button-text);
 }
 /* link */
@@ -205,14 +193,32 @@
 .escr-button--text svg {
     fill: var(--text1);
 }
-.escr-button--text:hover {
+.escr-button--text:hover,
+.escr-button--outline-text:hover {
     background-color: var(--secondary-hover);
 }
-.escr-button--text:active {
+.escr-button--text:active,
+.escr-button--outline-text:active {
     background-color: var(--secondary-focus);
 }
-.escr-button--text:focus {
+.escr-button--text:focus,
+.escr-button--outline-text:focus {
     box-shadow: 0 0 0 0.2rem  var(--secondary-focus);
+}
+/* "outline-text" color variant */
+.escr-button--outline-text {
+    background-color: transparent;
+    border: 1px solid var(--text1);
+    color: var(--text1);
+}
+.escr-button--outline-text svg,
+.escr-button--outline-text:hover svg,
+.escr-button--outline-text:active svg {
+    fill: var(--text1);
+}
+.escr-button--outline-text:hover,
+.escr-button--outline-text:active {
+    color: var(--text1);
 }
 /* disabled */
 .escr-button:disabled {

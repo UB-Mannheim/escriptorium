@@ -14,11 +14,13 @@ export default {
                 "secondary",
                 "tertiary",
                 "danger",
+                "text",
+                "link-primary",
                 "outline-primary",
                 "outline-secondary",
                 "outline-tertiary",
                 "outline-danger",
-                "link-primary",
+                "outline-text",
             ],
         },
         size: {
@@ -135,6 +137,13 @@ SmallOutline.args = {
     label: "Button",
     onClick: () => {},
     color: "outline-primary",
+    size: "small",
+};
+export const SmallOutlineText = Template.bind({});
+SmallOutlineText.args = {
+    label: "Button",
+    onClick: () => {},
+    color: "outline-text",
     size: "small",
 };
 
