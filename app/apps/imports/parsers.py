@@ -1176,10 +1176,17 @@ class TranskribusPageXmlParser(PagexmlParser):
     #     )
 
     def clean_coords(self, coordTag):
-        return [
-            list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
-            for pt in coordTag.get("points").strip().split(" ")
-        ]
+        try:
+            return [
+                list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
+                for pt in coordTag.get("points").strip().split(" ")
+            ]
+        except (AttributeError, ValueError):
+            msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
+                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline
+            )
+            self.report.append(msg)
+            raise ParseError(msg)
 
 
 def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True, mets_describer=False, mets_base_uri=None):
