@@ -32,6 +32,19 @@ export const Toast = Template.bind({});
 Toast.args = {
     message: messages[0],
 };
+export const ToastWithActionLink = Template.bind({});
+ToastWithActionLink.args = {
+    message: messages[0],
+    actionLink: window.parent.location,
+    actionLabel: "Click me",
+};
+
+export const ToastWithActionFunction = Template.bind({});
+ToastWithActionFunction.args = {
+    message: messages[0],
+    actionLabel: "Click me",
+    actionFn: () => {},
+};
 
 const GroupTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),

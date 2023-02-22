@@ -7,6 +7,20 @@
         <span>
             {{ message }}
         </span>
+        <a
+            v-if="actionLink && actionLabel"
+            :href="actionLink"
+            class="escr-button escr-button--small escr-button--outline-text"
+        >
+            {{ actionLabel }}
+        </a>
+        <EscrButton
+            v-else-if="actionFn && actionLabel"
+            :label="actionLabel"
+            :on-click="actionFn"
+            color="outline-text"
+            size="small"
+        />
         <EscrButton
             :on-click="onClose"
             aria-label="Close"
@@ -28,6 +42,27 @@ export default {
     name: "EscrToast",
     components: { EscrButton, XIcon },
     props: {
+        /**
+         * Optional function to pass to an action button on the alert.
+         */
+        actionFn: {
+            type: Function,
+            default: null,
+        },
+        /**
+         * Optional label to display on an action button on the alert.
+         */
+        actionLabel: {
+            type: String,
+            default: "",
+        },
+        /**
+         * Optional link to pass to an action button on the alert.
+         */
+        actionLink: {
+            type: String,
+            default: "",
+        },
         /**
          * The color of the toast alert, which must be one of `alert`, `success`, or `test`.
          */

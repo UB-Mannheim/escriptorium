@@ -21,15 +21,14 @@
     width: max-content;
     max-width: 100%;
     transition: opacity 0.5s;
+    gap: 0.5rem;
 }
 .escr-toast-group .escr-toast + .escr-toast {
     margin-top: 1rem;
 }
-.escr-toast > span {
+.escr-toast > span,
+.escr-toast > a {
     font-weight: 600;
-}
-.escr-toast > button:last-of-type {
-    margin-left: 0.5rem;
 }
 /* color variants */
 .escr-toast--alert {
