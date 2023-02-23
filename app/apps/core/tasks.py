@@ -149,7 +149,7 @@ class FrontendFeedback(Callback):
     def on_train_epoch_end(self, trainer, pl_module) -> None:
         self.es_model.refresh_from_db()
         self.es_model.training_epoch = trainer.current_epoch
-        val_metric = float(trainer.logged_metrics['val_metric'])
+        val_metric = float(trainer.logged_metrics['val_accuracy'])
         self.es_model.training_accuracy = val_metric
         # model.training_total = chars
         # model.training_errors = error
