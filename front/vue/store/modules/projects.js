@@ -119,14 +119,13 @@ const actions = {
         commit("setLoading", true);
         const { data } = await retrieveAllProjectTags();
         if (data?.results) {
-            console.log(data.results.map((tag) => ({
-                ...tag,
-                variant: tagColorToVariant(tag.color),
-            })))
-            commit("setTags", data.results.map((tag) => ({
-                ...tag,
-                variant: tagColorToVariant(tag.color),
-            })));
+            commit(
+                "setTags",
+                data.results.map((tag) => ({
+                    ...tag,
+                    variant: tagColorToVariant(tag.color),
+                })),
+            );
         } else {
             commit("setLoading", false);
             throw new Error("Unable to retrieve project tags");
