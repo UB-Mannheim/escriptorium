@@ -9,6 +9,7 @@ from api.views import (
     BlockViewSet,
     DocumentMetadataViewSet,
     DocumentPartTypeViewSet,
+    DocumentTagViewSet,
     DocumentTranscriptionViewSet,
     DocumentViewSet,
     ImageAnnotationViewSet,
@@ -18,10 +19,10 @@ from api.views import (
     OcrModelViewSet,
     PartMetadataViewSet,
     PartViewSet,
+    ProjectTagViewSet,
     ProjectViewSet,
     RegenerableAuthToken,
     ScriptViewSet,
-    TagViewSet,
     TextAnnotationViewSet,
     UserViewSet,
 )
@@ -32,13 +33,14 @@ router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'models', OcrModelViewSet)
 router.register(r'users', UserViewSet)
+router.register(r'tags/project', ProjectTagViewSet, basename='project-tag')
 router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 router.register(r'types/annotations', AnnotationTypeViewSet)
 router.register(r'types/part', DocumentPartTypeViewSet)
 
 projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
-projects_router.register(r'tags', TagViewSet, basename='tag')
+projects_router.register(r'tags', DocumentTagViewSet, basename='document-tag')
 
 documents_router = routers.NestedSimpleRouter(router, r'documents', lookup='document')
 documents_router.register(r'metadata', DocumentMetadataViewSet, basename='metadata')
