@@ -30,21 +30,25 @@ const tags = [
         pk: 7,
         name: "Tag",
         variant: 4,
+        color: "#fcb55f",
     },
     {
         pk: 8,
         name: "Tag tag",
         variant: 7,
+        color: "#80c6ba",
     },
     {
         pk: 9,
         name: "Other tag",
         variant: 8,
+        color: "#88c9f2",
     },
     {
         pk: 10,
         name: "A tag",
         variant: 6,
+        color: "#cbe364",
     },
 ];
 
@@ -130,7 +134,7 @@ const filteredByTag = (items, tags, operator) => {
 // setup mocks for API requests
 const mock = new MockAdapter(axios);
 const projectsEndpoint = "/projects";
-const projectsTagsEndpoint = "/project_tags";
+const projectsTagsEndpoint = "/tags/project";
 const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
 
 const PageTemplate = (args, { argTypes }) => ({

@@ -21,6 +21,6 @@ export const createProject = async (name) =>
 export const retrieveProject = async (projectId) =>
     await axios.get(`/projects/${projectId}`);
 export const retrieveAllProjectTags = async () =>
-    await axios.get("/project_tags");
+    await axios.get("/tags/project");
 export const deleteProject = async (projectId) =>
     await axios.delete(`/projects/${projectId}`);

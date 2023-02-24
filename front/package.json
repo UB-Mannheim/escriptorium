@@ -18,6 +18,7 @@
     "axios": "^0.21.4",
     "bootstrap": "^4.2.1",
     "bootstrap-select": "^1.13.18",
+    "color-classifier": "^0.0.1",
     "css-loader": "^5.0.1",
     "diff": "^4.0.1",
     "dropzone": "^5.9.2",

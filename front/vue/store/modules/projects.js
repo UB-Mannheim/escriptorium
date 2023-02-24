@@ -5,6 +5,7 @@ import {
     retrieveAllProjectTags,
     retrieveProjects,
 } from "../../../src/api";
+import { tagColorToVariant } from "../util/color";
 
 // initial state
 const state = () => ({
@@ -118,8 +119,14 @@ const actions = {
         commit("setLoading", true);
         const { data } = await retrieveAllProjectTags();
         if (data?.results) {
-            // TODO: Handle multiple pages of tags
-            commit("setTags", data.results);
+            console.log(data.results.map((tag) => ({
+                ...tag,
+                variant: tagColorToVariant(tag.color),
+            })))
+            commit("setTags", data.results.map((tag) => ({
+                ...tag,
+                variant: tagColorToVariant(tag.color),
+            })));
         } else {
             commit("setLoading", false);
             throw new Error("Unable to retrieve project tags");
