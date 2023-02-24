@@ -17,14 +17,6 @@ tests:
   stage: test
   image: registry.gitlab.com/scripta/escriptorium/base:kraken42
 
-  # Skip tests for base tags since the tests are likely to fail if any api
-  # of one of the modules changed
-  # and the tests will be run on the actual build anyway
-  rules:
-    - if: '$CI_COMMIT_TAG !~ /^base-.*/'
-      when: on_success
-    - when: never
-
   services:
     - postgres:13-alpine
     - redis:alpine
@@ -105,3 +97,24 @@ docker-build-base:
 
   script:
     - ci/build-base.sh
+
+pages:
+  stage: deploy
+  image: node:latest
+  rules:
+    # run this job on push to develop when frontend related stuff changes
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - front/**/*
+    # or on manual trigger in GitLab web ui
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  script:
+    # install npm deps and build storybook
+    - cd front
+    - npm install
+    - npm run build-storybook -- -o ../public
+  artifacts:
+    # save storybook build as an artifact
+    untracked: true
+    paths:
+      - public

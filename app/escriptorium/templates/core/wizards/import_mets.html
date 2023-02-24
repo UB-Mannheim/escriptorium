@@ -1,0 +1,34 @@
+{% extends 'core/wizards/import.html' %}
+{% load i18n bootstrap %}
+
+{% block selected_images %}{% endblock %}
+
+{% block wizard_action %}action="{% url 'api:document-imports' pk=object.pk %}"{% endblock %}
+
+{% block wizard_fields %}
+  {{ block.super }}
+  {% if not import_form.current_import.ongoing %}
+  <div class="form-group">
+    <h5>{% trans "Import images/segmentation/transcriptions described by METS." %}</h5>
+    {% render_field import_form.mets %}
+
+    {% trans 'The prefix of the target transcription. Will default to "METS Import"' as name_help_text %}
+    {% render_field import_form.name help_text=name_help_text %}
+
+    {% render_field import_form.override %}
+  </div>
+
+  <div class="form-group">
+    <h5>{% trans "From a remote METS file" %}</h5>
+    {% render_field import_form.mets_uri %}
+  </div>
+
+  <div class="form-group">
+    <h5>{% trans "Or from a local archive" %}</h5>
+    {% trans "A single ZIP archive described by a METS file contained inside it." as file_help_text %}
+    {% render_field import_form.upload_file class="js-proc-settings" accept=".zip" help_text=file_help_text %}
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block wizard_submit %}{% trans "Start importing" %}{% endblock %}

@@ -289,7 +289,7 @@ class DocumentViewSet(ModelViewSet):
     def imports(self, request, pk=None):
         document = self.get_object()
         form = ImportForm(document, request.user,
-                          request.POST, request.FILES)
+                          request.data, request.FILES)
         if form.is_valid():
             form.save()  # create the import
             try:
@@ -324,7 +324,7 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def export(self, request, pk=None):
         document = self.get_object()
-        form = ExportForm(document, request.user, request.POST)
+        form = ExportForm(document, request.user, request.data)
         if form.is_valid():
             # return form.stream()
             form.process()

@@ -1,0 +1,51 @@
+.escr-filter-button,
+.escr-filter-button .escr-button {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-filter-button .escr-button {
+    color: var(--text1);
+    background-color: var(--background2);
+    margin-right: 4px;
+    font-size: 12px;
+    min-height: 36px;
+}
+.escr-filter-button .escr-button:hover {
+    background-color: var(--background2-dark);
+}
+.escr-filter-button .escr-button:active {
+    background-color: var(--background2-darker);
+}
+.escr-filter-button .escr-button:focus {
+    box-shadow: 0 0 0 0.2rem var(--background2-focus);
+}
+.escr-filter-button .escr-button .label {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-filter-button .escr-button .escr-tag-icon {
+    margin-right: 4px;
+}
+.escr-filter-button .escr-button .count {
+    display: block;
+    padding: 1px 1px 0 0;
+    color: var(--button-text);
+    background-color: var(--primary);
+    margin-left: 4px;
+    font-size: 12px;
+    width: 19px;
+    height: 19px;
+    border-radius: 10px;
+}
+.escr-filter-button .escr-clear-filter-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 18px;
+    padding: 4px;
+}
+.escr-filter-button .escr-clear-filter-button svg {
+    fill: var(--text1);
+}

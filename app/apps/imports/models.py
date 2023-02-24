@@ -9,6 +9,10 @@ from reporting.models import TaskReport
 from users.models import User
 
 
+def document_import_path(instance, filename):
+    return "import_src/{0}/{1}".format(instance.document.pk, filename)
+
+
 class DocumentImport(models.Model):
     WORKFLOW_STATE_CREATED = 0
     WORKFLOW_STATE_STARTED = 1
@@ -34,9 +38,11 @@ class DocumentImport(models.Model):
     name = models.CharField(max_length=256, blank=True)
     override = models.BooleanField(default=False)
     import_file = models.FileField(
-        upload_to='import_src/',
+        upload_to=document_import_path,
         validators=[FileExtensionValidator(
             allowed_extensions=XML_EXTENSIONS + ['json'])])
+    with_mets = models.BooleanField(default=False)
+    mets_base_uri = models.CharField(null=True, blank=True, max_length=512)
 
     report = models.ForeignKey(TaskReport, max_length=64,
                                null=True, blank=True,
@@ -76,7 +82,9 @@ class DocumentImport(models.Model):
 
             start_at = resume and self.processed or 0
             parser = make_parser(self.document, self.import_file,
-                                 name=self.name, report=self.report)
+                                 name=self.name, report=self.report,
+                                 mets_describer=self.with_mets,
+                                 mets_base_uri=self.mets_base_uri)
             for obj in parser.parse(start_at=start_at,
                                     override=self.override,
                                     user=self.started_by):
@@ -92,3 +100,6 @@ class DocumentImport(models.Model):
             self.report.error(str(e))
             self.save()
             raise e
+
+        else:
+            parser.clean()

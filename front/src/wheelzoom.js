@@ -179,17 +179,19 @@ export class WheelZoom {
     }
 
     zoomIn() {
+        var tr = this.targets[0].element.getBoundingClientRect();
         var target = {
-            x: this.targets[0].element.clientWidth/2-this.pos.x,
-            y: this.targets[0].element.clientHeight/2-this.pos.y
+            x: tr.width / 2 - this.pos.x,
+            y: tr.height / 2 - this.pos.y
         };
         this.zoomTo(target, 0.1);
     }
 
     zoomOut() {
+        var tr = this.targets[0].element.getBoundingClientRect();
         var target = {
-            x: this.targets[0].element.clientWidth/2-this.pos.x,
-            y: this.targets[0].element.clientHeight/2-this.pos.y
+            x: tr.width / 2 - this.pos.x,
+            y: tr.height / 2 - this.pos.y
         };
         this.zoomTo(target, -0.1);
     }
@@ -216,10 +218,11 @@ export class WheelZoom {
     drag(e) {
         if (this.disabled) return null;
 	e.preventDefault();
-        let target = this.dragging;
+        var target = this.dragging;
         if (!target) return null;
-        let ts = target.container.getBoundingClientRect();
-        let delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
+        var ts = target.container.getBoundingClientRect();
+        var ter = target.element.getBoundingClientRect();
+        var delta, oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
 
         if (this.previousEvent) {
             if (e.altKey) {
@@ -230,27 +233,26 @@ export class WheelZoom {
             }
         }
 	// Make sure the slide stays in its container area when zooming in/out
-        if (target.element.clientWidth * this.scale > ts.width) {
+        if (ter.width * this.scale > ts.width) {
             if (this.pos.x > 0) { this.pos.x = 0; }
-            if (this.pos.x + target.element.clientWidth * this.scale < ts.width) {
-                this.pos.x = ts.width - target.element.clientWidth * this.scale;
+            if (this.pos.x + ter.width < ts.width) {
+                this.pos.x = ts.width - ter.width;
             }
         } else {
             if (this.pos.x < 0) { this.pos.x = 0; }
-	    if (this.pos.x + target.element.clientWidth *  this.scale > ts.width) {
-                this.pos.x = ts.width - target.element.clientWidth *  this.scale;
+	    if (this.pos.x + ter.width > ts.width) {
+                this.pos.x = ts.width - ter.width;
             }
         }
-
-        if (target.element.clientHeight * this.scale > ts.height) {
+        if (ter.height * this.scale > ts.height) {
             if (this.pos.y > 0) { this.pos.y = 0; }
-	    if (this.pos.y + target.element.clientHeight * this.scale < ts.height) {
-                this.pos.y = ts.height - target.element.clientHeight * this.scale;
+	    if (this.pos.y + ter.height < ts.height) {
+                this.pos.y = ts.height - ter.height;
             }
         } else {
             if (this.pos.y < 0) { this.pos.y = 0; }
-            if (this.pos.y + target.element.clientHeight * this.scale > ts.height) {
-                this.pos.y = ts.height - target.element.clientHeight *  this.scale;
+            if (this.pos.y + ter.height > ts.height) {
+                this.pos.y = ts.height - ter.height;
             }
         }
 
@@ -307,7 +309,7 @@ export class WheelZoom {
     }
 
     reset() {
-        let oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
+        var oldPos={x: this.pos.x, y: this.pos.y}, oldAngle=this.angle;
         this.pos = {x:0, y:0};
 	this.scale = this.initialScale || 1;
         this.updateStyle({x: -oldPos.x, y:-oldPos.y, scale: 1/oldAngle});

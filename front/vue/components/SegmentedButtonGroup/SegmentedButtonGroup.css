@@ -1,0 +1,80 @@
+.escr-segmented-button-group {
+    display: flex;
+    flex-flow: row nowrap;
+}
+.escr-segmented-button-group label {
+    display: flex;
+    flex-flow: row nowrap;
+    flex: 1 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0px 10px;
+    min-height: 32px;
+    height: 32px;
+    color: var(--button-text);
+    font-size: 12px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        font-weight 0.15s ease-in-out;
+    cursor: pointer;
+}
+/* separation and border radius */
+.escr-segmented-button-group label:not(:last-of-type) {
+    margin-right: 1px;
+}
+.escr-segmented-button-group label:first-of-type {
+    border-radius: 5px 0px 0px 5px;
+}
+.escr-segmented-button-group label:last-of-type {
+    border-radius: 0px 5px 5px 0px;
+}
+.escr-segmented-button-group label:not(:first-of-type):not(:last-of-type) {
+    border-radius: 0px;
+}
+.escr-segmented-button-group label:first-of-type:last-of-type {
+    border-radius: 5px;
+}
+/* inactive button(s) */
+.escr-segmented-button-group input:not(:checked) + label {
+    color: var(--text2);
+    background-color: var(--background2);
+    font-weight: 400;
+}
+.escr-segmented-button-group input:not(:checked) + label:hover {
+    background-color: var(--background2-dark);
+}
+.escr-segmented-button-group input:not(:checked) + label:active {
+    background-color: var(--background2-darker);
+}
+/* active button */
+.escr-segmented-button-group input:checked + label {
+    font-weight: 600;
+}
+.escr-segmented-button-group--primary input:checked + label {
+    background-color: var(--primary);
+}
+.escr-segmented-button-group--primary input:checked + label:hover {
+    background-color: var(--primary-dark);
+}
+.escr-segmented-button-group--primary input:checked + label:active {
+    background-color: var(--primary-darker);
+}
+.escr-segmented-button-group--secondary input:checked + label {
+    background-color: var(--secondary);
+}
+.escr-segmented-button-group--secondary input:checked + label:hover {
+    background-color: var(--secondary-dark);
+}
+.escr-segmented-button-group--secondary input:checked + label:active {
+    background-color: var(--secondary-darker);
+}
+/* focus */
+.escr-segmented-button-group input:focus + label {
+    z-index: 1;
+}
+.escr-segmented-button-group--primary input:focus + label {
+    box-shadow: 0 0 0 0.1rem var(--primary-focus);
+}
+.escr-segmented-button-group--secondary input:focus + label {
+    box-shadow: 0 0 0 0.1rem var(--secondary-focus);
+}

@@ -1,6 +1,6 @@
 import json
 import logging
-import os.path
+import os
 import re
 import time
 import uuid
@@ -16,19 +16,21 @@ from django.db import transaction
 from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from easy_thumbnails.files import get_thumbnailer
 from lxml import etree
 
 from core.models import (
     Block,
     DocumentMetadata,
     DocumentPart,
+    DocumentPartMetadata,
     Line,
     LineTranscription,
     Metadata,
     Transcription,
 )
-from core.tasks import generate_part_thumbnails
 from imports.mets import METSProcessor
+from users.consumers import send_event
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -78,6 +80,24 @@ class ParserDocument:
         )
         return transcription
 
+    def clean(self):
+        # remove import file if everything went well and any left over
+        # this is only called if the import went to completion.
+        pass
+
+    def post_process_image(self, part):
+        # generate the card thumbnail right away to show the image card
+        if getattr(settings, 'THUMBNAIL_ENABLE', True):
+            get_thumbnailer(part.image).get_thumbnail(
+                settings.THUMBNAIL_ALIASES[""]["card"]
+            )
+        send_event("document", part.document.pk, "part:new", {
+            "id": part.pk
+        })
+        part.task(
+            "convert",
+            user_pk=part.document.owner and part.document.owner.pk or None)
+
 
 class PdfParser(ParserDocument):
     def __init__(self, document, file_handler, report):
@@ -99,6 +119,10 @@ class PdfParser(ParserDocument):
             return 0
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         buff = self.file.read()
         doc = pyvips.Image.pdfload_buffer(buff, n=-1, access='sequential')
         n_pages = doc.get('n-pages')
@@ -114,24 +138,43 @@ class PdfParser(ParserDocument):
                                                    page=page_nb,
                                                    dpi=300,
                                                    access='sequential')
-                part = DocumentPart(document=self.document)
-                fname = '%s_page_%d.png' % (self.file.name.rsplit('/')[-1], page_nb + 1)
+                pdfname = os.path.basename(self.file.name)
+                fname = '%s_page_%d.png' % (pdfname, page_nb + 1)
+                try:
+                    part = DocumentPart.objects.filter(
+                        document=self.document,
+                        original_filename=fname
+                    )[0]
+                except IndexError:
+                    # we do not use DoesNotExist because documents could have
+                    # duplicate image names at some point.
+                    part = DocumentPart(
+                        document=self.document,
+                        original_filename=fname
+                    )
+
                 part.image_file_size = 0
                 part.image.save(fname, ContentFile(page.write_to_buffer('.png')))
                 part.image_file_size = part.image.size
-                part.original_filename = fname
+                part.source = f"pdf//{pdfname}"
                 part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                 part.save()
-                generate_part_thumbnails.si(instance_pk=part.pk)
+                self.post_process_image(part)
+
                 yield part
                 page_nb = page_nb + 1
+
         except pyvips.error.Error as e:
-            msg = _("Parse error in {filename}: {page}: {error}, skipping it.").format(
-                filename=self.file.name, page=page_nb + 1, error=e.args[0]
+            self.report.append(
+                _("Parse error in {filename}: {page}: {error}, skipping it.").format(
+                    filename=self.file.name, page=page_nb + 1, error=e.args[0]
+                ),
+                logger_fct=logger.warning,
             )
-            logger.warning(msg)
-            if self.report:
-                self.report.append(msg)
+
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
 
 
 class ZipParser(ParserDocument):
@@ -161,6 +204,10 @@ class ZipParser(ParserDocument):
             return len(zfh.infolist())
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         with zipfile.ZipFile(self.file) as zfh:
             total = len(zfh.infolist())
             for index, finfo in enumerate(zfh.infolist()):
@@ -183,6 +230,8 @@ class ZipParser(ParserDocument):
                                     original_filename=filename
                                 )[0]
                             except IndexError:
+                                # we do not use DoesNotExist because documents could have
+                                # duplicate image names at some point.
                                 part = DocumentPart(
                                     document=self.document,
                                     original_filename=filename
@@ -190,9 +239,13 @@ class ZipParser(ParserDocument):
                             part.image_file_size = 0
                             part.image.save(filename, ContentFile(zipedfh.read()))
                             part.image_file_size = part.image.size
+                            part.source = "zip//{0}/{1}".format(
+                                os.path.basename(self.file.name),
+                                filename
+                            )
                             part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
                             part.save()
-                            generate_part_thumbnails.si(instance_pk=part.pk)
+                            self.post_process_image(part)
 
                         # xml
                         elif file_extension in XML_EXTENSIONS:
@@ -206,30 +259,160 @@ class ZipParser(ParserDocument):
                         pass
                     except ParseError as e:
                         # we let go to try other documents
-                        msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
+                        msg = _(
+                            "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                        ).format(
                             filename=self.file.name, xmlfile=filename, error=e.args[0]
                         )
-                        logger.warning(msg)
-                        if self.report:
-                            self.report.append(msg)
+                        self.report.append(msg, logger_fct=logger.warning)
                         if user:
                             user.notify(msg, id="import:warning", level="warning")
 
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
 
-class METSZipParser(ZipParser):
+
+class METSBaseParser():
+    def parse_image(self, user, total, index, start_at, filename, image, source):
+        # If quotas are enforced, assert that the user still has free disk storage
+        if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
+            raise DiskQuotaReachedError(
+                _(f"You ran out of disk storage. {total - index} files were left to import (over {total - start_at})")
+            )
+
+        try:
+            part = DocumentPart.objects.filter(
+                document=self.document,
+                original_filename=filename
+            )[0]
+        except IndexError:
+            # we do not use DoesNotExist because documents could have
+            # duplicate image names at some point.
+            part = DocumentPart(
+                document=self.document,
+                original_filename=filename
+            )
+        part.image_file_size = 0
+        part.image.save(filename, ContentFile(image.read()))
+        part.image_file_size = part.image.size
+        part.source = source
+        part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
+        part.save()
+        self.post_process_image(part)
+
+        return part
+
+    def store_document_metadata(self, metadata):
+        for md_name, md_value in metadata.items():
+            if not md_value:
+                continue
+            md, created = Metadata.objects.get_or_create(name=md_name)
+            DocumentMetadata.objects.get_or_create(document=self.document, key=md, defaults={'value': md_value[:512]})
+
+    def store_part_metadata(self, metadata, part):
+        for md_name, md_value in metadata.items():
+            if not md_value:
+                continue
+            md, created = Metadata.objects.get_or_create(name=md_name)
+            DocumentPartMetadata.objects.get_or_create(part=part, key=md, defaults={'value': md_value[:512]})
+
+
+class METSRemoteParser(ParserDocument, METSBaseParser):
     DEFAULT_NAME = _("METS Import")
 
-    def __init__(self, document, file_handler, report, transcription_name=None):
+    def __init__(self, document, file_handler, report, xml_root, mets_base_uri, transcription_name=None):
+        self.mets_file_content = xml_root
+        self.mets_base_uri = mets_base_uri
         self.mets_pages = []
-        super().__init__(document, file_handler, report, transcription_name)
+        super().__init__(document, file_handler, report, transcription_name=transcription_name)
 
     @property
     def total(self):
-        return len(self.mets_pages)
+        total = 0
+        for page in self.mets_pages:
+            if page.image:
+                total += 1
+            if page.sources:
+                total += len(page.sources.keys())
+        return total
+
+    def validate(self):
+        pass
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
+        # Retrieving all the pages described by the METS file
+        try:
+            self.mets_pages, metadata = METSProcessor(self.mets_file_content, report=self.report, mets_base_uri=self.mets_base_uri).process()
+        except ParseError:
+            raise
+        except Exception as e:
+            raise ParseError(f"An error occurred during the processing of the remote METS file: {e}")
+
+        self.store_document_metadata(metadata)
+
+        total = self.total
+        global_index = 0
+        for index, mets_page in enumerate(self.mets_pages):
+            metadata_already_stored = False
+
+            if mets_page.image:
+                if global_index < start_at:
+                    global_index += 1 + len(mets_page.sources.keys())
+                    continue
+
+                filename = mets_page.image.name
+                part = self.parse_image(user, total, index, start_at, filename,
+                                        mets_page.image, self.mets_base_uri)
+                # If we have a page with an image + multiple sources, we don't want to
+                # store the same metadata multiple times and spam the database for nothing
+                if not metadata_already_stored:
+                    self.store_part_metadata(mets_page.metadata, part)
+                    metadata_already_stored = True
+
+            for index, (layer_name, source) in enumerate(mets_page.sources.items()):
+                if global_index < start_at:
+                    global_index += 1 + len(mets_page.sources.keys())
+                    continue
+
+                filename = source.name
+
+                try:
+                    parser = make_parser(self.document, source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
+                    # We only want to override for the first imported source if there are multiple ones
+                    for part in parser.parse(override=(override and index == 0), user=user):
+                        # If we have a page with an image + multiple sources, we don't want to
+                        # store the same metadata multiple times and spam the database for nothing
+                        if not metadata_already_stored:
+                            self.store_part_metadata(mets_page.metadata, part)
+                            metadata_already_stored = True
+
+                        yield part
+                except (ValueError, ParseError) as e:
+                    # We let go to try other sources
+                    msg = _(
+                        "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                    ).format(filename=self.file.name, xmlfile=filename, error=e.args[0])
+                    self.report.append(msg, logger_fct=logger.warning)
+                    if user:
+                        user.notify(msg, id="import:warning", level="warning")
+
+
+class METSZipParser(ZipParser, METSBaseParser):
+    DEFAULT_NAME = _("METS Import")
+
+    def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         # Searching for the METS file in the archive
         with zipfile.ZipFile(self.file) as archive:
+            total = len(archive.infolist())
             xml_filenames = [filename for filename in archive.namelist() if os.path.splitext(filename)[1][1:] == "xml"]
 
             mets_file_content = None
@@ -254,59 +437,69 @@ class METSZipParser(ZipParser):
 
         # Retrieving all the pages described by the METS file
         try:
-            self.mets_pages = METSProcessor(mets_file_content, archive=self.file).process()
+            mets_pages, metadata = METSProcessor(mets_file_content, report=self.report, archive=self.file).process()
         except ParseError:
             raise
         except Exception as e:
             raise ParseError(f"An error occurred during the processing of the METS file contained in the archive: {e}")
 
+        self.store_document_metadata(metadata)
+
         with zipfile.ZipFile(self.file) as archive:
-            for index, mets_page in enumerate(self.mets_pages):
+            info_list = [info.filename for info in archive.infolist()]
+
+            for index, mets_page in enumerate(mets_pages):
+                metadata_already_stored = False
+
                 if mets_page.image:
+                    if info_list.index(mets_page.image) < start_at:
+                        continue
+
                     with archive.open(mets_page.image) as ziped_image:
                         filename = os.path.basename(ziped_image.name)
+                        image_source = "mets//{0}/{1}".format(os.path.basename(self.file.name), filename)
+                        part = self.parse_image(user, total, index, start_at, filename,
+                                                ziped_image, image_source)
+                        # If we have a page with an image + multiple sources, we don't want to
+                        # store the same metadata multiple times and spam the database for nothing
+                        if not metadata_already_stored:
+                            self.store_part_metadata(mets_page.metadata, part)
+                            metadata_already_stored = True
 
-                        # If quotas are enforced, assert that the user still has free disk storage
-                        if not settings.DISABLE_QUOTAS and not user.has_free_disk_storage():
-                            raise DiskQuotaReachedError(
-                                _(f"You ran out of disk storage. {self.total - index} METS pages were left to import (over {self.total - start_at})")
-                            )
+                for index, (layer_name, source) in enumerate(mets_page.sources.items()):
+                    if info_list.index(source) < start_at:
+                        continue
 
-                        try:
-                            part = DocumentPart.objects.filter(
-                                document=self.document,
-                                original_filename=filename
-                            )[0]
-                        except IndexError:
-                            part = DocumentPart(
-                                document=self.document,
-                                original_filename=filename
-                            )
-                        part.image_file_size = 0
-                        part.image.save(filename, ContentFile(ziped_image.read()))
-                        part.image_file_size = part.image.size
-                        part.workflow_state = DocumentPart.WORKFLOW_STATE_CONVERTED
-                        part.save()
-                        generate_part_thumbnails.si(instance_pk=part.pk)
-
-                for layer_name, source in mets_page.sources.items():
                     with archive.open(source) as ziped_source:
                         filename = os.path.basename(ziped_source.name)
 
                         try:
                             parser = make_parser(self.document, ziped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
-                            for part in parser.parse(override=override, user=user):
+                            # We only want to override for the first imported source if there are multiple ones
+                            for part in parser.parse(override=(override and index == 0), user=user):
+                                # If we have a page with an image + multiple sources, we don't want to
+                                # store the same metadata multiple times and spam the database for nothing
+                                if not metadata_already_stored:
+                                    self.store_part_metadata(mets_page.metadata, part)
+                                    metadata_already_stored = True
+
                                 yield part
                         except (ValueError, ParseError) as e:
                             # We let go to try other sources
-                            msg = _("Parse error in {filename}: {xmlfile}: {error}, skipping it.").format(
-                                filename=self.file.name, xmlfile=filename, error=e.args[0]
+                            msg = _(
+                                "Parse error in {filename}: {xmlfile}: {error}, skipping it."
+                            ).format(
+                                filename=self.file.name,
+                                xmlfile=filename,
+                                error=e.args[0],
                             )
-                            logger.warning(msg)
-                            if self.report:
-                                self.report.append(msg)
+                            self.report.append(msg, logger_fct=logger.warning)
                             if user:
                                 user.notify(msg, id="import:warning", level="warning")
+
+    def clean(self):
+        # if the import went well we are safe to delete the file
+        os.remove(os.path.join(settings.MEDIA_ROOT, self.file.path))
 
 
 class XMLParser(ParserDocument):
@@ -363,7 +556,7 @@ class XMLParser(ParserDocument):
                         self.report.append("Document didn't validate. %s, %s" % (e.args[0], OWN_RISK))
         else:
             if self.report:
-                self.report.append("Document Schema %s is not in the accepted escriptiium list. Valid schemas are: %s, %s" %
+                self.report.append("Document Schema %s is not in the accepted escriptorium list. Valid schemas are: %s, %s" %
                                    (self.schema_location, self.ACCEPTED_SCHEMAS, OWN_RISK))
 
     def get_filename(self, pageTag):
@@ -421,6 +614,10 @@ class XMLParser(ParserDocument):
             lt.transcription.save()
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         pages = self.get_pages()
         n_pages = len(pages)
         n_blocks = 0
@@ -434,13 +631,11 @@ class XMLParser(ParserDocument):
                     document=self.document, original_filename=filename
                 )[0]
             except IndexError:
-                # TODO: check for the image in the zip
-                if self.report:
-                    self.report.append(
-                        _("No match found for file {} with filename \"{}\".").format(
-                            self.file.name, filename
-                        )
+                self.report.append(
+                    _('No match found for file {} with filename "{}".').format(
+                        os.path.basename(self.file.name), filename
                     )
+                )
             else:
                 # if something fails, revert everything for this document part
                 with transaction.atomic():
@@ -471,10 +666,15 @@ class XMLParser(ParserDocument):
                                 try:
                                     block.full_clean()
                                 except ValidationError as e:
-                                    if self.report:
-                                        self.report.append(
-                                            _("Block in '{filen}' line N°{line} was skipped because: {error}").format(
-                                                filen=self.file.name, line=blockTag.sourceline, error=e))
+                                    self.report.append(
+                                        _(
+                                            "Block in '{filen}' line N°{line} was skipped because: {error}"
+                                        ).format(
+                                            filen=self.file.name,
+                                            line=blockTag.sourceline,
+                                            error=e,
+                                        )
+                                    )
                                 else:
                                     block.save()
                         else:
@@ -500,13 +700,16 @@ class XMLParser(ParserDocument):
                             try:
                                 line.full_clean()
                             except ValidationError as e:
-                                if self.report:
-                                    self.report.append(
-                                        _("Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}")
-                                        .format(filen=self.file.name,
-                                                line=blockTag.sourceline,
-                                                lineid=line_id,
-                                                error=e))
+                                self.report.append(
+                                    _(
+                                        "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
+                                    ).format(
+                                        filen=self.file.name,
+                                        line=blockTag.sourceline,
+                                        lineid=line_id,
+                                        error=e,
+                                    )
+                                )
                             else:
                                 line.save()
 
@@ -575,7 +778,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         polygon = blockTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
             try:
-                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                coords = tuple(map(float, polygon.get("POINTS").strip().split(" ")))
                 block.box = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
                 logger.warning("Invalid polygon %s" % polygon)
@@ -587,19 +790,19 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             block.box = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
 
         try:
-            tag = blockTag.get("TAGREFS").split(" ")[0]
+            tag = blockTag.get("TAGREFS").strip().split(" ")[0]
             type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             # Index to catch empty tagrefs, Attribute to catch no tagrefs or invalid
             type_ = None
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
-            if type_ in valid_types_mapping.keys():
-                block.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            block.typology = typo
+            if created:
+                self.report.append(
+                    _("Block type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("BASELINE")
@@ -612,14 +815,17 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             except ValueError:
                 # it's an expected polygon
                 try:
-                    coords = tuple(map(float, baseline.split(" ")))
+                    coords = tuple(map(float, baseline.strip().split(" ")))
                     line.baseline = tuple(zip(coords[::2], coords[1::2]))
                 except ValueError:
-                    msg = _("Invalid baseline {baseline} in {filen} line {linen}").format(
-                        baseline=baseline, filen=self.file.name, linen=lineTag.sourceline)
-                    logger.warning(msg)
-                    if self.report:
-                        self.report.append(msg)
+                    self.report.append(
+                        _("Invalid baseline {baseline} in {filen} line {linen}").format(
+                            baseline=baseline,
+                            filen=self.file.name,
+                            linen=lineTag.sourceline,
+                        ),
+                        logger_fct=logger.warning,
+                    )
         else:
             # extract it from <String>s then
             strings = lineTag.findall("String", self.root.nsmap)
@@ -631,13 +837,14 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
         polygon = lineTag.find("Shape/Polygon", self.root.nsmap)
         if polygon is not None:
             try:
-                coords = tuple(map(float, polygon.get("POINTS").split(" ")))
+                coords = tuple(map(float, polygon.get("POINTS").strip().split(" ")))
                 line.mask = tuple(zip(coords[::2], coords[1::2]))
             except ValueError:
-                msg = "Invalid polygon %s in %s line %d" % (polygon, self.file.name, lineTag.sourceline)
-                logger.warning(msg)
-                if self.report:
-                    self.report.append(msg)
+                self.report.append(
+                    "Invalid polygon %s in %s line %d"
+                    % (polygon, self.file.name, lineTag.sourceline),
+                    logger_fct=logger.warning,
+                )
         else:
             line.box = [
                 int(float(lineTag.get("HPOS"))),
@@ -647,18 +854,18 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             ]
 
         try:
-            tag = lineTag.get("TAGREFS").split(" ")[0]
+            tag = lineTag.get("TAGREFS").strip().split(" ")[0]
             type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
         except (IndexError, AttributeError):
             type_ = None
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
-            if type_ in valid_types_mapping.keys():
-                line.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            line.typology = typo
+            if created:
+                self.report.append(
+                    _("Line type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def get_transcription_content(self, lineTag):
         return " ".join(
@@ -712,7 +919,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
     def update_block(self, block, blockTag):
         coords = blockTag.find("Coords", self.root.nsmap).get("points")
         #  for PAGE file a box is multiple points x1,y1 x2,y2 x3,y3 ...
-        block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.split(" ")]
+        block.box = [list(map(lambda x: int(float(x)), pt.split(","))) for pt in coords.strip().split(" ")]
 
         type_ = blockTag.get("type")
         if not type_:
@@ -723,12 +930,12 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_block_types.all()}
-            if type_ in valid_types_mapping.keys():
-                block.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            block.typology = typo
+            if created:
+                self.report.append(
+                    _("Block type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def update_line(self, line, lineTag):
         try:
@@ -736,8 +943,11 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
             if baseline is not None:
                 line.baseline = self.clean_coords(baseline)
             else:
-                msg = _('Line without baseline in {filen} line #{linen}, very likely that it will not be usable!').format(filen=self.file.name, linen=lineTag.sourceline)
-                self.report.append(msg)
+                self.report.append(
+                    _(
+                        "Line without baseline in {filen} line #{linen}, very likely that it will not be usable!"
+                    ).format(filen=self.file.name, linen=lineTag.sourceline)
+                )
         except ParseError:
             #  to check if the baseline is good
             line.baseline = None
@@ -758,22 +968,23 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            valid_types_mapping = {t.name: t for t in self.document.valid_line_types.all()}
-            if type_ in valid_types_mapping.keys():
-                line.typology = valid_types_mapping[type_]
-            else:
-                # raise warning discard type
-                pass
+            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            line.typology = typo
+            if created:
+                self.report.append(
+                    _("Line type {0} was automatically added to the ontology").format(typo.name)
+                )
 
     def clean_coords(self, coordTag):
         try:
             return [
                 list(map(int, pt.split(",")))
-                for pt in coordTag.get("points").split(" ")
+                for pt in coordTag.get("points").strip().split(" ")
             ]
         except (AttributeError, ValueError):
             msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
-                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline)
+                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline
+            )
             self.report.append(msg)
             raise ParseError(msg)
 
@@ -817,7 +1028,7 @@ class IIIFManifestParser(ParserDocument):
         try:
             return self.manifest["sequences"][0]["canvases"]
         except (KeyError, IndexError):
-            return 0
+            return []
 
     def validate(self):
         if len(self.canvases) < 1:
@@ -831,8 +1042,8 @@ class IIIFManifestParser(ParserDocument):
     def get_image(url: str, retry_limit: int = 4) -> requests.Response:
         """Retrieve a iiif image from a iiif server
 
-        This method will retry on certain 5XX errors that are likely to
-        be transient.  It will only retry a fixed number of times (default 10),
+        This method will retry on certain 5XX errors, network and timeout.
+        It will only retry a fixed number of times (default 3),
         and it backs off a little more on each retry. Failure to retrieve
         the image within the retry limit will result in a DownloadError
         being raised. All other unsuccessful requests will raise a
@@ -841,32 +1052,44 @@ class IIIFManifestParser(ParserDocument):
 
         current_retry = 0
         while current_retry < retry_limit:
+            current_retry = current_retry + 1
             time.sleep(0.1 * current_retry)  # avoid being throttled; add a little backoff
             try:
-                r = requests.get(url, stream=True, verify=False, timeout=10)
-                r.raise_for_status()
-                return r
+                response = requests.get(url, stream=True, verify=False, timeout=10)
+                response.raise_for_status()
+                return response
 
             except requests.exceptions.HTTPError as http_error:
                 # retry on transient 5XX errors, but keep a record of the retry count
                 if http_error.response.status_code in [500, 502, 503, 504, 507, 508]:
-                    current_retry = current_retry + 1
+                    continue
+
+                if http_error.response.status_code == 429:
+                    # the server might tell us when we are free to go, if not let's wait 1s
+                    sleep_time = http_error.response.headers.get('Retry-After', 1)
+                    time.sleep(sleep_time)
                     continue
 
                 # We probably got a 4XX error, but whatever it is just raise it
                 raise DownloadError(http_error)
 
-            except requests.exceptions.ConnectionError as connection_error:
-                raise DownloadError(connection_error)
+            except requests.exceptions.ConnectionError:
+                # network error, retry
+                continue
 
-            except requests.exceptions.Timeout as timeout_error:
-                raise DownloadError(timeout_error)
+            except requests.exceptions.Timeout:
+                # timeout, retry
+                continue
 
         # Max retries has been exceeded
-        raise DownloadError(f"After {current_retry + 1} tries, the server still errors out loading"
+        raise DownloadError(f"After {current_retry} tries, the server still errors out loading"
                             f": {url}")
 
     def parse(self, start_at=0, override=False, user=None):
+        assert (
+            self.report
+        ), "A TaskReport instance should be provided while parsing data."
+
         try:
             for metadata in self.manifest["metadata"]:
                 if metadata["value"]:
@@ -904,7 +1127,16 @@ class IIIFManifestParser(ParserDocument):
                 # us important things about the supported file types and the available sizing.
                 r = self.get_image(url)
 
-                part = DocumentPart(document=self.document, source=url)
+                try:
+                    part = DocumentPart.objects.filter(
+                        document=self.document,
+                        source=url)[0]
+                except IndexError:
+                    # we do not use DoesNotExist because documents could have
+                    # duplicate image names at some point.
+                    part = DocumentPart(
+                        document=self.document,
+                        source=url)
                 if "label" in resource:
                     part.name = resource["label"]
                 # iiif file names are always default.jpg or close to
@@ -914,15 +1146,20 @@ class IIIFManifestParser(ParserDocument):
                 part.image.save(name, ContentFile(r.content), save=False)
                 part.image_file_size = part.image.size
                 part.save()
+                self.post_process_image(part)
+
                 yield part
                 time.sleep(0.1)  # avoid being throttled
+
             except (KeyError, IndexError, DownloadError) as e:
-                if self.report:
-                    self.report.append(_('Error while fetching {filename}: {error}').format(
-                        filename=name, error=e))
+                self.report.append(
+                    _("Error while fetching {filename}: {error}").format(
+                        filename=name, error=e
+                    )
+                )
                 if isinstance(e, DownloadError):
                     error_msg = f"Could not download image: {url}"
-                    user.notify(error_msg)
+                    user.notify(error_msg, level="warning", id="import:warning")
                     self.report.append(error_msg)
 
 
@@ -939,13 +1176,20 @@ class TranskribusPageXmlParser(PagexmlParser):
     #     )
 
     def clean_coords(self, coordTag):
-        return [
-            list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
-            for pt in coordTag.get("points").split(" ")
-        ]
+        try:
+            return [
+                list(map(lambda x: 0 if float(x) < 0 else float(x), pt.split(",")))
+                for pt in coordTag.get("points").strip().split(" ")
+            ]
+        except (AttributeError, ValueError):
+            msg = _("Invalid coordinates for {tag} in {filen} line {line}").format(
+                tag=coordTag.tag, filen=self.file.name, line=coordTag.sourceline
+            )
+            self.report.append(msg)
+            raise ParseError(msg)
 
 
-def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True):
+def make_parser(document, file_handler, name=None, report=None, zip_allowed=True, pdf_allowed=True, mets_describer=False, mets_base_uri=None):
     # TODO: not great to rely on file name extension
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
@@ -955,13 +1199,14 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
             raise ParseError(e.msg)
         try:
             schema = root.nsmap[None]
+            schemas = root.nsmap.values()
         except KeyError:
             raise ParseError(
                 "Couldn't determine xml schema, xmlns attribute missing on root element."
             )
         # if 'abbyy' in schema:  # Not super robust
         #     return AbbyyParser(root, name=name)
-        if "alto" in schema:
+        if "alto" in schema.lower():
             return AltoParser(
                 document, file_handler, report, transcription_name=name, xml_root=root
             )
@@ -974,6 +1219,8 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
                 return PagexmlParser(
                     document, file_handler, report, transcription_name=name, xml_root=root
                 )
+        elif METSProcessor.NAMESPACES["mets"] in schemas:
+            return METSRemoteParser(document, file_handler, report, root, mets_base_uri, transcription_name=name)
 
         else:
             raise ParseError(
@@ -982,7 +1229,10 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
     elif zip_allowed and ext == "zip":
-        return ZipParser(document, file_handler, report, transcription_name=name)
+        if mets_describer:
+            return METSZipParser(document, file_handler, report, transcription_name=name)
+        else:
+            return ZipParser(document, file_handler, report, transcription_name=name)
     elif pdf_allowed and ext == "pdf":
         return PdfParser(document, file_handler, report)
     else:

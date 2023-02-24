@@ -1,0 +1,9 @@
+.escr-tag-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.escr-tag-icon--active {
+    fill: var(--primary);
+}

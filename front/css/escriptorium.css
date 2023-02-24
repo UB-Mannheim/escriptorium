@@ -399,9 +399,9 @@ form.inline-form {
 
 
 .tools {
-    height: 45px;
+    min-height: 45px;
     margin-bottom: 5px;
-    /* overflow: hidden; */
+    overflow: hidden;
 }
 
 .tools .fas {
@@ -424,6 +424,7 @@ i.panel-icon {
 .js-zoom-target {
     box-shadow: 1px 0 4px 1px rgba(0,0,0,0.1);
     display: inline-block;
+    width: 100%;
 }
 
 #transcription-panel .js-zoom-target {

@@ -997,7 +997,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             x_cluster, line_height_decrease = 0.1, 0.8
 
             origins_np = np.array(
-                list(map(lambda l: line_origin_pt(l, read_direction_), lines_in_block))
+                list(map(lambda line: line_origin_pt(line, read_direction_), lines_in_block))
             )
 
             # Devise the number of columns by performing DBSCAN clustering on x coordinate of line origins
@@ -1073,13 +1073,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
     def save(self, *args, **kwargs):
         new = self.pk is None
         instance = super().save(*args, **kwargs)
-        if new:
-            self.task(
-                "convert",
-                user_pk=self.document.owner and self.document.owner.pk or None,
-            )
-            send_event("document", self.document.pk, "part:new", {"id": self.pk})
-        else:
+        if not new:
             self.calculate_progress()
         return instance
 
@@ -1241,6 +1235,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 raise e
         else:
             os.rename(opti_name, self.image.file.name)
+            self.image_file_size = self.image.size
+            self.save()
 
     def binarize(self, threshold=None):
         fname = os.path.basename(self.image.file.name)
@@ -1317,18 +1313,17 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             res = blla.segment(im, **options)
 
             if steps in ["regions", "both"]:
-                block_types = {t.name: t for t in self.document.valid_block_types.all()}
                 for region_type, regions in res["regions"].items():
+                    typo, created = self.document.valid_block_types.get_or_create(name=region_type)
                     for region in regions:
                         Block.objects.create(
                             document_part=self,
-                            typology=block_types.get(region_type),
+                            typology=typo,
                             box=region,
                         )
 
             regions = self.blocks.all()
             if steps in ["lines", "both"]:
-                line_types = {t.name: t for t in self.document.valid_line_types.all()}
                 for line in res["lines"]:
                     mask = line["boundary"] if line["boundary"] is not None else None
                     baseline = line["baseline"]
@@ -1340,9 +1335,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
 
+                    typo, created = self.document.valid_line_types.get_or_create(
+                        name=line["tags"].get("type"))
                     Line.objects.create(
                         document_part=self,
-                        typology=line_types.get(line["tags"].get("type")),
+                        typology=typo,
                         block=region,
                         baseline=baseline,
                         mask=mask,
@@ -2154,6 +2151,6 @@ class TextualWitness(models.Model):
 @receiver(pre_delete, sender=DocumentPart, dispatch_uid="thumbnails_delete_signal")
 def delete_thumbnails(sender, instance, using, **kwargs):
     thumbnailer = get_thumbnailer(instance.image)
-    thumbnailer.delete_thumbnails()
+    thumbnailer.delete()
     thumbnailer = get_thumbnailer(instance.bw_image)
-    thumbnailer.delete_thumbnails()
+    thumbnailer.delete()

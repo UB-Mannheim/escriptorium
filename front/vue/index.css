@@ -1,0 +1,121 @@
+/* Root styles for the entire application. */
+:root {
+    /* main colors */
+    --primary: #28A696;
+    --tertiary: #5869FC;
+    --alert: #E84F4F;
+    /* button state colors */
+    --primary-dark: #229082;
+    --primary-darker: #1e8174;
+    --primary-focus: rgb(40 166 150 / 50%);
+    --tertiary-dark: #2c41fb;
+    --tertiary-darker: #0f26fa;
+    --tertiary-focus: rgb(88 105 252 / 50%);
+    --alert-dark: #e32b2b;
+    --alert-darker: #d61c1c;
+    --alert-focus: rgb(227 43 43 / 50%);
+    /* text on all filled buttons */
+    --button-text: #FFFFFF;
+    /* tag colors */
+    --tag-1: #E0726E;
+    --tag-2: #F78D8D;
+    --tag-3: #FF9A6F;
+    --tag-4: #FCB55F;
+    --tag-5: #F2CD5C;
+    --tag-6: #CBE364;
+    --tag-7: #80C6BA;
+    --tag-8: #88C9F2;
+    --tag-9: #99AFF2;
+    --tag-10: #C195DB;
+    --tag-11: #F2A7C3;
+    --tag-12: #C6C4C4;
+    --tag-text: #212323;
+}
+.light-mode {
+    /* button colors */
+    --secondary: #1761B5;
+    --secondary-dark: #14549d;
+    --secondary-darker: #114b8d;
+    --secondary-focus: rgb(23 97 181 / 50%);
+    /* light mode backgrounds */
+    --background1: #FFFFFF;
+    --background2: #E9E9E9;
+    --background2-dark: #CACACA;
+    --background2-darker: #b5b5b5;
+    --background2-focus: rgb(202 202 202 / 50%);
+    /* light mode text */
+    --text1: #212323;
+    --text2: #666768;
+    --text3: #A7A8A9;
+}
+.dark-mode {
+    /* button colors */
+    --secondary: #4F96E8;
+    --secondary-dark: #2b80e3;
+    --secondary-darker:#1c72d6;
+    --secondary-focus: rgb(79 150 232 / 50%);
+    /* dark mode backgrounds */
+    --background1: #2F3132;
+    --background2: #3E4142;
+    --background2-dark: #565a5b;
+    --background2-darker: #666a6c;
+    --background2-focus: rgb(86 90 91 / 50%);
+    /* dark mode text */
+    --text1: #FFFFFF;
+    --text2: #A7A8A9;
+    --text3: #717373;
+}
+
+/* Typography */
+body,
+input[type="text"] {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+    color: var(--text1);
+    font-style: normal;
+}
+h1 {
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 33px;
+}
+h2 {
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 25px;
+}
+h3 {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+}
+h4 {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+}
+
+/* Horizontal rule */
+hr {
+    border: none;
+    border-top: 1px solid var(--text3);
+}
+
+/*
+	Improved screen reader only CSS class
+	@author Gaël Poupard
+*/
+
+.sr-only {
+	border: 0 !important;
+	clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
+	-webkit-clip-path: inset(50%) !important;
+		clip-path: inset(50%) !important;  /* 2 */
+	height: 1px !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	padding: 0 !important;
+	position: absolute !important;
+	width: 1px !important;
+	white-space: nowrap !important;            /* 3 */
+}

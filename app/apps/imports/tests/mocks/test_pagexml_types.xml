@@ -32,7 +32,7 @@ TRP</Creator>
                 </TextEquiv>
             </TextLine>
 
-            <TextLine id="r2l2" custom="readingOrder {index:1;} structure {type: invalid_line_type;}">
+            <TextLine id="r2l2" custom="readingOrder {index:1;} structure {type: new_line_type;}">
                 <Coords points="120,121 644,119 670,113 669,68 563,80 492,60 436,87 306,70 257,84 180,62 119,83"/>
                 <Baseline points="125,109 152,109 179,109 206,108 233,108 260,107 287,107 314,107 341,106 368,106 395,106 422,105 449,105 476,105 503,105 530,105 557,106 584,106 611,107 638,107 665,108"/>
                 <TextEquiv>
@@ -47,7 +47,7 @@ TRP</Creator>
           <Coords points="120,121 644,119 670,113"/>
         </TextRegion>
 
-        <TextRegion id="r4" custom="readingOrder {index:2;} structure {type: invalid_block_type;}">
+        <TextRegion id="r4" custom="readingOrder {index:2;} structure {type: new_block_type;}">
           <Coords points="120,121 644,119 670,113"/>
         </TextRegion>
 

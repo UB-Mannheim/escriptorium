@@ -17,6 +17,7 @@ from core.models import (
 from core.tests.factory import CoreFactoryTestCase
 from imports.models import DocumentImport
 from imports.parsers import AltoParser, IIIFManifestParser
+from reporting.models import TaskReport
 
 # DO NOT REMOVE THIS IMPORT, it will break a lot of tests
 # It is used to trigger Celery signals when running tests
@@ -47,7 +48,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_single.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(25):
+            with self.assertNumQueries(26):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -62,7 +63,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
 
         # import was created since the form validated
         imp = DocumentImport.objects.first()
-        self.assertTrue(imp.report.messages.startswith('No match found for file import_src/test_single_'))
+        self.assertTrue(imp.report.messages.startswith('No match found for file test_single'))
 
     def test_alto_invalid_xml(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -153,7 +154,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_composedblock.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(72):
+            with self.assertNumQueries(86):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -164,12 +165,17 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(DocumentImport.objects.first().workflow_state,
                          DocumentImport.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 3)
-        self.part1.blocks.all()[0].typology = None
-        self.part1.blocks.all()[1].typology.name = 'test_block_type'
-        self.part1.blocks.all()[2].typology = None  # invalid
-        self.part1.lines.all()[0].typology = None
-        self.part1.lines.all()[1].typology.name = 'test_line_type'
-        self.part1.lines.all()[2].typology = None  # invalid
+
+        # one of each created automatically
+        self.assertEqual(self.document.valid_block_types.count(), 2)
+        self.assertEqual(self.document.valid_line_types.count(), 2)
+
+        self.assertEqual(self.part1.blocks.all()[0].typology, None)
+        self.assertEqual(self.part1.blocks.all()[1].typology.name, 'test_block_type')
+        self.assertEqual(self.part1.blocks.all()[2].typology.name, 'new_block_type')
+        self.assertEqual(self.part1.lines.all()[0].typology, None)
+        self.assertEqual(self.part1.lines.all()[1].typology.name, 'test_line_type')
+        self.assertEqual(self.part1.lines.all()[2].typology.name, 'new_line_type')
         self.assertEqual(self.part1.lines.count(), 3)
 
     def test_resume(self):
@@ -271,7 +277,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'pagexml_test.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(25):
+            with self.assertNumQueries(26):
                 response = self.client.post(uri, {'upload_file': SimpleUploadedFile(filename,
                                                                                     fh.read())})
                 # Note: the ParseError is raised by the processing of the import,
@@ -377,7 +383,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
         filename = 'test_pagexml_types.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(80):
+            with self.assertNumQueries(92):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -388,13 +394,18 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(DocumentImport.objects.first().workflow_state,
                          DocumentImport.WORKFLOW_STATE_DONE)
         self.assertEqual(self.part1.blocks.count(), 4)
+
+        # 1 of each created automatically
+        self.assertEqual(self.document.valid_block_types.count(), 3)
+        self.assertEqual(self.document.valid_line_types.count(), 2)
+
         self.assertEqual(self.part1.blocks.all()[0].typology, None)
         self.assertEqual(self.part1.blocks.all()[1].typology.name, non_word_block_type)
         self.assertEqual(self.part1.blocks.all()[2].typology.name, word_block_type)
-        self.assertEqual(self.part1.blocks.all()[3].typology, None)  # invalid
+        self.assertEqual(self.part1.blocks.all()[3].typology.name, 'new_block_type')  # created
         self.assertEqual(self.part1.lines.all()[0].typology, None)
         self.assertEqual(self.part1.lines.all()[1].typology.name, non_word_line_type)
-        self.assertEqual(self.part1.lines.all()[2].typology, None)  # invalid
+        self.assertEqual(self.part1.lines.all()[2].typology.name, 'new_line_type')  # created
         self.assertEqual(self.part1.lines.count(), 3)
 
     def test_iiif(self):
@@ -405,7 +416,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
             imp = DocumentImport(
                 document=self.document,
                 name='test',
-                started_by=self.document.owner
+                started_by=self.document.owner,
+                report=TaskReport.objects.create(
+                    user=self.document.owner,
+                    label="Test import",
+                    document=self.document,
+                    method="imports.tasks.document_import",
+                )
             )
             imp.import_file.save(
                 'iiif_manifest.json',

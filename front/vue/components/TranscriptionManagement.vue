@@ -64,7 +64,7 @@ export default {
         async deleteTranscription(ev) {
             let transcription = ev.target.dataset.trpk;
             // I lied, it's only archived
-            if(confirm("Are you sure you want to delete the transcription?")) {
+            if(confirm("Are you sure you want to delete the transcription? This will affect ALL pages of the document!")) {
                 this.$store.dispatch('transcriptions/archive', transcription)
                 .then(test => {
                     ev.target.parentNode.remove();

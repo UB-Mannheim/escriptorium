@@ -39,6 +39,7 @@ from core.models import (
 )
 from core.tasks import segment, segtrain, train, transcribe
 from reporting.models import TaskReport
+from users.consumers import send_event
 from users.models import User
 
 logger = logging.getLogger(__name__)
@@ -453,10 +454,28 @@ class PartSerializer(serializers.ModelSerializer):
         data['document'] = document
         data['original_filename'] = data['image'].name
         data['image_file_size'] = data['image'].size
-        obj = super().create(data)
+
+        try:
+            # check if the image already exists
+            part = DocumentPart.objects.filter(document=document,
+                                               original_filename=data['image'].name)[0]
+            data['id'] = part.id
+            part = super().update(part, data)
+        except IndexError:
+            # it's new
+            # Can't use DoesNotExist because of legacy documents with duplicate image names
+            part = super().create(data)
+
         # generate card thumbnail right away since we need it
-        get_thumbnailer(obj.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'])
-        return obj
+        get_thumbnailer(part.image).get_thumbnail(settings.THUMBNAIL_ALIASES['']['card'],
+                                                  generate=True)
+
+        send_event("document", part.document.pk, "part:new", {"id": part.pk})
+        part.task(
+            "convert",
+            user_pk=part.document.owner and part.document.owner.pk or None)
+
+        return part
 
 
 class BlockSerializer(serializers.ModelSerializer):
@@ -530,7 +549,7 @@ class LineOrderListSerializer(serializers.ListSerializer):
         first_ = qs[0]
         down = first_.order < data_mapping[first_.pk]['order']
         lines = list(data_mapping.items())
-        lines.sort(key=lambda l: l[1]['order'])
+        lines.sort(key=lambda line: line[1]['order'])
         if down:
             # reverse to avoid pushing up already moved lines
             lines.reverse()
