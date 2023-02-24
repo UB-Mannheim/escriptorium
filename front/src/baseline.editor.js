@@ -865,6 +865,13 @@ export class Segmenter {
         // make sure we capture clicks before the img
         this.canvas.style.zIndex = this.img.style.zIndex + 1;
 
+        var bounds = this.img.getBoundingClientRect();
+        // Note: need to cast to int to deal with a floating display bug in paper.js on some systems
+        var boundsWidth = parseInt(bounds.width);
+        var boundsHeight = parseInt(bounds.height);
+        this.canvas.width = boundsWidth;
+        this.canvas.height = boundsHeight;
+
         this.refresh();
 
         var tool = new Tool();
@@ -1460,11 +1467,8 @@ export class Segmenter {
         }
 
         var bounds = this.img.getBoundingClientRect();
-        // Note: need to cast to int to deal with a floating display bug in paper.js on some systems
         var boundsWidth = parseInt(bounds.width);
         var boundsHeight = parseInt(bounds.height);
-        this.canvas.width = boundsWidth;
-        this.canvas.height = boundsHeight;
 
         if (paper.view) {
             var imgRatio = (boundsWidth / this.img.naturalWidth);
