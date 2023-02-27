@@ -1,12 +1,29 @@
 <template>
     <div :class="classes">
-        <button class="escr-button" @click="onClick">
+        <button
+            class="escr-button"
+            :disabled="disabled"
+            @click="onClick"
+        >
             <!-- slot for an icon, if you want one in the filter button label -->
-            <slot name="filter-icon" :active="active"></slot>
+            <slot
+                name="filter-icon"
+                :active="active"
+            />
             <span class="label">{{ label }}</span>
-            <span v-if="active && count" class="count">{{ count }}</span>
+            <span
+                v-if="active && count"
+                class="count"
+            >
+                {{ count }}
+            </span>
         </button>
-        <button class="escr-clear-filter-button" v-if="active" @click="onClear">
+        <button
+            v-if="active"
+            :disabled="disabled"
+            class="escr-clear-filter-button"
+            @click="onClear"
+        >
             <XIcon />
             <span class="sr-only">Clear filter</span>
         </button>
@@ -19,7 +36,8 @@ import "../Button/Button.css";
 import "./FilterButton.css";
 
 export default {
-    name: "escr-filter-button",
+    name: "EscrFilterButton",
+    components: { XIcon },
     props: {
         /**
          * Whether or not the filter is currently applied and filtering data
@@ -28,10 +46,18 @@ export default {
             type: Boolean,
         },
         /**
+         * Whether or not the filter button is disabled, e.g. during loading
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * Number to display for filters with a visible count (such as tags)
          */
         count: {
             type: Number,
+            default: 0,
         },
         /**
          * Label for the filter button
@@ -62,8 +88,7 @@ export default {
                 "escr-filter-button--active": this.active,
             };
         }
-    },
-    components: { XIcon }
+    }
 }
 
 </script>

@@ -13,6 +13,7 @@ from django.urls import reverse
 
 from core.models import (
     Block,
+    Document,
     DocumentMetadata,
     Line,
     LineTranscription,
@@ -1013,6 +1014,17 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:project-list')
         resp = self.client.post(uri, {'name': 'test proj'})
         self.assertEqual(resp.status_code, 201)
+
+    def test_documents_count(self):
+        self.factory.make_document(project=self.project)
+        uri = reverse('api:project-list')
+        self.client.force_login(self.project.owner)
+        resp = self.client.get(uri)
+        self.assertEqual(resp.json()['results'][0]['documents_count'], 1)
+        # adding an archived document should not increase the count
+        self.factory.make_document(project=self.project, workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+        resp = self.client.get(uri)
+        self.assertEqual(resp.json()['results'][0]['documents_count'], 1)
 
     def test_add_tag_to_project(self):
         tag = self.factory.make_project_tag(user=self.project.owner)

@@ -87,6 +87,7 @@ class ScriptSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     slug = serializers.ReadOnlyField()
+    documents_count = serializers.ReadOnlyField()
 
     class Meta:
         model = Project

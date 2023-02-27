@@ -11,6 +11,12 @@
     font-size: 12px;
     min-height: 36px;
 }
+.escr-filter-button .escr-button svg {
+    fill: var(--text1);
+}
+.escr-filter-button--active .escr-button svg {
+    fill: var(--primary);
+}
 .escr-filter-button .escr-button:hover {
     background-color: var(--background2-dark);
 }
@@ -25,9 +31,6 @@
     flex-flow: row nowrap;
     align-items: center;
 }
-.escr-filter-button .escr-button .escr-tag-icon {
-    margin-right: 4px;
-}
 .escr-filter-button .escr-button .count {
     display: block;
     padding: 1px 1px 0 0;
@@ -38,6 +41,19 @@
     width: 19px;
     height: 19px;
     border-radius: 10px;
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+.escr-filter-button .escr-button:disabled {
+    color: var(--text3);
+    cursor: default;
+    pointer-events: none;
+}
+.escr-filter-button .escr-button:disabled .count {
+    color: var(--text3);
+    background-color: var(--background);
+}
+.escr-filter-button .escr-button:disabled svg {
+    fill: var(--text3);
 }
 .escr-filter-button .escr-clear-filter-button {
     border: none;
@@ -46,6 +62,13 @@
     width: 18px;
     padding: 4px;
 }
+.escr-filter-button .escr-clear-filter-button:disabled {
+    cursor: default;
+}
 .escr-filter-button .escr-clear-filter-button svg {
     fill: var(--text1);
+    transition: fill 0.15s ease-in-out;
+}
+.escr-filter-button .escr-clear-filter-button:disabled svg {
+    fill: var(--text3);
 }

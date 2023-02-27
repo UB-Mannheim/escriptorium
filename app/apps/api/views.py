@@ -4,12 +4,12 @@ import logging
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from rest_framework import status
+from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -136,9 +136,17 @@ class ScriptViewSet(ReadOnlyModelViewSet):
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'documents_count', 'id', 'name', 'owner', 'updated_at']
 
     def get_queryset(self):
-        return Project.objects.for_user_read(self.request.user)
+        return (Project.objects
+                .for_user_read(self.request.user)
+                .annotate(documents_count=Count(
+                    'documents',
+                    filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
+                    distinct=True))
+                .select_related('owner'))
 
 
 class ProjectTagViewSet(ModelViewSet):

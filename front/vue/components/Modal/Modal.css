@@ -1,0 +1,27 @@
+/* common modal styles */
+.escr-modal-backdrop {
+    z-index: var(--modal-backdrop-z);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0 0 0 / 10%);
+}
+.escr-modal {
+    z-index: var(--modal-z);
+    background-color: var(--background1);
+    padding: 8px 16px 16px;
+    border-radius: 15px;
+    filter: drop-shadow(2px 4px 4px var(--drop-shadow))
+        drop-shadow(-1px -1px 2px var(--drop-shadow));
+}
+/* button group at end of modal */
+.escr-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+.escr-modal .modal-actions button + button {
+    margin-left: 16px;
+}

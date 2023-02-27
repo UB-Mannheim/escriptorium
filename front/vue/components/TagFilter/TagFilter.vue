@@ -1,25 +1,27 @@
 <script>
-import '../Tags/Tag.css';
-import './TagFilter.css';
-import Button from '../Button/Button.vue';
-import CheckIcon from '../Icons/CheckIcon/CheckIcon.vue';
-import Tags from '../Tags/Tags.vue';
-import TextField from '../TextField/TextField.vue';
-import SegmentedButtonGroup from '../SegmentedButtonGroup/SegmentedButtonGroup.vue';
+import Button from "../Button/Button.vue";
+import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
+import Tags from "../Tags/Tags.vue";
+import TextField from "../TextField/TextField.vue";
+import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
+import "../Modal/Modal.css";
+import "../Tags/Tag.css";
+import "./TagFilter.css";
 
 export default {
-    name: 'escr-tag-filter',
+    name: "EscrTagFilter",
     props: {
         /**
-         * The list of tags, each an `Object` with a `name` (`String`) property
-         * and a `variant` (`Number`) property, which must be between 1 and 12
+         * The list of tags, each an `Object` with a `name` (`String`) property,
+         * a `pk` (`Number`) property, and a `variant` (`Number`) property, which
+         * must be between 1 and 12
          */
         tags: {
             type: Array,
             default: () => [],
             required: true,
             validator: function (value) {
-                return value.length > 0 && value.every(t => t.name);
+                return value.length > 0 && value.every((t) => t.pk || t.pk === 0);
             },
         },
         /**
@@ -34,7 +36,7 @@ export default {
          */
         operator: {
             type: String,
-            default: 'or',
+            default: "or",
         },
         /**
          * Boolean indicating whether or not "without tag" is already selected
@@ -70,10 +72,22 @@ export default {
     data: function () {
         return {
             selectedOperator: this.operator,
-            selectedTags: this.selected,
+            selectedTags: [...this.selected],
             stringFilter: "",
             withoutTag: this.withoutTagSelected,
         };
+    },
+    computed: {
+        // Boolean indicating whether or not filter has been changed
+        dirty() {
+            const tagsChanged = !(
+                this.selectedTags.every((tag) => this.selected.includes(tag))
+                && this.selected.every((tag) => this.selectedTags.includes(tag))
+            );
+            return this.selectedOperator !== this.operator
+                || this.withoutTag !== this.withoutTagSelected
+                || tagsChanged;
+        }
     },
     methods: {
         /**
@@ -84,31 +98,44 @@ export default {
         /**
          * Change the operator for the filter (and/or)
          */
-        setOperator: function (operator) {
+        setOperator(operator) {
             this.selectedOperator = operator;
+        },
+        /**
+         * add or remove tags from selected list
+         */
+        changeTagSelection(checked, tag) {
+            if (checked) {
+                this.selectedTags.push(tag.pk);
+            } else {
+                this.selectedTags.splice(
+                    this.selectedTags.indexOf(tag.pk),
+                    1,
+                );
+            }
         },
         /**
          * Select all tags after clicking "Select All"
          */
-        selectAllTags: function () {
-            this.selectedTags = this.tags.map(t => t.name);
+        selectAllTags() {
+            this.selectedTags = this.tags.map((t) => t.pk);
         },
         /**
          * Select no tags after clicking "Select None"
          */
-        selectNoTags: function () {
+        selectNoTags() {
             this.selectedTags = [];
         },
         /**
          * Toggle "without tag" with the checkmark input
          */
-        toggleWithoutTag: function (e) {
+        toggleWithoutTag(e) {
             this.withoutTag = e.target.checked;
         },
         /**
          * Use the text input to filter the tags by string
          */
-        filterByString: function (e) {
+        filterByString(e) {
             this.stringFilter = e.target.value;
         },
         /**
@@ -125,46 +152,36 @@ export default {
          * Helper method to render a checkbox input and label
          * for a given tag.
          */
-        renderTagOption: function (h, tag) {
+        renderTagOption(h, tag) {
             return [
                 h(
-                    'input',
+                    "input",
                     {
                         class: {
-                            'sr-only': true
+                            "sr-only": true
                         },
                         domProps: {
-                            id: `filter-tag-${tag.name}`,
-                            name: `filter-tag-${tag.name}`,
-                            type: 'checkbox',
+                            id: `filter-tag-${tag.pk}`,
+                            name: `filter-tag-${tag.pk}`,
+                            type: "checkbox",
                             // ensure initial selections are checked on mount
-                            checked: this.selectedTags.includes(tag.name),
+                            checked: this.selectedTags.includes(tag.pk),
                         },
                         on: {
-                            change: (e) => {
-                                // add or remove tags from selected list
-                                if (e.target.checked) {
-                                    this.selectedTags.push(tag.name);
-                                } else {
-                                    this.selectedTags.splice(
-                                        this.selectedTags.indexOf(tag.name),
-                                        1,
-                                    );
-                                }
-                            }
+                            change: (e) => this.changeTagSelection(e.target.checked, tag),
                         },
                     },
                 ),
                 h(
-                    'label',
+                    "label",
                     {
                         class: this.tagClasses(tag.variant),
                         domProps: {
-                            htmlFor: `filter-tag-${tag.name}`,
+                            htmlFor: `filter-tag-${tag.pk}`,
                         },
                     },
                     [
-                        h('span', tag.name),
+                        h("span", tag.name),
                         h(CheckIcon)
                     ],
                 ),
@@ -173,19 +190,19 @@ export default {
         /**
          * Helper method to render cancel and apply buttons
          */
-        renderFilterActions: function (h) {
+        renderFilterActions(h) {
             return h(
-                'div',
+                "div",
                 {
-                    class: 'escr-filter-actions'
+                    class: "modal-actions"
                 },
                 [
                     h(
                         Button,
                         {
                             props: {
-                                color: 'outline-primary',
-                                label: 'Cancel',
+                                color: "outline-primary",
+                                label: "Cancel",
                                 onClick: this.onCancel,
                             }
                         }
@@ -194,9 +211,9 @@ export default {
                         Button,
                         {
                             props: {
-                                color: 'primary',
-                                label: 'Apply Filter',
-                                disabled: !this.selectedTags?.length && !this.withoutTag,
+                                color: "primary",
+                                label: "Apply Filter",
+                                disabled: !this.dirty,
                                 onClick: () => this.onApply({
                                     operator: this.selectedOperator,
                                     tags: this.selectedTags,
@@ -215,8 +232,8 @@ export default {
             const filteredTags = this.getFilteredTags();
             const hiddenSelectedTagCount = this.tags.filter(
                 (tag) =>
-                    this.selectedTags.includes(tag.name) &&
-                    !filteredTags.some((t) => t.name === tag.name),
+                    this.selectedTags.includes(tag.pk) &&
+                    !filteredTags.some((t) => t.pk === tag.pk),
             ).length;
             if (filteredTags.length === 0) {
                 return h(
@@ -229,7 +246,8 @@ export default {
                 return h(
                     "div",
                     `+ ${hiddenTagCount
-                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${hiddenSelectedTagCount
+                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${
+                        hiddenSelectedTagCount
                     } selected tag${hiddenSelectedTagCount !== 1 ? "s" : ""}`,
                 );
             }
@@ -245,25 +263,25 @@ export default {
      * - A checkbox input for "without tag"
      * - Buttons to cancel and apply the filter
      */
-    render: function (h) {
+    render(h) {
         return h(
-            'div',
-            { class: 'escr-tag-filter' },
+            "div",
+            { class: "escr-tag-filter escr-modal" },
             [
-                h('h3', 'Filter Tags'),
+                h("h3", "Filter Tags"),
                 h(
                     SegmentedButtonGroup,
                     {
                         props: {
-                            color: 'secondary',
-                            name: 'tag-filter-operator',
+                            color: "secondary",
+                            name: "tag-filter-operator",
                             options: [{
-                                value: 'and',
-                                label: 'AND',
+                                value: "and",
+                                label: "AND",
                                 selected: this.selectedOperator === "and",
                             }, {
-                                value: 'or',
-                                label: 'OR',
+                                value: "or",
+                                label: "OR",
                                 selected: this.selectedOperator === "or",
                             }],
                             onChangeSelection: this.setOperator,
@@ -271,24 +289,24 @@ export default {
                     }
                 ),
                 h(
-                    'h4',
+                    "h4",
                     [
-                        h('span', 'Tags'),
-                        h('div', [
+                        h("span", "Tags"),
+                        h("div", [
                             h(Button, {
                                 props: {
-                                    label: 'Select All',
-                                    color: 'link-primary',
-                                    size: 'small',
+                                    label: "Select All",
+                                    color: "link-primary",
+                                    size: "small",
                                     onClick: this.selectAllTags,
                                     disabled: this.selectedTags.length === this.tags.length,
                                 },
                             }),
                             h(Button, {
                                 props: {
-                                    label: 'Select None',
-                                    color: 'link-primary',
-                                    size: 'small',
+                                    label: "Select None",
+                                    color: "link-primary",
+                                    size: "small",
                                     onClick: this.selectNoTags,
                                     disabled: this.selectedTags.length === 0,
                                 },
@@ -308,36 +326,36 @@ export default {
                     }
                 ),
                 h(
-                    'div',
-                    { class: 'escr-tag-filter-group' },
+                    "div",
+                    { class: "escr-tag-filter-group" },
                     this.getFilteredTags().map(
                         (tag) => this.renderTagOption(h, tag)
                     ),
                 ),
                 this.renderFilteredTagNotice(h),
-                h('hr'),
+                h("hr"),
                 h(
-                    'label',
+                    "label",
                     {
                         domProps: {
-                            htmlFor: 'without-tag',
+                            htmlFor: "without-tag",
                         }
                     },
                     [
                         h(
-                            'input',
+                            "input",
                             {
                                 domProps: {
-                                    type: 'checkbox',
-                                    id: 'without-tag',
+                                    type: "checkbox",
+                                    id: "without-tag",
                                     onchange: this.toggleWithoutTag,
                                     checked: this.withoutTag,
                                 },
                             },
                         ),
                         h(
-                            'span',
-                            'Without tag'
+                            "span",
+                            "Without tag"
                         )
                     ]
                 ),
