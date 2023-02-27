@@ -1,11 +1,13 @@
 from bootstrap.forms import BootstrapFormMixin
 from captcha.fields import CaptchaField
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
+from escriptorium.utils import send_email
 from users.models import ContactUs, GroupOwner, Invitation, User
 
 
@@ -150,6 +152,26 @@ class ContactUsForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = ContactUs
         fields = ('name', 'email', 'message', 'captcha')
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+
+        context = {
+            "sender_name": self.instance.name,
+            "sender_email": self.instance.email,
+            "message": self.instance.message,
+        }
+
+        send_email(
+            'users/email/contactus_subject.txt',
+            'users/email/contactus_message.txt',
+            'users/email/contactus_html.html',
+            [email for name, email in settings.ADMINS],
+            context=context,
+            result_interface=None
+        )
+
+        return instance
 
 
 class RegenerateApiTokenForm(forms.Form):

@@ -40,7 +40,7 @@ class MyUserAdmin(UserAdmin):
     add_form = MyUserCreationForm
     list_display = UserAdmin.list_display + ('is_active', 'last_login', 'date_joined', 'quota_disk_storage', 'quota_cpu', 'quota_gpu')
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('fields', 'onboarding')}),  # second fields refers to research fields
+        (None, {'fields': ('fields',)}),  # second fields refers to research fields
         ('Quotas management (if not defined, fallback to instance quotas)', {'fields': ('quota_disk_storage', 'quota_cpu', 'quota_gpu')}),
     )
     add_fieldsets = (

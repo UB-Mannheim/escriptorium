@@ -26,11 +26,6 @@ class User(AbstractUser):
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
 
-    onboarding = models.BooleanField(
-        _('Show onboarding'),
-        default=True
-    )
-
     # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
     # quota_disk_storage is to be defined in Mb
     quota_disk_storage = models.PositiveIntegerField(null=True, blank=True)
@@ -254,23 +249,6 @@ class ContactUs(models.Model):
 
     def __str__(self):
         return "from {}({})".format(self.name, self.email)
-
-    def save(self, *args, **kwargs):
-        context = {
-            "sender_name": self.name,
-            "sender_email": self.email,
-            "message": self.message,
-        }
-
-        send_email(
-            'users/email/contactus_subject.txt',
-            'users/email/contactus_message.txt',
-            'users/email/contactus_html.html',
-            settings.ADMINS,
-            context=context,
-            result_interface=None
-        )
-        super().save(*args, **kwargs)
 
 
 class GroupOwner(models.Model):

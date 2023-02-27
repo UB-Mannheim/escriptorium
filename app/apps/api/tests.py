@@ -29,18 +29,60 @@ class UserViewSetTestCase(CoreFactoryTestCase):
 
     def setUp(self):
         super().setUp()
+        self.user = self.factory.make_user()
+        self.user2 = self.factory.make_user()
+        self.admin = self.factory.make_user(is_staff=True)
 
-    def test_onboarding(self):
-        user = self.factory.make_user()
-        self.client.force_login(user)
-        uri = reverse('api:user-detail', kwargs={'pk': user.pk})
-        resp = self.client.patch(uri, {
-            'onboarding': 'False',
-        }, content_type='application/json')
-
-        user.refresh_from_db()
+    def test_simple_list(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:user-list')
+        with self.assertNumQueries(4):
+            resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(user.onboarding, False)
+
+    def test_simple_detail(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:user-detail', kwargs={'pk': self.user.pk})
+        with self.assertNumQueries(3):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_only_admins_see_everyone(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:user-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.data['count'], 1)
+
+        self.client.force_login(self.admin)
+        resp = self.client.get(uri)
+        self.assertEqual(resp.data['count'], 3)
+
+    def test_user_cant_access_another_user(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:user-detail', kwargs={'pk': self.user2.pk})
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_get_project_tags(self):
+        project = self.factory.make_project()
+        tag = self.factory.make_project_tag(user=self.user)
+        project.tags.add(tag)
+        self.client.force_login(self.user)
+        uri = reverse('api:project-tag-list')
+        with self.assertNumQueries(4):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+    def test_create_project_tag(self):
+        self.client.force_login(self.user)
+
+        uri = reverse('api:project-tag-list')
+        with self.assertNumQueries(3):
+            resp = self.client.post(uri, {
+                'name': 'test-tag',
+                'color': '#123456'
+            })
+            self.assertEqual(resp.status_code, 201, resp.content)
 
 
 class DocumentViewSetTestCase(CoreFactoryTestCase):
@@ -401,7 +443,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(16):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {
@@ -460,7 +502,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 report2.error('Canceled by celery')
 
         mock_revoke.side_effect = fake_revoke
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(15):
             resp = self.client.post(reverse('api:document-cancel-tasks', kwargs={'pk': self.doc.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {
@@ -531,7 +573,7 @@ class PartViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:part-list',
                       kwargs={'document_pk': self.part.document.pk})
-        with self.assertNumQueries(17):
+        with self.assertNumQueries(18):
             img = self.factory.make_image_file()
             resp = self.client.post(uri, {
                 'image': SimpleUploadedFile(
@@ -983,6 +1025,32 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.factory.make_document(project=self.project, workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
         resp = self.client.get(uri)
         self.assertEqual(resp.json()['results'][0]['documents_count'], 1)
+
+    def test_add_tag_to_project(self):
+        tag = self.factory.make_project_tag(user=self.project.owner)
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
+        with self.assertNumQueries(11):
+            resp = self.client.patch(uri, {
+                'tags': [tag.pk]
+            }, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(self.project.tags.count(), 1)
+
+    def test_remove_tag_from_project(self):
+        tag1 = self.factory.make_project_tag(name='tag1', user=self.project.owner)
+        tag2 = self.factory.make_project_tag(name='tag2', user=self.project.owner)
+        self.project.tags.add(tag1)
+        self.project.tags.add(tag2)
+        self.assertEqual(self.project.tags.count(), 2)
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
+        with self.assertNumQueries(11):
+            resp = self.client.patch(uri, {
+                'tags': [tag2.pk]
+            }, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(self.project.tags.count(), 1)
 
 
 class DocumentPartMetadataTestCase(CoreFactoryTestCase):

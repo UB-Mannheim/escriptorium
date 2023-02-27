@@ -51,7 +51,7 @@
           <a data-proc="import-xml" class="js-proc-selected dropdown-item" href="#">Transcriptions (XML)</a>
         </span>
         <span {% if not has_disk_storage_left %}title="You don't have any disk storage left"{% endif %}>
-          <a data-proc="import-mets" class="js-proc-selected dropdown-item {% if not has_disk_storage_left %}disabled{% endif %}" href="#">METS archive (ZIP)</a>
+          <a data-proc="import-mets" class="js-proc-selected dropdown-item {% if not has_disk_storage_left %}disabled{% endif %}" href="#">METS (URI/ZIP)</a>
         </span>
       </div>
     </div>
@@ -246,9 +246,6 @@
 <script>
  'use strict';
  const DOCUMENT_ID = {{ document.pk }};
- {% if user.onboarding %}
- const ONBOARDING_PAGE = 'onboarding_images';
- {% endif %}
 </script>
 
 {{ block.super }}

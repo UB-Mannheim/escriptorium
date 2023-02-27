@@ -830,7 +830,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
-            # handle empty strings, NoneType; allow some values that could be falsy
+            # handle empty strings, NoneType; allow some values that could be false
             n_gram=int(n_gram if n_gram else 25),
             max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 0),
             merge=bool(merge),
