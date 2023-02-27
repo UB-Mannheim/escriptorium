@@ -1030,7 +1030,7 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         tag = self.factory.make_project_tag(user=self.project.owner)
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(10):
             resp = self.client.patch(uri, {
                 'tags': [tag.pk]
             }, content_type='application/json')
@@ -1045,7 +1045,7 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(self.project.tags.count(), 2)
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(10):
             resp = self.client.patch(uri, {
                 'tags': [tag2.pk]
             }, content_type='application/json')
