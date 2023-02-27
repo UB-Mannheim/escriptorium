@@ -112,11 +112,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
- {% if user.onboarding %}
- const ONBOARDING_PAGE = 'onboarding_document_form';
- {% endif %}
-</script>
 {{ block.super }}
 <script>
  $(document).ready(function(){

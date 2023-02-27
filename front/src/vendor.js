@@ -6,7 +6,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/css/bootstrap-reboot.min.css';
 import 'dropzone/dist/min/basic.min.css';
 import 'dropzone/dist/min/dropzone.min.css';
-import 'intro.js/introjs.css';
 // import '@recogito/annotorious/dist/annotorious.min.css';
 import 'lodash';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -23,10 +22,6 @@ window.jQuery = window.$ = require('jquery');
 // window.Dropzone = require('dropzone/dist/dropzone');
 import Dropzone from "dropzone";
 window.Dropzone = Dropzone;
-
-// Intro.js needs to be explicitly set on window, as it's used at boot time
-// by onboarding.js
-window.introJs = require('intro.js');
 
 // moment needs to be explicitly set on window, as it's used at boot time
 // by trans_modal.js

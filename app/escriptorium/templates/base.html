@@ -162,11 +162,6 @@
         });
       </script>
       {% include 'includes/messages.html' %}
-      {% if user.onboarding %}
-      <script>
-       bootOnboarding();
-      </script>
-      {% endif %}
       {% if ENABLE_COOKIE_CONSENT %}
       <script>
         userProfile.setUserId({{ request.user.id }});

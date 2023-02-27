@@ -26,11 +26,6 @@ class User(AbstractUser):
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
 
-    onboarding = models.BooleanField(
-        _('Show onboarding'),
-        default=True
-    )
-
     # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
     # quota_disk_storage is to be defined in Mb
     quota_disk_storage = models.PositiveIntegerField(null=True, blank=True)
