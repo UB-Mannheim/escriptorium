@@ -22,9 +22,6 @@ window.WheelZoom = WheelZoom;
 import { userProfile } from './profile.js'
 window.userProfile = userProfile;
 
-import { bootOnboarding } from './onboarding.js';
-window.bootOnboarding = bootOnboarding;
-
 import { setupFormSet } from './formsets.js';
 window.setupFormSet = setupFormSet;
 

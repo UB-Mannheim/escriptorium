@@ -32,18 +32,6 @@ class UserViewSetTestCase(CoreFactoryTestCase):
         self.user2 = self.factory.make_user()
         self.admin = self.factory.make_user(is_staff=True)
 
-    def test_onboarding(self):
-        user = self.factory.make_user()
-        self.client.force_login(user)
-        uri = reverse('api:user-detail', kwargs={'pk': user.pk})
-        resp = self.client.patch(uri, {
-            'onboarding': 'False',
-        }, content_type='application/json')
-
-        user.refresh_from_db()
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(user.onboarding, False)
-
     def test_simple_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:user-list')

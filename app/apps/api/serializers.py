@@ -132,8 +132,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('pk', 'is_active',
                   'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login',
-                  'onboarding')
+                  'date_joined', 'last_login')
         read_only_fields = ('date_joined', 'last_login')
 
 
