@@ -959,6 +959,13 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
         super().setUp()
         self.user = self.factory.make_user()
 
+    def test_list(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:ocrmodel-list')
+        with self.assertNumQueries(16):
+            resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
     def test_create(self):
         self.client.force_login(self.user)
         uri = reverse('api:ocrmodel-list')
@@ -993,6 +1000,21 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200, resp.json())
         self.assertEqual(resp.json()['count'], 1)
+
+    def test_no_duplicates(self):
+        # regression test
+        doc = self.factory.make_document(owner=self.user)
+        user2 = self.factory.make_user()
+        model = self.factory.make_model(doc)
+        group = self.factory.make_group(users=[self.user, user2])
+        model.ocr_model_rights.create(ocr_model=model, user=user2)
+        model.ocr_model_rights.create(ocr_model=model, group=group)
+
+        self.client.force_login(self.user)
+        uri = reverse('api:ocrmodel-list')
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200, resp.json())
+        self.assertEqual(resp.json()['count'], 1, resp.json())
 
 
 class ProjectViewSetTestCase(CoreFactoryTestCase):

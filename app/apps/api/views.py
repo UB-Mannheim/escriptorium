@@ -849,7 +849,9 @@ class OcrModelViewSet(ModelViewSet):
         return (super().get_queryset()
                 .filter(Q(owner=self.request.user)
                         | Q(ocr_model_rights__user=self.request.user)
-                        | Q(ocr_model_rights__group__user=self.request.user)))
+                        | Q(ocr_model_rights__group__user=self.request.user))
+                .distinct()
+                )
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
