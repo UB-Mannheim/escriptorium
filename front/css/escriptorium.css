@@ -217,6 +217,10 @@ form.inline-form {
     opacity: .5;
 }
 
+#segmentation-help-ben.help {
+    float: none;
+}
+
 .tools .notice {
     color: var(--warning);
     border: 1px solid;
@@ -401,7 +405,6 @@ form.inline-form {
 .tools {
     min-height: 45px;
     margin-bottom: 5px;
-    overflow: hidden;
 }
 
 .tools .fas {
