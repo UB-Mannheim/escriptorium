@@ -1499,7 +1499,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
     def make_masks(self, only=None):
         im = Image.open(self.image).convert("L")
-        lines = list(self.lines.all())  # needs to store the qs result
+        lines = list(self.lines.filter(baseline__isnull=False))
         to_calc = [line for line in lines if (only and line.pk in only) or (only is None)]
 
         for line in to_calc:
