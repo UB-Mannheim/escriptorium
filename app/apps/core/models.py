@@ -117,6 +117,17 @@ class Tag(models.Model):
         return self.name
 
 
+class ProjectTag(Tag):
+    user = models.ForeignKey(
+        "users.User",
+        related_name="project_tags",
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = ["user", "name"]
+
+
 class DocumentTag(Tag):
     project = models.ForeignKey(
         "core.Project",
@@ -405,7 +416,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
         related_name="shared_projects",
     )
 
-    # strict_ontology =
+    tags = models.ManyToManyField(ProjectTag, blank=True, related_name='tags_project')
 
     objects = ProjectManager()
 

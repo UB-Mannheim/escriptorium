@@ -30,6 +30,7 @@ from api.serializers import (
     DocumentPartMetadataSerializer,
     DocumentPartTypeSerializer,
     DocumentSerializer,
+    DocumentTagSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
     LineOrderSerializer,
@@ -41,10 +42,10 @@ from api.serializers import (
     PartMoveSerializer,
     PartSerializer,
     ProjectSerializer,
+    ProjectTagSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
-    TagDocumentSerializer,
     TextAnnotationSerializer,
     TrainSerializer,
     TranscribeSerializer,
@@ -71,6 +72,7 @@ from core.models import (
     LineType,
     OcrModel,
     Project,
+    ProjectTag,
     ProtectedObjectException,
     Script,
     TextAnnotation,
@@ -139,9 +141,17 @@ class ProjectViewSet(ModelViewSet):
         return Project.objects.for_user_read(self.request.user)
 
 
-class TagViewSet(ModelViewSet):
+class ProjectTagViewSet(ModelViewSet):
+    queryset = ProjectTag.objects.all()
+    serializer_class = ProjectTagSerializer
+
+    def get_queryset(self):
+        return ProjectTag.objects.filter(user=self.request.user)
+
+
+class DocumentTagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
-    serializer_class = TagDocumentSerializer
+    serializer_class = DocumentTagSerializer
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))
