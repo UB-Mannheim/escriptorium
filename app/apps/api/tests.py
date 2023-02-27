@@ -962,7 +962,7 @@ class OcrModelViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:ocrmodel-list')
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(3):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
