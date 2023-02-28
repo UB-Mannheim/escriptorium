@@ -32,6 +32,7 @@ from core.models import (
     OcrModel,
     OcrModelDocument,
     Project,
+    ProjectTag,
     Script,
     TextAnnotation,
     TextAnnotationComponentValue,
@@ -86,6 +87,7 @@ class ScriptSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     slug = serializers.ReadOnlyField()
+    documents_count = serializers.ReadOnlyField()
 
     class Meta:
         model = Project
@@ -131,8 +133,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('pk', 'is_active',
                   'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login',
-                  'onboarding')
+                  'date_joined', 'last_login')
         read_only_fields = ('date_joined', 'last_login')
 
 
@@ -293,7 +294,17 @@ class TextAnnotationSerializer(serializers.ModelSerializer):
         return anno
 
 
-class TagDocumentSerializer(serializers.ModelSerializer):
+class ProjectTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectTag
+        fields = ("pk", "name", "color")
+
+    def create(self, data):
+        data['user'] = self.context['request'].user
+        return super().create(data)
+
+
+class DocumentTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentTag
         fields = ("pk", "name", "color")

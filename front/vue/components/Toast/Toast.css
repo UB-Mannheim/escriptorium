@@ -1,0 +1,49 @@
+.escr-toast-group {
+    display: flex;
+    flex-flow: column;
+    position: absolute;
+    left: 6rem;
+    bottom: 2rem;
+}
+.toast-group-enter, .toast-group-leave-to {
+    opacity: 0;
+}
+.escr-toast {
+    z-index: var(--toast-z);
+    background-color: var(--background2);
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 4rem;
+    box-shadow: 0px 4px 4px var(--drop-shadow);
+    border-radius: 5px;
+    padding: 0 0.5rem 0 1rem;
+    width: max-content;
+    max-width: 100%;
+    transition: opacity 0.5s;
+    gap: 0.5rem;
+}
+.escr-toast-group .escr-toast + .escr-toast {
+    margin-top: 1rem;
+}
+.escr-toast > span,
+.escr-toast > a {
+    font-weight: 600;
+}
+/* color variants */
+.escr-toast--alert {
+    background-color: var(--alert);
+    color: white;
+    box-shadow: 0px 4px 4px var(--alert-focus);
+}
+.escr-toast--alert svg {
+    fill: white;
+}
+.escr-toast--success {
+    background-color: var(--primary);
+    color: white;
+    box-shadow: 0px 4px 4px var(--primary-focus);
+}
+.escr-toast--success svg {
+    fill: white;
+}

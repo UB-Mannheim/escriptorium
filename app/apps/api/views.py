@@ -4,12 +4,12 @@ import logging
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from rest_framework import status
+from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -30,6 +30,7 @@ from api.serializers import (
     DocumentPartMetadataSerializer,
     DocumentPartTypeSerializer,
     DocumentSerializer,
+    DocumentTagSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
     LineOrderSerializer,
@@ -41,10 +42,10 @@ from api.serializers import (
     PartMoveSerializer,
     PartSerializer,
     ProjectSerializer,
+    ProjectTagSerializer,
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
-    TagDocumentSerializer,
     TextAnnotationSerializer,
     TrainSerializer,
     TranscribeSerializer,
@@ -71,6 +72,7 @@ from core.models import (
     LineType,
     OcrModel,
     Project,
+    ProjectTag,
     ProtectedObjectException,
     Script,
     TextAnnotation,
@@ -134,14 +136,30 @@ class ScriptViewSet(ReadOnlyModelViewSet):
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'documents_count', 'id', 'name', 'owner', 'updated_at']
 
     def get_queryset(self):
-        return Project.objects.for_user_read(self.request.user)
+        return (Project.objects
+                .for_user_read(self.request.user)
+                .annotate(documents_count=Count(
+                    'documents',
+                    filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
+                    distinct=True))
+                .select_related('owner'))
 
 
-class TagViewSet(ModelViewSet):
+class ProjectTagViewSet(ModelViewSet):
+    queryset = ProjectTag.objects.all()
+    serializer_class = ProjectTagSerializer
+
+    def get_queryset(self):
+        return ProjectTag.objects.filter(user=self.request.user)
+
+
+class DocumentTagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
-    serializer_class = TagDocumentSerializer
+    serializer_class = DocumentTagSerializer
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))
@@ -831,7 +849,9 @@ class OcrModelViewSet(ModelViewSet):
         return (super().get_queryset()
                 .filter(Q(owner=self.request.user)
                         | Q(ocr_model_rights__user=self.request.user)
-                        | Q(ocr_model_rights__group__user=self.request.user)))
+                        | Q(ocr_model_rights__group__user=self.request.user))
+                .distinct()
+                )
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):

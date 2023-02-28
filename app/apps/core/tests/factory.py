@@ -18,6 +18,7 @@ from core.models import (
     Metadata,
     OcrModel,
     Project,
+    ProjectTag,
     TextualWitness,
     Transcription,
 )
@@ -36,12 +37,11 @@ class CoreFactory():
         for obj in self.cleanup_registry:
             obj.delete()
 
-    def make_user(self, group_name=None):
-        name = 'test-%s' % str(uuid.uuid1())
-        return User.objects.create(
-            username=name,
-            email='%s@test.com' % name
-        )
+    def make_user(self, **kwargs):
+        attrs = kwargs.copy()
+        attrs['username'] = kwargs.get('username') or 'test-%s' % str(uuid.uuid1())
+        attrs['email'] = kwargs.get('email') or '%s@test.com' % attrs['username']
+        return User.objects.create(**attrs)
 
     def make_group(self, users=None):
         name = 'group-%s' % str(uuid.uuid1())
@@ -60,6 +60,12 @@ class CoreFactory():
             }
         )
         return project
+
+    def make_project_tag(self, **kwargs):
+        attrs = kwargs.copy()
+        attrs['name'] = attrs.get('name') or 'test-tag'
+        attrs['user'] = attrs.get('user') or self.make_user()
+        return ProjectTag.objects.create(**attrs)
 
     def make_document(self, **kwargs):
         attrs = kwargs.copy()

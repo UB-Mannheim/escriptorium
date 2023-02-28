@@ -117,6 +117,17 @@ class Tag(models.Model):
         return self.name
 
 
+class ProjectTag(Tag):
+    user = models.ForeignKey(
+        "users.User",
+        related_name="project_tags",
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = ["user", "name"]
+
+
 class DocumentTag(Tag):
     project = models.ForeignKey(
         "core.Project",
@@ -405,7 +416,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
         related_name="shared_projects",
     )
 
-    # strict_ontology =
+    tags = models.ManyToManyField(ProjectTag, blank=True, related_name='tags_project')
 
     objects = ProjectManager()
 
@@ -1488,7 +1499,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
     def make_masks(self, only=None):
         im = Image.open(self.image).convert("L")
-        lines = list(self.lines.all())  # needs to store the qs result
+        lines = list(self.lines.filter(baseline__isnull=False))
         to_calc = [line for line in lines if (only and line.pk in only) or (only is None)]
 
         for line in to_calc:
