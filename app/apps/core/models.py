@@ -1362,10 +1362,21 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
         self.save()
         self.recalculate_ordering(read_direction=read_direction)
 
-    def transcribe(self, model, text_direction=None):
-        trans, created = Transcription.objects.get_or_create(
-            name="kraken:" + model.name, document=self.document
-        )
+    def transcribe(self, model, transcription=None, text_direction=None, user=None):
+        if transcription is not None:
+            trans = transcription
+        else:
+            # create a new one
+            trans_name = "kraken:" + model.name
+            # if a transcription with this name already exists we add the date to the name
+            if Transcription.objects.filter(
+                    name=trans_name,
+                    document=self.document).exists():
+                trans_name += ' (' + datetime.strftime(datetime.now(), '%y/%m/%d-%H:%M') + ')'
+            trans = Transcription.objects.create(
+                name=trans_name,
+                document=self.document)
+
         model_ = kraken_models.load_any(model.file.path)
 
         lines = self.lines.all()
@@ -1416,6 +1427,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=trans
                 )
+
+                if not created:
+                    lt.new_version()
+
+                lt.version_author = user and user.username or ''
+                lt.version_source = 'kraken:' + model.name
+
                 for pred in it:
                     lt.content = pred.prediction
                     lt.graphs = [{
@@ -1428,6 +1446,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     line_avg_confidence = mean([graph['confidence'] for graph in lt.graphs if "confidence" in graph])
                     lt.avg_confidence = line_avg_confidence
                     line_confidences.append(line_avg_confidence)
+
                 lt.save()
         if line_confidences:
             # calculate and set all avg confidence values on models
