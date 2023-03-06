@@ -78,3 +78,12 @@
 .escr-segmented-button-group--secondary input:focus + label {
     box-shadow: 0 0 0 0.1rem var(--secondary-focus);
 }
+
+/* disabled */
+.escr-segmented-button-group input:disabled + label {
+    pointer-events: none;
+    cursor: default;
+    color: var(--text3);
+    background-color: var(--background2);
+    font-weight: 400;
+}
