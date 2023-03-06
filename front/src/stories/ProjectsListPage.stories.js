@@ -4,6 +4,7 @@ import EscrNewProjectModal from "../../vue/pages/ProjectsList/NewProjectModal.vu
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
 import { ManyTags } from "./Tags.stories";
+import { sorted } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
@@ -88,32 +89,6 @@ const projects = [
     },
 ];
 
-const sorted = (items, { ordering }) => {
-    const alphabeticSort = (key) => (a, b) => {
-        return a[key].toString().localeCompare(b[key].toString());
-    };
-    const numericSort = (key) => (a, b) => {
-        return a[key] - b[key];
-    };
-    if (!ordering) {
-        return [...items].sort(numericSort("id"));
-    } else {
-        // handle ordering param ("sortfield" = asc, "-sortfield" = desc)
-        let sorted = [...items];
-        const split = ordering.split("-");
-        const sort = split.length == 1 ? split[0] : split[1];
-        if (ordering.includes("documents_count")) {
-            sorted.sort(numericSort(sort));
-        } else {
-            sorted.sort(alphabeticSort(sort));
-        }
-        if (split.length == 2) {
-            sorted.reverse();
-        }
-        return sorted;
-    }
-};
-
 const filteredByTag = (items, tags, operator) => {
     if (tags) {
         return items.filter((item) => {
@@ -131,17 +106,16 @@ const filteredByTag = (items, tags, operator) => {
     return items;
 };
 
-// setup mocks for API requests
-const mock = new MockAdapter(axios);
-const projectsEndpoint = "/projects";
-const projectsTagsEndpoint = "/tags/project";
-const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
-
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { ProjectsList },
     template: "<ProjectsList v-bind=\"$props\" />",
     setup() {
+        // setup mocks for API requests
+        const mock = new MockAdapter(axios);
+        const projectsEndpoint = "/projects";
+        const projectsTagsEndpoint = "/tags/project";
+        const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
         // mock projects list
         mock.onGet(projectsEndpoint).reply(async function(config) {
             // wait for 100-300 ms to mimic server-side loading
