@@ -37,10 +37,10 @@
     font-size: 14px;
     height: 64px;
     transition: background-color 0.15s ease-in-out;
+    border-bottom: 1px solid var(--background);
 }
 .escr-table--compact tbody tr {
     height: 42px;
-    border-bottom: 1px solid var(--background);
 }
 .escr-table tr td:first-of-type,
 .escr-table tr th:first-of-type {
