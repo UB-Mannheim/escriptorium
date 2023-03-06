@@ -13,7 +13,11 @@
 .escr-table thead tr {
     font-size: 12px;
     height: 32px;
-    border-bottom: 1px solid var(--background2);
+    border-bottom: 1px solid var(--background);
+}
+.escr-table--compact thead tr {
+    font-size: 10px;
+    height: 26px;
 }
 .escr-table th {
     font-weight: 600;
@@ -33,6 +37,10 @@
     font-size: 14px;
     height: 64px;
     transition: background-color 0.15s ease-in-out;
+}
+.escr-table--compact tbody tr {
+    height: 42px;
+    border-bottom: 1px solid var(--background);
 }
 .escr-table tr td:first-of-type,
 .escr-table tr th:first-of-type {
@@ -57,6 +65,9 @@
     padding: 0;
     transition: font-weight 0.15s ease-in-out, color 0.15s ease-in-out;
     font-weight: 600;
+}
+.escr-table--compact th button.escr-sort-button {
+    font-size: 10px;
 }
 .escr-table th button.escr-sort-button svg {
     margin-left: 2px;
