@@ -6,12 +6,23 @@
 .escr-card-padding {
     padding: 1rem;
 }
+.escr-card-table > *:not(table) {
+    padding: 0 1rem;
+}
 /* card header: should be comprised of one or two elements (left and, optionally, right) */
 .escr-card-header {
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.escr-card:not(.escr-card-padding) .escr-card-header {
+    margin: 0.3rem 0;
+}
+.escr-card-padding .escr-card-header h1,
+.escr-card-padding .escr-card-header h2 {
+    margin: 0;
 }
 .escr-card-actions {
     display: flex;
