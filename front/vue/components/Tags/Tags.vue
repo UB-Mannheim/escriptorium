@@ -48,9 +48,8 @@ export default {
         tags: {
             type: Array,
             default: () => [],
-            required: true,
             validator(value) {
-                return value.length > 0 && value.every((t) => t.pk || t.pk === 0);
+                return !value.length || value.every((t) => t.pk || t.pk === 0);
             },
         },
         /**
