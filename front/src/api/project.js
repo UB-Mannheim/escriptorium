@@ -47,3 +47,27 @@ export const retrieveProjectOntology = async ({
         { params },
     );
 };
+
+// retrieve characters, sorted by character or frequency, in all transcriptions in the project
+export const retrieveProjectCharacters = async ({ projectId, field, direction }) => {
+    let params = {};
+    if (field && direction) {
+        params.ordering = getSortParam({ field, direction });
+    }
+    return await axios.get(`/projects/${projectId}/characters`, { params });
+};
+
+// retrieve a list of documents by project
+// TODO: Is this the right place for this, or would it be better to filter docs by
+// project pk?
+export const retrieveProjectDocuments = async ({
+    projectId,
+    field,
+    direction,
+}) => {
+    let params = {};
+    if (field && direction) {
+        params.ordering = getSortParam({ field, direction });
+    }
+    return await axios.get(`/projects/${projectId}/documents`, { params });
+};

@@ -1,0 +1,32 @@
+.escr-project-dashboard {
+    display: grid;
+    height: 90vh;
+    max-height: 90vh;
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas:
+      "header ontology"
+      "doclist ontology"
+      "doclist chars"
+      "doclist chars";
+    grid-template-rows: auto;
+    grid-auto-rows: 25%;
+    gap: 24px;
+    align-items: stretch;
+}
+.project-details {
+    grid-area: header;
+}
+.project-documents-list {
+    grid-area: doclist;
+    overflow: hidden;
+}
+.project-documents-list table {
+    max-height: 100%;
+    overflow-y: auto;
+}
+.project-ontology {
+    grid-area: ontology;
+}
+.project-characters {
+    grid-area: chars;
+}
