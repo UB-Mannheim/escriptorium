@@ -15,7 +15,7 @@ export const sorted = (items, { ordering }) => {
         let sorted = [...items];
         const split = ordering.split("-");
         const sort = split.length == 1 ? split[0] : split[1];
-        if (ordering.includes("count")) {
+        if (ordering.includes("count") || ordering.includes("-frequency")) {
             sorted.sort(numericSort(sort));
         } else {
             sorted.sort(alphabeticSort(sort));
@@ -43,9 +43,11 @@ export const onSort = (items, { field, direction }) => {
 
 // mock ontologies for all stories with ontology
 export const blockTypes = [
-    { pk: 1, name: "Main", count: 2 },
+    { pk: 1, name: "Main", count: 22 },
     { pk: 2, name: "Commentary", count: 3 },
     { pk: 3, name: "Header", count: 1 },
+    { pk: 4, name: "Illustration", count: 4 },
+    { pk: 5, name: "Footnote", count: 4 },
 ];
 export const lineTypes = [
     { pk: 1, name: "Correction", count: 13 },
