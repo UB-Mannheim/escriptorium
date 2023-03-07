@@ -22,14 +22,16 @@
             :options="categories"
             :on-change-selection="onSelectCategory"
         />
-        <EscrTable
-            item-key="pk"
-            compact
-            :headers="tableHeaders"
-            :items="items"
-            :on-sort="onSort"
-            :sort-disabled="loading"
-        />
+        <div class="escr-ontology-table-container">
+            <EscrTable
+                item-key="pk"
+                compact
+                :headers="tableHeaders"
+                :items="items"
+                :on-sort="onSort"
+                :sort-disabled="loading"
+            />
+        </div>
     </div>
 </template>
 <script>
