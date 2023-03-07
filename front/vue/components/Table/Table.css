@@ -28,10 +28,6 @@
     align-items: center;
     justify-content: flex-start;
 }
-.escr-table th,
-.escr-table td {
-    padding: 0 8px;
-}
 /* other rows */
 .escr-table tbody tr {
     font-size: 14px;
