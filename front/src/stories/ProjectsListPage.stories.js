@@ -31,9 +31,7 @@ const projects = [
         owner: "Ryuichi Sakamoto",
         updated_at: "2022-08-09T09:01:12.145622Z",
         documents_count: 10,
-        tags: {
-            tags: tags.slice(0, 7),
-        },
+        tags: tags.slice(0, 7),
     },
     {
         id: 1,
@@ -42,9 +40,7 @@ const projects = [
         owner: "Haruomi Hosono",
         updated_at: "2023-01-31T12:14:32.004501Z",
         documents_count: 100,
-        tags: {
-            tags: [tags[5], ...tags.slice(7, 9)],
-        },
+        tags: [tags[5], ...tags.slice(7, 9)],
     },
     {
         id: 2,
@@ -53,9 +49,7 @@ const projects = [
         owner: "Yukihiro Takahashi",
         updated_at: "2022-01-09T17:24:40.044701Z",
         documents_count: 50,
-        tags: {
-            tags: [tags[7], tags[9], tags[10]],
-        },
+        tags: [tags[7], tags[9], tags[10]],
     },
 ];
 
@@ -147,9 +141,7 @@ const PageTemplate = (args, { argTypes }) => ({
                             owner: "John Smith",
                             updated_at: "2023-02-20T11:10:01.122122Z",
                             documents_count: 1,
-                            tags: {
-                                tags: [tags[4]],
-                            },
+                            tags: [tags[4]],
                         },
                     ],
                     next: null,

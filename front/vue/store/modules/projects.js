@@ -144,7 +144,10 @@ const actions = {
             filters: rootState?.filter?.filters,
         });
         if (data?.results) {
-            commit("setProjects", data.results);
+            commit("setProjects", data.results.map((result) => ({
+                ...result,
+                tags: { tags: result.tags },
+            })));
             commit("setNextPage", data.next);
         } else {
             commit("setLoading", false);
