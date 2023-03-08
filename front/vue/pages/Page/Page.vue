@@ -11,6 +11,7 @@
 <script>
 import Alerts from "../../components/Toast/ToastGroup.vue";
 import EscrBreadcrumbs from "../../components/Breadcrumbs/Breadcrumbs.vue";
+import "./Page.css";
 
 export default {
     name: "EscrPage",

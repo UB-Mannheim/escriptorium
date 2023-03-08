@@ -3,8 +3,7 @@ import MockAdapter from "axios-mock-adapter";
 import EscrNewProjectModal from "../../vue/pages/ProjectsList/NewProjectModal.vue";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
-import { ManyTags } from "./Tags.stories";
-import { sorted } from "./util";
+import { sorted, tags } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
@@ -24,35 +23,6 @@ const Template = (args, { argTypes }) => ({
 export const NewProjectModal = Template.bind({});
 
 // tags and projects for list view
-
-const tags = [
-    ...ManyTags.args.tags,
-    {
-        pk: 7,
-        name: "Tag",
-        variant: 4,
-        color: "#fcb55f",
-    },
-    {
-        pk: 8,
-        name: "Tag tag",
-        variant: 7,
-        color: "#80c6ba",
-    },
-    {
-        pk: 9,
-        name: "Other tag",
-        variant: 8,
-        color: "#88c9f2",
-    },
-    {
-        pk: 10,
-        name: "A tag",
-        variant: 6,
-        color: "#cbe364",
-    },
-];
-
 const projects = [
     {
         id: 0,

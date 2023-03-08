@@ -4,6 +4,7 @@ import {
     retrieveProjectDocuments,
     retrieveProjectOntology,
 } from "../../../src/api";
+import { tagColorToVariant } from "../util/color";
 
 // initial state
 const state = () => ({
@@ -44,6 +45,7 @@ const state = () => ({
      */
     documents: [],
     editModalOpen: false,
+    guidelines: "",
     id: null,
     loading: false,
     name: "",
@@ -92,7 +94,13 @@ const actions = {
         const { data } = await retrieveProject(state.id);
         if (data) {
             commit("setName", data.name);
-            commit("setTags", data.tags);
+            commit(
+                "setTags",
+                data.tags?.map((tag) => ({
+                    ...tag,
+                    variant: tagColorToVariant(tag.color),
+                })),
+            );
         } else {
             throw new Error("Unable to retrieve project");
         }
@@ -125,7 +133,10 @@ const actions = {
             ...state.sortState,
         });
         if (data?.results) {
-            commit("setDocuments", data.results);
+            commit("setDocuments", data.results.map((result) => ({
+                ...result,
+                tags: { tags: result.tags },
+            })));
         } else {
             throw new Error("Unable to retrieve documents");
         }

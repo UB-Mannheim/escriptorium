@@ -1,12 +1,15 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import ProjectDashboard from "../../vue/pages/Project/Project.vue";
+import { ManyTags } from "./Tags.stories";
 import {
     annotationTypes,
     blockTypes,
+    characters,
     lineTypes,
     partTypes,
     sorted,
+    tags,
 } from "./util";
 
 export default {
@@ -18,71 +21,80 @@ const project = {
     id: 1,
     name: "Project name that is really really long",
     guidelines: "",
-    tags: [],
+    tags: ManyTags.args.tags,
 };
 
 const documents = [
     {
         pk: 0,
         name: "Document Name 1",
-        tags: [],
+        tags: tags.slice(7, 10),
         parts_count: 10,
         updated_at: "2022-04-22T19:47:56.943325Z",
     },
     {
         pk: 1,
         name: "My Document",
-        tags: [],
+        tags: tags.slice(3, 11),
         parts_count: 50,
         updated_at: "2022-01-12T19:47:56.943325Z",
     },
-];
-
-const characters = [
-    { char: " ", frequency: 2285 },
-    { char: "ئ", frequency: 58 },
-    { char: "ع", frequency: 1008 },
-    { char: "و", frequency: 1858 },
-    { char: "ك", frequency: 222 },
-    { char: "0", frequency: 3 },
-    { char: "1", frequency: 2 },
-    { char: "2", frequency: 10 },
-    { char: "a", frequency: 15 },
-    { char: "b", frequency: 85 },
-    { char: "c", frequency: 3 },
-    { char: "d", frequency: 6 },
-    { char: "e", frequency: 12 },
-    { char: "f", frequency: 68 },
-    { char: "g", frequency: 2 },
-    { char: "h", frequency: 44 },
-    { char: "i", frequency: 5 },
-    { char: "j", frequency: 7 },
-    { char: "k", frequency: 8 },
-    { char: "l", frequency: 2 },
-    { char: "m", frequency: 89 },
-    { char: "n", frequency: 1 },
-    { char: "o", frequency: 11 },
-    { char: "p", frequency: 22 },
-    { char: "q", frequency: 33 },
-    { char: "r", frequency: 41 },
-    { char: "s", frequency: 64 },
-    { char: "t", frequency: 86 },
-    { char: "u", frequency: 38 },
-    { char: "v", frequency: 86 },
-    { char: "w", frequency: 66 },
-    { char: "x", frequency: 58 },
-    { char: "y", frequency: 65 },
-    { char: "z", frequency: 77 },
-    { char: "{", frequency: 22 },
-    { char: "}", frequency: 1 },
-    { char: "ؤ", frequency: 24 },
-    { char: "‐", frequency: 56 },
-    { char: "'", frequency: 2 },
-    { char: ".", frequency: 5 },
-    { char: ",", frequency: 33 },
-    { char: "/", frequency: 27 },
-    { char: "(", frequency: 8 },
-    { char: ")", frequency: 8 },
+    {
+        pk: 2,
+        name: "My Other Document",
+        tags: tags.slice(1, 3),
+        parts_count: 100,
+        updated_at: "2022-01-12T12:47:56.943325Z",
+    },
+    {
+        pk: 3,
+        name: "My Friend's Document",
+        tags: tags.slice(2, 6),
+        parts_count: 150,
+        updated_at: "2022-09-08T19:47:56.943325Z",
+    },
+    {
+        pk: 4,
+        name: "A New Document",
+        tags: tags.slice(4, 7),
+        parts_count: 2,
+        updated_at: "2022-04-04T19:47:56.943325Z",
+    },
+    {
+        pk: 5,
+        name: "The Book of Documents",
+        tags: [],
+        parts_count: 15,
+        updated_at: "2022-02-14T19:47:56.943325Z",
+    },
+    {
+        pk: 6,
+        name: "A Document From A Book",
+        tags: tags.slice(9, 11),
+        parts_count: 200,
+        updated_at: "2022-08-22T19:47:56.943325Z",
+    },
+    {
+        pk: 7,
+        name: "My PDF Conversion",
+        tags: tags.slice(7, 11),
+        parts_count: 50,
+        updated_at: "2022-03-13T19:47:56.943325Z",
+    },
+    {
+        pk: 8,
+        name: "My Transcribed Manuscript",
+        tags: tags.slice(1, 4),
+        parts_count: 55,
+        updated_at: "2022-02-02T19:47:56.943325Z",
+    },
+    {
+        pk: 9,
+        name: "An Ancient Text",
+        tags: tags.slice(5, 8),
+        parts_count: 72,
+        updated_at: "2023-02-12T19:47:56.943325Z",
+    },
 ];
 
 const Template = (args, { argTypes }) => ({

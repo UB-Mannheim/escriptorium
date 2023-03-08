@@ -1,7 +1,7 @@
 .escr-project-dashboard .escr-grid-container {
     display: grid;
-    height: 90vh;
-    max-height: 90vh;
+    height: calc(90vh - 32px);
+    max-height: calc(90vh - 32px);
     grid-template-columns: 3fr 1fr;
     grid-template-areas:
         "header ontology"
@@ -13,20 +13,32 @@
     gap: 24px;
     align-items: stretch;
 }
-.project-details {
+.escr-project-details {
     grid-area: header;
 }
-.project-documents-list {
+.escr-documents-list {
     grid-area: doclist;
     overflow: hidden;
+    display: flex;
+    flex-flow: column;
 }
-.project-documents-list table {
-    max-height: 100%;
-    overflow-y: auto;
+.escr-documents-list .table-container {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
 }
-.project-ontology {
+.escr-project-ontology {
     grid-area: ontology;
 }
-.project-characters {
+.escr-project-characters {
     grid-area: chars;
+}
+
+/* constrain tags cells width */
+.escr-documents-list table td:nth-of-type(2) {
+    width: 300px;
+    max-width: 300px;
+}
+.escr-documents-list .escr-card-actions > button:last-of-type {
+    margin-left: 2rem;
 }

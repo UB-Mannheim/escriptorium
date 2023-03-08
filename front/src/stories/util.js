@@ -1,3 +1,5 @@
+import { ManyTags } from "./Tags.stories";
+
 // sort utility functions
 const alphabeticSort = (key) => (a, b) => {
     return a[key].toString().localeCompare(b[key].toString());
@@ -60,4 +62,81 @@ export const annotationTypes = [
 export const partTypes = [
     { pk: 1, name: "Cover", count: 4 },
     { pk: 2, name: "Page", count: 100 },
+];
+
+// mock tags for all stories with tags
+export const tags = [
+    ...ManyTags.args.tags,
+    {
+        pk: 7,
+        name: "Tag",
+        variant: 4,
+        color: "#fcb55f",
+    },
+    {
+        pk: 8,
+        name: "Tag tag",
+        variant: 7,
+        color: "#80c6ba",
+    },
+    {
+        pk: 9,
+        name: "Other tag",
+        variant: 8,
+        color: "#88c9f2",
+    },
+    {
+        pk: 10,
+        name: "A tag",
+        variant: 6,
+        color: "#cbe364",
+    },
+];
+
+// mock characters for all stories with characters
+export const characters = [
+    { char: " ", frequency: 2285 },
+    { char: "ئ", frequency: 58 },
+    { char: "ع", frequency: 1008 },
+    { char: "و", frequency: 1858 },
+    { char: "ك", frequency: 222 },
+    { char: "0", frequency: 3 },
+    { char: "1", frequency: 2 },
+    { char: "2", frequency: 10 },
+    { char: "a", frequency: 15 },
+    { char: "b", frequency: 85 },
+    { char: "c", frequency: 3 },
+    { char: "d", frequency: 6 },
+    { char: "e", frequency: 12 },
+    { char: "f", frequency: 68 },
+    { char: "g", frequency: 2 },
+    { char: "h", frequency: 44 },
+    { char: "i", frequency: 5 },
+    { char: "j", frequency: 7 },
+    { char: "k", frequency: 8 },
+    { char: "l", frequency: 2 },
+    { char: "m", frequency: 89 },
+    { char: "n", frequency: 1 },
+    { char: "o", frequency: 11 },
+    { char: "p", frequency: 22 },
+    { char: "q", frequency: 33 },
+    { char: "r", frequency: 41 },
+    { char: "s", frequency: 64 },
+    { char: "t", frequency: 86 },
+    { char: "u", frequency: 38 },
+    { char: "v", frequency: 86 },
+    { char: "w", frequency: 66 },
+    { char: "x", frequency: 58 },
+    { char: "y", frequency: 65 },
+    { char: "z", frequency: 77 },
+    { char: "{", frequency: 22 },
+    { char: "}", frequency: 1 },
+    { char: "ؤ", frequency: 24 },
+    { char: "‐", frequency: 56 },
+    { char: "'", frequency: 2 },
+    { char: ".", frequency: 5 },
+    { char: ",", frequency: 33 },
+    { char: "/", frequency: 27 },
+    { char: "(", frequency: 8 },
+    { char: ")", frequency: 8 },
 ];
