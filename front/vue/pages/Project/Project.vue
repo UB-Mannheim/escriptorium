@@ -1,81 +1,86 @@
 <template>
-    <EscrPage class="escr-project-dashboard">
+    <EscrPage
+        class="escr-project-dashboard"
+        :breadcrumbs="breadcrumbs"
+    >
         <template #page-content>
-            <div class="escr-card escr-card-padding project-details">
-                <div class="escr-card-header">
-                    <h1>{{ projectName }}</h1>
-                    <div class="escr-card-actions">
-                        <EscrButton
-                            label="Edit"
-                            size="small"
-                            :on-click="openEditModal"
-                            :disabled="loading || editModalOpen"
-                        >
-                            <template #button-icon>
-                                <PencilIcon />
-                            </template>
-                        </EscrButton>
+            <div class="escr-grid-container">
+                <div class="escr-card escr-card-padding project-details">
+                    <div class="escr-card-header">
+                        <h1>{{ projectName }}</h1>
+                        <div class="escr-card-actions">
+                            <EscrButton
+                                label="Edit"
+                                size="small"
+                                :on-click="openEditModal"
+                                :disabled="loading || editModalOpen"
+                            >
+                                <template #button-icon>
+                                    <PencilIcon />
+                                </template>
+                            </EscrButton>
+                        </div>
                     </div>
+                    Project Guidelines
                 </div>
-                Project Guidelines
-            </div>
-            <div class="escr-card escr-card-table project-documents-list">
-                <div class="escr-card-header">
-                    <h2>Documents</h2>
+                <div class="escr-card escr-card-table project-documents-list">
+                    <div class="escr-card-header">
+                        <h2>Documents</h2>
+                    </div>
+                    <EscrTable
+                        item-key="pk"
+                        :headers="headers"
+                        :items="documents"
+                        :on-sort="sortDocuments"
+                        :sort-disabled="loading"
+                    >
+                        <template #actions="{ item }">
+                            <EscrButton
+                                v-tooltip.bottom="'Images'"
+                                size="small"
+                                color="text"
+                                :on-click="() => navigateToImages(item)"
+                                :disabled="loading"
+                                aria-label="Document images"
+                            >
+                                <template #button-icon>
+                                    <ImagesIcon />
+                                </template>
+                            </EscrButton>
+                            <EscrButton
+                                v-tooltip.bottom="'Delete'"
+                                size="small"
+                                color="text"
+                                :on-click="() => openDeleteModal(item)"
+                                :disabled="loading"
+                                aria-label="Delete document"
+                            >
+                                <template #button-icon>
+                                    <TrashIcon />
+                                </template>
+                            </EscrButton>
+                        </template>
+                    </EscrTable>
                 </div>
-                <EscrTable
-                    item-key="pk"
-                    :headers="headers"
-                    :items="documents"
-                    :on-sort="sortDocuments"
-                    :sort-disabled="loading"
-                >
-                    <template #actions="{ item }">
-                        <EscrButton
-                            v-tooltip.bottom="'Images'"
-                            size="small"
-                            color="text"
-                            :on-click="() => navigateToImages(item)"
-                            :disabled="loading"
-                            aria-label="Document images"
-                        >
-                            <template #button-icon>
-                                <ImagesIcon />
-                            </template>
-                        </EscrButton>
-                        <EscrButton
-                            v-tooltip.bottom="'Delete'"
-                            size="small"
-                            color="text"
-                            :on-click="() => openDeleteModal(item)"
-                            :disabled="loading"
-                            aria-label="Delete document"
-                        >
-                            <template #button-icon>
-                                <TrashIcon />
-                            </template>
-                        </EscrButton>
-                    </template>
-                </EscrTable>
+                <OntologyCard
+                    class="project-ontology"
+                    context="Project"
+                    :items="ontology"
+                    :loading="loading"
+                    :on-view="() => openOntologyModal"
+                    :on-select-category="changeOntologyCategory"
+                    :on-sort="sortOntology"
+                    :selected-category="ontologyCategory"
+                />
+                <CharactersCard
+                    class="project-characters"
+                    :loading="loading"
+                    :on-view="() => openCharactersModal"
+                    :on-sort-characters="sortCharacters"
+                    :sort="charactersSort?.field"
+                    :items="characters"
+                />
             </div>
-            <OntologyCard
-                class="project-ontology"
-                context="Project"
-                :items="ontology"
-                :loading="loading"
-                :on-view="() => openOntologyModal"
-                :on-select-category="changeOntologyCategory"
-                :on-sort="sortOntology"
-                :selected-category="ontologyCategory"
-            />
-            <CharactersCard
-                class="project-characters"
-                :loading="loading"
-                :on-view="() => openCharactersModal"
-                :on-sort-characters="sortCharacters"
-                :sort="charactersSort?.field"
-                :items="characters"
-            />
         </template>
     </EscrPage>
 </template>
@@ -124,6 +129,15 @@ export default {
             ontologyCategory: (state) => state.ontology.category,
             projectName: (state) => state.project.name,
         }),
+        /**
+         * Links and titles for the breadcrumbs above the page.
+         */
+        breadcrumbs() {
+            return [
+                { title: "My Projects", href: "/projects" },
+                { title: this.projectName || "Loading..." }
+            ];
+        },
         /**
          * Table headers for the document list in the project dashboard.
          */

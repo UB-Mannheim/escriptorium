@@ -1,13 +1,13 @@
-.escr-project-dashboard {
+.escr-project-dashboard .escr-grid-container {
     display: grid;
     height: 90vh;
     max-height: 90vh;
     grid-template-columns: 3fr 1fr;
     grid-template-areas:
-      "header ontology"
-      "doclist ontology"
-      "doclist chars"
-      "doclist chars";
+        "header ontology"
+        "doclist ontology"
+        "doclist chars"
+        "doclist chars";
     grid-template-rows: auto;
     grid-auto-rows: 25%;
     gap: 24px;
