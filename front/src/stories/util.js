@@ -41,7 +41,28 @@ export const onSort = (items, { field, direction }) => {
     if (direction === -1) {
         items.reverse();
     }
-}
+};
+
+// tags filter utility function
+export const filteredByTag = (items, tags, operator, withoutTag) => {
+    if (tags) {
+        return items.filter((item) => {
+            if (withoutTag && !item.tags.length) {
+                return true;
+            }
+            if (operator === "or") {
+                return item.tags?.some((itemTag) =>
+                    tags.includes(itemTag.pk),
+                );
+            } else {
+                return tags.every((tag) =>
+                    item.tags?.some((itemTag) => itemTag.pk === tag),
+                );
+            }
+        });
+    }
+    return items;
+};
 
 // mock ontologies for all stories with ontology
 export const blockTypes = [

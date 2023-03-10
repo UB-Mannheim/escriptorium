@@ -152,6 +152,7 @@ class ProjectViewSet(ModelViewSet):
 class ProjectTagViewSet(ModelViewSet):
     queryset = ProjectTag.objects.all()
     serializer_class = ProjectTagSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         return ProjectTag.objects.filter(user=self.request.user)
@@ -160,6 +161,7 @@ class ProjectTagViewSet(ModelViewSet):
 class DocumentTagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
     serializer_class = DocumentTagSerializer
+    pagination_class = LargeResultsSetPagination
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))

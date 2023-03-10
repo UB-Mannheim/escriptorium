@@ -1,11 +1,11 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import ProjectDashboard from "../../vue/pages/Project/Project.vue";
-import { ManyTags } from "./Tags.stories";
 import {
     annotationTypes,
     blockTypes,
     characters,
+    filteredByTag,
     lineTypes,
     partTypes,
     sorted,
@@ -21,7 +21,7 @@ const project = {
     id: 1,
     name: "Project name that is really really long",
     guidelines: "",
-    tags: ManyTags.args.tags,
+    tags: tags.slice(3, 8),
 };
 
 const documents = [
@@ -115,6 +115,7 @@ const Template = (args, { argTypes }) => ({
         );
         const partEndpoint = new RegExp(/\/projects\/\d+\/types\/part$/);
         const charactersEndpoint = new RegExp(/\/projects\/\d+\/characters$/);
+        const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         // mock project page
         mock.onGet(projectEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -127,8 +128,19 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
-                const { ordering } = config.params;
-                return [200, { results: sorted(documents, { ordering }) }];
+                const { ordering, tags, tags_op, withoutTag } = config.params;
+                return [
+                    200,
+                    {
+                        results: sorted(
+                            filteredByTag(documents, tags, tags_op, withoutTag),
+                            {
+                                ordering
+                            },
+                        ),
+                        next: "fake-nextpage",
+                    },
+                ];
             }
             return [200, { results: documents }];
         });
@@ -180,6 +192,11 @@ const Template = (args, { argTypes }) => ({
                 return [200, { results: sorted(characters, { ordering }) }];
             }
             return [200, { results: characters }];
+        });
+        mock.onGet(documentTagsEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: tags }];
         });
     },
 });

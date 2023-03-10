@@ -49,7 +49,11 @@ export const retrieveProjectOntology = async ({
 };
 
 // retrieve characters, sorted by character or frequency, in all transcriptions in the project
-export const retrieveProjectCharacters = async ({ projectId, field, direction }) => {
+export const retrieveProjectCharacters = async ({
+    projectId,
+    field,
+    direction,
+}) => {
     let params = {};
     if (field && direction) {
         params.ordering = getSortParam({ field, direction });
@@ -64,10 +68,18 @@ export const retrieveProjectDocuments = async ({
     projectId,
     field,
     direction,
+    filters,
 }) => {
     let params = {};
     if (field && direction) {
         params.ordering = getSortParam({ field, direction });
     }
+    if (filters) {
+        params = { ...params, ...getFilterParams({ filters }) };
+    }
     return await axios.get(`/projects/${projectId}/documents`, { params });
 };
+
+// retrieve a list of unique tags on all documents in a project
+export const retrieveProjectDocumentTags = async (project_id) =>
+    await axios.get(`/projects/${project_id}/tags`);

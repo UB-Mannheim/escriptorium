@@ -21,6 +21,7 @@
     overflow: hidden;
     display: flex;
     flex-flow: column;
+    padding-bottom: 0;
 }
 .escr-documents-list .table-container {
     overflow: auto;

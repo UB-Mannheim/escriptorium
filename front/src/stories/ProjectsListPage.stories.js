@@ -3,7 +3,7 @@ import MockAdapter from "axios-mock-adapter";
 import EscrNewProjectModal from "../../vue/pages/ProjectsList/NewProjectModal.vue";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
-import { sorted, tags } from "./util";
+import { filteredByTag, sorted, tags } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
@@ -52,23 +52,6 @@ const projects = [
         tags: [tags[7], tags[9], tags[10]],
     },
 ];
-
-const filteredByTag = (items, tags, operator) => {
-    if (tags) {
-        return items.filter((item) => {
-            if (operator === "or") {
-                return item.tags?.tags?.some((itemTag) =>
-                    tags.includes(itemTag.pk),
-                );
-            } else {
-                return tags.every((tag) =>
-                    item.tags?.tags?.some((itemTag) => itemTag.pk === tag),
-                );
-            }
-        });
-    }
-    return items;
-};
 
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),

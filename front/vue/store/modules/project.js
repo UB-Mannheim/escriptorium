@@ -2,6 +2,7 @@ import {
     retrieveProject,
     retrieveProjectCharacters,
     retrieveProjectDocuments,
+    retrieveProjectDocumentTags,
     retrieveProjectOntology,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
@@ -44,6 +45,14 @@ const state = () => ({
      * }]
      */
     documents: [],
+    /**
+     * documentTags: [{
+     *     name: String,
+     *     pk: Number,
+     *     variant: Number,
+     * }]
+     */
+    documentTags: [],
     editModalOpen: false,
     guidelines: "",
     id: null,
@@ -126,19 +135,42 @@ const actions = {
     /**
      * Fetch documents in the current project.
      */
-    async fetchProjectDocuments({ commit, state }) {
+    async fetchProjectDocuments({ commit, state, rootState }) {
         commit("setLoading", true);
         const { data } = await retrieveProjectDocuments({
             projectId: state.id,
+            filters: rootState?.filter?.filters,
             ...state.sortState,
         });
         if (data?.results) {
-            commit("setDocuments", data.results.map((result) => ({
-                ...result,
-                tags: { tags: result.tags },
-            })));
+            commit(
+                "setDocuments",
+                data.results.map((result) => ({
+                    ...result,
+                    tags: { tags: result.tags },
+                })),
+            );
         } else {
             throw new Error("Unable to retrieve documents");
+        }
+        commit("setLoading", false);
+    },
+    /**
+     * Fetch all unique tags on documents in the current project.
+     */
+    async fetchProjectDocumentTags({ commit, state }) {
+        commit("setLoading", true);
+        const { data } = await retrieveProjectDocumentTags(state.id);
+        if (data?.results) {
+            commit(
+                "setDocumentTags",
+                data.results.map((tag) => ({
+                    ...tag,
+                    variant: tagColorToVariant(tag.color),
+                })),
+            );
+        } else {
+            throw new Error("Unable to retrieve document tags");
         }
         commit("setLoading", false);
     },
@@ -258,6 +290,9 @@ const mutations = {
     },
     setDocuments(state, documents) {
         state.documents = documents;
+    },
+    setDocumentTags(state, tags) {
+        state.documentTags = tags;
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;

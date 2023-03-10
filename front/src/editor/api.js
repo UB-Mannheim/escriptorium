@@ -72,8 +72,6 @@ export const deletetag = async (project_id, tag_id) => (await axios.delete(`/pro
 
 export const updatetag = async (project_id, tag_id, data) => (await axios.put(`/projects/${project_id}/tags/${tag_id}/`, data))
 
-export const retrieveProjectTag = async (project_id) => (await axios.get(`/projects/${project_id}/tags/`))
-
 export const updatePart = async (document_id, part_id, data) => (await axios.patch(`/documents/${document_id}/parts/${part_id}/`, data))
 
 export const retrievePartMetadata = async (document_id, part_id) => (await axios.get(`/documents/${document_id}/parts/${part_id}/metadata/`))
