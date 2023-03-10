@@ -8,7 +8,13 @@ import "floating-vue/dist/style.css";
 Vue.use(Vuex);
 Vue.prototype.$store = store;
 
-Vue.use(FloatingVue);
+Vue.use(FloatingVue, {
+    themes: {
+        "tags-dropdown": {
+            $extend: "dropdown",
+        },
+    },
+});
 
 export const parameters = {
     actions: { argTypesRegex: "^on[A-Z].*" },

@@ -10,7 +10,13 @@ import "floating-vue/dist/style.css";
 
 Vue.use(Vuex);
 
-Vue.use(FloatingVue);
+Vue.use(FloatingVue, {
+    themes: {
+        "tags-dropdown": {
+            $extend: "dropdown",
+        },
+    },
+});
 
 export default new Store({
     strict: process.env.NODE_ENV !== "production",
