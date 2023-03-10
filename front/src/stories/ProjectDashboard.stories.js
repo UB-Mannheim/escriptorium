@@ -138,7 +138,6 @@ const Template = (args, { argTypes }) => ({
                                 ordering
                             },
                         ),
-                        next: "fake-nextpage",
                     },
                 ];
             }

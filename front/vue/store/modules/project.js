@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
     retrieveProject,
     retrieveProjectCharacters,
@@ -58,6 +59,7 @@ const state = () => ({
     id: null,
     loading: false,
     name: "",
+    nextPage: "",
     /**
      * sortState: {
      *     direction: Number,
@@ -94,6 +96,28 @@ const actions = {
      */
     closeEditModal({ commit }) {
         commit("setEditModalOpen", false);
+    },
+    /**
+     * Fetch the next page of documents, retrieved from fetchProjects, and add
+     * all of its projects on the state.
+     */
+    async fetchNextPage({ state, commit, dispatch }) {
+        commit("setLoading", true);
+        try {
+            const { data } = await axios.get(state.nextPage);
+            if (data?.results) {
+                data.results.forEach((document) => {
+                    commit("addDocument", document);
+                });
+                commit("setNextPage", data.next);
+            } else {
+                commit("setLoading", false);
+                throw new Error("Unable to retrieve projects");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
     },
     /**
      * Fetch the current project.
@@ -142,6 +166,10 @@ const actions = {
             filters: rootState?.filter?.filters,
             ...state.sortState,
         });
+        console.log(data);
+        if (data?.next) {
+            commit("setNextPage", data.next);
+        }
         if (data?.results) {
             commit(
                 "setDocuments",
@@ -197,10 +225,30 @@ const actions = {
         }
     },
     /**
+     * Navigate to the images page for this document.
+     */
+    navigateToImages(_, item) {
+        // TODO: implement this; not yet designed
+        console.log(item);
+    },
+    /**
      * Open the "project characters" modal.
      */
     openCharactersModal({ commit }) {
         commit("setCharactersModalOpen", true);
+    },
+    /**
+     * Open the "create document" modal.
+     */
+    openCreateModal() {
+        // TODO: implement this; not yet designed
+    },
+    /**
+     * Open the "delete document" modal.
+     */
+    openDeleteModal(_, item) {
+        // TODO: implement this; not yet designed
+        console.log(item);
     },
     /**
      * Open the "edit project" modal.
@@ -279,6 +327,9 @@ const actions = {
 };
 
 const mutations = {
+    addDocument(state, document) {
+        state.documents.push(document);
+    },
     setCharacters(state, characters) {
         state.characters = characters;
     },
@@ -305,6 +356,9 @@ const mutations = {
     },
     setName(state, name) {
         state.name = name;
+    },
+    setNextPage(state, nextPage) {
+        state.nextPage = nextPage;
     },
     setSortState(state, sortState) {
         state.sortState = sortState;

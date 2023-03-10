@@ -5,6 +5,7 @@
     >
         <template #page-content>
             <div class="escr-grid-container">
+                <!-- Project metadata header -->
                 <div class="escr-card escr-card-padding escr-project-details">
                     <div class="escr-card-header">
                         <h1>{{ projectName }}</h1>
@@ -33,6 +34,7 @@
                         :tags="tags"
                     />
                 </div>
+                <!-- Documents list -->
                 <div class="escr-card escr-card-table escr-documents-list">
                     <div class="escr-card-header">
                         <h2>Documents</h2>
@@ -112,6 +114,7 @@
                         />
                     </div>
                 </div>
+                <!-- Ontology section -->
                 <OntologyCard
                     class="escr-project-ontology"
                     context="Project"
@@ -122,6 +125,7 @@
                     :on-sort="sortOntology"
                     :selected-category="ontologyCategory"
                 />
+                <!-- Characters section -->
                 <CharactersCard
                     class="escr-project-characters"
                     :loading="loading"
@@ -237,13 +241,16 @@ export default {
     methods: {
         ...mapActions("project", [
             "changeOntologyCategory",
+            "fetchNextPage",
             "fetchProject",
             "fetchProjectCharacters",
             "fetchProjectDocuments",
             "fetchProjectDocumentTags",
             "fetchProjectOntology",
+            "navigateToImages",
             "openCharactersModal",
             "openCreateModal",
+            "openDeleteModal",
             "openEditModal",
             "openOntologyModal",
             "setId",
