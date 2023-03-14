@@ -210,7 +210,8 @@ class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
                     'documents',
                     filter=~Q(documents__workflow_state=Document.WORKFLOW_STATE_ARCHIVED),
                     distinct=True))
-                .select_related('owner'))
+                .select_related('owner')
+                .order_by('-updated_at'))
 
 
 class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
