@@ -1,3 +1,7 @@
-# from django.urls import path
+from django.urls import path
 
-# urlpatterns = []
+from imports.views import DocumentOntologyExport
+
+urlpatterns = [
+    path('document/<int:pk>/ontology/export/', DocumentOntologyExport.as_view(), name='document-ontology-export'),
+]

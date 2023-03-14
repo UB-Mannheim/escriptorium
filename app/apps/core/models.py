@@ -168,6 +168,7 @@ class AnnotationComponent(models.Model):
 
     class Meta:
         unique_together = ['name', 'document']
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
