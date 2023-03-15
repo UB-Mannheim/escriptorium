@@ -15,7 +15,7 @@ lint:
 
 tests:
   stage: test
-  image: registry.gitlab.com/scripta/escriptorium/base:kraken435
+  image: registry.gitlab.com/scripta/escriptorium/base:kraken42
 
   services:
     - postgres:13-alpine
