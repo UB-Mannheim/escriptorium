@@ -166,7 +166,6 @@ const actions = {
             filters: rootState?.filter?.filters,
             ...state.sortState,
         });
-        console.log(data);
         if (data?.next) {
             commit("setNextPage", data.next);
         }
