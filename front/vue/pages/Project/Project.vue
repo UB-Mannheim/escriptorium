@@ -179,8 +179,8 @@ export default {
     },
     computed: {
         ...mapState({
-            characters: (state) => state.project.characters,
-            charactersSort: (state) => state.project.charactersSort,
+            characters: (state) => state.characters.characters,
+            charactersSort: (state) => state.characters.sortState,
             createModalOpen: (state) => state.project.createModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,

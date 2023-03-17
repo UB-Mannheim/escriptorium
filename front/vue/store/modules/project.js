@@ -11,24 +11,6 @@ import { tagColorToVariant } from "../util/color";
 // initial state
 const state = () => ({
     /**
-     * characters: [{
-     *    char: String,
-     *    frequency: Number,
-     * }]
-     */
-    characters: [],
-    charactersModalOpen: false,
-    /**
-     * charactersSort: {
-     *    direction: Number,
-     *    field: String,
-     * }
-     */
-    charactersSort: {
-        direction: 1,
-        field: "char",
-    },
-    /**
      * documents: [{
      *     pk: Number,
      *     name: String,
@@ -142,15 +124,15 @@ const actions = {
     /**
      * Fetch the current project.
      */
-    async fetchProjectCharacters({ commit, state }) {
+    async fetchProjectCharacters({ commit, state, rootState }) {
         commit("setLoading", true);
         const { data } = await retrieveProjectCharacters({
             projectId: state.id,
-            field: state.charactersSort.field,
-            direction: state.charactersSort.direction,
+            field: rootState.characters.sortState?.field,
+            direction: rootState.characters.sortState?.direction,
         });
         if (data?.results) {
-            commit("setCharacters", data.results);
+            commit("characters/setCharacters", data.results, { root: true });
         } else {
             throw new Error("Unable to retrieve characters");
         }
@@ -234,7 +216,7 @@ const actions = {
      * Open the "project characters" modal.
      */
     openCharactersModal({ commit }) {
-        commit("setCharactersModalOpen", true);
+        commit("characters/setModalOpen", true, { root: true });
     },
     /**
      * Open the "create document" modal.
@@ -305,7 +287,7 @@ const actions = {
         if (field === "frequency") {
             direction = -1;
         }
-        commit("setCharactersSort", { field, direction });
+        commit("characters/setSortState", { field, direction }, { root: true });
         try {
             await dispatch("fetchProjectCharacters");
         } catch (error) {
@@ -328,15 +310,6 @@ const actions = {
 const mutations = {
     addDocument(state, document) {
         state.documents.push(document);
-    },
-    setCharacters(state, characters) {
-        state.characters = characters;
-    },
-    setCharactersModalOpen(state, open) {
-        state.charactersModalOpen = open;
-    },
-    setCharactersSort(state, sortState) {
-        state.charactersSort = sortState;
     },
     setDocuments(state, documents) {
         state.documents = documents;
