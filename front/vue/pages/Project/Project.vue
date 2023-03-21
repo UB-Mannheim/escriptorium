@@ -2,6 +2,8 @@
     <EscrPage
         class="escr-project-dashboard"
         :breadcrumbs="breadcrumbs"
+        :sidebar-actions="sidebarActions"
+        :loading="loading"
     >
         <template #page-content>
             <div class="escr-grid-container">
@@ -149,7 +151,9 @@ import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
+import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
+import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import "./Project.css";
 
@@ -165,7 +169,11 @@ export default {
         ImagesIcon,
         OntologyCard,
         PencilIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        PeopleIcon,
         PlusIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        SharePanel,
         TrashIcon,
     },
     props: {
@@ -191,6 +199,8 @@ export default {
             ontology: (state) => state.ontology.ontology,
             ontologyCategory: (state) => state.ontology.category,
             projectName: (state) => state.project.name,
+            sharedWithUsers: (state) => state.project.sharedWithUsers,
+            sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
         }),
         /**
@@ -221,6 +231,22 @@ export default {
                 },
                 // { label: "Default Transcription Level", value: "default_transcription_level"  },
             ];
+        },
+        /**
+         * Sidebar quick actions for the project dashboard.
+         */
+        sidebarActions() {
+            return [{
+                data: {
+                    users: this.sharedWithUsers,
+                    groups: this.sharedWithGroups,
+                    openShareModal: this.openShareModal,
+                },
+                icon: PeopleIcon,
+                key: "share",
+                label: "Groups & Users",
+                panel: SharePanel,
+            }];
         },
     },
     /**
@@ -253,6 +279,7 @@ export default {
             "openDeleteModal",
             "openEditModal",
             "openOntologyModal",
+            "openShareModal",
             "setId",
             "sortCharacters",
             "sortDocuments",

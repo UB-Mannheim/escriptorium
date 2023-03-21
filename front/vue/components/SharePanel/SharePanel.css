@@ -1,0 +1,11 @@
+.escr-share-list {
+    border-bottom: 1px solid var(--background2);
+}
+.escr-share-list ul {
+    list-style: none;
+    padding: 0;
+}
+.escr-share-list + .escr-button,
+.escr-share-list li + li {
+    margin-top: 1rem;
+}

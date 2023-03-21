@@ -6,10 +6,12 @@ import {
     blockTypes,
     characters,
     filteredByTag,
+    groups,
     lineTypes,
     partTypes,
     sorted,
     tags,
+    users,
 } from "./util";
 
 export default {
@@ -22,6 +24,8 @@ const project = {
     name: "Project name that is really really long",
     guidelines: "",
     tags: tags.slice(3, 8),
+    shared_with_groups: groups,
+    shared_with_users: users,
 };
 
 const documents = [
@@ -201,6 +205,9 @@ const Template = (args, { argTypes }) => ({
 });
 
 export const ProjectDashboardPage = Template.bind({});
+ProjectDashboardPage.parameters = {
+    layout: "fullscreen",
+};
 ProjectDashboardPage.args = {
     id: 1,
 };

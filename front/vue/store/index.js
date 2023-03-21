@@ -7,6 +7,7 @@ import filter from "./modules/filter";
 import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
+import sidebar from "./modules/sidebar";
 import "floating-vue/dist/style.css";
 
 Vue.use(Vuex);
@@ -28,5 +29,6 @@ export default new Store({
         ontology,
         project,
         projects,
+        sidebar,
     },
 });

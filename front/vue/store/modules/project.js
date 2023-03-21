@@ -43,6 +43,23 @@ const state = () => ({
     name: "",
     nextPage: "",
     /**
+     * sharedWithGroups: [{
+     *     pk: Number,
+     *     name: String,
+     * }]
+     */
+    sharedWithGroups: [],
+    /**
+     * sharedWithUsers: [{
+     *     pk: Number,
+     *     first_name?: String,
+     *     last_name?: String,
+     *     username: String,
+     * }]
+     */
+    sharedWithUsers: [],
+    shareModalOpen: false,
+    /**
      * sortState: {
      *     direction: Number,
      *     field: String,
@@ -116,6 +133,8 @@ const actions = {
                     variant: tagColorToVariant(tag.color),
                 })),
             );
+            commit("setSharedWithGroups", data.shared_with_groups);
+            commit("setSharedWithUsers", data.shared_with_users);
         } else {
             throw new Error("Unable to retrieve project");
         }
@@ -244,6 +263,12 @@ const actions = {
         commit("ontology/setModalOpen", true, { root: true });
     },
     /**
+     * Open the "add group or user" modal.
+     */
+    openShareModal({ commit }) {
+        commit("setShareModalOpen", true);
+    },
+    /**
      * Event handler for sorting the project ontology table; sets the sort state on the
      * ontology Vuex store, then makes a call to fetch project ontology based on current state.
      */
@@ -331,6 +356,15 @@ const mutations = {
     },
     setNextPage(state, nextPage) {
         state.nextPage = nextPage;
+    },
+    setSharedWithGroups(state, groups) {
+        state.sharedWithGroups = groups;
+    },
+    setSharedWithUsers(state, users) {
+        state.sharedWithUsers = users;
+    },
+    setShareModalOpen(state, open) {
+        state.shareModalOpen = open;
     },
     setSortState(state, sortState) {
         state.sortState = sortState;

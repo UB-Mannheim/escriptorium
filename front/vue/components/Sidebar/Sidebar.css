@@ -1,0 +1,114 @@
+/* sidebar container */
+.escr-sidebar-container {
+    display: flex;
+    z-index: var(--sidebar-container-z);
+}
+/* sidebar */
+.escr-sidebar {
+    background-color: var(--background1);
+    width: 64px;
+    min-width: 64px;
+    max-width: 64px;
+    padding-top: 32px;
+    filter: drop-shadow(0px 4px 4px var(--drop-shadow));
+    z-index: var(--sidebar-z);
+}
+/* sidebar list of buttons */
+.escr-sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+/* individual sidebar button */
+.escr-sidebar-button {
+    cursor: pointer;
+    border: none;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    height: 74px;
+    background-color: var(--background1);
+    color: var(--text1);
+    fill: var(--text1);
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out,
+        fill 0.15s ease-in-out;
+}
+.escr-sidebar-button:hover {
+    background-color: var(--background2);
+    color: var(--text1);
+    fill: var(--text1);
+}
+.escr-sidebar-button:active,
+.escr-sidebar-button--selected {
+    background-color: var(--secondary);
+    color: var(--background1);
+    fill: var(--background1);
+}
+.escr-sidebar-button--selected:hover {
+    background-color: var(--secondary-dark);
+    color: var(--background1);
+    fill: var(--background1);
+}
+.escr-sidebar-button--selected:active {
+    background-color: var(--secondary-darker);
+}
+.escr-sidebar-button:disabled {
+    color: var(--text2);
+    fill: var(--text2);
+    pointer-events: none;
+    cursor: default;
+}
+/* sidebar panel opened */
+.escr-selected-action {
+    position: absolute;
+    right: 64px;
+    width: 288px;
+    height: 100%;
+    background-color: var(--background1);
+    border-top-left-radius: 15px;
+    filter: drop-shadow(-5px 4px 10px rgba(0, 0, 0, 0.15));
+    z-index: var(--sidebar-container-z);
+    color: var(--text1);
+    fill: var(--text1);
+}
+.escr-action-header {
+    padding: 35px 19px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    border-bottom: 1px solid var(--background2);
+}
+.escr-action-header h2 {
+    margin: 0;
+    padding: 0;
+}
+.escr-action-header .escr-action-icon {
+    margin-right: 1rem;
+}
+.escr-action-header .escr-close-action {
+    cursor: pointer;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    width: 28px;
+    height: 28px;
+    position: absolute;
+    right: 1rem;
+}
+.escr-action-header .escr-close-action svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--text1);
+}
+/* variable content in a sidebar panel */
+.escr-selected-action .escr-action-panel {
+    padding: 1rem;
+}
+/* backdrop to prevent interactions with rest of page while sidebar panel open */
+.escr-sidebar-backdrop {
+    position: fixed;
+    z-index: var(--sidebar-backdrop-z);
+    left: 0;
+}

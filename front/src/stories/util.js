@@ -161,3 +161,20 @@ export const characters = [
     { char: "(", frequency: 8 },
     { char: ")", frequency: 8 },
 ];
+
+// mock groups for all stories with groups
+export const groups = [
+    { pk: 1, name: "Group Name 1" },
+    { pk: 2, name: "Group Name 2" },
+    { pk: 3, name: "Group Name 3" },
+]
+
+// mock users for all stories with users
+export const users = [
+    { pk: 1, first_name: "Elwin", last_name: "Abbott", username: "eabbott" },
+    { pk: 2, first_name: "Marcos", last_name: "Prosacco", username: "mpro" },
+    { pk: 3, first_name: "Emmy", last_name: "Leuschke", username: "eleu" },
+    { pk: 4, first_name: "Salvatore", last_name: "Spencer", username: "salspen" },
+    { pk: 5, first_name: "Nathanial", last_name: "Olson", username: "natols" },
+    { pk: 6, username: "someuser" },
+]

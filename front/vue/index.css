@@ -39,6 +39,9 @@
     --modal-backdrop-z: 3;
     --modal-z: 4;
     --toast-z: 5;
+    --sidebar-backdrop-z: 6;
+    --sidebar-container-z: 7;
+    --sidebar-z: 8;
 }
 .light-mode {
     /* button colors */
