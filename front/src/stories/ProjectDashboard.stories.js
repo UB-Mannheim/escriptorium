@@ -109,9 +109,7 @@ const Template = (args, { argTypes }) => ({
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
         const projectEndpoint = new RegExp(/\/projects\/\d+$/);
-        const projectDocumentsEndpoint = new RegExp(
-            /\/projects\/\d+\/documents$/,
-        );
+        const projectDocumentsEndpoint = new RegExp(/\/documents/);
         const blockEndpoint = new RegExp(/\/projects\/\d+\/types\/block$/);
         const lineEndpoint = new RegExp(/\/projects\/\d+\/types\/line$/);
         const annotationsEndpoint = new RegExp(

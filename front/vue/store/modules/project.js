@@ -1,8 +1,8 @@
 import axios from "axios";
 import {
+    retrieveDocumentsList,
     retrieveProject,
     retrieveProjectCharacters,
-    retrieveProjectDocuments,
     retrieveProjectDocumentTags,
     retrieveProjectOntology,
 } from "../../../src/api";
@@ -162,7 +162,7 @@ const actions = {
      */
     async fetchProjectDocuments({ commit, state, rootState }) {
         commit("setLoading", true);
-        const { data } = await retrieveProjectDocuments({
+        const { data } = await retrieveDocumentsList({
             projectId: state.id,
             filters: rootState?.filter?.filters,
             ...state.sortState,

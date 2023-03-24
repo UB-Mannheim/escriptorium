@@ -61,25 +61,6 @@ export const retrieveProjectCharacters = async ({
     return await axios.get(`/projects/${projectId}/characters`, { params });
 };
 
-// retrieve a list of documents by project
-// TODO: Is this the right place for this, or would it be better to filter docs by
-// project pk?
-export const retrieveProjectDocuments = async ({
-    projectId,
-    field,
-    direction,
-    filters,
-}) => {
-    let params = {};
-    if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
-    }
-    if (filters) {
-        params = { ...params, ...getFilterParams({ filters }) };
-    }
-    return await axios.get(`/projects/${projectId}/documents`, { params });
-};
-
 // retrieve a list of unique tags on all documents in a project
 export const retrieveProjectDocumentTags = async (project_id) =>
     await axios.get(`/projects/${project_id}/tags`);
