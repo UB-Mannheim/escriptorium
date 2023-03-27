@@ -13,3 +13,13 @@
     padding: 0;
     overflow: auto;
 }
+.escr-ontology-card--compact .escr-card-header,
+.escr-ontology-card--compact .escr-card-actions {
+    justify-content: stretch;
+    gap: 1rem;
+    flex: 1 0 auto;
+}
+.escr-ontology-card--compact .escr-segmented-button-group {
+    flex: 1 0 auto;
+    margin-bottom: 0;
+}
