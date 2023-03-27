@@ -17,6 +17,11 @@
 .escr-ontology-card--compact .escr-card-actions {
     justify-content: stretch;
     gap: 1rem;
+}
+.escr-ontology-card--compact .escr-card-header {
+    flex: 0 1 auto;
+}
+.escr-ontology-card--compact .escr-card-actions {
     flex: 1 0 auto;
 }
 .escr-ontology-card--compact .escr-segmented-button-group {

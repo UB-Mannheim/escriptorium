@@ -31,9 +31,7 @@
             :options="sortOptions"
             :on-change-selection="onSortCharacters"
         />
-        <dl
-            v-if="items.length"
-        >
+        <dl>
             <div
                 v-for="item in items"
                 :key="item.char"
