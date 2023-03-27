@@ -8,6 +8,8 @@
         <!-- slot for an icon -->
         <slot name="button-icon" />
         <span v-if="label">{{ label }}</span>
+        <!-- slot for an icon on the right -->
+        <slot name="button-icon-right" />
     </button>
 </template>
 

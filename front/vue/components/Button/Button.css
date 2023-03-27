@@ -24,7 +24,8 @@
     fill: var(--button-text);
     transition: fill 0.15s ease-in-out;
 }
-.escr-button svg + span {
+.escr-button svg + span,
+.escr-button span + svg {
     margin-left: 5px;
 }
 /* size */
