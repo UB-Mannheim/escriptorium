@@ -28,13 +28,9 @@ def backward(apps, se):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0067_projecttag_project_tags'),
+        ('core', '0068_alter_annotationcomponent_options'),
     ]
 
     operations = [
         migrations.RunPython(forward, backward),
-        migrations.AlterUniqueTogether(
-            name='annotationcomponent',
-            unique_together={('name', 'document')},
-        ),
     ]
