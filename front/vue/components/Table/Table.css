@@ -48,6 +48,14 @@
 .escr-table tbody tr:hover {
     background-color: var(--background2);
 }
+.escr-table tr td.with-img img {
+    width: 50px;
+    height: 50px;
+    vertical-align: middle;
+}
+.escr-table tr td.with-img img ~ * {
+    vertical-align: middle;
+}
 /* sorting */
 .escr-table th button.escr-sort-button {
     cursor: pointer;
