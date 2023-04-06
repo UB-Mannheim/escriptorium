@@ -7,6 +7,9 @@ Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var lastSelected = null;
 
+import { SCRIPT_NAME } from './scriptname.js';
+console.log('image_cards: SCRIPT_NAME=', SCRIPT_NAME);
+
 function openWizard(proc) {
     var selected_num = partCard.getSelectedPks().length;
 
@@ -97,7 +100,7 @@ class partCard {
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
-        var url = '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
+        var url = SCRIPT_NAME + '/document/' + DOCUMENT_ID + '/part/' + this.pk + '/edit/';
 
         // show avg confidence on the card
         var avgConfidenceElement = this.progressBar;
@@ -380,9 +383,9 @@ class partCard {
 export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, showConfidenceViz) {
     DOCUMENT_ID = documentId;
     API = {
-        'document': '/api/documents/' + DOCUMENT_ID,
-        'parts': '/api/documents/' + DOCUMENT_ID + '/parts/',
-        'part': '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
+        'document': SCRIPT_NAME + '/api/documents/' + DOCUMENT_ID,
+        'parts': SCRIPT_NAME + '/api/documents/' + DOCUMENT_ID + '/parts/',
+        'part': SCRIPT_NAME + '/api/documents/' + DOCUMENT_ID + '/parts/{part_pk}/'
     };
     //************* Card ordering *************
     $('#cards-container').on('dragover', '.js-drop', function(ev) {
