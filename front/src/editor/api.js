@@ -3,6 +3,7 @@ import axios from 'axios'
 const path_components = location.pathname.split("/", 2);
 const prefix = path_components[1];
 const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+console.log('editor/api: SCRIPT_NAME=', SCRIPT_NAME);
 
 axios.defaults.baseURL = SCRIPT_NAME + '/api'
 axios.defaults.xsrfCookieName = 'csrftoken'

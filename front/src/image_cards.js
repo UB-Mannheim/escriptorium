@@ -7,6 +7,10 @@ Dropzone.autoDiscover = false;
 var g_dragged = null;  // Note: chrome doesn't understand dataTransfer very well
 var lastSelected = null;
 
+const path_components = location.pathname.split("/", 2);
+const prefix = path_components[1];
+var SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+
 function openWizard(proc) {
     var selected_num = partCard.getSelectedPks().length;
 
@@ -97,9 +101,7 @@ class partCard {
         this.progressBar.css('width', this.progress + '%');
         this.progressBar.text(this.progress + '%');
         this.updateWorkflowIcons();
-        const path_components = location.pathname.split("/", 2);
-        const prefix = path_components[1];
-        const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+        console.log('image_cards: SCRIPT_NAME=', SCRIPT_NAME);
         var url = SCRIPT_NAME + '/document/'+DOCUMENT_ID+'/part/'+this.pk+'/edit/';
 
         // show avg confidence on the card
@@ -382,9 +384,7 @@ class partCard {
 
 export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, showConfidenceViz) {
     DOCUMENT_ID = documentId;
-    const path_components = location.pathname.split("/", 2);
-    const prefix = path_components[1];
-    const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+    console.log('bootImageCards: SCRIPT_NAME=', SCRIPT_NAME);
     API = {
         'document': SCRIPT_NAME + '/api/documents/' + DOCUMENT_ID,
         'parts': SCRIPT_NAME + '/api/documents/' + DOCUMENT_ID + '/parts/',

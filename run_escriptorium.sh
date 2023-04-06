@@ -3,6 +3,7 @@
 source /home/stweil/src/gitlab/scripta/escriptorium/venv/bin/activate
 export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
 export ESC_LANGUAGES="de,en,fr"
+export ESC_SCRIPT_NAME=/escriptorium2
 
 cd /home/stweil/src/gitlab/scripta/escriptorium/app
 celery worker --app escriptorium --concurrency 2 --loglevel DEBUG &
