@@ -1,6 +1,9 @@
 from os import listdir, stat
 from os.path import isfile, join, relpath
 
+import logging
+logger = logging.getLogger(__name__)
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
