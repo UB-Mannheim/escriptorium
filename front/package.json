@@ -2,7 +2,12 @@
   "name": "escriptorium",
   "version": "0.1.0",
   "description": "eScriptorium Frontend project",
+  "license": "MIT",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/scripta/escriptorium.git"
+  },
   "scripts": {
     "build": "webpack --config webpack.dev.js",
     "start": "webpack --config webpack.dev.js --watch",
