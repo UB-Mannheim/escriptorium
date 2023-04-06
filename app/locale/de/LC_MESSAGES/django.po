@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-09 12:00+0100\n"
+"POT-Creation-Date: 2023-03-03 16:33+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -774,8 +774,18 @@ msgstr "Standard ALTO-Import"
 
 #: apps/imports/parsers.py
 #, python-brace-format
+msgid "Block type {0} was automatically added to the ontology"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
 msgid "Invalid baseline {baseline} in {filen} line {linen}"
 msgstr "Ungültige Grundlinie {baseline} in {filen} Zeile {linen}"
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Line type {0} was automatically added to the ontology"
+msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Default PAGE Import"
@@ -905,10 +915,6 @@ msgstr "GPU-Minuten"
 #: apps/users/models.py
 msgid "email address"
 msgstr "E-Mail-Adresse"
-
-#: apps/users/models.py
-msgid "Show onboarding"
-msgstr "Onboarding anzeigen"
 
 #: apps/users/models.py
 msgid "Error"
@@ -2798,10 +2804,6 @@ msgstr "Einladungen"
 #: escriptorium/templates/users/profile.html
 msgid "Save"
 msgstr "Speichern"
-
-#: escriptorium/templates/users/profile.html
-msgid "Reset onboarding"
-msgstr "Starthilfe zurücksetzen"
 
 #: escriptorium/templates/users/profile_api_key.html
 msgid "API Authentication Token:"
