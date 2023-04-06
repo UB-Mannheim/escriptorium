@@ -1,10 +1,10 @@
 # English translations for eScriptorium.
-# Copyright (C) 2022
+# Copyright (C) 2022–2023
 # This file is distributed under the same license as the eScriptorium package.
 # Stefan Weil <sw@weilnetz.de, 2022
 #
 # This file was created like this:
-# django-admin makemessages -l en
+# django-admin makemessages -l en --add-location file
 #
 # To update all translations, run
 # django-admin makemessages --all --add-location file
@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-16 17:14+0100\n"
+"POT-Creation-Date: 2023-04-06 10:47+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English <https://hosted.weblate.org/projects/escriptorium/>\n"
@@ -575,6 +575,18 @@ msgid "Document was successfully migrated to the selected project!"
 msgstr ""
 
 #: apps/imports/forms.py
+msgid "The document is unreachable, unreadable or the host timed out."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid "The document pointed to by the given uri doesn't seem to be valid json."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid "Couldn't parse the given file or its validation failed"
+msgstr ""
+
+#: apps/imports/forms.py
 #, python-brace-format
 msgid ""
 "The name of the target transcription. Will default to '{format} Import'."
@@ -608,19 +620,17 @@ msgid "Resume previous import"
 msgstr ""
 
 #: apps/imports/forms.py
+msgid "METS file URI"
+msgstr ""
+
+#: apps/imports/forms.py
 msgid "A single ALTO or PAGE XML file."
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "The document is unreachable, unreadable or the host timed out."
-msgstr ""
-
-#: apps/imports/forms.py
-msgid "The document pointed to by the given uri doesn't seem to be valid json."
-msgstr ""
-
-#: apps/imports/forms.py
-msgid "Couldn't parse the given file or its validation failed"
+msgid ""
+"You're not allowed to import files from this domain, please contact your "
+"instance administrator."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -689,6 +699,10 @@ msgid "Parse error in {filename}: {xmlfile}: {error}, skipping it."
 msgstr ""
 
 #: apps/imports/parsers.py
+msgid "METS Import"
+msgstr ""
+
+#: apps/imports/parsers.py
 msgid "No match found for file {} with filename \"{}\"."
 msgstr ""
 
@@ -709,7 +723,17 @@ msgstr ""
 
 #: apps/imports/parsers.py
 #, python-brace-format
+msgid "Block type {0} was automatically added to the ontology"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
 msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Line type {0} was automatically added to the ontology"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -833,10 +857,6 @@ msgstr ""
 
 #: apps/users/models.py
 msgid "email address"
-msgstr ""
-
-#: apps/users/models.py
-msgid "Show onboarding"
 msgstr ""
 
 #: apps/users/models.py
@@ -1790,6 +1810,7 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/import.html
 #: escriptorium/templates/core/wizards/import_file.html
+#: escriptorium/templates/core/wizards/import_mets.html
 #: escriptorium/templates/core/wizards/import_pdf.html
 msgid "Start importing"
 msgstr ""
@@ -1800,6 +1821,26 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/import_iiif.html
 msgid "Import images from IIIF."
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "Import images/segmentation/transcriptions described by METS."
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "The prefix of the target transcription. Will default to \"METS Import\""
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "From a remote METS file"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "Or from a local archive"
+msgstr ""
+
+#: escriptorium/templates/core/wizards/import_mets.html
+msgid "A single ZIP archive described by a METS file contained inside it."
 msgstr ""
 
 #: escriptorium/templates/core/wizards/import_pdf.html
@@ -2506,10 +2547,6 @@ msgstr ""
 
 #: escriptorium/templates/users/profile.html
 msgid "Save"
-msgstr ""
-
-#: escriptorium/templates/users/profile.html
-msgid "Reset onboarding"
 msgstr ""
 
 #: escriptorium/templates/users/profile_api_key.html
