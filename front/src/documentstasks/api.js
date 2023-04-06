@@ -1,8 +1,11 @@
 import axios from 'axios'
 
-const path_components = location.pathname.split("/", 2);
-const prefix = path_components[1];
-const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
+//const SCRIPT_NAME = process.env.ESC_SCRIPT_NAME;
+const path_components = location.pathname.split("/documents/tasks", 2);
+const SCRIPT_NAME = path_components[0];
+console.log('documentstasks/api: SCRIPT_NAME=', SCRIPT_NAME);
+console.log('href    =', location.href);
+console.log('pathname=', location.pathname);
 
 axios.defaults.baseURL = SCRIPT_NAME +  '/api'
 axios.defaults.xsrfCookieName = 'csrftoken'

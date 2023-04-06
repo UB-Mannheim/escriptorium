@@ -7,10 +7,10 @@ function scriptName() {
 const SCRIPT_NAME = scriptName();
 
 console.log('protocol=', location.protocol);
-console.log('host    =', location.host);
+console.log('hostname=', location.hostname);
 console.log('href    =', location.href);
 console.log('pathname=', location.pathname);
-console.log('SCRIPT_NAME=', SCRIPT_NAME);
+console.log('main: SCRIPT_NAME=', SCRIPT_NAME);
 
 import '../css/escriptorium.css';
 import '../css/rtl.css';

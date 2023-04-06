@@ -1,5 +1,11 @@
 export var msgSocket;
 
+const path_components = location.pathname.split("/document", 2);
+const SCRIPT_NAME = path_components[0];
+console.log('bootWebsocket: SCRIPT_NAME=', SCRIPT_NAME);
+console.log('href    =', location.href);
+console.log('pathname=', location.pathname);
+
 var alerts = {};
 export class Alert {
     constructor(id, message, level, links) {
@@ -46,14 +52,7 @@ export class Alert {
 }
 
 export function bootWebsocket(){
-    console.log('protocol=', location.protocol);
-    console.log('host    =', location.host);
-    console.log('href    =', location.href);
-    console.log('pathname=', location.pathname);
     let scheme = location.protocol === 'https:'?'wss:':'ws:';
-    const path_components = location.pathname.split("/", 2);
-    const prefix = path_components[1];
-    const SCRIPT_NAME = (prefix.length > 0 ? "/" + prefix : "")
     msgSocket = new ReconnectingWebSocket(scheme + '//' + location.host + SCRIPT_NAME + '/ws/notif/');
     msgSocket.maxReconnectAttempts = 3;
 
