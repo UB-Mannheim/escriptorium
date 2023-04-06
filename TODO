@@ -22,7 +22,7 @@ source venv/bin/activate
 pip install -U pip setuptools==59.5.0 wheel
 pip install -U -r requirements.txt
 cd front
-npm install
+npm ci
 npm audit fix
 npm run production
 cd ../app
