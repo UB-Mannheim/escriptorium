@@ -1,5 +1,8 @@
 export var msgSocket;
 
+import { SCRIPT_NAME } from './scriptname.js';
+console.log('messages: SCRIPT_NAME=', SCRIPT_NAME);
+
 var alerts = {};
 export class Alert {
     constructor(id, message, level, links) {
@@ -61,7 +64,7 @@ export class Alert {
 export function bootWebsocket() {
     let scheme = location.protocol === "https:" ? "wss:" : "ws:";
     msgSocket = new ReconnectingWebSocket(
-        scheme + "//" + window.location.host + "/ws/notif/",
+        scheme + "//" + window.location.host + SCRIPT_NAME + "/ws/notif/",
     );
     msgSocket.maxReconnectAttempts = 3;
 
