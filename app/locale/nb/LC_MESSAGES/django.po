@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-09 12:00+0100\n"
+"POT-Creation-Date: 2023-03-03 16:33+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/"
@@ -726,7 +726,17 @@ msgstr ""
 
 #: apps/imports/parsers.py
 #, python-brace-format
+msgid "Block type {0} was automatically added to the ontology"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
 msgid "Invalid baseline {baseline} in {filen} line {linen}"
+msgstr ""
+
+#: apps/imports/parsers.py
+#, python-brace-format
+msgid "Line type {0} was automatically added to the ontology"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -850,10 +860,6 @@ msgstr ""
 
 #: apps/users/models.py
 msgid "email address"
-msgstr ""
-
-#: apps/users/models.py
-msgid "Show onboarding"
 msgstr ""
 
 #: apps/users/models.py
@@ -2544,10 +2550,6 @@ msgstr ""
 
 #: escriptorium/templates/users/profile.html
 msgid "Save"
-msgstr ""
-
-#: escriptorium/templates/users/profile.html
-msgid "Reset onboarding"
 msgstr ""
 
 #: escriptorium/templates/users/profile_api_key.html
