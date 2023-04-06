@@ -1,6 +1,9 @@
 from os import listdir, stat
 from os.path import isfile, join, relpath
 
+import logging
+logger = logging.getLogger(__name__)
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -277,4 +280,5 @@ class ContactUsView(SuccessMessageMixin, CreateView):
     form_class = ContactUsForm
     success_message = _('Message successfully sent.')
     template_name = 'users/contactus.html'
+    logger.error("script_prefix=%s\n", get_script_prefix())
     success_url = get_script_prefix() + 'contact/'
