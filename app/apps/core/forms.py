@@ -470,7 +470,7 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
             try:
                 model.training_epoch = (self.model_metadata
                                         .get('hyper_params')
-                                        .get('completed_epochs'))
+                                        .get('completed_epochs')) or 0
             except AttributeError:
                 pass
 
