@@ -1,4 +1,4 @@
-FROM node:12-alpine as frontend
+FROM docker.io/library/node:12-alpine as frontend
 
 WORKDIR /build
 COPY ./front /build

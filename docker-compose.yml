@@ -33,7 +33,7 @@ services:
     env_file: variables.env
 
   redis:
-    image: "redis:alpine"
+    image: "docker.io/redis:alpine"
 
   nginx:
     image: registry.gitlab.com/scripta/escriptorium/nginx
