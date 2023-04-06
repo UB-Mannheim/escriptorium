@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getFilterParams, getSortParam, ontologyMap } from "./util";
+import { getFilterParams, getSortParam } from "./util";
 
 // retrieve projects list
 export const retrieveProjects = async ({ field, direction, filters }) => {
@@ -27,39 +27,6 @@ export const createProject = async (name) =>
 // delete a project by ID
 export const deleteProject = async (projectId) =>
     await axios.delete(`/projects/${projectId}`);
-
-// retrieve types list for a specific project
-export const retrieveProjectOntology = async ({
-    projectId,
-    category,
-    sortField,
-    sortDirection,
-}) => {
-    let params = {};
-    if (sortField && sortDirection) {
-        params.ordering = getSortParam({
-            field: sortField,
-            direction: sortDirection,
-        });
-    }
-    return await axios.get(
-        `/projects/${projectId}/types/${ontologyMap[category]}`,
-        { params },
-    );
-};
-
-// retrieve characters, sorted by character or frequency, in all transcriptions in the project
-export const retrieveProjectCharacters = async ({
-    projectId,
-    field,
-    direction,
-}) => {
-    let params = {};
-    if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
-    }
-    return await axios.get(`/projects/${projectId}/characters`, { params });
-};
 
 // retrieve a list of unique tags on all documents in a project
 export const retrieveProjectDocumentTags = async (project_id) =>

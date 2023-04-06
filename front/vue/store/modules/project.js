@@ -2,9 +2,7 @@ import axios from "axios";
 import {
     retrieveDocumentsList,
     retrieveProject,
-    retrieveProjectCharacters,
     retrieveProjectDocumentTags,
-    retrieveProjectOntology,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 
@@ -80,17 +78,6 @@ const getters = {};
 
 const actions = {
     /**
-     * Change the ontology table category and fetch the selected ontology.
-     */
-    async changeOntologyCategory({ commit, dispatch }, category) {
-        commit("ontology/setCategory", category, { root: true });
-        try {
-            await dispatch("fetchProjectOntology");
-        } catch (error) {
-            dispatch("alerts/addError", error, { root: true });
-        }
-    },
-    /**
      * Close the "edit project" modal.
      */
     closeEditModal({ commit }) {
@@ -141,23 +128,6 @@ const actions = {
         commit("setLoading", false);
     },
     /**
-     * Fetch the current project.
-     */
-    async fetchProjectCharacters({ commit, state, rootState }) {
-        commit("setLoading", true);
-        const { data } = await retrieveProjectCharacters({
-            projectId: state.id,
-            field: rootState.characters.sortState?.field,
-            direction: rootState.characters.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("characters/setCharacters", data.results, { root: true });
-        } else {
-            throw new Error("Unable to retrieve characters");
-        }
-        commit("setLoading", false);
-    },
-    /**
      * Fetch documents in the current project.
      */
     async fetchProjectDocuments({ commit, state, rootState }) {
@@ -203,39 +173,11 @@ const actions = {
         commit("setLoading", false);
     },
     /**
-     * Fetch the current project ontology, given this project's id from state, plus
-     * ontology category and sorting params from ontology Vuex store.
-     */
-    async fetchProjectOntology({ commit, state, rootState }) {
-        commit("setLoading", true);
-        const { data } = await retrieveProjectOntology({
-            projectId: state.id,
-            category: rootState.ontology.category,
-            sortField: rootState.ontology.sortState?.field,
-            sortDirection: rootState.ontology.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("ontology/setOntology", data.results, { root: true });
-            commit("setLoading", false);
-        } else {
-            commit("setLoading", false);
-            throw new Error(
-                `Unable to retrieve ${rootState.ontology.category} ontology`,
-            );
-        }
-    },
-    /**
      * Navigate to the images page for this document.
      */
     navigateToImages(_, item) {
         // TODO: implement this; not yet designed
         console.log(item);
-    },
-    /**
-     * Open the "project characters" modal.
-     */
-    openCharactersModal({ commit }) {
-        commit("characters/setModalOpen", true, { root: true });
     },
     /**
      * Open the "create document" modal.
@@ -257,67 +199,16 @@ const actions = {
         commit("setEditModalOpen", true);
     },
     /**
-     * Open the "project ontology" modal.
-     */
-    openOntologyModal({ commit }) {
-        commit("ontology/setModalOpen", true, { root: true });
-    },
-    /**
      * Open the "add group or user" modal.
      */
     openShareModal({ commit }) {
         commit("setShareModalOpen", true);
     },
     /**
-     * Event handler for sorting the project ontology table; sets the sort state on the
-     * ontology Vuex store, then makes a call to fetch project ontology based on current state.
-     */
-    async sortOntology({ commit, dispatch }, { field, direction }) {
-        commit("ontology/setSortState", { field, direction }, { root: true });
-        try {
-            await dispatch("fetchProjectOntology");
-        } catch (error) {
-            dispatch("alerts/addError", error, { root: true });
-        }
-    },
-    /**
-     * Set the default transcription level on one of the documents in the list, then
-     * fetch the documents list again with updated data.
-     *
-     * TODO: figure out implementation.
-     */
-    // async setDocDefaultTranscription({ commit, dispatch }, documentPk, level) {
-    //     commit("setLoading", true);
-    //     try {
-    //         await updateDocument(documentPk, {
-    //             default_transcription_level: level,
-    //         });
-    //         await dispatch("fetchProjectDocuments");
-    //     } catch (error) {
-    //         commit("setLoading", false);
-    //         dispatch("alerts/addError", error, { root: true });
-    //     }
-    // },
-    /**
      * Set the ID of the project on the state (happens immediately on page load).
      */
     setId({ commit }, id) {
         commit("setId", id);
-    },
-    /**
-     * Change the characters sort field and perform another fetch for characters.
-     */
-    async sortCharacters({ commit, dispatch }, field) {
-        let direction = 1;
-        if (field === "frequency") {
-            direction = -1;
-        }
-        commit("characters/setSortState", { field, direction }, { root: true });
-        try {
-            await dispatch("fetchProjectCharacters");
-        } catch (error) {
-            dispatch("alerts/addError", error, { root: true });
-        }
     },
     /**
      * Change the documents list sort and perform another fetch for documents.

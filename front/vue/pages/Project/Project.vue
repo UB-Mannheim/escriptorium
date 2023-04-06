@@ -116,40 +116,18 @@
                         />
                     </div>
                 </div>
-                <!-- Ontology section -->
-                <OntologyCard
-                    class="escr-project-ontology"
-                    context="Project"
-                    :items="ontology"
-                    :loading="loading"
-                    :on-view="() => openOntologyModal"
-                    :on-select-category="changeOntologyCategory"
-                    :on-sort="sortOntology"
-                    :selected-category="ontologyCategory"
-                />
-                <!-- Characters section -->
-                <CharactersCard
-                    class="escr-project-characters"
-                    :loading="loading"
-                    :on-view="() => openCharactersModal"
-                    :on-sort-characters="sortCharacters"
-                    :sort="charactersSort?.field"
-                    :items="characters"
-                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
-import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
-import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
@@ -160,14 +138,12 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
-        CharactersCard,
         EscrButton,
         EscrPage,
         EscrTable,
         EscrTags,
         FilterSet,
         ImagesIcon,
-        OntologyCard,
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
@@ -187,8 +163,6 @@ export default {
     },
     computed: {
         ...mapState({
-            characters: (state) => state.characters.characters,
-            charactersSort: (state) => state.characters.sortState,
             createModalOpen: (state) => state.project.createModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
@@ -196,8 +170,6 @@ export default {
             guidelines: (state) => state.project.guidelines,
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
-            ontology: (state) => state.ontology.ontology,
-            ontologyCategory: (state) => state.ontology.category,
             projectName: (state) => state.project.name,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
@@ -258,32 +230,23 @@ export default {
             await this.fetchProject();
             await this.fetchProjectDocuments();
             await this.fetchProjectDocumentTags();
-            await this.fetchProjectOntology();
-            await this.fetchProjectCharacters();
         } catch (error) {
             this.addError(error);
         }
     },
     methods: {
         ...mapActions("project", [
-            "changeOntologyCategory",
             "fetchNextPage",
             "fetchProject",
-            "fetchProjectCharacters",
             "fetchProjectDocuments",
             "fetchProjectDocumentTags",
-            "fetchProjectOntology",
             "navigateToImages",
-            "openCharactersModal",
             "openCreateModal",
             "openDeleteModal",
             "openEditModal",
-            "openOntologyModal",
             "openShareModal",
             "setId",
-            "sortCharacters",
             "sortDocuments",
-            "sortOntology",
         ]),
         ...mapActions("alerts", ["addError"]),
     },

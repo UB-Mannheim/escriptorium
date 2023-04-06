@@ -4,10 +4,10 @@
     max-height: calc(90vh - 32px);
     grid-template-columns: 3fr 1fr;
     grid-template-areas:
-        "header ontology"
-        "doclist ontology"
-        "doclist chars"
-        "doclist chars";
+        "header header"
+        "doclist doclist"
+        "doclist doclist"
+        "doclist doclist";
     grid-template-rows: auto;
     grid-auto-rows: 25%;
     gap: 24px;
