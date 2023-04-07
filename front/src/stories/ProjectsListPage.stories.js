@@ -69,12 +69,12 @@ const PageTemplate = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
-                const { ordering, tags, tags_op } = config.params;
+                const { ordering, tags } = config.params;
                 return [
                     200,
                     {
                         results: sorted(
-                            filteredByTag(projects, tags, tags_op),
+                            filteredByTag(projects, tags),
                             {
                                 ordering
                             },

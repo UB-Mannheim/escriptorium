@@ -39,9 +39,9 @@ export default {
             default: "or",
         },
         /**
-         * Boolean indicating whether or not "without tag" is already selected
+         * Boolean indicating whether or not "untagged" is already selected
          */
-        withoutTagSelected: {
+        untaggedSelected: {
             type: Boolean,
             default: false,
         },
@@ -53,7 +53,7 @@ export default {
          * {
          *     operator: String,
          *     tags: Array<String>,
-         *     withoutTag: Boolean,
+         *     untagged: Boolean,
          * }
          * ```
          */
@@ -74,7 +74,7 @@ export default {
             selectedOperator: this.operator,
             selectedTags: [...this.selected],
             stringFilter: "",
-            withoutTag: this.withoutTagSelected,
+            untagged: this.untaggedSelected,
         };
     },
     computed: {
@@ -85,7 +85,7 @@ export default {
                 && this.selected.every((tag) => this.selectedTags.includes(tag))
             );
             return this.selectedOperator !== this.operator
-                || this.withoutTag !== this.withoutTagSelected
+                || this.untagged !== this.untaggedSelected
                 || tagsChanged;
         }
     },
@@ -127,10 +127,10 @@ export default {
             this.selectedTags = [];
         },
         /**
-         * Toggle "without tag" with the checkmark input
+         * Toggle "untagged" with the checkmark input
          */
-        toggleWithoutTag(e) {
-            this.withoutTag = e.target.checked;
+        toggleUntagged(e) {
+            this.untagged = e.target.checked;
         },
         /**
          * Use the text input to filter the tags by string
@@ -217,7 +217,7 @@ export default {
                                 onClick: () => this.onApply({
                                     operator: this.selectedOperator,
                                     tags: this.selectedTags,
-                                    withoutTag: this.withoutTag,
+                                    untagged: this.untagged,
                                 }),
                             }
                         }
@@ -260,7 +260,7 @@ export default {
      * - Buttons for select/deselect all
      * - Text input to filter tags by name
      * - A label and checkbox input for each tag
-     * - A checkbox input for "without tag"
+     * - A checkbox input for "untagged"
      * - Buttons to cancel and apply the filter
      */
     render(h) {
@@ -338,7 +338,7 @@ export default {
                     "label",
                     {
                         domProps: {
-                            htmlFor: "without-tag",
+                            htmlFor: "untagged",
                         }
                     },
                     [
@@ -347,15 +347,15 @@ export default {
                             {
                                 domProps: {
                                     type: "checkbox",
-                                    id: "without-tag",
-                                    onchange: this.toggleWithoutTag,
-                                    checked: this.withoutTag,
+                                    id: "untagged",
+                                    onchange: this.toggleUntagged,
+                                    checked: this.untagged,
                                 },
                             },
                         ),
                         h(
                             "span",
-                            "Without tag"
+                            "Untagged"
                         )
                     ]
                 ),

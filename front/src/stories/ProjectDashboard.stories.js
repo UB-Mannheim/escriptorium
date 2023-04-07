@@ -130,12 +130,12 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
-                const { ordering, tags, tags_op, withoutTag } = config.params;
+                const { ordering, tags } = config.params;
                 return [
                     200,
                     {
                         results: sorted(
-                            filteredByTag(documents, tags, tags_op, withoutTag),
+                            filteredByTag(documents, tags),
                             {
                                 ordering
                             },

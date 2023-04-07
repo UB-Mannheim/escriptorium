@@ -44,19 +44,29 @@ export const onSort = (items, { field, direction }) => {
 };
 
 // tags filter utility function
-export const filteredByTag = (items, tags, operator, withoutTag) => {
-    if (tags) {
+export const filteredByTag = (items, tags) => {
+    // "or" operator will be formatted like "2|3|none", so split by |
+    let tagArray = tags && !Array.isArray(tags) ? tags.split("|") : tags;
+    // convert all pks to strings for comparison with api response
+    tagArray = tagArray?.map((t) => t.toString());
+    if (tags && tagArray) {
         return items.filter((item) => {
-            if (withoutTag && !item.tags.length) {
+            if (
+                (!Array.isArray(tags) || tags.length === 1) &&
+                tagArray.includes("none") &&
+                !item.tags.length
+            ) {
+                // "none" selected and either this is "or" operator, or it's "and" with one entry
                 return true;
-            }
-            if (operator === "or") {
+            } else if (!Array.isArray(tags)) {
+                // "or" operator
                 return item.tags?.some((itemTag) =>
-                    tags.includes(itemTag.pk),
+                    tagArray.includes(itemTag.pk.toString()),
                 );
             } else {
-                return tags.every((tag) =>
-                    item.tags?.some((itemTag) => itemTag.pk === tag),
+                // "and" operator
+                return tagArray.every((tag) =>
+                    item.tags?.some((itemTag) => itemTag.pk.toString() === tag),
                 );
             }
         });
@@ -167,14 +177,19 @@ export const groups = [
     { pk: 1, name: "Group Name 1" },
     { pk: 2, name: "Group Name 2" },
     { pk: 3, name: "Group Name 3" },
-]
+];
 
 // mock users for all stories with users
 export const users = [
     { pk: 1, first_name: "Elwin", last_name: "Abbott", username: "eabbott" },
     { pk: 2, first_name: "Marcos", last_name: "Prosacco", username: "mpro" },
     { pk: 3, first_name: "Emmy", last_name: "Leuschke", username: "eleu" },
-    { pk: 4, first_name: "Salvatore", last_name: "Spencer", username: "salspen" },
+    {
+        pk: 4,
+        first_name: "Salvatore",
+        last_name: "Spencer",
+        username: "salspen",
+    },
     { pk: 5, first_name: "Nathanial", last_name: "Olson", username: "natols" },
     { pk: 6, username: "someuser" },
-]
+];
