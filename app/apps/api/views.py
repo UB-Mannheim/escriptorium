@@ -3,12 +3,16 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from django.views.decorators.cache import cache_page
+from django_filters import Filter, FilterSet
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -96,6 +100,33 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+class TagFilter(Filter):
+    def filter(self, qs, value):
+        if value and '|' in value:
+            values = value.split('|')
+            if 'none' in values:
+                values.remove('none')
+                qs = (qs.annotate(tag_count=Count('tags'))
+                      .filter(Q(tag_count=0) | Q(**{'tags__in': values})))
+            else:
+                return qs.filter(**{'tags__in': values})
+        elif value == 'none':
+            return qs.annotate(tag_count=Count('tags')).filter(tag_count=0)
+        else:
+            return super().filter(qs, value)
+        return qs
+
+
+class TagFilterSet(FilterSet):
+    tags = TagFilter()
+
+
+class DocumentTagFilterSet(TagFilterSet):
+    class Meta:
+        model = Document
+        fields = ['project', 'tags']
+
+
 class IsAdminOrSelfOnly(BasePermission):
     """
     Permission class letting a non-admin user only update his own record,
@@ -136,7 +167,8 @@ class ScriptViewSet(ReadOnlyModelViewSet):
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    filter_backends = [filters.OrderingFilter]
+    filterset_class = TagFilterSet
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['created_at', 'documents_count', 'id', 'name', 'owner', 'updated_at']
 
     def get_queryset(self):
@@ -172,6 +204,9 @@ class DocumentTagViewSet(ModelViewSet):
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['project', 'tags']
+    filterset_class = DocumentTagFilterSet
 
     def get_queryset(self):
         return Document.objects.for_user(self.request.user).prefetch_related(
@@ -395,6 +430,7 @@ class DocumentPermissionMixin():
                              .get(pk=self.kwargs.get('document_pk')))
         except Document.DoesNotExist:
             raise PermissionDenied
+
         return super().get_queryset()
 
 
@@ -525,16 +561,18 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class DocumentTranscriptionViewSet(ModelViewSet):
+class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     # Note: there is no dedicated Transcription viewset, it's always in the context of a Document
     queryset = Transcription.objects.all()
     serializer_class = TranscriptionSerializer
     pagination_class = None
 
     def get_queryset(self):
-        return Transcription.objects.filter(
+        qs = super().get_queryset()
+        qs = qs.filter(
             archived=False,
-            document=self.kwargs['document_pk'])
+            document=self.document)
+        return qs
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -542,6 +580,23 @@ class DocumentTranscriptionViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ProtectedObjectException:
             return Response("This object can not be deleted.", status=400)
+
+    @method_decorator(cache_page(60 * 60))  # one hour
+    @action(detail=True, methods=['GET'])
+    def characters(self, request, document_pk=None, pk=None):
+        transcription = self.get_object()
+        with connection.cursor() as cursor:
+            cursor.execute('''
+            SELECT char, count(*) as frequency
+            FROM "core_linetranscription", regexp_split_to_table(content, '') t(char), core_line, core_documentpart
+            WHERE "core_linetranscription"."line_id" = "core_line"."id"
+            AND "core_line"."document_part_id" = "core_documentpart"."id"
+            AND ("core_documentpart"."document_id" = %s AND "core_linetranscription"."transcription_id" = %s)
+            GROUP BY char ORDER BY frequency DESC;
+            ''', [self.document.pk, transcription.pk])
+            all_ = cursor.fetchall()
+            data = [{'char': char, 'frequency': freq} for char, freq in all_]
+        return Response(data)
 
 
 class BlockTypeViewSet(ModelViewSet):

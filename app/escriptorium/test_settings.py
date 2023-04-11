@@ -25,6 +25,13 @@ class DisableMigrations(object):
 
 MIGRATION_MODULES = DisableMigrations()
 
+# disable cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
 KRAKEN_TRAINING_LOAD_THREADS = 0
 
 # Disables easy-thumbnail spamming

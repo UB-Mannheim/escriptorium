@@ -13,6 +13,7 @@ from core.models import (
     BlockType,
     Document,
     DocumentPart,
+    DocumentTag,
     Line,
     LineTranscription,
     Metadata,
@@ -73,6 +74,12 @@ class CoreFactory():
         attrs['project'] = attrs.get('project') or self.make_project(owner=attrs['owner'])
         attrs['name'] = attrs.get('name') or 'test doc'
         return Document.objects.create(**attrs)
+
+    def make_document_tag(self, **kwargs):
+        attrs = kwargs.copy()
+        attrs['project'] = attrs.get('project') or self.make_project()
+        attrs['name'] = attrs.get('name') or 'test tag'
+        return DocumentTag.objects.create(**attrs)
 
     def make_part(self, **kwargs):
         if 'image_asset' in kwargs:
