@@ -200,7 +200,7 @@ CACHES = {
 
 # Boolean used to defuse the search feature (default to True)
 DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'localhost:9200')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
 
 
