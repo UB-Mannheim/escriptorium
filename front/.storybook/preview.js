@@ -13,6 +13,9 @@ Vue.use(FloatingVue, {
         "tags-dropdown": {
             $extend: "dropdown",
         },
+        "vertical-menu": {
+            $extend: "menu",
+        },
     },
 });
 

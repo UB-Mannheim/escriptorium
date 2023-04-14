@@ -34,10 +34,13 @@ const state = () => ({
      * }]
      */
     documentTags: [],
+    deleteModalOpen: false,
+    deleteDocumentModalOpen: false,
     editModalOpen: false,
     guidelines: "",
     id: null,
     loading: false,
+    menuOpen: false,
     name: "",
     nextPage: "",
     /**
@@ -82,6 +85,18 @@ const actions = {
      */
     closeEditModal({ commit }) {
         commit("setEditModalOpen", false);
+    },
+    /**
+     * Close the "delete project" modal.
+     */
+    closeDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", false);
+    },
+    /**
+     * Close the "edit/delete project" menu.
+     */
+    closeProjectMenu({ commit }) {
+        commit("setMenuOpen", false);
     },
     /**
      * Fetch the next page of documents, retrieved from fetchProjects, and add
@@ -186,9 +201,15 @@ const actions = {
         // TODO: implement this; not yet designed
     },
     /**
+     * Open the "delete project" modal.
+     */
+    openDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", true);
+    },
+    /**
      * Open the "delete document" modal.
      */
-    openDeleteModal(_, item) {
+    openDeleteDocumentModal(_, item) {
         // TODO: implement this; not yet designed
         console.log(item);
     },
@@ -197,6 +218,12 @@ const actions = {
      */
     openEditModal({ commit }) {
         commit("setEditModalOpen", true);
+    },
+    /**
+     * Open the "edit/delete project" menu.
+     */
+    openProjectMenu({ commit }) {
+        commit("setMenuOpen", true);
     },
     /**
      * Open the "add group or user" modal.
@@ -227,6 +254,12 @@ const mutations = {
     addDocument(state, document) {
         state.documents.push(document);
     },
+    setDeleteModalOpen(state, open) {
+        state.deleteModalOpen = open;
+    },
+    setDeleteDocumentModalOpen(state, open) {
+        state.deleteDocumentModalOpen = open;
+    },
     setDocuments(state, documents) {
         state.documents = documents;
     },
@@ -241,6 +274,9 @@ const mutations = {
     },
     setLoading(state, loading) {
         state.loading = loading;
+    },
+    setMenuOpen(state, open) {
+        state.menuOpen = open;
     },
     setName(state, name) {
         state.name = name;

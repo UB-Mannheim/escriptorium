@@ -19,6 +19,13 @@ export default {
 
     props: {
         /**
+         * Whether or not this is a round button
+         */
+        round: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * Color of the button
          */
         color: {
@@ -80,6 +87,7 @@ export default {
                 "escr-button": true,
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
+                "escr-button--round": this.round,
                 "escr-button--icon-only": !this.label && this.$slots["button-icon"],
             };
         },

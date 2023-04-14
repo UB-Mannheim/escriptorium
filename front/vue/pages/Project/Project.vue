@@ -12,16 +12,13 @@
                     <div class="escr-card-header">
                         <h1>{{ projectName }}</h1>
                         <div class="escr-card-actions">
-                            <EscrButton
-                                label="Edit"
-                                size="small"
-                                :on-click="openEditModal"
-                                :disabled="loading || editModalOpen"
-                            >
-                                <template #button-icon>
-                                    <PencilIcon />
-                                </template>
-                            </EscrButton>
+                            <VerticalMenu
+                                :is-open="projectMenuOpen"
+                                :close-menu="closeProjectMenu"
+                                :open-menu="openProjectMenu"
+                                :disabled="loading"
+                                :items="projectMenuItems"
+                            />
                         </div>
                     </div>
                     <EscrButton
@@ -83,7 +80,7 @@
                                     v-tooltip.bottom="'Delete'"
                                     size="small"
                                     color="text"
-                                    :on-click="() => openDeleteModal(item)"
+                                    :on-click="() => openDeleteDocumentModal(item)"
                                     :disabled="loading"
                                     aria-label="Delete document"
                                 >
@@ -133,6 +130,7 @@ import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Project.css";
 
 export default {
@@ -144,6 +142,7 @@ export default {
         EscrTags,
         FilterSet,
         ImagesIcon,
+        // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
@@ -151,6 +150,7 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TrashIcon,
+        VerticalMenu,
     },
     props: {
         /**
@@ -171,6 +171,7 @@ export default {
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
             projectName: (state) => state.project.name,
+            projectMenuOpen: (state) => state.project.menuOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
@@ -205,6 +206,26 @@ export default {
             ];
         },
         /**
+         * Menu items for the vertical menu in the top right corner of the dashboard.
+         */
+        projectMenuItems() {
+            return [
+                {
+                    icon: PencilIcon,
+                    key: "edit",
+                    label: "Edit",
+                    onClick: this.openEditModal,
+                },
+                {
+                    icon: TrashIcon,
+                    class: "new-section",
+                    key: "delete",
+                    label: "Delete Project",
+                    onClick: this.openDeleteModal,
+                }
+            ]
+        },
+        /**
          * Sidebar quick actions for the project dashboard.
          */
         sidebarActions() {
@@ -236,6 +257,7 @@ export default {
     },
     methods: {
         ...mapActions("project", [
+            "closeProjectMenu",
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
@@ -243,7 +265,9 @@ export default {
             "navigateToImages",
             "openCreateModal",
             "openDeleteModal",
+            "openDeleteDocumentModal",
             "openEditModal",
+            "openProjectMenu",
             "openShareModal",
             "setId",
             "sortDocuments",

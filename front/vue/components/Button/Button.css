@@ -16,6 +16,9 @@
     text-decoration: none;
     box-sizing: border-box;
 }
+.escr-button--round {
+    border-radius: 50%;
+}
 .escr-button:focus {
     outline: 0;
 }
