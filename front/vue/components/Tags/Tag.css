@@ -8,6 +8,8 @@
     display: flex;
     flex-flow: row nowrap;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     align-items: center;
     background-color: var(--tag-12);
 }

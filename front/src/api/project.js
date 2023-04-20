@@ -20,9 +20,21 @@ export const retrieveProject = async (projectId) =>
 export const retrieveAllProjectTags = async () =>
     await axios.get("/tags/project");
 
-// create a project by providing a name
-export const createProject = async (name) =>
-    await axios.post("/projects", { params: { name } });
+export const createProjectTag = async ({ name, color }) =>
+    await axios.post("/tags/project", {
+        params: { name, color },
+    });
+
+// create a project by providing a name (and optional other metadata)
+export const createProject = async ({ name, guidelines, tags }) =>
+    await axios.post("/projects", {
+        params: { name, guidelines, tags },
+    });
+
+export const editProject = async (projectId, { name, guidelines, tags }) =>
+    await axios.put(`/projects/${projectId}`, {
+        params: { name, guidelines, tags },
+    });
 
 // delete a project by ID
 export const deleteProject = async (projectId) =>

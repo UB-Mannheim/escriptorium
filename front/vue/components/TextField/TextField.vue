@@ -1,12 +1,16 @@
 <template>
-    <label class="escr-text-field">
+    <label class="escr-text-field escr-form-field">
         <span v-if="labelVisible">
-            {{ label }}
+            {{ label }}<span
+                v-if="required"
+                class="escr-required"
+            >*</span>
         </span>
         <input
             type="text"
             :placeholder="placeholder"
             :aria-label="label"
+            :value="value"
             @input="onInput"
         >
     </label>
@@ -44,6 +48,20 @@ export default {
         labelVisible: {
             type: Boolean,
             default: true,
+        },
+        /**
+         * Whether or not this field is required in the form.
+         */
+        required: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * Current value.
+         */
+        value: {
+            type: String,
+            default: "",
         },
     },
 }

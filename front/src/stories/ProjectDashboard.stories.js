@@ -23,7 +23,7 @@ const project = {
     id: 1,
     name: "Project name that is really really long",
     guidelines: "",
-    tags: tags.slice(3, 8),
+    tags: tags.slice(3, 8).map((tag) => tag.pk),
     shared_with_groups: groups,
     shared_with_users: users,
 };
@@ -101,10 +101,13 @@ const documents = [
     },
 ];
 
+const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
+const newTagPks = [newPk];
+
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { ProjectDashboard },
-    template: "<ProjectDashboard v-bind=\"$props\" />",
+    template: '<ProjectDashboard v-bind="$props" />',
     setup() {
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
@@ -118,6 +121,7 @@ const Template = (args, { argTypes }) => ({
         const partEndpoint = new RegExp(/\/projects\/\d+\/types\/part$/);
         const charactersEndpoint = new RegExp(/\/projects\/\d+\/characters$/);
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
+        const projectsTagsEndpoint = "/tags/project";
         // mock project page
         mock.onGet(projectEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -134,12 +138,9 @@ const Template = (args, { argTypes }) => ({
                 return [
                     200,
                     {
-                        results: sorted(
-                            filteredByTag(documents, tags),
-                            {
-                                ordering
-                            },
-                        ),
+                        results: sorted(filteredByTag(documents, tags), {
+                            ordering,
+                        }),
                     },
                 ];
             }
@@ -198,6 +199,35 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: tags }];
+        });
+        // mock all-projects tags list
+        mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
+        // mock create tag
+        mock.onPost(projectsTagsEndpoint).reply(async function(config) {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new tag with increment pk
+                const { params } = JSON.parse(config.data);
+                const { name, color } = params;
+                const newTag = Math.max(...newTagPks) + 1;
+                newTagPks.push(newTag);
+                return [200, { name, color, pk: newTag }];
+            }
+            return [500];
+        });
+        // mock edit project
+        mock.onPut(projectEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock return updated project
+                const { params } = JSON.parse(config.data);
+                const { name, guidelines, tags } = params;
+                return [200, { ...project, name, guidelines, tags }];
+            }
+            return [500];
         });
     },
 });

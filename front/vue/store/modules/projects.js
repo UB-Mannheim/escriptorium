@@ -1,18 +1,18 @@
 import axios from "axios";
 import {
     createProject,
+    createProjectTag,
     deleteProject,
     retrieveAllProjectTags,
     retrieveProjects,
 } from "../../../src/api";
-import { tagColorToVariant } from "../util/color";
+import { tagColorToVariant, tagVariants } from "../util/color";
 
 // initial state
 const state = () => ({
     createModalOpen: false,
     deleteModalOpen: false,
     loading: false,
-    newProjectName: "",
     /**
      * If there are additional pages of results, the next one will go here
      */
@@ -63,13 +63,17 @@ const actions = {
         commit("setDeleteModalOpen", false);
     },
     /**
-     * Create a new project with the project name from state; show error
+     * Create a new project with the project data from state; show error
      * alert on failure.
      */
-    async createNewProject({ dispatch, commit, state }) {
+    async createNewProject({ dispatch, commit, rootState }) {
         commit("setLoading", true);
         try {
-            const { data } = await createProject(state.newProjectName);
+            const { data } = await createProject({
+                name: rootState?.editProject?.name,
+                tags: rootState?.editProject?.tags,
+                guidelines: rootState?.editProject?.guidelines,
+            });
             if (data) {
                 // show toast alert on success
                 dispatch(
@@ -85,6 +89,35 @@ const actions = {
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create project");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    /**
+     * Create a new tag with the data from state, reload list of tags.
+     */
+    async createNewProjectTag({ commit, dispatch, rootState, state }) {
+        commit("setLoading", true);
+        try {
+            const { data } = await createProjectTag({
+                name: rootState?.editProject?.tagName,
+                // TODO: Allow users to select this color.
+                color:
+                    tagVariants[Math.floor(Math.random() * tagVariants.length)],
+            });
+            if (data?.pk) {
+                // set the new data on the state
+                const tags = [...state.tags];
+                tags.push({ ...data, variant: tagColorToVariant(data.color) });
+                commit("setTags", tags);
+                // select the new tag and reset the tag name add/search field
+                commit("editProject/selectTag", data, { root: true });
+                commit("editProject/setTagName", "", { root: true });
+            } else {
+                commit("setLoading", false);
+                throw new Error("Unable to create tag");
             }
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
@@ -178,16 +211,10 @@ const actions = {
         commit("setLoading", false);
     },
     /**
-     * Set the new project name on the state.
-     */
-    handleNewProjectNameInput({ commit }, input) {
-        commit("setNewProjectName", input);
-    },
-    /**
      * Open the "create project" modal and clear the new project name, if there is one.
      */
     openCreateModal({ commit }) {
-        commit("setNewProjectName", "");
+        commit({ type: "editProject/clearForm" }, { root: true });
         commit("setCreateModalOpen", true);
     },
     /**

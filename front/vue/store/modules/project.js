@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    editProject,
     retrieveDocumentsList,
     retrieveProject,
     retrieveProjectDocumentTags,
@@ -81,10 +82,15 @@ const getters = {};
 
 const actions = {
     /**
-     * Close the "edit project" modal.
+     * Close the "edit project" modal and clear out state.
      */
-    closeEditModal({ commit }) {
+    closeEditModal({ commit, state }) {
         commit("setEditModalOpen", false);
+        commit("editProject/setName", state.name, { root: true });
+        commit("editProject/setGuidelines", state.guidelines, {
+            root: true,
+        });
+        commit("editProject/setTags", state.tags, { root: true });
     },
     /**
      * Close the "delete project" modal.
@@ -97,6 +103,17 @@ const actions = {
      */
     closeProjectMenu({ commit }) {
         commit("setMenuOpen", false);
+    },
+    /**
+     * Create a new tag with the data from state.
+     */
+    async createNewProjectTag({ commit, dispatch }) {
+        commit("setLoading", true);
+        await dispatch(
+            { type: "projects/createNewProjectTag" },
+            { root: true },
+        );
+        commit("setLoading", false);
     },
     /**
      * Fetch the next page of documents, retrieved from fetchProjects, and add
@@ -123,20 +140,26 @@ const actions = {
     /**
      * Fetch the current project.
      */
-    async fetchProject({ commit, state }) {
+    async fetchProject({ commit, dispatch, state, rootState }) {
         commit("setLoading", true);
+        await dispatch(
+            { type: "projects/fetchAllProjectTags" },
+            { root: true },
+        );
         const { data } = await retrieveProject(state.id);
         if (data) {
             commit("setName", data.name);
             commit(
                 "setTags",
-                data.tags?.map((tag) => ({
-                    ...tag,
-                    variant: tagColorToVariant(tag.color),
-                })),
+                rootState.projects.tags.filter((t) => data.tags.includes(t.pk)),
             );
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
+            commit("editProject/setName", data.name, { root: true });
+            commit("editProject/setGuidelines", data.guidelines, {
+                root: true,
+            });
+            commit("editProject/setTags", data.tags, { root: true });
         } else {
             throw new Error("Unable to retrieve project");
         }
@@ -231,6 +254,33 @@ const actions = {
     openShareModal({ commit }) {
         commit("setShareModalOpen", true);
     },
+    async saveProject({ commit, dispatch, state, rootState }) {
+        commit("setLoading", true);
+        const { name, guidelines, tags } = rootState.editProject;
+        try {
+            const { data } = await editProject(state.id, {
+                name,
+                guidelines,
+                tags,
+            });
+            if (data) {
+                commit("setName", name);
+                commit("setGuidelines", guidelines);
+                commit(
+                    "setTags",
+                    rootState.projects.tags.filter((t) =>
+                        data?.tags?.includes(t.pk),
+                    ),
+                );
+                commit("setEditModalOpen", false);
+            } else {
+                throw new Error("Unable to retrieve project");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
     /**
      * Set the ID of the project on the state (happens immediately on page load).
      */
@@ -268,6 +318,9 @@ const mutations = {
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
+    },
+    setGuidelines(state, guidelines) {
+        state.guidelines = guidelines;
     },
     setId(state, id) {
         state.id = id;

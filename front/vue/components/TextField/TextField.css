@@ -10,3 +10,6 @@
 .escr-text-field span {
     font-weight: 600;
 }
+.escr-text-field span.escr-required {
+    color: red;
+}

@@ -1,0 +1,9 @@
+.escr-edit-project .escr-modal {
+    width: 400px;
+    position: absolute;
+    top: 15%;
+    left: calc(50% - 216px);
+}
+.escr-edit-project .escr-modal h2 {
+    margin: 24px 0 8px;
+}

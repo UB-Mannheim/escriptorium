@@ -1,6 +1,6 @@
 import ColorClassifier from "color-classifier";
 
-const tagVariants = [
+export const tagVariants = [
     "#e0726e",
     "#f78d8d",
     "#ff9a6f",

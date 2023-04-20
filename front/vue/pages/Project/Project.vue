@@ -19,15 +19,23 @@
                                 :disabled="loading"
                                 :items="projectMenuItems"
                             />
+                            <EditProjectModal
+                                v-if="editModalOpen"
+                                :disabled="loading"
+                                :on-cancel="closeEditModal"
+                                :on-create-tag="createNewProjectTag"
+                                :on-save="saveProject"
+                                :tags="allProjectTags"
+                            />
                         </div>
                     </div>
-                    <EscrButton
+                    <a
                         v-if="guidelines"
-                        :on-click="openGuidelinesModal"
-                        label="Project Guidelines"
-                        size="small"
-                        color="text"
-                    />
+                        :href="guidelines"
+                        class="escr-project-guidelines"
+                    >
+                        Project Guidelines
+                    </a>
                     <EscrTags
                         v-if="tags"
                         :tags="tags"
@@ -119,6 +127,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
@@ -136,6 +145,7 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
+        EditProjectModal,
         EscrButton,
         EscrPage,
         EscrTable,
@@ -163,6 +173,7 @@ export default {
     },
     computed: {
         ...mapState({
+            allProjectTags: (state) => state.projects.tags,
             createModalOpen: (state) => state.project.createModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
@@ -218,7 +229,8 @@ export default {
                 },
                 {
                     icon: TrashIcon,
-                    class: "new-section",
+                    // Add the "new-section" class if/when there is more than one item above this
+                    // class: "new-section",
                     key: "delete",
                     label: "Delete Project",
                     onClick: this.openDeleteModal,
@@ -257,7 +269,9 @@ export default {
     },
     methods: {
         ...mapActions("project", [
+            "closeEditModal",
             "closeProjectMenu",
+            "createNewProjectTag",
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
@@ -269,9 +283,11 @@ export default {
             "openEditModal",
             "openProjectMenu",
             "openShareModal",
+            "saveProject",
             "setId",
             "sortDocuments",
         ]),
+        ...mapActions("projects", ["fetchAllProjectTags"]),
         ...mapActions("alerts", ["addError"]),
     },
 }

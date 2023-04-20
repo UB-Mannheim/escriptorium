@@ -4,6 +4,7 @@ import FloatingVue from "floating-vue";
 import alerts from "./modules/alerts";
 import characters from "./modules/characters";
 import filter from "./modules/filter";
+import editProject from "./modules/forms/editProject";
 import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
@@ -28,6 +29,7 @@ export default new Store({
     modules: {
         alerts,
         characters,
+        editProject,
         filter,
         ontology,
         project,

@@ -22,11 +22,12 @@
                         </EscrButton>
                         <NewProjectModal
                             v-if="createModalOpen"
-                            :cancel-disabled="loading"
-                            :create-disabled="loading || !newProjectName"
-                            :on-input="(e) => handleNewProjectNameInput(e.target.value)"
-                            :on-create="() => createNewProject()"
-                            :on-cancel="() => closeCreateModal()"
+                            :disabled="loading"
+                            :new-project="true"
+                            :on-save="createNewProject"
+                            :on-cancel="closeCreateModal"
+                            :on-create-tag="createNewProjectTag"
+                            :tags="tags"
                         />
                     </div>
                 </div>
@@ -112,7 +113,7 @@ import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
-import NewProjectModal from "./NewProjectModal.vue";
+import NewProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import "./ProjectsList.css";
@@ -142,7 +143,6 @@ export default {
             createModalOpen: (state) => state.projects.createModalOpen,
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
             loading: (state) => state.projects.loading,
-            newProjectName: (state) => state.projects.newProjectName,
             nextPage: (state) => state.projects.nextPage,
             projects: (state) => state.projects.projects,
             projectToDelete: (state) => state.projects.projectToDelete,
@@ -179,11 +179,11 @@ export default {
             "closeCreateModal",
             "closeDeleteModal",
             "createNewProject",
+            "createNewProjectTag",
             "deleteProject",
             "fetchAllProjectTags",
             "fetchProjects",
             "fetchNextPage",
-            "handleNewProjectNameInput",
             "openCreateModal",
             "openDeleteModal",
             "sortProjects",

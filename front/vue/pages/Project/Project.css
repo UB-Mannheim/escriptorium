@@ -16,6 +16,12 @@
 .escr-project-details {
     grid-area: header;
 }
+.escr-project-guidelines {
+    display: inline-block;
+    color: var(--text2);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
 .escr-documents-list {
     grid-area: doclist;
     overflow: hidden;

@@ -25,7 +25,7 @@ export default {
             },
         },
         /**
-         * Tags that are already selected, as an array of names
+         * Tags that are already selected, as an array of pks
          */
         selected: {
             type: Array,
@@ -322,6 +322,7 @@ export default {
                             labelVisible: false,
                             onInput: this.filterByString,
                             placeholder: "Find tag",
+                            value: this.stringFilter,
                         },
                     }
                 ),

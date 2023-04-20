@@ -1,6 +1,6 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import EscrNewProjectModal from "../../vue/pages/ProjectsList/NewProjectModal.vue";
+import EscrNewProjectModal from "../../vue/components/EditProjectModal/EditProjectModal.vue";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
 import { filteredByTag, sorted, tags } from "./util";
@@ -21,6 +21,10 @@ const Template = (args, { argTypes }) => ({
     template: "<EscrNewProjectModal v-bind=\"$props\" />",
 });
 export const NewProjectModal = Template.bind({});
+NewProjectModal.args = {
+    newProject: true,
+    tags,
+};
 
 // tags and projects for list view
 const projects = [
@@ -52,6 +56,9 @@ const projects = [
         tags: [tags[7], tags[9], tags[10]],
     },
 ];
+
+const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
+const newTagPks = [newPk];
 
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
@@ -88,6 +95,19 @@ const PageTemplate = (args, { argTypes }) => ({
         });
         // mock tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
+        // mock create tag
+        mock.onPost(projectsTagsEndpoint).reply(async function(config) {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new tag with increment pk
+                const { params } = JSON.parse(config.data);
+                const { name, color } = params;
+                const newTag = Math.max(...newTagPks) + 1;
+                newTagPks.push(newTag);
+                return [200, { name, color, pk: newTag }];
+            }
+        });
         // mock create project
         mock.onPost(projectsEndpoint).reply(async function() {
             // wait for 200-400 ms to mimic server-side loading

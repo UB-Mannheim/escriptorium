@@ -1,0 +1,42 @@
+.escr-tags-field .escr-form-label {
+    font-weight: 600;
+}
+.escr-tags-field .escr-text-field {
+    margin-top: 0;
+}
+.escr-tags-field .escr-create-tag {
+    margin-top: 0.5rem;
+}
+.escr-tags-field .escr-create-tag .escr-button {
+    margin: 0 auto;
+}
+
+/* Tags list with checkboxes */
+.escr-tag-field-group {
+    display: flex;
+    flex-flow: row wrap;
+    margin-top: 8px;
+}
+.escr-tag-field-group .escr-tag {
+    margin-right: 7px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    height: 25px;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-tag-field-group input[type="checkbox"]:checked + .escr-tag {
+    border: 1px solid var(--text1);
+}
+.escr-tag-field-group input[type="checkbox"]:focus + .escr-tag {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+
+/* Checkmark for checked box */
+.escr-tag-field-group input[type="checkbox"]:not(:checked) + .escr-tag svg {
+    display: none;
+}
+.escr-tag-field-group input[type="checkbox"]:checked + .escr-tag svg {
+    margin-left: 5px;
+    display: inline;
+}
