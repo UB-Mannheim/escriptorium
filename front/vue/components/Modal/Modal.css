@@ -16,6 +16,20 @@
     filter: drop-shadow(2px 4px 4px var(--drop-shadow))
         drop-shadow(-1px -1px 2px var(--drop-shadow));
 }
+.escr-modal .escr-modal-header {
+    margin: 0.5rem 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-modal .escr-modal-header h2 {
+    margin: 0;
+}
+.escr-modal .escr-modal-header svg {
+    width: 14px;
+    height: 14px;
+}
+
 .escr-modal .escr-form-field {
     display: block;
     margin-top: 24px;

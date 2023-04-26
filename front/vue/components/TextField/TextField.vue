@@ -11,15 +11,21 @@
             :placeholder="placeholder"
             :aria-label="label"
             :value="value"
+            :disabled="disabled"
             @input="onInput"
         >
     </label>
 </template>
 <script>
 import "./TextField.css";
+import "../Common/Form.css";
 export default {
     name: "EscrTextField",
     props: {
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
         /**
          * Event handler for the text input
          */

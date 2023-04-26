@@ -1,10 +1,22 @@
 <template>
     <EscrModal class="escr-edit-project">
         <template #modal-content>
-            <h2>{{ newProject ? "Create New" : "Edit" }} Project</h2>
+            <div class="escr-modal-header">
+                <h2>{{ newProject ? "Create New" : "Edit" }} Project</h2>
+                <EscrButton
+                    color="text"
+                    :on-click="onCancel"
+                    size="small"
+                >
+                    <template #button-icon>
+                        <XIcon />
+                    </template>
+                </EscrButton>
+            </div>
             <TextField
                 label="Name"
                 placeholder="Enter project name"
+                :disabled="disabled"
                 :on-input="handleNameInput"
                 :value="name"
                 required
@@ -12,6 +24,7 @@
             <TextField
                 label="Link to Project Guidelines"
                 placeholder="https://"
+                :disabled="disabled"
                 :on-input="handleGuidelinesInput"
                 :value="guidelines"
             />
@@ -49,6 +62,7 @@ import EscrModal from "../Modal/Modal.vue";
 import TagsField from "../TagsField/TagsField.vue";
 import TextField from "../TextField/TextField.vue";
 import "./EditProjectModal.css";
+import XIcon from "../Icons/XIcon/XIcon.vue";
 
 export default {
     name: "EscrEditProjectModal",
@@ -57,6 +71,7 @@ export default {
         EscrModal,
         TagsField,
         TextField,
+        XIcon,
     },
     props: {
         /**
