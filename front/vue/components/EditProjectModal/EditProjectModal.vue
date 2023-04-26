@@ -31,7 +31,7 @@
             <TagsField
                 label="Tags"
                 :disabled="disabled"
-                :on-change="handleTagsInput"
+                :on-change="handleTagsFieldInput"
                 :on-change-tag-name="handleTagNameInput"
                 :on-create-tag="onCreateTag"
                 :tag-name="tagName"
@@ -119,19 +119,31 @@ export default {
     },
     computed: {
         ...mapState({
-            guidelines: (state) => state.editProject.guidelines,
-            name: (state) => state.editProject.name,
-            selectedTags: (state) => state.editProject.tags,
-            tagName: (state) => state.editProject.tagName,
+            guidelines: (state) => state.forms.editProject.guidelines,
+            name: (state) => state.forms.editProject.name,
+            selectedTags: (state) => state.forms.editProject.tags,
+            tagName: (state) => state.forms.editProject.tagName,
         }),
     },
     methods: {
-        ...mapActions("editProject", [
-            "handleGuidelinesInput",
-            "handleNameInput",
-            "handleTagNameInput",
+        ...mapActions("forms", [
+            "handleTextInput",
             "handleTagsInput",
-        ])
+        ]),
+        handleTagsFieldInput({ checked, tag }) {
+            this.handleTagsInput({ checked, tag, form: "editProject" });
+        },
+        handleNameInput(e) {
+            this.handleTextInput({ form: "editProject", field: "name", value: e.target.value});
+        },
+        handleGuidelinesInput(e) {
+            this.handleTextInput(
+                { form: "editProject", field: "guidelines", value: e.target.value}
+            );
+        },
+        handleTagNameInput(e) {
+            this.handleTextInput({ form: "editProject", field: "tagName", value: e.target.value});
+        },
     },
 };
 </script>

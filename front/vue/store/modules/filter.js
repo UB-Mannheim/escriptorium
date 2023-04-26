@@ -65,7 +65,6 @@ const mutations = {
     addFilter: (state, filter) => {
         const filters = state.filters.filter((f) => f.type !== filter.type);
         filters.push(filter);
-        console.log(filter);
         state.filters = filters;
     },
     /**

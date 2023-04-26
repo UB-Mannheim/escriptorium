@@ -70,9 +70,9 @@ const actions = {
         commit("setLoading", true);
         try {
             const { data } = await createProject({
-                name: rootState?.editProject?.name,
-                tags: rootState?.editProject?.tags,
-                guidelines: rootState?.editProject?.guidelines,
+                name: rootState?.forms?.editProject?.name,
+                tags: rootState?.forms?.editProject?.tags,
+                guidelines: rootState?.forms?.editProject?.guidelines,
             });
             if (data) {
                 // show toast alert on success
@@ -102,7 +102,7 @@ const actions = {
         commit("setLoading", true);
         try {
             const { data } = await createProjectTag({
-                name: rootState?.editProject?.tagName,
+                name: rootState?.forms?.editProject?.tagName,
                 // TODO: Allow users to select this color.
                 color:
                     tagVariants[Math.floor(Math.random() * tagVariants.length)],
@@ -113,8 +113,16 @@ const actions = {
                 tags.push({ ...data, variant: tagColorToVariant(data.color) });
                 commit("setTags", tags);
                 // select the new tag and reset the tag name add/search field
-                commit("editProject/selectTag", data, { root: true });
-                commit("editProject/setTagName", "", { root: true });
+                commit(
+                    "forms/selectTag",
+                    { form: "editProject", tag: data },
+                    { root: true },
+                );
+                commit(
+                    "forms/setFieldValue",
+                    { form: "editProject", field: "tagName", value: "" },
+                    { root: true },
+                );
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create tag");
@@ -177,10 +185,13 @@ const actions = {
             filters: rootState?.filter?.filters,
         });
         if (data?.results) {
-            commit("setProjects", data.results.map((result) => ({
-                ...result,
-                tags: { tags: result.tags },
-            })));
+            commit(
+                "setProjects",
+                data.results.map((result) => ({
+                    ...result,
+                    tags: { tags: result.tags },
+                })),
+            );
             commit("setNextPage", data.next);
         } else {
             commit("setLoading", false);
@@ -214,7 +225,7 @@ const actions = {
      * Open the "create project" modal and clear the new project name, if there is one.
      */
     openCreateModal({ commit }) {
-        commit({ type: "editProject/clearForm" }, { root: true });
+        commit({ type: "forms/clearEditProjectForm" }, { root: true });
         commit("setCreateModalOpen", true);
     },
     /**

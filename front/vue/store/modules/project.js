@@ -86,11 +86,19 @@ const actions = {
      */
     closeEditModal({ commit, state }) {
         commit("setEditModalOpen", false);
-        commit("editProject/setName", state.name, { root: true });
-        commit("editProject/setGuidelines", state.guidelines, {
-            root: true,
-        });
-        commit("editProject/setTags", state.tags, { root: true });
+        commit(
+            "forms/setFormState",
+            {
+                form: "editProject",
+                formState: {
+                    name: state.name,
+                    guidelines: state.guidelines,
+                    tags: state.tags,
+                    tagName: "",
+                },
+            },
+            { root: true },
+        );
     },
     /**
      * Close the "delete project" modal.
@@ -155,11 +163,19 @@ const actions = {
             );
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
-            commit("editProject/setName", data.name, { root: true });
-            commit("editProject/setGuidelines", data.guidelines, {
-                root: true,
-            });
-            commit("editProject/setTags", data.tags, { root: true });
+            commit(
+                "forms/setFormState",
+                {
+                    form: "editProject",
+                    formState: {
+                        name: data.name,
+                        guidelines: data.guidelines,
+                        tags: data.tags,
+                        tagName: "",
+                    },
+                },
+                { root: true },
+            );
         } else {
             throw new Error("Unable to retrieve project");
         }
@@ -256,7 +272,7 @@ const actions = {
     },
     async saveProject({ commit, dispatch, state, rootState }) {
         commit("setLoading", true);
-        const { name, guidelines, tags } = rootState.editProject;
+        const { name, guidelines, tags } = rootState.forms.editProject;
         try {
             const { data } = await editProject(state.id, {
                 name,

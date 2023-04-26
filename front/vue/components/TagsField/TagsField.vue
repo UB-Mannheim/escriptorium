@@ -40,9 +40,9 @@ export default {
     },
     computed: {
         filteredTags() {
-            return this.tags.filter(
-                (tag) => tag.name.toLowerCase().includes(this.tagName.toLowerCase())
-            );
+            return this.tags?.filter(
+                (tag) => tag.name?.toLowerCase().includes(this.tagName?.toLowerCase())
+            ) || [];
         },
     },
     methods: {
