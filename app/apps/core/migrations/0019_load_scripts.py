@@ -62,6 +62,7 @@ def make_scripts(apps, schema_editor):
         {'iso_code': 'Hanb', 'name': 'Han with Bopomofo (alias for Han + Bopomofo)', 'name_fr': 'han avec bopomofo (alias pour han + bopomofo)'},
         {'iso_code': 'Hang', 'name': 'Hangul (Hangŭl, Hangeul)', 'name_fr': 'hangûl (hangŭl, hangeul)'},
         {'iso_code': 'Hani', 'name': 'Han (Hanzi, Kanji, Hanja)', 'name_fr': 'idéogrammes han (sinogrammes)'},
+        {'iso_code': 'Hani', 'name': 'Han (Hanzi, Kanji, Hanja) vertical', 'name_fr': 'idéogrammes han (sinogrammes)', 'text_direction': 'ttb'},
         {'iso_code': 'Hano', 'name': 'Hanunoo (Hanunóo)', 'name_fr': 'hanounóo'},
         {'iso_code': 'Hans', 'name': 'Han (Simplified variant)', 'name_fr': 'idéogrammes han (variante simplifiée)'},
         {'iso_code': 'Hant', 'name': 'Han (Traditional variant)', 'name_fr': 'idéogrammes han (variante traditionnelle)'},
