@@ -93,7 +93,7 @@ const actions = {
                 formState: {
                     name: state.name,
                     guidelines: state.guidelines,
-                    tags: state.tags,
+                    tags: state.tags.map((tag) => tag.pk),
                     tagName: "",
                 },
             },

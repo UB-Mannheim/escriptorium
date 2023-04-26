@@ -17,7 +17,7 @@
                 label="Name"
                 placeholder="Enter project name"
                 :disabled="disabled"
-                :on-input="handleNameInput"
+                :on-input="(e) => handleTextFieldInput('name', e.target.value)"
                 :value="name"
                 required
             />
@@ -25,14 +25,14 @@
                 label="Link to Project Guidelines"
                 placeholder="https://"
                 :disabled="disabled"
-                :on-input="handleGuidelinesInput"
+                :on-input="(e) => handleTextFieldInput('guidelines', e.target.value)"
                 :value="guidelines"
             />
             <TagsField
                 label="Tags"
                 :disabled="disabled"
                 :on-change="handleTagsFieldInput"
-                :on-change-tag-name="handleTagNameInput"
+                :on-change-tag-name="(e) => handleTextFieldInput('tagName', e.target.value)"
                 :on-create-tag="onCreateTag"
                 :tag-name="tagName"
                 :tags="tags"
@@ -133,16 +133,8 @@ export default {
         handleTagsFieldInput({ checked, tag }) {
             this.handleTagsInput({ checked, tag, form: "editProject" });
         },
-        handleNameInput(e) {
-            this.handleTextInput({ form: "editProject", field: "name", value: e.target.value});
-        },
-        handleGuidelinesInput(e) {
-            this.handleTextInput(
-                { form: "editProject", field: "guidelines", value: e.target.value}
-            );
-        },
-        handleTagNameInput(e) {
-            this.handleTextInput({ form: "editProject", field: "tagName", value: e.target.value});
+        handleTextFieldInput(field, value) {
+            this.handleTextInput({ form: "editProject", field, value });
         },
     },
 };
