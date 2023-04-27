@@ -51,12 +51,13 @@
     --secondary-focus: rgb(23 97 181 / 50%);
     --secondary-hover: rgb(23 97 181 / 20%);
     /* light mode backgrounds */
-    --background: #F0F0F0;
+    --background: #f0f0f0;
     --background1: #ffffff;
     --background2: #e9e9e9;
     --background2-dark: #cacaca;
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
+    --background3: #dfdfdf;
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
@@ -76,6 +77,7 @@
     --background2-dark: #565a5b;
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
+    --background3: #383b3c;
     /* dark mode text */
     --text1: #ffffff;
     --text2: #a7a8a9;

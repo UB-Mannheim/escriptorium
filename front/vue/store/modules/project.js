@@ -138,6 +138,7 @@ const actions = {
                 throw new Error("Unable to retrieve projects");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -291,6 +292,7 @@ const actions = {
                 throw new Error("Unable to retrieve project");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -309,6 +311,7 @@ const actions = {
         try {
             await dispatch("fetchProjectDocuments");
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
     },

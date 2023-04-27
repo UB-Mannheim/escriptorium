@@ -82,6 +82,14 @@ export const blockTypes = [
     { pk: 4, name: "Illustration", count: 4 },
     { pk: 5, name: "Footnote", count: 4 },
 ];
+export const blockTypesRandomized = [
+    ...blockTypes.map((b) => ({
+        ...b,
+        count: Math.ceil(Math.random() * 30),
+    })),
+    { pk: 0, name: "Extra type", count: 33 },
+];
+
 export const lineTypes = [
     { pk: 1, name: "Correction", count: 13 },
     { pk: 2, name: "Main", count: 101 },
@@ -172,6 +180,11 @@ export const characters = [
     { char: ")", frequency: 8 },
 ];
 
+export const charactersRandomized = characters.map((c) => ({
+    ...c,
+    frequency: Math.ceil(Math.random() * 2000),
+}));
+
 // mock groups for all stories with groups
 export const groups = [
     { pk: 1, name: "Group Name 1" },
@@ -192,4 +205,21 @@ export const users = [
     },
     { pk: 5, first_name: "Nathanial", last_name: "Olson", username: "natols" },
     { pk: 6, username: "someuser" },
+];
+
+export const transcriptions = [
+    {
+        pk: 1,
+        name: "manual",
+        archived: false,
+        avg_confidence: null,
+        lines_count: 2000,
+    },
+    {
+        pk: 2,
+        name: "Example transcription level",
+        archived: false,
+        avg_confidence: 0.8235823,
+        lines_count: 20,
+    },
 ];

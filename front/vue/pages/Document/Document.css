@@ -1,0 +1,175 @@
+.escr-document-dashboard .escr-page {
+    padding-right: 0;
+}
+.escr-document-dashboard .escr-breadcrumbs {
+    position: relative;
+    max-height: 19px;
+}
+.escr-document-dashboard .escr-grid-container {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 56% 44%;
+}
+.escr-document-dashboard .escr-doc-left-grid,
+.escr-document-dashboard .escr-doc-right-grid {
+    display: grid;
+    gap: 24px;
+    align-items: stretch;
+    height: calc(100vh - 75px);
+    max-height: calc(100vh - 75px);
+}
+
+/**
+ * left side grid
+ */
+.escr-document-dashboard .escr-doc-left-grid {
+    grid-template-columns: 2fr 3fr;
+    grid-template-rows: 0.5fr 0.7fr 0.7fr 1fr 1fr;
+    padding-bottom: 24px;
+    align-items: stretch;
+    grid-template-areas:
+        "header header"
+        "tags tasks"
+        "tags tasks"
+        "images images"
+        "images images";
+}
+/* header and metadata */
+.escr-document-dashboard .escr-document-details {
+    grid-area: header;
+}
+.escr-document-dashboard .escr-document-metadata {
+    color: var(--text2);
+    font-weight: 400;
+    font-size: 14px;
+}
+/* tags */
+.escr-document-dashboard .escr-document-tags {
+    grid-area: tags;
+    padding-right: 0;
+}
+.escr-document-dashboard .escr-document-tags .escr-card-header {
+    padding-right: 1rem;
+}
+.escr-document-dashboard .escr-tag-group-wrapped {
+    overflow-y: auto;
+    max-height: calc(100% - 32px);
+    padding-right: 1rem;
+}
+.escr-document-dashboard .escr-tag-group-wrapped .escr-tag {
+    margin-bottom: 8px;
+}
+/* tasks */
+.escr-document-dashboard .escr-document-tasks {
+    grid-area: tasks;
+}
+/* images list */
+.escr-document-dashboard .escr-document-images {
+    grid-area: images;
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    padding-bottom: 0;
+}
+.escr-document-dashboard .escr-document-images .table-container {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+
+/**
+ * right side grid
+ */
+.escr-document-dashboard .escr-doc-right-grid {
+    background-color: var(--background3);
+    margin-top: -51px;
+    padding: 51px 48px 24px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 10% 116px 12% 11% auto 11% auto;
+    grid-template-areas:
+        "header header header"
+        "images lines characters"
+        "status status status"
+        "chars chars chars"
+        "chars chars chars"
+        "ontology ontology ontology"
+        "ontology ontology ontology";
+}
+/* right side header and select element */
+.escr-document-dashboard .doc-stats-header {
+    grid-area: header;
+}
+.escr-document-dashboard .doc-stats-header h2 {
+    margin-top: 0;
+}
+.escr-document-dashboard .doc-stats-header div {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.escr-document-dashboard .doc-stats-header div h3 {
+    font-weight: 700;
+    margin: 0;
+}
+/* common stat styles */
+.escr-document-dashboard .escr-stat {
+    font-size: 24px;
+    font-weight: 400;
+}
+.escr-document-dashboard [class$=-stats] .escr-card-header {
+    margin-bottom: 14px;
+}
+.escr-document-dashboard [class$=-stats] h2 {
+    line-height: 20px;
+    max-width: 70%;
+}
+/* total images */
+.escr-document-dashboard .images-stats {
+    grid-area: images;
+}
+/* total lines */
+.escr-document-dashboard .lines-stats {
+    grid-area: lines;
+}
+/* total chars */
+.escr-document-dashboard .chars-stats {
+    grid-area: characters;
+}
+/* transcription status */
+.escr-document-dashboard .transcription-status {
+    grid-area: status;
+}
+.escr-document-dashboard .transcription-status {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+}
+.transcription-status dl {
+    display: flex;
+    flex-flow: column-reverse;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0;
+}
+.transcription-status dl dt {
+    color: var(--text2);
+    font-weight: 400;
+    font-size: 12px;
+    margin: 0;
+}
+.transcription-status dl dd {
+    font-weight: 400;
+    font-size: 32px;
+    margin: 0;
+}
+/* characters table */
+.escr-document-dashboard .escr-document-characters {
+    grid-area: chars;
+}
+/* ontology table */
+.escr-document-dashboard .escr-document-ontology {
+    grid-area: ontology;
+}
