@@ -1,10 +1,9 @@
 import axios from "axios";
 import {
+    editProject,
+    retrieveDocumentsList,
     retrieveProject,
-    retrieveProjectCharacters,
-    retrieveProjectDocuments,
     retrieveProjectDocumentTags,
-    retrieveProjectOntology,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 
@@ -36,10 +35,13 @@ const state = () => ({
      * }]
      */
     documentTags: [],
+    deleteModalOpen: false,
+    deleteDocumentModalOpen: false,
     editModalOpen: false,
     guidelines: "",
     id: null,
     loading: false,
+    menuOpen: false,
     name: "",
     nextPage: "",
     /**
@@ -80,21 +82,43 @@ const getters = {};
 
 const actions = {
     /**
-     * Change the ontology table category and fetch the selected ontology.
+     * Close the "edit project" modal and clear out state.
      */
-    async changeOntologyCategory({ commit, dispatch }, category) {
-        commit("ontology/setCategory", category, { root: true });
-        try {
-            await dispatch("fetchProjectOntology");
-        } catch (error) {
-            dispatch("alerts/addError", error, { root: true });
-        }
+    closeEditModal({ commit, state }) {
+        commit("setEditModalOpen", false);
+        commit(
+            "forms/setFormState",
+            {
+                form: "editProject",
+                formState: {
+                    name: state.name,
+                    guidelines: state.guidelines,
+                    tags: state.tags.map((tag) => tag.pk),
+                    tagName: "",
+                },
+            },
+            { root: true },
+        );
     },
     /**
-     * Close the "edit project" modal.
+     * Close the "delete project" modal.
      */
-    closeEditModal({ commit }) {
-        commit("setEditModalOpen", false);
+    closeDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", false);
+    },
+    /**
+     * Close the "edit/delete project" menu.
+     */
+    closeProjectMenu({ commit }) {
+        commit("setMenuOpen", false);
+    },
+    /**
+     * Create a new tag with the data from state.
+     */
+    async createNewProjectTag({ commit, dispatch }, color) {
+        commit("setLoading", true);
+        await dispatch("projects/createNewProjectTag", color, { root: true },);
+        commit("setLoading", false);
     },
     /**
      * Fetch the next page of documents, retrieved from fetchProjects, and add
@@ -121,39 +145,37 @@ const actions = {
     /**
      * Fetch the current project.
      */
-    async fetchProject({ commit, state }) {
+    async fetchProject({ commit, dispatch, state, rootState }) {
         commit("setLoading", true);
+        await dispatch(
+            { type: "projects/fetchAllProjectTags" },
+            { root: true },
+        );
         const { data } = await retrieveProject(state.id);
         if (data) {
             commit("setName", data.name);
             commit(
                 "setTags",
-                data.tags?.map((tag) => ({
-                    ...tag,
-                    variant: tagColorToVariant(tag.color),
-                })),
+                rootState.projects.tags.filter((t) => data.tags.includes(t.pk)),
             );
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
+            commit(
+                "forms/setFormState",
+                {
+                    form: "editProject",
+                    formState: {
+                        name: data.name,
+                        guidelines: data.guidelines,
+                        tags: data.tags,
+                        tagColor: "",
+                        tagName: "",
+                    },
+                },
+                { root: true },
+            );
         } else {
             throw new Error("Unable to retrieve project");
-        }
-        commit("setLoading", false);
-    },
-    /**
-     * Fetch the current project.
-     */
-    async fetchProjectCharacters({ commit, state, rootState }) {
-        commit("setLoading", true);
-        const { data } = await retrieveProjectCharacters({
-            projectId: state.id,
-            field: rootState.characters.sortState?.field,
-            direction: rootState.characters.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("characters/setCharacters", data.results, { root: true });
-        } else {
-            throw new Error("Unable to retrieve characters");
         }
         commit("setLoading", false);
     },
@@ -162,7 +184,7 @@ const actions = {
      */
     async fetchProjectDocuments({ commit, state, rootState }) {
         commit("setLoading", true);
-        const { data } = await retrieveProjectDocuments({
+        const { data } = await retrieveDocumentsList({
             projectId: state.id,
             filters: rootState?.filter?.filters,
             ...state.sortState,
@@ -203,39 +225,11 @@ const actions = {
         commit("setLoading", false);
     },
     /**
-     * Fetch the current project ontology, given this project's id from state, plus
-     * ontology category and sorting params from ontology Vuex store.
-     */
-    async fetchProjectOntology({ commit, state, rootState }) {
-        commit("setLoading", true);
-        const { data } = await retrieveProjectOntology({
-            projectId: state.id,
-            category: rootState.ontology.category,
-            sortField: rootState.ontology.sortState?.field,
-            sortDirection: rootState.ontology.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("ontology/setOntology", data.results, { root: true });
-            commit("setLoading", false);
-        } else {
-            commit("setLoading", false);
-            throw new Error(
-                `Unable to retrieve ${rootState.ontology.category} ontology`,
-            );
-        }
-    },
-    /**
      * Navigate to the images page for this document.
      */
     navigateToImages(_, item) {
         // TODO: implement this; not yet designed
         console.log(item);
-    },
-    /**
-     * Open the "project characters" modal.
-     */
-    openCharactersModal({ commit }) {
-        commit("characters/setModalOpen", true, { root: true });
     },
     /**
      * Open the "create document" modal.
@@ -244,9 +238,15 @@ const actions = {
         // TODO: implement this; not yet designed
     },
     /**
+     * Open the "delete project" modal.
+     */
+    openDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", true);
+    },
+    /**
      * Open the "delete document" modal.
      */
-    openDeleteModal(_, item) {
+    openDeleteDocumentModal(_, item) {
         // TODO: implement this; not yet designed
         console.log(item);
     },
@@ -257,10 +257,10 @@ const actions = {
         commit("setEditModalOpen", true);
     },
     /**
-     * Open the "project ontology" modal.
+     * Open the "edit/delete project" menu.
      */
-    openOntologyModal({ commit }) {
-        commit("ontology/setModalOpen", true, { root: true });
+    openProjectMenu({ commit }) {
+        commit("setMenuOpen", true);
     },
     /**
      * Open the "add group or user" modal.
@@ -268,56 +268,38 @@ const actions = {
     openShareModal({ commit }) {
         commit("setShareModalOpen", true);
     },
-    /**
-     * Event handler for sorting the project ontology table; sets the sort state on the
-     * ontology Vuex store, then makes a call to fetch project ontology based on current state.
-     */
-    async sortOntology({ commit, dispatch }, { field, direction }) {
-        commit("ontology/setSortState", { field, direction }, { root: true });
+    async saveProject({ commit, dispatch, state, rootState }) {
+        commit("setLoading", true);
+        const { name, guidelines, tags } = rootState.forms.editProject;
         try {
-            await dispatch("fetchProjectOntology");
+            const { data } = await editProject(state.id, {
+                name,
+                guidelines,
+                tags,
+            });
+            if (data) {
+                commit("setName", name);
+                commit("setGuidelines", guidelines);
+                commit(
+                    "setTags",
+                    rootState.projects.tags.filter((t) =>
+                        data?.tags?.includes(t.pk),
+                    ),
+                );
+                commit("setEditModalOpen", false);
+            } else {
+                throw new Error("Unable to retrieve project");
+            }
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
+        commit("setLoading", false);
     },
-    /**
-     * Set the default transcription level on one of the documents in the list, then
-     * fetch the documents list again with updated data.
-     *
-     * TODO: figure out implementation.
-     */
-    // async setDocDefaultTranscription({ commit, dispatch }, documentPk, level) {
-    //     commit("setLoading", true);
-    //     try {
-    //         await updateDocument(documentPk, {
-    //             default_transcription_level: level,
-    //         });
-    //         await dispatch("fetchProjectDocuments");
-    //     } catch (error) {
-    //         commit("setLoading", false);
-    //         dispatch("alerts/addError", error, { root: true });
-    //     }
-    // },
     /**
      * Set the ID of the project on the state (happens immediately on page load).
      */
     setId({ commit }, id) {
         commit("setId", id);
-    },
-    /**
-     * Change the characters sort field and perform another fetch for characters.
-     */
-    async sortCharacters({ commit, dispatch }, field) {
-        let direction = 1;
-        if (field === "frequency") {
-            direction = -1;
-        }
-        commit("characters/setSortState", { field, direction }, { root: true });
-        try {
-            await dispatch("fetchProjectCharacters");
-        } catch (error) {
-            dispatch("alerts/addError", error, { root: true });
-        }
     },
     /**
      * Change the documents list sort and perform another fetch for documents.
@@ -336,6 +318,12 @@ const mutations = {
     addDocument(state, document) {
         state.documents.push(document);
     },
+    setDeleteModalOpen(state, open) {
+        state.deleteModalOpen = open;
+    },
+    setDeleteDocumentModalOpen(state, open) {
+        state.deleteDocumentModalOpen = open;
+    },
     setDocuments(state, documents) {
         state.documents = documents;
     },
@@ -345,11 +333,17 @@ const mutations = {
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
     },
+    setGuidelines(state, guidelines) {
+        state.guidelines = guidelines;
+    },
     setId(state, id) {
         state.id = id;
     },
     setLoading(state, loading) {
         state.loading = loading;
+    },
+    setMenuOpen(state, open) {
+        state.menuOpen = open;
     },
     setName(state, name) {
         state.name = name;

@@ -7,6 +7,10 @@
     padding: 8px;
     margin: 8px 0;
 }
+.escr-text-field input:disabled {
+    color: var(--text3);
+    pointer-events: none;
+}
 .escr-text-field span {
     font-weight: 600;
 }

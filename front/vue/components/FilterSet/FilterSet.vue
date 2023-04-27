@@ -18,7 +18,7 @@
             :tags="tags"
             :selected="tagFilterSelectedTags"
             :operator="tagFilterOperator"
-            :without-tag-selected="withoutTagSelected"
+            :untagged-selected="untaggedSelected"
             :on-apply="toggleClosedAndFilter"
             :on-cancel="() => toggleOpen(undefined)"
         />
@@ -72,7 +72,7 @@ export default {
             "tagFilter",
             "tagFilterOperator",
             "tagFilterSelectedTags",
-            "withoutTagSelected",
+            "untaggedSelected",
         ]),
     },
     methods: {
@@ -82,9 +82,6 @@ export default {
         clearFilter(type) {
             this.openFilter = undefined;
             this.removeFilter(type);
-            if (type === "tags") {
-                this.removeFilter("withoutTag");
-            }
             this.onFilter();
         },
         /**
@@ -101,10 +98,15 @@ export default {
          * Result of clicking "Submit" on a filter dialog: close the dialog
          * and apply the filter
          */
-        toggleClosedAndFilter({ operator, tags, withoutTag }) {
+        toggleClosedAndFilter({ operator, tags, untagged }) {
             this.openFilter = undefined;
-            this.addFilter({ type: "tags", value: tags, operator });
-            this.addFilter({ type: "withoutTag", value: withoutTag });
+            this.addFilter({
+                type: "tags",
+                value: untagged
+                    ? Array.from(new Set([...tags, "none"]))
+                    : tags.filter((t) => t !== "none"),
+                operator,
+            });
             this.onFilter();
         },
         ...mapActions("filter", [

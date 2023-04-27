@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getFilterParams, getSortParam, ontologyMap } from "./util";
+import { getFilterParams, getSortParam } from "./util";
 
 // retrieve projects list
 export const retrieveProjects = async ({ field, direction, filters }) => {
@@ -20,65 +20,25 @@ export const retrieveProject = async (projectId) =>
 export const retrieveAllProjectTags = async () =>
     await axios.get("/tags/project");
 
-// create a project by providing a name
-export const createProject = async (name) =>
-    await axios.post("/projects", { params: { name } });
+export const createProjectTag = async ({ name, color }) =>
+    await axios.post("/tags/project", {
+        params: { name, color },
+    });
+
+// create a project by providing a name (and optional other metadata)
+export const createProject = async ({ name, guidelines, tags }) =>
+    await axios.post("/projects", {
+        params: { name, guidelines, tags },
+    });
+
+export const editProject = async (projectId, { name, guidelines, tags }) =>
+    await axios.put(`/projects/${projectId}`, {
+        params: { name, guidelines, tags },
+    });
 
 // delete a project by ID
 export const deleteProject = async (projectId) =>
     await axios.delete(`/projects/${projectId}`);
-
-// retrieve types list for a specific project
-export const retrieveProjectOntology = async ({
-    projectId,
-    category,
-    sortField,
-    sortDirection,
-}) => {
-    let params = {};
-    if (sortField && sortDirection) {
-        params.ordering = getSortParam({
-            field: sortField,
-            direction: sortDirection,
-        });
-    }
-    return await axios.get(
-        `/projects/${projectId}/types/${ontologyMap[category]}`,
-        { params },
-    );
-};
-
-// retrieve characters, sorted by character or frequency, in all transcriptions in the project
-export const retrieveProjectCharacters = async ({
-    projectId,
-    field,
-    direction,
-}) => {
-    let params = {};
-    if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
-    }
-    return await axios.get(`/projects/${projectId}/characters`, { params });
-};
-
-// retrieve a list of documents by project
-// TODO: Is this the right place for this, or would it be better to filter docs by
-// project pk?
-export const retrieveProjectDocuments = async ({
-    projectId,
-    field,
-    direction,
-    filters,
-}) => {
-    let params = {};
-    if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
-    }
-    if (filters) {
-        params = { ...params, ...getFilterParams({ filters }) };
-    }
-    return await axios.get(`/projects/${projectId}/documents`, { params });
-};
 
 // retrieve a list of unique tags on all documents in a project
 export const retrieveProjectDocumentTags = async (project_id) =>

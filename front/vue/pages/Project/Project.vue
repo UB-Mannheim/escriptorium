@@ -12,25 +12,30 @@
                     <div class="escr-card-header">
                         <h1>{{ projectName }}</h1>
                         <div class="escr-card-actions">
-                            <EscrButton
-                                label="Edit"
-                                size="small"
-                                :on-click="openEditModal"
-                                :disabled="loading || editModalOpen"
-                            >
-                                <template #button-icon>
-                                    <PencilIcon />
-                                </template>
-                            </EscrButton>
+                            <VerticalMenu
+                                :is-open="projectMenuOpen"
+                                :close-menu="closeProjectMenu"
+                                :open-menu="openProjectMenu"
+                                :disabled="loading"
+                                :items="projectMenuItems"
+                            />
+                            <EditProjectModal
+                                v-if="editModalOpen"
+                                :disabled="loading"
+                                :on-cancel="closeEditModal"
+                                :on-create-tag="createNewProjectTag"
+                                :on-save="saveProject"
+                                :tags="allProjectTags"
+                            />
                         </div>
                     </div>
-                    <EscrButton
+                    <a
                         v-if="guidelines"
-                        :on-click="openGuidelinesModal"
-                        label="Project Guidelines"
-                        size="small"
-                        color="text"
-                    />
+                        :href="guidelines"
+                        class="escr-project-guidelines"
+                    >
+                        Project Guidelines
+                    </a>
                     <EscrTags
                         v-if="tags"
                         :tags="tags"
@@ -83,7 +88,7 @@
                                     v-tooltip.bottom="'Delete'"
                                     size="small"
                                     color="text"
-                                    :on-click="() => openDeleteModal(item)"
+                                    :on-click="() => openDeleteDocumentModal(item)"
                                     :disabled="loading"
                                     aria-label="Delete document"
                                 >
@@ -116,65 +121,50 @@
                         />
                     </div>
                 </div>
-                <!-- Ontology section -->
-                <OntologyCard
-                    class="escr-project-ontology"
-                    context="Project"
-                    :items="ontology"
-                    :loading="loading"
-                    :on-view="() => openOntologyModal"
-                    :on-select-category="changeOntologyCategory"
-                    :on-sort="sortOntology"
-                    :selected-category="ontologyCategory"
-                />
-                <!-- Characters section -->
-                <CharactersCard
-                    class="escr-project-characters"
-                    :loading="loading"
-                    :on-view="() => openCharactersModal"
-                    :on-sort-characters="sortCharacters"
-                    :sort="charactersSort?.field"
-                    :items="characters"
-                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
-import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
+import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
-import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
+import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
+import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Project.css";
 
 export default {
     name: "EscrProjectDashboard",
     components: {
-        CharactersCard,
+        EditProjectModal,
         EscrButton,
         EscrPage,
         EscrTable,
         EscrTags,
         FilterSet,
         ImagesIcon,
-        OntologyCard,
+        // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
         PlusIcon,
         // eslint-disable-next-line vue/no-unused-components
+        SearchPanel,
+        // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TrashIcon,
+        VerticalMenu,
     },
     props: {
         /**
@@ -187,8 +177,7 @@ export default {
     },
     computed: {
         ...mapState({
-            characters: (state) => state.characters.characters,
-            charactersSort: (state) => state.characters.sortState,
+            allProjectTags: (state) => state.projects.tags,
             createModalOpen: (state) => state.project.createModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
@@ -196,9 +185,9 @@ export default {
             guidelines: (state) => state.project.guidelines,
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
-            ontology: (state) => state.ontology.ontology,
-            ontologyCategory: (state) => state.ontology.category,
             projectName: (state) => state.project.name,
+            projectId: (state) => state.project.id,
+            projectMenuOpen: (state) => state.project.menuOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
@@ -233,20 +222,55 @@ export default {
             ];
         },
         /**
+         * Menu items for the vertical menu in the top right corner of the dashboard.
+         */
+        projectMenuItems() {
+            return [
+                {
+                    icon: PencilIcon,
+                    key: "edit",
+                    label: "Edit",
+                    onClick: this.openEditModal,
+                },
+                {
+                    icon: TrashIcon,
+                    // Add the "new-section" class if/when there is more than one item above this
+                    // class: "new-section",
+                    key: "delete",
+                    label: "Delete Project",
+                    onClick: this.openDeleteModal,
+                }
+            ]
+        },
+        /**
          * Sidebar quick actions for the project dashboard.
          */
         sidebarActions() {
-            return [{
-                data: {
-                    users: this.sharedWithUsers,
-                    groups: this.sharedWithGroups,
-                    openShareModal: this.openShareModal,
+            return [
+                {
+                    data: {
+                        disabled: this.loading,
+                        projectId: this.projectId,
+                        searchScope: "Project",
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Project",
+                    panel: SearchPanel,
                 },
-                icon: PeopleIcon,
-                key: "share",
-                label: "Groups & Users",
-                panel: SharePanel,
-            }];
+                {
+                    data: {
+                        disabled: this.loading,
+                        users: this.sharedWithUsers,
+                        groups: this.sharedWithGroups,
+                        openShareModal: this.openShareModal,
+                    },
+                    icon: PeopleIcon,
+                    key: "share",
+                    label: "Groups & Users",
+                    panel: SharePanel,
+                },
+            ];
         },
     },
     /**
@@ -258,33 +282,32 @@ export default {
             await this.fetchProject();
             await this.fetchProjectDocuments();
             await this.fetchProjectDocumentTags();
-            await this.fetchProjectOntology();
-            await this.fetchProjectCharacters();
         } catch (error) {
             this.addError(error);
         }
     },
     methods: {
         ...mapActions("project", [
-            "changeOntologyCategory",
+            "closeEditModal",
+            "closeProjectMenu",
+            "createNewProjectTag",
             "fetchNextPage",
             "fetchProject",
-            "fetchProjectCharacters",
             "fetchProjectDocuments",
             "fetchProjectDocumentTags",
-            "fetchProjectOntology",
             "navigateToImages",
-            "openCharactersModal",
             "openCreateModal",
             "openDeleteModal",
+            "openDeleteDocumentModal",
             "openEditModal",
-            "openOntologyModal",
+            "openProjectMenu",
             "openShareModal",
+            "searchProject",
+            "saveProject",
             "setId",
-            "sortCharacters",
             "sortDocuments",
-            "sortOntology",
         ]),
+        ...mapActions("projects", ["fetchAllProjectTags"]),
         ...mapActions("alerts", ["addError"]),
     },
 }

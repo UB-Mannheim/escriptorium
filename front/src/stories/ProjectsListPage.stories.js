@@ -1,26 +1,18 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import EscrNewProjectModal from "../../vue/pages/ProjectsList/NewProjectModal.vue";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
 import { filteredByTag, sorted, tags } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
-    component: EscrNewProjectModal,
+    component: ProjectsList,
     argTypes: {
         onClick: { action: "clicked" },
         onInput: { action: "input" },
         onCancel: { action: "cancel" },
     },
 };
-
-const Template = (args, { argTypes }) => ({
-    props: Object.keys(argTypes),
-    components: { EscrNewProjectModal },
-    template: "<EscrNewProjectModal v-bind=\"$props\" />",
-});
-export const NewProjectModal = Template.bind({});
 
 // tags and projects for list view
 const projects = [
@@ -53,6 +45,9 @@ const projects = [
     },
 ];
 
+const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
+const newTagPks = [newPk];
+
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { ProjectsList },
@@ -69,12 +64,12 @@ const PageTemplate = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
-                const { ordering, tags, tags_op } = config.params;
+                const { ordering, tags } = config.params;
                 return [
                     200,
                     {
                         results: sorted(
-                            filteredByTag(projects, tags, tags_op),
+                            filteredByTag(projects, tags),
                             {
                                 ordering
                             },
@@ -88,6 +83,19 @@ const PageTemplate = (args, { argTypes }) => ({
         });
         // mock tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
+        // mock create tag
+        mock.onPost(projectsTagsEndpoint).reply(async function(config) {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new tag with increment pk
+                const { params } = JSON.parse(config.data);
+                const { name, color } = params;
+                const newTag = Math.max(...newTagPks) + 1;
+                newTagPks.push(newTag);
+                return [200, { name, color, pk: newTag }];
+            }
+        });
         // mock create project
         mock.onPost(projectsEndpoint).reply(async function() {
             // wait for 200-400 ms to mimic server-side loading

@@ -1,0 +1,6 @@
+.escr-edit-project .escr-modal {
+    width: 400px;
+    position: absolute;
+    top: 15%;
+    left: calc(50% - 216px);
+}

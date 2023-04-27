@@ -42,10 +42,10 @@ const getters = {
         return getters.tagFilter?.value;
     },
     /**
-     * Whether or not "without tag" is checked in the current tag filter.
+     * Whether or not "untagged" is checked in the current tag filter.
      */
-    withoutTagSelected: (state) => {
-        return state.filters.find((filter) => filter.type === "withoutTag")?.value;
+    untaggedSelected: (state) => {
+        return state.filters.find((filter) => filter.type === "tags")?.value?.includes("none");
     },
 };
 

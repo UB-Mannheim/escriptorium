@@ -30,6 +30,7 @@
         </div>
         <EscrButton
             :on-click="data?.openShareModal || (() => {})"
+            :disabled="data?.disabled"
             label="Add Group or User"
             size="small"
             color="outline-primary"
@@ -50,8 +51,8 @@ export default {
     components: { EscrButton, EscrPlusIcon },
     props: {
         /**
-         * Data for the share panel, an object containing users, groups, and a callback
-         * function openShareModal that should handle clicking "Add group or user".
+         * Data for the share panel, an object containing users, groups, disabled boolean,
+         * and a callback function openShareModal that should handle clicking "Add group or user".
          */
         data: {
             type: Object,

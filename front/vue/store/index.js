@@ -4,6 +4,7 @@ import FloatingVue from "floating-vue";
 import alerts from "./modules/alerts";
 import characters from "./modules/characters";
 import filter from "./modules/filter";
+import forms from "./modules/forms";
 import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
@@ -17,6 +18,9 @@ Vue.use(FloatingVue, {
         "tags-dropdown": {
             $extend: "dropdown",
         },
+        "vertical-menu": {
+            $extend: "menu",
+        },
     },
 });
 
@@ -26,6 +30,7 @@ export default new Store({
         alerts,
         characters,
         filter,
+        forms,
         ontology,
         project,
         projects,

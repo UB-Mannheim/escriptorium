@@ -1,0 +1,9 @@
+.escr-form-field span.escr-required {
+    color: red;
+}
+.escr-form-field .escr-help-text {
+    font-weight: 400;
+    font-size: 12px;
+    font-family: 'Noto Sans';
+    font-style: normal;
+}

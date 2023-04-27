@@ -19,8 +19,13 @@ export const getSortParam = ({ field, direction }) => {
 export const getFilterParams = ({ filters }) => {
     const params = {};
     filters.forEach((filter) => {
-        params[filter.type] = filter.value;
-        if (filter.operator) params[`${filter.type}_op`] = filter.operator;
+        if (filter.operator === "or" && Array.isArray(filter.value)) {
+            // "or" should be constructed as "?tags=1|2|none" for api
+            params[filter.type] = filter.value.join("|");
+        } else {
+            // "and" should be constructed as "?tags=1&tags=2" for api, so pass array
+            params[filter.type] = filter.value;
+        }
     });
     return params;
 };
