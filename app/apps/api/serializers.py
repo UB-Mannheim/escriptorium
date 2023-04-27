@@ -328,6 +328,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
+    tags = DocumentTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
@@ -460,7 +461,8 @@ class PartSerializer(serializers.ModelSerializer):
             'transcription_progress',
             'source',
             'max_avg_confidence',
-            'comments'
+            'comments',
+            'updated_at',
         )
 
     def validate(self, data):
@@ -636,7 +638,7 @@ class OcrModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = OcrModel
         fields = ('pk', 'name', 'file', 'file_size', 'job',
-                  'owner', 'training', 'versions')
+                  'owner', 'training', 'versions', 'documents')
 
     def create(self, data):
         # If quotas are enforced, assert that the user still has free disk storage

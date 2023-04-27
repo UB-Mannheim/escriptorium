@@ -900,6 +900,8 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
 class OcrModelViewSet(ModelViewSet):
     queryset = OcrModel.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['documents']
     serializer_class = OcrModelSerializer
 
     def get_queryset(self):
