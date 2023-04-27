@@ -452,6 +452,7 @@ class PartSerializer(serializers.ModelSerializer):
             'typology',
             'image',
             'image_file_size',
+            'original_filename',
             'bw_image',
             'workflow',
             'order',

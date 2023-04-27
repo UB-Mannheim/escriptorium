@@ -599,3 +599,66 @@ class ExportersTestCase(CoreFactoryTestCase):
                 archive.read(self.part2_xml_export_filename),
                 open(f"{SAMPLES_DIR}/tei_xml_export_full_part2.xml", "rb").read(),
             )
+
+    def test_export_orphan_lines(self, timezone_mock):
+        line = Line.objects.create(
+            baseline=[[200, 45], [500, 45]],
+            mask=[[200, 30], [500, 30], [500, 60], [200, 60]],
+            document_part=self.part,
+            block=None,
+            external_id="eSc_line_orphan",
+        )
+
+        LineTranscription.objects.create(
+            transcription=self.params[3],
+            line=line,
+            content='test orphan line',
+        )
+
+        exporter = TextExporter(
+            [self.part.pk],
+            ['Orphan'],
+            False,  # include_images
+            *self.params,
+        )
+        exporter.render()
+
+        self.assertEqual(
+            open(exporter.filepath).read(),
+            open(f"{SAMPLES_DIR}/text_export_orphan_lines.txt").read(),
+        )
+
+    def test_export_undefined_regions(self, timezone_mock):
+        block = Block.objects.create(
+            box=[[190, 25], [510, 65]],
+            document_part=self.part,
+            typology=None,
+            external_id="eSc_block_undefined"
+        )
+
+        line = Line.objects.create(
+            baseline=[[200, 45], [500, 45]],
+            mask=[[200, 30], [500, 30], [500, 60], [200, 60]],
+            document_part=self.part,
+            block=block,
+            external_id="eSc_line_undefine_region"
+        )
+
+        LineTranscription.objects.create(
+            transcription=self.params[3],
+            line=line,
+            content='test undefined region'
+        )
+
+        exporter = TextExporter(
+            [self.part.pk],
+            ['Undefined'],
+            False,  # include_images
+            *self.params,
+        )
+        exporter.render()
+
+        self.assertEqual(
+            open(exporter.filepath).read(),
+            open(f"{SAMPLES_DIR}/text_export_undefined_region.txt").read(),
+        )

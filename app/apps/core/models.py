@@ -166,6 +166,10 @@ class AnnotationComponent(models.Model):
     )
     document = models.ForeignKey("core.Document", on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ['name', 'document']
+        ordering = ["name"]
+
     def __str__(self):
         return self.name
 
