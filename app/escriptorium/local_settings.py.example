@@ -61,7 +61,7 @@ DEBUG_TOOLBAR_PANELS = [
 # Uncomment the following line to enable Elasticsearch
 # DISABLE_ELASTICSEARCH = False
 
-# Set this variable to point to your ES instance (defaults to 'localhost:9200')
+# Set this variable to point to your ES instance (defaults to 'http://localhost:9200')
 # ELASTICSEARCH_URL = <es_url>
 
 # Set this variable to define the common ES index (defaults to 'es-transcriptions')

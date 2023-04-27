@@ -19,7 +19,7 @@
     <th>{% trans "Trained from" %}</th>
     <th>{% trans "Training Status" %}</th>
     <th>{% trans "Accuracy" %}</th>
-    <th>{% trans "Errors" %}</th>
+    {# <th>{% trans "Errors" %}</th> #}
     <th>{% trans "Right" %}</th>
     <th>{# buttons #}</th>
   </tr>
@@ -55,7 +55,7 @@
       </form>
     </td>
     <td id="accuracy-{{model.pk}}" data-value="{{ model.training_accuracy }}" title="{% trans "Accuracy" %}">{% if model.accuracy_percent %}{{ model.accuracy_percent|floatformat:1 }}%{% else %}-{% endif %}</td>
-    <td title="{% trans "Number of errors/Total number of characters" %}">{% if model.training_total %}{{ model.training_errors }}/{{model.training_total}}{% else %}-{% endif %}</td>
+    {% comment %}<td title="{% trans "Number of errors/Total number of characters" %}">{% if model.training_total %}{{ model.training_errors }}/{{model.training_total}}{% else %}-{% endif %}</td>{% endcomment %}
     <td>
       {% if model.owner == request.user %}
       <span class="badge badge-pill badge-danger">Owner</span>
@@ -123,7 +123,7 @@
     <td></td>
     <td></td>
     <td title="{% trans "Accuracy" %}">{{ version.accuracy_percent|floatformat:1 }}%</td>
-    <td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>
+    {% comment %}<td title="{% trans "Number of errors/Total number of characters" %}">{{ version.training_errors }}/{{version.training_total}}</td>{% endcomment %}
     <td>
       {% if version.owner == request.user %}
       <span class="badge badge-pill badge-danger">Owner</span>
