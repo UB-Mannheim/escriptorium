@@ -48,3 +48,26 @@
     margin-left: 5px;
     display: inline;
 }
+.escr-tag-colors {
+    padding: 0;
+    margin: 1rem;
+    gap: 4px;
+    display: grid;
+    list-style: none;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.escr-tag-colors button {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-tag-colors button:hover {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.1);
+}
+.escr-tag-colors button:active {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.2);
+}

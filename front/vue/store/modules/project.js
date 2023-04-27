@@ -115,12 +115,9 @@ const actions = {
     /**
      * Create a new tag with the data from state.
      */
-    async createNewProjectTag({ commit, dispatch }) {
+    async createNewProjectTag({ commit, dispatch }, color) {
         commit("setLoading", true);
-        await dispatch(
-            { type: "projects/createNewProjectTag" },
-            { root: true },
-        );
+        await dispatch("projects/createNewProjectTag", color, { root: true },);
         commit("setLoading", false);
     },
     /**
@@ -171,6 +168,7 @@ const actions = {
                         name: data.name,
                         guidelines: data.guidelines,
                         tags: data.tags,
+                        tagColor: "",
                         tagName: "",
                     },
                 },

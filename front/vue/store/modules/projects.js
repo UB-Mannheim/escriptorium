@@ -6,7 +6,7 @@ import {
     retrieveAllProjectTags,
     retrieveProjects,
 } from "../../../src/api";
-import { tagColorToVariant, tagVariants } from "../util/color";
+import { tagColorToVariant } from "../util/color";
 
 // initial state
 const state = () => ({
@@ -98,19 +98,18 @@ const actions = {
     /**
      * Create a new tag with the data from state, reload list of tags.
      */
-    async createNewProjectTag({ commit, dispatch, rootState, state }) {
+    async createNewProjectTag({ commit, dispatch, rootState, state }, color) {
         commit("setLoading", true);
         try {
             const { data } = await createProjectTag({
                 name: rootState?.forms?.editProject?.tagName,
                 // TODO: Allow users to select this color.
-                color:
-                    tagVariants[Math.floor(Math.random() * tagVariants.length)],
+                color,
             });
             if (data?.pk) {
                 // set the new data on the state
                 const tags = [...state.tags];
-                tags.push({ ...data, variant: tagColorToVariant(data.color) });
+                tags.push({ ...data, variant: tagColorToVariant(color) });
                 commit("setTags", tags);
                 // select the new tag and reset the tag name add/search field
                 commit(
@@ -224,8 +223,8 @@ const actions = {
     /**
      * Open the "create project" modal and clear the new project name, if there is one.
      */
-    openCreateModal({ commit }) {
-        commit({ type: "forms/clearEditProjectForm" }, { root: true });
+    openCreateModal({ commit, dispatch }) {
+        dispatch({ type: "forms/clearEditProjectForm" }, { root: true });
         commit("setCreateModalOpen", true);
     },
     /**

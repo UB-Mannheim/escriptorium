@@ -1,14 +1,20 @@
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
 import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
 import EscrButton from "../Button/Button.vue";
+import PlusIcon from "../Icons/PlusIcon/PlusIcon.vue";
 import Tags from "../Tags/Tags.vue";
 import TextField from "../TextField/TextField.vue";
+
 import "./TagsField.css";
-import PlusIcon from "../Icons/PlusIcon/PlusIcon.vue";
+import { tagVariants } from "../../store/util/color";
 
 export default {
     name: "EscrTagsField",
     props: {
+        /**
+         * Boolean to disable clicking tags or buttons.
+         */
         disabled: {
             type: Boolean,
             required: true,
@@ -52,6 +58,44 @@ export default {
          */
         tagClasses: Tags.methods.tagClasses,
         /*
+         * Helper method to render the color picker
+         */
+        renderTagColorPicker(h) {
+            return [
+                h(
+                    VDropdown,
+                    {
+                        scopedSlots: {
+                            popper: ({ hide }) => h(
+                                "div",
+                                { class: "escr-tag-colors" },
+                                [...Array(12).keys()].map((n) =>
+                                    h(
+                                        "button",
+                                        {
+                                            class: `escr-tag--variant-${n+1}`,
+                                            domProps: {
+                                                disabled: this.disabled,
+                                            },
+                                            on: {
+                                                click: () => {
+                                                    this.onCreateTag(tagVariants[n]);
+                                                    hide();
+                                                }
+                                            },
+                                        },
+                                    )
+                                ),
+                            ),
+                        }
+                    },
+                    [
+                        this.renderAddTagButton(h),
+                    ],
+                ),
+            ]
+        },
+        /*
          * Helper method to render an individual tag option
          */
         renderTagOption(h, tag) {
@@ -64,6 +108,7 @@ export default {
                         },
                         domProps: {
                             id: `field-tag-${tag.pk}`,
+                            disabled: this.disabled,
                             name: `field-tag-${tag.pk}`,
                             type: "checkbox",
                             // ensure initial selections are checked on mount
@@ -136,7 +181,8 @@ export default {
                                 disabled: this.disabled || !this.tagName || this.tags.some(
                                     (tag) => tag.name === this.tagName
                                 ),
-                                onClick: this.onCreateTag,
+                                // color picker will bind to this button, so its onClick can be noop
+                                onClick: () => {},
                                 size: "small",
                             },
                             scopedSlots: {
@@ -159,6 +205,7 @@ export default {
                     TextField,
                     {
                         props: {
+                            disabled: this.disabled,
                             label: "Add/search tags",
                             labelVisible: false,
                             onInput: this.onChangeTagName,
@@ -177,7 +224,7 @@ export default {
                     ),
                 ),
                 this.renderFilteredTagNotice(h),
-                this.renderAddTagButton(h),
+                this.renderTagColorPicker(h),
             ],
         );
     },

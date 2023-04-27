@@ -1,29 +1,17 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import EscrNewProjectModal from "../../vue/components/EditProjectModal/EditProjectModal.vue";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
 import { filteredByTag, sorted, tags } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
-    component: EscrNewProjectModal,
+    component: ProjectsList,
     argTypes: {
         onClick: { action: "clicked" },
         onInput: { action: "input" },
         onCancel: { action: "cancel" },
     },
-};
-
-const Template = (args, { argTypes }) => ({
-    props: Object.keys(argTypes),
-    components: { EscrNewProjectModal },
-    template: "<EscrNewProjectModal v-bind=\"$props\" />",
-});
-export const NewProjectModal = Template.bind({});
-NewProjectModal.args = {
-    newProject: true,
-    tags,
 };
 
 // tags and projects for list view
