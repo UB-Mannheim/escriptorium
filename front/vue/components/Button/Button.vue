@@ -1,6 +1,6 @@
 <template>
     <button
-        type="button"
+        :type="type || 'button'"
         :class="classes"
         :disabled="disabled"
         @click="onClick"
@@ -78,7 +78,14 @@ export default {
         disabled: {
             type: Boolean,
             default: false,
-        }
+        },
+        /**
+         * Type attribute, used in forms
+         */
+        type: {
+            type: String,
+            default: "button",
+        },
     },
 
     computed: {

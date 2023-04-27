@@ -137,6 +137,8 @@ import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
+import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
+import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
@@ -157,6 +159,8 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
         PlusIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        SearchPanel,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TrashIcon,
@@ -182,6 +186,7 @@ export default {
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
             projectName: (state) => state.project.name,
+            projectId: (state) => state.project.id,
             projectMenuOpen: (state) => state.project.menuOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
@@ -241,17 +246,31 @@ export default {
          * Sidebar quick actions for the project dashboard.
          */
         sidebarActions() {
-            return [{
-                data: {
-                    users: this.sharedWithUsers,
-                    groups: this.sharedWithGroups,
-                    openShareModal: this.openShareModal,
+            return [
+                {
+                    data: {
+                        disabled: this.loading,
+                        projectId: this.projectId,
+                        searchScope: "Project",
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Project",
+                    panel: SearchPanel,
                 },
-                icon: PeopleIcon,
-                key: "share",
-                label: "Groups & Users",
-                panel: SharePanel,
-            }];
+                {
+                    data: {
+                        disabled: this.loading,
+                        users: this.sharedWithUsers,
+                        groups: this.sharedWithGroups,
+                        openShareModal: this.openShareModal,
+                    },
+                    icon: PeopleIcon,
+                    key: "share",
+                    label: "Groups & Users",
+                    panel: SharePanel,
+                },
+            ];
         },
     },
     /**
@@ -283,6 +302,7 @@ export default {
             "openEditModal",
             "openProjectMenu",
             "openShareModal",
+            "searchProject",
             "saveProject",
             "setId",
             "sortDocuments",

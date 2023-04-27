@@ -12,8 +12,15 @@
             :aria-label="label"
             :value="value"
             :disabled="disabled"
+            :name="name"
             @input="onInput"
         >
+        <span
+            v-if="helpText"
+            class="escr-help-text"
+        >
+            {{ helpText }}
+        </span>
     </label>
 </template>
 <script>
@@ -41,6 +48,13 @@ export default {
             default: "",
         },
         /**
+         * Help text (optional)
+         */
+        helpText: {
+            type: String,
+            default: "",
+        },
+        /**
          * Label text
          */
         label: {
@@ -54,6 +68,13 @@ export default {
         labelVisible: {
             type: Boolean,
             default: true,
+        },
+        /**
+         * Optional input name, which is necessary if using in an HTML form.
+         */
+        name: {
+            type: String,
+            default: "",
         },
         /**
          * Whether or not this field is required in the form.
