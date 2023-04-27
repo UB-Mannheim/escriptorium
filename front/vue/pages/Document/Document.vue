@@ -200,6 +200,8 @@ import EscrTable from "../../components/Table/Table.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
+import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
+import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import "./Document.css";
 
@@ -217,6 +219,10 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
         PencilIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        SearchIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        SearchPanel,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
     },
@@ -297,6 +303,19 @@ export default {
         sidebarActions() {
             return [{
                 data: {
+                    disabled: this.loading?.document,
+                    searchScope: "Document",
+                    projectId: this.projectId,
+                    documentId: this.id,
+                },
+                icon: SearchIcon,
+                key: "search",
+                label: "Search Document",
+                panel: SearchPanel,
+            },
+            {
+                data: {
+                    disabled: this.loading?.document,
                     users: this.sharedWithUsers,
                     groups: this.sharedWithGroups,
                     openShareModal: this.openShareModal,

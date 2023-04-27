@@ -50,7 +50,7 @@ import EscrButton from "../Button/Button.vue";
 import "./SearchPanel.css";
 
 export default {
-    name: "EscrSharePanel",
+    name: "EscrSearchPanel",
     components: { EscrButton },
     props: {
         /**
