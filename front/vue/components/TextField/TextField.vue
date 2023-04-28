@@ -1,6 +1,9 @@
 <template>
     <label class="escr-text-field escr-form-field">
-        <span v-if="labelVisible">
+        <span
+            v-if="labelVisible"
+            class="escr-field-label"
+        >
             {{ label }}<span
                 v-if="required"
                 class="escr-required"
