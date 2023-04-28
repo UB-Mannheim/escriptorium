@@ -43,3 +43,8 @@ export const deleteProject = async (projectId) =>
 // retrieve a list of unique tags on all documents in a project
 export const retrieveProjectDocumentTags = async (project_id) =>
     await axios.get(`/projects/${project_id}/tags`);
+
+export const createProjectDocumentTag = async ({ name, color, projectId }) =>
+    await axios.post(`/projects/${projectId}/tags`, {
+        params: { name, color },
+    });

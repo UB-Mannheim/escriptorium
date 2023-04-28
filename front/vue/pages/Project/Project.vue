@@ -49,17 +49,27 @@
                             <FilterSet
                                 :disabled="loading"
                                 :tags="documentTags"
-                                :on-filter="async () => await fetchProjectDocuments()"
+                                :on-filter="onFilterDocuments"
                             />
                             <EscrButton
                                 label="Create New"
-                                :on-click="openCreateModal"
-                                :disabled="loading || createModalOpen"
+                                :on-click="openCreateDocumentModal"
+                                :disabled="loading || createDocumentModalOpen"
                             >
                                 <template #button-icon>
                                     <PlusIcon />
                                 </template>
                             </EscrButton>
+                            <EditDocumentModal
+                                v-if="createDocumentModalOpen"
+                                :disabled="loading"
+                                :new-document="true"
+                                :on-cancel="closeCreateDocumentModal"
+                                :on-create-tag="createNewDocumentTag"
+                                :on-save="createNewDocument"
+                                :scripts="scripts"
+                                :tags="documentTags"
+                            />
                         </div>
                     </div>
                     <div class="table-container">
@@ -127,6 +137,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrPage from "../Page/Page.vue";
@@ -147,6 +158,7 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
+        EditDocumentModal,
         EditProjectModal,
         EscrButton,
         EscrPage,
@@ -178,7 +190,7 @@ export default {
     computed: {
         ...mapState({
             allProjectTags: (state) => state.projects.tags,
-            createModalOpen: (state) => state.project.createModalOpen,
+            createDocumentModalOpen: (state) => state.project.createDocumentModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
             editModalOpen: (state) => state.project.editModalOpen,
@@ -188,6 +200,7 @@ export default {
             projectName: (state) => state.project.name,
             projectId: (state) => state.project.id,
             projectMenuOpen: (state) => state.project.menuOpen,
+            scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
@@ -277,26 +290,28 @@ export default {
      * On load, fetch basic details about the project.
      */
     async created() {
+        this.setLoading(true);
         this.setId(this.id);
         try {
             await this.fetchProject();
-            await this.fetchProjectDocuments();
-            await this.fetchProjectDocumentTags();
         } catch (error) {
             this.addError(error);
         }
+        this.setLoading(false);
     },
     methods: {
         ...mapActions("project", [
+            "closeCreateDocumentModal",
             "closeEditModal",
             "closeProjectMenu",
+            "createNewDocumentTag",
+            "createNewDocument",
             "createNewProjectTag",
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
-            "fetchProjectDocumentTags",
             "navigateToImages",
-            "openCreateModal",
+            "openCreateDocumentModal",
             "openDeleteModal",
             "openDeleteDocumentModal",
             "openEditModal",
@@ -305,10 +320,20 @@ export default {
             "searchProject",
             "saveProject",
             "setId",
+            "setLoading",
             "sortDocuments",
         ]),
         ...mapActions("projects", ["fetchAllProjectTags"]),
         ...mapActions("alerts", ["addError"]),
+        async onFilterDocuments() {
+            this.setLoading(true);
+            try {
+                await this.fetchProjectDocuments();
+            } catch (error) {
+                this.addError(error);
+            }
+            this.setLoading(false);
+        },
     },
 }
 </script>

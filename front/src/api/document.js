@@ -20,3 +20,23 @@ export const retrieveDocumentsList = async ({
     }
     return await axios.get("/documents", { params });
 };
+
+// create a new document
+export const createDocument = async ({
+    name,
+    project,
+    mainScript,
+    readDirection,
+    linePosition,
+    tags,
+}) =>
+    await axios.post("/documents", {
+        params: {
+            name,
+            project,
+            main_script: mainScript,
+            read_direction: readDirection,
+            line_offset: linePosition,
+            tags,
+        },
+    });
