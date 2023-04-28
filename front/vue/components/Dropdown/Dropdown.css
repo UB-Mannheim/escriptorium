@@ -21,6 +21,9 @@
 .escr-dropdown select:disabled {
     cursor: default;
 }
+.escr-dropdown select[invalid=true] {
+    color: var(--text2);
+}
 .escr-dropdown .escr-chervon-down-icon {
     position: absolute;
     top: 14px;
