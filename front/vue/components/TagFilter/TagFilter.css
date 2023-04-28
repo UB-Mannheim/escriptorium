@@ -11,6 +11,9 @@
     display: flex;
     flex-flow: row nowrap;
 }
+.escr-tag-filter {
+    padding-right: 16px;
+}
 
 /* Tags list with checkboxes */
 .escr-tag-filter-group {
