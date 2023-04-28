@@ -147,6 +147,10 @@ class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100
 
 
+class ExtraLargeResultsSetPagination(PageNumberPagination):
+    page_size = 500
+
+
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -160,6 +164,7 @@ class UserViewSet(ModelViewSet):
 
 
 class ScriptViewSet(ReadOnlyModelViewSet):
+    pagination_class = ExtraLargeResultsSetPagination
     queryset = Script.objects.all()
     serializer_class = ScriptSerializer
 
