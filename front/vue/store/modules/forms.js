@@ -1,14 +1,7 @@
-const initialEditProjectState = {
-    guidelines: "",
-    name: "",
-    tags: [],
-    tagName: "",
-};
+import initialFormState from "../util/initialFormState";
 
 const state = () => ({
-    editProject: {
-        ...initialEditProjectState,
-    },
+    ...initialFormState,
 });
 
 const getters = {};
@@ -21,12 +14,12 @@ const actions = {
         commit("setFieldValue", { form, field, value });
     },
     /**
-     * Clear editProject form, resetting all fields to empty string and tags to empty array
+     * Clear form, resetting all fields to empty string and tags to empty array
      */
-    clearEditProjectForm({ commit }) {
+    clearForm({ commit }, form) {
         commit("setFormState", {
-            form: "editProject",
-            formState: { ...initialEditProjectState },
+            form,
+            formState: { ...initialFormState[form] },
         });
     },
     /**
