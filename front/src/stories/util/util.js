@@ -1,4 +1,4 @@
-import { ManyTags } from "./Tags.stories";
+import { ManyTags } from "../Tags.stories";
 
 // sort utility functions
 const alphabeticSort = (key) => (a, b) => {
