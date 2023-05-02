@@ -36,12 +36,12 @@
     /* z-index layers */
     --segmented-button-focus-z: 1;
     --taggroup-overflow-z: 2;
-    --modal-backdrop-z: 3;
-    --modal-z: 4;
-    --toast-z: 5;
-    --sidebar-backdrop-z: 6;
-    --sidebar-container-z: 7;
-    --sidebar-z: 8;
+    --sidebar-backdrop-z: 3;
+    --sidebar-container-z: 4;
+    --sidebar-z: 5;
+    --modal-backdrop-z: 6;
+    --modal-z: 7;
+    --toast-z: 8;
 }
 .light-mode {
     /* button colors */

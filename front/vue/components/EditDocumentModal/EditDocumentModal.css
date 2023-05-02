@@ -7,6 +7,3 @@
 .escr-edit-document .escr-modal-content {
     max-height: calc(100vh - 170px);
 }
-.escr-edit-document .escr-modal .escr-dropdown select {
-    width: 100%;
-}

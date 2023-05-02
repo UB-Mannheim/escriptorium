@@ -15,4 +15,8 @@ export default {
         tags: [],
         tagName: "",
     },
+    share: {
+        group: "",
+        user: "",
+    },
 };

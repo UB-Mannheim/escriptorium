@@ -103,6 +103,18 @@ const documents = [
     },
 ];
 
+const userGroups = [
+    ...groups,
+    {
+        pk: 4,
+        name: "Example group",
+    },
+    {
+        pk: 5,
+        name: "Group 2",
+    },
+];
+
 const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
 const newTagPks = [newPk];
 const newDocumentTagPks = [newPk];
@@ -126,6 +138,8 @@ const Template = (args, { argTypes }) => ({
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         const projectsTagsEndpoint = "/tags/project";
         const scriptsEndpoint = "/scripts";
+        const groupsEndpoint = "/groups";
+        const shareEndpoint = new RegExp(/\/projects\/\d+\/share$/);
         // mock project page
         mock.onGet(projectEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -260,8 +274,30 @@ const Template = (args, { argTypes }) => ({
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
-            return [200, { results: scripts.map((script) => ({ name: script })) }];
-        })
+            return [
+                200,
+                { results: scripts.map((script) => ({ name: script })) },
+            ];
+        });
+        // mock groups
+        mock.onGet(groupsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: userGroups }];
+        });
+        // mock share
+        mock.onPost(shareEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock return success
+                // TODO: Mock actual API output here
+                return [200];
+            }
+            return [400];
+        });
     },
 });
 

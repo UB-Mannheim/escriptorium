@@ -17,6 +17,7 @@
     color: var(--text1);
     position: relative;
     max-width: 100%;
+    width: 100%;
 }
 .escr-dropdown select:disabled {
     cursor: default;

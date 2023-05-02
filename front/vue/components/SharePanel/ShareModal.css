@@ -1,0 +1,10 @@
+.escr-share-modal .escr-modal {
+    width: 400px;
+    position: fixed;
+    top: 25%;
+    left: calc(50% - 216px);
+}
+.escr-share-modal .escr-text-field,
+.escr-share-modal input[type="text"] {
+    margin: 0;
+}

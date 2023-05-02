@@ -14,7 +14,6 @@
             :disabled="disabled"
             :options="options"
             :on-change="onChange"
-            :value="value"
         />
         <span
             v-if="helpText"

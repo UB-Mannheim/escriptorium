@@ -12,6 +12,7 @@ from api.views import (
     DocumentTagViewSet,
     DocumentTranscriptionViewSet,
     DocumentViewSet,
+    GroupViewSet,
     ImageAnnotationViewSet,
     LineTranscriptionViewSet,
     LineTypeViewSet,
@@ -33,6 +34,7 @@ router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'models', OcrModelViewSet)
 router.register(r'users', UserViewSet)
+router.register(r'groups', GroupViewSet)
 router.register(r'tags/project', ProjectTagViewSet, basename='project-tag')
 router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)

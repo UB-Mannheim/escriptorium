@@ -7,6 +7,7 @@ import {
     retrieveProject,
     retrieveProjectDocumentTags,
     retrieveScripts,
+    shareProject,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 
@@ -128,6 +129,12 @@ const actions = {
         commit("setMenuOpen", false);
     },
     /**
+     * Close the "add group or user" modal.
+     */
+    closeShareModal({ commit }) {
+        commit("setShareModalOpen", false);
+    },
+    /**
      * Create a new document with the data from state.
      */
     async createNewDocument({ commit, dispatch, state, rootState }) {
@@ -176,7 +183,10 @@ const actions = {
             if (data?.pk) {
                 // set the new data on the state
                 const documentTags = [...state.documentTags];
-                documentTags.push({ ...data, variant: tagColorToVariant(color) });
+                documentTags.push({
+                    ...data,
+                    variant: tagColorToVariant(color),
+                });
                 commit("setDocumentTags", documentTags);
                 // select the new tag and reset the tag name add/search field
                 commit(
@@ -202,7 +212,7 @@ const actions = {
      */
     async createNewProjectTag({ commit, dispatch }, color) {
         commit("setLoading", true);
-        await dispatch("projects/createNewProjectTag", color, { root: true },);
+        await dispatch("projects/createNewProjectTag", color, { root: true });
         commit("setLoading", false);
     },
     /**
@@ -315,7 +325,10 @@ const actions = {
     async fetchScripts({ commit }) {
         const { data } = await retrieveScripts();
         if (data?.results) {
-            commit("setScripts", data.results.map((script) => script.name));
+            commit(
+                "setScripts",
+                data.results.map((script) => script.name),
+            );
         } else {
             throw new Error("Unable to retrieve scripts");
         }
@@ -403,6 +416,25 @@ const actions = {
      */
     setLoading({ commit }, loading) {
         commit("setLoading", loading);
+    },
+    async share({ dispatch, rootState, state }) {
+        const { user, group } = rootState.forms.share;
+        try {
+            await shareProject({ projectId: state.id, user, group });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: `${user ? "User" : "Group"} added successfully`,
+                },
+                { root: true },
+            );
+            // TODO: Update users/groups on project
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        dispatch("closeShareModal");
     },
     /**
      * Change the documents list sort and perform another fetch for documents.

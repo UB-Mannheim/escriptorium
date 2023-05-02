@@ -131,6 +131,13 @@
                         />
                     </div>
                 </div>
+                <ShareModal
+                    v-if="shareModalOpen"
+                    :groups="groups"
+                    :disabled="loading"
+                    :on-cancel="closeShareModal"
+                    :on-submit="share"
+                />
             </div>
         </template>
     </EscrPage>
@@ -150,6 +157,7 @@ import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
@@ -173,6 +181,7 @@ export default {
         PlusIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TrashIcon,
@@ -194,6 +203,7 @@ export default {
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
             editModalOpen: (state) => state.project.editModalOpen,
+            groups: (state) => state.user.groups,
             guidelines: (state) => state.project.guidelines,
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
@@ -201,6 +211,7 @@ export default {
             projectId: (state) => state.project.id,
             projectMenuOpen: (state) => state.project.menuOpen,
             scripts: (state) => state.project.scripts,
+            shareModalOpen: (state) => state.project.shareModalOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
@@ -294,6 +305,7 @@ export default {
         this.setId(this.id);
         try {
             await this.fetchProject();
+            await this.fetchGroups();
         } catch (error) {
             this.addError(error);
         }
@@ -304,6 +316,7 @@ export default {
             "closeCreateDocumentModal",
             "closeEditModal",
             "closeProjectMenu",
+            "closeShareModal",
             "createNewDocumentTag",
             "createNewDocument",
             "createNewProjectTag",
@@ -321,9 +334,11 @@ export default {
             "saveProject",
             "setId",
             "setLoading",
+            "share",
             "sortDocuments",
         ]),
         ...mapActions("projects", ["fetchAllProjectTags"]),
+        ...mapActions("user", ["fetchGroups"]),
         ...mapActions("alerts", ["addError"]),
         async onFilterDocuments() {
             this.setLoading(true);

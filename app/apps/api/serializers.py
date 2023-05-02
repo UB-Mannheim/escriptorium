@@ -93,6 +93,15 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('date_joined', 'last_login')
 
 
+class DetailedGroupSerializer(serializers.ModelSerializer):
+    users = UserSerializer(many=True, read_only=True, source='user_set')
+    owner = serializers.ReadOnlyField(source='groupowner.owner.pk')
+
+    class Meta:
+        model = Group
+        fields = ('pk', 'name', 'users', 'owner')
+
+
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
