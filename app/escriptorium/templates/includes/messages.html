@@ -11,6 +11,17 @@
 <div id="alerts-container"></div>
 {% if messages %}
 <script>
-{% for message in messages %}Alert.add(null, "{{ message }}", "{{ message.tags|level_to_color }}");{% endfor %}
+  {% for message in messages %}
+    {% if message.extra_tags and "quotas" in message.extra_tags %}
+      Alert.add(null, "{{ message }}", "{{ message.level_tag|level_to_color }}", [{
+        src: "{{ message.extra_tags }}",
+        text: "Report",
+        cssClass: "a",
+        targetBlank: true
+      }]);
+    {% else %}
+      Alert.add(null, "{{ message }}", "{{ message.level_tag|level_to_color }}")
+    {% endif %}
+  {% endfor %}
 </script>
 {% endif %}
