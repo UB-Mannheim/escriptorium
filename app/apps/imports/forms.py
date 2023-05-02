@@ -8,6 +8,7 @@ from bootstrap.forms import BootstrapFormMixin
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext as _
 
 from core.forms import RegionTypesFormMixin
@@ -229,3 +230,12 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                               include_images=self.cleaned_data['include_images'],
                               user_pk=self.user.pk,
                               report_label=_('Export %(document_name)s') % {'document_name': self.document.name})
+
+
+class DocumentOntologyImportForm(BootstrapFormMixin, forms.Form):
+    file = forms.FileField(
+        required=True,
+        help_text=_("A file containing a document ontology in JSON format"),
+        widget=forms.FileInput(attrs={"accept": "application/json"}),
+        validators=[FileExtensionValidator(allowed_extensions=["json"])]
+    )
