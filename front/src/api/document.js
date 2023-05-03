@@ -85,3 +85,26 @@ export const retrieveDocumentParts = async ({
     }
     return await axios.get(`/documents/${documentId}/parts`, { params });
 };
+// create a new document
+export const createDocument = async ({
+    name,
+    project,
+    mainScript,
+    readDirection,
+    linePosition,
+    tags,
+}) =>
+    await axios.post("/documents", {
+        params: {
+            name,
+            project,
+            main_script: mainScript,
+            read_direction: readDirection,
+            line_offset: linePosition,
+            tags,
+        },
+    });
+
+// delete a document
+export const deleteDocument = async ({ documentId }) =>
+    await axios.delete(`/documents/${documentId}`);

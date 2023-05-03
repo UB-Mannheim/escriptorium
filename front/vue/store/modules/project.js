@@ -1,14 +1,21 @@
 import axios from "axios";
 import {
+    createDocument,
+    createProjectDocumentTag,
+    deleteDocument,
+    deleteProject,
     editProject,
     retrieveDocumentsList,
     retrieveProject,
     retrieveProjectDocumentTags,
+    retrieveScripts,
+    shareProject,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 
 // initial state
 const state = () => ({
+    createDocumentModalOpen: false,
     /**
      * documents: [{
      *     pk: Number,
@@ -35,6 +42,7 @@ const state = () => ({
      * }]
      */
     documentTags: [],
+    documentToDelete: null,
     deleteModalOpen: false,
     deleteDocumentModalOpen: false,
     editModalOpen: false,
@@ -45,6 +53,10 @@ const state = () => ({
     name: "",
     nextPage: "",
     /**
+     * scripts: Array<String>
+     */
+    scripts: [],
+    /**
      * sharedWithGroups: [{
      *     pk: Number,
      *     name: String,
@@ -54,6 +66,7 @@ const state = () => ({
     /**
      * sharedWithUsers: [{
      *     pk: Number,
+     *     email: String,
      *     first_name?: String,
      *     last_name?: String,
      *     username: String,
@@ -61,6 +74,7 @@ const state = () => ({
      */
     sharedWithUsers: [],
     shareModalOpen: false,
+    slug: "",
     /**
      * sortState: {
      *     direction: Number,
@@ -81,6 +95,12 @@ const state = () => ({
 const getters = {};
 
 const actions = {
+    /**
+     * Close the "create document" modal.
+     */
+    closeCreateDocumentModal({ commit }) {
+        commit("setCreateDocumentModalOpen", false);
+    },
     /**
      * Close the "edit project" modal and clear out state.
      */
@@ -107,17 +127,132 @@ const actions = {
         commit("setDeleteModalOpen", false);
     },
     /**
+     * Close the "delete document" modal.
+     */
+    closeDeleteDocumentModal({ commit }) {
+        commit("setDeleteDocumentModalOpen", false);
+    },
+    /**
      * Close the "edit/delete project" menu.
      */
     closeProjectMenu({ commit }) {
         commit("setMenuOpen", false);
     },
     /**
-     * Create a new tag with the data from state.
+     * Close the "add group or user" modal.
+     */
+    closeShareModal({ commit }) {
+        commit("setShareModalOpen", false);
+    },
+    /**
+     * Create a new document with the data from state.
+     */
+    async createNewDocument({ commit, dispatch, state, rootState }) {
+        commit("setLoading", true);
+        try {
+            const { data } = await createDocument({
+                name: rootState.forms?.editDocument?.name,
+                project: state.slug,
+                mainScript: rootState.forms?.editDocument?.mainScript,
+                readDirection: rootState.forms?.editDocument?.readDirection,
+                linePosition: rootState.forms?.editDocument?.linePosition,
+                tags: rootState.forms?.editDocument?.tags,
+            });
+            if (data) {
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: "Document created successfully",
+                    },
+                    { root: true },
+                );
+                // TODO: redirect to new document
+                commit("setCreateDocumentModalOpen", false);
+            } else {
+                commit("setLoading", false);
+                throw new Error("Unable to create document");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    /**
+     * Create a new document tag with the data from state.
+     */
+    async createNewDocumentTag({ commit, dispatch, state, rootState }, color) {
+        commit("setLoading", true);
+        try {
+            const { data } = await createProjectDocumentTag({
+                name: rootState?.forms?.editDocument?.tagName,
+                color,
+                projectId: state.id,
+            });
+            if (data?.pk) {
+                // set the new data on the state
+                const documentTags = [...state.documentTags];
+                documentTags.push({
+                    ...data,
+                    variant: tagColorToVariant(color),
+                });
+                commit("setDocumentTags", documentTags);
+                // select the new tag and reset the tag name add/search field
+                commit(
+                    "forms/selectTag",
+                    { form: "editDocument", tag: data },
+                    { root: true },
+                );
+                commit(
+                    "forms/setFieldValue",
+                    { form: "editDocument", field: "tagName", value: "" },
+                    { root: true },
+                );
+            } else {
+                throw new Error("Unable to create tag");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    /**
+     * Create a new project tag with the data from state.
      */
     async createNewProjectTag({ commit, dispatch }, color) {
         commit("setLoading", true);
-        await dispatch("projects/createNewProjectTag", color, { root: true },);
+        await dispatch("projects/createNewProjectTag", color, { root: true });
+        commit("setLoading", false);
+    },
+    async deleteDocument({ dispatch, commit, state }) {
+        commit("setLoading", true);
+        try {
+            await deleteDocument({ documentId: state?.documentToDelete?.pk });
+            commit("setDeleteDocumentModalOpen", false);
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Document deleted successfully",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    async deleteProject({ dispatch, commit, state }) {
+        commit("setLoading", true);
+        try {
+            await deleteProject(state.id);
+            commit("setDeleteModalOpen", false);
+            // TODO: redirect to projects list on delete
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
         commit("setLoading", false);
     },
     /**
@@ -147,7 +282,7 @@ const actions = {
      * Fetch the current project.
      */
     async fetchProject({ commit, dispatch, state, rootState }) {
-        commit("setLoading", true);
+        // fetch project tags first so we can use it in setTags
         await dispatch(
             { type: "projects/fetchAllProjectTags" },
             { root: true },
@@ -155,6 +290,7 @@ const actions = {
         const { data } = await retrieveProject(state.id);
         if (data) {
             commit("setName", data.name);
+            commit("setSlug", data.slug);
             commit(
                 "setTags",
                 rootState.projects.tags.filter((t) => data.tags.includes(t.pk)),
@@ -178,13 +314,15 @@ const actions = {
         } else {
             throw new Error("Unable to retrieve project");
         }
-        commit("setLoading", false);
+        // set off all the other fetches
+        await dispatch("fetchProjectDocuments");
+        await dispatch("fetchProjectDocumentTags");
+        await dispatch("fetchScripts");
     },
     /**
      * Fetch documents in the current project.
      */
     async fetchProjectDocuments({ commit, state, rootState }) {
-        commit("setLoading", true);
         const { data } = await retrieveDocumentsList({
             projectId: state.id,
             filters: rootState?.filter?.filters,
@@ -204,13 +342,11 @@ const actions = {
         } else {
             throw new Error("Unable to retrieve documents");
         }
-        commit("setLoading", false);
     },
     /**
      * Fetch all unique tags on documents in the current project.
      */
     async fetchProjectDocumentTags({ commit, state }) {
-        commit("setLoading", true);
         const { data } = await retrieveProjectDocumentTags(state.id);
         if (data?.results) {
             commit(
@@ -223,7 +359,20 @@ const actions = {
         } else {
             throw new Error("Unable to retrieve document tags");
         }
-        commit("setLoading", false);
+    },
+    /**
+     * Fetch all scripts from the database and set their names on the state.
+     */
+    async fetchScripts({ commit }) {
+        const { data } = await retrieveScripts();
+        if (data?.results) {
+            commit(
+                "setScripts",
+                data.results.map((script) => script.name),
+            );
+        } else {
+            throw new Error("Unable to retrieve scripts");
+        }
     },
     /**
      * Navigate to the images page for this document.
@@ -235,8 +384,9 @@ const actions = {
     /**
      * Open the "create document" modal.
      */
-    openCreateModal() {
-        // TODO: implement this; not yet designed
+    openCreateDocumentModal({ commit, dispatch }) {
+        dispatch("forms/clearForm", "editDocument", { root: true });
+        commit("setCreateDocumentModalOpen", true);
     },
     /**
      * Open the "delete project" modal.
@@ -247,9 +397,10 @@ const actions = {
     /**
      * Open the "delete document" modal.
      */
-    openDeleteDocumentModal(_, item) {
-        // TODO: implement this; not yet designed
-        console.log(item);
+    openDeleteDocumentModal({ commit }, item) {
+        // set which document to delete, then open the modal
+        commit("setDocumentToDelete", item);
+        commit("setDeleteDocumentModalOpen", true);
     },
     /**
      * Open the "edit project" modal.
@@ -304,6 +455,37 @@ const actions = {
         commit("setId", id);
     },
     /**
+     * Set loading state.
+     */
+    setLoading({ commit }, loading) {
+        commit("setLoading", loading);
+    },
+    async share({ commit, dispatch, rootState, state }) {
+        const { user, group } = rootState.forms.share;
+        try {
+            const { data } = await shareProject({ projectId: state.id, user, group });
+            if (data) {
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: `${user ? "User" : "Group"} added successfully`,
+                    },
+                    { root: true },
+                );
+                // update share data on frontend
+                commit("setSharedWithGroups", data.shared_with_groups);
+                commit("setSharedWithUsers", data.shared_with_users);
+            } else {
+                throw new Error("Unable to add user or group.");
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        dispatch("closeShareModal");
+    },
+    /**
      * Change the documents list sort and perform another fetch for documents.
      */
     async sortDocuments({ commit, dispatch }, { field, direction }) {
@@ -321,6 +503,9 @@ const mutations = {
     addDocument(state, document) {
         state.documents.push(document);
     },
+    setCreateDocumentModalOpen(state, open) {
+        state.createDocumentModalOpen = open;
+    },
     setDeleteModalOpen(state, open) {
         state.deleteModalOpen = open;
     },
@@ -332,6 +517,9 @@ const mutations = {
     },
     setDocumentTags(state, tags) {
         state.documentTags = tags;
+    },
+    setDocumentToDelete(state, pk) {
+        state.documentToDelete = pk;
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
@@ -354,6 +542,9 @@ const mutations = {
     setNextPage(state, nextPage) {
         state.nextPage = nextPage;
     },
+    setScripts(state, scripts) {
+        state.scripts = scripts;
+    },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;
     },
@@ -362,6 +553,9 @@ const mutations = {
     },
     setShareModalOpen(state, open) {
         state.shareModalOpen = open;
+    },
+    setSlug(state, slug) {
+        state.slug = slug;
     },
     setSortState(state, sortState) {
         state.sortState = sortState;

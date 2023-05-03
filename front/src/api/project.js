@@ -43,3 +43,15 @@ export const deleteProject = async (projectId) =>
 // retrieve a list of unique tags on all documents in a project
 export const retrieveProjectDocumentTags = async (project_id) =>
     await axios.get(`/projects/${project_id}/tags`);
+
+// create a new Document-level tag on this project
+export const createProjectDocumentTag = async ({ name, color, projectId }) =>
+    await axios.post(`/projects/${projectId}/tags`, {
+        params: { name, color },
+    });
+
+// share this project with a group or user
+export const shareProject = async ({ projectId, group, user }) =>
+    await axios.post(`/projects/${projectId}/share`, {
+        params: { group, user }
+    });

@@ -1,0 +1,218 @@
+<template>
+    <EscrModal class="escr-edit-document">
+        <template #modal-header>
+            <h2>{{ newDocument ? "Create New" : "Edit" }} Document</h2>
+            <EscrButton
+                color="text"
+                :on-click="onCancel"
+                size="small"
+            >
+                <template #button-icon>
+                    <XIcon />
+                </template>
+            </EscrButton>
+        </template>
+        <template #modal-content>
+            <TextField
+                label="Name"
+                placeholder="Name"
+                :disabled="disabled"
+                :on-input="(e) => handleTextFieldInput('name', e.target.value)"
+                :value="name"
+                required
+            />
+            <DropdownField
+                label="Script"
+                :disabled="disabled"
+                :on-change="(e) => handleTextFieldInput('mainScript', e.target.value)"
+                :options="scriptOptions"
+                required
+            />
+            <DropdownField
+                label="Read Direction"
+                :disabled="disabled"
+                :help-text="(
+                    'The read direction describes the order of the elements in the ' +
+                    'document, in opposition with the text direction which describes the ' +
+                    'order of the words in a line and is set by the script.'
+                )"
+                :on-change="(e) => handleTextFieldInput('readDirection', e.target.value)"
+                :options="readDirectionOptions"
+                required
+            />
+            <DropdownField
+                label="Line Position"
+                help-text="The position of the line relative to the polygon."
+                :disabled="disabled"
+                :on-change="(e) => handleTextFieldInput('linePosition', e.target.value)"
+                :options="linePositionOptions"
+                required
+            />
+            <TagsField
+                label="Tags"
+                :disabled="disabled"
+                :on-change="handleTagsFieldInput"
+                :on-change-tag-name="(e) => handleTextFieldInput('tagName', e.target.value)"
+                :on-create-tag="onCreateTag"
+                :tag-name="tagName"
+                :tags="tags"
+                :selected-tags="selectedTags"
+            />
+        </template>
+        <template #modal-actions>
+            <EscrButton
+                color="outline-primary"
+                label="Cancel"
+                :on-click="onCancel"
+                :disabled="disabled"
+            />
+            <EscrButton
+                color="primary"
+                :label="newDocument ? 'Create' : 'Save'"
+                :on-click="onSave"
+                :disabled="disabled || invalid"
+            />
+        </template>
+    </EscrModal>
+</template>
+<script>
+import { mapActions, mapState } from "vuex";
+import DropdownField from "../Dropdown/DropdownField.vue";
+import EscrButton from "../Button/Button.vue";
+import EscrModal from "../Modal/Modal.vue";
+import TextField from "../TextField/TextField.vue";
+import XIcon from "../Icons/XIcon/XIcon.vue";
+import TagsField from "../TagsField/TagsField.vue";
+import "./EditDocumentModal.css";
+
+export default {
+    name: "EscrEditDocumentModal",
+    components: {
+        DropdownField,
+        EscrButton,
+        EscrModal,
+        TextField,
+        XIcon,
+        TagsField
+    },
+    props: {
+        /**
+         * Boolean indicating if the form fields should be disabled
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * If this is a new document, set true; if it's editing an existing one, leave false
+         */
+        newDocument: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * Callback for clicking the cancel button
+         */
+        onCancel: {
+            type: Function,
+            required: true,
+        },
+        /**
+         * Callback for clicking the "create tag" button
+         */
+        onCreateTag: {
+            type: Function,
+            required: true,
+        },
+        /**
+         * Callback for clicking the save/create button
+         */
+        onSave: {
+            type: Function,
+            required: true,
+        },
+        /**
+         * Full list of scripts from the database
+         */
+        scripts: {
+            type: Array,
+            required: true,
+        },
+        /**
+         * Full list of tags across all documents
+         */
+        tags: {
+            type: Array,
+            default: () => [],
+        },
+    },
+    computed: {
+        ...mapState({
+            linePosition: (state) => state.forms.editDocument.linePosition,
+            mainScript: (state) => state.forms.editDocument.mainScript,
+            name: (state) => state.forms.editDocument.name,
+            readDirection: (state) => state.forms.editDocument.readDirection,
+            selectedTags: (state) => state.forms.editDocument.tags,
+            tagName: (state) => state.forms.editDocument.tagName,
+        }),
+        /**
+         * Consider the form invalid if missing required fields.
+         */
+        invalid() {
+            return !this.name ||
+                !this.readDirection ||
+                !this.mainScript ||
+                (!this.linePosition && this.linePosition !== 0);
+        },
+        /**
+         * Populate dropdown options for line position.
+         */
+        linePositionOptions() {
+            return ["Baseline", "Topline", "Centered"].map((linePos, idx) => ({
+                value: idx.toString(),
+                label: linePos,
+                selected: idx.toString() === this.linePosition.toString(),
+            }));
+        },
+        /**
+         * Populate dropdown options for read direction.
+         */
+        readDirectionOptions() {
+            return [
+                {
+                    value: "ltr",
+                    label: "Left to right",
+                    selected: this.readDirection === "ltr",
+                },
+                {
+                    value: "rtl",
+                    label: "Right to left",
+                    selected: this.readDirection === "rtl",
+                }
+            ];
+        },
+        /**
+         * Populate dropdown options for script.
+         */
+        scriptOptions() {
+            return this.scripts.map((script) => ({
+                value: script,
+                label: script,
+                selected: script === this.mainScript,
+            }))
+        },
+    },
+    methods: {
+        ...mapActions("forms", [
+            "handleTextInput",
+            "handleTagsInput",
+        ]),
+        handleTagsFieldInput({ checked, tag }) {
+            this.handleTagsInput({ checked, tag, form: "editDocument" });
+        },
+        handleTextFieldInput(field, value) {
+            this.handleTextInput({ field, value, form: "editDocument" });
+        },
+    },
+}
+</script>

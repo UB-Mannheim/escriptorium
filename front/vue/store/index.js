@@ -11,6 +11,7 @@ import project from "./modules/project";
 import projects from "./modules/projects";
 import sidebar from "./modules/sidebar";
 import transcription from "./modules/transcription";
+import user from "./modules/user";
 import "floating-vue/dist/style.css";
 
 Vue.use(Vuex);
@@ -39,5 +40,6 @@ export default new Store({
         projects,
         sidebar,
         transcription,
+        user,
     },
 });

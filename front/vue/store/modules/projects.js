@@ -70,9 +70,9 @@ const actions = {
         commit("setLoading", true);
         try {
             const { data } = await createProject({
-                name: rootState?.forms?.editProject?.name,
-                tags: rootState?.forms?.editProject?.tags,
-                guidelines: rootState?.forms?.editProject?.guidelines,
+                name: rootState.forms?.editProject?.name,
+                tags: rootState.forms?.editProject?.tags,
+                guidelines: rootState.forms?.editProject?.guidelines,
             });
             if (data) {
                 // show toast alert on success
@@ -104,7 +104,6 @@ const actions = {
         try {
             const { data } = await createProjectTag({
                 name: rootState?.forms?.editProject?.tagName,
-                // TODO: Allow users to select this color.
                 color,
             });
             if (data?.pk) {
@@ -227,7 +226,7 @@ const actions = {
      * Open the "create project" modal and clear the new project name, if there is one.
      */
     openCreateModal({ commit, dispatch }) {
-        dispatch({ type: "forms/clearEditProjectForm" }, { root: true });
+        dispatch("forms/clearForm", "editProject", { root: true });
         commit("setCreateModalOpen", true);
     },
     /**

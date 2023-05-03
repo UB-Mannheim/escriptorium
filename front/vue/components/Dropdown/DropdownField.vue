@@ -1,5 +1,5 @@
 <template>
-    <label class="escr-text-field escr-form-field">
+    <label class="escr-dropdown-field escr-form-field">
         <span
             v-if="labelVisible"
             class="escr-field-label"
@@ -9,15 +9,12 @@
                 class="escr-required"
             >*</span>
         </span>
-        <input
-            type="text"
-            :placeholder="placeholder"
-            :aria-label="label"
-            :value="value"
+        <EscrDropdown
+            :label="label"
             :disabled="disabled"
-            :name="name"
-            @input="onInput"
-        >
+            :options="options"
+            :on-change="onChange"
+        />
         <span
             v-if="helpText"
             class="escr-help-text"
@@ -27,31 +24,22 @@
     </label>
 </template>
 <script>
-import "./TextField.css";
+import EscrDropdown from "./Dropdown.vue";
+import "./DropdownField.css";
 import "../Common/Form.css";
 export default {
-    name: "EscrTextField",
+    name: "EscrDropdownField",
+    components: { EscrDropdown },
     props: {
+        /**
+         * Boolean indicating if the form field is disabled
+         */
         disabled: {
             type: Boolean,
             default: false,
         },
         /**
-         * Event handler for the text input
-         */
-        onInput: {
-            type: Function,
-            required: true,
-        },
-        /**
-         * Placeholder text (optional)
-         */
-        placeholder: {
-            type: String,
-            default: "",
-        },
-        /**
-         * Help text (optional)
+         * Optional help text for the form field
          */
         helpText: {
             type: String,
@@ -73,11 +61,23 @@ export default {
             default: true,
         },
         /**
-         * Optional input name, which is necessary if using in an HTML form.
+         * Event handler for the select change
          */
-        name: {
-            type: String,
-            default: "",
+        onChange: {
+            type: Function,
+            required: true,
+        },
+        /**
+         * List of options, each of which should be an object:
+         * {
+         *     value: String,
+         *     label: String,
+         *     selected: Boolean,
+         * }
+         */
+        options: {
+            type: Array,
+            required: true,
         },
         /**
          * Whether or not this field is required in the form.
@@ -85,13 +85,6 @@ export default {
         required: {
             type: Boolean,
             default: false,
-        },
-        /**
-         * Current value.
-         */
-        value: {
-            type: String,
-            default: "",
         },
     },
 }

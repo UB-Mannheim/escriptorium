@@ -7,3 +7,5 @@ axios.defaults.withCredentials = true;
 
 export * from "./document";
 export * from "./project";
+export * from "./scripts";
+export * from "./user";

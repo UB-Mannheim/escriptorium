@@ -49,17 +49,27 @@
                             <FilterSet
                                 :disabled="loading"
                                 :tags="documentTags"
-                                :on-filter="async () => await fetchProjectDocuments()"
+                                :on-filter="onFilterDocuments"
                             />
                             <EscrButton
                                 label="Create New"
-                                :on-click="openCreateModal"
-                                :disabled="loading || createModalOpen"
+                                :on-click="openCreateDocumentModal"
+                                :disabled="loading || createDocumentModalOpen"
                             >
                                 <template #button-icon>
                                     <PlusIcon />
                                 </template>
                             </EscrButton>
+                            <EditDocumentModal
+                                v-if="createDocumentModalOpen"
+                                :disabled="loading"
+                                :new-document="true"
+                                :on-cancel="closeCreateDocumentModal"
+                                :on-create-tag="createNewDocumentTag"
+                                :on-save="createNewDocument"
+                                :scripts="scripts"
+                                :tags="documentTags"
+                            />
                         </div>
                     </div>
                     <div class="table-container">
@@ -121,12 +131,46 @@
                         />
                     </div>
                 </div>
+                <!-- delete project modal -->
+                <ConfirmModal
+                    v-if="deleteModalOpen"
+                    body-text="Are you sure you want to delete this project?"
+                    confirm-verb="Delete"
+                    title="Delete Project"
+                    :cannot-undo="true"
+                    :disabled="loading"
+                    :on-cancel="closeDeleteModal"
+                    :on-confirm="deleteProject"
+                />
+                <!-- delete document modal -->
+                <ConfirmModal
+                    v-if="deleteDocumentModalOpen"
+                    :body-text="`Are you sure you want to delete the document ${
+                        documentToDelete?.name || ''
+                    }?`"
+                    confirm-verb="Delete"
+                    :title="`Delete ${documentToDelete?.name || 'Document'}`"
+                    :cannot-undo="true"
+                    :disabled="loading"
+                    :on-cancel="closeDeleteDocumentModal"
+                    :on-confirm="deleteDocument"
+                />
+                <!-- share project modal -->
+                <ShareModal
+                    v-if="shareModalOpen"
+                    :groups="groups"
+                    :disabled="loading"
+                    :on-cancel="closeShareModal"
+                    :on-submit="share"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
+import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrPage from "../Page/Page.vue";
@@ -139,6 +183,7 @@ import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
@@ -147,6 +192,8 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
+        ConfirmModal,
+        EditDocumentModal,
         EditProjectModal,
         EscrButton,
         EscrPage,
@@ -161,6 +208,7 @@ export default {
         PlusIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TrashIcon,
@@ -178,16 +226,22 @@ export default {
     computed: {
         ...mapState({
             allProjectTags: (state) => state.projects.tags,
-            createModalOpen: (state) => state.project.createModalOpen,
+            createDocumentModalOpen: (state) => state.project.createDocumentModalOpen,
+            deleteModalOpen: (state) => state.project.deleteModalOpen,
+            deleteDocumentModalOpen: (state) => state.project.deleteDocumentModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
+            documentToDelete: (state) => state.project.documentToDelete,
             editModalOpen: (state) => state.project.editModalOpen,
+            groups: (state) => state.user.groups,
             guidelines: (state) => state.project.guidelines,
             loading: (state) => state.project.loading,
             nextPage: (state) => state.project.nextPage,
             projectName: (state) => state.project.name,
             projectId: (state) => state.project.id,
             projectMenuOpen: (state) => state.project.menuOpen,
+            scripts: (state) => state.project.scripts,
+            shareModalOpen: (state) => state.project.shareModalOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,
             tags: (state) => state.project.tags,
@@ -277,26 +331,33 @@ export default {
      * On load, fetch basic details about the project.
      */
     async created() {
+        this.setLoading(true);
         this.setId(this.id);
         try {
             await this.fetchProject();
-            await this.fetchProjectDocuments();
-            await this.fetchProjectDocumentTags();
+            await this.fetchGroups();
         } catch (error) {
             this.addError(error);
         }
+        this.setLoading(false);
     },
     methods: {
         ...mapActions("project", [
+            "closeCreateDocumentModal",
+            "closeDeleteModal",
+            "closeDeleteDocumentModal",
             "closeEditModal",
             "closeProjectMenu",
+            "closeShareModal",
+            "createNewDocumentTag",
+            "createNewDocument",
             "createNewProjectTag",
+            "deleteDocument",
+            "deleteProject",
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
-            "fetchProjectDocumentTags",
-            "navigateToImages",
-            "openCreateModal",
+            "openCreateDocumentModal",
             "openDeleteModal",
             "openDeleteDocumentModal",
             "openEditModal",
@@ -304,11 +365,31 @@ export default {
             "openShareModal",
             "searchProject",
             "saveProject",
+            "setDocumentToDelete",
             "setId",
+            "setLoading",
+            "share",
             "sortDocuments",
         ]),
         ...mapActions("projects", ["fetchAllProjectTags"]),
+        ...mapActions("user", ["fetchGroups"]),
         ...mapActions("alerts", ["addError"]),
+        async onFilterDocuments() {
+            this.setLoading(true);
+            try {
+                await this.fetchProjectDocuments();
+            } catch (error) {
+                this.addError(error);
+            }
+            this.setLoading(false);
+        },
+        navigateToImages(item) {
+            if (item?.pk) {
+                window.location = `/document/${item.pk}/images`;
+            } else {
+                this.addError({ message: "Error navigating to the images page." });
+            }
+        },
     },
 }
 </script>

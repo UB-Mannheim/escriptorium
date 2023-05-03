@@ -1,0 +1,9 @@
+.escr-edit-document .escr-modal {
+    width: 460px;
+    position: absolute;
+    top: 10px;
+    left: calc(50% - 277px);
+}
+.escr-edit-document .escr-modal-content {
+    max-height: calc(100vh - 170px);
+}

@@ -9,6 +9,7 @@ import {
     groups,
     lineTypes,
     partTypes,
+    scripts,
     sorted,
     tags,
     users,
@@ -21,6 +22,7 @@ export default {
 
 const project = {
     id: 1,
+    slug: "project-name-that-is-really-really-long",
     name: "Project name that is really really long",
     guidelines: "",
     tags: tags.slice(3, 8).map((tag) => tag.pk),
@@ -101,8 +103,21 @@ const documents = [
     },
 ];
 
+const userGroups = [
+    ...groups,
+    {
+        pk: 4,
+        name: "Example group",
+    },
+    {
+        pk: 5,
+        name: "Group 2",
+    },
+];
+
 const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
 const newTagPks = [newPk];
+const newDocumentTagPks = [newPk];
 
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
@@ -113,6 +128,7 @@ const Template = (args, { argTypes }) => ({
         const mock = new MockAdapter(axios);
         const projectEndpoint = new RegExp(/\/projects\/\d+$/);
         const projectDocumentsEndpoint = new RegExp(/\/documents/);
+        const documentEndpoint = new RegExp(/\/documents\/\d+$/);
         const blockEndpoint = new RegExp(/\/projects\/\d+\/types\/block$/);
         const lineEndpoint = new RegExp(/\/projects\/\d+\/types\/line$/);
         const annotationsEndpoint = new RegExp(
@@ -122,6 +138,9 @@ const Template = (args, { argTypes }) => ({
         const charactersEndpoint = new RegExp(/\/projects\/\d+\/characters$/);
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         const projectsTagsEndpoint = "/tags/project";
+        const scriptsEndpoint = "/scripts";
+        const groupsEndpoint = "/groups";
+        const shareEndpoint = new RegExp(/\/projects\/\d+\/share$/);
         // mock project page
         mock.onGet(projectEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -145,6 +164,13 @@ const Template = (args, { argTypes }) => ({
                 ];
             }
             return [200, { results: documents }];
+        });
+        // mock create document
+        mock.onPost(projectDocumentsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, documents[0]];
         });
         // mock ontology
         mock.onGet(blockEndpoint).reply(async function(config) {
@@ -195,10 +221,25 @@ const Template = (args, { argTypes }) => ({
             }
             return [200, { results: characters }];
         });
+        // mock document tags
         mock.onGet(documentTagsEndpoint).reply(async function() {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: tags }];
+        });
+        // mock create document tag
+        mock.onPost(documentTagsEndpoint).reply(async function(config) {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new tag with increment pk
+                const { params } = JSON.parse(config.data);
+                const { name, color } = params;
+                const newTag = Math.max(...newDocumentTagPks) + 1;
+                newDocumentTagPks.push(newTag);
+                return [200, { name, color, pk: newTag }];
+            }
+            return [500];
         });
         // mock all-projects tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
@@ -228,6 +269,76 @@ const Template = (args, { argTypes }) => ({
                 return [200, { ...project, name, guidelines, tags }];
             }
             return [500];
+        });
+        // mock scripts
+        mock.onGet(scriptsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                200,
+                { results: scripts.map((script) => ({ name: script })) },
+            ];
+        });
+        // mock groups
+        mock.onGet(groupsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: userGroups }];
+        });
+        // mock share
+        mock.onPost(shareEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                const { params } = JSON.parse(config.data);
+                const { group, user } = params;
+                if (
+                    group &&
+                    !project.shared_with_groups.some(
+                        (grp) => grp.pk.toString() === group.toString(),
+                    )
+                ) {
+                    project.shared_with_groups.push(
+                        userGroups.find(
+                            (grp) => grp.pk.toString() === group.toString(),
+                        ),
+                    );
+                }
+                if (user) {
+                    project.shared_with_users.push({ email: user });
+                }
+                return [200, project];
+            }
+            return [400];
+        });
+        // mock delete project (throw an error, for fun!)
+        mock.onDelete(projectEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a project.",
+                },
+            ];
+        });
+        // mock delete document (throw an error, for fun!)
+        mock.onDelete(documentEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a document.",
+                },
+            ];
         });
     },
 });

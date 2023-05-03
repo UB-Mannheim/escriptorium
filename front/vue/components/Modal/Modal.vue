@@ -4,7 +4,12 @@
         aria-modal="true"
     >
         <div class="escr-modal">
-            <slot name="modal-content" />
+            <div class="escr-modal-header">
+                <slot name="modal-header" />
+            </div>
+            <div class="escr-modal-content">
+                <slot name="modal-content" />
+            </div>
             <div class="modal-actions">
                 <slot name="modal-actions" />
             </div>
