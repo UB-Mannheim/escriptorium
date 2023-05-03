@@ -292,9 +292,24 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             if (config?.data) {
-                // mock return success
-                // TODO: Mock actual API output here
-                return [200];
+                const { params } = JSON.parse(config.data);
+                const { group, user } = params;
+                if (
+                    group &&
+                    !project.shared_with_groups.some(
+                        (grp) => grp.pk.toString() === group.toString(),
+                    )
+                ) {
+                    project.shared_with_groups.push(
+                        userGroups.find(
+                            (grp) => grp.pk.toString() === group.toString(),
+                        ),
+                    );
+                }
+                if (user) {
+                    project.shared_with_users.push({ email: user });
+                }
+                return [200, project];
             }
             return [400];
         });

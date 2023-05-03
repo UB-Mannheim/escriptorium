@@ -66,7 +66,7 @@ export default {
          */
         getName(user) {
             const name = [user["first_name"], user["last_name"]].join(" ");
-            return name.trim() || user.username;
+            return name.trim() || user.username || user.email;
         },
     },
 }

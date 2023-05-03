@@ -63,6 +63,7 @@ const state = () => ({
     /**
      * sharedWithUsers: [{
      *     pk: Number,
+     *     email: String,
      *     first_name?: String,
      *     last_name?: String,
      *     username: String,
@@ -417,20 +418,26 @@ const actions = {
     setLoading({ commit }, loading) {
         commit("setLoading", loading);
     },
-    async share({ dispatch, rootState, state }) {
+    async share({ commit, dispatch, rootState, state }) {
         const { user, group } = rootState.forms.share;
         try {
-            await shareProject({ projectId: state.id, user, group });
-            // show toast alert on success
-            dispatch(
-                "alerts/add",
-                {
-                    color: "success",
-                    message: `${user ? "User" : "Group"} added successfully`,
-                },
-                { root: true },
-            );
-            // TODO: Update users/groups on project
+            const { data } = await shareProject({ projectId: state.id, user, group });
+            if (data) {
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: `${user ? "User" : "Group"} added successfully`,
+                    },
+                    { root: true },
+                );
+                // update share data on frontend
+                commit("setSharedWithGroups", data.shared_with_groups);
+                commit("setSharedWithUsers", data.shared_with_users);
+            } else {
+                throw new Error("Unable to add user or group.");
+            }
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
