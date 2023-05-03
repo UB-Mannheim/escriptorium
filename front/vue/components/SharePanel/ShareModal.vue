@@ -67,18 +67,34 @@ export default {
         XIcon,
     },
     props: {
+        /**
+         * Boolean to indicate whether fields should be disabled.
+         */
         disabled: {
             type: Boolean,
             default: false,
         },
+        /**
+         * Array of all of the current user's groups, each structured as follows:
+         * {
+         *     name: String,
+         *     pk: Number,
+         * }
+         */
         groups: {
             type: Array,
             default: () => [],
         },
+        /**
+         * Callback function for cancelling the action.
+         */
         onCancel: {
             type: Function,
             required: true,
         },
+        /**
+         * Callback function for submitting the form.
+         */
         onSubmit: {
             type: Function,
             required: true,

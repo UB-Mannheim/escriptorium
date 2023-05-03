@@ -21,6 +21,13 @@ import "./Breadcrumbs.css";
 export default {
     name: "EscrBreadcrumbs",
     props: {
+        /**
+         * An array of breadcrumbs objects, each strctured as follows:
+         * {
+         *     title: String,
+         *     href?: String,
+         * }
+         */
         items: {
             type: Array,
             required: true,

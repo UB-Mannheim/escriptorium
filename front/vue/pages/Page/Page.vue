@@ -27,14 +27,34 @@ export default {
     name: "EscrPage",
     components: { Alerts, EscrBreadcrumbs, EscrSidebar, GlobalNavigation },
     props: {
+        /**
+         * An array of breadcrumbs objects, each strctured as follows:
+         * {
+         *     title: String,
+         *     href?: String,
+         * }
+         */
         breadcrumbs: {
             type: Array,
             default: () => [],
         },
+        /**
+         * Boolean indicating whether or not the page is currently loading
+         */
         loading: {
             type: Boolean,
             default: false,
         },
+        /**
+         * An array of sidebar action objects, each strctured as follows:
+         * {
+         *     data?: Object, // props for the panel component
+         *     icon: VueComponent,
+         *     key: String,  // each key must be unique
+         *     label: String,
+         *     panel: VueComponent,
+         * }
+         */
         sidebarActions: {
             type: Array,
             default: () => [],

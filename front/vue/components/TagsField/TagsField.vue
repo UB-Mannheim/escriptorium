@@ -19,26 +19,45 @@ export default {
             type: Boolean,
             required: true,
         },
+        /**
+         * Callback function for submitting after changing the tags selection
+         */
         onChange: {
             type: Function,
             required: true,
         },
+        /**
+         * Callback function for changing the string in the "Add/search tags" field
+         */
         onChangeTagName: {
             type: Function,
             required: true,
         },
+        /**
+         * Callback function for creating a new tag
+         */
         onCreateTag: {
             type: Function,
             required: true,
         },
+        /**
+         * String currently typed into the "Add/search tags" field
+         */
         tagName: {
             type: String,
             required: true,
         },
+        /**
+         * Array of tag objects to populate the list of all tags, each structured as follows:
+         * { pk: Number, name: String, variant: Number }
+         */
         tags: {
             type: Array,
             required: true,
         },
+        /**
+         * Array of numbers, which correspond to selected tag primary keys.
+         */
         selectedTags: {
             type: Array,
             required: true,
