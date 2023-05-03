@@ -131,6 +131,31 @@
                         />
                     </div>
                 </div>
+                <!-- delete project modal -->
+                <ConfirmModal
+                    v-if="deleteModalOpen"
+                    body-text="Are you sure you want to delete this project?"
+                    confirm-verb="Delete"
+                    title="Delete Project"
+                    :cannot-undo="true"
+                    :disabled="loading"
+                    :on-cancel="closeDeleteModal"
+                    :on-confirm="deleteProject"
+                />
+                <!-- delete document modal -->
+                <ConfirmModal
+                    v-if="deleteDocumentModalOpen"
+                    :body-text="`Are you sure you want to delete the document ${
+                        documentToDelete?.name || ''
+                    }?`"
+                    confirm-verb="Delete"
+                    :title="`Delete ${documentToDelete?.name || 'Document'}`"
+                    :cannot-undo="true"
+                    :disabled="loading"
+                    :on-cancel="closeDeleteDocumentModal"
+                    :on-confirm="deleteDocument"
+                />
+                <!-- share project modal -->
                 <ShareModal
                     v-if="shareModalOpen"
                     :groups="groups"
@@ -144,6 +169,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EditProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
@@ -166,6 +192,7 @@ import "./Project.css";
 export default {
     name: "EscrProjectDashboard",
     components: {
+        ConfirmModal,
         EditDocumentModal,
         EditProjectModal,
         EscrButton,
@@ -200,8 +227,11 @@ export default {
         ...mapState({
             allProjectTags: (state) => state.projects.tags,
             createDocumentModalOpen: (state) => state.project.createDocumentModalOpen,
+            deleteModalOpen: (state) => state.project.deleteModalOpen,
+            deleteDocumentModalOpen: (state) => state.project.deleteDocumentModalOpen,
             documents: (state) => state.project.documents,
             documentTags: (state) => state.project.documentTags,
+            documentToDelete: (state) => state.project.documentToDelete,
             editModalOpen: (state) => state.project.editModalOpen,
             groups: (state) => state.user.groups,
             guidelines: (state) => state.project.guidelines,
@@ -314,12 +344,16 @@ export default {
     methods: {
         ...mapActions("project", [
             "closeCreateDocumentModal",
+            "closeDeleteModal",
+            "closeDeleteDocumentModal",
             "closeEditModal",
             "closeProjectMenu",
             "closeShareModal",
             "createNewDocumentTag",
             "createNewDocument",
             "createNewProjectTag",
+            "deleteDocument",
+            "deleteProject",
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
@@ -332,6 +366,7 @@ export default {
             "openShareModal",
             "searchProject",
             "saveProject",
+            "setDocumentToDelete",
             "setId",
             "setLoading",
             "share",

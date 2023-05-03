@@ -128,6 +128,7 @@ const Template = (args, { argTypes }) => ({
         const mock = new MockAdapter(axios);
         const projectEndpoint = new RegExp(/\/projects\/\d+$/);
         const projectDocumentsEndpoint = new RegExp(/\/documents/);
+        const documentEndpoint = new RegExp(/\/documents\/\d+$/);
         const blockEndpoint = new RegExp(/\/projects\/\d+\/types\/block$/);
         const lineEndpoint = new RegExp(/\/projects\/\d+\/types\/line$/);
         const annotationsEndpoint = new RegExp(
@@ -312,6 +313,32 @@ const Template = (args, { argTypes }) => ({
                 return [200, project];
             }
             return [400];
+        });
+        // mock delete project (throw an error, for fun!)
+        mock.onDelete(projectEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a project.",
+                },
+            ];
+        });
+        // mock delete document (throw an error, for fun!)
+        mock.onDelete(documentEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a document.",
+                },
+            ];
         });
     },
 });

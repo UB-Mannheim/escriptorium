@@ -2,6 +2,8 @@ import axios from "axios";
 import {
     createDocument,
     createProjectDocumentTag,
+    deleteDocument,
+    deleteProject,
     editProject,
     retrieveDocumentsList,
     retrieveProject,
@@ -40,6 +42,7 @@ const state = () => ({
      * }]
      */
     documentTags: [],
+    documentToDelete: null,
     deleteModalOpen: false,
     deleteDocumentModalOpen: false,
     editModalOpen: false,
@@ -122,6 +125,12 @@ const actions = {
      */
     closeDeleteModal({ commit }) {
         commit("setDeleteModalOpen", false);
+    },
+    /**
+     * Close the "delete document" modal.
+     */
+    closeDeleteDocumentModal({ commit }) {
+        commit("setDeleteDocumentModalOpen", false);
     },
     /**
      * Close the "edit/delete project" menu.
@@ -214,6 +223,36 @@ const actions = {
     async createNewProjectTag({ commit, dispatch }, color) {
         commit("setLoading", true);
         await dispatch("projects/createNewProjectTag", color, { root: true });
+        commit("setLoading", false);
+    },
+    async deleteDocument({ dispatch, commit, state }) {
+        commit("setLoading", true);
+        try {
+            await deleteDocument({ documentId: state?.documentToDelete?.pk });
+            commit("setDeleteDocumentModalOpen", false);
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Document deleted successfully",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    async deleteProject({ dispatch, commit, state }) {
+        commit("setLoading", true);
+        try {
+            await deleteProject(state.id);
+            commit("setDeleteModalOpen", false);
+            // TODO: redirect to projects list on delete
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
         commit("setLoading", false);
     },
     /**
@@ -357,9 +396,10 @@ const actions = {
     /**
      * Open the "delete document" modal.
      */
-    openDeleteDocumentModal(_, item) {
-        // TODO: implement this; not yet designed
-        console.log(item);
+    openDeleteDocumentModal({ commit }, item) {
+        // set which document to delete, then open the modal
+        commit("setDocumentToDelete", item);
+        commit("setDeleteDocumentModalOpen", true);
     },
     /**
      * Open the "edit project" modal.
@@ -474,6 +514,9 @@ const mutations = {
     },
     setDocumentTags(state, tags) {
         state.documentTags = tags;
+    },
+    setDocumentToDelete(state, pk) {
+        state.documentToDelete = pk;
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;

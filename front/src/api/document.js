@@ -40,3 +40,6 @@ export const createDocument = async ({
             tags,
         },
     });
+
+export const deleteDocument = async ({ documentId }) =>
+    await axios.delete(`/documents/${documentId}`);

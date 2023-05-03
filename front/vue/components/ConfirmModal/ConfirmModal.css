@@ -1,0 +1,36 @@
+.escr-confirm-modal .escr-modal {
+    width: 460px;
+    position: fixed;
+    top: 25%;
+    left: calc(50% - 250px);
+    padding-top: 1rem;
+}
+.escr-confirm-modal h2[class^="confirm-header"]  {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.escr-confirm-modal *[class^="confirm-header"] svg {
+    width: 25px;
+    height: auto;
+}
+.escr-confirm-modal .escr-modal-content {
+    padding-left: calc(1rem + 25px);
+}
+
+/* icon color options */
+.escr-confirm-modal .confirm-header--primary svg {
+    fill: var(--primary);
+}
+.escr-confirm-modal .confirm-header--secondary svg {
+    fill: var(--secondary);
+}
+.escr-confirm-modal .confirm-header--tertiary svg {
+    fill: var(--tertiary);
+}
+.escr-confirm-modal .confirm-header--danger svg {
+    fill: var(--alert);
+}
+.escr-confirm-modal .confirm-header--text svg {
+    fill: var(--text1);
+}
