@@ -6,7 +6,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgb(0 0 0 / 10%);
+    background-color: var(--modal-backdrop);
 }
 .escr-modal {
     z-index: var(--modal-z);

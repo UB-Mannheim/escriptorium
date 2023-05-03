@@ -57,6 +57,8 @@
     --background2-dark: #cacaca;
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
+    /* modal backdrop */
+    --modal-backdrop: rgb(0 0 0 / 10%);
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
@@ -76,6 +78,8 @@
     --background2-dark: #565a5b;
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
+    /* modal backdrop */
+    --modal-backdrop: rgb(0 0 0 / 33%);
     /* dark mode text */
     --text1: #ffffff;
     --text2: #a7a8a9;

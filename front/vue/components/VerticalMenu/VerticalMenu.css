@@ -41,6 +41,10 @@
     padding: 8px 32px;
     cursor: pointer;
     transition: background-color 0.15s ease-in-out;
+    color: var(--text1);
+}
+.escr-vertical-menu button svg {
+    fill: var(--text1);
 }
 .escr-vertical-menu button:hover {
     background-color: var(--background2);

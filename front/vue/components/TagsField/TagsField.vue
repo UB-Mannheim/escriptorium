@@ -65,10 +65,15 @@ export default {
                 h(
                     VDropdown,
                     {
+                        props: {
+                            theme: "tags-dropdown",
+                        },
                         scopedSlots: {
                             popper: ({ hide }) => h(
                                 "div",
-                                { class: "escr-tag-colors" },
+                                {
+                                    class: "escr-tag-colors",
+                                },
                                 [...Array(12).keys()].map((n) =>
                                     h(
                                         "button",
