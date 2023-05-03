@@ -357,7 +357,6 @@ export default {
             "fetchNextPage",
             "fetchProject",
             "fetchProjectDocuments",
-            "navigateToImages",
             "openCreateDocumentModal",
             "openDeleteModal",
             "openDeleteDocumentModal",
@@ -383,6 +382,13 @@ export default {
                 this.addError(error);
             }
             this.setLoading(false);
+        },
+        navigateToImages(item) {
+            if (item?.pk) {
+                window.location = `/document/${item.pk}/images`;
+            } else {
+                this.addError({ message: "Error navigating to the images page." });
+            }
         },
     },
 }
