@@ -242,7 +242,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
 
-        if self.request.method == "POST":
+        if self.request.method == "POST" and 'import_form' not in self.request.POST:
             # we need to accept all types when posting for added ones
             # TODO: if the form has errors it show everything.. need to find a better solution
             block_qs = BlockType.objects.all()
@@ -268,13 +268,13 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['valid_part_types'].queryset = part_qs.order_by('name')
 
         self.compo_form = ComponentFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             prefix='compo_form',
             instance=self.instance)
 
         img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
         self.img_anno_form = ImageAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
             prefix='img_anno_form',
@@ -282,7 +282,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
         text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
         self.text_anno_form = TextAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=text_choices).select_related('typology').prefetch_related('components'),
             prefix='text_anno_form',
