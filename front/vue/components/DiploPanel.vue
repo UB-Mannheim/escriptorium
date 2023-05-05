@@ -219,17 +219,20 @@ export default Vue.extend({
                 formatter: textAnnoFormatter.bind(this)
             });
 
-            const isEditorOpen = function(mutationsList, observer) {
+            this.isEditorOpen = false;
+            const editorOpenObserver = function(mutationsList, observer) {
                 // let's hope for no race condition with the contenteditable focusin/out...
                 for (let mutation of mutationsList) {
                     if (mutation.addedNodes.length) {
+                        this.isEditorOpen = true;
                         this.$store.commit('document/setBlockShortcuts', true);
                     } else if (mutation.removedNodes.length) {
+                        this.isEditorOpen = false;
                         this.$store.commit('document/setBlockShortcuts', false);
                     }
                 }
             }.bind(this);
-            const editorObserver = new MutationObserver(isEditorOpen);
+            const editorObserver = new MutationObserver(editorOpenObserver);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
             this.anno.on('createAnnotation', async function(annotation, overrideId) {
@@ -362,7 +365,9 @@ export default Vue.extend({
         },
 
         stopEdit(ev) {
-            this.$store.commit('document/setBlockShortcuts', false);
+            if (this.isEditorOpen !== true) {
+               this.$store.commit('document/setBlockShortcuts', false);
+            }
             this.constrainLineNumber();
             this.save();
         },
