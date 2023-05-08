@@ -308,8 +308,10 @@ const Template = (args, { argTypes }) => ({
                     );
                 }
                 if (user) {
-                    project.shared_with_users.push({ email: user });
+                    project.shared_with_users.push({ username: user });
                 }
+                // return the entire project with the shared_with_users
+                // or shared_with_groups updated
                 return [200, project];
             }
             return [400];

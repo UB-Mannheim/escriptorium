@@ -24,12 +24,12 @@
             />
             <h3>Add User</h3>
             <TextField
-                placeholder="Enter email of registered user"
+                placeholder="Enter username of registered user"
                 label="Add user"
                 :label-visible="false"
                 :on-input="handleUserInput"
                 :disabled="disabled"
-                :value="userEmail"
+                :value="username"
             />
         </template>
         <template #modal-actions>
@@ -43,7 +43,7 @@
                 color="primary"
                 label="Submit"
                 :on-click="onSubmit"
-                :disabled="disabled || (!selectedGroup && !userEmail)"
+                :disabled="disabled || (!selectedGroup && !username)"
             />
         </template>
     </EscrModal>
@@ -87,7 +87,7 @@ export default {
     computed: {
         ...mapState({
             selectedGroup: (state) => state.forms.share.group,
-            userEmail: (state) => state.forms.share.user,
+            username: (state) => state.forms.share.user,
         }),
         groupOptions() {
             return this.groups.map((group) => ({
@@ -100,7 +100,7 @@ export default {
     methods: {
         ...mapActions("forms", ["clearForm", "handleTextInput"]),
         handleGroupChange(e) {
-            if (this.userEmail !== "") {
+            if (this.username !== "") {
                 this.handleTextInput({ form: "share", field: "user", value: "" });
             }
             this.handleTextInput({ form: "share", field: "group", value: e.target.value });
