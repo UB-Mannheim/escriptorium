@@ -1,4 +1,6 @@
 import {
+    deleteDocument,
+    editDocument,
     retrieveDocument,
     retrieveDocumentParts,
     retrieveTranscriptionCharacters,
@@ -9,14 +11,18 @@ import { tagColorToVariant } from "../util/color";
 
 // initial state
 const state = () => ({
+    deleteModalOpen: false,
+    editModalOpen: false,
     id: null,
     lastModified: "",
+    linePosition: null,
     loading: {
         document: false,
         parts: false,
         transcriptions: false,
     },
     mainScript: "",
+    menuOpen: false,
     name: "",
     /**
      * parts: [{
@@ -30,6 +36,7 @@ const state = () => ({
     partsCount: null,
     projectId: null,
     projectName: "",
+    readDirection: "",
     /**
      * sharedWithGroups: [{
      *     pk: Number,
@@ -118,6 +125,53 @@ const actions = {
         }
     },
     /**
+     * Close the "delete document" modal.
+     */
+    closeDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", false);
+    },
+    /**
+     * Close the "edit/delete document" menu.
+     */
+    closeDocumentMenu({ commit }) {
+        commit("setMenuOpen", false);
+    },
+    /**
+     * Close the "edit document" modal and clear out state.
+     */
+    closeEditModal({ commit, state }) {
+        commit("setEditModalOpen", false);
+        commit(
+            "forms/setFormState",
+            {
+                form: "editDocument",
+                formState: {
+                    linePosition: state.linePosition,
+                    mainScript: state.mainScript,
+                    name: state.name,
+                    readDirection: state.readDirection,
+                    tags: state.tags.map((tag) => tag.pk),
+                    tagName: "",
+                },
+            },
+            { root: true },
+        );
+    },
+    /**
+     * Delete the current document.
+     */
+    async deleteDocument({ dispatch, commit, state }) {
+        commit("setLoading", true);
+        try {
+            await deleteDocument({ documentId: state.id });
+            commit("setDeleteModalOpen", false);
+            // TODO: redirect to project on delete
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", false);
+    },
+    /**
      * Fetch the current document.
      */
     async fetchDocument({ commit, state, dispatch, rootState }) {
@@ -126,6 +180,8 @@ const actions = {
         if (data) {
             commit("setLastModified", data.updated_at);
             commit("setMainScript", data.main_script);
+            commit("setReadDirection", data.read_direction);
+            commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
             commit("setPartsCount", data.parts_count);
             commit("setProjectId", data.project?.id);
@@ -138,6 +194,22 @@ const actions = {
                     ...tag,
                     variant: tagColorToVariant(tag.color),
                 })),
+            );
+            // set form state for the edit modal
+            commit(
+                "forms/setFormState",
+                {
+                    form: "editDocument",
+                    formState: {
+                        linePosition: data.line_offset,
+                        mainScript: data.main_script,
+                        name: data.name,
+                        readDirection: data.read_direction,
+                        tags: state.tags.map((tag) => tag.pk),
+                        tagName: "",
+                    },
+                },
+                { root: true },
             );
             if (data.parts_count > 0) {
                 // kickoff parts fetch
@@ -176,20 +248,39 @@ const actions = {
                     dispatch("alerts/addError", error, { root: true });
                 }
             }
+            if (data.project?.id) {
+                // set project id and fetch all document tags on the project
+                try {
+                    await commit("project/setId", data.project?.id, {
+                        root: true,
+                    });
+                    await dispatch(
+                        { type: "project/fetchProjectDocumentTags" },
+                        { root: true },
+                    );
+                } catch (error) {
+                    dispatch("alerts/addError", error, { root: true });
+                }
+            }
         } else {
             commit("setLoading", "document", false);
             throw new Error("Unable to retrieve document");
         }
+        // fetch scripts
+        await dispatch({ type: "project/fetchScripts" }, { root: true });
         commit("setLoading", "document", false);
     },
     async fetchDocumentParts({ commit, state }) {
         commit("setLoading", "parts", true);
         const { data } = await retrieveDocumentParts({ documentId: state.id });
         if (data?.results) {
-            commit("setParts", data.results.map((part) => ({
-                ...part,
-                thumbnail: part.image?.thumbnails?.card,
-            })));
+            commit(
+                "setParts",
+                data.results.map((part) => ({
+                    ...part,
+                    thumbnail: part.image?.thumbnails?.card,
+                })),
+            );
         } else {
             commit("setLoading", "parts", false);
             throw new Error("Unable to retrieve document images");
@@ -272,10 +363,72 @@ const actions = {
         }
     },
     /**
+     * Open the "delete document" modal.
+     */
+    openDeleteModal({ commit }) {
+        commit("setDeleteModalOpen", true);
+    },
+    /**
+     * Open the "edit/delete document" menu.
+     */
+    openDocumentMenu({ commit }) {
+        commit("setMenuOpen", true);
+    },
+    /**
      * Open the "edit document" modal.
      */
     openEditModal({ commit }) {
         commit("setEditModalOpen", true);
+    },
+    /**
+     * Save changes to the document made in the edit modal.
+     */
+    async saveDocument({ commit, dispatch, rootState, state }) {
+        commit("setLoading", "document", true);
+        const {
+            linePosition,
+            mainScript,
+            name,
+            readDirection,
+            tags,
+        } = rootState.forms.editDocument;
+        try {
+            const { data } = await editDocument(state.id, {
+                linePosition,
+                mainScript,
+                name,
+                readDirection,
+                tags,
+            });
+            if (data) {
+                commit("setName", name);
+                commit("setLinePosition", linePosition);
+                commit("setMainScript", mainScript);
+                commit("setReadDirection", readDirection);
+                commit(
+                    "setTags",
+                    rootState.project.documentTags.filter((t) =>
+                        data?.tags?.includes(t.pk),
+                    ),
+                );
+                commit("setEditModalOpen", false);
+            } else {
+                throw new Error("Unable to save document");
+            }
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Document updated successfully",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            commit("setLoading", "document", false);
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", "document", false);
     },
     /**
      * Set the ID of the document on the state (happens immediately on page load).
@@ -321,6 +474,9 @@ const actions = {
 };
 
 const mutations = {
+    setDeleteModalOpen(state, open) {
+        state.deleteModalOpen = open;
+    },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
     },
@@ -330,11 +486,17 @@ const mutations = {
     setLastModified(state, lastModified) {
         state.lastModified = lastModified;
     },
+    setLinePosition(state, linePosition) {
+        state.linePosition = linePosition;
+    },
     setLoading(state, key, loading) {
         state.loading[key] = loading;
     },
     setMainScript(state, mainScript) {
         state.mainScript = mainScript;
+    },
+    setMenuOpen(state, open) {
+        state.menuOpen = open;
     },
     setName(state, name) {
         state.name = name;
@@ -350,6 +512,9 @@ const mutations = {
     },
     setProjectName(state, projectName) {
         state.projectName = projectName;
+    },
+    setReadDirection(state, readDirection) {
+        state.readDirection = readDirection;
     },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;

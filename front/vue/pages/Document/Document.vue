@@ -13,16 +13,23 @@
                         <div class="escr-card-header">
                             <h1>{{ documentName }}</h1>
                             <div class="escr-card-actions">
-                                <EscrButton
-                                    label="Edit"
-                                    size="small"
-                                    :on-click="openEditModal"
-                                    :disabled="loading?.document || editModalOpen"
-                                >
-                                    <template #button-icon>
-                                        <PencilIcon />
-                                    </template>
-                                </EscrButton>
+                                <VerticalMenu
+                                    :is-open="documentMenuOpen"
+                                    :close-menu="closeDocumentMenu"
+                                    :open-menu="openDocumentMenu"
+                                    :disabled="loading?.document || editModalOpen || deleteModalOpen"
+                                    :items="documentMenuItems"
+                                />
+                                <EditDocumentModal
+                                    v-if="editModalOpen"
+                                    :disabled="loading?.document"
+                                    :new-document="false"
+                                    :on-cancel="closeEditModal"
+                                    :on-create-tag="createNewDocumentTag"
+                                    :on-save="saveDocument"
+                                    :scripts="scripts"
+                                    :tags="allDocumentTags"
+                                />
                             </div>
                         </div>
                         <!-- TODO: figure out what metadata should go here, handle appropriately -->
@@ -35,18 +42,6 @@
                     <div class="escr-card escr-card-padding escr-document-tags">
                         <div class="escr-card-header">
                             <h2>Tags</h2>
-                            <div class="escr-card-actions">
-                                <EscrButton
-                                    label="Edit"
-                                    size="small"
-                                    :on-click="openTagsModal"
-                                    :disabled="loading?.document || tagsModalOpen"
-                                >
-                                    <template #button-icon>
-                                        <PencilIcon />
-                                    </template>
-                                </EscrButton>
-                            </div>
                         </div>
                         <EscrTags
                             v-if="tags"
@@ -184,6 +179,17 @@
                         :items="characters"
                     />
                 </div>
+                <!-- delete project modal -->
+                <ConfirmModal
+                    v-if="deleteModalOpen"
+                    body-text="Are you sure you want to delete this document?"
+                    confirm-verb="Delete"
+                    title="Delete Document"
+                    :cannot-undo="true"
+                    :disabled="loading?.document"
+                    :on-cancel="closeDeleteModal"
+                    :on-confirm="deleteDocument"
+                />
             </div>
         </template>
     </EscrPage>
@@ -192,6 +198,8 @@
 import { mapActions, mapState } from "vuex";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
+import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrPage from "../Page/Page.vue";
@@ -203,6 +211,8 @@ import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
+import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Document.css";
 
 export default {
@@ -210,6 +220,8 @@ export default {
     components: {
         ArrowRightIcon,
         CharactersCard,
+        ConfirmModal,
+        EditDocumentModal,
         EscrButton,
         EscrDropdown,
         EscrPage,
@@ -218,6 +230,7 @@ export default {
         OntologyCard,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
+        // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchIcon,
@@ -225,6 +238,9 @@ export default {
         SearchPanel,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
+        // eslint-disable-next-line vue/no-unused-components
+        TrashIcon,
+        VerticalMenu,
     },
     props: {
         /**
@@ -237,11 +253,14 @@ export default {
     },
     computed: {
         ...mapState({
+            allDocumentTags: (state) => state.project.documentTags,
             charCount: (state) => state.transcription.characterCount,
             characters: (state) => state.characters.characters,
             charactersLoading: (state) => state.characters.loading,
             charactersSort: (state) => state.characters.sortState,
+            documentMenuOpen: (state) => state.document.menuOpen,
             documentName: (state) => state.document.name,
+            deleteModalOpen: (state) => state.document.deleteModalOpen,
             editModalOpen: (state) => state.document.editModalOpen,
             lineCount: (state) => state.transcription.lineCount,
             loading: (state) => state.document.loading,
@@ -255,6 +274,7 @@ export default {
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
+            scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
             sharedWithGroups: (state) => state.document.sharedWithGroups,
             tags: (state) => state.document.tags,
@@ -280,6 +300,25 @@ export default {
                 { title: "My Projects", href: "/projects" },
                 ...docBreadcrumbs,
             ];
+        },
+        /**
+         * Menu items for the vertical menu in the top right corner of the dashboard.
+         */
+        documentMenuItems() {
+            return [
+                {
+                    icon: PencilIcon,
+                    key: "edit",
+                    label: "Edit",
+                    onClick: this.openEditModal,
+                },
+                {
+                    icon: TrashIcon,
+                    key: "delete",
+                    label: "Delete Document",
+                    onClick: this.openDeleteModal,
+                }
+            ]
         },
         /**
          * Headers for the parts (images) table.
@@ -356,14 +395,21 @@ export default {
         ...mapActions("document", [
             "changeOntologyCategory",
             "changeSelectedTranscription",
+            "closeDeleteModal",
+            "closeDocumentMenu",
+            "closeEditModal",
+            "deleteDocument",
             "fetchDocument",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
             "openCharactersModal",
+            "openDeleteModal",
+            "openDocumentMenu",
             "openEditModal",
             "openOntologyModal",
             "openShareModal",
             "openTagsModal",
+            "saveDocument",
             "selectTranscription",
             "setId",
             "setLoading",
@@ -372,6 +418,7 @@ export default {
             "viewTasks",
         ]),
         ...mapActions("alerts", ["addError"]),
+        ...mapActions("project", ["createNewDocumentTag"]),
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },

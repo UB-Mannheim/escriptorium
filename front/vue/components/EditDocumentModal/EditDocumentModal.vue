@@ -32,9 +32,9 @@
                 label="Read Direction"
                 :disabled="disabled"
                 :help-text="(
-                    'The read direction describes the order of the elements in the ' +
-                    'document, in opposition with the text direction which describes the ' +
-                    'order of the words in a line and is set by the script.'
+                    'The read direction describes the overall order of elements/pages in the ' +
+                    'document; NOT the words in a line, which will be automatically determined ' +
+                    'by the script.'
                 )"
                 :on-change="(e) => handleTextFieldInput('readDirection', e.target.value)"
                 :options="readDirectionOptions"

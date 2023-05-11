@@ -10,6 +10,7 @@ import {
     groups,
     lineTypes,
     partTypes,
+    scripts,
     sorted,
     tags,
     transcriptions,
@@ -22,6 +23,7 @@ export default {
 };
 
 const doc = {
+    line_offset: 0,
     main_script: "Arabic",
     name: "Document Name",
     parts_count: 32,
@@ -83,6 +85,9 @@ const parts = [
     },
 ];
 
+const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
+const newDocumentTagPks = [newPk];
+
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { DocumentDashboard },
@@ -91,6 +96,8 @@ const Template = (args, { argTypes }) => ({
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
         const documentEndpoint = new RegExp(/\/documents\/\d+$/);
+        const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
+        const scriptsEndpoint = "/scripts";
         const partsEndpoint = new RegExp(/\/documents\/\d+\/parts$/);
         const blockEndpointA = new RegExp(
             /\/documents\/\d+\/transcriptions\/1\/types\/block$/,
@@ -213,6 +220,82 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: parts }];
+        });
+        // mock scripts
+        mock.onGet(scriptsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                200,
+                { results: scripts.map((script) => ({ name: script })) },
+            ];
+        });
+        // mock document tags
+        mock.onGet(documentTagsEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: tags }];
+        });
+        // mock edit document
+        mock.onPut(documentEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock return updated document
+                const { params } = JSON.parse(config.data);
+                const {
+                    name,
+                    project,
+                    main_script,
+                    read_direction,
+                    line_offset,
+                    tags,
+                } = params;
+                return [
+                    200,
+                    {
+                        ...doc,
+                        name,
+                        project,
+                        main_script,
+                        read_direction,
+                        line_offset,
+                        tags,
+                    },
+                ];
+            }
+            return [500];
+        });
+
+        // mock create document tag
+        mock.onPost(documentTagsEndpoint).reply(async function(config) {
+            const timeout = Math.random() * 200 + 100;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new tag with increment pk
+                const { params } = JSON.parse(config.data);
+                const { name, color } = params;
+                const newTag = Math.max(...newDocumentTagPks) + 1;
+                newDocumentTagPks.push(newTag);
+                return [200, { name, color, pk: newTag }];
+            }
+            return [500];
+        });
+
+        // mock delete document (throw an error for test environment)
+        mock.onDelete(documentEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot delete a document.",
+                },
+            ];
         });
     },
 });
