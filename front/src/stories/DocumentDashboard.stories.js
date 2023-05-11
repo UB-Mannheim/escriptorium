@@ -38,6 +38,24 @@ const doc = {
     transcriptions,
     updated_at: "2023-03-17T13:54:15.352146Z",
 };
+
+const metadata = [
+    {
+        pk: 1,
+        key: {
+            name: "example_key",
+        },
+        value: "value1",
+    },
+    {
+        pk: 2,
+        key: {
+            name: "key2",
+        },
+        value: "example 2",
+    },
+];
+
 const parts = [
     {
         title: "Element 2 - name_of_image.jpg",
@@ -88,6 +106,9 @@ const parts = [
 const newPk = Math.max(...tags.map((tag) => tag.pk)) + 1;
 const newDocumentTagPks = [newPk];
 
+const newMetaPk = Math.max(...metadata.map((m) => m.pk)) + 1;
+const newDocumentMetaPks = [newMetaPk];
+
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { DocumentDashboard },
@@ -96,6 +117,12 @@ const Template = (args, { argTypes }) => ({
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
         const documentEndpoint = new RegExp(/\/documents\/\d+$/);
+        const documentMetadataEndpoint = new RegExp(
+            /\/documents\/\d+\/metadata$/,
+        );
+        const documentMetadatumEndpoint = new RegExp(
+            /\/documents\/\d+\/metadata\/\d+$/,
+        );
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         const scriptsEndpoint = "/scripts";
         const partsEndpoint = new RegExp(/\/documents\/\d+\/parts$/);
@@ -296,6 +323,48 @@ const Template = (args, { argTypes }) => ({
                         "This is just a test environment, so you cannot delete a document.",
                 },
             ];
+        });
+
+        // mock retrieve document metadata
+        mock.onGet(documentMetadataEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: metadata }];
+        });
+        // mock create document metadata
+        mock.onPost(documentMetadataEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                // mock creating a new metadatum with increment pk
+                const { params } = JSON.parse(config.data);
+                const { key, value } = params;
+                const newMeta = Math.max(...newDocumentMetaPks) + 1;
+                newDocumentMetaPks.push(newMeta);
+                return [201, { key, value, pk: newMeta }];
+            }
+            return [400];
+        });
+        // mock update document metadatum
+        mock.onPut(documentMetadatumEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                const { params } = JSON.parse(config.data);
+                const { pk, key, value } = params;
+                return [200, { pk, key, value }];
+            }
+            return [400];
+        });
+        // mock delete document metadatum
+        mock.onDelete(documentMetadatumEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [204];
         });
     },
 });

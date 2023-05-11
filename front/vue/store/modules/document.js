@@ -1,13 +1,18 @@
 import {
+    createDocumentMetadata,
     deleteDocument,
+    deleteDocumentMetadata,
     editDocument,
     retrieveDocument,
+    retrieveDocumentMetadata,
     retrieveDocumentParts,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
     retrieveTranscriptionOntology,
+    updateDocumentMetadata,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
+import { getDocumentMetadataCRUD } from "../util/metadata";
 
 // initial state
 const state = () => ({
@@ -23,6 +28,16 @@ const state = () => ({
     },
     mainScript: "",
     menuOpen: false,
+    /**
+     * metadata: [{
+     *     pk: Number,
+     *     key: {
+     *         name: String,
+     *     },
+     *     value: String,
+     * }]
+     */
+    metadata: [],
     name: "",
     /**
      * parts: [{
@@ -148,6 +163,7 @@ const actions = {
                 formState: {
                     linePosition: state.linePosition,
                     mainScript: state.mainScript,
+                    metadata: state.metadata,
                     name: state.name,
                     readDirection: state.readDirection,
                     tags: state.tags.map((tag) => tag.pk),
@@ -203,6 +219,7 @@ const actions = {
                     formState: {
                         linePosition: data.line_offset,
                         mainScript: data.main_script,
+                        metadata: state.metadata,
                         name: data.name,
                         readDirection: data.read_direction,
                         tags: state.tags.map((tag) => tag.pk),
@@ -266,10 +283,34 @@ const actions = {
             commit("setLoading", "document", false);
             throw new Error("Unable to retrieve document");
         }
-        // fetch scripts
+        // fetch scripts and metadata
         await dispatch({ type: "project/fetchScripts" }, { root: true });
+        await dispatch("fetchDocumentMetadata");
         commit("setLoading", "document", false);
     },
+    /**
+     * Fetch the current document's metadata.
+     */
+    async fetchDocumentMetadata({ commit, state }) {
+        const { data } = await retrieveDocumentMetadata(state.id);
+        if (data?.results) {
+            commit("setMetadata", data.results);
+            commit(
+                "forms/setFieldValue",
+                {
+                    form: "editDocument",
+                    field: "metadata",
+                    value: data.results,
+                },
+                { root: true },
+            );
+        } else {
+            throw new Error("Unable to retrieve document metadata");
+        }
+    },
+    /**
+     * Fetch the current document's most recent images with thumbnails.
+     */
     async fetchDocumentParts({ commit, state }) {
         commit("setLoading", "parts", true);
         const { data } = await retrieveDocumentParts({ documentId: state.id });
@@ -385,22 +426,77 @@ const actions = {
      */
     async saveDocument({ commit, dispatch, rootState, state }) {
         commit("setLoading", "document", true);
+        // get form state
         const {
             linePosition,
             mainScript,
+            metadata,
             name,
             readDirection,
             tags,
         } = rootState.forms.editDocument;
+        // split modified metadata by operation
+        const {
+            metadataToCreate,
+            metadataToUpdate,
+            metadataToDelete,
+        } = getDocumentMetadataCRUD({
+            stateMetadata: state.metadata,
+            formMetadata: metadata,
+        });
         try {
-            const { data } = await editDocument(state.id, {
-                linePosition,
-                mainScript,
-                name,
-                readDirection,
-                tags,
-            });
-            if (data) {
+            const [documentResponse, ...metadataResponses] = await Promise.all([
+                // update the document
+                editDocument(state.id, {
+                    linePosition,
+                    mainScript,
+                    name,
+                    readDirection,
+                    tags,
+                }),
+                // create, update, delete metadata as needed
+                ...metadataToCreate.map((metadatum) =>
+                    createDocumentMetadata({
+                        documentId: state.id,
+                        metadatum,
+                    }),
+                ),
+                ...metadataToUpdate.map((metadatum) =>
+                    updateDocumentMetadata({
+                        documentId: state.id,
+                        metadatum,
+                    }),
+                ),
+                ...metadataToDelete.map((m) =>
+                    deleteDocumentMetadata({
+                        documentId: state.id,
+                        metadatumId: m.pk,
+                    }),
+                ),
+            ]);
+            // update state for metadata responses
+            metadataResponses
+                .filter((r) => !!r)
+                .forEach((response) => {
+                    if (response.status === 200) {
+                        // updated
+                        const { data } = response;
+                        commit("addMetadatum", data);
+                    } else if (response.status === 201) {
+                        // created
+                        const { data } = response;
+                        commit("updateMetadatum", data);
+                    } else if (response.status === 204) {
+                        // deleted
+                        const { request } = response;
+                        const pk = request?.responseURL.split("/").slice(-1);
+                        commit("removeMetadatum", pk);
+                    } else {
+                        throw new Error("Error updating metadata");
+                    }
+                });
+            // update state for document response
+            if (documentResponse?.data) {
                 commit("setName", name);
                 commit("setLinePosition", linePosition);
                 commit("setMainScript", mainScript);
@@ -408,7 +504,7 @@ const actions = {
                 commit(
                     "setTags",
                     rootState.project.documentTags.filter((t) =>
-                        data?.tags?.includes(t.pk),
+                        documentResponse.data.tags?.includes(t.pk),
                     ),
                 );
                 commit("setEditModalOpen", false);
@@ -474,6 +570,17 @@ const actions = {
 };
 
 const mutations = {
+    addMetadatum(state, metadatum) {
+        const metadata = structuredClone(state.metadata);
+        metadata.push(metadatum);
+        state.metadata = metadata;
+    },
+    removeMetadatum(state, removePk) {
+        const clone = structuredClone(state.metadata);
+        state.metadata = clone.filter(
+            (metadatum) => metadatum.pk.toString() !== removePk.toString(),
+        );
+    },
     setDeleteModalOpen(state, open) {
         state.deleteModalOpen = open;
     },
@@ -497,6 +604,9 @@ const mutations = {
     },
     setMenuOpen(state, open) {
         state.menuOpen = open;
+    },
+    setMetadata(state, metadata) {
+        state.metadata = metadata;
     },
     setName(state, name) {
         state.name = name;
@@ -530,6 +640,15 @@ const mutations = {
     },
     setTranscriptions(state, transcriptions) {
         state.transcriptions = transcriptions;
+    },
+    updateMetadatum(state, metadatumToUpdate) {
+        const metadata = structuredClone(state.metadata).map((m) => {
+            if (m.pk.toString() === metadatumToUpdate.pk.toString()) {
+                return metadatumToUpdate;
+            }
+            return m;
+        });
+        state.metadata = metadata;
     },
 };
 

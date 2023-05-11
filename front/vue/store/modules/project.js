@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
     createDocument,
+    createDocumentMetadata,
     createProjectDocumentTag,
     deleteDocument,
     deleteProject,
@@ -159,6 +160,15 @@ const actions = {
                 tags: rootState.forms?.editDocument?.tags,
             });
             if (data) {
+                // try to create metadata too
+                await Promise.all(
+                    rootState.forms?.editDocument?.metadata.map((metadatum) =>
+                        createDocumentMetadata({
+                            documentId: data.pk,
+                            metadatum,
+                        }),
+                    ),
+                );
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
@@ -463,14 +473,20 @@ const actions = {
     async share({ commit, dispatch, rootState, state }) {
         const { user, group } = rootState.forms.share;
         try {
-            const { data } = await shareProject({ projectId: state.id, user, group });
+            const { data } = await shareProject({
+                projectId: state.id,
+                user,
+                group,
+            });
             if (data) {
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
                     {
                         color: "success",
-                        message: `${user ? "User" : "Group"} added successfully`,
+                        message: `${
+                            user ? "User" : "Group"
+                        } added successfully`,
                     },
                     { root: true },
                 );

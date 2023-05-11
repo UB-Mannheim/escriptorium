@@ -124,3 +124,23 @@ export const editDocument = async (
             tags,
         },
     });
+
+// retrieve document metadata
+export const retrieveDocumentMetadata = async (documentId) =>
+    await axios.get(`/documents/${documentId}/metadata`);
+
+// create document metadata
+export const createDocumentMetadata = async ({ documentId, metadatum }) =>
+    await axios.post(`/documents/${documentId}/metadata`, {
+        params: metadatum,
+    });
+
+// update document metadata
+export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
+    await axios.put(`/documents/${documentId}/metadata/${metadatum.pk}`, {
+        params: metadatum,
+    });
+
+// delete document metadata
+export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
+    await axios.delete(`/documents/${documentId}/metadata/${metadatumId}`);

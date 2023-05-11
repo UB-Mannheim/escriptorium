@@ -414,6 +414,18 @@ class DocumentMetadataSerializer(serializers.ModelSerializer):
                                               **validated_data)
         return dmd
 
+    def update(self, instance, validated_data):
+        instance.value = validated_data.get('value', instance.value)
+        instance.save()
+
+        if "key" in validated_data:
+            new_key = validated_data.get('key')
+            nested_serializer = self.fields['key']
+            nested_instance = instance.key
+            nested_serializer.update(nested_instance, new_key)
+
+        return instance
+
 
 class DocumentPartMetadataSerializer(serializers.ModelSerializer):
     key = MetadataSerializer()

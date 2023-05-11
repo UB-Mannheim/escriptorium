@@ -453,6 +453,7 @@ class DocumentPermissionMixin():
 class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentMetadata.objects.all().select_related('document')
     serializer_class = DocumentMetadataSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         qs = super().get_queryset()

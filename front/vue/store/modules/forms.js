@@ -32,13 +32,48 @@ const actions = {
             commit("deselectTag", { form, tag });
         }
     },
+    /**
+     * Update the list of metadata items on the state.
+     */
+    handleMetadataInput({ commit }, { form, action, metadatum }) {
+        switch (action) {
+            case "add":
+                commit("addMetadatum", { form, metadatum });
+                break;
+            case "remove":
+                commit("removeMetadatum", { form, metadatum });
+                break;
+            case "update":
+                commit("updateMetadatum", { form, metadatum });
+                break;
+        }
+    },
 };
 
 const mutations = {
+    addMetadatum(state, { form, metadatum }) {
+        const formClone = structuredClone(state[form]);
+        formClone.metadata.push(metadatum);
+        state[form] = formClone;
+    },
     deselectTag(state, { form, tag }) {
         const formClone = structuredClone(state[form]);
         formClone.tags.splice(formClone.tags.indexOf(tag.pk), 1);
         state[form] = formClone;
+    },
+    removeMetadatum(state, { form, metadatum }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone.metadata.findIndex(
+            (m) =>
+                // use pk if it exists on the backend, otherwise use index
+                (metadatum.pk && m.pk.toString() === metadatum.pk.toString()) ||
+                (metadatum.index && m.index === metadatum.index),
+        );
+        // remove if found
+        if (foundIndex !== -1) {
+            formClone.metadata.splice(foundIndex, 1);
+            state[form] = formClone;
+        }
     },
     selectTag(state, { form, tag }) {
         const formClone = structuredClone(state[form]);
@@ -52,6 +87,20 @@ const mutations = {
     },
     setFormState(state, { form, formState }) {
         state[form] = formState;
+    },
+    updateMetadatum(state, { form, metadatum }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone.metadata.findIndex(
+            (m) =>
+                // use pk if it exists on the backend, otherwise use index
+                (metadatum.pk && m.pk.toString() === metadatum.pk.toString()) ||
+                (metadatum.index && m.index === metadatum.index),
+        );
+        // update if found
+        if (foundIndex !== -1) {
+            formClone.metadata[foundIndex] = metadatum;
+            state[form] = formClone;
+        }
     },
 };
 

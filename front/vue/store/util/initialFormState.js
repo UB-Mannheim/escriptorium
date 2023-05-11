@@ -4,6 +4,7 @@ export default {
     editDocument: {
         linePosition: "",
         mainScript: "",
+        metadata: [],
         name: "",
         readDirection: "",
         tags: [],

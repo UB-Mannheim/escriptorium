@@ -32,7 +32,6 @@
                                 />
                             </div>
                         </div>
-                        <!-- TODO: figure out what metadata should go here, handle appropriately -->
                         <span class="escr-document-metadata">
                             Main script: {{ mainScript }}
                         </span>
@@ -259,6 +258,7 @@ export default {
             charactersLoading: (state) => state.characters.loading,
             charactersSort: (state) => state.characters.sortState,
             documentMenuOpen: (state) => state.document.menuOpen,
+            documentMetadata: (state) => state.document.metadata,
             documentName: (state) => state.document.name,
             deleteModalOpen: (state) => state.document.deleteModalOpen,
             editModalOpen: (state) => state.document.editModalOpen,
@@ -400,6 +400,7 @@ export default {
             "closeEditModal",
             "deleteDocument",
             "fetchDocument",
+            "fetchDocumentMetadata",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
             "openCharactersModal",
