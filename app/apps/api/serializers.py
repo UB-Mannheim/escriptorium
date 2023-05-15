@@ -655,11 +655,15 @@ class OcrModelSerializer(serializers.ModelSerializer):
     job = DisplayChoiceField(choices=OcrModel.MODEL_JOB_CHOICES)
     training = serializers.ReadOnlyField()
     file_size = serializers.IntegerField(required=False)
+    rights = serializers.SerializerMethodField(source='get_rights')
+    script = serializers.ReadOnlyField(source='script.name')
+    parent = serializers.ReadOnlyField(source='parent.name')
 
     class Meta:
         model = OcrModel
         fields = ('pk', 'name', 'file', 'file_size', 'job',
-                  'owner', 'training', 'versions', 'documents')
+                  'owner', 'training', 'versions', 'documents',
+                  'accuracy_percent', 'rights', 'script', 'parent')
 
     def create(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
@@ -670,6 +674,16 @@ class OcrModelSerializer(serializers.ModelSerializer):
         data['file_size'] = data['file'].size
         obj = super().create(data)
         return obj
+
+    def get_rights(self, instance):
+        # get the requesting user's permissions for the model
+        user = self.context["view"].request.user
+        if instance.owner == user:
+            return "owner"
+        elif instance.public:
+            return "public"
+        else:
+            return "user"
 
 
 class ProcessSerializerMixin():

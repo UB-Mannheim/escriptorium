@@ -204,6 +204,8 @@ import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
+import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
+import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
@@ -226,6 +228,10 @@ export default {
         EscrPage,
         EscrTable,
         EscrTags,
+        // eslint-disable-next-line vue/no-unused-components
+        ModelsIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        ModelsPanel,
         OntologyCard,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
@@ -265,6 +271,7 @@ export default {
             lineCount: (state) => state.transcription.lineCount,
             loading: (state) => state.document.loading,
             mainScript: (state) => state.document.mainScript,
+            models: (state) => state.document.models,
             nextPage: (state) => state.document.nextPage,
             ontology: (state) => state.ontology.ontology,
             ontologyCategory: (state) => state.ontology.category,
@@ -340,30 +347,42 @@ export default {
          * Sidebar quick actions for the document dashboard.
          */
         sidebarActions() {
-            return [{
-                data: {
-                    disabled: this.loading?.document,
-                    searchScope: "Document",
-                    projectId: this.projectId,
-                    documentId: this.id,
+            return [
+                {
+                    data: {
+                        disabled: this.loading?.document,
+                        searchScope: "Document",
+                        projectId: this.projectId,
+                        documentId: this.id,
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Document",
+                    panel: SearchPanel,
                 },
-                icon: SearchIcon,
-                key: "search",
-                label: "Search Document",
-                panel: SearchPanel,
-            },
-            {
-                data: {
-                    disabled: this.loading?.document,
-                    users: this.sharedWithUsers,
-                    groups: this.sharedWithGroups,
-                    openShareModal: this.openShareModal,
+                {
+                    data: {
+                        disabled: this.loading?.document,
+                        users: this.sharedWithUsers,
+                        groups: this.sharedWithGroups,
+                        openShareModal: this.openShareModal,
+                    },
+                    icon: PeopleIcon,
+                    key: "share",
+                    label: "Groups & Users",
+                    panel: SharePanel,
                 },
-                icon: PeopleIcon,
-                key: "share",
-                label: "Groups & Users",
-                panel: SharePanel,
-            }];
+                {
+                    data: {
+                        loading: this.loading?.document || this.loading?.models,
+                        models: this.models,
+                    },
+                    icon: ModelsIcon,
+                    key: "models",
+                    label: "Document Models",
+                    panel: ModelsPanel,
+                }
+            ];
         },
         transcriptionConfidence() {
             const confidence = this.transcriptions?.find(

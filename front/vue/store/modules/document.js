@@ -5,6 +5,7 @@ import {
     editDocument,
     retrieveDocument,
     retrieveDocumentMetadata,
+    retrieveDocumentModels,
     retrieveDocumentParts,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
@@ -23,6 +24,7 @@ const state = () => ({
     linePosition: null,
     loading: {
         document: false,
+        models: false,
         parts: false,
         transcriptions: false,
     },
@@ -38,6 +40,21 @@ const state = () => ({
      * }]
      */
     metadata: [],
+    /**
+     * models: [{
+     *     pk: Number,
+     *     name: String,
+     *     file: String,
+     *     file_size: Number,
+     *     job: String,
+     *     rights: String,
+     *     training: Boolean,
+     *     accuracy_percent?: Number,
+     *     model?: String,
+     *     parent?: String,
+     * }]
+     */
+    models: [],
     name: "",
     /**
      * parts: [{
@@ -177,7 +194,7 @@ const actions = {
      * Delete the current document.
      */
     async deleteDocument({ dispatch, commit, state }) {
-        commit("setLoading", true);
+        commit("setLoading", { key: "document", loading: true });
         try {
             await deleteDocument({ documentId: state.id });
             commit("setDeleteModalOpen", false);
@@ -185,13 +202,13 @@ const actions = {
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
-        commit("setLoading", false);
+        commit("setLoading", { key: "document", loading: false });
     },
     /**
      * Fetch the current document.
      */
     async fetchDocument({ commit, state, dispatch, rootState }) {
-        commit("setLoading", "document", true);
+        commit("setLoading", { key: "document", loading: true });
         const { data } = await retrieveDocument(state.id);
         if (data) {
             commit("setLastModified", data.updated_at);
@@ -231,10 +248,10 @@ const actions = {
             if (data.parts_count > 0) {
                 // kickoff parts fetch
                 try {
-                    commit("setLoading", "parts", true);
+                    commit("setLoading", { key: "parts", loading: true });
                     await dispatch("fetchDocumentParts");
                 } catch (error) {
-                    commit("setLoading", "parts", false);
+                    commit("setLoading", { key: "parts", loading: false });
                     dispatch("alerts/addError", error, { root: true });
                 }
             }
@@ -280,13 +297,15 @@ const actions = {
                 }
             }
         } else {
-            commit("setLoading", "document", false);
+            commit("setLoading", { key: "document", loading: false });
             throw new Error("Unable to retrieve document");
         }
-        // fetch scripts and metadata
+        commit("setLoading", { key: "document", loading: false });
+
+        // fetch scripts, metadata, models
         await dispatch({ type: "project/fetchScripts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
-        commit("setLoading", "document", false);
+        await dispatch("fetchDocumentModels");
     },
     /**
      * Fetch the current document's metadata.
@@ -309,10 +328,23 @@ const actions = {
         }
     },
     /**
+     * Fetch the current document's models.
+     */
+    async fetchDocumentModels({ commit, state }) {
+        commit("setLoading", { key: "models", loading: true });
+        const { data } = await retrieveDocumentModels(state.id);
+        if (data?.results) {
+            commit("setModels", data.results);
+        } else {
+            throw new Error("Unable to retrieve document models");
+        }
+        commit("setLoading", { key: "models", loading: false });
+    },
+    /**
      * Fetch the current document's most recent images with thumbnails.
      */
     async fetchDocumentParts({ commit, state }) {
-        commit("setLoading", "parts", true);
+        commit("setLoading", { key: "parts", loading: true });
         const { data } = await retrieveDocumentParts({ documentId: state.id });
         if (data?.results) {
             commit(
@@ -323,10 +355,10 @@ const actions = {
                 })),
             );
         } else {
-            commit("setLoading", "parts", false);
+            commit("setLoading", { key: "parts", loading: false });
             throw new Error("Unable to retrieve document images");
         }
-        commit("setLoading", "parts", false);
+        commit("setLoading", { key: "parts", loading: false });
     },
     /**
      * Fetch the current transcription's characters, given this document's id from state,
@@ -425,7 +457,7 @@ const actions = {
      * Save changes to the document made in the edit modal.
      */
     async saveDocument({ commit, dispatch, rootState, state }) {
-        commit("setLoading", "document", true);
+        commit("setLoading", { key: "document", loading: true });
         // get form state
         const {
             linePosition,
@@ -521,10 +553,10 @@ const actions = {
                 { root: true },
             );
         } catch (error) {
-            commit("setLoading", "document", false);
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
-        commit("setLoading", "document", false);
+        commit("setLoading", { key: "document", loading: false });
     },
     /**
      * Set the ID of the document on the state (happens immediately on page load).
@@ -596,8 +628,10 @@ const mutations = {
     setLinePosition(state, linePosition) {
         state.linePosition = linePosition;
     },
-    setLoading(state, key, loading) {
-        state.loading[key] = loading;
+    setLoading(state, { key, loading }) {
+        const clone = structuredClone(state.loading);
+        clone[key] = loading;
+        state.loading = clone;
     },
     setMainScript(state, mainScript) {
         state.mainScript = mainScript;
@@ -607,6 +641,9 @@ const mutations = {
     },
     setMetadata(state, metadata) {
         state.metadata = metadata;
+    },
+    setModels(state, models) {
+        state.models = models;
     },
     setName(state, name) {
         state.name = name;

@@ -144,3 +144,11 @@ export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
 // delete document metadata
 export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
     await axios.delete(`/documents/${documentId}/metadata/${metadatumId}`);
+
+// retrieve document models
+export const retrieveDocumentModels = async (documentId) =>
+    await axios.get("/models", {
+        params: {
+            documents: documentId,
+        },
+    });

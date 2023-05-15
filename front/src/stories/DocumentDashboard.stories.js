@@ -9,6 +9,7 @@ import {
     charactersRandomized,
     groups,
     lineTypes,
+    models,
     partTypes,
     scripts,
     sorted,
@@ -122,6 +123,9 @@ const Template = (args, { argTypes }) => ({
         );
         const documentMetadatumEndpoint = new RegExp(
             /\/documents\/\d+\/metadata\/\d+$/,
+        );
+        const documentModelsEndpoint = new RegExp(
+            /\/models$/,
         );
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         const scriptsEndpoint = "/scripts";
@@ -365,6 +369,13 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [204];
+        });
+        // mock get document models
+        mock.onGet(documentModelsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: models }];
         });
     },
 });
