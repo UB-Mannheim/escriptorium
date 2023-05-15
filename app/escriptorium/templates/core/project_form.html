@@ -13,7 +13,7 @@
                 {% endfor %}
             </div>
 
-            {% render_field form.name %}
+            {% render_field form.name maxlength=50 %}
 
             <input type="submit" value="{% if object %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}" class="btn btn-success btn-block my-3" {% if object %}autofocus{% endif %}>
         </fieldset>
