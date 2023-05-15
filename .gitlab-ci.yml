@@ -26,7 +26,7 @@ tests:
     - when: never
 
   services:
-    - postgres:13-alpine
+    - postgres:15
     - redis:alpine
 
   variables:
