@@ -11,9 +11,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     align-items: center;
-    background-color: var(--tag-12);
+    background-color: var(--tag-0);
 }
-/* tag color variants */
+/* tag color variants: light colors */
+.escr-tag--variant-0 {
+    background-color: var(--tag-0);
+}
 .escr-tag--variant-1 {
     background-color: var(--tag-1);
 }
@@ -49,4 +52,75 @@
 }
 .escr-tag--variant-12 {
     background-color: var(--tag-12);
+}
+.escr-tag--variant-13 {
+    background-color: var(--tag-13);
+}
+.escr-tag--variant-14 {
+    background-color: var(--tag-14);
+}
+.escr-tag--variant-15 {
+    background-color: var(--tag-15);
+}
+
+/* darker colors */
+.escr-tag--variant-16 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-16);
+}
+.escr-tag--variant-17 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-17);
+}
+.escr-tag--variant-18 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-18);
+}
+.escr-tag--variant-19 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-19);
+}
+.escr-tag--variant-20 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-20);
+}
+.escr-tag--variant-21 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-21);
+}
+.escr-tag--variant-22 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-22);
+}
+.escr-tag--variant-23 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-23);
+}
+.escr-tag--variant-24 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-24);
+}
+.escr-tag--variant-25 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-25);
+}
+.escr-tag--variant-26 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-26);
+}
+.escr-tag--variant-27 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-27);
+}
+.escr-tag--variant-28 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-28);
+}
+.escr-tag--variant-29 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-29);
+}
+.escr-tag--variant-30 {
+    color: var(--tag-text-ondark);
+    background-color: var(--tag-30);
 }
