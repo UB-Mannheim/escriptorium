@@ -275,6 +275,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
+            model.training_accuracy = kraken_model.best_metric
         except FileNotFoundError:
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
@@ -466,6 +467,7 @@ def train_(qs, document, transcription, model=None, user=None):
     if kraken_model.best_epoch != 0:
         best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
         shutil.copy(best_version, model.file.path)
+        model.training_accuracy = kraken_model.best_metric
     else:
         raise ValueError('No model created.')
 
