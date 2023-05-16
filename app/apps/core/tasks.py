@@ -269,7 +269,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
                                          topline=topline)
 
         trainer = KrakenTrainer(accelerator=accelerator,
-                                device=device,
+                                devices=device,
                                 # max_epochs=2,
                                 # min_epochs=5,
                                 enable_progress_bar=False,
@@ -458,7 +458,7 @@ def train_(qs, document, transcription, model=None, user=None):
                                     resize='add')
 
     trainer = KrakenTrainer(accelerator=accelerator,
-                            device=device,
+                            devices=device,
                             # max_epochs=,
                             # min_epochs=hyper_params['min_epochs'],
                             enable_progress_bar=False,
