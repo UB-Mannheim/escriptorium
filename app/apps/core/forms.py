@@ -242,7 +242,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
 
-        if self.request.method == "POST":
+        if self.request.method == "POST" and 'import_form' not in self.request.POST:
             # we need to accept all types when posting for added ones
             # TODO: if the form has errors it show everything.. need to find a better solution
             block_qs = BlockType.objects.all()
@@ -268,13 +268,13 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['valid_part_types'].queryset = part_qs.order_by('name')
 
         self.compo_form = ComponentFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             prefix='compo_form',
             instance=self.instance)
 
         img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
         self.img_anno_form = ImageAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
             prefix='img_anno_form',
@@ -282,7 +282,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
         text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
         self.text_anno_form = TextAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=text_choices).select_related('typology').prefetch_related('components'),
             prefix='text_anno_form',
@@ -638,9 +638,13 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
-    model = forms.ModelChoiceField(queryset=OcrModel.objects
-                                   .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
-                                   required=False)
+    model = forms.ModelChoiceField(
+        queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+        required=False)
+    transcription = forms.ModelChoiceField(
+        queryset=Transcription.objects.filter(archived=False),
+        empty_label=_('-- New --'),
+        required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -652,8 +656,13 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
             | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
+        self.fields['transcription'].queryset = self.fields['transcription'].queryset.filter(
+            document=self.document
+        )
+
     def process(self):
         model = self.cleaned_data.get('model')
+        transcription = self.cleaned_data.get('transcription')
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -667,7 +676,8 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         for part in self.cleaned_data.get('parts'):
             part.task('transcribe',
                       user_pk=self.user.pk,
-                      model_pk=model.pk)
+                      model_pk=model.pk,
+                      transcription_pk=transcription and transcription.pk or None)
 
 
 class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixin):
@@ -850,7 +860,7 @@ class TrainMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Note: Only a owner should be able to train on top of an existing model
+        # Note: Only an owner should be able to train on top of an existing model
         # if the model is public, the user can only clone it (override=False)
         self.fields['model'].queryset = (self.fields['model'].queryset
                                          .filter(Q(public=True) | Q(owner=self.user)))
@@ -995,7 +1005,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['user'].label = ''
-        self.fields['user'].empty_label = 'Choose an user'
+        self.fields['user'].empty_label = 'Choose a user'
         self.fields['user'].queryset = self.fields['user'].queryset.exclude(
             Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
         ).filter(groups__in=model.owner.groups.all()).distinct()
@@ -1017,8 +1027,8 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         user = cleaned_data.get("user")
         group = cleaned_data.get("group")
         if (not user and not group) or (user and group):
-            self.add_error('user', 'You must either choose an user OR a group')
-            self.add_error('group', 'You must either choose an user OR a group')
+            self.add_error('user', 'You must either choose a user OR a group')
+            self.add_error('group', 'You must either choose a user OR a group')
         return cleaned_data
 
 

@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'captcha',
 
     'bootstrap',
@@ -199,7 +200,7 @@ CACHES = {
 
 # Boolean used to defuse the search feature (default to True)
 DISABLE_ELASTICSEARCH = os.getenv('DISABLE_ELASTICSEARCH', 'True').lower() not in ('false', '0')
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'localhost:9200')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_COMMON_INDEX = os.getenv('ELASTICSEARCH_COMMON_INDEX', 'es-transcriptions')
 
 
@@ -431,7 +432,7 @@ QUOTA_CPU_MINUTES = int(os.environ['QUOTA_CPU_MINUTES']) if os.environ.get('QUOT
 # If set to None, users have unlimited GPU minutes capacity
 QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOTA_GPU_MINUTES') else None
 
-# Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
+# Number of days that we have to wait before sending a new email to a user that reached one or more of its quotas
 QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
 
 # Boolean used to enable the OpenITI mARkdown export mode

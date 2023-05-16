@@ -649,9 +649,18 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
         $(this).attr('title', this.value);
     });
 
+    $('#process-part-form-transcribe #id_model').on('change', function(ev) {
+        var modelName = ev.target.options[ev.target.selectedIndex].innerHTML;
+        var options = document.querySelectorAll('#process-part-form-transcribe #id_transcription option');
+        var opt = Array.from(options).find(o => o.innerHTML == 'kraken:'+modelName);
+        if (opt) {
+            opt.selected = true;
+        }
+    });
+
     $('#process-part-form-export').submit(function(ev) {
         // store the export format choice for later use
-        let export_format = $('#process-part-form-export #id_file_format').val();
+        var export_format = $('#process-part-form-export #id_file_format').val();
         userProfile.set('exportFormat', export_format);
     });
 

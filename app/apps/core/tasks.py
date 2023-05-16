@@ -275,6 +275,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
+            model.training_accuracy = kraken_model.best_metric
         except FileNotFoundError:
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
@@ -466,6 +467,7 @@ def train_(qs, document, transcription, model=None, user=None):
     if kraken_model.best_epoch != 0:
         best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
         shutil.copy(best_version, model.file.path)
+        model.training_accuracy = kraken_model.best_metric
     else:
         raise ValueError('No model created.')
 
@@ -532,7 +534,8 @@ def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **k
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=None, **kwargs):
+def transcribe(instance_pk=None, model_pk=None, user_pk=None,
+               transcription_pk=None, text_direction=None, **kwargs):
 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -554,9 +557,14 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
         user = None
 
     try:
+        if transcription_pk:
+            Transcription = apps.get_model('core', 'Transcription')
+            transcription = Transcription.objects.get(pk=transcription_pk)
+        else:
+            transcription = None
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
-        part.transcribe(model)
+        part.transcribe(model, transcription=transcription, user=user)
 
     except Exception as e:
         if user:

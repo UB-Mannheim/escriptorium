@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
@@ -59,7 +60,8 @@ from core.models import (
     OcrModelRight,
     Project,
 )
-from imports.forms import ExportForm, ImportForm
+from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
+from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
 from users.models import User
 
@@ -393,6 +395,62 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
     form_class = DocumentOntologyForm
     template_name = "core/document_ontology.html"
     success_message = _("Ontology saved successfully!")
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+
+        if 'import_form' in request.POST:
+            import_form = DocumentOntologyImportForm(request.POST, request.FILES, prefix='import_form')
+            if not import_form.is_valid():
+                context.update({'import_form': import_form, 'show_import_modal': True})
+                return self.render_to_response(context)
+
+            # Creating a TaskReport object to store warnings and errors that occur during deserialization
+            report = TaskReport.objects.create(
+                label=f'Ontology import from a JSON file in "{self.object}"',
+                user=request.user,
+                document=self.object,
+            )
+            report.start()
+
+            updated_with_warnings = False
+            try:
+                # Parsing the provided JSON file
+                json_ontology = json.loads(request.FILES.get('import_form-file').read())
+                serializer = OntologyImportSerializer(self.object, data=json_ontology, report=report)
+
+                # Checking its version is the supported one
+                json_version = json_ontology.get('version')
+                if json_version != serializer.VERSION:
+                    raise Exception(f'JSON ontology file is in version {json_version}, currently supported version is {serializer.VERSION}')
+
+                # Saving the data on the Document object
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
+                updated_with_warnings = serializer.updated_with_warnings
+            except Exception as e:
+                report.error('[ERROR] ' + str(e))
+
+                messages.error(self.request, _('Something went wrong during the ontology import...'), extra_tags=report.uri)
+            else:
+                report.end()
+
+                if updated_with_warnings:
+                    messages.warning(self.request, _('Ontology import finished with warnings.'), extra_tags=report.uri)
+                else:
+                    messages.success(self.request, _('Ontology import finished successfully!'), extra_tags=report.uri)
+
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['import_form'] = DocumentOntologyImportForm(prefix='import_form')
+        context['show_import_modal'] = False
+        return context
 
     def get_success_url(self):
         return reverse('document-ontology', kwargs={'pk': self.object.pk})
