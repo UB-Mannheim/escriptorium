@@ -860,7 +860,7 @@ class TrainMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Note: Only a owner should be able to train on top of an existing model
+        # Note: Only an owner should be able to train on top of an existing model
         # if the model is public, the user can only clone it (override=False)
         self.fields['model'].queryset = (self.fields['model'].queryset
                                          .filter(Q(public=True) | Q(owner=self.user)))
@@ -1005,7 +1005,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['user'].label = ''
-        self.fields['user'].empty_label = 'Choose an user'
+        self.fields['user'].empty_label = 'Choose a user'
         self.fields['user'].queryset = self.fields['user'].queryset.exclude(
             Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
         ).filter(groups__in=model.owner.groups.all()).distinct()
@@ -1027,8 +1027,8 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         user = cleaned_data.get("user")
         group = cleaned_data.get("group")
         if (not user and not group) or (user and group):
-            self.add_error('user', 'You must either choose an user OR a group')
-            self.add_error('group', 'You must either choose an user OR a group')
+            self.add_error('user', 'You must either choose a user OR a group')
+            self.add_error('group', 'You must either choose a user OR a group')
         return cleaned_data
 
 
