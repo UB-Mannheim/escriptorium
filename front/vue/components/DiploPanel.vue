@@ -280,13 +280,15 @@ export default Vue.extend({
 
         recalculateAnnotationSelectors() {
             for (let anno of this.anno.getAnnotations()) {
-                let annoEl = document.querySelector('.r6o-annotation[data-id="'+anno.id+'"]');
+                let annoEls = document.querySelectorAll('.r6o-annotation[data-id="'+anno.id+'"]');
 
-                if (annoEl === null) {
+                if (annoEls === null) {
                     this.$store.dispatch('textAnnotations/delete', anno.id);
                 }
+
                 let range = document.createRange();
-                range.selectNodeContents(annoEl);
+                range.setStart(annoEls[0], 0);
+                range.setEnd(annoEls[annoEls.length-1], 1);
                 let rangeBefore = document.createRange();
                 rangeBefore.setStart(this.$refs.contentContainer, 0);
                 rangeBefore.setEnd(range.startContainer, range.startOffset);

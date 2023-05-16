@@ -186,7 +186,7 @@ export var AnnoPanel = {
         getAPIAnnotationBody(annotation) {
             return {
                 part: this.$store.state.parts.pk,
-                taxonomy: annotation.taxonomy.pk,
+                taxonomy: annotation.taxonomy ? annotation.taxonomy.pk : null,
                 comments: [...annotation.body.filter(e => e.purpose == 'commenting')].map(b => b.value),
                 components: [...annotation.body.filter(e=> e.purpose.startsWith('attribute'))].map(b => {
                     return {
