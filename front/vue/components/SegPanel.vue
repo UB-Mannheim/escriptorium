@@ -81,12 +81,7 @@
           class="btn btn-sm btn-info fas fa-th-large"
           autocomplete="off"
         ></button>
-        <button
-          id="be-toggle-order"
-          title="Toggle ordering display. (L)"
-          class="btn btn-sm btn-info fas fa-sort-numeric-down"
-          autocomplete="off"
-        ></button>
+
         <button
           id="be-toggle-line-mode"
           title="Toggle line masks and stroke width. (M)"
@@ -98,6 +93,29 @@
           id="be-split-lines"
           title="Cut through lines. (C)"
           class="btn btn-sm btn-warning fas fa-cut"
+        ></button>
+      </div>
+
+      <div class="btn-group">
+        <button
+          id="be-toggle-order"
+          title="Toggle ordering display. (L)"
+          class="btn btn-sm btn-info fas fa-sort-numeric-down"
+          autocomplete="off"
+        ></button>
+        <button
+          id="toggle-auto-order"
+          @click="toggleAutoOrder"
+          title="Toggle automatic reordering on line creation/deletion."
+          class="btn btn-sm fas fa-robot"
+          v-bind:class="[autoOrder ? 'btn-success' : 'btn-info']"
+        ></button>
+        <button
+          v-if="!autoOrder"
+          id="manualOrder"
+          title="Reorder line automatically"
+          class="btn btn-sm btn-info fas fa-sort"
+          @click="recalculateOrdering"
         ></button>
       </div>
 
@@ -235,7 +253,8 @@ export default Vue.extend({
       imageLoaded: false,
       colorMode: "color", //  color - binary - grayscale
       undoManager: new UndoManager(),
-      isWorking: false
+      isWorking: false,
+      autoOrder: userProfile.get('autoOrder', true)
     };
   },
   components: {
@@ -247,6 +266,8 @@ export default Vue.extend({
     // wait for the element to be rendered
     Vue.nextTick(
       function () {
+        this.$store.commit('lines/setAutoOrdering', this.autoOrder);
+
         this.$parent.zoom.register(this.$refs.segZoomContainer, { map: true });
         let beSettings =
           userProfile.get("baseline-editor-" + this.$store.state.document.id) ||
@@ -502,6 +523,12 @@ export default Vue.extend({
     toggleBinary(ev) {
       if (this.colorMode == "color") this.colorMode = "binary";
       else this.colorMode = "color";
+    },
+
+    toggleAutoOrder(ev) {
+      this.autoOrder = !this.autoOrder;
+      this.$store.commit('lines/setAutoOrdering', this.autoOrder);
+      userProfile.set("autoOrder", this.autoOrder);
     },
 
     pushHistory(undo, redo) {
@@ -806,6 +833,10 @@ export default Vue.extend({
     async processLines(ev) {
       ev.target.disabled = true;
       await this.$store.dispatch("lines/recalculateMasks");
+    },
+
+    async recalculateOrdering(ev) {
+      await this.$store.dispatch("lines/recalculateOrdering");
     },
 
     onImageLoaded() {

@@ -4,6 +4,7 @@ import * as api from '../api'
 export const initialState = () => ({
     all: [],
     editedLine: null,
+    autoOrder: true,
     // internal
     masksToRecalc: [],
     debouncedRecalculateMasks: null,
@@ -53,6 +54,9 @@ export const mutations = {
     },
     setEditedLine (state, line) {
         state.editedLine = line
+    },
+    setAutoOrdering (state, value) {
+        state.autoOrder = value
     },
     updateOrder (state, { lines, recalculate }) {
         for (let i=0; i<lines.length; i++) {
@@ -161,7 +165,10 @@ export const actions = {
             commit('append', newLine)
         }
 
-        await dispatch('recalculateOrdering')
+        if (rootState.lines.autoOrder) {
+            await dispatch('recalculateOrdering')
+        }
+
         if (getters.hasMasks) {
             await dispatch('recalculateMasks', createdLines.map(l=>l.pk))
         }
@@ -206,7 +213,8 @@ export const actions = {
         if (getters.hasMasks && updatedBaselines.length) {
             await dispatch('recalculateMasks', updatedBaselines.map(l=>l.pk))
         }
-        if (hasToRecalculateOrdering) {
+
+        if (hasToRecalculateOrdering && state.autoOrder) {
             await dispatch('recalculateOrdering')
         }
 
@@ -225,8 +233,11 @@ export const actions = {
                 commit('remove', index)
             }
         }
-
-        await dispatch('recalculateOrdering')
+        if (state.autoOrder) {
+            await dispatch('recalculateOrdering')
+        } else {
+            commit('updateOrder', { lines: state.all, recalculate: true })
+        }
 
         return { deletedPKs, deletedLines }
     },
@@ -261,8 +272,12 @@ export const actions = {
             }
         }
         commit('append', createdLine)
+        if (state.autoOrder) {
+            await dispatch('recalculateOrdering');
+        } else {
+            commit('updateOrder', { lines: state.all, recalculate: true })
+        }
 
-        await dispatch('recalculateOrdering');
         if (getters.hasMasks) {
             await dispatch('recalculateMasks', createdLine.pk)
         }
