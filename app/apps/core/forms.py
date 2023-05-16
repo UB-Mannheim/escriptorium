@@ -638,9 +638,13 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
-    model = forms.ModelChoiceField(queryset=OcrModel.objects
-                                   .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
-                                   required=False)
+    model = forms.ModelChoiceField(
+        queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+        required=False)
+    transcription = forms.ModelChoiceField(
+        queryset=Transcription.objects.filter(archived=False),
+        empty_label=_('-- New --'),
+        required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -652,8 +656,13 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
             | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
+        self.fields['transcription'].queryset = self.fields['transcription'].queryset.filter(
+            document=self.document
+        )
+
     def process(self):
         model = self.cleaned_data.get('model')
+        transcription = self.cleaned_data.get('transcription')
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -667,7 +676,8 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         for part in self.cleaned_data.get('parts'):
             part.task('transcribe',
                       user_pk=self.user.pk,
-                      model_pk=model.pk)
+                      model_pk=model.pk,
+                      transcription_pk=transcription and transcription.pk or None)
 
 
 class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixin):
