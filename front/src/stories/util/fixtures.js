@@ -190,3 +190,15 @@ export const transcriptions = [
         lines_count: 20,
     },
 ];
+
+export const userGroups = [
+    ...groups,
+    {
+        pk: 4,
+        name: "Example group",
+    },
+    {
+        pk: 5,
+        name: "Group 2",
+    },
+];

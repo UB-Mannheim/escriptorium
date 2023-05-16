@@ -10,6 +10,7 @@ import {
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
     retrieveTranscriptionOntology,
+    shareDocument,
     updateDocumentMetadata,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
@@ -27,6 +28,7 @@ const state = () => ({
         models: false,
         parts: false,
         transcriptions: false,
+        user: false,
     },
     mainScript: "",
     menuOpen: false,
@@ -189,6 +191,13 @@ const actions = {
             },
             { root: true },
         );
+    },
+    /**
+     * Close the "add group or user" modal and clear out state.
+     */
+    closeShareModal({ commit, dispatch }) {
+        commit("setShareModalOpen", false);
+        dispatch("forms/clearForm", "share", { root: true });
     },
     /**
      * Delete the current document.
@@ -454,6 +463,12 @@ const actions = {
         commit("setEditModalOpen", true);
     },
     /**
+     * Open the "groups and users" modal.
+     */
+    openShareModal({ commit }) {
+        commit("setShareModalOpen", true);
+    },
+    /**
      * Save changes to the document made in the edit modal.
      */
     async saveDocument({ commit, dispatch, rootState, state }) {
@@ -567,8 +582,45 @@ const actions = {
     /**
      * Set the loading state.
      */
-    setLoading({ commit }, key, loading) {
-        commit("setLoading", key, loading);
+    setLoading({ commit }, { key, loading }) {
+        commit("setLoading", { key, loading });
+    },
+    /**
+     * Send a POST request to share the document with users and groups from the share form.
+     */
+    async shareDocument({ commit, dispatch, state, rootState }) {
+        commit("setLoading", { key: "document", loading: true });
+        const { user, group } = rootState.forms.share;
+        try {
+            const { data } = await shareDocument({
+                documentId: state.id,
+                user,
+                group,
+            });
+            if (data) {
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: `${
+                            user ? "User" : "Group"
+                        } added successfully`,
+                    },
+                    { root: true },
+                );
+                // update share data on frontend
+                commit("setSharedWithGroups", data.shared_with_groups);
+                commit("setSharedWithUsers", data.shared_with_users);
+            } else {
+                throw new Error("Unable to add user or group.");
+            }
+        } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", { key: "document", loading: false });
+        dispatch("closeShareModal");
     },
     /**
      * Change the characters sort field and perform another fetch for characters.

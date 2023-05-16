@@ -140,10 +140,11 @@ const actions = {
         commit("setMenuOpen", false);
     },
     /**
-     * Close the "add group or user" modal.
+     * Close the "add group or user" modal and clear out state.
      */
-    closeShareModal({ commit }) {
+    closeShareModal({ commit, dispatch }) {
         commit("setShareModalOpen", false);
+        dispatch("forms/clearForm", "share", { root: true });
     },
     /**
      * Create a new document with the data from state.

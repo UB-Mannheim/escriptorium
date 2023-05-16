@@ -152,3 +152,9 @@ export const retrieveDocumentModels = async (documentId) =>
             documents: documentId,
         },
     });
+
+// share this document with a group or user
+export const shareDocument = async ({ documentId, group, user }) =>
+    await axios.post(`/documents/${documentId}/share`, {
+        params: { group, user },
+    });

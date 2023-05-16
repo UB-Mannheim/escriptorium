@@ -178,7 +178,7 @@
                         :items="characters"
                     />
                 </div>
-                <!-- delete project modal -->
+                <!-- delete document modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
                     body-text="Are you sure you want to delete this document?"
@@ -188,6 +188,14 @@
                     :disabled="loading?.document"
                     :on-cancel="closeDeleteModal"
                     :on-confirm="deleteDocument"
+                />
+                <!-- share document modal -->
+                <ShareModal
+                    v-if="shareModalOpen"
+                    :groups="groups"
+                    :disabled="loading?.document || loading?.user"
+                    :on-cancel="closeShareModal"
+                    :on-submit="shareDocument"
                 />
             </div>
         </template>
@@ -211,6 +219,7 @@ import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
@@ -241,6 +250,7 @@ export default {
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         // eslint-disable-next-line vue/no-unused-components
@@ -268,6 +278,7 @@ export default {
             documentName: (state) => state.document.name,
             deleteModalOpen: (state) => state.document.deleteModalOpen,
             editModalOpen: (state) => state.document.editModalOpen,
+            groups: (state) => state.user.groups,
             lineCount: (state) => state.transcription.lineCount,
             loading: (state) => state.document.loading,
             mainScript: (state) => state.document.mainScript,
@@ -284,6 +295,7 @@ export default {
             scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
             sharedWithGroups: (state) => state.document.sharedWithGroups,
+            shareModalOpen: (state) => state.document.shareModalOpen,
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
             transcriptionLoading: (state) => state.transcription.loading,
@@ -406,7 +418,15 @@ export default {
         try {
             await this.fetchDocument();
         } catch (error) {
-            this.setLoading("document", false);
+            this.setLoading({ key: "document", loading: false });
+            this.addError(error);
+        }
+        try {
+            this.setLoading({ key: "user", loading: true });
+            await this.fetchGroups();
+            this.setLoading({ key: "user", loading: false });
+        } catch(error) {
+            this.setLoading({ key: "user", loading: false });
             this.addError(error);
         }
     },
@@ -417,6 +437,7 @@ export default {
             "closeDeleteModal",
             "closeDocumentMenu",
             "closeEditModal",
+            "closeShareModal",
             "deleteDocument",
             "fetchDocument",
             "fetchDocumentMetadata",
@@ -433,12 +454,14 @@ export default {
             "selectTranscription",
             "setId",
             "setLoading",
+            "shareDocument",
             "sortCharacters",
             "sortOntology",
             "viewTasks",
         ]),
         ...mapActions("alerts", ["addError"]),
         ...mapActions("project", ["createNewDocumentTag"]),
+        ...mapActions("user", ["fetchGroups"]),
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },

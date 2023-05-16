@@ -16,6 +16,7 @@ import {
     tags,
     transcriptions,
     users,
+    userGroups,
 } from "./util";
 
 export default {
@@ -124,9 +125,7 @@ const Template = (args, { argTypes }) => ({
         const documentMetadatumEndpoint = new RegExp(
             /\/documents\/\d+\/metadata\/\d+$/,
         );
-        const documentModelsEndpoint = new RegExp(
-            /\/models$/,
-        );
+        const documentModelsEndpoint = new RegExp(/\/models$/);
         const documentTagsEndpoint = new RegExp(/\/projects\/\d+\/tags$/);
         const scriptsEndpoint = "/scripts";
         const partsEndpoint = new RegExp(/\/documents\/\d+\/parts$/);
@@ -157,6 +156,8 @@ const Template = (args, { argTypes }) => ({
         const charCountB = new RegExp(
             /\/documents\/\d+\/transcriptions\/2\/character_count$/,
         );
+        const groupsEndpoint = "/groups";
+        const shareEndpoint = new RegExp(/\/documents\/\d+\/share$/);
         // mock document response
         mock.onGet(documentEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -376,6 +377,42 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: models }];
+        });
+        // mock groups
+        mock.onGet(groupsEndpoint).reply(async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: userGroups }];
+        });
+        // mock share
+        mock.onPost(shareEndpoint).reply(async function(config) {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            if (config?.data) {
+                const { params } = JSON.parse(config.data);
+                const { group, user } = params;
+                if (
+                    group &&
+                    !doc.shared_with_groups.some(
+                        (grp) => grp.pk.toString() === group.toString(),
+                    )
+                ) {
+                    doc.shared_with_groups.push(
+                        userGroups.find(
+                            (grp) => grp.pk.toString() === group.toString(),
+                        ),
+                    );
+                }
+                if (user) {
+                    doc.shared_with_users.push({ username: user });
+                }
+                // return the entire document with the shared_with_users
+                // or shared_with_groups updated
+                return [200, doc];
+            }
+            return [400];
         });
     },
 });
