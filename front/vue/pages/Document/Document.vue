@@ -217,10 +217,12 @@ import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
+import QuickActionsPanel from "../../components/QuickActionsPanel/QuickActionsPanel.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
+import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Document.css";
@@ -247,12 +249,16 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
+        QuickActionsPanel,
+        // eslint-disable-next-line vue/no-unused-components
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
         ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
+        // eslint-disable-next-line vue/no-unused-components
+        ToolsIcon,
         // eslint-disable-next-line vue/no-unused-components
         TrashIcon,
         VerticalMenu,
@@ -371,6 +377,16 @@ export default {
                     key: "search",
                     label: "Search Document",
                     panel: SearchPanel,
+                },
+                {
+                    data: {
+                        disabled: this.loading?.document,
+                        scope: "Document",
+                    },
+                    icon: ToolsIcon,
+                    key: "tasks",
+                    label: "Quick Actions",
+                    panel: QuickActionsPanel,
                 },
                 {
                     data: {

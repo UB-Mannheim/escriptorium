@@ -10,6 +10,7 @@ import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
 import sidebar from "./modules/sidebar";
+import tasks from "./modules/tasks";
 import transcription from "./modules/transcription";
 import user from "./modules/user";
 import "floating-vue/dist/style.css";
@@ -39,6 +40,7 @@ export default new Store({
         project,
         projects,
         sidebar,
+        tasks,
         transcription,
         user,
     },
