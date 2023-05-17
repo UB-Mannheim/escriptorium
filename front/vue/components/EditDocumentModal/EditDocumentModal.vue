@@ -215,7 +215,7 @@ export default {
     },
     methods: {
         ...mapActions("forms", [
-            "handleTextInput",
+            "handleGenericInput",
             "handleTagsInput",
             "handleMetadataInput",
         ]),
@@ -259,7 +259,7 @@ export default {
             this.handleTagsInput({ checked, tag, form: "editDocument" });
         },
         handleTextFieldInput(field, value) {
-            this.handleTextInput({ field, value, form: "editDocument" });
+            this.handleGenericInput({ field, value, form: "editDocument" });
         },
     },
 }

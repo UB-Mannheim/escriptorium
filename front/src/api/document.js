@@ -158,3 +158,9 @@ export const shareDocument = async ({ documentId, group, user }) =>
     await axios.post(`/documents/${documentId}/share`, {
         params: { group, user },
     });
+
+// queue the segmentation task for this document
+export const segmentDocument = async ({ documentId, override, model, steps }) =>
+    await axios.post(`/documents/${documentId}/segment`, {
+        params: { override, model, steps },
+    });

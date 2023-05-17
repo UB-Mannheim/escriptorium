@@ -197,6 +197,26 @@
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
+                <!-- segment document modal -->
+                <SegmentModal
+                    v-if="taskModalOpen?.segment"
+                    :models="models"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('segment')"
+                    :on-submit="handleSubmitSegmentation"
+                    scope="Document"
+                />
+                <!-- overwrite segmentation modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen?.overwriteWarning"
+                    :body-text="'Are you sure you want to continue? Re-segmenting will delete ' +
+                        'any existing transcriptions.'"
+                    title="Overwrite Existing Segmentation and Transcriptions"
+                    confirm-verb="Continue"
+                    :cannot-undo="true"
+                    :on-cancel="() => closeTaskModal('overwriteWarning')"
+                    :on-confirm="confirmOverwriteWarning"
+                />
             </div>
         </template>
     </EscrPage>
@@ -220,6 +240,7 @@ import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import QuickActionsPanel from "../../components/QuickActionsPanel/QuickActionsPanel.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
@@ -254,6 +275,7 @@ export default {
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        SegmentModal,
         ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
@@ -304,6 +326,7 @@ export default {
             shareModalOpen: (state) => state.document.shareModalOpen,
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
+            taskModalOpen: (state) => state.tasks.modalOpen,
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
         }),
@@ -454,11 +477,13 @@ export default {
             "closeDocumentMenu",
             "closeEditModal",
             "closeShareModal",
+            "confirmOverwriteWarning",
             "deleteDocument",
             "fetchDocument",
             "fetchDocumentMetadata",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
+            "handleSubmitSegmentation",
             "openCharactersModal",
             "openDeleteModal",
             "openDocumentMenu",
@@ -478,6 +503,12 @@ export default {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("project", ["createNewDocumentTag"]),
         ...mapActions("user", ["fetchGroups"]),
+        ...mapActions("tasks", {
+            closeTaskModal: "closeModal",
+            align: "alignDocument",
+            transcribe: "transcribeDocument",
+            export: "exportDocument",
+        }),
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },

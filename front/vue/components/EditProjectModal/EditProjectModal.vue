@@ -127,14 +127,14 @@ export default {
     },
     methods: {
         ...mapActions("forms", [
-            "handleTextInput",
+            "handleGenericInput",
             "handleTagsInput",
         ]),
         handleTagsFieldInput({ checked, tag }) {
             this.handleTagsInput({ checked, tag, form: "editProject" });
         },
         handleTextFieldInput(field, value) {
-            this.handleTextInput({ form: "editProject", field, value });
+            this.handleGenericInput({ form: "editProject", field, value });
         },
     },
 };

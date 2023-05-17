@@ -8,9 +8,9 @@ const getters = {};
 
 const actions = {
     /**
-     * Handle text input generically
+     * Handle text (or other) input generically
      */
-    handleTextInput({ commit }, { form, field, value }) {
+    handleGenericInput({ commit }, { form, field, value }) {
         commit("setFieldValue", { form, field, value });
     },
     /**
@@ -27,9 +27,9 @@ const actions = {
      */
     handleTagsInput({ commit }, { form, checked, tag }) {
         if (checked) {
-            commit("selectTag", { form, tag });
+            commit("addToArray", { form, field: "tags", value: tag.pk });
         } else {
-            commit("deselectTag", { form, tag });
+            commit("removeFromArray", { form, field: "tags", value: tag.pk });
         }
     },
     /**
@@ -48,17 +48,32 @@ const actions = {
                 break;
         }
     },
+    /**
+     * Take a checkbox input and translate it into array add/remove operations.
+     */
+    handleCheckboxArrayInput({ commit }, { form, field, checked, value }) {
+        if (checked) {
+            commit("addToArray", { form, field, value });
+        } else {
+            commit("removeFromArray", { form, field, value });
+        }
+    },
 };
 
 const mutations = {
+    addToArray(state, { form, field, value }) {
+        const formClone = structuredClone(state[form]);
+        formClone[field].push(value);
+        state[form] = formClone;
+    },
     addMetadatum(state, { form, metadatum }) {
         const formClone = structuredClone(state[form]);
         formClone.metadata.push(metadatum);
         state[form] = formClone;
     },
-    deselectTag(state, { form, tag }) {
+    removeFromArray(state, { form, field, value }) {
         const formClone = structuredClone(state[form]);
-        formClone.tags.splice(formClone.tags.indexOf(tag.pk), 1);
+        formClone[field].splice(formClone[field].indexOf(value), 1);
         state[form] = formClone;
     },
     removeMetadatum(state, { form, metadatum }) {
@@ -74,11 +89,6 @@ const mutations = {
             formClone.metadata.splice(foundIndex, 1);
             state[form] = formClone;
         }
-    },
-    selectTag(state, { form, tag }) {
-        const formClone = structuredClone(state[form]);
-        formClone.tags.push(tag.pk);
-        state[form] = formClone;
     },
     setFieldValue(state, { form, field, value }) {
         const formClone = structuredClone(state[form]);

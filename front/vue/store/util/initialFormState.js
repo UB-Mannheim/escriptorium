@@ -16,6 +16,12 @@ export default {
         tags: [],
         tagName: "",
     },
+    segment: {
+        model: "",
+        overwrite: false,
+        include: [],
+        textDirection: "",
+    },
     share: {
         group: "",
         user: "",

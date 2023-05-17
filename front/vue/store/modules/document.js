@@ -200,6 +200,18 @@ const actions = {
         dispatch("forms/clearForm", "share", { root: true });
     },
     /**
+     * Handle the user overwriting existing segmentation
+     */
+    async confirmOverwriteWarning({ dispatch, state }) {
+        try {
+            await dispatch("tasks/segmentDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "overwriteWarning", { root: true });
+            dispatch("tasks/closeModal", "segment", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Delete the current document.
      */
     async deleteDocument({ dispatch, commit, state }) {
@@ -442,6 +454,22 @@ const actions = {
             throw new Error(
                 `Unable to retrieve ${rootState.ontology.category} ontology`,
             );
+        }
+    },
+    /**
+     * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
+     * is checked, otherwise just queue the segmentation task and close the modal.
+     */
+    async handleSubmitSegmentation({ dispatch, state, rootState }) {
+        if (rootState?.forms?.segment?.overwrite === true) {
+            dispatch("tasks/openModal", "overwriteWarning", { root: true });
+        } else {
+            try {
+                await dispatch("tasks/segmentDocument", state.id, { root: true });
+                dispatch("tasks/closeModal", "segment", { root: true });
+            } catch (error) {
+                dispatch("alerts/addError", error, { root: true });
+            }
         }
     },
     /**

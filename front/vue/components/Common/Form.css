@@ -1,5 +1,6 @@
 .escr-form-field span.escr-required {
     color: red;
+    margin-left: 3px;
 }
 .escr-form-field .escr-help-text {
     font-weight: 400;
@@ -10,4 +11,17 @@
 .escr-form-field .escr-field-label {
     display: block;
     font-weight: 600;
+}
+.escr-form-field.escr-checkbox-field {
+    display: flex;
+    flex-flow: column;
+}
+.escr-form-field.escr-checkbox-field label {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin-top: 8px;
+}
+.escr-form-field.escr-checkbox-field input {
+    margin-right: 12px;
 }
