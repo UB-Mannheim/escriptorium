@@ -20,7 +20,7 @@ mkdir /var/www/html/WEBROOT
 
 source venv/bin/activate
 pip install -U pip setuptools==59.5.0 wheel
-pip install -U -r requirements.txt -r requirements-dev.txt
+pip install -U -r app/requirements.txt -r app/requirements-dev.txt
 cd front
 sudo npm install -g npm
 npm ci
@@ -39,7 +39,7 @@ pip install "celery<5.0.0" # wegen celery.task
 celery -A escriptorium worker -l INFO
 
 python manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8080
-celery worker --app escriptorium --loglevel DEBUG --detach --logfile escriptorium/logs/celery-20220201.log
+celery --app escriptorium worker --loglevel DEBUG --detach --logfile escriptorium/logs/celery-20220201.log
 
 # Fix problems with websocket connection.
 pip install --upgrade Pillow autobahn django-ordered-model==3.1.1 protobuf pyOpenSSL threadpoolctl djangorestframework==3.9.2 django-redis==4.10.0 beautifulsoup4==4.7.1 bleach==3.1.5 channels-redis==2.4.2
@@ -100,3 +100,11 @@ kraken.lib.exceptions.KrakenRepoException: Found 0 models when querying for id '
 Try JuliaMono font for line transcriptions: https://juliamono.netlify.app/
 [2]-  Running                 python -Wa manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8080 &
 [3]+  Running                 celery worker --app escriptorium --loglevel DEBUG &
+
+
+## Administrative tasks for eScriptorium
+
+```
+# Remove old import files
+find app/media/import_src -mtime +100
+```
