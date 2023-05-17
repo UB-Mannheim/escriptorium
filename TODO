@@ -100,3 +100,11 @@ kraken.lib.exceptions.KrakenRepoException: Found 0 models when querying for id '
 Try JuliaMono font for line transcriptions: https://juliamono.netlify.app/
 [2]-  Running                 python -Wa manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8080 &
 [3]+  Running                 celery worker --app escriptorium --loglevel DEBUG &
+
+
+## Administrative tasks for eScriptorium
+
+```
+# Remove old import files
+find app/media/import_src -mtime +100
+```
