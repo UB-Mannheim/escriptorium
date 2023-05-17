@@ -14,7 +14,7 @@ ADMINS = [
 # ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Settings for running from a subpath behind a proxy.
-FORCE_SCRIPT_NAME = '/escriptorium'
+FORCE_SCRIPT_NAME = '/escriptorium2'
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -37,7 +37,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2023-05-01'
+VERSION_DATE = 'UBMA-2023-05-17'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -59,8 +59,8 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
-MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+# INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
+# MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 INTERNAL_IPS = ['127.0.0.1']
 
 # only needed in development
