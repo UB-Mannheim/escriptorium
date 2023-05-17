@@ -20,7 +20,7 @@ mkdir /var/www/html/WEBROOT
 
 source venv/bin/activate
 pip install -U pip setuptools==59.5.0 wheel
-pip install -U -r requirements.txt -r requirements-dev.txt
+pip install -U -r app/requirements.txt -r app/requirements-dev.txt
 cd front
 sudo npm install -g npm
 npm ci
