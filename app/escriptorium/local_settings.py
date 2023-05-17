@@ -37,11 +37,14 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2023-05-01'
+VERSION_DATE = 'UBMA-2023-05-17'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
 ]
+
+# Workaround for buggy CPU cost calculation (factor is 1 / number of threads = 1 / 64).
+CPU_COST_FACTOR = 0.015625
 
 DEBUG = True
 
@@ -59,8 +62,8 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
-MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+# INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
+# MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 INTERNAL_IPS = ['127.0.0.1']
 
 # only needed in development
