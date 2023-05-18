@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-13 18:11+0200\n"
+"POT-Creation-Date: 2023-05-17 04:13+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -181,6 +181,10 @@ msgid ""
 msgstr ""
 "Wenn diese Option aktiviert ist, werden vorhandene Segmentierungen <b>und "
 "damit verbundene Transkriptionen</b> zuerst gelöscht!"
+
+#: apps/core/forms.py
+msgid "-- New --"
+msgstr ""
 
 #: apps/core/forms.py
 msgid "The transcription on which to perform alignment."
@@ -1846,6 +1850,7 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/wizards/align.html
+#: escriptorium/templates/core/wizards/transcribe.html
 msgid "Select a transcription"
 msgstr "Wählen Sie eine Transkription aus"
 
