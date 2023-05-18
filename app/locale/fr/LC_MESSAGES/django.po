@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-13 18:11+0200\n"
+"POT-Creation-Date: 2023-05-17 04:13+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -180,6 +180,10 @@ msgid ""
 msgstr ""
 "Si cette option est sélectionnée, les segmentations <b>et transcriptions "
 "existantes</b> seront d'abord supprimées !"
+
+#: apps/core/forms.py
+msgid "-- New --"
+msgstr ""
 
 #: apps/core/forms.py
 msgid "The transcription on which to perform alignment."
@@ -1794,6 +1798,7 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/wizards/align.html
+#: escriptorium/templates/core/wizards/transcribe.html
 msgid "Select a transcription"
 msgstr ""
 
