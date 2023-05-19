@@ -26,4 +26,8 @@ export default {
         group: "",
         user: "",
     },
+    transcribe: {
+        model: "",
+        layerName: "",
+    },
 };

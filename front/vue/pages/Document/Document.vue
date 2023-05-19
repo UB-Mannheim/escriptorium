@@ -206,6 +206,15 @@
                     :on-submit="handleSubmitSegmentation"
                     scope="Document"
                 />
+                <!-- transcribe document modal -->
+                <TranscribeModal
+                    v-if="taskModalOpen?.transcribe"
+                    :models="models"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('transcribe')"
+                    :on-submit="handleSubmitTranscribe"
+                    scope="Document"
+                />
                 <!-- overwrite segmentation modal -->
                 <ConfirmModal
                     v-if="taskModalOpen?.overwriteWarning"
@@ -245,6 +254,7 @@ import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Document.css";
 
@@ -283,6 +293,7 @@ export default {
         ToolsIcon,
         // eslint-disable-next-line vue/no-unused-components
         TrashIcon,
+        TranscribeModal,
         VerticalMenu,
     },
     props: {
@@ -319,6 +330,7 @@ export default {
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
+            regionTypes: (state) => state.document.regionTypes,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
@@ -484,6 +496,7 @@ export default {
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
             "handleSubmitSegmentation",
+            "handleSubmitTranscribe",
             "openCharactersModal",
             "openDeleteModal",
             "openDocumentMenu",

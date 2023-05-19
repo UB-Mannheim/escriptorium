@@ -72,6 +72,13 @@ const state = () => ({
     projectName: "",
     readDirection: "",
     /**
+     * regionTypes: [{
+     *     pk: Number,
+     *     name: String,
+     * }]
+     */
+    regionTypes: [],
+    /**
      * sharedWithGroups: [{
      *     pk: Number,
      *     name: String,
@@ -240,6 +247,7 @@ const actions = {
             commit("setPartsCount", data.parts_count);
             commit("setProjectId", data.project?.id);
             commit("setProjectName", data.project?.name);
+            commit("setRegionTypes", data.valid_block_types);
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
             commit(
@@ -470,6 +478,17 @@ const actions = {
             } catch (error) {
                 dispatch("alerts/addError", error, { root: true });
             }
+        }
+    },
+    /**
+     * Handle submitting the transcribe modal: just queue the task and close the modal.
+     */
+    async handleSubmitTranscribe({ dispatch, state }) {
+        try {
+            await dispatch("tasks/transcribeDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "transcribe", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
         }
     },
     /**
@@ -742,6 +761,9 @@ const mutations = {
     },
     setReadDirection(state, readDirection) {
         state.readDirection = readDirection;
+    },
+    setRegionTypes(state, regionTypes) {
+        state.regionTypes = regionTypes;
     },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;

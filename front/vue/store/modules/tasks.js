@@ -1,4 +1,4 @@
-import { segmentDocument } from "../../../src/api";
+import { segmentDocument, transcribeDocument } from "../../../src/api";
 
 // initial state
 const state = () => ({
@@ -42,6 +42,13 @@ const actions = {
             override: rootState?.forms?.segment?.overwrite,
             model: rootState?.forms?.segment?.model,
             steps,
+        });
+    },
+    async transcribeDocument({ rootState }, documentId) {
+        await transcribeDocument({
+            documentId,
+            model: rootState?.forms?.transcribe?.model,
+            layerName: rootState?.forms?.transcribe?.layerName,
         });
     },
 };

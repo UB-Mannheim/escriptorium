@@ -15,6 +15,12 @@
     border-radius: 15px;
     filter: drop-shadow(2px 4px 4px var(--drop-shadow))
         drop-shadow(-1px -1px 2px var(--drop-shadow));
+
+    /* the following will generally be overridden, but it's similar for enough to factor out */
+    width: 460px;
+    position: fixed;
+    top: 15%;
+    left: calc(50% - 250px);
 }
 .escr-modal .escr-modal-content {
     overflow: auto;

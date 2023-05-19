@@ -39,6 +39,7 @@ const doc = {
     tags,
     transcriptions,
     updated_at: "2023-03-17T13:54:15.352146Z",
+    valid_block_types: blockTypes,
 };
 
 const metadata = [

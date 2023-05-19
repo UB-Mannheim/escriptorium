@@ -164,3 +164,8 @@ export const segmentDocument = async ({ documentId, override, model, steps }) =>
     await axios.post(`/documents/${documentId}/segment`, {
         params: { override, model, steps },
     });
+
+export const transcribeDocument = async ({ documentId, model, layerName }) =>
+    await axios.post(`/documents/${documentId}/transcribe`, {
+        params: { model, name: layerName },
+    });
