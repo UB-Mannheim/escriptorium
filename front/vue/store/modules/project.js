@@ -211,8 +211,8 @@ const actions = {
                 commit("setDocumentTags", documentTags);
                 // select the new tag and reset the tag name add/search field
                 commit(
-                    "forms/selectTag",
-                    { form: "editDocument", tag: data },
+                    "forms/addToArray",
+                    { form: "editDocument", field: "tags", value: data.pk },
                     { root: true },
                 );
                 commit(
