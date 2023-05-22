@@ -1,0 +1,15 @@
+.escr-ontology-card {
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    padding: 0;
+}
+.escr-ontology-card .escr-segmented-button-group {
+    margin-bottom: 1rem;
+}
+.escr-ontology-card .escr-ontology-table-container {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+}

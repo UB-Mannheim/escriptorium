@@ -41,7 +41,7 @@ from core.models import (
 from core.tasks import segment, segtrain, train, transcribe
 from reporting.models import TaskReport
 from users.consumers import send_event
-from users.models import User
+from users.models import Group, User
 
 logger = logging.getLogger(__name__)
 
@@ -84,10 +84,36 @@ class ScriptSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('pk', 'is_active',
+                  'username', 'email', 'first_name', 'last_name',
+                  'date_joined', 'last_login')
+        read_only_fields = ('date_joined', 'last_login')
+
+
+class DetailedGroupSerializer(serializers.ModelSerializer):
+    users = UserSerializer(many=True, read_only=True, source='user_set')
+    owner = serializers.ReadOnlyField(source='groupowner.owner.pk')
+
+    class Meta:
+        model = Group
+        fields = ('pk', 'name', 'users', 'owner')
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ('pk', 'name')
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     slug = serializers.ReadOnlyField()
     documents_count = serializers.ReadOnlyField()
+    shared_with_users = UserSerializer(many=True, read_only=True)
+    shared_with_groups = GroupSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -126,15 +152,6 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             return super().create(data)
         except IntegrityError:
             return Transcription.objects.get(name=data['name'])
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('pk', 'is_active',
-                  'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login')
-        read_only_fields = ('date_joined', 'last_login')
 
 
 class BlockTypeSerializer(serializers.ModelSerializer):

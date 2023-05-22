@@ -1,6 +1,6 @@
 <template>
     <button
-        type="button"
+        :type="type || 'button'"
         :class="classes"
         :disabled="disabled"
         @click="onClick"
@@ -18,6 +18,13 @@ export default {
     name: "EscrButton",
 
     props: {
+        /**
+         * Whether or not this is a round button
+         */
+        round: {
+            type: Boolean,
+            default: false,
+        },
         /**
          * Color of the button
          */
@@ -71,7 +78,14 @@ export default {
         disabled: {
             type: Boolean,
             default: false,
-        }
+        },
+        /**
+         * Type attribute, used in forms
+         */
+        type: {
+            type: String,
+            default: "button",
+        },
     },
 
     computed: {
@@ -80,6 +94,7 @@ export default {
                 "escr-button": true,
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
+                "escr-button--round": this.round,
                 "escr-button--icon-only": !this.label && this.$slots["button-icon"],
             };
         },

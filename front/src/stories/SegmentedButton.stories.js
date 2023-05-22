@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-len
 import SegmentedButtonGroup from "../../vue/components/SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import "../../vue/components/Common/Card.css";
 
@@ -41,4 +42,12 @@ Secondary.args = {
     color: "secondary",
     name: "storybook",
     options: buttons,
+};
+
+export const Disabled = Template.bind({});
+Disabled.args = {
+    color: "secondary",
+    name: "storybook",
+    options: buttons,
+    disabled: true,
 };

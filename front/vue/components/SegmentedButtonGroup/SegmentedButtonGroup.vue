@@ -2,7 +2,7 @@
 import "./SegmentedButtonGroup.css";
 
 export default {
-    name: "escr-segmented-button-group",
+    name: "EscrSegmentedButtonGroup",
     functional: true,
     props: {
         /**
@@ -15,6 +15,14 @@ export default {
             validator: function(value) {
                 return ["primary", "secondary"].indexOf(value) !== -1;
             },
+        },
+        /**
+         * Boolean indicating whether or not this entire component should be disabled, for example,
+         * during data loading.
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
         },
         /**
          * List of options, each of which should have a `value` and a `label`.
@@ -62,6 +70,7 @@ export default {
                             value: option.value,
                             name: context.props.name,
                             checked: option.selected,
+                            disabled: context.props.disabled,
                         },
                         class: {"sr-only": true },
                         on: {
@@ -79,7 +88,7 @@ export default {
                     option.label,
                 ),
             ]
-        };
+        }
         /**
          * Render the container div and radio children
          */

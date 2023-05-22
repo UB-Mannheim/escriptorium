@@ -15,20 +15,24 @@
 /* tag overflow (non-wrapping) */
 .escr-tag-overflow-toggle {
     cursor: default;
-    position: relative;
+}
+.v-popper--theme-tags-dropdown .v-popper__inner {
+    background: var(--background1);
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
+    border: none;
+}
+.v-popper--theme-tags-dropdown .v-popper__arrow-inner {
+    border-color: var(--background1);
+}
+.v-popper--theme-tags-dropdown .v-popper__arrow-outer {
+    border-color: var(--background2);
 }
 .escr-tag-overflow {
-    position: absolute;
     display: flex;
     flex-flow: column;
-    padding: 16px;
-    background: var(--background1);
-    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
-    border-radius: 15px;
     align-items: flex-start;
-    left: 0px;
-    top: 32px;
-    z-index: var(--taggroup-overflow-z);
 }
 .escr-tag-overflow .escr-tag:not(:last-of-type) {
     margin-bottom: 10px;

@@ -36,9 +36,12 @@
     /* z-index layers */
     --segmented-button-focus-z: 1;
     --taggroup-overflow-z: 2;
-    --modal-backdrop-z: 3;
-    --modal-z: 4;
-    --toast-z: 5;
+    --sidebar-backdrop-z: 3;
+    --sidebar-container-z: 4;
+    --sidebar-z: 5;
+    --modal-backdrop-z: 6;
+    --modal-z: 7;
+    --toast-z: 8;
 }
 .light-mode {
     /* button colors */
@@ -54,6 +57,8 @@
     --background2-dark: #cacaca;
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
+    /* modal backdrop */
+    --modal-backdrop: rgb(0 0 0 / 10%);
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
@@ -73,6 +78,8 @@
     --background2-dark: #565a5b;
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
+    /* modal backdrop */
+    --modal-backdrop: rgb(0 0 0 / 33%);
     /* dark mode text */
     --text1: #ffffff;
     --text2: #a7a8a9;

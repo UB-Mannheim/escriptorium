@@ -1,0 +1,58 @@
+/* restyled from floating-vue */
+.v-popper--theme-vertical-menu .v-popper__inner {
+    background: var(--background1);
+    box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.15), 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    padding: 16px 0;
+    border: none;
+}
+.v-popper--theme-vertical-menu .v-popper__arrow-inner {
+    display: none;
+}
+.v-popper--theme-vertical-menu .v-popper__arrow-outer {
+    display: none;
+}
+/* menu items list */
+.escr-vertical-menu {
+    display: flex;
+    flex-flow: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 220px;
+}
+.escr-vertical-menu .escr-menuitem-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 1rem;
+}
+.escr-vertical-menu button {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 36px;
+    font-family: inherit;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 8px 32px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    color: var(--text1);
+}
+.escr-vertical-menu button svg {
+    fill: var(--text1);
+}
+.escr-vertical-menu button:hover {
+    background-color: var(--background2);
+}
+.escr-vertical-menu button:active,
+.escr-vertical-menu button:focus {
+    background-color: var(--secondary-hover);
+}
+.escr-vertical-menu .new-section {
+    border-top: 1px solid var(--background2);
+}

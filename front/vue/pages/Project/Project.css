@@ -1,0 +1,51 @@
+.escr-project-dashboard .escr-grid-container {
+    display: grid;
+    height: calc(90vh - 32px);
+    max-height: calc(90vh - 32px);
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas:
+        "header header"
+        "doclist doclist"
+        "doclist doclist"
+        "doclist doclist";
+    grid-template-rows: auto;
+    grid-auto-rows: 25%;
+    gap: 24px;
+    align-items: stretch;
+}
+.escr-project-details {
+    grid-area: header;
+}
+.escr-project-guidelines {
+    display: inline-block;
+    color: var(--text2);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+.escr-documents-list {
+    grid-area: doclist;
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    padding-bottom: 0;
+}
+.escr-documents-list .table-container {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+.escr-project-ontology {
+    grid-area: ontology;
+}
+.escr-project-characters {
+    grid-area: chars;
+}
+
+/* constrain tags cells width */
+.escr-documents-list table td:nth-of-type(2) {
+    width: 300px;
+    max-width: 300px;
+}
+.escr-documents-list .escr-card-actions > button:last-of-type {
+    margin-left: 2rem;
+}

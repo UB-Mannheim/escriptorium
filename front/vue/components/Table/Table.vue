@@ -1,5 +1,5 @@
 <template>
-    <table class="escr-table">
+    <table :class="classes">
         <thead>
             <tr>
                 <th
@@ -101,6 +101,14 @@ export default {
     },
     props: {
         /**
+         * An option to style this table as a compact table, which takes up less vertical space
+         * and uses a smaller font size.
+         */
+        compact: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * List of headers, each of which is an object that should have a `value` and a `label`.
          * To make a column sortable, set the `sortable` boolean for its header to `true`.
          *
@@ -176,6 +184,14 @@ export default {
                 direction: 0,
             },
         };
+    },
+    computed: {
+        classes() {
+            return {
+                "escr-table": true,
+                "escr-table--compact": this.compact,
+            };
+        },
     },
     methods: {
         /**

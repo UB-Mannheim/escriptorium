@@ -1,3 +1,24 @@
+/* body layout */
+.escr-body {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: stretch;
+    height: 100vh;
+}
+
+/* page padding */
 .escr-page {
-    padding: 32px;
+    padding: 16px 32px;
+    width: 100%;
+}
+
+/* no documents/projects to display message */
+.escr-page .escr-empty-msg {
+    text-align: center;
+    padding: 0 1rem 1rem;
+}
+
+/* load more */
+.escr-page .escr-load-more-btn {
+    margin: 1rem auto;
 }

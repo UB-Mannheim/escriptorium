@@ -8,36 +8,45 @@
             {{ tag.name }}
         </span>
         <!-- Tag overflow toggle for non-wrapping tag group -->
-        <div
+        <VDropdown
             v-if="!wrap && shouldOverflow"
-            :class="tagClasses()"
-            class="escr-tag-overflow-toggle"
-            @mouseover="showOverflowed"
-            @mouseout="hideOverflowed"
+            :triggers="['hover']"
+            theme="tags-dropdown"
         >
-            <span>...</span>
-            <!-- Tag overflow list -->
             <div
-                v-if="overflowVisible"
-                class="escr-tag-overflow"
+                :class="tagClasses()"
+                class="escr-tag-overflow-toggle"
             >
-                <span
-                    v-for="tag in overflowTags"
-                    :key="tag.pk"
-                    :class="tagClasses(tag.variant)"
-                >
-                    {{ tag.name }}
-                </span>
+                <span>...</span>
             </div>
-        </div>
+            <template #popper>
+                <!-- Tag overflow list -->
+                <div
+                    class="escr-tag-overflow"
+                >
+                    <span
+                        v-for="tag in overflowTags"
+                        :key="tag.pk"
+                        :class="tagClasses(tag.variant)"
+                    >
+                        {{ tag.name }}
+                    </span>
+                </div>
+            </template>
+        </VDropdown>
     </div>
 </template>
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
 import "./Tag.css";
 import "./TagGroup.css";
 
 export default {
     name: "EscrTags",
+
+    components: {
+        VDropdown,
+    },
 
     props: {
         /**
@@ -48,9 +57,8 @@ export default {
         tags: {
             type: Array,
             default: () => [],
-            required: true,
             validator(value) {
-                return value.length > 0 && value.every((t) => t.pk || t.pk === 0);
+                return !value.length || value.every((t) => t.pk || t.pk === 0);
             },
         },
         /**

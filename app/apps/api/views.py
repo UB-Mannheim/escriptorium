@@ -29,6 +29,7 @@ from api.serializers import (
     AnnotationTypeSerializer,
     BlockSerializer,
     BlockTypeSerializer,
+    DetailedGroupSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
     DocumentPartMetadataSerializer,
@@ -87,7 +88,7 @@ from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskReport
 from users.consumers import send_event
-from users.models import User
+from users.models import Group, User
 from versioning.models import NoChangeException
 
 logger = logging.getLogger(__name__)
@@ -147,6 +148,10 @@ class LargeResultsSetPagination(PageNumberPagination):
     page_size = 100
 
 
+class ExtraLargeResultsSetPagination(PageNumberPagination):
+    page_size = 500
+
+
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -159,7 +164,16 @@ class UserViewSet(ModelViewSet):
         return qs
 
 
+class GroupViewSet(ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = DetailedGroupSerializer
+
+    def get_queryset(self):
+        return self.request.user.groups.all()
+
+
 class ScriptViewSet(ReadOnlyModelViewSet):
+    pagination_class = ExtraLargeResultsSetPagination
     queryset = Script.objects.all()
     serializer_class = ScriptSerializer
 
@@ -184,6 +198,7 @@ class ProjectViewSet(ModelViewSet):
 class ProjectTagViewSet(ModelViewSet):
     queryset = ProjectTag.objects.all()
     serializer_class = ProjectTagSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         return ProjectTag.objects.filter(user=self.request.user)
@@ -192,6 +207,7 @@ class ProjectTagViewSet(ModelViewSet):
 class DocumentTagViewSet(ModelViewSet):
     queryset = DocumentTag.objects.all()
     serializer_class = DocumentTagSerializer
+    pagination_class = LargeResultsSetPagination
 
     def perform_create(self, serializer):
         project = Project.objects.get(pk=self.kwargs.get('project_pk'))
