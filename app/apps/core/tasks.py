@@ -167,6 +167,17 @@ class FrontendFeedback(Callback):
         })
 
 
+def _to_ptl_device(device: str):
+    if device in ['cpu', 'mps']:
+        return device, 'auto'
+    elif any([device.startswith(x) for x in ['tpu', 'cuda', 'hpu', 'ipu']]):
+        dev, idx = device.split(':')
+        if dev == 'cuda':
+            dev = 'gpu'
+        return dev, [int(idx)]
+    raise Exception(f'Invalid device {device} specified')
+
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -232,11 +243,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
         for part in qs[:partition]:
             evaluation_data.append(make_segmentation_training_data(part))
 
-        device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-        if device_ == 'cpu':
-            device = None
-        elif device_.startswith('cuda'):
-            device = [int(device_.split(':')[-1])]
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
 
@@ -261,7 +268,8 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
                                          resize='both',
                                          topline=topline)
 
-        trainer = KrakenTrainer(devices=device,
+        trainer = KrakenTrainer(accelerator=accelerator,
+                                devices=device,
                                 # max_epochs=2,
                                 # min_epochs=5,
                                 enable_progress_bar=False,
@@ -421,11 +429,7 @@ def train_(qs, document, transcription, model=None, user=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-    if device_ == 'cpu':
-        device = None
-    elif device_.startswith('cuda'):
-        device = [int(device_.split(':')[-1])]
+    accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
 
@@ -454,7 +458,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                     # codec=codec,
                                     resize='add')
 
-    trainer = KrakenTrainer(devices=device,
+    trainer = KrakenTrainer(accelerator=accelerator,
+                            devices=device,
                             # max_epochs=,
                             # min_epochs=hyper_params['min_epochs'],
                             enable_progress_bar=False,
