@@ -38,6 +38,12 @@
 .escr-document-dashboard .escr-document-details {
     grid-area: header;
 }
+.escr-document-dashboard .escr-document-details .escr-card-header h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
 .escr-document-dashboard .escr-document-metadata {
     color: var(--text2);
     font-weight: 400;
@@ -117,10 +123,10 @@
     font-size: 24px;
     font-weight: 400;
 }
-.escr-document-dashboard [class$=-stats] .escr-card-header {
+.escr-document-dashboard [class$="-stats"] .escr-card-header {
     margin-bottom: 14px;
 }
-.escr-document-dashboard [class$=-stats] h2 {
+.escr-document-dashboard [class$="-stats"] h2 {
     line-height: 20px;
     max-width: 70%;
 }

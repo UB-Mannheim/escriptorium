@@ -17,6 +17,7 @@
                 label="Name"
                 placeholder="Name"
                 :disabled="disabled"
+                :max-length="512"
                 :on-input="(e) => handleTextFieldInput('name', e.target.value)"
                 :value="name"
                 required

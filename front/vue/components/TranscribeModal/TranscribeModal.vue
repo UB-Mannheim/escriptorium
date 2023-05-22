@@ -25,6 +25,7 @@
             <TextField
                 :disabled="disabled"
                 help-text="Enter a name for the new transcription layer."
+                :max-length="512"
                 :on-input="handleLayerNameInput"
                 :value="layerName"
                 placeholder="Enter layer name"

@@ -11,7 +11,9 @@
                     <!-- Document metadata header -->
                     <div class="escr-card escr-card-padding escr-document-details">
                         <div class="escr-card-header">
-                            <h1>{{ documentName }}</h1>
+                            <h1 :title="documentName">
+                                {{ documentName }}
+                            </h1>
                             <div class="escr-card-actions">
                                 <VerticalMenu
                                     :is-open="documentMenuOpen"

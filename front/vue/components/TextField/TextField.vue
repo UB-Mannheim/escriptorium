@@ -16,6 +16,7 @@
             :value="value"
             :disabled="disabled"
             :name="name"
+            :maxlength="maxLength"
             @input="onInput"
         >
         <span
@@ -85,6 +86,13 @@ export default {
         required: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * Optional maximum length of the text field.
+         */
+        maxLength: {
+            type: Number,
+            default: undefined,
         },
         /**
          * Current value.

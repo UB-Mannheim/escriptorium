@@ -1,17 +1,18 @@
 /* tags */
 .escr-tag {
+    display: inline-flex;
     color: var(--tag-text);
     font-weight: 600;
     font-size: 12px;
     border-radius: 16px;
     padding: 4px 10px;
-    display: flex;
     flex-flow: row nowrap;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     align-items: center;
     background-color: var(--tag-12);
+    max-width: 200px;
 }
 /* tag color variants */
 .escr-tag--variant-1 {

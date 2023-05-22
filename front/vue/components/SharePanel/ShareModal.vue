@@ -29,6 +29,7 @@
                 :label-visible="false"
                 :on-input="handleUserInput"
                 :disabled="disabled"
+                :max-length="150"
                 :value="username"
             />
         </template>

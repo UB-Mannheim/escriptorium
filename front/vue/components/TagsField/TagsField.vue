@@ -235,6 +235,7 @@ export default {
                             onInput: this.onChangeTagName,
                             placeholder: "Add/search tags",
                             value: this.tagName,
+                            maxLength: 100,
                         },
                     }
                 ),
