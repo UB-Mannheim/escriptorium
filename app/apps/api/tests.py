@@ -1251,6 +1251,35 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.get(uri + '?tags=none|' + str(tag1.pk))
         self.assertEqual(resp.json()['count'], 2)
 
+    def test_share_group(self):
+        self.client.force_login(self.project.owner)
+        group = self.factory.make_group(users=[self.project.owner])
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_groups'], [group.pk])
+
+    def test_share_group_not_part_of(self):
+        self.client.force_login(self.project.owner)
+        group = self.factory.make_group()  # owner is not part of the group
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 400)
+
+    def test_share_user(self):
+        self.client.force_login(self.project.owner)
+        user = self.factory.make_user()
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'user': user.username})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_users'], [user.pk])
+
 
 class DocumentPartMetadataTestCase(CoreFactoryTestCase):
     def setUp(self):
