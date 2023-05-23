@@ -285,8 +285,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
         if kraken_model.best_epoch == -1:
             raise DidNotConverge
 
-        best_version = os.path.join(model_dir,
-                                    f'version_{kraken_model.best_epoch}.mlmodel')
+        best_version = os.path.join(model_dir, kraken_model.best_model)
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
@@ -487,7 +486,7 @@ def train_(qs, document, transcription, model=None, user=None):
     if kraken_model.best_epoch == -1:
         raise DidNotConverge
     else:
-        best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
+        best_version = os.path.join(model_dir, kraken_model.best_model)
         shutil.copy(best_version, model.file.path)
         model.training_accuracy = kraken_model.best_metric
 
