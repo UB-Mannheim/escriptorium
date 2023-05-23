@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class DidNotConverge(Exception):
+    pass
+
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
 def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
@@ -278,6 +282,9 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
 
         trainer.fit(kraken_model)
 
+        if kraken_model.best_epoch == -1:
+            raise DidNotConverge
+
         best_version = os.path.join(model_dir,
                                     f'version_{kraken_model.best_epoch}.mlmodel')
 
@@ -288,6 +295,14 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
             shutil.copy(load, model.file.path)
+
+    except DidNotConverge:
+        send_event('document', ground_truth[0].document.pk, "training:error", {
+            "id": model.pk,
+        })
+        user.notify(_("The model did not converge, probably because of lack of data."),
+                    id="training-warning", level='warning')
+        model.delete()
 
     except Exception as e:
         send_event('document', document_pk, "training:error", {
@@ -469,12 +484,12 @@ def train_(qs, document, transcription, model=None, user=None):
 
     trainer.fit(kraken_model)
 
-    if kraken_model.best_epoch != 0:
+    if kraken_model.best_epoch == -1:
+        raise DidNotConverge
+    else:
         best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
         shutil.copy(best_version, model.file.path)
         model.training_accuracy = kraken_model.best_metric
-    else:
-        raise ValueError('No model created.')
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -513,8 +528,15 @@ def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **k
                       line__document_part__pk__in=part_pks)
               .exclude(Q(content='') | Q(content=None)))
         train_(qs, document, transcription, model=model, user=user)
+    except DidNotConverge:
+        send_event('document', document.pk, "training:error", {
+            "id": model.pk,
+        })
+        user.notify(_("The model did not converge, probably because of lack of data."),
+                    id="training-warning", level='warning')
+        model.delete()
+
     except Exception as e:
-        # TODO: catch KrakenInputException specificely?
         send_event('document', document.pk, "training:error", {
             "id": model.pk,
         })
