@@ -58,6 +58,18 @@ const actions = {
             commit("removeFromArray", { form, field, value });
         }
     },
+    /**
+     * Show a named tooltip on a form
+     */
+    showTooltip({ commit }, { form, tooltip }) {
+        commit("setTooltipShown", { form, tooltip, shown: true })
+    },
+    /**
+     * Hide a named tooltip on a form
+     */
+    hideTooltip({ commit }, { form, tooltip }) {
+        commit("setTooltipShown", { form, tooltip, shown: false })
+    },
 };
 
 const mutations = {
@@ -111,6 +123,11 @@ const mutations = {
             formClone.metadata[foundIndex] = metadatum;
             state[form] = formClone;
         }
+    },
+    setTooltipShown(state, { form, tooltip, shown }) {
+        const formClone = structuredClone(state[form]);
+        formClone.tooltipShown[tooltip] = shown;
+        state[form] = formClone;
     },
 };
 
