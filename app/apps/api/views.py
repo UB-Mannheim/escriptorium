@@ -52,6 +52,7 @@ from api.serializers import (
     SegmentSerializer,
     SegTrainSerializer,
     TextAnnotationSerializer,
+    TextualWitnessSerializer,
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
@@ -81,6 +82,7 @@ from core.models import (
     ProtectedObjectException,
     Script,
     TextAnnotation,
+    TextualWitness,
     Transcription,
 )
 from core.tasks import recalculate_masks
@@ -176,6 +178,16 @@ class ScriptViewSet(ReadOnlyModelViewSet):
     pagination_class = ExtraLargeResultsSetPagination
     queryset = Script.objects.all()
     serializer_class = ScriptSerializer
+
+
+class TextualWitnessViewSet(ModelViewSet):
+    queryset = TextualWitness.objects.all()
+    serializer_class = TextualWitnessSerializer
+
+    def get_queryset(self):
+        return TextualWitness.objects.filter(
+            owner=self.request.user
+        )
 
 
 class ProjectViewSet(ModelViewSet):

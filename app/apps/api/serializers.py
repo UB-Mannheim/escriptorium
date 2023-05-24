@@ -36,6 +36,7 @@ from core.models import (
     Script,
     TextAnnotation,
     TextAnnotationComponentValue,
+    TextualWitness,
     Transcription,
 )
 from core.tasks import segment, segtrain, train, transcribe
@@ -830,6 +831,14 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                        part_pks=[part.pk for part in self.validated_data.get('parts')],
                        document_pk=self.document.pk,
                        user_pk=self.user.pk)
+
+
+class TextualWitnessSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = TextualWitness
+        fields = ('name', 'pk', 'file', 'owner')
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):

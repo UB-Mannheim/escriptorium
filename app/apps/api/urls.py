@@ -25,11 +25,13 @@ from api.views import (
     RegenerableAuthToken,
     ScriptViewSet,
     TextAnnotationViewSet,
+    TextualWitnessViewSet,
     UserViewSet,
 )
 
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
+router.register(r'textual-witnesses', TextualWitnessViewSet)
 router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'models', OcrModelViewSet)
