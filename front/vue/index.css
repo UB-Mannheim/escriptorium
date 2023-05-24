@@ -16,6 +16,7 @@
     --alert-focus: rgb(227 43 43 / 50%);
     /* text on all filled buttons */
     --button-text: #ffffff;
+
     /* tag colors */
     --tag-1: #e0726e;
     --tag-2: #f78d8d;
@@ -30,8 +31,15 @@
     --tag-11: #f2a7c3;
     --tag-12: #c6c4c4;
     --tag-text: #212323;
+
     /* drop shadow */
     --drop-shadow: rgba(0, 0, 0, 0.15);
+
+    /* color combinations on some components (e.g. Alert) */
+    --foreground-secondary: #104581;
+    --background-secondary: #b9d0e9;
+    --foreground-alert: #771010;
+    --background-alert: #f8caca;
 
     /* z-index layers */
     --segmented-button-focus-z: 1;
@@ -144,4 +152,21 @@ hr {
     position: absolute !important;
     width: 1px !important;
     white-space: nowrap !important;
+}
+
+/* tooltip styling */
+.v-popper--theme-escr-tooltip .v-popper__inner {
+    background: var(--background1);
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
+    border: none;
+    max-width: 220px;
+    font-size: 12px;
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-inner {
+    border-color: var(--background1);
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-outer {
+    border-color: var(--background2);
 }

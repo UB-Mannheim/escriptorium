@@ -15,6 +15,10 @@
             </EscrButton>
         </template>
         <template #modal-content>
+            <EscrAlert
+                color="secondary"
+                message="Check accuracy of segmentation prior to transcribing."
+            />
             <DropdownField
                 label="Model"
                 :disabled="disabled || !models"
@@ -52,6 +56,7 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import DropdownField from "../Dropdown/DropdownField.vue";
+import EscrAlert from "../Alert/Alert.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
 import TextField from "../TextField/TextField.vue";
@@ -62,6 +67,7 @@ export default {
     name: "EscrTranscribeModal",
     components: {
         DropdownField,
+        EscrAlert,
         EscrButton,
         EscrModal,
         TextField,
