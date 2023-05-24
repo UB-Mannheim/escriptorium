@@ -487,6 +487,17 @@ const actions = {
         }
     },
     /**
+     * Handle submitting the alignment modal. Queue the task and close the modal.
+     */
+    async handleSubmitAlign({ dispatch, state }) {
+        try {
+            await dispatch("tasks/alignDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "align", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
      * is checked, otherwise just queue the segmentation task and close the modal.
      */

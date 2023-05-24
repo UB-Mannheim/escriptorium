@@ -228,12 +228,24 @@
                     :on-cancel="() => closeTaskModal('overwriteWarning')"
                     :on-confirm="confirmOverwriteWarning"
                 />
+                <!-- align document modal -->
+                <AlignModal
+                    v-if="taskModalOpen?.align"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('align')"
+                    :on-submit="handleSubmitAlign"
+                    :textual-witnesses="textualWitnesses"
+                    scope="Document"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
@@ -263,6 +275,7 @@ import "./Document.css";
 export default {
     name: "EscrDocumentDashboard",
     components: {
+        AlignModal,
         ArrowRightIcon,
         CharactersCard,
         ConfirmModal,
@@ -498,6 +511,7 @@ export default {
             "fetchDocumentMetadata",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
+            "handleSubmitAlign",
             "handleSubmitSegmentation",
             "handleSubmitTranscribe",
             "openCharactersModal",

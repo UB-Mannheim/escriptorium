@@ -174,3 +174,39 @@ export const transcribeDocument = async ({ documentId, model, layerName }) =>
 // retrieve textual witnesses for use in alignment
 export const retrieveTextualWitnesses = async () =>
     await axios.get("/textual-witnesses");
+
+// queue the alignment task for this document
+export const alignDocument = async ({
+    documentId,
+    beamSize,
+    existingWitness,
+    fullDoc,
+    gap,
+    layerName,
+    maxOffset,
+    merge,
+    ngram,
+    regionTypes,
+    threshold,
+    transcription,
+    witnessFile,
+}) => {
+    // need to use FormData to handle witness file upload
+    const formData = new FormData();
+    formData.append("beam_size", beamSize);
+    formData.append("existing_witness", existingWitness);
+    formData.append("full_doc", fullDoc);
+    formData.append("gap", gap);
+    formData.append("layer_name", layerName);
+    formData.append("max_offset", maxOffset);
+    formData.append("merge", merge);
+    formData.append("n_gram", ngram);
+    formData.append("region_types", regionTypes);
+    formData.append("threshold", threshold);
+    formData.append("transcription", transcription);
+    formData.append("witness_file", witnessFile);
+    const headers = { "Content-Type": "multipart/form-data" };
+    return await axios.post(`/documents/${documentId}/align`, formData, {
+        headers,
+    });
+};

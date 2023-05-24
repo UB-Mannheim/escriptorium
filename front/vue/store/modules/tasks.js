@@ -1,4 +1,8 @@
-import { segmentDocument, transcribeDocument } from "../../../src/api";
+import {
+    alignDocument,
+    segmentDocument,
+    transcribeDocument,
+} from "../../../src/api";
 
 // initial state
 const state = () => ({
@@ -15,6 +19,34 @@ const state = () => ({
 const getters = {};
 
 const actions = {
+    /**
+     * Queue the alignment task for a document, passing in the correct type of witness
+     * (selected existing or upload), and the correct choice of beam size or max offset.
+     */
+    async alignDocument({ rootState }, documentId) {
+        if (rootState?.forms?.align) {
+            const witness =
+                rootState.forms.align.textualWitnessType === "select"
+                    ? { existingWitness: rootState.forms.align.textualWitness }
+                    : { witnessFile: rootState.forms.align.textualWitnessFile };
+            const beamOrOffset = rootState.forms.align.beamSize
+                ? { beamSize: rootState.forms.align.beamSize }
+                : { maxOffset: rootState.forms.align.maxOffset };
+            await alignDocument({
+                documentId,
+                fullDoc: rootState.forms.align.fullDoc,
+                gap: rootState.forms.align.gap,
+                layerName: rootState.forms.align.layerName,
+                merge: rootState.forms.align.merge,
+                ngram: rootState.forms.align.ngram,
+                regionTypes: rootState.forms.align.regionTypes,
+                threshold: rootState.forms.align.threshold,
+                transcription: rootState.forms.align.transcription,
+                ...beamOrOffset,
+                ...witness,
+            });
+        }
+    },
     /**
      * Close the modal by key and clear its form.
      */
@@ -44,6 +76,9 @@ const actions = {
             steps,
         });
     },
+    /**
+     * Queue the transcription task for a document.
+     */
     async transcribeDocument({ rootState }, documentId) {
         await transcribeDocument({
             documentId,
