@@ -202,3 +202,14 @@ export const userGroups = [
         name: "Group 2",
     },
 ];
+
+export const textualWitnesses = [
+    {
+        "name": "kashf_jun16",
+        "pk": 1
+    },
+    {
+        "name": "witness_exmaple",
+        "pk": 2
+    }
+];

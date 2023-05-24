@@ -14,6 +14,7 @@ import {
     scripts,
     sorted,
     tags,
+    textualWitnesses,
     transcriptions,
     users,
     userGroups,
@@ -159,6 +160,7 @@ const Template = (args, { argTypes }) => ({
         );
         const groupsEndpoint = "/groups";
         const shareEndpoint = new RegExp(/\/documents\/\d+\/share$/);
+        const witnessesEndpoint  = "/textual-witnesses";
         // mock document response
         mock.onGet(documentEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -415,6 +417,12 @@ const Template = (args, { argTypes }) => ({
             }
             return [400];
         });
+        // mock get textual witnesses
+        mock.onGet(witnessesEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: textualWitnesses }];
+        })
     },
 });
 

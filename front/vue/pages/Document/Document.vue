@@ -341,6 +341,7 @@ export default {
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
             taskModalOpen: (state) => state.tasks.modalOpen,
+            textualWitnesses: (state) => state.document.textualWitnesses,
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
         }),

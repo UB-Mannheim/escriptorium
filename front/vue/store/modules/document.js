@@ -7,6 +7,7 @@ import {
     retrieveDocumentMetadata,
     retrieveDocumentModels,
     retrieveDocumentParts,
+    retrieveTextualWitnesses,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
     retrieveTranscriptionOntology,
@@ -103,6 +104,15 @@ const state = () => ({
      * }]
      */
     tags: [],
+    /**
+     * textualWitnesses: [{
+     *     name: String,
+     *     pk: Number,
+     *     owner: String,
+     *     file: String,
+     * }]
+     */
+    textualWitnesses: [],
     /**
      * transcriptions: [{
      *     name: String,
@@ -331,10 +341,11 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
 
-        // fetch scripts, metadata, models
+        // fetch scripts, metadata, models, textual witnesses
         await dispatch({ type: "project/fetchScripts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
         await dispatch("fetchDocumentModels");
+        await dispatch("fetchTextualWitnesses");
     },
     /**
      * Fetch the current document's metadata.
@@ -388,6 +399,17 @@ const actions = {
             throw new Error("Unable to retrieve document images");
         }
         commit("setLoading", { key: "parts", loading: false });
+    },
+    /**
+     * Fetch existing textual witnesses for use in alignment.
+     */
+    async fetchTextualWitnesses({ commit }) {
+        const { data } = await retrieveTextualWitnesses();
+        if (data?.results) {
+            commit("setTextualWitnesses", data.results);
+        } else {
+            throw new Error("Unable to retrieve textual witnesses");
+        }
     },
     /**
      * Fetch the current transcription's characters, given this document's id from state,
@@ -776,6 +798,9 @@ const mutations = {
     },
     setTags(state, tags) {
         state.tags = tags;
+    },
+    setTextualWitnesses(state, textualWitnesses) {
+        state.textualWitnesses = textualWitnesses;
     },
     setTranscriptions(state, transcriptions) {
         state.transcriptions = transcriptions;

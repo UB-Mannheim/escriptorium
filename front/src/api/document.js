@@ -165,7 +165,12 @@ export const segmentDocument = async ({ documentId, override, model, steps }) =>
         params: { override, model, steps },
     });
 
+// queue the transcription task for this document
 export const transcribeDocument = async ({ documentId, model, layerName }) =>
     await axios.post(`/documents/${documentId}/transcribe`, {
         params: { model, name: layerName },
     });
+
+// retrieve textual witnesses for use in alignment
+export const retrieveTextualWitnesses = async () =>
+    await axios.get("/textual-witnesses");
