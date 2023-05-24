@@ -1,4 +1,5 @@
-.escr-form-field span.escr-required {
+.escr-form-field span.escr-required,
+h3 span.escr-required {
     color: red;
     margin-left: 3px;
 }
@@ -24,4 +25,28 @@
 }
 .escr-form-field.escr-checkbox-field input {
     margin-right: 12px;
+}
+.escr-form-field.escr-checkbox-field .escr-help-text {
+    display: block;
+    margin-top: 8px;
+}
+
+input[type="file"] {
+    margin-top: 24px;
+    font: inherit;
+    background-color: var(--background);
+    width: 100%;
+    border-radius: 4px;
+    height: 38px;
+}
+input[type="file"]::file-selector-button {
+    padding: 8px 16px;
+    height: 100%;
+    font: inherit;
+    border-radius: 4px 0 0 4px;
+    border: none;
+    background-color: var(--primary);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
 }

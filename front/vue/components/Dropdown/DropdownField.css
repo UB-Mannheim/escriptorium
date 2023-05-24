@@ -1,6 +1,6 @@
 .escr-dropdown-field select {
     margin: 8px 0 0;
 }
-.escr-dropdown-field .escr-chervon-down-icon {
+.escr-dropdown-field span + .escr-dropdown .escr-chervon-down-icon {
     top: 22px;
 }

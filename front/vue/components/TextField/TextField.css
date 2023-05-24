@@ -1,5 +1,6 @@
 .escr-text-field input {
     background-color: var(--background2);
+    color: var(--text1);
     width: 100%;
     box-sizing: border-box;
     border: none;
@@ -9,6 +10,7 @@
 }
 .escr-text-field input:disabled {
     color: var(--text3);
+    background-color: var(--background);
     pointer-events: none;
 }
 .escr-text-field input:invalid,
