@@ -251,6 +251,9 @@ export default {
                 selected: this.formRegionTypes.includes(type.pk.toString()),
             }));
         },
+        /**
+         * Convert textual witness list to options for select element
+         */
         textualWitnessOptions() {
             return this.textualWitnesses?.map((witness) => ({
                 label: witness.name,
@@ -258,6 +261,9 @@ export default {
                 selected: this.formTextualWitness.toString() === witness.pk.toString(),
             }));
         },
+        /**
+         * Switcher between selecting existing and uploading textual witness
+         */
         textalWitnessTypeOptions() {
             return [
                 {
@@ -272,6 +278,9 @@ export default {
                 },
             ]
         },
+        /**
+         * Convert transcription layers to options for select element
+         */
         transcriptionOptions() {
             return this.transcriptions.map((transcription) => ({
                 label: transcription.name,
@@ -310,6 +319,7 @@ export default {
             this.handleGenericInput({
                 form: "align", field: "layerName", value: e.target.value,
             });
+            // turn on the overwrite warning if the user enters an existing layer name
             if (
                 !this.overwriteWarningVisible &&
                 this.transcriptions.some((t) => t.name === e.target.value)
