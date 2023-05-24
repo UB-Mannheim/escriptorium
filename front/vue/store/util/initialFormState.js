@@ -40,6 +40,12 @@ export default {
         tags: [],
         tagName: "",
     },
+    export: {
+        fileFormat: "",
+        includeImages: false,
+        regionTypes: [],
+        transcription: "",
+    },
     segment: {
         model: "",
         overwrite: false,

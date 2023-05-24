@@ -210,3 +210,19 @@ export const alignDocument = async ({
         headers,
     });
 };
+
+export const exportDocument = async ({
+    documentId,
+    fileFormat,
+    includeImages,
+    regionTypes,
+    transcription,
+}) =>
+    await axios.post(`/documents/${documentId}/export`, {
+        params: {
+            region_types: regionTypes,
+            file_format: fileFormat,
+            include_images: includeImages,
+            transcription,
+        },
+    });

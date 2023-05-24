@@ -1,5 +1,6 @@
 import {
     alignDocument,
+    exportDocument,
     segmentDocument,
     transcribeDocument,
 } from "../../../src/api";
@@ -45,6 +46,8 @@ const actions = {
                 ...beamOrOffset,
                 ...witness,
             });
+        } else {
+            throw new Error("Error: alignment failed, no form fields found");
         }
     },
     /**
@@ -53,6 +56,18 @@ const actions = {
     closeModal({ commit, dispatch }, key) {
         commit("setModalOpen", { key, open: false });
         dispatch("forms/clearForm", key, { root: true });
+    },
+    /**
+     * Queue the export task for a document.
+     */
+    async exportDocument({ rootState }, documentId) {
+        await exportDocument({
+            documentId,
+            regionTypes: rootState?.forms?.export?.regionTypes,
+            fileFormat: rootState?.forms?.export?.fileFormat,
+            transcription: rootState?.forms?.export?.transcription,
+            includeImages: rootState?.forms?.export?.includeImages,
+        });
     },
     /**
      * Open a task modal by key.

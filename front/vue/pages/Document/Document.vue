@@ -239,6 +239,16 @@
                     :textual-witnesses="textualWitnesses"
                     scope="Document"
                 />
+                <!-- export document modal -->
+                <ExportModal
+                    v-if="taskModalOpen?.export"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('export')"
+                    :on-submit="handleSubmitExport"
+                    scope="Document"
+                />
             </div>
         </template>
     </EscrPage>
@@ -246,6 +256,7 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
@@ -285,6 +296,7 @@ export default {
         EscrPage,
         EscrTable,
         EscrTags,
+        ExportModal,
         // eslint-disable-next-line vue/no-unused-components
         ModelsIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -512,6 +524,7 @@ export default {
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
             "handleSubmitAlign",
+            "handleSubmitExport",
             "handleSubmitSegmentation",
             "handleSubmitTranscribe",
             "openCharactersModal",

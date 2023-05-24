@@ -497,6 +497,14 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
         }
     },
+    async handleSubmitExport({ dispatch, state }) {
+        try {
+            await dispatch("tasks/exportDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "export", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
     /**
      * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
      * is checked, otherwise just queue the segmentation task and close the modal.
