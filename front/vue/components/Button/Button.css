@@ -193,6 +193,31 @@
 .escr-button--link-primary.escr-button--small {
     font-size: 12px;
 }
+/* link secondary */
+.escr-button--link-secondary {
+    background-color: transparent;
+    border: none;
+    color: var(--secondary);
+    font-weight: 400;
+}
+.escr-button--link-secondary svg {
+    fill: var(--secondary);
+}
+.escr-button--link-secondary:hover {
+    color: var(--secondary-dark);
+}
+.escr-button--link-secondary:hover svg {
+    fill: var(--secondary-dark);
+}
+.escr-button--link-secondary:active {
+    color: var(--secondary-darker);
+}
+.escr-button--link-secondary:active svg {
+    fill: var(--secondary-darker);
+}
+.escr-button--link-secondary:focus {
+    text-decoration: underline;
+}
 /* "text" color variant */
 .escr-button--text {
     background-color: transparent;
