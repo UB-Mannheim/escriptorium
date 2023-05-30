@@ -16,6 +16,7 @@ import {
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 import { getDocumentMetadataCRUD } from "../util/metadata";
+import forms from "../util/initialFormState";
 
 // initial state
 const state = () => ({
@@ -258,6 +259,27 @@ const actions = {
             commit("setProjectId", data.project?.id);
             commit("setProjectName", data.project?.name);
             commit("setRegionTypes", data.valid_block_types);
+            // select all region types on forms that have that key
+            Object.keys(forms)
+                .filter((form) =>
+                    Object.prototype.hasOwnProperty.call(
+                        forms[form],
+                        "regionTypes",
+                    ),
+                )
+                .forEach((form) => {
+                    commit(
+                        "forms/setFieldValue",
+                        {
+                            form,
+                            field: "regionTypes",
+                            value: data.valid_block_types.map((rt) =>
+                                rt.pk.toString(),
+                            ),
+                        },
+                        { root: true },
+                    );
+                });
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
             commit(
@@ -514,7 +536,9 @@ const actions = {
             dispatch("tasks/openModal", "overwriteWarning", { root: true });
         } else {
             try {
-                await dispatch("tasks/segmentDocument", state.id, { root: true });
+                await dispatch("tasks/segmentDocument", state.id, {
+                    root: true,
+                });
                 dispatch("tasks/closeModal", "segment", { root: true });
             } catch (error) {
                 dispatch("alerts/addError", error, { root: true });
@@ -526,7 +550,9 @@ const actions = {
      */
     async handleSubmitTranscribe({ dispatch, state }) {
         try {
-            await dispatch("tasks/transcribeDocument", state.id, { root: true });
+            await dispatch("tasks/transcribeDocument", state.id, {
+                root: true,
+            });
             dispatch("tasks/closeModal", "transcribe", { root: true });
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });

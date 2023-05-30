@@ -46,7 +46,8 @@
             <ArrayField
                 :on-change="handleRegionTypesChange"
                 :options="regionTypesOptions"
-                help-text="Select region types to include in the alignment."
+                class="escr-region-types"
+                help-text="Select region types to include in the export."
                 label="Region Types"
             />
         </template>

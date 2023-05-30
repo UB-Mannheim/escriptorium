@@ -33,6 +33,7 @@
     </div>
 </template>
 <script>
+import "./ArrayField.css";
 import "../Common/Form.css";
 
 export default {

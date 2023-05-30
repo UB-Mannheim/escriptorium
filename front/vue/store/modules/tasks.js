@@ -4,6 +4,7 @@ import {
     segmentDocument,
     transcribeDocument,
 } from "../../../src/api";
+import initialFormState from "../util/initialFormState";
 
 // initial state
 const state = () => ({
@@ -53,9 +54,25 @@ const actions = {
     /**
      * Close the modal by key and clear its form.
      */
-    closeModal({ commit, dispatch }, key) {
+    closeModal({ commit, dispatch, rootState }, key) {
         commit("setModalOpen", { key, open: false });
         dispatch("forms/clearForm", key, { root: true });
+        // when clearing forms with regionTypes, ensure default (all types selected)
+        // is set if possible
+        if (Object.hasOwnProperty.call(initialFormState[key], "regionTypes")) {
+            commit(
+                "forms/setFieldValue",
+                {
+                    form: key,
+                    field: "regionTypes",
+                    value:
+                        rootState?.document?.regionTypes?.map((rt) =>
+                            rt.pk.toString(),
+                        ) || [],
+                },
+                { root: true },
+            );
+        }
     },
     /**
      * Queue the export task for a document.

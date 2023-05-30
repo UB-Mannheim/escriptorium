@@ -83,6 +83,7 @@
             <ArrayField
                 :on-change="handleRegionTypesChange"
                 :options="regionTypesOptions"
+                class="escr-region-types"
                 help-text="Select region types to include in the alignment."
                 label="Region Types"
             />

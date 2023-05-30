@@ -1,3 +1,6 @@
+.escr-form-field {
+    display: block;
+}
 .escr-form-field span.escr-required,
 h3 span.escr-required {
     color: red;
