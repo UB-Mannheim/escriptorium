@@ -17,6 +17,7 @@
             :disabled="disabled"
             :name="name"
             :maxlength="maxLength"
+            :invalid="invalid"
             @input="onInput"
         >
         <span
@@ -57,6 +58,13 @@ export default {
         helpText: {
             type: String,
             default: "",
+        },
+        /**
+         * Invalid attribute for html-based form validation (optional)
+         */
+        invalid: {
+            type: Boolean,
+            default: false,
         },
         /**
          * Label text

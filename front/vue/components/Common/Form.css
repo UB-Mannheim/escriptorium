@@ -52,3 +52,7 @@ input[type="file"]::file-selector-button {
     font-weight: 600;
     cursor: pointer;
 }
+
+input[type="file"].invalid {
+    outline: 1px solid var(--alert);
+}

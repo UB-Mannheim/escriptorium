@@ -7,6 +7,7 @@
             <TextField
                 label="IIIF Manifest URI"
                 placeholder="https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
+                :invalid="invalid['iiifUri']"
                 :on-input="handleIIIFInput"
                 :value="iiifUri"
                 :max-length="255"
@@ -21,6 +22,12 @@ import TextField from "../TextField/TextField.vue";
 export default {
     name: "EscrImportIIIFForm",
     components: { TextField },
+    props: {
+        invalid: {
+            type: Object,
+            required: true,
+        },
+    },
     computed: {
         ...mapState({
             iiifUri: (state) => state.forms.import.iiifUri,
@@ -34,7 +41,7 @@ export default {
             this.handleGenericInput({
                 form: "import",
                 field: "iiifUri",
-                value: e.target.files[0],
+                value: e.target.value,
             });
         },
     },

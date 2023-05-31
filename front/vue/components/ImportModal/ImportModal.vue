@@ -47,7 +47,10 @@
                     </button>
                 </li>
             </ul>
-            <component :is="currentComponent" />
+            <component
+                :is="currentComponent"
+                :invalid="invalid"
+            />
         </template>
         <template #modal-actions>
             <EscrButton
@@ -59,7 +62,7 @@
             <EscrButton
                 color="primary"
                 label="Upload"
-                :on-click="onSubmit"
+                :on-click="handleSubmit"
                 :disabled="disabled"
             />
         </template>
@@ -117,9 +120,19 @@ export default {
             required: true,
         },
     },
+    data() {
+        return {
+            invalid: {},
+        };
+    },
     computed: {
         ...mapState({
+            iiifUri: (state) => state.forms.import.iiifUri,
             importMode: (state) => state.forms.import.mode,
+            layerName: (state) => state.forms.import.layerName,
+            metsUri: (state) => state.forms.import.metsUri,
+            metsType: (state) => state.forms.import.metsType,
+            uploadFile: (state) => state.forms.import.uploadFile,
         }),
         currentComponent() {
             switch (this.importMode) {
@@ -143,6 +156,44 @@ export default {
         ]),
         setImportMode(mode) {
             this.handleGenericInput({ form: "import", field: "mode", value: mode })
+        },
+        recalculateInvalid() {
+            let invalid = {};
+            switch (this.importMode) {
+                case "images":
+                default:
+                    break;
+                case "pdf":
+                    invalid = { file: !this.uploadFile };
+                    break;
+                case "iiif":
+                    invalid = { iiifUri: !this.iiifUri };
+                    break;
+                case "mets":
+                    invalid = { layerName: !this.layerName };
+                    invalid =  this.metsType === "file"
+                        ? { ...invalid, file: !this.uploadFile }
+                        : { ...invalid, metsUri: !this.metsUri };
+                    break;
+                case "xml":
+                    invalid = {
+                        file: !this.uploadFile,
+                        layerName: !this.layerName,
+                    };
+                    break;
+            }
+            this.invalid = invalid;
+            return invalid;
+        },
+        handleSubmit() {
+            const invalid = this.recalculateInvalid();
+            if (Object.keys(invalid).some((key) => invalid[key] === true)) {
+                // if any are invalid, don't submit, just show red
+                console.log(invalid);
+            } else {
+                // otherwise, submit
+                this.onSubmit();
+            }
         },
     },
 }

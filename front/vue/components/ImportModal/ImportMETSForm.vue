@@ -14,6 +14,7 @@
                 <input
                     type="file"
                     accept=".zip"
+                    :class="{ invalid: invalid['file'] }"
                     @change="handleFileChange"
                 >
                 <span class="escr-help-text">
@@ -24,6 +25,7 @@
                 <TextField
                     label="Remote METS URI"
                     placeholder="Enter METS file URI"
+                    :invalid="invalid['metsUri']"
                     :label-visible="false"
                     :value="metsUri"
                     :on-input="handleMetsUriInput"
@@ -33,6 +35,7 @@
                 label="Transcription Name"
                 help-text="The name of the resulting transcription layer."
                 placeholder="Name"
+                :invalid="invalid['layerName']"
                 :value="layerName"
                 :on-input="handleLayerNameInput"
             />
@@ -64,6 +67,12 @@ export default {
     components: {
         SegmentedButtonGroup,
         TextField,
+    },
+    props: {
+        invalid: {
+            type: Object,
+            required: true,
+        },
     },
     computed: {
         ...mapState({

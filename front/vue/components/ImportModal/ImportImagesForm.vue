@@ -32,6 +32,12 @@ export default {
         ImageDropzone,
         UploadIcon,
     },
+    props: {
+        invalid: {
+            type: Object,
+            required: true,
+        },
+    },
     data: function() {
         return {
             dropzoneOptions: {

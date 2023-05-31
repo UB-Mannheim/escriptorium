@@ -9,12 +9,14 @@
             <input
                 type="file"
                 accept=".zip,.xml"
+                :class="{ invalid: invalid['file'] }"
                 @change="handleFileChange"
             >
             <TextField
                 label="Transcription Name"
                 help-text="The name of the resulting transcription layer."
                 placeholder="Name"
+                :invalid="invalid['layerName']"
                 :value="layerName"
                 :on-input="handleLayerNameInput"
             />
@@ -37,13 +39,19 @@
     </div>
 </template>
 <script>
-import { mapState } from "vuex";
+import { mapActions, mapState } from "vuex";
 import TextField from "../TextField/TextField.vue";
 
 export default {
     name: "EscrImportXMLForm",
     components: {
         TextField,
+    },
+    props: {
+        invalid: {
+            type: Object,
+            required: true,
+        },
     },
     computed: {
         ...mapState({
@@ -52,6 +60,9 @@ export default {
         }),
     },
     methods: {
+        ...mapActions("forms", [
+            "handleGenericInput",
+        ]),
         handleFileChange(e) {
             this.handleGenericInput({
                 form: "import",

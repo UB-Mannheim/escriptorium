@@ -6,6 +6,7 @@
             <input
                 type="file"
                 accept=".pdf"
+                :class="{ invalid: invalid['file'] }"
                 @change="handleFileChange"
             >
         </fieldset>
@@ -16,6 +17,12 @@ import { mapActions } from "vuex";
 
 export default {
     name: "EscrImportPDFForm",
+    props: {
+        invalid: {
+            type: Object,
+            required: true,
+        },
+    },
     methods: {
         ...mapActions("forms", [
             "handleGenericInput",
