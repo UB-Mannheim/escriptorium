@@ -560,6 +560,60 @@ def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **k
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
+                 part_pk=None, user_pk=None, **kwargs):
+
+    from kraken.align import forced_align as kraken_forced_align
+    from kraken.lib import models as kraken_models
+
+    OcrModel = apps.get_model('core', 'OcrModel')
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    Transcription = apps.get_model('core', 'Transcription')
+    LineTranscription = apps.get_model('core', 'LineTranscription')
+
+    ocrmodel = OcrModel.objects.get(pk=model_pk)
+    model = kraken_models.load_any(ocrmodel.file.path)
+    transcription = Transcription.objects.get(pk=transcription_pk)
+
+    part = DocumentPart.objects.get(pk=instance_pk)
+    document = part.document
+
+    text_direction = (
+        (document.main_script and document.main_script.text_direction)
+        or "horizontal-lr"
+    )
+
+    linetrans = LineTranscription.objects.filter(
+        line__document_part=part,
+        transcription=transcription
+    ).select_related('line')
+
+    for lt in linetrans:
+        data = {
+            'image': part.image,
+            "lines": [{
+                "text": lt.content,
+                "baseline": lt.line.baseline,
+                "boundary": lt.line.mask,
+                "text_direction": text_direction,
+                "tags": {'type': lt.line.typology and lt.line.typology.name or 'default'},
+            }],
+            "type": "baselines"
+        }
+
+        records = kraken_forced_align(data, model)  # base_dir = L,R
+        for pred in records:
+            # lt.content = pred.prediction
+            lt.graphs = [{
+                'c': letter,
+                'poly': poly,
+                'confidence': float(confidence)
+            } for letter, poly, confidence in zip(
+                pred.prediction, pred.cuts, pred.confidences)]
+            lt.save()
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def transcribe(instance_pk=None, model_pk=None, user_pk=None,
                transcription_pk=None, text_direction=None, **kwargs):
 
