@@ -211,6 +211,7 @@ export const alignDocument = async ({
     });
 };
 
+// queue the export task for this document
 export const exportDocument = async ({
     documentId,
     fileFormat,
@@ -226,3 +227,7 @@ export const exportDocument = async ({
             transcription,
         },
     });
+
+// queue the import task for this document
+export const queueImport = async ({ documentId, params }) =>
+    await axios.post(`/document/${documentId}/import`, { params });

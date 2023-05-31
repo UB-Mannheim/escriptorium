@@ -1,6 +1,7 @@
 import {
     alignDocument,
     exportDocument,
+    queueImport,
     segmentDocument,
     transcribeDocument,
 } from "../../../src/api";
@@ -85,6 +86,41 @@ const actions = {
             transcription: rootState?.forms?.export?.transcription,
             includeImages: rootState?.forms?.export?.includeImages,
         });
+    },
+    /**
+     * Queue the import task for a document.
+     */
+    async importImagesOrTranscription({ rootState }, documentId) {
+        let params = {};
+        switch (rootState?.forms?.import?.mode) {
+            case "pdf":
+                params["upload_file"] = rootState.forms.import.uploadFile;
+                break;
+            case "iiif":
+                params["iiif_uri"] = rootState.forms.import.iiifUri;
+                break;
+            case "mets":
+                params["name"] = rootState.forms.import.layerName;
+                params["override"] = rootState.forms.import.overwrite;
+                if (rootState.forms.import.metsType === "url") {
+                    params["mets_uri"] = rootState.forms.import.metsUri;
+                } else {
+                    params["upload_file"] = rootState.forms.import.uploadFile;
+                    params["mets"] = true;
+                }
+                break;
+            case "xml":
+                params["name"] = rootState.forms.import.layerName;
+                params["override"] = rootState.forms.import.overwrite;
+                params["upload_file"] = rootState.forms.import.uploadFile;
+                break;
+            // image files already uploaded to the /parts endpoint by the drop zone component,
+            // so no need to do anything with them
+            case "images":
+            default:
+                break;
+        }
+        return await queueImport({ documentId, params });
     },
     /**
      * Open a task modal by key.

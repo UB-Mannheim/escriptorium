@@ -23,6 +23,16 @@ import {
 export default {
     title: "Pages/Document Dashboard",
     component: DocumentDashboard,
+    parameters: {
+        // mock dropzone image upload api endpoint
+        mockData: [
+            {
+                url: "/api/documents/1/parts",
+                method: "POST",
+                status: 201,
+            },
+        ],
+    },
 };
 
 const doc = {
@@ -160,7 +170,7 @@ const Template = (args, { argTypes }) => ({
         );
         const groupsEndpoint = "/groups";
         const shareEndpoint = new RegExp(/\/documents\/\d+\/share$/);
-        const witnessesEndpoint  = "/textual-witnesses";
+        const witnessesEndpoint = "/textual-witnesses";
         // mock document response
         mock.onGet(documentEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -422,7 +432,7 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: textualWitnesses }];
-        })
+        });
     },
 });
 

@@ -46,3 +46,6 @@
     align-items: center;
     justify-content: space-between;
 }
+.escr-align-modal input[type="file"] {
+    margin-top: 24px;
+}

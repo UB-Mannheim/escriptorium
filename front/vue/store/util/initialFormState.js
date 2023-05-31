@@ -46,6 +46,15 @@ export default {
         regionTypes: [],
         transcription: "",
     },
+    import: {
+        iiifUri: "",
+        layerName: "",
+        metsType: "url",
+        metsUri: "",
+        mode: "images",
+        overwrite: false,
+        uploadFile: "",
+    },
     segment: {
         model: "",
         overwrite: false,

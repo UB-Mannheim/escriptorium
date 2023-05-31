@@ -6,7 +6,7 @@ h3 span.escr-required {
     color: red;
     margin-left: 3px;
 }
-.escr-form-field .escr-help-text {
+.escr-help-text {
     font-weight: 400;
     font-size: 12px;
     font-family: 'Noto Sans';
@@ -35,7 +35,6 @@ h3 span.escr-required {
 }
 
 input[type="file"] {
-    margin-top: 24px;
     font: inherit;
     background-color: var(--background);
     width: 100%;

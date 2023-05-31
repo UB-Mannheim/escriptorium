@@ -519,10 +519,24 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
         }
     },
+    /**
+     * Handle submitting the export modal. Queue the task and close the modal.
+     */
     async handleSubmitExport({ dispatch, state }) {
         try {
             await dispatch("tasks/exportDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "export", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the import modal. Queue the task and close the modal.
+     */
+    async handleSubmitImport({ dispatch, state }) {
+        try {
+            await dispatch("tasks/importImagesOrTranscription", state.id, { root: true });
+            dispatch("tasks/closeModal", "import", { root: true });
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }

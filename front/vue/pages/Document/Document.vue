@@ -199,6 +199,13 @@
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
+                <!-- import images modal -->
+                <ImportModal
+                    v-if="taskModalOpen?.import"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('import')"
+                    :on-submit="handleSubmitImport"
+                />
                 <!-- segment document modal -->
                 <SegmentModal
                     v-if="taskModalOpen?.segment"
@@ -266,6 +273,7 @@ import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
+import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
@@ -297,6 +305,7 @@ export default {
         EscrTable,
         EscrTags,
         ExportModal,
+        ImportModal,
         // eslint-disable-next-line vue/no-unused-components
         ModelsIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -525,6 +534,7 @@ export default {
             "fetchTranscriptionOntology",
             "handleSubmitAlign",
             "handleSubmitExport",
+            "handleSubmitImport",
             "handleSubmitSegmentation",
             "handleSubmitTranscribe",
             "openCharactersModal",
