@@ -173,6 +173,9 @@ class ProfileInfos(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     success_message = _('Profile successfully saved.')
     template_name = 'users/profile.html'
 
+    def get_success_url(self):
+        return reverse('profile')
+
     def get_object(self):
         return self.request.user
 
