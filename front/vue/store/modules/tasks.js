@@ -118,7 +118,7 @@ const actions = {
             // so no need to do anything with them
             case "images":
             default:
-                break;
+                return;
         }
         return await queueImport({ documentId, params });
     },
