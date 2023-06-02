@@ -1,11 +1,14 @@
 .escr-form-field span.escr-required {
-    color: red;
+    color: var(--alert);
 }
-.escr-form-field .escr-help-text {
+.escr-help-text {
     font-weight: 400;
     font-size: 12px;
     font-family: 'Noto Sans';
     font-style: normal;
+}
+.escr-error-text {
+    color: var(--alert);
 }
 .escr-form-field .escr-field-label {
     display: block;

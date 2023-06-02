@@ -27,7 +27,14 @@
                 :disabled="disabled"
                 :on-input="(e) => handleTextFieldInput('guidelines', e.target.value)"
                 :value="guidelines"
+                :invalid="!!guidelines && !isHttpUrl(guidelines)"
             />
+            <span
+                v-if="guidelines && !isHttpUrl(guidelines)"
+                class="escr-help-text escr-error-text"
+            >
+                Must be a valid URL starting with http:// or https://.
+            </span>
             <TagsField
                 label="Tags"
                 :disabled="disabled"
@@ -50,7 +57,7 @@
                 color="primary"
                 :label="newProject ? 'Create' : 'Save'"
                 :on-click="onSave"
-                :disabled="disabled || !name"
+                :disabled="disabled || invalid"
             />
         </template>
     </EscrModal>
@@ -124,6 +131,9 @@ export default {
             selectedTags: (state) => state.forms.editProject.tags,
             tagName: (state) => state.forms.editProject.tagName,
         }),
+        invalid() {
+            return !this.name || (!!this.guidelines && !this.isHttpUrl(this.guidelines));
+        },
     },
     methods: {
         ...mapActions("forms", [
@@ -135,6 +145,15 @@ export default {
         },
         handleTextFieldInput(field, value) {
             this.handleTextInput({ form: "editProject", field, value });
+        },
+        isHttpUrl(string) {
+            let givenURL;
+            try {
+                givenURL = new URL(string);
+            } catch (error) {
+                return false;
+            }
+            return givenURL.protocol === "http:" || givenURL.protocol === "https:";
         },
     },
 };
