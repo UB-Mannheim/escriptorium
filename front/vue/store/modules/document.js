@@ -7,6 +7,7 @@ import {
     retrieveDocumentMetadata,
     retrieveDocumentModels,
     retrieveDocumentParts,
+    retrieveDocumentTasks,
     retrieveTextualWitnesses,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
@@ -17,6 +18,7 @@ import {
 import { tagColorToVariant } from "../util/color";
 import { getDocumentMetadataCRUD } from "../util/metadata";
 import forms from "../util/initialFormState";
+import { throttle } from "../util/throttle";
 
 // initial state
 const state = () => ({
@@ -29,6 +31,7 @@ const state = () => ({
         document: false,
         models: false,
         parts: false,
+        tasks: false,
         transcriptions: false,
         user: false,
     },
@@ -105,6 +108,21 @@ const state = () => ({
      * }]
      */
     tags: [],
+    /**
+     * tasks: [{
+     *     pk: Number,
+     *     document: Number,
+     *     workflow_state: Number,
+     *     label: String,
+     *     messages?: String,
+     *     queued_at: String,
+     *     started_at: String
+     *     done_at: String,
+     *     method: String,
+     *     user: Number,
+     * }]
+     */
+    tasks: [],
     /**
      * textualWitnesses: [{
      *     name: String,
@@ -247,7 +265,11 @@ const actions = {
      * Fetch the current document.
      */
     async fetchDocument({ commit, state, dispatch, rootState }) {
-        commit("setLoading", { key: "document", loading: true });
+        // set all loading
+        Object.keys(state.loading).map((key) =>
+            commit("setLoading", { key, loading: true }),
+        );
+        // fetch document
         const { data } = await retrieveDocument(state.id);
         if (data) {
             commit("setLastModified", data.updated_at);
@@ -363,9 +385,10 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
 
-        // fetch scripts, metadata, models, textual witnesses
+        // fetch scripts, metadata, tasks, models, textual witnesses
         await dispatch({ type: "project/fetchScripts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
+        await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
         await dispatch("fetchTextualWitnesses");
     },
@@ -421,6 +444,29 @@ const actions = {
             throw new Error("Unable to retrieve document images");
         }
         commit("setLoading", { key: "parts", loading: false });
+    },
+    /**
+     * Fetch page 1 of the current document's most recent tasks.
+     */
+    async fetchDocumentTasks({ commit, state }) {
+        commit("setLoading", { key: "tasks", loading: true });
+        const { data } = await retrieveDocumentTasks({ documentId: state.id });
+        if (data?.results) {
+            commit("setTasks", data.results);
+        } else {
+            commit("setLoading", { key: "tasks", loading: false });
+            throw new Error("Unable to retrieve document tasks");
+        }
+        commit("setLoading", { key: "tasks", loading: false });
+    },
+    /**
+     * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
+     */
+    fetchDocumentTasksThrottled({ commit, dispatch }) {
+        commit("setLoading", { key: "tasks", loading: true });
+        throttle(function* () {
+            yield dispatch("fetchDocumentTasks");
+        });
     },
     /**
      * Fetch existing textual witnesses for use in alignment.
@@ -854,6 +900,9 @@ const mutations = {
     },
     setShareModalOpen(state, open) {
         state.shareModalOpen = open;
+    },
+    setTasks(state, tasks) {
+        state.tasks = tasks;
     },
     setTags(state, tags) {
         state.tags = tags;

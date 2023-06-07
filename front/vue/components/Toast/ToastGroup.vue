@@ -7,6 +7,9 @@
         <Toast
             v-for="toast in alerts"
             :key="toast.id"
+            :action-label="toast.actionLabel"
+            :action-link="toast.actionLink"
+            :delay="toast.delay"
             :color="toast.color"
             :message="toast.message"
             :on-close="() => remove(toast)"

@@ -72,6 +72,7 @@
     --text1: #212323;
     --text2: #666768;
     --text3: #a7a8a9;
+    --toast-text: #ffffff;
 }
 .dark-mode {
     /* button colors */
@@ -94,6 +95,7 @@
     --text1: #ffffff;
     --text2: #a7a8a9;
     --text3: #717373;
+    --toast-text: #ffffff;
 }
 
 /* Site-wide styles */
@@ -169,4 +171,48 @@ hr {
 }
 .v-popper--theme-escr-tooltip .v-popper__arrow-outer {
     border-color: var(--background2);
+}
+
+/* spinner (adapted from bootstrap) */
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+.escr-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 4px solid var(--background2);
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-animation: spinner-border 1s linear infinite;
+    animation: spinner-border 1s linear infinite;
+}
+.escr-spinner--inactive {
+    border-right-color: var(--background2);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner--secondary {
+    border-color: var(--secondary);
+    border-right-color: transparent;
+}
+.escr-spinner--secondary-inactive {
+    border-color: var(--secondary);
+    border-right-color: var(--secondary);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner--danger {
+    border-color: var(--alert);
+    border-right-color: var(--alert);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 auto;
 }

@@ -205,11 +205,66 @@ export const userGroups = [
 
 export const textualWitnesses = [
     {
-        "name": "kashf_jun16",
-        "pk": 1
+        name: "kashf_jun16",
+        pk: 1,
     },
     {
-        "name": "witness_exmaple",
-        "pk": 2
-    }
+        name: "witness_exmaple",
+        pk: 2,
+    },
+];
+
+export const tasks = [
+    {
+        pk: 1,
+        document: 1,
+        workflow_state: 0, // queued
+        document_part: null,
+        label: "Export My Document",
+        messages: "",
+        queued_at: "2023-06-02T18:35:20.062384Z",
+        started_at: "",
+        done_at: "",
+        method: "imports.tasks.document_export",
+        user: 1,
+    },
+    {
+        pk: 2,
+        document: 1,
+        workflow_state: 1, // started
+        document_part: "Element 1",
+        label: "Transcribe in My Document",
+        messages: "",
+        queued_at: "2023-06-02T18:30:16.933211Z",
+        started_at: "2023-06-02T18:30:18.008626Z",
+        done_at: "",
+        method: "core.tasks.transcribe",
+        user: 1,
+    },
+    {
+        pk: 3,
+        document: 1,
+        workflow_state: 3, // done
+        document_part: "Element 1",
+        label: "Segment in My Document",
+        messages: "",
+        queued_at: "2023-06-01T16:05:23.350174Z",
+        started_at: "",
+        done_at: "2023-06-02T16:18:57.629539Z",
+        method: "core.tasks.segment",
+        user: 1,
+    },
+    {
+        pk: 4,
+        document: 1,
+        workflow_state: 3, // done
+        document_part: null,
+        label: "Export My Document",
+        messages: "",
+        queued_at: "2023-06-01T18:05:23.350174Z",
+        started_at: "2023-06-01T18:05:23.369946Z",
+        done_at: "2023-06-01T18:05:23.483863Z",
+        method: "imports.tasks.document_export",
+        user: 1,
+    },
 ];

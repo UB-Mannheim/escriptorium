@@ -1,5 +1,6 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
+import { Server } from "mock-socket";
 import DocumentDashboard from "../../vue/pages/Document/Document.vue";
 import {
     annotationTypes,
@@ -18,6 +19,7 @@ import {
     transcriptions,
     users,
     userGroups,
+    tasks,
 } from "./util";
 
 export default {
@@ -38,7 +40,7 @@ export default {
 const doc = {
     line_offset: 0,
     main_script: "Arabic",
-    name: "Document Name",
+    name: "My Document",
     parts_count: 32,
     project: {
         id: 1,
@@ -128,6 +130,20 @@ const Template = (args, { argTypes }) => ({
     components: { DocumentDashboard },
     template: '<DocumentDashboard v-bind="$props" />',
     setup() {
+        // setup websocket mocks for tasks
+        const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+        const mockSocketURL = `${scheme}//${window.location.host}/ws/notif/`;
+        // wrap in try/catch in case reloaded with mock socket still open
+        try {
+            const mockServer = new Server(mockSocketURL);
+            // close after 30 minutes
+            setTimeout(() => {
+                mockServer.stop(() => console.log("websocket close"));
+            }, 1800000);
+        } catch (err) {
+            console.log(err);
+        }
+
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
         const documentEndpoint = new RegExp(/\/documents\/\d+$/);
@@ -171,6 +187,7 @@ const Template = (args, { argTypes }) => ({
         const groupsEndpoint = "/groups";
         const shareEndpoint = new RegExp(/\/documents\/\d+\/share$/);
         const witnessesEndpoint = "/textual-witnesses";
+        const tasksEndpoint = "/tasks";
         // mock document response
         mock.onGet(documentEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -432,6 +449,12 @@ const Template = (args, { argTypes }) => ({
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: textualWitnesses }];
+        });
+        // mock get tasks
+        mock.onGet(tasksEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: tasks }];
         });
     },
 });

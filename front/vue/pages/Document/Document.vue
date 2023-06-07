@@ -52,7 +52,7 @@
                     </div>
 
                     <!-- Document tasks card -->
-                    <div class="escr-card escr-card-padding escr-document-tasks">
+                    <div class="escr-card escr-card-table escr-document-tasks">
                         <div class="escr-card-header">
                             <h2>Tasks</h2>
                             <div class="escr-card-actions">
@@ -60,13 +60,16 @@
                                     label="View All"
                                     size="small"
                                     :on-click="viewTasks"
-                                    :disabled="loading?.document"
+                                    :disabled="loading?.tasks"
                                 >
                                     <template #button-icon-right>
                                         <ArrowRightIcon />
                                     </template>
                                 </EscrButton>
                             </div>
+                        </div>
+                        <div class="tasks-container">
+                            <TaskDashboard />
                         </div>
                     </div>
 
@@ -256,11 +259,23 @@
                     :on-submit="handleSubmitExport"
                     scope="Document"
                 />
+                <!-- cancel task modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen?.cancelWarning"
+                    :body-text="'Are you sure you want to cancel this task?'"
+                    title="Cancel Task"
+                    confirm-verb="Yes"
+                    cancel-verb="No"
+                    :cannot-undo="false"
+                    :on-cancel="() => closeTaskModal('cancelWarning')"
+                    :on-confirm="() => cancelTask({ documentId: id })"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
+import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
@@ -285,6 +300,7 @@ import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
+import TaskDashboard from "./TaskDashboard.vue";
 import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
@@ -325,6 +341,7 @@ export default {
         ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
+        TaskDashboard,
         // eslint-disable-next-line vue/no-unused-components
         ToolsIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -340,6 +357,11 @@ export default {
             type: Number,
             required: true,
         }
+    },
+    data() {
+        return {
+            msgSocket: undefined,
+        };
     },
     computed: {
         ...mapState({
@@ -503,6 +525,16 @@ export default {
      */
     async created() {
         this.setId(this.id);
+        // join document websocket room
+        const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
+        const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+        const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}/ws/notif/`);
+        msgSocket.maxReconnectAttempts = 3;
+        msgSocket.addEventListener("open", function() {
+            msgSocket.send(msg);
+        });
+        // handle document-related websocket events
+        msgSocket.addEventListener("message", this.websocketTaskListener);
         try {
             await this.fetchDocument();
         } catch (error) {
@@ -530,6 +562,7 @@ export default {
             "deleteDocument",
             "fetchDocument",
             "fetchDocumentMetadata",
+            "fetchDocumentTasksThrottled",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
             "handleSubmitAlign",
@@ -557,6 +590,7 @@ export default {
         ...mapActions("project", ["createNewDocumentTag"]),
         ...mapActions("user", ["fetchGroups"]),
         ...mapActions("tasks", {
+            cancelTask: "cancel",
             closeTaskModal: "closeModal",
             align: "alignDocument",
             transcribe: "transcribeDocument",
@@ -565,6 +599,19 @@ export default {
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },
+        async websocketTaskListener(e) {
+            const data = JSON.parse(e.data);
+            // handle task-related events
+            const taskEvents = [
+                "export:", "import:", "part:mask", "part:workflow", "training:"
+            ];
+            if (
+                data.type === "event" && taskEvents.some((task) => data.name.startsWith(task))
+            ) {
+                // these may be frequent, so throttle
+                this.fetchDocumentTasksThrottled();
+            }
+        }
     },
 }
 </script>
