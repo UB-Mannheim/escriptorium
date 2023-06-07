@@ -51,6 +51,7 @@ from api.serializers import (
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
+    TaskReportSerializer,
     TextAnnotationSerializer,
     TextualWitnessSerializer,
     TrainSerializer,
@@ -448,6 +449,17 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
+
+
+class TaskReportViewSet(ModelViewSet):
+    queryset = TaskReport.objects.all().order_by("-queued_at", "-started_at", "-done_at")
+    serializer_class = TaskReportSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['document']
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(user=self.request.user)
+        return qs
 
 
 class DocumentPermissionMixin():
