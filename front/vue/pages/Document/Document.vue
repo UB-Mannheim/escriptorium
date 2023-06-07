@@ -59,7 +59,7 @@
                                 <EscrButton
                                     label="View All"
                                     size="small"
-                                    :on-click="viewTasks"
+                                    :on-click="() => navigateToTasks()"
                                     :disabled="loading?.tasks"
                                 >
                                     <template #button-icon-right>
@@ -81,7 +81,7 @@
                                 <EscrButton
                                     label="View All"
                                     size="small"
-                                    :on-click="viewTasks"
+                                    :on-click="() => navigateToImages()"
                                     :disabled="loading?.parts"
                                 >
                                     <template #button-icon-right>
@@ -596,6 +596,16 @@ export default {
             transcribe: "transcribeDocument",
             export: "exportDocument",
         }),
+        navigateToImages() {
+            if (this.id) {
+                window.location = `/document/${this.id}/images`;
+            } else {
+                this.addError({ message: "Error navigating to the images page." });
+            }
+        },
+        navigateToTasks() {
+            window.location = "/quotas/";
+        },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },
