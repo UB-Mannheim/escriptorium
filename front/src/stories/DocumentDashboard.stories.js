@@ -64,7 +64,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_2.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/3cb1ea61edef4606848a2891b05a931c/1.png",
             },
         },
         updated_at: "2023-03-17T13:46:38.076375Z",
@@ -75,7 +75,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_1.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/4334a28c59987228d2d498fe10a6784f/2.png",
             },
         },
         updated_at: "2022-07-08T13:40:30.810030Z",
@@ -86,7 +86,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_3.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/e9f2fe1a19c4ff9892d045fe501304d1/3.png",
             },
         },
         updated_at: "2022-07-08T13:40:37.484940Z",
@@ -97,7 +97,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_4.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/668ab44cd09e3dc0799df39dbba82449/4.png",
             },
         },
         updated_at: "2022-07-08T13:40:40.970483Z",
