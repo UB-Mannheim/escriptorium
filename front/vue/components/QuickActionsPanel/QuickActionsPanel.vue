@@ -1,16 +1,25 @@
 <template>
     <ul class="escr-quick-actions">
         <li>
-            <EscrButton
-                color="text"
-                :disabled="!data || data.disabled"
-                :on-click="() => openModal('import')"
-                label="Import Images"
+            <VDropdown
+                placement="left"
+                :triggers="['hover']"
+                theme="tags-dropdown"
             >
-                <template #button-icon>
-                    <ImportIcon />
+                <EscrButton
+                    color="text"
+                    :disabled="!data || data.disabled"
+                    :on-click="() => openModal('import')"
+                    label="Import"
+                >
+                    <template #button-icon>
+                        <ImportIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Import images or transcription content.
                 </template>
-            </EscrButton>
+            </VDropdown>
         </li>
         <li>
             <EscrButton
@@ -64,6 +73,7 @@
 </template>
 
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
 import { mapActions, mapState } from "vuex";
 import AlignIcon from "../Icons/AlignIcon/AlignIcon.vue";
 import EscrButton from "../Button/Button.vue";
@@ -75,7 +85,15 @@ import "./QuickActionsPanel.css";
 
 export default {
     name: "EscrQuickActionsPanel",
-    components: { AlignIcon, EscrButton, ExportIcon, ImportIcon, SegmentIcon, TranscribeIcon },
+    components: {
+        AlignIcon,
+        EscrButton,
+        ExportIcon,
+        ImportIcon,
+        SegmentIcon,
+        TranscribeIcon,
+        VDropdown,
+    },
     props: {
         /**
          * Data for the quick actions panel, an object containing:
