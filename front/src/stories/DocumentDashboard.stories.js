@@ -456,6 +456,28 @@ const Template = (args, { argTypes }) => ({
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: tasks }];
         });
+
+        // mock queuing or canceling tasks (always just throw error for now)
+        const taskActionResponse = async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot queue or cancel tasks",
+                },
+            ];
+        };
+        [
+            new RegExp(/\/documents\/\d+\/segment$/),
+            new RegExp(/\/documents\/\d+\/transcribe$/),
+            new RegExp(/\/documents\/\d+\/align$/),
+            new RegExp(/\/documents\/\d+\/export$/),
+            new RegExp(/\/documents\/\d+\/import$/),
+            new RegExp(/\/documents\/\d+\/cancel_tasks$/),
+        ].forEach((endpoint) => mock.onPost(endpoint).reply(taskActionResponse));
     },
 });
 
