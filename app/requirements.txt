@@ -19,7 +19,7 @@ easy-thumbnails~=2.8.1
 elasticsearch>=7.17
 kombu~=4.6.11
 # git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
-kraken==4.3.12
+kraken~=4.3.12
 # numpy>=1.17
 oitei~=1.0.0
 # passim, "seriatim" branch
