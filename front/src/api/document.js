@@ -231,3 +231,19 @@ export const exportDocument = async ({
 // queue the import task for this document
 export const queueImport = async ({ documentId, params }) =>
     await axios.post(`/document/${documentId}/import`, { params });
+
+// retrieve latest tasks for a document
+export const retrieveDocumentTasks = async ({ documentId }) =>
+    await axios.get("/tasks", {
+        params: {
+            document: documentId,
+        },
+    });
+
+// cancel a task on a document by pk
+export const cancelTask = async ({ documentId, taskReportId }) =>
+    await axios.post(`/document/${documentId}/cancel_tasks`, {
+        params: {
+            task_report: taskReportId,
+        },
+    });

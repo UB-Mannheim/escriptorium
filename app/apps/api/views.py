@@ -321,6 +321,21 @@ class DocumentViewSet(ModelViewSet):
                    .prefetch_related('document_part')
                    .filter(workflow_state__in=[TaskReport.WORKFLOW_STATE_QUEUED,
                                                TaskReport.WORKFLOW_STATE_STARTED]))
+
+        if request.data.get("task_report"):
+            # If a task report PK is provided, try to locate it
+            task_report_pk = int(request.data.get("task_report"))
+            try:
+                TaskReport.objects.get(pk=task_report_pk)
+                # limit the canceled tasks to just the one with that pk
+                reports = reports.filter(pk=task_report_pk)
+            except TaskReport.DoesNotExist:
+                # otherwise there is an error here, so let's return a response
+                return Response({
+                    'status': 'error',
+                    'error': 'Could not cancel: the requested task could not be found.'
+                }, status=400)
+
         count = len(reports)  # evaluate query
         for report in reports:
             report.cancel(request.user.username)

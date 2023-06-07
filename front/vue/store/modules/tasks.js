@@ -1,5 +1,6 @@
 import {
     alignDocument,
+    cancelTask,
     exportDocument,
     queueImport,
     segmentDocument,
@@ -11,12 +12,14 @@ import initialFormState from "../util/initialFormState";
 const state = () => ({
     modalOpen: {
         align: false,
+        cancelWarning: false,
         export: false,
         import: false,
         overwriteWarning: false,
         segment: false,
         transcribe: false,
     },
+    selectedTask: undefined,
 });
 
 const getters = {};
@@ -53,26 +56,41 @@ const actions = {
         }
     },
     /**
+     * Confirm cancelling a task and close the cancel warning modal.
+     */
+    async cancel({ dispatch, state }, { documentId }) {
+        try {
+            await cancelTask({ documentId, taskReportId: state.selectedTask });
+            dispatch("closeModal", "cancelWarning");
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Close the modal by key and clear its form.
      */
     closeModal({ commit, dispatch, rootState }, key) {
         commit("setModalOpen", { key, open: false });
-        dispatch("forms/clearForm", key, { root: true });
-        // when clearing forms with regionTypes, ensure default (all types selected)
-        // is set if possible
-        if (Object.hasOwnProperty.call(initialFormState[key], "regionTypes")) {
-            commit(
-                "forms/setFieldValue",
-                {
-                    form: key,
-                    field: "regionTypes",
-                    value:
-                        rootState?.document?.regionTypes?.map((rt) =>
-                            rt.pk.toString(),
-                        ) || [],
-                },
-                { root: true },
-            );
+        if (Object.hasOwnProperty.call(initialFormState, key)) {
+            dispatch("forms/clearForm", key, { root: true });
+            // when clearing forms with regionTypes, ensure default (all types selected)
+            // is set if possible
+            if (
+                Object.hasOwnProperty.call(initialFormState[key], "regionTypes")
+            ) {
+                commit(
+                    "forms/setFieldValue",
+                    {
+                        form: key,
+                        field: "regionTypes",
+                        value:
+                            rootState?.document?.regionTypes?.map((rt) =>
+                                rt.pk.toString(),
+                            ) || [],
+                    },
+                    { root: true },
+                );
+            }
         }
     },
     /**
@@ -145,6 +163,12 @@ const actions = {
         });
     },
     /**
+     * Set the selected task on the state (e.g. for cancellation)
+     */
+    selectTask({ commit }, task) {
+        commit("setSelectedTask", task);
+    },
+    /**
      * Queue the transcription task for a document.
      */
     async transcribeDocument({ rootState }, documentId) {
@@ -159,6 +183,9 @@ const actions = {
 const mutations = {
     setModalOpen(state, { key, open }) {
         state.modalOpen[key] = open;
+    },
+    setSelectedTask(state, task) {
+        state.selectedTask = task;
     },
 };
 
