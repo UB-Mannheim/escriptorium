@@ -49,14 +49,6 @@ export const blockTypes = [
     { pk: 4, name: "Illustration", count: 4 },
     { pk: 5, name: "Footnote", count: 4 },
 ];
-export const blockTypesRandomized = [
-    ...blockTypes.map((b) => ({
-        ...b,
-        count: Math.ceil(Math.random() * 30),
-    })),
-    { pk: 0, name: "Extra type", count: 33 },
-];
-
 export const lineTypes = [
     { pk: 1, name: "Correction", count: 13 },
     { pk: 2, name: "Main", count: 101 },

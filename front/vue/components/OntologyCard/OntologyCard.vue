@@ -16,16 +16,6 @@
                     :options="categories"
                     :on-change-selection="onSelectCategory"
                 />
-                <EscrButton
-                    label="View"
-                    size="small"
-                    :disabled="loading"
-                    :on-click="onView"
-                >
-                    <template #button-icon>
-                        <OpenIcon />
-                    </template>
-                </EscrButton>
             </div>
         </div>
         <SegmentedButtonGroup
@@ -109,13 +99,6 @@ export default {
          * Callback function for sorting table columns.
          */
         onSort: {
-            type: Function,
-            default: () => {},
-        },
-        /**
-         * Callback function for clicking the "View" button to open the modal.
-         */
-        onView: {
             type: Function,
             default: () => {},
         },

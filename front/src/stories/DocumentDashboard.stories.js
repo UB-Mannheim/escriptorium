@@ -4,7 +4,6 @@ import DocumentDashboard from "../../vue/pages/Document/Document.vue";
 import {
     annotationTypes,
     blockTypes,
-    blockTypesRandomized,
     characters,
     charactersRandomized,
     groups,
@@ -130,10 +129,7 @@ const Template = (args, { argTypes }) => ({
         const scriptsEndpoint = "/scripts";
         const partsEndpoint = new RegExp(/\/documents\/\d+\/parts$/);
         const blockEndpointA = new RegExp(
-            /\/documents\/\d+\/transcriptions\/1\/types\/block$/,
-        );
-        const blockEndpointB = new RegExp(
-            /\/documents\/\d+\/transcriptions\/2\/types\/block$/,
+            /\/documents\/\d+\/transcriptions\/\d+\/types\/block$/,
         );
         const lineEndpoint = new RegExp(
             /\/documents\/\d+\/transcriptions\/\d+\/types\/line$/,
@@ -174,18 +170,6 @@ const Template = (args, { argTypes }) => ({
                 return [200, { results: sorted(blockTypes, { ordering }) }];
             }
             return [200, { results: blockTypes }];
-        });
-        mock.onGet(blockEndpointB).reply(async function(config) {
-            const timeout = Math.random() * 200 + 100;
-            await new Promise((r) => setTimeout(r, timeout));
-            if (Object.keys(config.params).length) {
-                const { ordering } = config.params;
-                return [
-                    200,
-                    { results: sorted(blockTypesRandomized, { ordering }) },
-                ];
-            }
-            return [200, { results: blockTypesRandomized }];
         });
         mock.onGet(lineEndpoint).reply(async function(config) {
             const timeout = Math.random() * 200 + 100;

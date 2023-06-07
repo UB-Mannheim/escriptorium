@@ -11,16 +11,6 @@
                     :options="sortOptions"
                     :on-change-selection="onSortCharacters"
                 />
-                <EscrButton
-                    label="View"
-                    size="small"
-                    :disabled="loading"
-                    :on-click="onView"
-                >
-                    <template #button-icon>
-                        <OpenIcon />
-                    </template>
-                </EscrButton>
             </div>
         </div>
         <SegmentedButtonGroup
@@ -46,14 +36,12 @@
     </div>
 </template>
 <script>
-import EscrButton from "../Button/Button.vue";
-import OpenIcon from "../Icons/OpenIcon/OpenIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import "./CharactersCard.css";
 
 export default {
     name: "EscrCharactersCard",
-    components: { EscrButton, OpenIcon, SegmentedButtonGroup },
+    components: { SegmentedButtonGroup },
     props: {
         /**
          * Whether or not to display a compact variant of this card (i.e. for document view).
@@ -87,13 +75,6 @@ export default {
          * Callback function for switching the sort option.
          */
         onSortCharacters: {
-            type: Function,
-            required: true,
-        },
-        /**
-         * Callback function for opening the "View" modal.
-         */
-        onView: {
             type: Function,
             required: true,
         },
