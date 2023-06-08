@@ -277,7 +277,7 @@ const Template = (args, { argTypes }) => ({
             await new Promise((r) => setTimeout(r, timeout));
             return [
                 200,
-                { results: scripts.map((script) => ({ name: script })) },
+                { results: scripts },
             ];
         });
         // mock groups

@@ -24,7 +24,7 @@
             <DropdownField
                 label="Script"
                 :disabled="disabled"
-                :on-change="(e) => handleTextFieldInput('mainScript', e.target.value)"
+                :on-change="handleMainScriptChange"
                 :options="scriptOptions"
                 required
             />
@@ -196,10 +196,10 @@ export default {
          */
         scriptOptions() {
             return this.scripts.map((script) => ({
-                value: script,
-                label: script,
-                selected: script === this.mainScript,
-            }))
+                value: script.name,
+                label: script.name,
+                selected: script.name === this.mainScript,
+            }));
         },
     },
     methods: {
@@ -213,6 +213,16 @@ export default {
         handleTextFieldInput(field, value) {
             this.handleTextInput({ field, value, form: "editDocument" });
         },
+        handleMainScriptChange(e) {
+            this.handleTextFieldInput("mainScript", e.target.value);
+            const script = this.scripts.find(
+                (script) => script.name === e.target.value
+            );
+            const readDirection = script.text_direction.endsWith("-rl") ? "rtl" : "ltr";
+            this.handleTextInput(
+                { field: "readDirection", value: readDirection, form: "editDocument" }
+            );
+        }
     },
 }
 </script>
