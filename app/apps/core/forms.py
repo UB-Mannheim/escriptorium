@@ -195,7 +195,7 @@ class FindAndReplaceForm(BaseSearchForm):
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name']
+        fields = ['name', 'guidelines']
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):

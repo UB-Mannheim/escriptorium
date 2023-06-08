@@ -28,6 +28,7 @@ from core.views import (
     ShareDocument,
     ShareProject,
     UpdateDocument,
+    UpdateProject,
     UserModels,
 )
 
@@ -39,7 +40,7 @@ urlpatterns = [
 
     path('projects/create/', CreateProject.as_view(), name='project-create'),
     path('projects/', ProjectList.as_view(), name='projects-list'),
-    # path('project/<str:slug>/', ProjectDetail.as_view(), name='project-detail'),
+    path('project/<str:slug>/', UpdateProject.as_view(), name='project-update'),
     path('project/<str:slug>/documents/', DocumentsList.as_view(), name='documents-list'),
     path('project/<str:slug>/document/create/', CreateDocument.as_view(), name='document-create'),
     path('project/<int:pk>/share/', ShareProject.as_view(), name='project-share'),

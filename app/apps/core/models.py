@@ -401,6 +401,7 @@ class ProjectManager(models.Manager):
 class Project(ExportModelOperationsMixin("Project"), models.Model):
     name = models.CharField(max_length=512)
     slug = models.SlugField(unique=True)
+    guidelines = models.URLField(null=True, blank=True, help_text=_("An url explaining the principles that needs to be applied during manual segmentation/transcription."))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
