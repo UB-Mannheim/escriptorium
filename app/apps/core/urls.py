@@ -13,6 +13,7 @@ from core.views import (
     DocumentsList,
     DocumentsTasksList,
     EditPart,
+    FindAndReplace,
     Home,
     MigrateDocument,
     ModelCancelTraining,
@@ -34,6 +35,7 @@ urlpatterns = [
     path('', Home.as_view(), name='home'),
 
     path('search/', Search.as_view(), name='search'),
+    path('find-replace/', FindAndReplace.as_view(), name='find-replace'),
 
     path('projects/create/', CreateProject.as_view(), name='project-create'),
     path('projects/', ProjectList.as_view(), name='projects-list'),

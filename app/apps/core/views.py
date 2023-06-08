@@ -1,5 +1,6 @@
 import json
 import logging
+from math import ceil
 
 from django.conf import settings
 from django.contrib import messages
@@ -29,6 +30,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import exceptions as es_exceptions
 
 from core.forms import (
@@ -37,6 +39,7 @@ from core.forms import (
     DocumentForm,
     DocumentOntologyForm,
     DocumentShareForm,
+    FindAndReplaceForm,
     MetadataFormSet,
     MigrateDocumentForm,
     ModelRightsForm,
@@ -96,6 +99,76 @@ class Home(TemplateView):
         return context
 
 
+class BaseSearch(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
+    def get_form(self):
+        self.form = self.form_class(self.request.GET, **self.get_form_kwargs())
+        return self.form
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    @property
+    def no_extra_calculation_condition(self):
+        # No extra calculation if:
+        # - the form is invalid
+        # - the search terms are empty
+        return not self.form.is_valid() or not self.form.cleaned_data.get('query')
+
+    def get_line_viewbox(self, bounding_box):
+        if not bounding_box:
+            return None, False
+
+        return " ".join([
+            str(max([bounding_box[0] - 10, 0])),
+            str(max([bounding_box[1] - 10, 0])),
+            str(bounding_box[2] - bounding_box[0] + 20),
+            str(bounding_box[3] - bounding_box[1] + 20)
+        ]), (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+
+    def get_and_format_results(self, page=None, paginate_by=None):
+        """
+        Generic function to overwrite to retrieve and format search results
+        """
+        pass
+
+    def get_paginator(self, results, paginate_by):
+        """
+        Generic function to overwrite that must return a valid Paginator
+        """
+        return Paginator(results, paginate_by)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.no_extra_calculation_condition:
+            return context
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        paginate_by = self.get_paginate_by(None)
+
+        results, error = self.get_and_format_results(page=page, paginate_by=paginate_by)
+        if error:
+            context.update(error)
+            return context
+
+        # Pagination
+        paginator = self.get_paginator(results, paginate_by)
+
+        if page > paginator.num_pages:
+            page = paginator.num_pages
+
+        context['page_obj'] = paginator.page(page)
+        context['is_paginated'] = paginator.num_pages > 1
+
+        return context
+
+
 class ESPaginator(Paginator):
 
     def __init__(self, *args, **kwargs):
@@ -111,84 +184,43 @@ class ESPaginator(Paginator):
         return Page(self.object_list, number, self)
 
 
-class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
-    template_name = 'core/search.html'
+class Search(BaseSearch):
     form_class = SearchForm
+    template_name = 'core/search/search.html'
+    es_total = 0
 
-    def get_paginate_by(self):
-        return super().get_paginate_by(None)
-
-    def get_form(self):
-        self.form = SearchForm(self.request.GET, **self.get_form_kwargs())
-        return self.form
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super(Search, self).get_context_data(**kwargs)
-
+    @property
+    def no_extra_calculation_condition(self):
         # No extra calculation if:
-        # - search feature is deactivated on the instance
-        # - the form is invalid
-        # - the search terms are empty
-        if settings.DISABLE_ELASTICSEARCH or not self.form.is_valid() or not self.form.cleaned_data.get('query'):
-            return context
-
-        try:
-            page = int(self.request.GET.get('page', '1'))
-        except ValueError:
-            page = 1
-
-        paginate_by = self.get_paginate_by()
-        try:
-            es_results = self.form.search(page, paginate_by)
-        except es_exceptions.ConnectionError as e:
-            context['es_error'] = str(e)
-            return context
-
-        template_results = [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']]
-
-        # Pagination
-        paginator = ESPaginator(template_results, paginate_by, total=int(es_results['hits']['total']['value']))
-
-        if page > paginator.num_pages:
-            page = paginator.num_pages
-
-        context['page_obj'] = paginator.page(page)
-        context['is_paginated'] = paginator.num_pages > 1
-
-        return context
+        # - the search feature is deactivated on the instance
+        return settings.DISABLE_ELASTICSEARCH or super().no_extra_calculation_condition
 
     def convert_hit_to_template(self, hit):
         hit_source = hit['_source']
         highlight = hit.get('highlight', {})
-        bounding_box = hit_source['bounding_box']
-
-        viewbox = None
-        larger = False
-        if bounding_box:
-            viewbox = " ".join([
-                str(max([bounding_box[0] - 10, 0])),
-                str(max([bounding_box[1] - 10, 0])),
-                str(bounding_box[2] - bounding_box[0] + 20),
-                str(bounding_box[3] - bounding_box[1] + 20)
-            ])
-            larger = (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+        viewbox, larger = self.get_line_viewbox(hit_source['bounding_box'])
 
         return {
+            'object': {
+                'highlighted_content': highlight.get('raw_content'),
+                'line': {
+                    'order': hit_source['line_number'] - 1,
+                    'document_part': {
+                        'id': hit_source['document_part_id'],
+                        'title': hit_source['part_title'],
+                        'document': {
+                            'id': hit_source['document_id'],
+                            'name': hit_source['document_name'],
+                        }
+                    }
+                },
+                'transcription': {
+                    'id': hit_source['transcription_id'],
+                    'name': hit_source['transcription_name'],
+                },
+            },
             'context_before': highlight.get('context_before'),
-            'content': highlight.get('raw_content'),
             'context_after': highlight.get('context_after'),
-            'line_number': hit_source['line_number'],
-            'transcription_pk': hit_source['transcription_id'],
-            'transcription_name': hit_source['transcription_name'],
-            'part_title': hit_source['part_title'],
-            'part_pk': hit_source['document_part_id'],
-            'document_name': hit_source['document_name'],
-            'document_pk': hit_source['document_id'],
             'score': hit['_score'],
             'img_url': hit_source['image_url'],
             'img_w': hit_source['image_width'],
@@ -197,8 +229,93 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
             'larger': larger
         }
 
+    def get_and_format_results(self, page=None, paginate_by=None):
+        try:
+            es_results = self.form.search(page=page, paginate_by=paginate_by)
+            self.es_total = int(es_results['hits']['total']['value'])
+        except es_exceptions.ConnectionError as e:
+            return [], {'es_error': str(e)}
+
+        return [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']], None
+
+    def get_paginator(self, results, paginate_by):
+        return ESPaginator(results, paginate_by, total=self.es_total)
+
     def get_success_url(self):
         return reverse('search')
+
+
+class FindAndReplace(BaseSearch):
+    form_class = FindAndReplaceForm
+    template_name = 'core/search/find_and_replace.html'
+
+    def get_part_image_thumbnail(self, part_image):
+        thumbnailer = get_thumbnailer(part_image)
+        try:
+            thumbnail = thumbnailer.get_thumbnail(
+                settings.THUMBNAIL_ALIASES[""]["large"], generate=False
+            )
+            assert thumbnail
+        except Exception:
+            thumbnail = part_image
+            pass
+
+        # Factors to scale line bboxes if necessary
+        scale_factors = [
+            thumbnail.width / part_image.width,
+            thumbnail.height / part_image.height,
+        ] * 2
+
+        return thumbnail.url, thumbnail.width, thumbnail.height, scale_factors
+
+    def get_line_bounding_box(self, line, scale_factors):
+        line_box = line.get_box()
+        if not line_box:
+            return None
+
+        return [
+            ceil(value * factor)
+            for value, factor in zip(line_box, scale_factors)
+        ]
+
+    def convert_lt_object_to_template(self, lt_object, thumbnails):
+        if lt_object.line.document_part_id not in thumbnails:
+            try:
+                thumbnail_url, thumbnail_width, thumbnail_height, scale_factors = self.get_part_image_thumbnail(lt_object.line.document_part.image)
+            except FileNotFoundError:
+                thumbnail_url, thumbnail_width, thumbnail_height = None, None, None
+                scale_factors = [1, 1, 1, 1]
+
+            thumbnails[lt_object.line.document_part_id] = {"url": thumbnail_url, "width": thumbnail_width, "height": thumbnail_height, "scale_factors": scale_factors}
+
+        bounding_box = self.get_line_bounding_box(lt_object.line, thumbnails[lt_object.line.document_part_id]["scale_factors"])
+        viewbox, larger = self.get_line_viewbox(bounding_box)
+
+        return {
+            'object': lt_object,
+            'context_before': None,
+            'context_after': None,
+            'score': 100,
+            'img_url': thumbnails[lt_object.line.document_part_id]["url"],
+            'img_w': thumbnails[lt_object.line.document_part_id]["width"],
+            'img_h': thumbnails[lt_object.line.document_part_id]["height"],
+            'viewbox': viewbox,
+            'larger': larger,
+        }, thumbnails
+
+    def get_and_format_results(self, page=None, paginate_by=None):
+        results = self.form.search()
+
+        thumbnails = {}
+        template_results = []
+        for lt_object in results:
+            template_result, thumbnails = self.convert_lt_object_to_template(lt_object, thumbnails)
+            template_results.append(template_result)
+
+        return template_results, None
+
+    def get_success_url(self):
+        return reverse('find-replace')
 
 
 class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
