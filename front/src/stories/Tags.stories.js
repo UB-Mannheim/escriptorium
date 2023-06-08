@@ -1,4 +1,5 @@
 import Tags from "../../vue/components/Tags/Tags.vue";
+import { tagVariants } from "../../vue/store/util/color";
 
 export default {
     title: "Components/Tags",
@@ -26,7 +27,7 @@ SingleTag.args = {
         {
             pk: 0,
             variant: 1,
-            color: "#e0726e",
+            color: tagVariants[1],
             name: "Tag Name",
         },
     ],
@@ -38,14 +39,14 @@ MultipleTags.args = {
         {
             pk: 1,
             name: "Longer tag name",
-            variant: 9,
-            color: "#99aff2",
+            variant: 12,
+            color: tagVariants[12],
         },
         {
             pk: 2,
             name: "Third tag",
-            variant: 5,
-            color: "#f2cd5c",
+            variant: 8,
+            color: tagVariants[8],
         },
     ],
 };
@@ -57,26 +58,26 @@ ManyTags.args = {
         {
             pk: 3,
             name: "Fourth tag",
-            variant: 3,
-            color: "#ff9a6f",
+            variant: 28,
+            color: tagVariants[28],
         },
         {
             pk: 4,
             name: "Fifth tag",
-            variant: 6,
-            color: "#cbe364",
+            variant: 22,
+            color: tagVariants[22],
         },
         {
             pk: 5,
             name: "Sixth tag",
             variant: 11,
-            color: "#f2a7c3",
+            color: tagVariants[11],
         },
         {
             pk: 6,
             name: "Long tag name 7",
-            variant: 7,
-            color: "#80c6ba",
+            variant: 15,
+            color: tagVariants[15],
         }
     ],
     wrap: false,
