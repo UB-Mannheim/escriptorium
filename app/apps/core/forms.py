@@ -36,7 +36,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.search import search_content
+from core.search import search_content_es, search_content_psql
 from users.models import User
 
 logger = logging.getLogger(__name__)
@@ -65,8 +65,8 @@ class SearchModelChoiceField(forms.ModelChoiceField):
         return super().clean(value)
 
 
-class SearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label=_("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness"), required=False)
+class BaseSearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(label=_("Text to search in all of your projects"), required=False)
     project = SearchModelChoiceField(
         queryset=Project.objects.none(),
         label="",
@@ -119,12 +119,25 @@ class SearchForm(BootstrapFormMixin, forms.Form):
             except ValueError:
                 pass
 
-    def search(self, page, paginate_by):
+    def search(self, page=None, paginate_by=None):
+        """
+        Generic function to overwrite to search content
+        """
+        pass
+
+
+class SearchForm(BaseSearchForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['query'].label += _(", surround one or more terms with quotation marks to deactivate fuzziness")
+
+    def search(self, page=None, paginate_by=None):
         projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
         documents = [self.cleaned_data['document'].id] if self.cleaned_data['document'] else None
         transcriptions = [self.cleaned_data['transcription'].id] if self.cleaned_data['transcription'] else None
 
-        return search_content(
+        return search_content_es(
             page,
             paginate_by,
             self.user.id,
@@ -132,6 +145,50 @@ class SearchForm(BootstrapFormMixin, forms.Form):
             projects=projects,
             documents=documents,
             transcriptions=transcriptions
+        )
+
+
+class FindAndReplaceForm(BaseSearchForm):
+    part = SearchModelChoiceField(
+        queryset=DocumentPart.objects.none(),
+        label="",
+        required=False,
+        widget=forms.HiddenInput,
+        obj_class=DocumentPart,
+        obj_name="part"
+    )
+
+    class Meta(BaseSearchForm.Meta):
+        fields = BaseSearchForm.Meta.fields + ['part']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        document = self.data.get('document')
+        if document:
+            try:
+                document = int(document)
+                self.fields['part'].queryset = DocumentPart.objects.filter(document_id=document)
+            except ValueError:
+                pass
+
+    def search(self, page=None, paginate_by=None):
+        right_filters = {
+            'line__document_part__document__project_id__in': self.fields['project'].queryset,
+            'line__document_part__document_id__in': self.fields['document'].queryset,
+        }
+        project_id = self.cleaned_data['project'].id if self.cleaned_data['project'] else None
+        document_id = self.cleaned_data['document'].id if self.cleaned_data['document'] else None
+        transcription_id = self.cleaned_data['transcription'].id if self.cleaned_data['transcription'] else None
+        part_id = self.cleaned_data['part'].id if self.cleaned_data['part'] else None
+
+        return search_content_psql(
+            self.cleaned_data['query'],
+            right_filters,
+            project_id=project_id,
+            document_id=document_id,
+            transcription_id=transcription_id,
+            part_id=part_id
         )
 
 

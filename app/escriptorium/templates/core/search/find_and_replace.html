@@ -1,0 +1,21 @@
+{% extends 'core/search/base.html' %}
+{% load i18n %}
+
+{% block head_title %}
+{% trans "Find and replace in projects" %}
+{% endblock %}
+
+{% block title %}
+{% trans "Find and replace text in projects" %}
+{% endblock %}
+
+{% block action_button %}{% trans "Find" %}{% endblock %}
+
+{% block part_title %}
+<a
+  title="{% trans 'Filter results by this part' %}"
+  href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ result.object.line.document_part.document.id }}&part={{ result.object.line.document_part.id }}"
+>
+  {{ result.object.line.document_part.title }}
+</a>
+{% endblock %}
