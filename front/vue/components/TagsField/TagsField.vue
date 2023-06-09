@@ -72,8 +72,7 @@ export default {
     },
     methods: {
         /**
-         * Determine which variant class to apply based on props,
-         * default variant is 12 (gray).
+         * Determine which variant class to apply based on props.
          */
         tagClasses: Tags.methods.tagClasses,
         /*
@@ -93,7 +92,7 @@ export default {
                                 {
                                     class: "escr-tag-colors",
                                 },
-                                [...Array(12).keys()].map((n) =>
+                                [...Array(30).keys()].map((n) =>
                                     h(
                                         "button",
                                         {

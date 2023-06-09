@@ -92,7 +92,7 @@ export default {
     methods: {
         /**
          * Determine which variant class to apply based on props,
-         * default variant is 12 (gray).
+         * default variant is 0 (gray).
          */
         tagClasses: Tags.methods.tagClasses,
         /**

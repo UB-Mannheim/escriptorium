@@ -18,20 +18,39 @@
     --button-text: #ffffff;
 
     /* tag colors */
-    --tag-1: #e0726e;
-    --tag-2: #f78d8d;
-    --tag-3: #ff9a6f;
-    --tag-4: #fcb55f;
-    --tag-5: #f2cd5c;
-    --tag-6: #cbe364;
-    --tag-7: #80c6ba;
-    --tag-8: #88c9f2;
-    --tag-9: #99aff2;
-    --tag-10: #c195db;
-    --tag-11: #f2a7c3;
-    --tag-12: #c6c4c4;
+    --tag-0: #c6c4c4;
+    --tag-1: #adffd9;
+    --tag-2: #adfeff;
+    --tag-3: #99e6ff;
+    --tag-4: #88c9f2;
+    --tag-5: #99aff2;
+    --tag-6: #b3b3e6;
+    --tag-7: #c195db;
+    --tag-8: #da9ecf;
+    --tag-9: #f2a7c3;
+    --tag-10: #dc8f8d;
+    --tag-11: #ff9a6f;
+    --tag-12: #fcb55f;
+    --tag-13: #f7ed78;
+    --tag-14: #cbe364;
+    --tag-15: #a9d69a;
+    --tag-16: #006644;
+    --tag-17: #006666;
+    --tag-18: #006699;
+    --tag-19: #0074de;
+    --tag-20: #3864e5;
+    --tag-21: #5056ce;
+    --tag-22: #5d36b4;
+    --tag-23: #a126a0;
+    --tag-24: #d61c71;
+    --tag-25: #ed0020;
+    --tag-26: #ff621f;
+    --tag-27: #fba841;
+    --tag-28: #e7d50d;
+    --tag-29: #979f34;
+    --tag-30: #41742f;
     --tag-text: #212323;
-
+    --tag-text-ondark: #ffffff;
     /* drop shadow */
     --drop-shadow: rgba(0, 0, 0, 0.15);
 

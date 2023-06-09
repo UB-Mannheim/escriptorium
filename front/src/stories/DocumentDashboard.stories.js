@@ -5,7 +5,6 @@ import DocumentDashboard from "../../vue/pages/Document/Document.vue";
 import {
     annotationTypes,
     blockTypes,
-    blockTypesRandomized,
     characters,
     charactersRandomized,
     groups,
@@ -79,7 +78,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_2.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/3cb1ea61edef4606848a2891b05a931c/1.png",
             },
         },
         updated_at: "2023-03-17T13:46:38.076375Z",
@@ -90,7 +89,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_1.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/4334a28c59987228d2d498fe10a6784f/2.png",
             },
         },
         updated_at: "2022-07-08T13:40:30.810030Z",
@@ -101,7 +100,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_3.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/e9f2fe1a19c4ff9892d045fe501304d1/3.png",
             },
         },
         updated_at: "2022-07-08T13:40:37.484940Z",
@@ -112,7 +111,7 @@ const parts = [
             thumbnails: {
                 card:
                     // eslint-disable-next-line max-len
-                    "http://localhost:8000/media/documents/11/exampldpdf_gpZmcsU.pdf_page_4.png.180x180_q85_crop-smart.png",
+                    "https://gitlab.com/scripta/escriptorium/uploads/668ab44cd09e3dc0799df39dbba82449/4.png",
             },
         },
         updated_at: "2022-07-08T13:40:40.970483Z",
@@ -158,10 +157,7 @@ const Template = (args, { argTypes }) => ({
         const scriptsEndpoint = "/scripts";
         const partsEndpoint = new RegExp(/\/documents\/\d+\/parts$/);
         const blockEndpointA = new RegExp(
-            /\/documents\/\d+\/transcriptions\/1\/types\/block$/,
-        );
-        const blockEndpointB = new RegExp(
-            /\/documents\/\d+\/transcriptions\/2\/types\/block$/,
+            /\/documents\/\d+\/transcriptions\/\d+\/types\/block$/,
         );
         const lineEndpoint = new RegExp(
             /\/documents\/\d+\/transcriptions\/\d+\/types\/line$/,
@@ -204,18 +200,6 @@ const Template = (args, { argTypes }) => ({
                 return [200, { results: sorted(blockTypes, { ordering }) }];
             }
             return [200, { results: blockTypes }];
-        });
-        mock.onGet(blockEndpointB).reply(async function(config) {
-            const timeout = Math.random() * 200 + 100;
-            await new Promise((r) => setTimeout(r, timeout));
-            if (Object.keys(config.params).length) {
-                const { ordering } = config.params;
-                return [
-                    200,
-                    { results: sorted(blockTypesRandomized, { ordering }) },
-                ];
-            }
-            return [200, { results: blockTypesRandomized }];
         });
         mock.onGet(lineEndpoint).reply(async function(config) {
             const timeout = Math.random() * 200 + 100;

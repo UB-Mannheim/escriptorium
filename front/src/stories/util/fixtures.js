@@ -1,4 +1,5 @@
 import { ManyTags } from "../Tags.stories";
+import { tagVariants } from "../../../vue/store/util/color";
 
 /* eslint-disable max-len */
 
@@ -49,14 +50,6 @@ export const blockTypes = [
     { pk: 4, name: "Illustration", count: 4 },
     { pk: 5, name: "Footnote", count: 4 },
 ];
-export const blockTypesRandomized = [
-    ...blockTypes.map((b) => ({
-        ...b,
-        count: Math.ceil(Math.random() * 30),
-    })),
-    { pk: 0, name: "Extra type", count: 33 },
-];
-
 export const lineTypes = [
     { pk: 1, name: "Correction", count: 13 },
     { pk: 2, name: "Main", count: 101 },
@@ -77,25 +70,25 @@ export const tags = [
         pk: 7,
         name: "Tag",
         variant: 4,
-        color: "#fcb55f",
+        color: tagVariants[4],
     },
     {
         pk: 8,
         name: "Tag tag",
-        variant: 7,
-        color: "#80c6ba",
+        variant: 17,
+        color: tagVariants[17],
     },
     {
         pk: 9,
         name: "Other tag",
-        variant: 8,
-        color: "#88c9f2",
+        variant: 24,
+        color: tagVariants[24],
     },
     {
         pk: 10,
         name: "A tag",
-        variant: 6,
-        color: "#cbe364",
+        variant: 19,
+        color: tagVariants[19],
     },
 ];
 
