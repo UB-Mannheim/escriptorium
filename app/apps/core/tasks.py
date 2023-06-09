@@ -557,14 +557,12 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None,
         user = None
 
     try:
-        if transcription_pk:
-            Transcription = apps.get_model('core', 'Transcription')
-            transcription = Transcription.objects.get(pk=transcription_pk)
-        else:
-            transcription = None
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
-        part.transcribe(model, transcription=transcription, user=user)
+        Transcription = apps.get_model('core', 'Transcription')
+        transcription = Transcription.objects.get(pk=transcription_pk)
+
+        part.transcribe(model, transcription, user=user)
 
     except Exception as e:
         if user:

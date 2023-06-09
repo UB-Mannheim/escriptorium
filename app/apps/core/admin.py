@@ -20,6 +20,7 @@ from core.models import (
     Project,
     Script,
     TextualWitness,
+    Transcription,
 )
 
 
@@ -60,6 +61,10 @@ class DocumentPartAdmin(admin.ModelAdmin):
     def recover(self, request, queryset):
         for instance in queryset:
             instance.recover()
+
+
+class TranscriptionAdmin(admin.ModelAdmin):
+    list_display = ('name',)
 
 
 class LineTranscriptionAdmin(admin.ModelAdmin):
@@ -106,3 +111,4 @@ admin.site.register(AnnotationTaxonomy)
 admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)
 admin.site.register(TextualWitness)
+admin.site.register(Transcription)
