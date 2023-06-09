@@ -340,9 +340,8 @@ export default Vue.extend({
             }
 
             // need to add/remove danger indicators
-            // for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
-            //    let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
-            for (let line in this.$refs.diplomaticLines.childElement) {
+            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
+                let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
                 if (line === null) {
                     line.remove();
                     continue;
