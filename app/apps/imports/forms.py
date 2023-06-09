@@ -30,6 +30,8 @@ def clean_uri(uri, document, tempfile):
         parser.validate()
         total = parser.total
         return content, total
+    except requests.exceptions.SSLError:
+        raise forms.ValidationError(_("The document cannot be downloaded, certificate verify failed."))
     except requests.exceptions.RequestException:
         raise forms.ValidationError(_("The document is unreachable, unreadable or the host timed out."))
     except json.decoder.JSONDecodeError:
