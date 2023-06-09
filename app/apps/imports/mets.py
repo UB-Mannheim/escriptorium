@@ -212,6 +212,8 @@ class METSProcessor:
             content = get_resp.content
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
+        except requests.exceptions.SSLError:
+            self.report.append(f"File not downloaded, invalid certificate for remote URI {uri}: {e}", logger_fct=logger.error)
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
