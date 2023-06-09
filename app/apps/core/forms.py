@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from os.path import basename, splitext
 
 from bootstrap.forms import BootstrapFormMixin
@@ -720,6 +721,18 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
     def process(self):
         model = self.cleaned_data.get('model')
         transcription = self.cleaned_data.get('transcription')
+
+        if transcription is None:
+            # create a new one
+            trans_name = "kraken:" + model.name
+            # if a transcription with this name already exists we add the date to the name
+            if Transcription.objects.filter(
+                    name=trans_name,
+                    document=self.document).exists():
+                trans_name += ' (' + datetime.strftime(datetime.now(), '%y/%m/%d-%H:%M:%S') + ')'
+            transcription = Transcription.objects.create(
+                name=trans_name,
+                document=self.document)
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
