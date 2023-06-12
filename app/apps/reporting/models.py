@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
-# from celery.app import control
-from celery import app
+from escriptorium.celery import app
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
