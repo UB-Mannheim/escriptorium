@@ -1387,12 +1387,8 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             line_confidences = []
             for line in lines:
                 if not line.baseline:
-                    bounds = {
-                        "boxes": [line.box],
-                        "text_direction": text_direction,
-                        "type": "baselines",
-                        # 'script_detection': True
-                    }
+                    # bypass lines without baseline
+                    continue
                 else:
                     bounds = {
                         "lines": [
