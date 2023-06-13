@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='project',
             name='guidelines',
-            field=models.URLField(blank=True, help_text='An url explaining the principles that needs to be applied during manual segmentation/transcription.', null=True),
+            field=models.URLField(blank=True, help_text='An optional URL pointing to an external document that explains content editing and authorship guidelines for this project, in order to guide a team or group towards consistent practices for manual segmentation/transcription.', null=True),
         ),
     ]
