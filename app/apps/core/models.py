@@ -1330,7 +1330,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
 
             if steps in ["regions", "both"]:
                 for region_type, regions in res["regions"].items():
-                    typo, created = self.document.valid_block_types.get_or_create(name=region_type)
+                    try:
+                        typo, created = self.document.valid_block_types.get_or_create(
+                            name=region_type)
+                    except BlockType.MultipleObjectsReturned:
+                        # Note: this should not happen if the modelisation was alright
+                        # but for now we hack
+                        typo = self.document.valid_block_types.filter(name=region_type)[0]
                     for region in regions:
                         Block.objects.create(
                             document_part=self,
@@ -1350,9 +1356,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     region = next(
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
-
-                    typo, created = self.document.valid_line_types.get_or_create(
-                        name=line["tags"].get("type"))
+                    try:
+                        typo, created = self.document.valid_line_types.get_or_create(
+                            name=line["tags"].get("type"))
+                    except LineType.MultipleObjectsReturned:
+                        # Note: this should not happen if the modelisation was alright
+                        # but for now we hack
+                        typo = self.document.valid_line_types.filter(name=line["tags"].get("type"))[0]
                     Line.objects.create(
                         document_part=self,
                         typology=typo,
