@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /home/stweil/src/gitlab/scripta/escriptorium/venv/bin/activate
+source /home/stweil/src/gitlab/scripta/venv3.11/bin/activate
 export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
 export ESC_LANGUAGES="de,en,fr"
 
