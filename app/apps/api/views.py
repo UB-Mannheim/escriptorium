@@ -437,6 +437,41 @@ class DocumentViewSet(ModelViewSet):
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
 
+    @action(detail=True, methods=['post'])
+    def forced_align(self, request, pk=None):
+
+        document = self.get_object()
+
+        if 'parts' in request.data:
+            parts = document.parts.filter(pk__in=request.GET.get('parts'))
+        else:
+            parts = document.parts.all()
+
+        if 'model' not in request.data:
+            return Response({'error': "model(pk) is mandatory."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if 'transcription' not in request.data:
+            return Response({'error': "transcription(pk) is mandatory."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            document.transcriptions.get(pk=self.request.data.get('transcription'))
+        except Transcription.DoesNotExist:
+            return Response({'error': "Invalid transcription."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        from core.tasks import forced_align
+        for part in parts:
+            forced_align.delay(
+                instance_pk=part.pk,
+                model_pk=request.data['model'],
+                transcription_pk=request.data['transcription'],
+                part_pk=part.pk,
+                user_pk=request.user.pk
+            )
+
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
 
 class DocumentPermissionMixin():
     def get_queryset(self):
