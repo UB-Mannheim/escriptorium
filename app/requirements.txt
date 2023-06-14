@@ -18,11 +18,12 @@ drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
 elasticsearch~=7.17.0
 kraken>=5.2.5,~=5.2
-oitei~=1.1.1
+oitei~=2.0.0
+opensearch-py
 # passim, "seriatim" branch
 git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
 Pillow>=5.4.1
-psycopg2-binary<2.9
+psycopg2-binary
 pyvips~=2.1.12
 redis~=4.4.4
 requests>=2.21
