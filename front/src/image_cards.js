@@ -667,7 +667,12 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
     $('.process-part-form').submit(function(ev) {
         ev.preventDefault();
         var $form = $(ev.target);
+        var $submitButton = $('.js-submit-proc', $form);
         var proc = $form.data('proc');
+
+        $submitButton.prop('disabled', true);
+        var $icon = $('<i class="fas fa-spinner fa-spin ml-2">');
+        $submitButton.append($icon);
 
         let data = new FormData($form.get(0));
         data.set('document', DOCUMENT_ID);
@@ -689,7 +694,8 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
             } else if (proc == 'train') {
                 $('#train-selected').addClass('blink').removeClass('btn-danger');
             }
-
+            $submitButton.prop('disabled', false);
+            $icon.remove();
             $('#'+proc+'-wizard').modal('hide');
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
@@ -703,6 +709,8 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
                     input.parent().append(errorNode);
                 }
             }
+            $submitButton.prop('disabled', false);
+            $icon.remove();
             if (DEBUG) console.log(xhr);
         });
     });
