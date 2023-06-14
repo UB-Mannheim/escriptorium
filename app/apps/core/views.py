@@ -347,6 +347,23 @@ class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return response
 
 
+class UpdateProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Project
+    form_class = ProjectForm
+    success_message = _("Project updated successfully!")
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if not obj.owner == self.request.user:
+            raise PermissionDenied
+
+        return obj
+
+    def get_success_url(self):
+        return reverse('project-update', kwargs={'slug': self.object.slug})
+
+
 class DocumentsList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Document
     paginate_by = 10
