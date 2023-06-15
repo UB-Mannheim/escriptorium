@@ -3,7 +3,79 @@
     min-width: 64px;
     background: var(--background1);
     display: flex;
-    align-items: center;
     flex-flow: column;
     padding: 20px 0;
+    justify-content: space-between;
+}
+.escr-global-nav > div {
+    width: 64px;
+    min-width: 64px;
+    display: flex;
+    align-items: center;
+    flex-flow: column;
+}
+.escr-global-nav a.escr-global-search {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 42px;
+    height: 42px;
+    background: var(--background);
+    border-radius: 10px;
+    color: var(--text1);
+    fill: var(--text1);
+    margin-top: 48px;
+}
+.escr-global-nav .escr-globalnav-icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    width: 56px;
+    height: 56px;
+    padding: 8px;
+    margin-top: 24px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text1);
+    fill: var(--text1);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        fill 0.15s ease-in-out;
+}
+.escr-global-nav .escr-globalnav-icon:hover,
+.escr-global-nav .escr-globalnav-icon:focus,
+.escr-global-nav .escr-globalnav-icon[data-popper-shown] {
+    background-color: var(--secondary-hover);
+}
+.escr-global-nav .escr-globalnav-icon:active {
+    color: var(--tag-text-ondark);
+    fill: var(--tag-text-ondark);
+    background-color: var(--secondary);
+}
+.escr-global-nav input#escr-lightdark-switcher {
+    display: none;
+}
+.escr-global-nav input#escr-lightdark-switcher + label {
+    display: flex;
+    cursor: pointer;
+    padding: 0;
+    margin: 28px 0 16px;
+    background-color: var(--secondary-hover);
+    width: 42px;
+    height: 24px;
+    border-radius: 16px;
+}
+.escr-global-nav input#escr-lightdark-switcher:checked + label {
+    background-color: #d3d3d3;
+}
+.v-popper--theme-vertical-menu .v-popper__inner:has(.escr-tasks-menu) {
+    top: 24px;
 }

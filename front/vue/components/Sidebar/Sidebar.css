@@ -27,7 +27,7 @@
     font-size: 10px;
     font-weight: 600;
     height: 74px;
-    background-color: var(--background1);
+    background-color: transparent;
     color: var(--text1);
     fill: var(--text1);
     transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out,

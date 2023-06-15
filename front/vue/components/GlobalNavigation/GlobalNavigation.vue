@@ -1,15 +1,179 @@
 <template>
     <nav class="escr-global-nav">
-        <a href="/">
-            <EscrLogo />
-        </a>
+        <div class="escr-upper-navgroup">
+            <a
+                href="/"
+                aria-label="eScriptorium"
+            >
+                <EscrLogo />
+            </a>
+            <a
+                href="/search/"
+                aria-label="global search"
+                class="escr-global-search"
+            >
+                <SearchLargeIcon />
+            </a>
+            <a
+                href="/projects/"
+                aria-label="projects list"
+                class="escr-globalnav-icon"
+            >
+                <HomeIcon />
+                <span>Projects</span>
+            </a>
+            <a
+                href="/models/"
+                aria-label="models list"
+                class="escr-globalnav-icon"
+            >
+                <ModelsIcon />
+                <span>Models</span>
+            </a>
+            <VMenu
+                placement="right-start"
+                theme="vertical-menu"
+                :triggers="['click']"
+            >
+                <button
+                    aria-label="expand task monitoring and usage menu"
+                    class="escr-globalnav-icon"
+                    type="button"
+                >
+                    <TasksIcon />
+                    <span>Tasks</span>
+                </button>
+                <template #popper>
+                    <ul class="escr-vertical-menu escr-tasks-menu">
+                        <li>
+                            <a href="/documents/tasks/">
+                                <span>Task Monitoring</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/quotas/">
+                                <span>Task Usage</span>
+                            </a>
+                        </li>
+                    </ul>
+                </template>
+            </VMenu>
+        </div>
+        <div class="escr-lower-navgroup">
+            <VMenu
+                placement="right-end"
+                theme="vertical-menu"
+                :triggers="['click']"
+            >
+                <button
+                    aria-label="expand user profile menu"
+                    class="escr-globalnav-icon"
+                    type="button"
+                >
+                    <ProfileIcon />
+                    <span>Profile</span>
+                </button>
+                <template #popper>
+                    <ul class="escr-vertical-menu">
+                        <li>
+                            <a href="/profile/">
+                                <span>Profile Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/password_change/">
+                                <span>Change Password</span>
+                            </a>
+                        </li>
+                        <li class="new-section">
+                            <a href="/logout/">
+                                <span>Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </template>
+            </VMenu>
+            <input
+                id="escr-lightdark-switcher"
+                type="checkbox"
+                aria-label="switch to light mode"
+                :checked="currentTheme === 'dark-mode'"
+                @change="toggleTheme"
+            >
+            <label
+                for="escr-lightdark-switcher"
+            >
+                <DarkModeIcon v-if="currentTheme === 'dark-mode'" />
+                <LightModeIcon v-else />
+            </label>
+        </div>
     </nav>
 </template>
 <script>
+import { Menu as VMenu } from "floating-vue";
+import DarkModeIcon from "../Icons/DarkModeIcon/DarkModeIcon.vue";
 import EscrLogo from "../Icons/EscrLogo/EscrLogo.vue";
+import HomeIcon from "../Icons/HomeIcon/HomeIcon.vue";
+import LightModeIcon from "../Icons/LightModeIcon/LightModeIcon.vue";
+import ModelsIcon from "../Icons/ModelsIcon/ModelsIcon.vue";
+import ProfileIcon from "../Icons/ProfileIcon/ProfileIcon.vue";
+import SearchLargeIcon from "../Icons/SearchLargeIcon/SearchLargeIcon.vue";
+import TasksIcon from "../Icons/TasksIcon/TasksIcon.vue";
+import "../VerticalMenu/VerticalMenu.css";
 import "./GlobalNavigation.css";
+
 export default {
     name: "EscrGlobalNavigation",
-    components: { EscrLogo }
+    components: {
+        EscrLogo,
+        DarkModeIcon,
+        HomeIcon,
+        LightModeIcon,
+        ModelsIcon,
+        ProfileIcon,
+        SearchLargeIcon,
+        TasksIcon,
+        VMenu,
+    },
+    data() {
+        return {
+            currentTheme: "light-mode",
+        };
+    },
+    mounted() {
+        console.log(this.getTheme() || this.getMediaPreference());
+        const initTheme = this.getTheme() || this.getMediaPreference();
+        this.setTheme(initTheme);
+    },
+    methods: {
+        getTheme() {
+            return localStorage.getItem("user-theme");
+        },
+        getMediaPreference() {
+            const hasDarkPreference = window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches;
+            if (hasDarkPreference) {
+                return "dark-mode";
+            } else {
+                return "light-mode";
+            }
+        },
+        setTheme(theme) {
+            localStorage.setItem("user-theme", theme);
+            this.currentTheme = theme;
+            document.documentElement.className = theme;
+        },
+        /** Callback to toggle light/dark theme. */
+        toggleTheme() {
+            const activeTheme = localStorage.getItem("user-theme");
+            if (activeTheme === "light-mode") {
+                this.setTheme("dark-mode");
+            } else {
+                this.setTheme("light-mode");
+            }
+        }
+
+    }
 }
 </script>
