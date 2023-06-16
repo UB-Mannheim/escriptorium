@@ -90,8 +90,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('pk', 'is_active',
                   'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login')
-        read_only_fields = ('date_joined', 'last_login')
+                  'date_joined', 'last_login', 'is_staff')
+        read_only_fields = ('date_joined', 'last_login', 'is_staff')
 
 
 class DetailedGroupSerializer(serializers.ModelSerializer):
