@@ -19,6 +19,7 @@ import {
     users,
     userGroups,
     tasks,
+    currentUser,
 } from "./util";
 
 export default {
@@ -145,6 +146,7 @@ const Template = (args, { argTypes }) => ({
 
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
+        const currentUserEndpoint = "/users/current";
         const documentEndpoint = new RegExp(/\/documents\/\d+$/);
         const documentMetadataEndpoint = new RegExp(
             /\/documents\/\d+\/metadata$/,
@@ -462,6 +464,13 @@ const Template = (args, { argTypes }) => ({
             new RegExp(/\/documents\/\d+\/import$/),
             new RegExp(/\/documents\/\d+\/cancel_tasks$/),
         ].forEach((endpoint) => mock.onPost(endpoint).reply(taskActionResponse));
+
+        // mock get current user
+        mock.onGet(currentUserEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, currentUser];
+        });
     },
 });
 

@@ -1,7 +1,7 @@
 <template>
     <EscrPage class="escr-projects-list">
         <template #page-content>
-            <h1>Welcome back, {{ user.first_name }}</h1>
+            <h1>Welcome back, {{ firstName }}</h1>
             <div class="escr-card">
                 <div class="escr-card-padding escr-card-header">
                     <h2>Projects</h2>
@@ -132,19 +132,11 @@ export default {
         PlusIcon,
         TrashIcon,
     },
-    props: {
-        /**
-         * User object, at least requires a first_name key for "Welcome" message display.
-         */
-        user: {
-            type: Object,
-            required: true,
-        },
-    },
     computed: {
         ...mapState({
             createModalOpen: (state) => state.projects.createModalOpen,
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
+            firstName: (state) => state.user.firstName,
             loading: (state) => state.projects.loading,
             nextPage: (state) => state.projects.nextPage,
             projects: (state) => state.projects.projects,

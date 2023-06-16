@@ -2,7 +2,7 @@ import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
 
-import { filteredByTag, sorted, tags } from "./util";
+import { currentUser, filteredByTag, sorted, tags } from "./util";
 
 export default {
     title: "Pages/ProjectsList",
@@ -58,6 +58,7 @@ const PageTemplate = (args, { argTypes }) => ({
         const projectsEndpoint = "/projects";
         const projectsTagsEndpoint = "/tags/project";
         const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
+        const currentUserEndpoint = "/users/current";
         // mock projects list
         mock.onGet(projectsEndpoint).reply(async function(config) {
             // wait for 100-300 ms to mimic server-side loading
@@ -138,6 +139,12 @@ const PageTemplate = (args, { argTypes }) => ({
                     next: null,
                 },
             ];
+        });
+        // mock get current user
+        mock.onGet(currentUserEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, currentUser];
         });
     },
 });

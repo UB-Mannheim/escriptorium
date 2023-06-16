@@ -85,6 +85,11 @@
                                 <span>Change Password</span>
                             </a>
                         </li>
+                        <li v-if="isStaff">
+                            <a href="/invite/">
+                                <span>Invite Users</span>
+                            </a>
+                        </li>
                         <li class="new-section">
                             <a href="/logout/">
                                 <span>Logout</span>
@@ -121,6 +126,7 @@ import SearchLargeIcon from "../Icons/SearchLargeIcon/SearchLargeIcon.vue";
 import TasksIcon from "../Icons/TasksIcon/TasksIcon.vue";
 import "../VerticalMenu/VerticalMenu.css";
 import "./GlobalNavigation.css";
+import { mapActions, mapState } from "vuex";
 
 export default {
     name: "EscrGlobalNavigation",
@@ -140,12 +146,20 @@ export default {
             currentTheme: "light-mode",
         };
     },
+    computed: {
+        ...mapState({
+            isStaff: (state) => state.user.isStaff,
+        }),
+    },
     mounted() {
-        console.log(this.getTheme() || this.getMediaPreference());
         const initTheme = this.getTheme() || this.getMediaPreference();
         this.setTheme(initTheme);
+        this.fetchCurrentUser();
     },
     methods: {
+        ...mapActions("user", [
+            "fetchCurrentUser",
+        ]),
         getTheme() {
             return localStorage.getItem("user-theme");
         },
