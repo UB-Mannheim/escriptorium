@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-08 20:07+0000\n"
+"POT-Creation-Date: 2023-07-24 19:31+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -96,6 +96,10 @@ msgstr ""
 msgid "Canceled."
 msgstr "Supprimé."
 
+#: apps/api/views.py
+msgid "'lines' is mandatory."
+msgstr ""
+
 #: apps/core/forms.py
 #, python-brace-format
 msgid ""
@@ -108,16 +112,21 @@ msgid "You requested to search text in a {self.obj_name} that doesn't exist."
 msgstr ""
 
 #: apps/core/forms.py
-msgid "Text to search in all of your projects"
-msgstr ""
-
-#: apps/core/forms.py
 msgid "All projects"
 msgstr "Tous projets"
 
 #: apps/core/forms.py
 msgid ""
-", surround one or more terms with quotation marks to deactivate fuzziness"
+"Text to search in all of your projects, surround one or more terms with "
+"quotation marks to deactivate fuzziness"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to replace"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to find"
 msgstr ""
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
@@ -361,6 +370,13 @@ msgid "Top to bottom"
 msgstr "Haut en bas"
 
 #: apps/core/models.py
+msgid ""
+"An optional URL pointing to an external document that explains content "
+"editing and authorship guidelines for this project, in order to guide a team "
+"or group towards consistent practices for manual segmentation/transcription."
+msgstr ""
+
+#: apps/core/models.py
 msgid "Share with users"
 msgstr "Partager avec d'autres usagers"
 
@@ -552,8 +568,28 @@ msgstr ""
 msgid "Alignment done!"
 msgstr ""
 
+#: apps/core/tasks.py
+msgid "Your replacements are being applied..."
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "All replacements failed"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Replacements applied with some errors"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Replacements applied!"
+msgstr ""
+
 #: apps/core/views.py
 msgid "Project created successfully!"
+msgstr ""
+
+#: apps/core/views.py
+msgid "Project updated successfully!"
 msgstr ""
 
 #: apps/core/views.py
@@ -614,6 +650,10 @@ msgstr ""
 
 #: apps/core/views.py
 msgid "Document was successfully migrated to the selected project!"
+msgstr ""
+
+#: apps/imports/forms.py
+msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -1212,6 +1252,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
 #: escriptorium/templates/core/search/base.html
 msgid "Edit"
 msgstr ""
@@ -1690,6 +1731,10 @@ msgid "Content"
 msgstr ""
 
 #: escriptorium/templates/core/search/base.html
+msgid "Replacement preview"
+msgstr ""
+
+#: escriptorium/templates/core/search/base.html
 msgid "Image preview"
 msgstr ""
 
@@ -1760,6 +1805,10 @@ msgstr ""
 
 #: escriptorium/templates/core/search/find_and_replace.html
 msgid "Find"
+msgstr ""
+
+#: escriptorium/templates/core/search/find_and_replace.html
+msgid "Replace all"
 msgstr ""
 
 #: escriptorium/templates/core/search/find_and_replace.html
@@ -2240,6 +2289,12 @@ msgid "Document report"
 msgstr ""
 
 #: escriptorium/templates/reporting/document_report.html
+#, fuzzy
+#| msgid "Transcribing"
+msgid "Transcription"
+msgstr "Transcription"
+
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Data metrics"
 msgstr ""
@@ -2687,6 +2742,18 @@ msgstr ""
 msgid "You didn't send any invitations yet."
 msgstr ""
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr ""
+
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
 msgstr ""
