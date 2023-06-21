@@ -219,7 +219,7 @@ CELERY_TASK_QUEUES = (
     Queue('live', routing_key='live'),  # for everything that needs to be done on the spot to update the ui
     Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
-    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
+    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (except elasticsearch)
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 # When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
