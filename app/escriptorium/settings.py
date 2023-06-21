@@ -238,7 +238,7 @@ CELERY_TASK_QUEUES = (
     Queue('live', routing_key='live'),  # for everything that needs to be done on the spot to update the ui
     Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
-    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
+    Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (except elasticsearch)
     # for inference expensive enough to want a GPU; doesn't strictly require one (see
     # KRAKEN_INFERENCE_DEVICE), it just shouldn't compete with the 'default' queue's throughput.
     # Routed to dynamically per-call (see INTENSIVE_INFERENCE_MODEL_ARCHITECTURES), not statically here.
