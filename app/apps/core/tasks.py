@@ -464,7 +464,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
     trainer.fit(kraken_model)
 
-    if kraken_model.best_epoch != 0:
+    if kraken_model.best_epoch >= 0:
         best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
         shutil.copy(best_version, model.file.path)
         model.training_accuracy = kraken_model.best_metric
