@@ -10,6 +10,7 @@
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
       <div class="col">{% render_field form.query group=True %}</div>
+      {% block extra_form_field %}{% endblock %}
       <div class="col-auto">
         <input type="submit" value="{% block action_button %}{% endblock %}" class="btn btn-primary"></input>
       </div>
@@ -51,14 +52,17 @@
       </div>
       {% endif %}
 
-    <div class="mt-4 mb-3">
-      <h4>{% trans "Results" %} ({{ page_obj.paginator.count }})</h4>
+    <div class="my-4">
+      <h4>{% trans "Results" %} ({{ page_obj.paginator.count }}) {% block replacement_button %}{% endblock %}</h4>
     </div>
 
     <table class="table table-hover">
       <thead>
         <tr>
           <th>{% trans "Content" %}</th>
+          {% if request.GET.replacement %}
+          <th>{% trans "Replacement preview" %}</th>
+          {% endif %}
           <th>{% trans "Image preview" %}</th>
           {% if debug %}
           <th>{% trans "Score" %}</th>
@@ -72,14 +76,14 @@
           <td>
             {% if result.context_before %}
             <small class="context" title="{% trans "Previous line" %}">
-              {% for content in result.context_before %}{{ content|safe }}{% endfor %}
+              {{ result.context_before|safe }}
             </small>
             <br/>
             {% endif %}
 
             {% if result.object.highlighted_content %}
             <big title="{% trans "Line transcription" %}">
-              {% for content in result.object.highlighted_content %}{{ content|safe }}{% endfor %}
+              {{ result.object.highlighted_content|safe }}
             </big>
             {% else %}
             <small class="text-muted text-sm">
@@ -90,7 +94,7 @@
             {% if result.context_after %}
             <br/>
             <small class="context" title="{% trans "Next line" %}">
-              {% for content in result.context_after %}{{ content|safe }}{% endfor %}
+              {{ result.context_after|safe }}
             </small>
             {% endif %}
             <br/>
@@ -116,6 +120,13 @@
               </a>
             </small>
           </td>
+          {% if request.GET.replacement %}
+          <td>
+            <big>
+              {{ result.replacement_preview|safe }}
+            </big>
+          </td>
+          {% endif %}
           <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
             {% if result.viewbox and result.img_url %}
             <svg viewBox="{{ result.viewbox }}" class="lazy {% if result.larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">

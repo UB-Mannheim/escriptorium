@@ -67,7 +67,7 @@ class SearchModelChoiceField(forms.ModelChoiceField):
 
 
 class BaseSearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label=_("Text to search in all of your projects"), required=False)
+    query = forms.CharField(required=False)
     project = SearchModelChoiceField(
         queryset=Project.objects.none(),
         label="",
@@ -131,7 +131,7 @@ class SearchForm(BaseSearchForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['query'].label += _(", surround one or more terms with quotation marks to deactivate fuzziness")
+        self.fields["query"].widget.attrs["placeholder"] = _("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness")
 
     def search(self, page=None, paginate_by=None):
         projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
@@ -150,6 +150,7 @@ class SearchForm(BaseSearchForm):
 
 
 class FindAndReplaceForm(BaseSearchForm):
+    replacement = forms.CharField(label=_("Text to replace"), required=False)
     part = SearchModelChoiceField(
         queryset=DocumentPart.objects.none(),
         label="",
@@ -160,10 +161,12 @@ class FindAndReplaceForm(BaseSearchForm):
     )
 
     class Meta(BaseSearchForm.Meta):
-        fields = BaseSearchForm.Meta.fields + ['part']
+        fields = BaseSearchForm.Meta.fields + ['replacement', 'part']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["query"].widget.attrs["placeholder"] = _('Text to find')
 
         document = self.data.get('document')
         if document:
@@ -174,10 +177,6 @@ class FindAndReplaceForm(BaseSearchForm):
                 pass
 
     def search(self, page=None, paginate_by=None):
-        right_filters = {
-            'line__document_part__document__project_id__in': self.fields['project'].queryset,
-            'line__document_part__document_id__in': self.fields['document'].queryset,
-        }
         project_id = self.cleaned_data['project'].id if self.cleaned_data['project'] else None
         document_id = self.cleaned_data['document'].id if self.cleaned_data['document'] else None
         transcription_id = self.cleaned_data['transcription'].id if self.cleaned_data['transcription'] else None
@@ -185,7 +184,8 @@ class FindAndReplaceForm(BaseSearchForm):
 
         return search_content_psql(
             self.cleaned_data['query'],
-            right_filters,
+            self.user,
+            'text-danger' if self.cleaned_data['replacement'] else 'text-success',
             project_id=project_id,
             document_id=document_id,
             transcription_id=transcription_id,
