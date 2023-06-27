@@ -16,7 +16,7 @@ django-simple-captcha~=0.5.16
 djangorestframework~=3.13.1
 drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
-elasticsearch>=7.17
+elasticsearch==7.17.0
 kombu~=4.6.11
 # git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
 kraken==4.3.12
