@@ -63,6 +63,8 @@ from core.models import (
     OcrModelRight,
     Project,
 )
+from core.search import build_highlighted_replacement_psql
+from core.tasks import replace_line_transcriptions_text
 from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
 from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
@@ -107,6 +109,11 @@ class BaseSearch(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
+
+        # We don't want potential POST data to reach the form
+        if 'data' in kwargs:
+            del kwargs['data']
+
         return kwargs
 
     @property
@@ -120,7 +127,7 @@ class BaseSearch(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
         if not bounding_box:
             return None, False
 
-        return " ".join([
+        return ' '.join([
             str(max([bounding_box[0] - 10, 0])),
             str(max([bounding_box[1] - 10, 0])),
             str(bounding_box[2] - bounding_box[0] + 20),
@@ -202,7 +209,7 @@ class Search(BaseSearch):
 
         return {
             'object': {
-                'highlighted_content': highlight.get('raw_content'),
+                'highlighted_content': highlight['raw_content'][0] if highlight.get('raw_content') else None,
                 'line': {
                     'order': hit_source['line_number'] - 1,
                     'document_part': {
@@ -219,8 +226,9 @@ class Search(BaseSearch):
                     'name': hit_source['transcription_name'],
                 },
             },
-            'context_before': highlight.get('context_before'),
-            'context_after': highlight.get('context_after'),
+            'context_before': highlight['context_before'][0] if highlight.get('context_before') else None,
+            'context_after': highlight['context_after'][0] if highlight.get('context_after') else None,
+            'replacement_preview': None,
             'score': hit['_score'],
             'img_url': hit_source['image_url'],
             'img_w': hit_source['image_width'],
@@ -253,7 +261,7 @@ class FindAndReplace(BaseSearch):
         thumbnailer = get_thumbnailer(part_image)
         try:
             thumbnail = thumbnailer.get_thumbnail(
-                settings.THUMBNAIL_ALIASES[""]["large"], generate=False
+                settings.THUMBNAIL_ALIASES['']['large'], generate=False
             )
             assert thumbnail
         except Exception:
@@ -278,7 +286,7 @@ class FindAndReplace(BaseSearch):
             for value, factor in zip(line_box, scale_factors)
         ]
 
-    def convert_lt_object_to_template(self, lt_object, thumbnails):
+    def convert_lt_object_to_template(self, find_terms, replace_term, lt_object, thumbnails):
         if lt_object.line.document_part_id not in thumbnails:
             try:
                 thumbnail_url, thumbnail_width, thumbnail_height, scale_factors = self.get_part_image_thumbnail(lt_object.line.document_part.image)
@@ -286,36 +294,72 @@ class FindAndReplace(BaseSearch):
                 thumbnail_url, thumbnail_width, thumbnail_height = None, None, None
                 scale_factors = [1, 1, 1, 1]
 
-            thumbnails[lt_object.line.document_part_id] = {"url": thumbnail_url, "width": thumbnail_width, "height": thumbnail_height, "scale_factors": scale_factors}
+            thumbnails[lt_object.line.document_part_id] = {'url': thumbnail_url, 'width': thumbnail_width, 'height': thumbnail_height, 'scale_factors': scale_factors}
 
-        bounding_box = self.get_line_bounding_box(lt_object.line, thumbnails[lt_object.line.document_part_id]["scale_factors"])
+        bounding_box = self.get_line_bounding_box(lt_object.line, thumbnails[lt_object.line.document_part_id]['scale_factors'])
         viewbox, larger = self.get_line_viewbox(bounding_box)
 
         return {
             'object': lt_object,
             'context_before': None,
             'context_after': None,
+            'replacement_preview': build_highlighted_replacement_psql(find_terms, replace_term, lt_object.highlighted_content),
             'score': 100,
-            'img_url': thumbnails[lt_object.line.document_part_id]["url"],
-            'img_w': thumbnails[lt_object.line.document_part_id]["width"],
-            'img_h': thumbnails[lt_object.line.document_part_id]["height"],
+            'img_url': thumbnails[lt_object.line.document_part_id]['url'],
+            'img_w': thumbnails[lt_object.line.document_part_id]['width'],
+            'img_h': thumbnails[lt_object.line.document_part_id]['height'],
             'viewbox': viewbox,
             'larger': larger,
         }, thumbnails
 
     def get_and_format_results(self, page=None, paginate_by=None):
         results = self.form.search()
+        find_terms = '|'.join(self.form.cleaned_data['query'].split(' '))
+        replace_term = self.form.cleaned_data['replacement']
 
         thumbnails = {}
         template_results = []
         for lt_object in results:
-            template_result, thumbnails = self.convert_lt_object_to_template(lt_object, thumbnails)
+            template_result, thumbnails = self.convert_lt_object_to_template(find_terms, replace_term, lt_object, thumbnails)
             template_results.append(template_result)
 
         return template_results, None
 
+    def get_filters(self):
+        return {
+            'project': self.request.GET.get('project'),
+            'document': self.request.GET.get('document'),
+            'transcription': self.request.GET.get('transcription'),
+            'part': self.request.GET.get('part'),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if 'apply_replace' not in self.request.POST:
+            return super().post(request, *args, **kwargs)
+
+        form = self.get_form()
+        if not form.is_valid():
+            return self.form_invalid(form)
+
+        filters = self.get_filters()
+        replace_line_transcriptions_text.delay(
+            form.cleaned_data['query'],
+            form.cleaned_data['replacement'],
+            project_pk=filters['project'],
+            document_pk=filters['document'],
+            transcription_pk=filters['transcription'],
+            part_pk=filters['part'],
+            user_pk=self.request.user.pk
+        )
+        return self.form_valid(form)
+
+    def get_query_params(self):
+        params = self.get_filters()
+        query_params = '&'.join([f'{key}={value}' for key, value in params.items() if value is not None])
+        return f'?{query_params}' if query_params else ''
+
     def get_success_url(self):
-        return reverse('find-replace')
+        return reverse('find-replace') + self.get_query_params()
 
 
 class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):

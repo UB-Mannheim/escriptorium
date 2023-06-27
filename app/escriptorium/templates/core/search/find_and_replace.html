@@ -1,5 +1,5 @@
 {% extends 'core/search/base.html' %}
-{% load i18n %}
+{% load i18n bootstrap %}
 
 {% block head_title %}
 {% trans "Find and replace in projects" %}
@@ -9,7 +9,22 @@
 {% trans "Find and replace text in projects" %}
 {% endblock %}
 
+{% block extra_form_field %}
+<div class="col">{% render_field form.replacement group=True %}</div>
+{% endblock %}
+
 {% block action_button %}{% trans "Find" %}{% endblock %}
+
+{% block replacement_button %}
+  {% if page_obj and request.GET.replacement %}
+    <form method="post" class="inline-form float-right">
+      {% csrf_token %}
+      <button type="submit" name="apply_replace" value="{% trans 'Replace all' %}" class="btn btn-success">
+        {% trans 'Replace all' %}
+      </button>
+    </form>
+  {% endif %}
+{% endblock %}
 
 {% block part_title %}
 <a

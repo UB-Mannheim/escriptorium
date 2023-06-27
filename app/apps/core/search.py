@@ -5,8 +5,6 @@ from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from elasticsearch import Elasticsearch
 
-from core.models import LineTranscription
-
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 
 
@@ -73,8 +71,15 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
     return es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)
 
 
-def search_content_psql(terms, right_filters, project_id=None, document_id=None, transcription_id=None, part_id=None):
+def search_content_psql(terms, user, highlight_class, project_id=None, document_id=None, transcription_id=None, part_id=None):
+    from core.models import Document, LineTranscription, Project
+
     cleaned_terms = re.escape(terms)
+
+    right_filters = {
+        "line__document_part__document__project_id__in": Project.objects.for_user_read(user),
+        "line__document_part__document_id__in": Document.objects.for_user(user),
+    }
 
     filters = {}
     if project_id:
@@ -102,8 +107,15 @@ def search_content_psql(terms, right_filters, project_id=None, document_id=None,
             highlighted_content=SearchHeadline(
                 "content",
                 search_query,
-                start_sel='<strong class="text-success">',
+                start_sel=f'<strong class="{highlight_class}">',
                 stop_sel="</strong>",
             )
         )
     )
+
+
+def build_highlighted_replacement_psql(find_terms, replace_term, highlighted_content):
+    if not replace_term:
+        return None
+
+    return re.sub(find_terms, replace_term, highlighted_content, flags=re.IGNORECASE).replace("text-danger", "text-success")

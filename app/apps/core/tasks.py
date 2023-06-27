@@ -10,6 +10,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
+from django.utils.html import strip_tags
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from easy_thumbnails.files import get_thumbnailer
@@ -17,6 +18,8 @@ from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPER_PARAMS
 from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
 from pytorch_lightning.callbacks import Callback
+
+from core.search import build_highlighted_replacement_psql, search_content_psql
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -738,3 +741,61 @@ def align(
             user.notify(_("Alignment done!"),
                         id="alignment-success",
                         level='success')
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def replace_line_transcriptions_text(
+    task, find_terms, replace_term, project_pk=None, document_pk=None, transcription_pk=None, part_pk=None, user_pk=None, **kwargs
+):
+    LineTranscription = apps.get_model('core', 'LineTranscription')
+
+    # Get the associated TaskReport
+    TaskReport = apps.get_model('reporting', 'TaskReport')
+    report = TaskReport.objects.get(task_id=task.request.id)
+
+    user = User.objects.get(pk=user_pk)
+    user.notify(_('Your replacements are being applied...'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-running', level='info')
+
+    # Find line transcriptions to update
+    search_results = search_content_psql(
+        find_terms,
+        user,
+        '',
+        project_id=project_pk,
+        document_id=document_pk,
+        transcription_id=transcription_pk,
+        part_id=part_pk,
+    )
+
+    # Apply the replacement on the found line transcriptions
+    total = search_results.count()
+    errors = 0
+    updated = []
+    for result in search_results.iterator(chunk_size=5000):
+        try:
+            report.append(f'Applying the replacement on the transcription from the line {result.line}', logger_fct=logger.info)
+            # Replace on the highlighted content and then remove the highlighting tags
+            result.content = strip_tags(build_highlighted_replacement_psql(find_terms, replace_term, result.highlighted_content))
+        except Exception as e:
+            errors += 1
+            report.append(f'Failed to apply the replacement on the transcription from the line {result.line}: {e}', logger_fct=logger.error)
+            continue
+
+        updated.append(result)
+
+        # Once we have 1000 line transcriptions to update, we do it and clear the list
+        if len(updated) >= 1000:
+            LineTranscription.objects.bulk_update(updated, fields=['content'])
+            updated = []
+
+    # We don't forget to update the remaining line transcriptions
+    if updated:
+        LineTranscription.objects.bulk_update(updated, fields=['content'])
+
+    # Alert the user
+    if total and errors == total:
+        user.notify(_('All replacements failed'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-error', level='danger')
+    elif errors:
+        user.notify(_('Replacements applied with some errors'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-warning', level='warning')
+    else:
+        user.notify(_('Replacements applied!'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-success', level='success')
