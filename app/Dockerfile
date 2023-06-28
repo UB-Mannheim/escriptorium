@@ -16,12 +16,11 @@ RUN apt-get update -q && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+
 # Install OpenJDK-11
 RUN echo "Installing jvm" && \
-    apt-get install -y python-software-properties && \
-    add-apt-repository ppa:openjdk-r/ppa && \
     apt update && \
-    apt-get install -y openjdk-11-jdk && \
+    apt install -y default-jre default-jdk && \
     apt-get install -y ant && \
     apt-get clean;
 
