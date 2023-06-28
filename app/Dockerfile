@@ -18,6 +18,7 @@ RUN apt-get update -q && \
 
 # Install OpenJDK-11
 RUN echo "Installing jvm" && \
+    apt-get install -y software-properties-common && \
     add-apt-repository ppa:openjdk-r/ppa && \
     apt update && \
     apt-get install -y openjdk-11-jdk && \
