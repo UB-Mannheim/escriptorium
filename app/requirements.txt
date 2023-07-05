@@ -21,7 +21,7 @@ kombu~=4.6.11
 # git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
 kraken==4.3.12
 # numpy>=1.17
-oitei~=1.0.0
+oitei~=1.1.1
 # passim, "seriatim" branch
 git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
 Pillow>=5.4.1
