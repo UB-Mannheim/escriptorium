@@ -5,7 +5,7 @@ celery
 channels~=3.0.4
 channels-redis~=3.4.0
 daphne~=3.0.2
-Django~=4.0.8
+Django~=4.1.9
 django-cleanup~=5.1.0
 django-country-and-language-flags
 django-filter
