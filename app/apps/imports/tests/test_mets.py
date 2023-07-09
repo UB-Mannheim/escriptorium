@@ -102,7 +102,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         with self.assertRaises(ParseError) as context:
             processor.get_pages_from_struct_map()
 
-        self.assertTrue("The structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
+        self.assertTrue("The physical structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
 
     def test_get_pages_from_struct_map(self):
         processor = METSProcessor(self.root, self.report)
@@ -419,7 +419,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         with self.assertRaises(ParseError) as context:
             processor.process()
 
-        self.assertTrue("The structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
+        self.assertTrue("The physical structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
 
     @patch("imports.mets.METSProcessor.process_single_page")
     def test_process_pages_in_error(self, mock_process_single_page):
