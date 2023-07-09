@@ -248,6 +248,9 @@ class METSProcessor:
             file = files[file_pointer.get("FILEID")]
             href = self.get_file_location(file)
             layer_name = self.get_file_group_name(file) or f"Layer {layers_count}"
+            # Skip files in some file groups
+            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'THUMBS']:
+                continue
 
             if self.archive:
                 mets_page_image, mets_page_sources, layers_count = self.handle_pointer_in_archive(href, mets_page_image, mets_page_sources, layer_name, layers_count)
