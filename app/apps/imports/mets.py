@@ -99,9 +99,16 @@ class METSProcessor:
     def get_pages_from_struct_map(self):
         from imports.parsers import ParseError
 
-        struct_map = self.mets_xml.find("mets:structMap", namespaces=self.NAMESPACES)
+        struct_map = None
+        struct_maps = self.mets_xml.findall("mets:structMap[@TYPE]", namespaces=self.NAMESPACES)
+        for element in struct_maps:
+            type = element.get("TYPE", "")
+            if type.lower() == 'physical':
+                struct_map = element
+                break
+
         if struct_map is None:
-            raise ParseError("The structure mapping <structMap/> wasn't found in the METS file.")
+            raise ParseError("The physical structure mapping <structMap/> wasn't found in the METS file.")
 
         pages = []
         for element in struct_map.findall(".//mets:div[@TYPE]", namespaces=self.NAMESPACES):
