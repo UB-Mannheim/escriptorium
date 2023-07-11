@@ -824,6 +824,10 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @transaction.atomic
     def merge(self, request, document_pk=None, part_pk=None):
         original_lines = request.data.get("lines")
+
+        if original_lines is None:
+            return Response({'status': 'error', 'error': _("'lines' is mandatory.")}, status=status.HTTP_400_BAD_REQUEST)
+
         if len(original_lines) > MAX_MERGE_SIZE:
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 

@@ -862,7 +862,12 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, body, content_type="application/json")
         self.assertEqual(resp.status_code, 400, resp.content)
 
-        # Second merge should succeed
+        # second merge will fail, because 'lines' is mandatory
+        body = {}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        # third merge should succeed
         body = {'lines': [self.line.pk, self.orphan.pk]}
         resp = self.client.post(uri, body, content_type="application/json")
         self.assertEqual(resp.status_code, 200, resp.content)
