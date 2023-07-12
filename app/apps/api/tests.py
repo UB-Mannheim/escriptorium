@@ -410,7 +410,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'detail': 'You do not have permission to perform this action.'
         })
 
-    @patch('reporting.models.revoke')
+    @patch('escriptorium.celery.app.control.revoke')
     def test_cancel_all_tasks_for_document(self, mock_revoke):
         self.client.force_login(self.doc.owner)
 
@@ -465,7 +465,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         model.refresh_from_db()
         self.assertEqual(model.training, False)
 
-    @patch('reporting.models.revoke')
+    @patch('escriptorium.celery.app.control.revoke')
     def test_cancel_all_tasks_for_document_staff_user(self, mock_revoke):
         # This user doesn't own self.doc but can cancel all of its tasks since he is a staff member
         user = self.factory.make_user()
