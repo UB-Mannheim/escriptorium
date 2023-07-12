@@ -640,10 +640,15 @@ export class Segmenter {
             }
         }
 
-        // using the fact that selecting a segment also selects its line
+        // using the fact that selecting a segment also selects its line/region
         for (let i=0; i < this.selection.lines.length; i++) {
             this.selection.lines[i].updateDataFromCanvas();
         }
+
+        for (let i=0; i < this.selection.regions.length; i++) {
+            this.selection.regions[i].updateDataFromCanvas();
+        }
+
         this.showContextMenu();
     }
 
