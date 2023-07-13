@@ -85,7 +85,7 @@
                                 <span>Change Password</span>
                             </a>
                         </li>
-                        <li v-if="isStaff">
+                        <li v-if="canInvite">
                             <a href="/invite/">
                                 <span>Invite Users</span>
                             </a>
