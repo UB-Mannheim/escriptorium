@@ -443,7 +443,13 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
 
         if 'parts' in request.data:
-            parts = document.parts.filter(pk__in=request.GET.get('parts'))
+            pks = request.data.get('parts')
+            try:
+                iter(pks)
+            except TypeError:
+                return Response({'error': "'parts' has to be a list."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            parts = document.parts.filter(pk__in=pks)
         else:
             parts = document.parts.all()
 
