@@ -7,12 +7,14 @@
 {% block body %}
 <div class="jumbotron text-center bg-light">
     {% if CUSTOM_HOME %}
-    {% include "additional_heading.html" %}
+        {% include "additional_heading.html" %}
     {% else %}
-    <h1 class="jumbotron-heading">eScriptorium</h1>
-    <p class="lead text-muted">{% trans "eScriptorium: A Digital Text Production Pipeline for Print and Handwritten Texts using machine learning techniques." %}</p>
+        <h1 class="jumbotron-heading">eScriptorium</h1>
+        <p class="lead text-muted">{% trans "eScriptorium: A Digital Text Production Pipeline for Print and Handwritten Texts using machine learning techniques." %}</p>
     {% endif %}
-
+    {% if not user.is_authenticated %}
+        <a class="btn btn-primary" href="/login" role="button">{% trans "Sign in" %}</a>
+    {% endif %}
 </div>
 
 <div class="container my-5">
