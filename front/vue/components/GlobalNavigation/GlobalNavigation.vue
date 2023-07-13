@@ -8,6 +8,7 @@
                 <EscrLogo />
             </a>
             <a
+                v-if="isAuthenticated && !searchDisabled"
                 href="/search/"
                 aria-label="global search"
                 class="escr-global-search"
@@ -15,6 +16,7 @@
                 <SearchLargeIcon />
             </a>
             <a
+                v-if="isAuthenticated"
                 href="/projects/"
                 aria-label="projects list"
                 class="escr-globalnav-icon"
@@ -23,6 +25,7 @@
                 <span>Projects</span>
             </a>
             <a
+                v-if="isAuthenticated"
                 href="/models/"
                 aria-label="models list"
                 class="escr-globalnav-icon"
@@ -31,6 +34,7 @@
                 <span>Models</span>
             </a>
             <VMenu
+                v-if="isAuthenticated"
                 placement="right-start"
                 theme="vertical-menu"
                 :triggers="['click']"
@@ -61,6 +65,7 @@
         </div>
         <div class="escr-lower-navgroup">
             <VMenu
+                v-if="isAuthenticated"
                 placement="right-end"
                 theme="vertical-menu"
                 :triggers="['click']"
@@ -90,6 +95,19 @@
                                 <span>Invite Users</span>
                             </a>
                         </li>
+                        <li
+                            v-if="isStaff"
+                            class="new-section"
+                        >
+                            <a href="/quotas/instance/">
+                                <span>Leaderboard</span>
+                            </a>
+                        </li>
+                        <li v-if="isStaff">
+                            <a href="/admin/">
+                                <span>Site Administration</span>
+                            </a>
+                        </li>
                         <li class="new-section">
                             <a href="/logout/">
                                 <span>Logout</span>
@@ -98,6 +116,15 @@
                     </ul>
                 </template>
             </VMenu>
+            <a
+                v-else
+                href="/login"
+                aria-label="sign in"
+                class="escr-globalnav-icon"
+            >
+                <ProfileIcon />
+                <span>Sign in</span>
+            </a>
             <input
                 id="escr-lightdark-switcher"
                 type="checkbox"
@@ -141,6 +168,16 @@ export default {
         TasksIcon,
         VMenu,
     },
+    props: {
+        isAuthenticated: {
+            type: Boolean,
+            required: true,
+        },
+        searchDisabled: {
+            type: Boolean,
+            required: true,
+        },
+    },
     data() {
         return {
             currentTheme: "light-mode",
@@ -148,13 +185,16 @@ export default {
     },
     computed: {
         ...mapState({
+            canInvite: (state) => state.user.canInvite,
             isStaff: (state) => state.user.isStaff,
         }),
     },
     mounted() {
         const initTheme = this.getTheme() || this.getMediaPreference();
         this.setTheme(initTheme);
-        this.fetchCurrentUser();
+        if (this.isAuthenticated) {
+            this.fetchCurrentUser();
+        }
     },
     methods: {
         ...mapActions("user", [
