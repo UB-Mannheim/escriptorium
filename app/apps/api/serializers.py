@@ -873,19 +873,25 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
-    parts = serializers.PrimaryKeyRelatedField(many=True,
-                                               queryset=DocumentPart.objects.all())
-    model = serializers.PrimaryKeyRelatedField(queryset=OcrModel.objects.all())
-    # transcription = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.all())
+    parts = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=DocumentPart.objects.all())
+    model = serializers.PrimaryKeyRelatedField(
+        queryset=OcrModel.objects.all())
+    transcription = serializers.PrimaryKeyRelatedField(
+        queryset=Transcription.objects.all())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
-        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        self.fields['transcription'].queryset = Transcription.objects.filter(
+            document=self.document)
+        self.fields['model'].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_RECOGNIZE)
+        self.fields['parts'].queryset = DocumentPart.objects.filter(
+            document=self.document)
 
     def process(self):
         model = self.validated_data.get('model')
+        transcription = self.validated_data.get('transcription')
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -898,7 +904,9 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
 
         for part in self.validated_data.get('parts'):
             part.chain_tasks(
-                transcribe.si(instance_pk=part.pk,
-                              model_pk=model.pk,
-                              user_pk=self.user.pk)
+                transcribe.si(
+                    transcription_pk=transcription.pk,
+                    instance_pk=part.pk,
+                    model_pk=model.pk,
+                    user_pk=self.user.pk)
             )
