@@ -19,7 +19,10 @@
                 v-if="isAuthenticated"
                 href="/projects/"
                 aria-label="projects list"
-                class="escr-globalnav-icon"
+                :class="{
+                    'escr-globalnav-icon': true,
+                    'escr-globalnav-icon-active': location.href.endsWith('/projects/'),
+                }"
             >
                 <HomeIcon />
                 <span>Projects</span>
@@ -28,7 +31,10 @@
                 v-if="isAuthenticated"
                 href="/models/"
                 aria-label="models list"
-                class="escr-globalnav-icon"
+                :class="{
+                    'escr-globalnav-icon': true,
+                    'escr-globalnav-icon-active': location.href.endsWith('/models/'),
+                }"
             >
                 <ModelsIcon />
                 <span>Models</span>
@@ -41,7 +47,12 @@
             >
                 <button
                     aria-label="expand task monitoring and usage menu"
-                    class="escr-globalnav-icon"
+                    :class="{
+                        'escr-globalnav-icon': true,
+                        'escr-globalnav-icon-active': ['/tasks/', '/quotas/'].some(
+                            (page) => location.href.endsWith(page)
+                        ),
+                    }"
                     type="button"
                 >
                     <TasksIcon />
@@ -72,7 +83,12 @@
             >
                 <button
                     aria-label="expand user profile menu"
-                    class="escr-globalnav-icon"
+                    :class="{
+                        'escr-globalnav-icon': true,
+                        'escr-globalnav-icon-active': profilePages.some(
+                            (page) => location.href.endsWith(page)
+                        ),
+                    }"
                     type="button"
                 >
                     <ProfileIcon />
@@ -188,6 +204,14 @@ export default {
             canInvite: (state) => state.user.canInvite,
             isStaff: (state) => state.user.isStaff,
         }),
+        location() {
+            // helper to access window object from within template
+            return window.location;
+        },
+        profilePages() {
+            // pages that will trigger the "profile" button to be in the active state
+            return ["/profile/", "/password_change/", "/invite/", "/quotas/instance/"];
+        },
     },
     mounted() {
         const initTheme = this.getTheme() || this.getMediaPreference();

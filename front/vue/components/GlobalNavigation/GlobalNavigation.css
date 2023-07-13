@@ -55,8 +55,11 @@
 .escr-global-nav .escr-globalnav-icon:focus,
 .escr-global-nav .escr-globalnav-icon[data-popper-shown] {
     background-color: var(--secondary-hover);
+    color: var(--text1);
+    fill: var(--text1);
 }
-.escr-global-nav .escr-globalnav-icon:active {
+.escr-global-nav .escr-globalnav-icon:active,
+.escr-global-nav .escr-globalnav-icon-active {
     color: var(--tag-text-ondark);
     fill: var(--tag-text-ondark);
     background-color: var(--secondary);
