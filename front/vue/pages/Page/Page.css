@@ -1,11 +1,3 @@
-/* body layout */
-.escr-body {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: stretch;
-    height: 100vh;
-}
-
 /* page padding */
 .escr-page {
     padding: 16px 32px;

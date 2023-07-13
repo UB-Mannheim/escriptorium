@@ -1,5 +1,5 @@
 <template>
-    <div class="escr-body">
+    <div class="escr-body escr-vue-enabled">
         <GlobalNavigation />
         <main class="escr-page">
             <EscrBreadcrumbs

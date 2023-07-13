@@ -118,41 +118,61 @@
 }
 
 /* Site-wide styles */
-body {
+.escr-body {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: stretch;
+    height: 100vh;
+}
+.escr-body main:not(.escr-page) {
+    max-height: 100vh;
+    overflow: auto;
+    width: 100%;
+}
+.escr-body.escr-vue-enabled {
     background-color: var(--background);
 }
 
 /* Typography */
-body,
-input[type="text"] {
+.escr-body.escr-vue-enabled,
+input[type="text"],
+.escr-global-nav,
+.v-popper__inner {
     font-family: "Noto Sans", sans-serif;
     font-size: 14px;
     color: var(--text1);
     font-style: normal;
 }
-h1 {
+#vue-global-nav {
+    height: 100vh;
+    min-width: 64px;
+}
+#vue-global-nav .escr-global-nav {
+    height: 100vh;
+}
+.escr-page h1 {
     font-weight: 700;
     font-size: 24px;
     line-height: 33px;
 }
-h2 {
+.escr-page h2 {
     font-weight: 700;
     font-size: 18px;
     line-height: 25px;
 }
-h3 {
+.escr-page h3 {
     font-weight: 600;
     font-size: 16px;
     line-height: 22px;
 }
-h4 {
+.escr-page h4 {
     font-weight: 600;
     font-size: 14px;
     line-height: 19px;
 }
 
 /* Horizontal rule */
-hr {
+.escr-page hr {
     border: none;
     border-top: 1px solid var(--text3);
 }
