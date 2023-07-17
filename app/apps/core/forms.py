@@ -933,7 +933,10 @@ class TrainMixin():
         # Note: Only an owner should be able to train on top of an existing model
         # if the model is public, the user can only clone it (override=False)
         self.fields['model'].queryset = (self.fields['model'].queryset
-                                         .filter(Q(public=True) | Q(owner=self.user)))
+                                         .filter(Q(public=True)
+                                                 | Q(owner=self.user)
+                                                 | Q(ocr_model_rights__user=self.user)
+                                                 | Q(ocr_model_rights__group__user=self.user)))
 
     @property
     def model_job(self):

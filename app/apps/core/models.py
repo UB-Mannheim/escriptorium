@@ -2024,9 +2024,10 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
 
     def clone_for_training(self, owner, name=None):
         children_count = OcrModel.objects.filter(parent=self).count() + 2
+        name = name or self.name.split(".mlmodel")[0] + f"_v{children_count}"
         model = OcrModel.objects.create(
-            owner=self.owner or owner,
-            name=name or self.name.split(".mlmodel")[0] + f"_v{children_count}",
+            owner=owner or self.owner,
+            name=name,
             job=self.job,
             public=False,
             script=self.script,
@@ -2034,17 +2035,17 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
             versions=[],
             file_size=self.file.size,
         )
-        model.file = File(self.file, name=os.path.basename(self.file.name))
+        model.file = File(self.file, name=f'{name}.mlmodel')
         model.save()
 
-        if not model.public:
-            # Cloning rights to the new model
-            OcrModelRight.objects.bulk_create(
-                [
-                    OcrModelRight(ocr_model=model, user=right.user, group=right.group)
-                    for right in self.ocr_model_rights.all()
-                ]
-            )
+        # if not model.public:
+        #     # Cloning rights to the new model
+        #     OcrModelRight.objects.bulk_create(
+        #         [
+        #             OcrModelRight(ocr_model=model, user=right.user, group=right.group)
+        #             for right in self.ocr_model_rights.all()
+        #         ]
+        #     )
 
         return model
 
