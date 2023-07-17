@@ -60,7 +60,8 @@ class TasksTestCase(CoreFactoryTestCase):
         response = self.client.post(uri, {
             'document': self.part.document.pk,
             'parts': [str(part.pk) for part in parts],
-            'task': 'transcribe'
+            'task': 'transcribe',
+            'transcription': None
         }, follow=True)
         self.assertEqual(response.status_code, 200)
         part.refresh_from_db()
