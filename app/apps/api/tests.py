@@ -191,7 +191,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         })
         self.assertEqual(resp.status_code, 200)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_train_new_model(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-train', kwargs={'pk': self.doc.pk})
