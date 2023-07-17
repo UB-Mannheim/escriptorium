@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 
-from celery.task.control import revoke
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from escriptorium.celery import app
 
 User = get_user_model()
 
@@ -81,7 +81,7 @@ class TaskReport(models.Model):
             canceled_by = f"user {username}"
         self.append(f"Canceled by {canceled_by}")
 
-        revoke(self.task_id, terminate=True)
+        app.control.revoke(self.task_id, terminate=True)
         self.save()
 
     def error(self, message):
