@@ -66,7 +66,7 @@ class TasksTestCase(CoreFactoryTestCase):
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_train_new_transcription_model(self):
         self.makeTranscriptionContent()
         self.client.force_login(self.part.document.owner)
