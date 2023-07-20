@@ -99,9 +99,11 @@ class METSProcessor:
     def get_pages_from_struct_map(self):
         from imports.parsers import ParseError
 
-        struct_map = self.mets_xml.find("mets:structMap", namespaces=self.NAMESPACES)
+        struct_map = (self.mets_xml.find("mets:structMap[@TYPE='PHYSICAL']", namespaces=self.NAMESPACES)
+                      or self.mets_xml.find("mets:structMap[@TYPE='physical']", namespaces=self.NAMESPACES))
+
         if struct_map is None:
-            raise ParseError("The structure mapping <structMap/> wasn't found in the METS file.")
+            raise ParseError("The physical structure mapping <structMap/> wasn't found in the METS file.")
 
         pages = []
         for element in struct_map.findall(".//mets:div[@TYPE]", namespaces=self.NAMESPACES):
@@ -241,6 +243,9 @@ class METSProcessor:
             file = files[file_pointer.get("FILEID")]
             href = self.get_file_location(file)
             layer_name = self.get_file_group_name(file) or f"Layer {layers_count}"
+            # Skip files in some file groups
+            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'THUMBS']:
+                continue
 
             if self.archive:
                 mets_page_image, mets_page_sources, layers_count = self.handle_pointer_in_archive(href, mets_page_image, mets_page_sources, layer_name, layers_count)

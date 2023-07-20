@@ -1198,7 +1198,10 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:
-            schema = root.nsmap[None]
+            if 'mets' in root.nsmap:
+                schema = root.nsmap['mets']
+            else:
+                schema = root.nsmap[None]
             schemas = root.nsmap.values()
         except KeyError:
             raise ParseError(
