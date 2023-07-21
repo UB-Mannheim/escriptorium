@@ -1,8 +1,8 @@
 <template>
     <EscrPage class="escr-projects-list">
         <template #page-content>
-            <h1>Welcome back, {{ firstName }}</h1>
-            <div class="escr-card">
+            <h1>Welcome back, {{ firstName || username }}</h1>
+            <div class="escr-card escr-card-table">
                 <div class="escr-card-padding escr-card-header">
                     <h2>Projects</h2>
                     <div class="escr-card-actions">
@@ -57,50 +57,55 @@
                         />
                     </template>
                 </EscrModal>
-                <EscrTable
-                    v-if="projects.length"
-                    :items="projects"
-                    item-key="slug"
-                    :headers="headers"
-                    :on-sort="sortProjects"
-                    :sort-disabled="loading"
-                >
-                    <template #actions="{ item }">
-                        <EscrButton
-                            v-tooltip.bottom="'Delete'"
-                            size="small"
-                            color="text"
-                            :on-click="() => openDeleteModal(item)"
-                            :disabled="loading"
-                            aria-label="Delete project"
-                        >
-                            <template #button-icon>
-                                <TrashIcon />
-                            </template>
-                        </EscrButton>
-                    </template>
-                </EscrTable>
                 <div
-                    v-else-if="!loading"
-                    class="escr-empty-msg"
+                    class="table-container"
                 >
-                    There are no projects to display.
+                    <EscrTable
+                        v-if="projects.length"
+                        :items="projects"
+                        item-key="slug"
+                        :headers="headers"
+                        :on-sort="sortProjects"
+                        :sort-disabled="loading"
+                        :linkable="true"
+                    >
+                        <template #actions="{ item }">
+                            <EscrButton
+                                v-tooltip.bottom="'Delete'"
+                                size="small"
+                                color="text"
+                                :on-click="() => openDeleteModal(item)"
+                                :disabled="loading"
+                                aria-label="Delete project"
+                            >
+                                <template #button-icon>
+                                    <TrashIcon />
+                                </template>
+                            </EscrButton>
+                        </template>
+                    </EscrTable>
+                    <div
+                        v-else-if="!loading"
+                        class="escr-empty-msg"
+                    >
+                        There are no projects to display.
+                    </div>
+                    <div
+                        v-else
+                        class="escr-empty-msg"
+                    >
+                        Loading...
+                    </div>
+                    <EscrButton
+                        v-if="nextPage"
+                        label="Load more"
+                        class="escr-load-more-btn"
+                        color="outline-primary"
+                        size="small"
+                        :disabled="loading"
+                        :on-click="async () => await fetchNextPage()"
+                    />
                 </div>
-                <div
-                    v-else
-                    class="escr-empty-msg"
-                >
-                    Loading...
-                </div>
-                <EscrButton
-                    v-if="nextPage"
-                    label="Load more"
-                    class="escr-load-more-btn"
-                    color="outline-primary"
-                    size="small"
-                    :disabled="loading"
-                    :on-click="async () => await fetchNextPage()"
-                />
             </div>
         </template>
     </EscrPage>
@@ -116,6 +121,7 @@ import FilterSet from "../../components/FilterSet/FilterSet.vue";
 import NewProjectModal from "../../components/EditProjectModal/EditProjectModal.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import "../../components/Common/Card.css"
 import "./ProjectsList.css";
 
 export default {
@@ -142,6 +148,7 @@ export default {
             projects: (state) => state.projects.projects,
             projectToDelete: (state) => state.projects.projectToDelete,
             tags: (state) => state.projects.tags,
+            username: (state) => state.user.username,
         }),
         headers() {
             return [
@@ -163,6 +170,7 @@ export default {
     },
     async created() {
         try {
+            await this.fetchCurrentUser();
             await this.fetchProjects();
             await this.fetchAllProjectTags();
         } catch (error) {
@@ -184,6 +192,7 @@ export default {
             "sortProjects",
         ]),
         ...mapActions("alerts", ["addError"]),
+        ...mapActions("user", ["fetchCurrentUser"]),
     },
 };
 </script>

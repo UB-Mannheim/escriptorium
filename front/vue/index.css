@@ -62,13 +62,14 @@
 
     /* z-index layers */
     --segmented-button-focus-z: 1;
-    --taggroup-overflow-z: 2;
-    --sidebar-backdrop-z: 3;
-    --sidebar-container-z: 4;
-    --sidebar-z: 5;
-    --modal-backdrop-z: 6;
-    --modal-z: 7;
-    --toast-z: 8;
+    --table-actions-z: 2;
+    --taggroup-overflow-z: 3;
+    --sidebar-backdrop-z: 4;
+    --sidebar-container-z: 5;
+    --sidebar-z: 6;
+    --modal-backdrop-z: 7;
+    --modal-z: 8;
+    --toast-z: 9;
 }
 .light-mode {
     /* button colors */
@@ -124,7 +125,7 @@
     align-items: stretch;
     height: 100vh;
 }
-.escr-body main:not(.escr-page) {
+.escr-body main {
     max-height: 100vh;
     overflow: auto;
     width: 100%;
@@ -154,21 +155,45 @@ input[type="text"],
     font-weight: 700;
     font-size: 24px;
     line-height: 33px;
+    display: block;
+    margin-block-start: 0.67em;
+    margin-block-end: 0.67em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
 }
 .escr-page h2 {
     font-weight: 700;
     font-size: 18px;
     line-height: 25px;
+    display: block;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
 }
 .escr-page h3 {
     font-weight: 600;
     font-size: 16px;
     line-height: 22px;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
 }
 .escr-page h4 {
     font-weight: 600;
     font-size: 14px;
     line-height: 19px;
+    display: block;
+    margin-block-start: 1.33em;
+    margin-block-end: 1.33em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
 }
 
 /* Horizontal rule */

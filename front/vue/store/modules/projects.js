@@ -190,6 +190,7 @@ const actions = {
                 data.results.map((result) => ({
                     ...result,
                     tags: { tags: result.tags },
+                    href: `/project/${result.slug}/documents`,
                 })),
             );
             commit("setNextPage", data.next);

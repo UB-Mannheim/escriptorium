@@ -69,7 +69,7 @@
                     </a>
                     <component
                         :is="header.component"
-                        v-else-if="header.component && item[header.value]"
+                        v-if="header.component && item[header.value]"
                         v-bind="item[header.value]"
                     />
                     <span v-else>
