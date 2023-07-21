@@ -114,12 +114,23 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
+class ProjectTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectTag
+        fields = ("pk", "name", "color")
+
+    def create(self, data):
+        data['user'] = self.context['request'].user
+        return super().create(data)
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     slug = serializers.ReadOnlyField()
     documents_count = serializers.ReadOnlyField()
     shared_with_users = UserSerializer(many=True, read_only=True)
     shared_with_groups = GroupSerializer(many=True, read_only=True)
+    tags = ProjectTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -315,16 +326,6 @@ class TextAnnotationSerializer(serializers.ModelSerializer):
             component.value = component_value['value']
             component.save()
         return anno
-
-
-class ProjectTagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectTag
-        fields = ("pk", "name", "color")
-
-    def create(self, data):
-        data['user'] = self.context['request'].user
-        return super().create(data)
 
 
 class DocumentTagSerializer(serializers.ModelSerializer):
