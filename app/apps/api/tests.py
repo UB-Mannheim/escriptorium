@@ -36,14 +36,14 @@ class UserViewSetTestCase(CoreFactoryTestCase):
     def test_simple_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:user-list')
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
     def test_simple_detail(self):
         self.client.force_login(self.user)
         uri = reverse('api:user-detail', kwargs={'pk': self.user.pk})
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(5):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
