@@ -17,11 +17,12 @@ from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
     AnnotationComponentSerializer,
@@ -38,6 +39,7 @@ from api.serializers import (
     DocumentTagSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
+    ImportSerializer,
     LineOrderSerializer,
     LineSerializer,
     LineTranscriptionSerializer,
@@ -518,6 +520,17 @@ class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
         context = super().get_serializer_context()
         context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
         return context
+
+
+class ImportViewSet(GenericViewSet, CreateModelMixin):
+    # queryset = DocumentPart.objects.all()
+    serializer_class = ImportSerializer
+
+    def create(self, request, document_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
 
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
