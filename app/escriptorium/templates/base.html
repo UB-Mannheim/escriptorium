@@ -36,6 +36,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
     </style>
     {% endblock styles %}
+    {% block extrastyle %}{% endblock extrastyle %}
   </head>
   <body id="escriptorium" class="escr-body {% block bodyclass %}{% endblock %}">
     <div id="vue-global-nav">
@@ -46,7 +47,7 @@
     </div>
 
     <main><section>
-    <div class="container-fluid">
+    <div {% if user.legacy_mode %} class="container-fluid"{% endif %}>
     {% block body %}
     {% endblock body %}
     </div>
@@ -75,5 +76,6 @@
       {% endif %}
     {% endif %}
     {% endblock scripts %}
+    {% block extrascript %}{% endblock extrascript %}
   </body>
 </html>

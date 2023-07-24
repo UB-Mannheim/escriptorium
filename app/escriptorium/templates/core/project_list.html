@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block head_title %}{% trans "My Projects" %}{% endblock %}
 
 {% block nav-proj-list-class %}active{% endblock %}
 
 {% block body %}
+{% if request.user.legacy_mode %}
 <div class="row">
     <div class="col-md-12 col-md-offset-4">
         <a href="{% url 'project-create' %}" class="btn btn-success float-sm-right">{% trans 'Create new Project' %}</a>
@@ -35,4 +36,21 @@
     {% include 'includes/pagination.html' %}
     </div>
 </div>
+{% else %}
+    <div id="projects-list">
+        <projects-list></projects-list>
+    </div>
+{% endif %}
 {% endblock %}
+
+{% block extrascript %}
+    {% if not request.user.legacy_mode %}
+        <script src="{% static 'projectsList.js' %}"></script>
+    {% endif %}
+{% endblock extrascript %}
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'projectsList.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}
