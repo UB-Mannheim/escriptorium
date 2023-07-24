@@ -145,9 +145,9 @@ const actions = {
                 },
                 { root: true },
             );
-            commit("setDeleteModalOpen", false);
             // fetch projects list again
-            dispatch("fetchProjects");
+            await dispatch("fetchProjects");
+            commit("setDeleteModalOpen", false);
         } catch (error) {
             commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
