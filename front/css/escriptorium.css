@@ -6,6 +6,10 @@ body {
     margin: 15px;
 }
 
+#escriptorium section:has(.escr-vue-enabled) {
+    margin: 0;
+}
+
 .hide {
     display: none;
 }

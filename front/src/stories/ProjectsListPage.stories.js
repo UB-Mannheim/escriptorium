@@ -1,6 +1,7 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import ProjectsList from "../../vue/pages/ProjectsList/ProjectsList.vue";
+import GlobalNavigation from "../../vue/components/GlobalNavigation/GlobalNavigation.vue";
 
 import { currentUser, filteredByTag, sorted, tags } from "./util";
 
@@ -50,8 +51,21 @@ const newTagPks = [newPk];
 
 const PageTemplate = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
-    components: { ProjectsList },
-    template: "<ProjectsList v-bind=\"$props\" />",
+    components: { ProjectsList, GlobalNavigation },
+    // mimic the real-world django template
+    template: `
+    <div class="escr-body escr-vue-enabled">
+        <div id="vue-global-nav">
+            <GlobalNavigation isAuthenticated="true" />
+        </div>
+        <main>
+            <section>
+                <div>
+                    <ProjectsList v-bind="$props" />
+                </div>
+            </section>
+        </main>
+    </div>`,
     setup() {
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
@@ -69,12 +83,9 @@ const PageTemplate = (args, { argTypes }) => ({
                 return [
                     200,
                     {
-                        results: sorted(
-                            filteredByTag(projects, tags),
-                            {
-                                ordering
-                            },
-                        ),
+                        results: sorted(filteredByTag(projects, tags), {
+                            ordering,
+                        }),
                         next: "fake-nextpage",
                     },
                 ];

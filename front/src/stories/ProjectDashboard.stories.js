@@ -1,6 +1,7 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import ProjectDashboard from "../../vue/pages/Project/Project.vue";
+import GlobalNavigation from "../../vue/components/GlobalNavigation/GlobalNavigation.vue";
 import {
     annotationTypes,
     blockTypes,
@@ -111,8 +112,21 @@ const newDocumentTagPks = [newPk];
 
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
-    components: { ProjectDashboard },
-    template: '<ProjectDashboard v-bind="$props" />',
+    components: { ProjectDashboard, GlobalNavigation },
+    // mimic the real-world django template
+    template: `
+    <div class="escr-body escr-vue-enabled">
+        <div id="vue-global-nav">
+            <GlobalNavigation isAuthenticated="true" />
+        </div>
+        <main>
+            <section>
+                <div>
+                    <ProjectDashboard v-bind="$props" />
+                </div>
+            </section>
+        </main>
+    </div>`,
     setup() {
         // setup mocks for API requests
         const mock = new MockAdapter(axios);

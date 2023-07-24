@@ -1,14 +1,13 @@
 <template>
     <div class="escr-body escr-vue-enabled">
-        <GlobalNavigation />
-        <main class="escr-page">
+        <div class="escr-page">
             <EscrBreadcrumbs
                 v-if="breadcrumbs?.length"
                 :items="breadcrumbs"
             />
             <slot name="page-content" />
             <Alerts />
-        </main>
+        </div>
         <EscrSidebar
             v-if="sidebarActions?.length"
             :actions="sidebarActions"
@@ -22,12 +21,10 @@ import { mapActions } from "vuex";
 import Alerts from "../../components/Toast/ToastGroup.vue";
 import EscrBreadcrumbs from "../../components/Breadcrumbs/Breadcrumbs.vue";
 import EscrSidebar from "../../components/Sidebar/Sidebar.vue";
-import GlobalNavigation from "../../components/GlobalNavigation/GlobalNavigation.vue";
-import "./Page.css";
 
 export default {
     name: "EscrPage",
-    components: { Alerts, EscrBreadcrumbs, EscrSidebar, GlobalNavigation },
+    components: { Alerts, EscrBreadcrumbs, EscrSidebar },
     props: {
         /**
          * An array of breadcrumbs objects, each strctured as follows:
@@ -97,3 +94,7 @@ export default {
     },
 }
 </script>
+
+<style scoped>
+    @import "./Page.css";
+</style>
