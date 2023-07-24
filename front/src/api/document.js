@@ -94,15 +94,13 @@ export const createDocument = async ({
     linePosition,
     tags,
 }) =>
-    await axios.post("/documents", {
-        params: {
-            name,
-            project,
-            main_script: mainScript,
-            read_direction: readDirection,
-            line_offset: linePosition,
-            tags,
-        },
+    await axios.post("/documents/", {
+        name,
+        project,
+        main_script: mainScript,
+        read_direction: readDirection,
+        line_offset: linePosition,
+        tags,
     });
 
 // delete a document
@@ -131,14 +129,14 @@ export const retrieveDocumentMetadata = async (documentId) =>
 
 // create document metadata
 export const createDocumentMetadata = async ({ documentId, metadatum }) =>
-    await axios.post(`/documents/${documentId}/metadata`, {
-        params: metadatum,
+    await axios.post(`/documents/${documentId}/metadata/`, {
+        metadatum,
     });
 
 // update document metadata
 export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
     await axios.put(`/documents/${documentId}/metadata/${metadatum.pk}`, {
-        params: metadatum,
+        metadatum,
     });
 
 // delete document metadata
@@ -155,20 +153,24 @@ export const retrieveDocumentModels = async (documentId) =>
 
 // share this document with a group or user
 export const shareDocument = async ({ documentId, group, user }) =>
-    await axios.post(`/documents/${documentId}/share`, {
-        params: { group, user },
+    await axios.post(`/documents/${documentId}/share/`, {
+        group,
+        user,
     });
 
 // queue the segmentation task for this document
 export const segmentDocument = async ({ documentId, override, model, steps }) =>
-    await axios.post(`/documents/${documentId}/segment`, {
-        params: { override, model, steps },
+    await axios.post(`/documents/${documentId}/segment/`, {
+        override,
+        model,
+        steps,
     });
 
 // queue the transcription task for this document
 export const transcribeDocument = async ({ documentId, model, layerName }) =>
-    await axios.post(`/documents/${documentId}/transcribe`, {
-        params: { model, name: layerName },
+    await axios.post(`/documents/${documentId}/transcribe/`, {
+        model,
+        name: layerName,
     });
 
 // retrieve textual witnesses for use in alignment
@@ -206,7 +208,7 @@ export const alignDocument = async ({
     formData.append("transcription", transcription);
     formData.append("witness_file", witnessFile);
     const headers = { "Content-Type": "multipart/form-data" };
-    return await axios.post(`/documents/${documentId}/align`, formData, {
+    return await axios.post(`/documents/${documentId}/align/`, formData, {
         headers,
     });
 };
@@ -219,18 +221,16 @@ export const exportDocument = async ({
     regionTypes,
     transcription,
 }) =>
-    await axios.post(`/documents/${documentId}/export`, {
-        params: {
-            region_types: regionTypes,
-            file_format: fileFormat,
-            include_images: includeImages,
-            transcription,
-        },
+    await axios.post(`/documents/${documentId}/export/`, {
+        region_types: regionTypes,
+        file_format: fileFormat,
+        include_images: includeImages,
+        transcription,
     });
 
 // queue the import task for this document
 export const queueImport = async ({ documentId, params }) =>
-    await axios.post(`/documents/${documentId}/import`, { params });
+    await axios.post(`/documents/${documentId}/import/`, params);
 
 // retrieve latest tasks for a document
 export const retrieveDocumentTasks = async ({ documentId }) =>
@@ -242,8 +242,6 @@ export const retrieveDocumentTasks = async ({ documentId }) =>
 
 // cancel a task on a document by pk
 export const cancelTask = async ({ documentId, taskReportId }) =>
-    await axios.post(`/documents/${documentId}/cancel_tasks`, {
-        params: {
-            task_report: taskReportId,
-        },
+    await axios.post(`/documents/${documentId}/cancel_tasks/`, {
+        task_report: taskReportId,
     });

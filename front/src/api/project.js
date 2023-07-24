@@ -21,14 +21,17 @@ export const retrieveAllProjectTags = async () =>
     await axios.get("/tags/project");
 
 export const createProjectTag = async ({ name, color }) =>
-    await axios.post("/tags/project", {
-        params: { name, color },
+    await axios.post("/tags/project/", {
+        name,
+        color,
     });
 
 // create a project by providing a name (and optional other metadata)
 export const createProject = async ({ name, guidelines, tags }) =>
-    await axios.post("/projects", {
-        params: { name, guidelines, tags },
+    await axios.post("/projects/", {
+        name,
+        guidelines,
+        tags,
     });
 
 export const editProject = async (projectId, { name, guidelines, tags }) =>
@@ -46,12 +49,14 @@ export const retrieveProjectDocumentTags = async (project_id) =>
 
 // create a new Document-level tag on this project
 export const createProjectDocumentTag = async ({ name, color, projectId }) =>
-    await axios.post(`/projects/${projectId}/tags`, {
-        params: { name, color },
+    await axios.post(`/projects/${projectId}/tags/`, {
+        name,
+        color,
     });
 
 // share this project with a group or user
 export const shareProject = async ({ projectId, group, user }) =>
-    await axios.post(`/projects/${projectId}/share`, {
-        params: { group, user }
+    await axios.post(`/projects/${projectId}/share/`, {
+        group,
+        user,
     });

@@ -209,8 +209,12 @@ const actions = {
         try {
             const { data } = await axios.get(state.nextPage);
             if (data?.results) {
-                data.results.forEach((project) => {
-                    commit("addProject", project);
+                data.results.forEach((result) => {
+                    commit("addProject", {
+                        ...result,
+                        tags: { tags: result.tags },
+                        href: `/project/${result.slug}/documents`,
+                    });
                 });
                 commit("setNextPage", data.next);
             } else {

@@ -130,7 +130,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     documents_count = serializers.ReadOnlyField()
     shared_with_users = UserSerializer(many=True, read_only=True)
     shared_with_groups = GroupSerializer(many=True, read_only=True)
-    tags = ProjectTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -140,6 +139,12 @@ class ProjectSerializer(serializers.ModelSerializer):
         data['owner'] = self.context["view"].request.user
         obj = super().create(data)
         return obj
+
+    def to_representation(self, instance):
+        # only use ProjectTagSerializer on GET; otherwise, use pks
+        repr = super().to_representation(instance)
+        repr['tags'] = [ProjectTagSerializer(tag).data for tag in instance.tags.all()]
+        return repr
 
 
 class PartMoveSerializer(serializers.ModelSerializer):
@@ -344,7 +349,6 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
-    tags = DocumentTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
@@ -365,6 +369,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
+
+    def to_representation(self, instance):
+        # only use DocumentTagSerializer on GET; otherwise, use pks
+        repr = super().to_representation(instance)
+        repr['tags'] = [DocumentTagSerializer(tag).data for tag in instance.tags.all()]
+        return repr
 
 
 class DocumentTasksSerializer(serializers.ModelSerializer):
