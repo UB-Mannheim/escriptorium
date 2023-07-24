@@ -26,7 +26,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('segment')"
-                :label="`Segment ${data?.scope}`"
+                :label="`Segment ${data && data.scope}`"
             >
                 <template #button-icon>
                     <SegmentIcon />
@@ -38,7 +38,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('transcribe')"
-                :label="`Transcribe ${data?.scope}`"
+                :label="`Transcribe ${data && data.scope}`"
             >
                 <template #button-icon>
                     <TranscribeIcon />
@@ -50,7 +50,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('align')"
-                :label="`Align ${data?.scope}`"
+                :label="`Align ${data && data.scope}`"
             >
                 <template #button-icon>
                     <AlignIcon />
@@ -62,7 +62,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('export')"
-                :label="`Export ${data?.scope}`"
+                :label="`Export ${data && data.scope}`"
             >
                 <template #button-icon>
                     <ExportIcon />

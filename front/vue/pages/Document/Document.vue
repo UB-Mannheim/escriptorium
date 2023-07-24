@@ -3,7 +3,7 @@
         class="escr-document-dashboard"
         :breadcrumbs="breadcrumbs"
         :sidebar-actions="sidebarActions"
-        :loading="loading?.document"
+        :loading="loading && loading.document"
     >
         <template #page-content>
             <div class="escr-grid-container">
@@ -19,12 +19,12 @@
                                     :is-open="documentMenuOpen"
                                     :close-menu="closeDocumentMenu"
                                     :open-menu="openDocumentMenu"
-                                    :disabled="loading?.document || editModalOpen || deleteModalOpen"
+                                    :disabled="(loading && loading.document) || editModalOpen || deleteModalOpen"
                                     :items="documentMenuItems"
                                 />
                                 <EditDocumentModal
                                     v-if="editModalOpen"
-                                    :disabled="loading?.document"
+                                    :disabled="loading && loading.document"
                                     :new-document="false"
                                     :on-cancel="closeEditModal"
                                     :on-create-tag="createNewDocumentTag"
@@ -60,7 +60,7 @@
                                     label="View All"
                                     size="small"
                                     :on-click="() => navigateToTasks()"
-                                    :disabled="loading?.tasks"
+                                    :disabled="loading && loading.tasks"
                                 >
                                     <template #button-icon-right>
                                         <ArrowRightIcon />
@@ -82,7 +82,7 @@
                                     label="View All"
                                     size="small"
                                     :on-click="() => navigateToImages()"
-                                    :disabled="loading?.parts"
+                                    :disabled="loading && loading.parts"
                                 >
                                     <template #button-icon-right>
                                         <ArrowRightIcon />
@@ -106,7 +106,7 @@
                         <div>
                             <h3>View:</h3>
                             <EscrDropdown
-                                :disabled="loading?.transcriptions"
+                                :disabled="loading && loading.transcriptions"
                                 :options="transcriptionLevels"
                                 :on-change="selectTranscription"
                             />
@@ -179,7 +179,7 @@
                         :loading="charactersLoading"
                         :on-view="() => openCharactersModal"
                         :on-sort-characters="sortCharacters"
-                        :sort="charactersSort?.field"
+                        :sort="charactersSort && charactersSort.field"
                         :items="characters"
                     />
                 </div>
@@ -190,7 +190,7 @@
                     confirm-verb="Delete"
                     title="Delete Document"
                     :cannot-undo="true"
-                    :disabled="loading?.document"
+                    :disabled="loading && loading.document"
                     :on-cancel="closeDeleteModal"
                     :on-confirm="deleteDocument"
                 />
@@ -198,38 +198,38 @@
                 <ShareModal
                     v-if="shareModalOpen"
                     :groups="groups"
-                    :disabled="loading?.document || loading?.user"
+                    :disabled="loading && (loading.document || loading.user)"
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
                 <!-- import images modal -->
                 <ImportModal
-                    v-if="taskModalOpen?.import"
-                    :disabled="loading?.document"
+                    v-if="taskModalOpen && taskModalOpen.import"
+                    :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('import')"
                     :on-submit="handleSubmitImport"
                 />
                 <!-- segment document modal -->
                 <SegmentModal
-                    v-if="taskModalOpen?.segment"
+                    v-if="taskModalOpen && taskModalOpen.segment"
                     :models="models"
-                    :disabled="loading?.document"
+                    :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('segment')"
                     :on-submit="handleSubmitSegmentation"
                     scope="Document"
                 />
                 <!-- transcribe document modal -->
                 <TranscribeModal
-                    v-if="taskModalOpen?.transcribe"
+                    v-if="taskModalOpen && taskModalOpen.transcribe"
                     :models="models"
-                    :disabled="loading?.document"
+                    :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('transcribe')"
                     :on-submit="handleSubmitTranscribe"
                     scope="Document"
                 />
                 <!-- overwrite segmentation modal -->
                 <ConfirmModal
-                    v-if="taskModalOpen?.overwriteWarning"
+                    v-if="taskModalOpen && taskModalOpen.overwriteWarning"
                     :body-text="'Are you sure you want to continue? Re-segmenting will delete ' +
                         'any existing transcriptions.'"
                     title="Overwrite Existing Segmentation and Transcriptions"
@@ -240,10 +240,10 @@
                 />
                 <!-- align document modal -->
                 <AlignModal
-                    v-if="taskModalOpen?.align"
+                    v-if="taskModalOpen && taskModalOpen.align"
                     :transcriptions="transcriptions"
                     :region-types="regionTypes"
-                    :disabled="loading?.document"
+                    :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('align')"
                     :on-submit="handleSubmitAlign"
                     :textual-witnesses="textualWitnesses"
@@ -251,17 +251,17 @@
                 />
                 <!-- export document modal -->
                 <ExportModal
-                    v-if="taskModalOpen?.export"
+                    v-if="taskModalOpen && taskModalOpen.export"
                     :transcriptions="transcriptions"
                     :region-types="regionTypes"
-                    :disabled="loading?.document"
+                    :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('export')"
                     :on-submit="handleSubmitExport"
                     scope="Document"
                 />
                 <!-- cancel task modal -->
                 <ConfirmModal
-                    v-if="taskModalOpen?.cancelWarning"
+                    v-if="taskModalOpen && taskModalOpen.cancelWarning"
                     :body-text="'Are you sure you want to cancel this task?'"
                     title="Cancel Task"
                     confirm-verb="Yes"

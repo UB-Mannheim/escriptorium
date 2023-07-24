@@ -4,29 +4,29 @@
         action="/search/"
     >
         <input
-            v-if="data?.projectId"
+            v-if="data && data.projectId"
             name="project"
             type="text"
-            :value="data?.projectId"
+            :value="data && data.projectId"
             hidden
         >
         <input
-            v-if="data?.documentId"
+            v-if="data && data.documentId"
             name="document"
             type="text"
-            :value="data?.documentId"
+            :value="data && data.documentId"
             hidden
         >
         <div
             class="escr-search-form"
         >
-            <h3>Search Text in {{ data?.searchScope }}</h3>
+            <h3>Search Text in {{ data && data.searchScope }}</h3>
             <label class="escr-text-field escr-form-field">
                 <input
                     type="text"
                     placeholder="Text to search"
                     aria-label="Search"
-                    :disabled="data?.disabled"
+                    :disabled="data && data.disabled"
                     name="query"
                 >
                 <span
@@ -37,8 +37,8 @@
             </label>
         </div>
         <EscrButton
-            :disabled="data?.disabled"
-            :on-click="data?.onSearch || (() => {})"
+            :disabled="data && data.disabled"
+            :on-click="(data && data.onSearch) || (() => {})"
             label="Search"
             color="primary"
             type="submit"

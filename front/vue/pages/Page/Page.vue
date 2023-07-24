@@ -2,14 +2,14 @@
     <div class="escr-body escr-vue-enabled">
         <div class="escr-page">
             <EscrBreadcrumbs
-                v-if="breadcrumbs?.length"
+                v-if="breadcrumbs && breadcrumbs.length"
                 :items="breadcrumbs"
             />
             <slot name="page-content" />
             <Alerts />
         </div>
         <EscrSidebar
-            v-if="sidebarActions?.length"
+            v-if="sidebarActions && sidebarActions.length"
             :actions="sidebarActions"
             :loading="loading"
         />

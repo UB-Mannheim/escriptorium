@@ -146,10 +146,10 @@
                 <ConfirmModal
                     v-if="deleteDocumentModalOpen"
                     :body-text="`Are you sure you want to delete the document ${
-                        documentToDelete?.name || ''
+                        (documentToDelete && documentToDelete.name) || ''
                     }?`"
                     confirm-verb="Delete"
-                    :title="`Delete ${documentToDelete?.name || 'Document'}`"
+                    :title="`Delete ${(documentToDelete && documentToDelete.name) || 'Document'}`"
                     :cannot-undo="true"
                     :disabled="loading"
                     :on-cancel="closeDeleteDocumentModal"
