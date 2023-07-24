@@ -84,8 +84,9 @@ const actions = {
                     },
                     { root: true },
                 );
-                // TODO: redirect to `/project/${data.slug}`
                 commit("setCreateModalOpen", false);
+                // redirect to `/project/${data.slug}`
+                window.location = `/project/${data.slug}/documents`;
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create project");
