@@ -375,7 +375,7 @@ class ImportSerializer(serializers.Serializer):
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.all(),
         required=False)
-    override = serializers.BooleanField(allow_blank=True)
+    override = serializers.BooleanField(required=False)
     upload_file = serializers.FileField(required=False)
 
     iiif_uri = serializers.URLField(required=False)
