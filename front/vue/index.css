@@ -135,7 +135,7 @@
 
 /* Typography */
 .escr-body.escr-vue-enabled,
-input[type="text"],
+.escr-page input[type="text"],
 .escr-global-nav,
 .v-popper__inner {
     font-family: "Noto Sans", sans-serif;
