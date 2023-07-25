@@ -375,7 +375,7 @@ class ImportSerializer(serializers.Serializer):
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.all(),
         required=False)
-    # override = serializers.BooleanField(allow_blank=True)
+    override = serializers.BooleanField(allow_blank=True)
     upload_file = serializers.FileField(required=False)
 
     iiif_uri = serializers.URLField(required=False)
@@ -431,7 +431,7 @@ class ImportSerializer(serializers.Serializer):
                 raise serializers.ValidationError("'mets_type' is mandatory with mode 'mets'.")
             else:
                 if data.get('mets_type') == 'url':
-                    if 'mets_type' not in data:
+                    if 'mets_uri' not in data:
                         raise serializers.ValidationError("'mets_uri' is mandatory with mode 'mets'. and type 'url'")
                     else:
                         raise serializers.ValidationError("'upload_file' is mandatory with mode 'mets'. and type 'local'")
