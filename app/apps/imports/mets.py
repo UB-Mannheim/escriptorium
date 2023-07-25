@@ -249,7 +249,7 @@ class METSProcessor:
             href = self.get_file_location(file)
             layer_name = self.get_file_group_name(file) or f"Layer {layers_count}"
             # Skip files in some file groups
-            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'THUMBS']:
+            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'PRESENTATION', 'THUMBS']:
                 continue
 
             if self.archive:
