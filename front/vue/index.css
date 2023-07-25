@@ -134,12 +134,50 @@
 }
 
 /* Typography */
+@font-face {
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 400;
+    src: url("../fonts/NotoSans-Regular.ttf");
+}
+@font-face {
+    font-family: "Noto Sans";
+    font-style: italic;
+    font-weight: 400;
+    src: url("../fonts/NotoSans-Italic.ttf");
+}
+@font-face {
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 600;
+    src: url("../fonts/NotoSans-SemiBold.ttf");
+}
+@font-face {
+    font-family: "Noto Sans";
+    font-style: italic;
+    font-weight: 600;
+    src: url("../fonts/NotoSans-SemiBoldItalic.ttf");
+}
+@font-face {
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 700;
+    src: url("../fonts/NotoSans-Bold.ttf");
+}
+@font-face {
+    font-family: "Noto Sans";
+    font-style: italic;
+    font-weight: 700;
+    src: url("../fonts/NotoSans-BoldItalic.ttf");
+}
+/* reset default fonts to 14px normal noto sans, weight 400 */
 .escr-body.escr-vue-enabled,
 .escr-page input[type="text"],
 .escr-global-nav,
 .v-popper__inner {
     font-family: "Noto Sans", sans-serif;
     font-size: 14px;
+    font-weight: 400;
     color: var(--text1);
     font-style: normal;
 }
