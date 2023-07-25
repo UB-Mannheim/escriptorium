@@ -247,3 +247,8 @@ export const cancelTask = async ({ documentId, taskReportId }) =>
             task_report: taskReportId,
         },
     });
+
+export const createTranscriptionLayer = async ({ documentId, layerName }) =>
+    await axios.post(`/documents/${documentId}/transcriptions/`, {
+        name: layerName,
+    });
