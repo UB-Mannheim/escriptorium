@@ -808,12 +808,12 @@ class Document(ExportModelOperationsMixin("Document"), models.Model):
             part.workflow_state = part.WORKFLOW_STATE_ALIGNED
         DocumentPart.objects.bulk_update(parts, ["workflow_state"])
 
-    def queue_alignment(self, parts_qs, **kwargs):
+    def queue_alignment(self, parts, **kwargs):
         if not self.tasks_finished():
             raise AlreadyProcessingException
         align.delay(
             document_pk=self.pk,
-            part_pks=list(parts_qs.values_list('pk', flat=True)),
+            part_pks=[part.pk for part in parts],
             **kwargs,
         )
 

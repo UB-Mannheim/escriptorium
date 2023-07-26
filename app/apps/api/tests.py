@@ -220,6 +220,30 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         # won't work with dummy model and image
         # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
 
+    def test_align(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-align', kwargs={'pk': self.doc.pk})
+
+        witness = self.factory.make_witness(owner=self.doc.owner)
+
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'transcription': Transcription.objects.first().pk,
+
+            "existing_witness": witness.pk,
+            "n_gram": 2,
+            "max_offset": 20,
+            "merge": False,
+            "full_doc": True,
+            "threshold": 0.8,
+            "region_types": ["Orphan", "Undefined"],
+            "layer_name": "example",
+            # "beam_size": 10,
+            "gap": 1000000,
+        })
+
+        self.assertEqual(resp.status_code, 200, resp.content)
+
     def test_list_document_with_tasks(self):
         # Creating a new Document that self.doc.owner shouldn't see
         other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
