@@ -24,13 +24,15 @@ class FileImportError(Exception):
     pass
 
 
-def clean_uri(uri, document, tempfile):
+def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
     try:
         resp = requests.get(uri)
         content = resp.content
         buf = io.BytesIO(content)
         buf.name = tempfile
-        parser = make_parser(document, buf)
+        parser = make_parser(document, buf,
+                             mets_describer=is_mets,
+                             mets_base_uri=mets_base_uri)
         parser.validate()
         return content, parser.total
     except requests.exceptions.RequestException:
@@ -44,12 +46,12 @@ def clean_uri(uri, document, tempfile):
         raise FileImportError(msg)
 
 
-def clean_import_uri(uri, document, tmpFileName):
+def clean_import_uri(uri, document, tmp_file_name, is_mets=False, mets_base_uri=None):
     domain = urlparse(uri).netloc
     if ('*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS):
         raise FileImportError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
 
-    return clean_uri(uri, document, tmpFileName)
+    return clean_uri(uri, document, tmp_file_name, is_mets=is_mets, mets_base_uri=mets_base_uri)
 
 
 def clean_upload_file(upload_file, document, user):
@@ -121,7 +123,8 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             uri = self.cleaned_data.get('mets_uri')
             self.mets_uri = os.path.dirname(uri)
             if uri:
-                parser = clean_import_uri(uri, self.document, 'tmp.xml')
+                parser = clean_import_uri(uri, self.document, 'tmp.xml',
+                                          is_mets=True, mets_base_uri=self.mets_uri)
                 self.cleaned_data['total'] = parser.total
                 return parser.file
         except FileImportError as e:

@@ -510,23 +510,38 @@ class ImportEndpointTestCase(CoreFactoryTestCase):
     def test_mets_uri(self):
         self.client.force_login(self.user)
 
-        mock_mets = os.path.join(os.path.dirname(__file__), 'samples', 'simple_archive.zip')
+        mock_mets = os.path.join(os.path.dirname(__file__), 'samples', 'mets_with_images.xml')
+        mock_xml = os.path.join(os.path.dirname(__file__), 'mocks', 'pagexml_test.xml')
+        mock_image = os.path.join(os.path.dirname(__file__), 'mocks', 'test.png')
 
         with open(mock_mets, 'rb') as fh:
-            mock_resp = mock.Mock(content=fh.read(), status_code=200)
-            with mock.patch('requests.get', return_value=mock_resp):
-                uri = reverse('api:import-list', kwargs={'document_pk': self.doc.pk})
-                resp = self.client.post(uri, {
-                    'mode': 'mets',
-                    'mets_type': 'uri',
-                    'mets_uri': 'http://some.com/url/'})
+            mock_mets_resp = mock.Mock(content=fh.read(),
+                                       status_code=200,
+                                       headers={'content-type': 'text/xml'})
+        with open(mock_xml, 'rb') as fh:
+            mock_xml_resp = mock.Mock(content=fh.read(),
+                                      status_code=200,
+                                      headers={'content-type': 'text/xml'})
+        with open(mock_image, 'rb') as fh:
+            mock_img_resp = mock.Mock(content=fh.read(),
+                                      status_code=200,
+                                      headers={'content-type': 'image/png'})
 
-                self.assertEqual(resp.status_code, 201, resp.content)
+        with mock.patch('requests.get', side_effect=[mock_mets_resp,
+                                                     mock_img_resp,
+                                                     mock_xml_resp,
+                                                     mock_img_resp,
+                                                     mock_xml_resp]):
+            uri = reverse('api:import-list', kwargs={'document_pk': self.doc.pk})
+            resp = self.client.post(uri, {
+                'mode': 'mets',
+                'mets_type': 'url',
+                'mets_uri': 'http://some.com/url/'})
 
-                self.assertEqual(DocumentImport.objects.count(), 1)
+            self.assertEqual(resp.status_code, 201, resp.content)
 
-                self.assertEqual(self.doc.metadatas.count(), 4)
-                self.assertEqual(self.doc.parts.count(), 4)
+            self.assertEqual(DocumentImport.objects.count(), 1)
+            self.assertEqual(self.doc.parts.count(), 2)
 
     def test_xml(self):
         part1 = self.factory.make_part(name='part 1',

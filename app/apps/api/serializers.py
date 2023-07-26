@@ -1,5 +1,6 @@
 import html
 import logging
+import os.path
 
 import bleach
 from django.conf import settings
@@ -391,6 +392,7 @@ class ImportSerializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.user = self.context["view"].request.user
         self.document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
+        self.mets_base_uri = None
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
 
     def validate_iiif_uri(self, uri):
@@ -403,7 +405,9 @@ class ImportSerializer(serializers.Serializer):
 
     def validate_mets_uri(self, uri):
         try:
-            content, total = clean_import_uri(uri, self.document, 'tmp.xml')
+            self.mets_base_uri = os.path.dirname(uri)
+            content, total = clean_import_uri(uri, self.document, 'tmp.xml',
+                                              is_mets=True, mets_base_uri=self.mets_base_uri)
             self.file = ContentFile(content, name='mets.xml')
             self.total = total
         except FileImportError as e:
@@ -433,8 +437,8 @@ class ImportSerializer(serializers.Serializer):
                 if data.get('mets_type') == 'url':
                     if 'mets_uri' not in data:
                         raise serializers.ValidationError("'mets_uri' is mandatory with mode 'mets'. and type 'url'")
-                    else:
-                        raise serializers.ValidationError("'upload_file' is mandatory with mode 'mets'. and type 'local'")
+                elif 'upload_file' not in data:
+                    raise serializers.ValidationError("'upload_file' is mandatory with mode 'mets'. and type 'local'")
 
         elif mode == 'pdf':
             if 'upload_file' not in data:
@@ -457,7 +461,10 @@ class ImportSerializer(serializers.Serializer):
             override=validated_data.get('override') or False,
             import_file=self.file,
             total=self.total,
-            started_by=self.user)
+            started_by=self.user,
+            with_mets=validated_data.get('mode') == 'mets',
+            mets_base_uri=self.mets_base_uri
+        )
         imp.save()
 
         document_import.delay(
