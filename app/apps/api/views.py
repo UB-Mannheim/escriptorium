@@ -25,6 +25,7 @@ from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
+    AlignSerializer,
     AnnotationComponentSerializer,
     AnnotationTaxonomySerializer,
     AnnotationTypeSerializer,
@@ -438,6 +439,10 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
+
+    @action(detail=True, methods=['post'])
+    def align(self, request, pk=None):
+        return self.get_process_response(request, AlignSerializer)
 
     @action(detail=True, methods=['post'])
     def forced_align(self, request, pk=None):

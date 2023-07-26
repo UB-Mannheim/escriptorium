@@ -214,6 +214,11 @@ class METSProcessor:
             content = get_resp.content
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
+            if file.name == 'default.jpg':
+                # Images from IIIF image servers require special handling.
+                # {scheme}://{server}{/prefix}/{identifier}/{region}/{size}/{rotation}/{quality}.{format}
+                scheme_server_prefix, identifier, region, size, rotation, quality_format = uri.rsplit('/', 5)
+                file.name = identifier + '.jpg'
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
@@ -244,7 +249,7 @@ class METSProcessor:
             href = self.get_file_location(file)
             layer_name = self.get_file_group_name(file) or f"Layer {layers_count}"
             # Skip files in some file groups
-            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'THUMBS']:
+            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'PRESENTATION', 'THUMBS']:
                 continue
 
             if self.archive:
