@@ -189,10 +189,9 @@ class METSProcessor:
         except ValidationError:
             return urljoin(f"{self.mets_base_uri}/", href.lstrip("/"))
 
-    def check_is_image(self, uri):
-        head_resp = requests.head(uri)
-        content_type = head_resp.headers["content-type"]
-        return content_type.startswith("image/"), content_type
+    def check_is_image(self, resp):
+        content_type = resp.headers.get("content-type")
+        return content_type and content_type.startswith("image/"), content_type
 
     def handle_remote_pointer(self, href, mets_page_image, mets_page_sources, layer_name, layers_count):
         uri = self.build_remote_uri(href)
@@ -202,14 +201,15 @@ class METSProcessor:
             self.report.append(f'The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "{domain}".', logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
 
-        is_image, content_type = self.check_is_image(uri)
-        # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
-        if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
-            return mets_page_image, mets_page_sources, layers_count
-
         # Downloading the file content
         try:
             get_resp = requests.get(uri)
+            is_image, content_type = self.check_is_image(get_resp)
+
+            # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
+            if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
+                return mets_page_image, mets_page_sources, layers_count
+
             get_resp.raise_for_status()
             content = get_resp.content
             file = io.BytesIO(content)
