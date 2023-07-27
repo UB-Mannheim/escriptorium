@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from os.path import basename, splitext
 
 from bootstrap.forms import BootstrapFormMixin
@@ -36,7 +37,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.search import search_content
+from core.search import search_content_es, search_content_psql
 from users.models import User
 
 logger = logging.getLogger(__name__)
@@ -65,8 +66,8 @@ class SearchModelChoiceField(forms.ModelChoiceField):
         return super().clean(value)
 
 
-class SearchForm(BootstrapFormMixin, forms.Form):
-    query = forms.CharField(label=_("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness"), required=False)
+class BaseSearchForm(BootstrapFormMixin, forms.Form):
+    query = forms.CharField(required=False)
     project = SearchModelChoiceField(
         queryset=Project.objects.none(),
         label="",
@@ -119,12 +120,25 @@ class SearchForm(BootstrapFormMixin, forms.Form):
             except ValueError:
                 pass
 
-    def search(self, page, paginate_by):
+    def search(self, page=None, paginate_by=None):
+        """
+        Generic function to overwrite to search content
+        """
+        pass
+
+
+class SearchForm(BaseSearchForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["query"].widget.attrs["placeholder"] = _("Text to search in all of your projects, surround one or more terms with quotation marks to deactivate fuzziness")
+
+    def search(self, page=None, paginate_by=None):
         projects = [self.cleaned_data['project'].id] if self.cleaned_data['project'] else None
         documents = [self.cleaned_data['document'].id] if self.cleaned_data['document'] else None
         transcriptions = [self.cleaned_data['transcription'].id] if self.cleaned_data['transcription'] else None
 
-        return search_content(
+        return search_content_es(
             page,
             paginate_by,
             self.user.id,
@@ -135,10 +149,54 @@ class SearchForm(BootstrapFormMixin, forms.Form):
         )
 
 
+class FindAndReplaceForm(BaseSearchForm):
+    replacement = forms.CharField(label=_("Text to replace"), required=False)
+    part = SearchModelChoiceField(
+        queryset=DocumentPart.objects.none(),
+        label="",
+        required=False,
+        widget=forms.HiddenInput,
+        obj_class=DocumentPart,
+        obj_name="part"
+    )
+
+    class Meta(BaseSearchForm.Meta):
+        fields = BaseSearchForm.Meta.fields + ['replacement', 'part']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["query"].widget.attrs["placeholder"] = _('Text to find')
+
+        document = self.data.get('document')
+        if document:
+            try:
+                document = int(document)
+                self.fields['part'].queryset = DocumentPart.objects.filter(document_id=document)
+            except ValueError:
+                pass
+
+    def search(self, page=None, paginate_by=None):
+        project_id = self.cleaned_data['project'].id if self.cleaned_data['project'] else None
+        document_id = self.cleaned_data['document'].id if self.cleaned_data['document'] else None
+        transcription_id = self.cleaned_data['transcription'].id if self.cleaned_data['transcription'] else None
+        part_id = self.cleaned_data['part'].id if self.cleaned_data['part'] else None
+
+        return search_content_psql(
+            self.cleaned_data['query'],
+            self.user,
+            'text-danger' if self.cleaned_data['replacement'] else 'text-success',
+            project_id=project_id,
+            document_id=document_id,
+            transcription_id=transcription_id,
+            part_id=part_id
+        )
+
+
 class ProjectForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name']
+        fields = ['name', 'guidelines']
 
 
 class DocumentForm(BootstrapFormMixin, forms.ModelForm):
@@ -242,7 +300,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
 
-        if self.request.method == "POST":
+        if self.request.method == "POST" and 'import_form' not in self.request.POST:
             # we need to accept all types when posting for added ones
             # TODO: if the form has errors it show everything.. need to find a better solution
             block_qs = BlockType.objects.all()
@@ -268,13 +326,13 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         self.fields['valid_part_types'].queryset = part_qs.order_by('name')
 
         self.compo_form = ComponentFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             prefix='compo_form',
             instance=self.instance)
 
         img_choices = [c[0] for c in AnnotationTaxonomy.IMG_MARKER_TYPE_CHOICES]
         self.img_anno_form = ImageAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=img_choices).select_related('typology').prefetch_related('components'),
             prefix='img_anno_form',
@@ -282,7 +340,7 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
         text_choices = [c[0] for c in AnnotationTaxonomy.TEXT_MARKER_TYPE_CHOICES]
         self.text_anno_form = TextAnnotationTaxonomyFormSet(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
             queryset=AnnotationTaxonomy.objects.filter(
                 marker_type__in=text_choices).select_related('typology').prefetch_related('components'),
             prefix='text_anno_form',
@@ -638,9 +696,13 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
-    model = forms.ModelChoiceField(queryset=OcrModel.objects
-                                   .filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
-                                   required=False)
+    model = forms.ModelChoiceField(
+        queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
+        required=False)
+    transcription = forms.ModelChoiceField(
+        queryset=Transcription.objects.filter(archived=False),
+        empty_label=_('-- New --'),
+        required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -652,8 +714,25 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
             | Q(ocr_model_rights__group__user=self.user)
         ).distinct()
 
+        self.fields['transcription'].queryset = self.fields['transcription'].queryset.filter(
+            document=self.document
+        )
+
     def process(self):
         model = self.cleaned_data.get('model')
+        transcription = self.cleaned_data.get('transcription')
+
+        if transcription is None:
+            # create a new one
+            trans_name = "kraken:" + model.name
+            # if a transcription with this name already exists we add the date to the name
+            if Transcription.objects.filter(
+                    name=trans_name,
+                    document=self.document).exists():
+                trans_name += ' (' + datetime.strftime(datetime.now(), '%y/%m/%d-%H:%M:%S') + ')'
+            transcription = Transcription.objects.create(
+                name=trans_name,
+                document=self.document)
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -667,7 +746,8 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
         for part in self.cleaned_data.get('parts'):
             part.task('transcribe',
                       user_pk=self.user.pk,
-                      model_pk=model.pk)
+                      model_pk=model.pk,
+                      transcription_pk=transcription and transcription.pk or None)
 
 
 class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixin):
@@ -850,10 +930,13 @@ class TrainMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Note: Only a owner should be able to train on top of an existing model
+        # Note: Only an owner should be able to train on top of an existing model
         # if the model is public, the user can only clone it (override=False)
         self.fields['model'].queryset = (self.fields['model'].queryset
-                                         .filter(Q(public=True) | Q(owner=self.user)))
+                                         .filter(Q(public=True)
+                                                 | Q(owner=self.user)
+                                                 | Q(ocr_model_rights__user=self.user)
+                                                 | Q(ocr_model_rights__group__user=self.user)))
 
     @property
     def model_job(self):
@@ -995,7 +1078,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['user'].label = ''
-        self.fields['user'].empty_label = 'Choose an user'
+        self.fields['user'].empty_label = 'Choose a user'
         self.fields['user'].queryset = self.fields['user'].queryset.exclude(
             Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
         ).filter(groups__in=model.owner.groups.all()).distinct()
@@ -1017,8 +1100,8 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         user = cleaned_data.get("user")
         group = cleaned_data.get("group")
         if (not user and not group) or (user and group):
-            self.add_error('user', 'You must either choose an user OR a group')
-            self.add_error('group', 'You must either choose an user OR a group')
+            self.add_error('user', 'You must either choose a user OR a group')
+            self.add_error('group', 'You must either choose a user OR a group')
         return cleaned_data
 
 

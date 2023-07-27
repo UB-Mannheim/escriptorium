@@ -3,7 +3,7 @@
 }
 .escr-form-field span.escr-required,
 h3 span.escr-required {
-    color: red;
+    color: var(--alert);
     margin-left: 3px;
 }
 .escr-help-text {
@@ -11,6 +11,9 @@ h3 span.escr-required {
     font-size: 12px;
     font-family: 'Noto Sans';
     font-style: normal;
+}
+.escr-error-text {
+    color: var(--alert);
 }
 .escr-form-field .escr-field-label {
     display: block;

@@ -28,5 +28,5 @@ export function bootAlignForm() {
     beamSizeField.removeAttribute("disabled");
   }
   form.querySelector('button[data-dismiss="modal"]').addEventListener("click", reEnableFields);
-  form.querySelector('input[type="submit"]').addEventListener("click", reEnableFields);
+  form.querySelector('button[type="submit"]').addEventListener("click", reEnableFields);
 }

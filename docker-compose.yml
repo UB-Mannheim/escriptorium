@@ -27,7 +27,7 @@ services:
       - 5000
 
   db:
-    image: docker.io/library/postgres:10.5-alpine
+    image: docker.io/library/postgres:15
     volumes:
       - postgres:/var/lib/postgresql/data/
     env_file: variables.env

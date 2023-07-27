@@ -46,7 +46,7 @@ export const filteredByTag = (items, tags) => {
     // "or" operator will be formatted like "2|3|none", so split by |
     let tagArray = tags && !Array.isArray(tags) ? tags.split("|") : tags;
     // convert all pks to strings for comparison with api response
-    tagArray = tagArray?.map((t) => t.toString());
+    tagArray = tagArray ? tagArray.map((t) => t.toString()) : [];
     if (tags && tagArray) {
         return items.filter((item) => {
             if (

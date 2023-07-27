@@ -1,7 +1,9 @@
 import json
 import logging
+from math import ceil
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
@@ -28,6 +30,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from easy_thumbnails.files import get_thumbnailer
 from elasticsearch import exceptions as es_exceptions
 
 from core.forms import (
@@ -36,6 +39,7 @@ from core.forms import (
     DocumentForm,
     DocumentOntologyForm,
     DocumentShareForm,
+    FindAndReplaceForm,
     MetadataFormSet,
     MigrateDocumentForm,
     ModelRightsForm,
@@ -59,7 +63,10 @@ from core.models import (
     OcrModelRight,
     Project,
 )
-from imports.forms import ExportForm, ImportForm
+from core.search import build_highlighted_replacement_psql
+from core.tasks import replace_line_transcriptions_text
+from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
+from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
 from users.models import User
 
@@ -94,6 +101,81 @@ class Home(TemplateView):
         return context
 
 
+class BaseSearch(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
+    def get_form(self):
+        self.form = self.form_class(self.request.GET, **self.get_form_kwargs())
+        return self.form
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+
+        # We don't want potential POST data to reach the form
+        if 'data' in kwargs:
+            del kwargs['data']
+
+        return kwargs
+
+    @property
+    def no_extra_calculation_condition(self):
+        # No extra calculation if:
+        # - the form is invalid
+        # - the search terms are empty
+        return not self.form.is_valid() or not self.form.cleaned_data.get('query')
+
+    def get_line_viewbox(self, bounding_box):
+        if not bounding_box:
+            return None, False
+
+        return ' '.join([
+            str(max([bounding_box[0] - 10, 0])),
+            str(max([bounding_box[1] - 10, 0])),
+            str(bounding_box[2] - bounding_box[0] + 20),
+            str(bounding_box[3] - bounding_box[1] + 20)
+        ]), (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+
+    def get_and_format_results(self, page=None, paginate_by=None):
+        """
+        Generic function to overwrite to retrieve and format search results
+        """
+        pass
+
+    def get_paginator(self, results, paginate_by):
+        """
+        Generic function to overwrite that must return a valid Paginator
+        """
+        return Paginator(results, paginate_by)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.no_extra_calculation_condition:
+            return context
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        paginate_by = self.get_paginate_by(None)
+
+        results, error = self.get_and_format_results(page=page, paginate_by=paginate_by)
+        if error:
+            context.update(error)
+            return context
+
+        # Pagination
+        paginator = self.get_paginator(results, paginate_by)
+
+        if page > paginator.num_pages:
+            page = paginator.num_pages
+
+        context['page_obj'] = paginator.page(page)
+        context['is_paginated'] = paginator.num_pages > 1
+
+        return context
+
+
 class ESPaginator(Paginator):
 
     def __init__(self, *args, **kwargs):
@@ -109,84 +191,44 @@ class ESPaginator(Paginator):
         return Page(self.object_list, number, self)
 
 
-class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
-    template_name = 'core/search.html'
+class Search(BaseSearch):
     form_class = SearchForm
+    template_name = 'core/search/search.html'
+    es_total = 0
 
-    def get_paginate_by(self):
-        return super().get_paginate_by(None)
-
-    def get_form(self):
-        self.form = SearchForm(self.request.GET, **self.get_form_kwargs())
-        return self.form
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super(Search, self).get_context_data(**kwargs)
-
+    @property
+    def no_extra_calculation_condition(self):
         # No extra calculation if:
-        # - search feature is deactivated on the instance
-        # - the form is invalid
-        # - the search terms are empty
-        if settings.DISABLE_ELASTICSEARCH or not self.form.is_valid() or not self.form.cleaned_data.get('query'):
-            return context
-
-        try:
-            page = int(self.request.GET.get('page', '1'))
-        except ValueError:
-            page = 1
-
-        paginate_by = self.get_paginate_by()
-        try:
-            es_results = self.form.search(page, paginate_by)
-        except es_exceptions.ConnectionError as e:
-            context['es_error'] = str(e)
-            return context
-
-        template_results = [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']]
-
-        # Pagination
-        paginator = ESPaginator(template_results, paginate_by, total=int(es_results['hits']['total']['value']))
-
-        if page > paginator.num_pages:
-            page = paginator.num_pages
-
-        context['page_obj'] = paginator.page(page)
-        context['is_paginated'] = paginator.num_pages > 1
-
-        return context
+        # - the search feature is deactivated on the instance
+        return settings.DISABLE_ELASTICSEARCH or super().no_extra_calculation_condition
 
     def convert_hit_to_template(self, hit):
         hit_source = hit['_source']
         highlight = hit.get('highlight', {})
-        bounding_box = hit_source['bounding_box']
-
-        viewbox = None
-        larger = False
-        if bounding_box:
-            viewbox = " ".join([
-                str(max([bounding_box[0] - 10, 0])),
-                str(max([bounding_box[1] - 10, 0])),
-                str(bounding_box[2] - bounding_box[0] + 20),
-                str(bounding_box[3] - bounding_box[1] + 20)
-            ])
-            larger = (bounding_box[2] - bounding_box[0]) > (bounding_box[3] - bounding_box[1])
+        viewbox, larger = self.get_line_viewbox(hit_source['bounding_box'])
 
         return {
-            'context_before': highlight.get('context_before'),
-            'content': highlight.get('raw_content'),
-            'context_after': highlight.get('context_after'),
-            'line_number': hit_source['line_number'],
-            'transcription_pk': hit_source['transcription_id'],
-            'transcription_name': hit_source['transcription_name'],
-            'part_title': hit_source['part_title'],
-            'part_pk': hit_source['document_part_id'],
-            'document_name': hit_source['document_name'],
-            'document_pk': hit_source['document_id'],
+            'object': {
+                'highlighted_content': highlight['raw_content'][0] if highlight.get('raw_content') else None,
+                'line': {
+                    'order': hit_source['line_number'] - 1,
+                    'document_part': {
+                        'id': hit_source['document_part_id'],
+                        'title': hit_source['part_title'],
+                        'document': {
+                            'id': hit_source['document_id'],
+                            'name': hit_source['document_name'],
+                        }
+                    }
+                },
+                'transcription': {
+                    'id': hit_source['transcription_id'],
+                    'name': hit_source['transcription_name'],
+                },
+            },
+            'context_before': highlight['context_before'][0] if highlight.get('context_before') else None,
+            'context_after': highlight['context_after'][0] if highlight.get('context_after') else None,
+            'replacement_preview': None,
             'score': hit['_score'],
             'img_url': hit_source['image_url'],
             'img_w': hit_source['image_width'],
@@ -195,8 +237,129 @@ class Search(LoginRequiredMixin, PerPageMixin, FormView, TemplateView):
             'larger': larger
         }
 
+    def get_and_format_results(self, page=None, paginate_by=None):
+        try:
+            es_results = self.form.search(page=page, paginate_by=paginate_by)
+            self.es_total = int(es_results['hits']['total']['value'])
+        except es_exceptions.ConnectionError as e:
+            return [], {'es_error': str(e)}
+
+        return [self.convert_hit_to_template(hit) for hit in es_results['hits']['hits']], None
+
+    def get_paginator(self, results, paginate_by):
+        return ESPaginator(results, paginate_by, total=self.es_total)
+
     def get_success_url(self):
         return reverse('search')
+
+
+class FindAndReplace(BaseSearch):
+    form_class = FindAndReplaceForm
+    template_name = 'core/search/find_and_replace.html'
+
+    def get_part_image_thumbnail(self, part_image):
+        thumbnailer = get_thumbnailer(part_image)
+        try:
+            thumbnail = thumbnailer.get_thumbnail(
+                settings.THUMBNAIL_ALIASES['']['large'], generate=False
+            )
+            assert thumbnail
+        except Exception:
+            thumbnail = part_image
+            pass
+
+        # Factors to scale line bboxes if necessary
+        scale_factors = [
+            thumbnail.width / part_image.width,
+            thumbnail.height / part_image.height,
+        ] * 2
+
+        return thumbnail.url, thumbnail.width, thumbnail.height, scale_factors
+
+    def get_line_bounding_box(self, line, scale_factors):
+        line_box = line.get_box()
+        if not line_box:
+            return None
+
+        return [
+            ceil(value * factor)
+            for value, factor in zip(line_box, scale_factors)
+        ]
+
+    def convert_lt_object_to_template(self, find_terms, replace_term, lt_object, thumbnails):
+        if lt_object.line.document_part_id not in thumbnails:
+            try:
+                thumbnail_url, thumbnail_width, thumbnail_height, scale_factors = self.get_part_image_thumbnail(lt_object.line.document_part.image)
+            except FileNotFoundError:
+                thumbnail_url, thumbnail_width, thumbnail_height = None, None, None
+                scale_factors = [1, 1, 1, 1]
+
+            thumbnails[lt_object.line.document_part_id] = {'url': thumbnail_url, 'width': thumbnail_width, 'height': thumbnail_height, 'scale_factors': scale_factors}
+
+        bounding_box = self.get_line_bounding_box(lt_object.line, thumbnails[lt_object.line.document_part_id]['scale_factors'])
+        viewbox, larger = self.get_line_viewbox(bounding_box)
+
+        return {
+            'object': lt_object,
+            'context_before': None,
+            'context_after': None,
+            'replacement_preview': build_highlighted_replacement_psql(find_terms, replace_term, lt_object.highlighted_content),
+            'score': 100,
+            'img_url': thumbnails[lt_object.line.document_part_id]['url'],
+            'img_w': thumbnails[lt_object.line.document_part_id]['width'],
+            'img_h': thumbnails[lt_object.line.document_part_id]['height'],
+            'viewbox': viewbox,
+            'larger': larger,
+        }, thumbnails
+
+    def get_and_format_results(self, page=None, paginate_by=None):
+        results = self.form.search()
+        find_terms = '|'.join(self.form.cleaned_data['query'].split(' '))
+        replace_term = self.form.cleaned_data['replacement']
+
+        thumbnails = {}
+        template_results = []
+        for lt_object in results:
+            template_result, thumbnails = self.convert_lt_object_to_template(find_terms, replace_term, lt_object, thumbnails)
+            template_results.append(template_result)
+
+        return template_results, None
+
+    def get_filters(self):
+        return {
+            'project': self.request.GET.get('project'),
+            'document': self.request.GET.get('document'),
+            'transcription': self.request.GET.get('transcription'),
+            'part': self.request.GET.get('part'),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if 'apply_replace' not in self.request.POST:
+            return super().post(request, *args, **kwargs)
+
+        form = self.get_form()
+        if not form.is_valid():
+            return self.form_invalid(form)
+
+        filters = self.get_filters()
+        replace_line_transcriptions_text.delay(
+            form.cleaned_data['query'],
+            form.cleaned_data['replacement'],
+            project_pk=filters['project'],
+            document_pk=filters['document'],
+            transcription_pk=filters['transcription'],
+            part_pk=filters['part'],
+            user_pk=self.request.user.pk
+        )
+        return self.form_valid(form)
+
+    def get_query_params(self):
+        params = self.get_filters()
+        query_params = '&'.join([f'{key}={value}' for key, value in params.items() if value is not None])
+        return f'?{query_params}' if query_params else ''
+
+    def get_success_url(self):
+        return reverse('find-replace') + self.get_query_params()
 
 
 class ProjectList(LoginRequiredMixin, PerPageMixin, ListView):
@@ -226,6 +389,23 @@ class CreateProject(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
         return response
+
+
+class UpdateProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Project
+    form_class = ProjectForm
+    success_message = _("Project updated successfully!")
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if not obj.owner == self.request.user:
+            raise PermissionDenied
+
+        return obj
+
+    def get_success_url(self):
+        return reverse('project-update', kwargs={'slug': self.object.slug})
 
 
 class DocumentsList(LoginRequiredMixin, PerPageMixin, ListView):
@@ -393,6 +573,62 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
     form_class = DocumentOntologyForm
     template_name = "core/document_ontology.html"
     success_message = _("Ontology saved successfully!")
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+
+        if 'import_form' in request.POST:
+            import_form = DocumentOntologyImportForm(request.POST, request.FILES, prefix='import_form')
+            if not import_form.is_valid():
+                context.update({'import_form': import_form, 'show_import_modal': True})
+                return self.render_to_response(context)
+
+            # Creating a TaskReport object to store warnings and errors that occur during deserialization
+            report = TaskReport.objects.create(
+                label=f'Ontology import from a JSON file in "{self.object}"',
+                user=request.user,
+                document=self.object,
+            )
+            report.start()
+
+            updated_with_warnings = False
+            try:
+                # Parsing the provided JSON file
+                json_ontology = json.loads(request.FILES.get('import_form-file').read())
+                serializer = OntologyImportSerializer(self.object, data=json_ontology, report=report)
+
+                # Checking its version is the supported one
+                json_version = json_ontology.get('version')
+                if json_version != serializer.VERSION:
+                    raise Exception(f'JSON ontology file is in version {json_version}, currently supported version is {serializer.VERSION}')
+
+                # Saving the data on the Document object
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
+                updated_with_warnings = serializer.updated_with_warnings
+            except Exception as e:
+                report.error('[ERROR] ' + str(e))
+
+                messages.error(self.request, _('Something went wrong during the ontology import...'), extra_tags=report.uri)
+            else:
+                report.end()
+
+                if updated_with_warnings:
+                    messages.warning(self.request, _('Ontology import finished with warnings.'), extra_tags=report.uri)
+                else:
+                    messages.success(self.request, _('Ontology import finished successfully!'), extra_tags=report.uri)
+
+            return HttpResponseRedirect(self.get_success_url())
+
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['import_form'] = DocumentOntologyImportForm(prefix='import_form')
+        context['show_import_modal'] = False
+        return context
 
     def get_success_url(self):
         return reverse('document-ontology', kwargs={'pk': self.object.pk})

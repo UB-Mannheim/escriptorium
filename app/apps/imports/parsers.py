@@ -382,7 +382,13 @@ class METSRemoteParser(ParserDocument, METSBaseParser):
                 filename = source.name
 
                 try:
-                    parser = make_parser(self.document, source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
+                    parser = make_parser(self.document, source,
+                                         name=f"{self.name} | {layer_name}",
+                                         report=self.report,
+                                         # mets_describer=False,
+                                         # mets_base_uri=self.mets_base_uri,
+                                         zip_allowed=False,
+                                         pdf_allowed=False)
                     # We only want to override for the first imported source if there are multiple ones
                     for part in parser.parse(override=(override and index == 0), user=user):
                         # If we have a page with an image + multiple sources, we don't want to
@@ -1198,7 +1204,10 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:
-            schema = root.nsmap[None]
+            if 'mets' in root.nsmap:
+                schema = root.nsmap['mets']
+            else:
+                schema = root.nsmap[None]
             schemas = root.nsmap.values()
         except KeyError:
             raise ParseError(

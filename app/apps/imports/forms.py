@@ -8,6 +8,7 @@ from bootstrap.forms import BootstrapFormMixin
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext as _
 
 from core.forms import RegionTypesFormMixin
@@ -19,25 +20,54 @@ from imports.tasks import document_export, document_import
 from users.consumers import send_event
 
 
-def clean_uri(uri, document, tempfile):
+class FileImportError(Exception):
+    pass
+
+
+def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
     try:
         resp = requests.get(uri)
         content = resp.content
         buf = io.BytesIO(content)
         buf.name = tempfile
-        parser = make_parser(document, buf)
+        parser = make_parser(document, buf,
+                             mets_describer=is_mets,
+                             mets_base_uri=mets_base_uri)
         parser.validate()
-        total = parser.total
-        return content, total
+        return content, parser.total
     except requests.exceptions.RequestException:
-        raise forms.ValidationError(_("The document is unreachable, unreadable or the host timed out."))
+        raise FileImportError(_("The document is unreachable, unreadable or the host timed out."))
     except json.decoder.JSONDecodeError:
-        raise forms.ValidationError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+        raise FileImportError(_("The document pointed to by the given uri doesn't seem to be valid json."))
     except ParseError as e:
         msg = _("Couldn't parse the given file or its validation failed")
         if len(e.args):
             msg += ": %s" % e.args[0]
-        raise forms.ValidationError(msg)
+        raise FileImportError(msg)
+
+
+def clean_import_uri(uri, document, tmp_file_name, is_mets=False, mets_base_uri=None):
+    domain = urlparse(uri).netloc
+    if ('*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS):
+        raise FileImportError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
+
+    return clean_uri(uri, document, tmp_file_name, is_mets=is_mets, mets_base_uri=mets_base_uri)
+
+
+def clean_upload_file(upload_file, document, user):
+    try:
+        # If quotas are enforced, define if the user can upload ZIP and PDF files
+        allowed = settings.DISABLE_QUOTAS or user.has_free_disk_storage()
+        parser = make_parser(document, upload_file, zip_allowed=allowed, pdf_allowed=allowed)
+        parser.validate()
+    except ParseError as e:
+        msg = _("Couldn't parse the given file or its validation failed")
+        if len(e.args):
+            msg += ": %s" % e.args[0]
+        raise FileImportError(msg)
+    except ValueError as e:
+        raise FileImportError(repr(e))
+    return parser
 
 
 class ImportForm(BootstrapFormMixin, forms.Form):
@@ -79,45 +109,36 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             self.fields['upload_file'].help_text = _("A single ALTO or PAGE XML file.")
 
     def clean_iiif_uri(self):
-        uri = self.cleaned_data.get('iiif_uri')
-        if uri:
-            domain = urlparse(uri).netloc
-            if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
-                raise forms.ValidationError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
-
-            content, total = clean_uri(uri, self.document, 'tmp.json')
-            self.cleaned_data['total'] = total
-            return content
+        try:
+            uri = self.cleaned_data.get('uri')
+            if uri:
+                parser = clean_import_uri(uri, self.document, 'tmp.json')
+                self.cleaned_data['total'] = parser.total
+                return parser.file
+        except FileImportError as e:
+            raise forms.ValidationError(repr(e))
 
     def clean_mets_uri(self):
-        uri = self.cleaned_data.get('mets_uri')
-        self.mets_uri = os.path.dirname(uri)
-        if uri:
-            domain = urlparse(uri).netloc
-            if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
-                raise forms.ValidationError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
-
-            content, total = clean_uri(uri, self.document, 'tmp.xml')
-            self.cleaned_data['total'] = total
-            return content
+        try:
+            uri = self.cleaned_data.get('mets_uri')
+            self.mets_uri = os.path.dirname(uri)
+            if uri:
+                parser = clean_import_uri(uri, self.document, 'tmp.xml',
+                                          is_mets=True, mets_base_uri=self.mets_uri)
+                self.cleaned_data['total'] = parser.total
+                return parser.file
+        except FileImportError as e:
+            raise forms.ValidationError(repr(e))
 
     def clean_upload_file(self):
         upload_file = self.cleaned_data.get('upload_file')
         if upload_file:
             try:
-                # If quotas are enforced, define if the user can upload ZIP and PDF files
-                allowed = settings.DISABLE_QUOTAS or self.user.has_free_disk_storage()
-                parser = make_parser(self.document, upload_file, zip_allowed=allowed, pdf_allowed=allowed)
-                parser.validate()
+                parser = clean_upload_file(upload_file, self.document, self.user)
                 self.cleaned_data['total'] = parser.total
-            except ParseError as e:
-                msg = _("Couldn't parse the given file or its validation failed")
-                if len(e.args):
-                    msg += ": %s" % e.args[0]
-                raise forms.ValidationError(msg)
-            except ValueError as e:
-                raise forms.ValidationError(e)
-            return upload_file
+                return parser.file
+            except FileImportError as e:
+                raise forms.ValidationError(repr(e))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -229,3 +250,12 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                               include_images=self.cleaned_data['include_images'],
                               user_pk=self.user.pk,
                               report_label=_('Export %(document_name)s') % {'document_name': self.document.name})
+
+
+class DocumentOntologyImportForm(BootstrapFormMixin, forms.Form):
+    file = forms.FileField(
+        required=True,
+        help_text=_("A file containing a document ontology in JSON format"),
+        widget=forms.FileInput(attrs={"accept": "application/json"}),
+        validators=[FileExtensionValidator(allowed_extensions=["json"])]
+    )

@@ -13,6 +13,7 @@ from core.views import (
     DocumentsList,
     DocumentsTasksList,
     EditPart,
+    FindAndReplace,
     Home,
     MigrateDocument,
     ModelCancelTraining,
@@ -27,6 +28,7 @@ from core.views import (
     ShareDocument,
     ShareProject,
     UpdateDocument,
+    UpdateProject,
     UserModels,
 )
 
@@ -34,10 +36,11 @@ urlpatterns = [
     path('', Home.as_view(), name='home'),
 
     path('search/', Search.as_view(), name='search'),
+    path('find-replace/', FindAndReplace.as_view(), name='find-replace'),
 
     path('projects/create/', CreateProject.as_view(), name='project-create'),
     path('projects/', ProjectList.as_view(), name='projects-list'),
-    # path('project/<str:slug>/', ProjectDetail.as_view(), name='project-detail'),
+    path('project/<str:slug>/', UpdateProject.as_view(), name='project-update'),
     path('project/<str:slug>/documents/', DocumentsList.as_view(), name='documents-list'),
     path('project/<str:slug>/document/create/', CreateDocument.as_view(), name='document-create'),
     path('project/<int:pk>/share/', ShareProject.as_view(), name='project-share'),

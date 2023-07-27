@@ -17,13 +17,15 @@ from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
+    AlignSerializer,
     AnnotationComponentSerializer,
     AnnotationTaxonomySerializer,
     AnnotationTypeSerializer,
@@ -38,6 +40,7 @@ from api.serializers import (
     DocumentTagSerializer,
     DocumentTasksSerializer,
     ImageAnnotationSerializer,
+    ImportSerializer,
     LineOrderSerializer,
     LineSerializer,
     LineTranscriptionSerializer,
@@ -465,6 +468,51 @@ class DocumentViewSet(ModelViewSet):
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
 
+    @action(detail=True, methods=['post'])
+    def align(self, request, pk=None):
+        return self.get_process_response(request, AlignSerializer)
+
+    @action(detail=True, methods=['post'])
+    def forced_align(self, request, pk=None):
+
+        document = self.get_object()
+
+        if 'parts' in request.data:
+            pks = request.data.get('parts')
+            try:
+                iter(pks)
+            except TypeError:
+                return Response({'error': "'parts' has to be a list."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            parts = document.parts.filter(pk__in=pks)
+        else:
+            parts = document.parts.all()
+
+        if 'model' not in request.data:
+            return Response({'error': "model(pk) is mandatory."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if 'transcription' not in request.data:
+            return Response({'error': "transcription(pk) is mandatory."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            document.transcriptions.get(pk=self.request.data.get('transcription'))
+        except Transcription.DoesNotExist:
+            return Response({'error': "Invalid transcription."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        from core.tasks import forced_align
+        for part in parts:
+            forced_align.delay(
+                instance_pk=part.pk,
+                model_pk=request.data['model'],
+                transcription_pk=request.data['transcription'],
+                part_pk=part.pk,
+                user_pk=request.user.pk
+            )
+
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
 
 class TaskReportViewSet(ModelViewSet):
     queryset = TaskReport.objects.all().order_by("-queued_at", "-started_at", "-done_at")
@@ -517,6 +565,17 @@ class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
         context = super().get_serializer_context()
         context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
         return context
+
+
+class ImportViewSet(GenericViewSet, CreateModelMixin):
+    # queryset = DocumentPart.objects.all()
+    serializer_class = ImportSerializer
+
+    def create(self, request, document_pk=None):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
 
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -829,6 +888,10 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @transaction.atomic
     def merge(self, request, document_pk=None, part_pk=None):
         original_lines = request.data.get("lines")
+
+        if original_lines is None:
+            return Response({'status': 'error', 'error': _("'lines' is mandatory.")}, status=status.HTTP_400_BAD_REQUEST)
+
         if len(original_lines) > MAX_MERGE_SIZE:
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 

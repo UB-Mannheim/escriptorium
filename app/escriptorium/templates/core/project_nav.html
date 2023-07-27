@@ -2,13 +2,21 @@
 {% load i18n bootstrap %}
 
 {% block body %}
+{% if project %}
 <nav>
     <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
-        <h5 class="nav-item nav-link disabled">{{project.name|capfirst}}</h5>
+      <h5 class="nav-item nav-link disabled">{{project.name|capfirst}}</h5>
         <a href="{% url 'documents-list' slug=project.slug %}"
            class="nav-item nav-link {% block nav-docs-active %}{% endblock %}"
            id="nav-docs-tab"
            role="tab" aria-controls="nav-docs" aria-selected="true">{% trans "Documents" %}</a>
+
+        {% if project.owner == request.user %}
+        <a href="{% url 'project-update' slug=project.slug %}"
+           class="nav-item nav-link {% block nav-update-active %}{% endblock %}"
+           id="nav-docs-tab"
+           role="tab" aria-controls="nav-docs" aria-selected="true">{% trans "Edit" %}</a>
+        {% endif %}
 
         <a href="{% url 'project-report' slug=project.slug %}"
            class="nav-item nav-link {% block nav-reports-active %}{% endblock %}"
@@ -23,6 +31,7 @@
         {% block extra_nav %}{% endblock %}
     </div>
 </nav>
+{% endif %}
 
 {% block tab_content %}{% endblock %}
 {% block modals %}{% endblock %}
