@@ -36,6 +36,7 @@ from core.models import (
     Script,
     TextAnnotation,
     TextAnnotationComponentValue,
+    TextualWitness,
     Transcription,
 )
 from core.tasks import segment, segtrain, train, transcribe
@@ -385,6 +386,18 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
             return None
 
         return last_task.started_at
+
+
+class TaskReportSerializer(serializers.ModelSerializer):
+    document_part = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TaskReport
+        fields = ('pk', 'document', 'document_part', 'workflow_state', 'label', 'messages',
+                  'queued_at', 'started_at', 'done_at', 'method', 'user')
+
+    def get_document_part(self, task_report):
+        return str(task_report.document_part) if task_report.document_part else None
 
 
 class MetadataSerializer(serializers.ModelSerializer):
@@ -830,6 +843,14 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                        part_pks=[part.pk for part in self.validated_data.get('parts')],
                        document_pk=self.document.pk,
                        user_pk=self.user.pk)
+
+
+class TextualWitnessSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = TextualWitness
+        fields = ('name', 'pk', 'file', 'owner')
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):

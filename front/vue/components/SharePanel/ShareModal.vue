@@ -29,6 +29,7 @@
                 :label-visible="false"
                 :on-input="handleUserInput"
                 :disabled="disabled"
+                :max-length="150"
                 :value="username"
             />
         </template>
@@ -114,18 +115,18 @@ export default {
         },
     },
     methods: {
-        ...mapActions("forms", ["clearForm", "handleTextInput"]),
+        ...mapActions("forms", ["clearForm", "handleGenericInput"]),
         handleGroupChange(e) {
             if (this.username !== "") {
-                this.handleTextInput({ form: "share", field: "user", value: "" });
+                this.handleGenericInput({ form: "share", field: "user", value: "" });
             }
-            this.handleTextInput({ form: "share", field: "group", value: e.target.value });
+            this.handleGenericInput({ form: "share", field: "group", value: e.target.value });
         },
         handleUserInput(e) {
             if (this.selectedGroup !== "") {
-                this.handleTextInput({ form: "share", field: "group", value: "" });
+                this.handleGenericInput({ form: "share", field: "group", value: "" });
             }
-            this.handleTextInput({ form: "share", field: "user", value: e.target.value });
+            this.handleGenericInput({ form: "share", field: "user", value: e.target.value });
         },
     },
 }

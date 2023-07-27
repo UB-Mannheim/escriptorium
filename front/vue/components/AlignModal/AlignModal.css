@@ -1,0 +1,51 @@
+.escr-align-modal .escr-modal {
+    top: 10px;
+}
+.escr-align-modal .escr-modal-content h3 + .escr-form-field {
+    margin: 0 0 1rem;
+}
+.escr-align-modal .escr-modal-content h3 + .escr-form-field select {
+    margin: 0;
+}
+.escr-align-modal h3.escr-align-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-align-modal .escr-modal-content {
+    max-height: calc(100vh - 170px);
+}
+.escr-align-modal .escr-fulldoc-field .escr-help-text,
+.escr-align-modal .escr-merge-field .escr-help-text {
+    margin: 8px 30px 0;
+    font-style: italic;
+}
+.escr-align-modal .escr-merge-field {
+    margin-bottom: 1.5rem;
+}
+.escr-align-modal .escr-align-advanced {
+    border: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+.escr-align-modal .escr-align-advanced .escr-text-field {
+    display: flex;
+    flex-flow: column;
+}
+.escr-align-modal .escr-align-advanced .escr-text-field input {
+    margin: 0;
+    height: 38px;
+}
+.escr-align-modal .escr-align-advanced .escr-text-field div:first-of-type {
+    font-weight: 600;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-align-modal input[type="file"] {
+    margin-top: 24px;
+}

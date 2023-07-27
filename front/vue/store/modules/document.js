@@ -7,6 +7,8 @@ import {
     retrieveDocumentMetadata,
     retrieveDocumentModels,
     retrieveDocumentParts,
+    retrieveDocumentTasks,
+    retrieveTextualWitnesses,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
     retrieveTranscriptionOntology,
@@ -15,6 +17,8 @@ import {
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
 import { getDocumentMetadataCRUD } from "../util/metadata";
+import forms from "../util/initialFormState";
+import { throttle } from "../util/throttle";
 
 // initial state
 const state = () => ({
@@ -27,6 +31,7 @@ const state = () => ({
         document: false,
         models: false,
         parts: false,
+        tasks: false,
         transcriptions: false,
         user: false,
     },
@@ -72,6 +77,13 @@ const state = () => ({
     projectName: "",
     readDirection: "",
     /**
+     * regionTypes: [{
+     *     pk: Number,
+     *     name: String,
+     * }]
+     */
+    regionTypes: [],
+    /**
      * sharedWithGroups: [{
      *     pk: Number,
      *     name: String,
@@ -96,6 +108,30 @@ const state = () => ({
      * }]
      */
     tags: [],
+    /**
+     * tasks: [{
+     *     pk: Number,
+     *     document: Number,
+     *     workflow_state: Number,
+     *     label: String,
+     *     messages?: String,
+     *     queued_at: String,
+     *     started_at: String
+     *     done_at: String,
+     *     method: String,
+     *     user: Number,
+     * }]
+     */
+    tasks: [],
+    /**
+     * textualWitnesses: [{
+     *     name: String,
+     *     pk: Number,
+     *     owner: String,
+     *     file: String,
+     * }]
+     */
+    textualWitnesses: [],
     /**
      * transcriptions: [{
      *     name: String,
@@ -200,6 +236,18 @@ const actions = {
         dispatch("forms/clearForm", "share", { root: true });
     },
     /**
+     * Handle the user overwriting existing segmentation
+     */
+    async confirmOverwriteWarning({ dispatch, state }) {
+        try {
+            await dispatch("tasks/segmentDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "overwriteWarning", { root: true });
+            dispatch("tasks/closeModal", "segment", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Delete the current document.
      */
     async deleteDocument({ dispatch, commit, state }) {
@@ -217,7 +265,11 @@ const actions = {
      * Fetch the current document.
      */
     async fetchDocument({ commit, state, dispatch, rootState }) {
-        commit("setLoading", { key: "document", loading: true });
+        // set all loading
+        Object.keys(state.loading).map((key) =>
+            commit("setLoading", { key, loading: true }),
+        );
+        // fetch document
         const { data } = await retrieveDocument(state.id);
         if (data) {
             commit("setLastModified", data.updated_at);
@@ -228,6 +280,28 @@ const actions = {
             commit("setPartsCount", data.parts_count);
             commit("setProjectId", data.project?.id);
             commit("setProjectName", data.project?.name);
+            commit("setRegionTypes", data.valid_block_types);
+            // select all region types on forms that have that key
+            Object.keys(forms)
+                .filter((form) =>
+                    Object.prototype.hasOwnProperty.call(
+                        forms[form],
+                        "regionTypes",
+                    ),
+                )
+                .forEach((form) => {
+                    commit(
+                        "forms/setFieldValue",
+                        {
+                            form,
+                            field: "regionTypes",
+                            value: data.valid_block_types.map((rt) =>
+                                rt.pk.toString(),
+                            ),
+                        },
+                        { root: true },
+                    );
+                });
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
             commit(
@@ -311,10 +385,12 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
 
-        // fetch scripts, metadata, models
+        // fetch scripts, metadata, tasks, models, textual witnesses
         await dispatch({ type: "project/fetchScripts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
+        await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
+        await dispatch("fetchTextualWitnesses");
     },
     /**
      * Fetch the current document's metadata.
@@ -368,6 +444,40 @@ const actions = {
             throw new Error("Unable to retrieve document images");
         }
         commit("setLoading", { key: "parts", loading: false });
+    },
+    /**
+     * Fetch page 1 of the current document's most recent tasks.
+     */
+    async fetchDocumentTasks({ commit, state }) {
+        commit("setLoading", { key: "tasks", loading: true });
+        const { data } = await retrieveDocumentTasks({ documentId: state.id });
+        if (data?.results) {
+            commit("setTasks", data.results);
+        } else {
+            commit("setLoading", { key: "tasks", loading: false });
+            throw new Error("Unable to retrieve document tasks");
+        }
+        commit("setLoading", { key: "tasks", loading: false });
+    },
+    /**
+     * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
+     */
+    fetchDocumentTasksThrottled({ commit, dispatch }) {
+        commit("setLoading", { key: "tasks", loading: true });
+        throttle(function* () {
+            yield dispatch("fetchDocumentTasks");
+        });
+    },
+    /**
+     * Fetch existing textual witnesses for use in alignment.
+     */
+    async fetchTextualWitnesses({ commit }) {
+        const { data } = await retrieveTextualWitnesses();
+        if (data?.results) {
+            commit("setTextualWitnesses", data.results);
+        } else {
+            throw new Error("Unable to retrieve textual witnesses");
+        }
     },
     /**
      * Fetch the current transcription's characters, given this document's id from state,
@@ -442,6 +552,70 @@ const actions = {
             throw new Error(
                 `Unable to retrieve ${rootState.ontology.category} ontology`,
             );
+        }
+    },
+    /**
+     * Handle submitting the alignment modal. Queue the task and close the modal.
+     */
+    async handleSubmitAlign({ dispatch, state }) {
+        try {
+            await dispatch("tasks/alignDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "align", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the export modal. Queue the task and close the modal.
+     */
+    async handleSubmitExport({ dispatch, state }) {
+        try {
+            await dispatch("tasks/exportDocument", state.id, { root: true });
+            dispatch("tasks/closeModal", "export", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the import modal. Queue the task and close the modal.
+     */
+    async handleSubmitImport({ dispatch, state }) {
+        try {
+            await dispatch("tasks/importImagesOrTranscription", state.id, { root: true });
+            dispatch("tasks/closeModal", "import", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
+     * is checked, otherwise just queue the segmentation task and close the modal.
+     */
+    async handleSubmitSegmentation({ dispatch, state, rootState }) {
+        if (rootState?.forms?.segment?.overwrite === true) {
+            dispatch("tasks/openModal", "overwriteWarning", { root: true });
+        } else {
+            try {
+                await dispatch("tasks/segmentDocument", state.id, {
+                    root: true,
+                });
+                dispatch("tasks/closeModal", "segment", { root: true });
+            } catch (error) {
+                dispatch("alerts/addError", error, { root: true });
+            }
+        }
+    },
+    /**
+     * Handle submitting the transcribe modal: just queue the task and close the modal.
+     */
+    async handleSubmitTranscribe({ dispatch, state }) {
+        try {
+            await dispatch("tasks/transcribeDocument", state.id, {
+                root: true,
+            });
+            dispatch("tasks/closeModal", "transcribe", { root: true });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
         }
     },
     /**
@@ -715,6 +889,9 @@ const mutations = {
     setReadDirection(state, readDirection) {
         state.readDirection = readDirection;
     },
+    setRegionTypes(state, regionTypes) {
+        state.regionTypes = regionTypes;
+    },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;
     },
@@ -724,8 +901,14 @@ const mutations = {
     setShareModalOpen(state, open) {
         state.shareModalOpen = open;
     },
+    setTasks(state, tasks) {
+        state.tasks = tasks;
+    },
     setTags(state, tags) {
         state.tags = tags;
+    },
+    setTextualWitnesses(state, textualWitnesses) {
+        state.textualWitnesses = textualWitnesses;
     },
     setTranscriptions(state, transcriptions) {
         state.transcriptions = transcriptions;

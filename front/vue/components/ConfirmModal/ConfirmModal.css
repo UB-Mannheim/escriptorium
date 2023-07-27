@@ -1,8 +1,5 @@
 .escr-confirm-modal .escr-modal {
-    width: 460px;
-    position: fixed;
     top: 25%;
-    left: calc(50% - 250px);
     padding-top: 1rem;
 }
 .escr-confirm-modal h2[class^="confirm-header"]  {

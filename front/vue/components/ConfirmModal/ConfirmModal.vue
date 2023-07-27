@@ -17,7 +17,7 @@
         <template #modal-actions>
             <EscrButton
                 color="outline-text"
-                label="Cancel"
+                :label="cancelVerb"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
@@ -49,6 +49,13 @@ export default {
         bodyText: {
             type: String,
             required: true,
+        },
+        /**
+         * The word to display on the cancel button, such as "Cancel" or "No".
+         */
+        cancelVerb: {
+            type: String,
+            default: "Cancel",
         },
         /**
          * Whether or not to display the "cannot undo this action" message, defaults to true.

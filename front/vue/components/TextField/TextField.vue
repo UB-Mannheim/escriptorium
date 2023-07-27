@@ -16,6 +16,8 @@
             :value="value"
             :disabled="disabled"
             :name="name"
+            :maxlength="maxLength"
+            :invalid="invalid"
             @input="onInput"
         >
         <span
@@ -58,6 +60,13 @@ export default {
             default: "",
         },
         /**
+         * Invalid attribute for html-based form validation (optional)
+         */
+        invalid: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * Label text
          */
         label: {
@@ -85,6 +94,13 @@ export default {
         required: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * Optional maximum length of the text field.
+         */
+        maxLength: {
+            type: Number,
+            default: undefined,
         },
         /**
          * Current value.

@@ -17,6 +17,7 @@
                 label="Name"
                 placeholder="Name"
                 :disabled="disabled"
+                :max-length="512"
                 :on-input="(e) => handleTextFieldInput('name', e.target.value)"
                 :value="name"
                 required
@@ -215,7 +216,7 @@ export default {
     },
     methods: {
         ...mapActions("forms", [
-            "handleTextInput",
+            "handleGenericInput",
             "handleTagsInput",
             "handleMetadataInput",
         ]),
@@ -259,7 +260,7 @@ export default {
             this.handleTagsInput({ checked, tag, form: "editDocument" });
         },
         handleTextFieldInput(field, value) {
-            this.handleTextInput({ field, value, form: "editDocument" });
+            this.handleGenericInput({ field, value, form: "editDocument" });
         },
     },
 }

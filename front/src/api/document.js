@@ -158,3 +158,97 @@ export const shareDocument = async ({ documentId, group, user }) =>
     await axios.post(`/documents/${documentId}/share`, {
         params: { group, user },
     });
+
+// queue the segmentation task for this document
+export const segmentDocument = async ({ documentId, override, model, steps }) =>
+    await axios.post(`/documents/${documentId}/segment`, {
+        params: { override, model, steps },
+    });
+
+// queue the transcription task for this document
+export const transcribeDocument = async ({ documentId, model, layerName }) =>
+    await axios.post(`/documents/${documentId}/transcribe`, {
+        params: { model, name: layerName },
+    });
+
+// retrieve textual witnesses for use in alignment
+export const retrieveTextualWitnesses = async () =>
+    await axios.get("/textual-witnesses");
+
+// queue the alignment task for this document
+export const alignDocument = async ({
+    documentId,
+    beamSize,
+    existingWitness,
+    fullDoc,
+    gap,
+    layerName,
+    maxOffset,
+    merge,
+    ngram,
+    regionTypes,
+    threshold,
+    transcription,
+    witnessFile,
+}) => {
+    // need to use FormData to handle witness file upload
+    const formData = new FormData();
+    formData.append("beam_size", beamSize);
+    formData.append("existing_witness", existingWitness);
+    formData.append("full_doc", fullDoc);
+    formData.append("gap", gap);
+    formData.append("layer_name", layerName);
+    formData.append("max_offset", maxOffset);
+    formData.append("merge", merge);
+    formData.append("n_gram", ngram);
+    formData.append("region_types", regionTypes);
+    formData.append("threshold", threshold);
+    formData.append("transcription", transcription);
+    formData.append("witness_file", witnessFile);
+    const headers = { "Content-Type": "multipart/form-data" };
+    return await axios.post(`/documents/${documentId}/align`, formData, {
+        headers,
+    });
+};
+
+// queue the export task for this document
+export const exportDocument = async ({
+    documentId,
+    fileFormat,
+    includeImages,
+    regionTypes,
+    transcription,
+}) =>
+    await axios.post(`/documents/${documentId}/export`, {
+        params: {
+            region_types: regionTypes,
+            file_format: fileFormat,
+            include_images: includeImages,
+            transcription,
+        },
+    });
+
+// queue the import task for this document
+export const queueImport = async ({ documentId, params }) =>
+    await axios.post(`/documents/${documentId}/import`, { params });
+
+// retrieve latest tasks for a document
+export const retrieveDocumentTasks = async ({ documentId }) =>
+    await axios.get("/tasks", {
+        params: {
+            document: documentId,
+        },
+    });
+
+// cancel a task on a document by pk
+export const cancelTask = async ({ documentId, taskReportId }) =>
+    await axios.post(`/documents/${documentId}/cancel_tasks`, {
+        params: {
+            task_report: taskReportId,
+        },
+    });
+
+export const createTranscriptionLayer = async ({ documentId, layerName }) =>
+    await axios.post(`/documents/${documentId}/transcriptions/`, {
+        name: layerName,
+    });

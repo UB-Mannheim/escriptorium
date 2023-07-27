@@ -1,0 +1,30 @@
+.escr-alert {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 5px;
+    height: 32px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+.escr-alert svg {
+    width: 1rem;
+    height: 1rem;
+    margin: 0 8px 0 16px;
+}
+.escr-alert--danger {
+    background-color: var(--background-alert);
+    border: 1px solid var(--foreground-alert);
+    color: var(--foreground-alert);
+}
+.escr-alert--danger svg {
+    fill: var(--foreground-alert);
+}
+.escr-alert--secondary {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--foreground-secondary);
+    color: var(--foreground-secondary);
+}
+.escr-alert--secondary svg {
+    fill: var(--foreground-secondary);
+}

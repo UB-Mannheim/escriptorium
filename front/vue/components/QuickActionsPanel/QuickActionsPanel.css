@@ -1,0 +1,18 @@
+/* quick actions right sidebar panel */
+.escr-quick-actions.escr-action-panel {
+    list-style: none;
+    padding-left: 0.5rem;
+}
+.escr-quick-actions li {
+    margin-bottom: 10px;
+    width: 100%;
+}
+.escr-quick-actions li button {
+    padding-left: 0.5rem;
+    width: 100%;
+    text-align: left;
+    justify-content: flex-start;
+}
+.escr-quick-actions li button svg {
+    margin-right: 12px;
+}

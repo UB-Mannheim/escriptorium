@@ -51,7 +51,9 @@ from api.serializers import (
     ScriptSerializer,
     SegmentSerializer,
     SegTrainSerializer,
+    TaskReportSerializer,
     TextAnnotationSerializer,
+    TextualWitnessSerializer,
     TrainSerializer,
     TranscribeSerializer,
     TranscriptionSerializer,
@@ -81,6 +83,7 @@ from core.models import (
     ProtectedObjectException,
     Script,
     TextAnnotation,
+    TextualWitness,
     Transcription,
 )
 from core.tasks import recalculate_masks
@@ -176,6 +179,16 @@ class ScriptViewSet(ReadOnlyModelViewSet):
     pagination_class = ExtraLargeResultsSetPagination
     queryset = Script.objects.all()
     serializer_class = ScriptSerializer
+
+
+class TextualWitnessViewSet(ModelViewSet):
+    queryset = TextualWitness.objects.all()
+    serializer_class = TextualWitnessSerializer
+
+    def get_queryset(self):
+        return TextualWitness.objects.filter(
+            owner=self.request.user
+        )
 
 
 class ProjectViewSet(ModelViewSet):
@@ -308,6 +321,21 @@ class DocumentViewSet(ModelViewSet):
                    .prefetch_related('document_part')
                    .filter(workflow_state__in=[TaskReport.WORKFLOW_STATE_QUEUED,
                                                TaskReport.WORKFLOW_STATE_STARTED]))
+
+        if request.data.get("task_report"):
+            # If a task report PK is provided, try to locate it
+            task_report_pk = int(request.data.get("task_report"))
+            try:
+                TaskReport.objects.get(pk=task_report_pk)
+                # limit the canceled tasks to just the one with that pk
+                reports = reports.filter(pk=task_report_pk)
+            except TaskReport.DoesNotExist:
+                # otherwise there is an error here, so let's return a response
+                return Response({
+                    'status': 'error',
+                    'error': 'Could not cancel: the requested task could not be found.'
+                }, status=400)
+
         count = len(reports)  # evaluate query
         for report in reports:
             report.cancel(request.user.username)
@@ -436,6 +464,17 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         return self.get_process_response(request, TranscribeSerializer)
+
+
+class TaskReportViewSet(ModelViewSet):
+    queryset = TaskReport.objects.all().order_by("-queued_at", "-started_at", "-done_at")
+    serializer_class = TaskReportSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['document']
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(user=self.request.user)
+        return qs
 
 
 class DocumentPermissionMixin():

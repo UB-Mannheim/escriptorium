@@ -11,7 +11,9 @@
                     <!-- Document metadata header -->
                     <div class="escr-card escr-card-padding escr-document-details">
                         <div class="escr-card-header">
-                            <h1>{{ documentName }}</h1>
+                            <h1 :title="documentName">
+                                {{ documentName }}
+                            </h1>
                             <div class="escr-card-actions">
                                 <VerticalMenu
                                     :is-open="documentMenuOpen"
@@ -50,21 +52,24 @@
                     </div>
 
                     <!-- Document tasks card -->
-                    <div class="escr-card escr-card-padding escr-document-tasks">
+                    <div class="escr-card escr-card-table escr-document-tasks">
                         <div class="escr-card-header">
                             <h2>Tasks</h2>
                             <div class="escr-card-actions">
                                 <EscrButton
                                     label="View All"
                                     size="small"
-                                    :on-click="viewTasks"
-                                    :disabled="loading?.document"
+                                    :on-click="() => navigateToTasks()"
+                                    :disabled="loading?.tasks"
                                 >
                                     <template #button-icon-right>
                                         <ArrowRightIcon />
                                     </template>
                                 </EscrButton>
                             </div>
+                        </div>
+                        <div class="tasks-container">
+                            <TaskDashboard />
                         </div>
                     </div>
 
@@ -76,7 +81,7 @@
                                 <EscrButton
                                     label="View All"
                                     size="small"
-                                    :on-click="viewTasks"
+                                    :on-click="() => navigateToImages()"
                                     :disabled="loading?.parts"
                                 >
                                     <template #button-icon-right>
@@ -197,12 +202,83 @@
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
+                <!-- import images modal -->
+                <ImportModal
+                    v-if="taskModalOpen?.import"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('import')"
+                    :on-submit="handleSubmitImport"
+                />
+                <!-- segment document modal -->
+                <SegmentModal
+                    v-if="taskModalOpen?.segment"
+                    :models="models"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('segment')"
+                    :on-submit="handleSubmitSegmentation"
+                    scope="Document"
+                />
+                <!-- transcribe document modal -->
+                <TranscribeModal
+                    v-if="taskModalOpen?.transcribe"
+                    :models="models"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('transcribe')"
+                    :on-submit="handleSubmitTranscribe"
+                    scope="Document"
+                />
+                <!-- overwrite segmentation modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen?.overwriteWarning"
+                    :body-text="'Are you sure you want to continue? Re-segmenting will delete ' +
+                        'any existing transcriptions.'"
+                    title="Overwrite Existing Segmentation and Transcriptions"
+                    confirm-verb="Continue"
+                    :cannot-undo="true"
+                    :on-cancel="() => closeTaskModal('overwriteWarning')"
+                    :on-confirm="confirmOverwriteWarning"
+                />
+                <!-- align document modal -->
+                <AlignModal
+                    v-if="taskModalOpen?.align"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('align')"
+                    :on-submit="handleSubmitAlign"
+                    :textual-witnesses="textualWitnesses"
+                    scope="Document"
+                />
+                <!-- export document modal -->
+                <ExportModal
+                    v-if="taskModalOpen?.export"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading?.document"
+                    :on-cancel="() => closeTaskModal('export')"
+                    :on-submit="handleSubmitExport"
+                    scope="Document"
+                />
+                <!-- cancel task modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen?.cancelWarning"
+                    :body-text="'Are you sure you want to cancel this task?'"
+                    title="Cancel Task"
+                    confirm-verb="Yes"
+                    cancel-verb="No"
+                    :cannot-undo="false"
+                    :on-cancel="() => closeTaskModal('cancelWarning')"
+                    :on-confirm="() => cancelTask({ documentId: id })"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
+import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
+import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
@@ -212,22 +288,29 @@ import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
+import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import OntologyCard from "../../components/OntologyCard/OntologyCard.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
+import QuickActionsPanel from "../../components/QuickActionsPanel/QuickActionsPanel.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
+import TaskDashboard from "./TaskDashboard.vue";
+import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
 import "./Document.css";
 
 export default {
     name: "EscrDocumentDashboard",
     components: {
+        AlignModal,
         ArrowRightIcon,
         CharactersCard,
         ConfirmModal,
@@ -237,6 +320,8 @@ export default {
         EscrPage,
         EscrTable,
         EscrTags,
+        ExportModal,
+        ImportModal,
         // eslint-disable-next-line vue/no-unused-components
         ModelsIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -247,14 +332,21 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         PencilIcon,
         // eslint-disable-next-line vue/no-unused-components
+        QuickActionsPanel,
+        // eslint-disable-next-line vue/no-unused-components
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        SegmentModal,
         ShareModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
+        TaskDashboard,
+        // eslint-disable-next-line vue/no-unused-components
+        ToolsIcon,
         // eslint-disable-next-line vue/no-unused-components
         TrashIcon,
+        TranscribeModal,
         VerticalMenu,
     },
     props: {
@@ -265,6 +357,11 @@ export default {
             type: Number,
             required: true,
         }
+    },
+    data() {
+        return {
+            msgSocket: undefined,
+        };
     },
     computed: {
         ...mapState({
@@ -291,6 +388,7 @@ export default {
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
+            regionTypes: (state) => state.document.regionTypes,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
@@ -298,6 +396,8 @@ export default {
             shareModalOpen: (state) => state.document.shareModalOpen,
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
+            taskModalOpen: (state) => state.tasks.modalOpen,
+            textualWitnesses: (state) => state.document.textualWitnesses,
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
         }),
@@ -375,6 +475,16 @@ export default {
                 {
                     data: {
                         disabled: this.loading?.document,
+                        scope: "Document",
+                    },
+                    icon: ToolsIcon,
+                    key: "tasks",
+                    label: "Quick Actions",
+                    panel: QuickActionsPanel,
+                },
+                {
+                    data: {
+                        disabled: this.loading?.document,
                         users: this.sharedWithUsers,
                         groups: this.sharedWithGroups,
                         openShareModal: this.openShareModal,
@@ -415,6 +525,16 @@ export default {
      */
     async created() {
         this.setId(this.id);
+        // join document websocket room
+        const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
+        const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+        const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}/ws/notif/`);
+        msgSocket.maxReconnectAttempts = 3;
+        msgSocket.addEventListener("open", function() {
+            msgSocket.send(msg);
+        });
+        // handle document-related websocket events
+        msgSocket.addEventListener("message", this.websocketTaskListener);
         try {
             await this.fetchDocument();
         } catch (error) {
@@ -438,11 +558,18 @@ export default {
             "closeDocumentMenu",
             "closeEditModal",
             "closeShareModal",
+            "confirmOverwriteWarning",
             "deleteDocument",
             "fetchDocument",
             "fetchDocumentMetadata",
+            "fetchDocumentTasksThrottled",
             "fetchTranscriptionCharacters",
             "fetchTranscriptionOntology",
+            "handleSubmitAlign",
+            "handleSubmitExport",
+            "handleSubmitImport",
+            "handleSubmitSegmentation",
+            "handleSubmitTranscribe",
             "openCharactersModal",
             "openDeleteModal",
             "openDocumentMenu",
@@ -462,9 +589,39 @@ export default {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("project", ["createNewDocumentTag"]),
         ...mapActions("user", ["fetchGroups"]),
+        ...mapActions("tasks", {
+            cancelTask: "cancel",
+            closeTaskModal: "closeModal",
+            align: "alignDocument",
+            transcribe: "transcribeDocument",
+            export: "exportDocument",
+        }),
+        navigateToImages() {
+            if (this.id) {
+                window.location = `/document/${this.id}/images`;
+            } else {
+                this.addError({ message: "Error navigating to the images page." });
+            }
+        },
+        navigateToTasks() {
+            window.location = "/quotas/";
+        },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },
+        async websocketTaskListener(e) {
+            const data = JSON.parse(e.data);
+            // handle task-related events
+            const taskEvents = [
+                "export:", "import:", "part:mask", "part:workflow", "training:"
+            ];
+            if (
+                data.type === "event" && taskEvents.some((task) => data.name.startsWith(task))
+            ) {
+                // these may be frequent, so throttle
+                this.fetchDocumentTasksThrottled();
+            }
+        }
     },
 }
 </script>

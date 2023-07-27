@@ -1,5 +1,6 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
+import { Server } from "mock-socket";
 import DocumentDashboard from "../../vue/pages/Document/Document.vue";
 import {
     annotationTypes,
@@ -13,20 +14,32 @@ import {
     scripts,
     sorted,
     tags,
+    textualWitnesses,
     transcriptions,
     users,
     userGroups,
+    tasks,
 } from "./util";
 
 export default {
     title: "Pages/Document Dashboard",
     component: DocumentDashboard,
+    parameters: {
+        // mock dropzone image upload api endpoint
+        mockData: [
+            {
+                url: "/api/documents/1/parts",
+                method: "POST",
+                status: 201,
+            },
+        ],
+    },
 };
 
 const doc = {
     line_offset: 0,
     main_script: "Arabic",
-    name: "Document Name",
+    name: "My Document",
     parts_count: 32,
     project: {
         id: 1,
@@ -38,6 +51,7 @@ const doc = {
     tags,
     transcriptions,
     updated_at: "2023-03-17T13:54:15.352146Z",
+    valid_block_types: blockTypes,
 };
 
 const metadata = [
@@ -115,6 +129,20 @@ const Template = (args, { argTypes }) => ({
     components: { DocumentDashboard },
     template: '<DocumentDashboard v-bind="$props" />',
     setup() {
+        // setup websocket mocks for tasks
+        const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+        const mockSocketURL = `${scheme}//${window.location.host}/ws/notif/`;
+        // wrap in try/catch in case reloaded with mock socket still open
+        try {
+            const mockServer = new Server(mockSocketURL);
+            // close after 30 minutes
+            setTimeout(() => {
+                mockServer.stop(() => console.log("websocket close"));
+            }, 1800000);
+        } catch (err) {
+            console.log(err);
+        }
+
         // setup mocks for API requests
         const mock = new MockAdapter(axios);
         const documentEndpoint = new RegExp(/\/documents\/\d+$/);
@@ -154,6 +182,8 @@ const Template = (args, { argTypes }) => ({
         );
         const groupsEndpoint = "/groups";
         const shareEndpoint = new RegExp(/\/documents\/\d+\/share$/);
+        const witnessesEndpoint = "/textual-witnesses";
+        const tasksEndpoint = "/tasks";
         // mock document response
         mock.onGet(documentEndpoint).reply(async function() {
             // wait for 100-300 ms to mimic server-side loading
@@ -398,6 +428,40 @@ const Template = (args, { argTypes }) => ({
             }
             return [400];
         });
+        // mock get textual witnesses
+        mock.onGet(witnessesEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: textualWitnesses }];
+        });
+        // mock get tasks
+        mock.onGet(tasksEndpoint).reply(async function() {
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [200, { results: tasks }];
+        });
+
+        // mock queuing or canceling tasks (always just throw error for now)
+        const taskActionResponse = async function() {
+            // wait for 200-400 ms to mimic server-side loading
+            const timeout = Math.random() * 200 + 200;
+            await new Promise((r) => setTimeout(r, timeout));
+            return [
+                400,
+                {
+                    message:
+                        "This is just a test environment, so you cannot queue or cancel tasks",
+                },
+            ];
+        };
+        [
+            new RegExp(/\/documents\/\d+\/segment$/),
+            new RegExp(/\/documents\/\d+\/transcribe$/),
+            new RegExp(/\/documents\/\d+\/align$/),
+            new RegExp(/\/documents\/\d+\/export$/),
+            new RegExp(/\/documents\/\d+\/import$/),
+            new RegExp(/\/documents\/\d+\/cancel_tasks$/),
+        ].forEach((endpoint) => mock.onPost(endpoint).reply(taskActionResponse));
     },
 });
 

@@ -113,8 +113,8 @@ const actions = {
                 commit("setTags", tags);
                 // select the new tag and reset the tag name add/search field
                 commit(
-                    "forms/selectTag",
-                    { form: "editProject", tag: data },
+                    "forms/addToArray",
+                    { form: "editProject", field: "tags", value: data.pk },
                     { root: true },
                 );
                 commit(
