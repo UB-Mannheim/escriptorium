@@ -44,7 +44,8 @@ export const onSort = (items, { field, direction }) => {
 // tags filter utility function
 export const filteredByTag = (items, tags) => {
     // "or" operator will be formatted like "2|3|none", so split by |
-    let tagArray = tags && !Array.isArray(tags) ? tags.split("|") : tags;
+    let tagArray =
+        tags && tags.includes("|") ? tags.split("|") : tags.split(",");
     // convert all pks to strings for comparison with api response
     tagArray = tagArray?.map((t) => t.toString());
     if (tags && tagArray) {

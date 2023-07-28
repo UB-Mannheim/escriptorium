@@ -573,8 +573,13 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['count'], 1)
         self.assertEqual(resp.json()['results'][0]['pk'], self.doc2.pk)
 
+        # test OR logic
         resp = self.client.get(uri + '?tags=' + str(tag1.pk) + '|' + str(tag2.pk))
         self.assertEqual(resp.json()['count'], 2)
+
+        # test AND logic
+        resp = self.client.get(uri + '?tags=' + str(tag1.pk) + ',' + str(tag2.pk))
+        self.assertEqual(resp.json()['count'], 1)
 
     def test_filter_no_tag(self):
         tag1 = self.factory.make_document_tag(project=self.doc.project)
@@ -1191,8 +1196,13 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['count'], 1)
         self.assertEqual(resp.json()['results'][0]['id'], project2.pk)
 
+        # test OR logic
         resp = self.client.get(uri + '?tags=' + str(tag1.pk) + '|' + str(tag2.pk))
         self.assertEqual(resp.json()['count'], 2)
+
+        # test AND logic
+        resp = self.client.get(uri + '?tags=' + str(tag1.pk) + ',' + str(tag2.pk))
+        self.assertEqual(resp.json()['count'], 1)
 
     def test_filter_no_tag(self):
         tag1 = self.factory.make_project_tag(user=self.project.owner)
