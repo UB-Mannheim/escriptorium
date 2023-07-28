@@ -9,10 +9,3 @@
 .escr-filter-set .escr-filter-button {
     margin-left: 16px;
 }
-/* open filter modal */
-.escr-filter-set .escr-tag-filter {
-    position: absolute;
-    top: 42px;
-    right: 0;
-    z-index: var(--modal-z);
-}
