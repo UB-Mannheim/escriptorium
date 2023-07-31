@@ -1,6 +1,7 @@
 import {
     alignDocument,
     cancelTask,
+    createTranscriptionLayer,
     exportDocument,
     queueImport,
     segmentDocument,
@@ -106,39 +107,55 @@ const actions = {
         });
     },
     /**
-     * Queue the import task for a document.
+     * Use the import form state to queue the import task for a document.
      */
     async importImagesOrTranscription({ rootState }, documentId) {
         let params = {};
-        switch (rootState?.forms?.import?.mode) {
-            case "pdf":
-                params["upload_file"] = rootState.forms.import.uploadFile;
-                break;
-            case "iiif":
-                params["iiif_uri"] = rootState.forms.import.iiifUri;
-                break;
-            case "mets":
-                params["name"] = rootState.forms.import.layerName;
-                params["override"] = rootState.forms.import.overwrite;
-                if (rootState.forms.import.metsType === "url") {
-                    params["mets_uri"] = rootState.forms.import.metsUri;
-                } else {
+        if (rootState?.forms?.import?.mode) {
+            params["mode"] = rootState.forms.import.mode;
+            switch (params["mode"]) {
+                case "pdf":
                     params["upload_file"] = rootState.forms.import.uploadFile;
-                    params["mets"] = true;
+                    break;
+                case "iiif":
+                    params["iiif_uri"] = rootState.forms.import.iiifUri;
+                    break;
+                case "mets":
+                    params["name"] = rootState.forms.import.layerName;
+                    params["override"] = rootState.forms.import.overwrite;
+                    params["mets_type"] = rootState.forms.import.metsType;
+                    if (params["mets_type"] === "url") {
+                        params["mets_uri"] = rootState.forms.import.metsUri;
+                    } else {
+                        params["upload_file"] =
+                            rootState.forms.import.uploadFile;
+                    }
+                    break;
+                case "xml":
+                    params["name"] = rootState.forms.import.layerName;
+                    params["override"] = rootState.forms.import.overwrite;
+                    params["upload_file"] = rootState.forms.import.uploadFile;
+                    break;
+                // image files already uploaded to the /parts endpoint by the drop zone component,
+                // so no need to do anything with them
+                case "images":
+                default:
+                    return;
+            }
+            if (params["name"]) {
+                // first, create a transcription layer by POSTing the name to the endpoint
+                const { data } = await createTranscriptionLayer({
+                    documentId,
+                    layerName: params["name"],
+                });
+                // then, use the result to set the "transcription" param to new layer's pk
+                if (data) {
+                    params["transcription"] = data.pk;
                 }
-                break;
-            case "xml":
-                params["name"] = rootState.forms.import.layerName;
-                params["override"] = rootState.forms.import.overwrite;
-                params["upload_file"] = rootState.forms.import.uploadFile;
-                break;
-            // image files already uploaded to the /parts endpoint by the drop zone component,
-            // so no need to do anything with them
-            case "images":
-            default:
-                return;
+                delete params["name"];
+            }
+            return await queueImport({ documentId, params });
         }
-        return await queueImport({ documentId, params });
     },
     /**
      * Open a task modal by key.

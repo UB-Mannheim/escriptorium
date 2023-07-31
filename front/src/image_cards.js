@@ -649,16 +649,30 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
         $(this).attr('title', this.value);
     });
 
+    $('#process-part-form-transcribe #id_model').on('change', function(ev) {
+        var modelName = ev.target.options[ev.target.selectedIndex].innerHTML;
+        var options = document.querySelectorAll('#process-part-form-transcribe #id_transcription option');
+        var opt = Array.from(options).find(o => o.innerHTML == 'kraken:'+modelName);
+        if (opt) {
+            opt.selected = true;
+        }
+    });
+
     $('#process-part-form-export').submit(function(ev) {
         // store the export format choice for later use
-        let export_format = $('#process-part-form-export #id_file_format').val();
+        var export_format = $('#process-part-form-export #id_file_format').val();
         userProfile.set('exportFormat', export_format);
     });
 
     $('.process-part-form').submit(function(ev) {
         ev.preventDefault();
         var $form = $(ev.target);
+        var $submitButton = $('.js-submit-proc', $form);
         var proc = $form.data('proc');
+
+        $submitButton.prop('disabled', true);
+        var $icon = $('<i class="fas fa-spinner fa-spin ml-2">');
+        $submitButton.append($icon);
 
         let data = new FormData($form.get(0));
         data.set('document', DOCUMENT_ID);
@@ -680,7 +694,8 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
             } else if (proc == 'train') {
                 $('#train-selected').addClass('blink').removeClass('btn-danger');
             }
-
+            $submitButton.prop('disabled', false);
+            $icon.remove();
             $('#'+proc+'-wizard').modal('hide');
         }).fail(function(xhr) {
             var data = xhr.responseJSON;
@@ -694,6 +709,8 @@ export function bootImageCards(documentId, diskStorageLeft, cpuMinutesLeft, show
                     input.parent().append(errorNode);
                 }
             }
+            $submitButton.prop('disabled', false);
+            $icon.remove();
             if (DEBUG) console.log(xhr);
         });
     });

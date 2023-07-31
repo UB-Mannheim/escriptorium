@@ -2,8 +2,8 @@ body {
     margin: auto;
 }
 
-#escriptorium section {
-    margin: 15px;
+#escriptorium #main.container-fluid {
+    margin-top: 15px;
 }
 
 #escriptorium section:has(.escr-vue-enabled) {

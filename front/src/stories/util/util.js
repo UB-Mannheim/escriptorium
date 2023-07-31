@@ -47,7 +47,7 @@ export const filteredByTag = (items, tags) => {
     let tagArray =
         tags && tags.includes("|") ? tags.split("|") : tags.split(",");
     // convert all pks to strings for comparison with api response
-    tagArray = tagArray?.map((t) => t.toString());
+    tagArray = tagArray ? tagArray.map((t) => t.toString()) : [];
     if (tags && tagArray) {
         return items.filter((item) => {
             if (

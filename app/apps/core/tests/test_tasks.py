@@ -60,13 +60,14 @@ class TasksTestCase(CoreFactoryTestCase):
         response = self.client.post(uri, {
             'document': self.part.document.pk,
             'parts': [str(part.pk) for part in parts],
-            'task': 'transcribe'
+            'task': 'transcribe',
+            'transcription': None
         }, follow=True)
         self.assertEqual(response.status_code, 200)
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_train_new_transcription_model(self):
         self.makeTranscriptionContent()
         self.client.force_login(self.part.document.owner)

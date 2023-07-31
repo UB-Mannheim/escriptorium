@@ -24,7 +24,7 @@
 
         <text :text-anchor="$store.state.document.defaultTextDirection == 'rtl' ? 'end' : ''"
                 ref="textElement"
-                rotate="-90"
+                writing-mode="tb"
                 font-size="1em"
                 data-toggle="tooltip"
                 v-else>
@@ -90,9 +90,7 @@ export default Vue.extend({
 
             lineHeight = Math.max(Math.round(lineHeight), 5) * 0.3;
 
-            let ratio = 1/4;    //  more well suited for horizontal latin writings
-            if(this.$store.state.document.mainTextDirection == 'ttb')
-                ratio = 1/2;
+            let ratio = 1/4;
 
             this.$refs.textElement.setAttribute("font-size", String(lineHeight * (ratio)) + 'px');
 

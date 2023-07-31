@@ -211,7 +211,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         })
         self.assertEqual(resp.status_code, 200)
 
-    @unittest.expectedFailure
+    @unittest.skip
     def test_train_new_model(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-train', kwargs={'pk': self.doc.pk})
@@ -239,6 +239,30 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.content, b'{"status":"ok"}')
         # won't work with dummy model and image
         # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
+
+    def test_align(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-align', kwargs={'pk': self.doc.pk})
+
+        witness = self.factory.make_witness(owner=self.doc.owner)
+
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'transcription': Transcription.objects.first().pk,
+
+            "existing_witness": witness.pk,
+            "n_gram": 2,
+            "max_offset": 20,
+            "merge": False,
+            "full_doc": True,
+            "threshold": 0.8,
+            "region_types": ["Orphan", "Undefined"],
+            "layer_name": "example",
+            # "beam_size": 10,
+            "gap": 1000000,
+        })
+
+        self.assertEqual(resp.status_code, 200, resp.content)
 
     def test_list_document_with_tasks(self):
         # Creating a new Document that self.doc.owner shouldn't see
@@ -430,7 +454,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             'detail': 'You do not have permission to perform this action.'
         })
 
-    @patch('reporting.models.revoke')
+    @patch('escriptorium.celery.app.control.revoke')
     def test_cancel_all_tasks_for_document(self, mock_revoke):
         self.client.force_login(self.doc.owner)
 
@@ -485,7 +509,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         model.refresh_from_db()
         self.assertEqual(model.training, False)
 
-    @patch('reporting.models.revoke')
+    @patch('escriptorium.celery.app.control.revoke')
     def test_cancel_all_tasks_for_document_staff_user(self, mock_revoke):
         # This user doesn't own self.doc but can cancel all of its tasks since he is a staff member
         user = self.factory.make_user()
@@ -887,7 +911,12 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, body, content_type="application/json")
         self.assertEqual(resp.status_code, 400, resp.content)
 
-        # Second merge should succeed
+        # second merge will fail, because 'lines' is mandatory
+        body = {}
+        resp = self.client.post(uri, body, content_type="application/json")
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+        # third merge should succeed
         body = {'lines': [self.line.pk, self.orphan.pk]}
         resp = self.client.post(uri, body, content_type="application/json")
         self.assertEqual(resp.status_code, 200, resp.content)

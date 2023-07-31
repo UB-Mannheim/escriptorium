@@ -9,7 +9,7 @@
                 :options="metsOptions"
             />
             <div
-                v-if="metsType === 'file'"
+                v-if="metsType === 'local'"
             >
                 <input
                     type="file"
@@ -84,7 +84,7 @@ export default {
         metsOptions() {
             return [
                 { value: "url", label: "Enter URL", selected: this.metsType === "url" },
-                { value: "file", label: "Upload file", selected: this.metsType === "file" }
+                { value: "local", label: "Upload file", selected: this.metsType === "local" }
             ];
         },
     },

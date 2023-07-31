@@ -10,6 +10,11 @@
   <h5>{% trans "Select a model" %}</h5>
   {% render_field transcribe_form.model class="js-proc-settings" data_document=document.pk %}
 </div>
+
+<div class="form-group">
+  <h5>{% trans "Select a transcription" %}</h5>
+  {% render_field transcribe_form.transcription %}
+</div>
 {% endblock %}
 
 {% block wizard_submit %}{% trans "Transcribe" %}{% endblock %}

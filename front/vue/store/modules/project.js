@@ -54,7 +54,11 @@ const state = () => ({
     name: "",
     nextPage: "",
     /**
-     * scripts: Array<String>
+     * scripts: [{
+     *     id: Number,
+     *     name: String,
+     *     text_direction: String,
+     * }]
      */
     scripts: [],
     /**
@@ -377,10 +381,7 @@ const actions = {
     async fetchScripts({ commit }) {
         const { data } = await retrieveScripts();
         if (data?.results) {
-            commit(
-                "setScripts",
-                data.results.map((script) => script.name),
-            );
+            commit("setScripts", data.results);
         } else {
             throw new Error("Unable to retrieve scripts");
         }

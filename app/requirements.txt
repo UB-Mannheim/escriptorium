@@ -5,7 +5,7 @@ celery~=4.4.0  # for python 3.5+ you need recent versions of celery (> 4.2)
 channels~=3.0.4
 channels-redis~=3.4.0
 daphne~=3.0.2
-Django~=4.0.8
+Django~=4.1.10
 django-cleanup~=5.1.0
 django-country-and-language-flags
 django-filter
@@ -16,12 +16,12 @@ django-simple-captcha~=0.5.16
 djangorestframework~=3.13.1
 drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
-elasticsearch>=7.17
+elasticsearch==7.17.0
 kombu~=4.6.11
 # git+https://github.com/mittagessen/kraken@2d704b31941267fa329aec4cf89d3518cfdec631#egg=kraken
-kraken==4.3.9
+kraken==4.3.12
 # numpy>=1.17
-oitei~=1.0.0
+oitei~=1.1.1
 # passim, "seriatim" branch
 git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
 Pillow>=5.4.1

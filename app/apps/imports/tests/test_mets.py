@@ -102,7 +102,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         with self.assertRaises(ParseError) as context:
             processor.get_pages_from_struct_map()
 
-        self.assertTrue("The structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
+        self.assertTrue("The physical structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
 
     def test_get_pages_from_struct_map(self):
         processor = METSProcessor(self.root, self.report)
@@ -226,19 +226,18 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         uri = processor.build_remote_uri("https://somethingelse.com/a-simple-image.png")
         self.assertEqual(uri, "https://somethingelse.com/a-simple-image.png")
 
-    @patch("requests.head")
-    def test_check_is_image_true(self, mock_head):
-        mock_head.return_value = Mock(headers={"content-type": "image/png"}, status_code=200)
+    def test_check_is_image_true(self):
+        mock_get = Mock(headers={"content-type": "image/png"}, status_code=200)
         processor = METSProcessor(self.root, self.report)
-        is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-image.png")
+        is_image, content_type = processor.check_is_image(mock_get)
         self.assertTrue(is_image)
         self.assertEqual(content_type, "image/png")
 
-    @patch("requests.head")
-    def test_check_is_image_false(self, mock_head):
-        mock_head.return_value = Mock(headers={"content-type": "text/xml"}, status_code=200)
+    @patch("requests.get")
+    def test_check_is_image_false(self, mock_get):
+        mock_get = Mock(headers={"content-type": "text/xml"}, status_code=200)
         processor = METSProcessor(self.root, self.report)
-        is_image, content_type = processor.check_is_image("https://whatever.com/a-simple-xml.xml")
+        is_image, content_type = processor.check_is_image(mock_get)
         self.assertFalse(is_image)
         self.assertEqual(content_type, "text/xml")
 
@@ -419,7 +418,7 @@ class METSProcessorTestCase(CoreFactoryTestCase):
         with self.assertRaises(ParseError) as context:
             processor.process()
 
-        self.assertTrue("The structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
+        self.assertTrue("The physical structure mapping <structMap/> wasn't found in the METS file." in str(context.exception))
 
     @patch("imports.mets.METSProcessor.process_single_page")
     def test_process_pages_in_error(self, mock_process_single_page):

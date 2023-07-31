@@ -10,6 +10,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
+from django.utils.html import strip_tags
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from easy_thumbnails.files import get_thumbnailer
@@ -18,12 +19,18 @@ from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPE
 from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
 from pytorch_lightning.callbacks import Callback
 
+from core.search import build_highlighted_replacement_psql, search_content_psql
+
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
 from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class DidNotConverge(Exception):
+    pass
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60)
@@ -167,6 +174,17 @@ class FrontendFeedback(Callback):
         })
 
 
+def _to_ptl_device(device: str):
+    if device in ['cpu', 'mps']:
+        return device, 'auto'
+    elif any([device.startswith(x) for x in ['tpu', 'cuda', 'hpu', 'ipu']]):
+        dev, idx = device.split(':')
+        if dev == 'cuda':
+            dev = 'gpu'
+        return dev, [int(idx)]
+    raise Exception(f'Invalid device {device} specified')
+
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -232,11 +250,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
         for part in qs[:partition]:
             evaluation_data.append(make_segmentation_training_data(part))
 
-        device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-        if device_ == 'cpu':
-            device = None
-        elif device_.startswith('cuda'):
-            device = [int(device_.split(':')[-1])]
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
 
@@ -261,7 +275,8 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
                                          resize='both',
                                          topline=topline)
 
-        trainer = KrakenTrainer(devices=device,
+        trainer = KrakenTrainer(accelerator=accelerator,
+                                devices=device,
                                 # max_epochs=2,
                                 # min_epochs=5,
                                 enable_progress_bar=False,
@@ -270,15 +285,26 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
 
         trainer.fit(kraken_model)
 
-        best_version = os.path.join(model_dir,
-                                    f'version_{kraken_model.best_epoch}.mlmodel')
+        if kraken_model.best_epoch == -1:
+            raise DidNotConverge
+
+        best_version = os.path.join(model_dir, kraken_model.best_model)
 
         try:
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
+            model.training_accuracy = kraken_model.best_metric
         except FileNotFoundError:
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
             shutil.copy(load, model.file.path)
+
+    except DidNotConverge:
+        send_event('document', ground_truth[0].document.pk, "training:error", {
+            "id": model.pk,
+        })
+        user.notify(_("The model did not converge, probably because of lack of data."),
+                    id="training-warning", level='warning')
+        model.delete()
 
     except Exception as e:
         send_event('document', document_pk, "training:error", {
@@ -420,11 +446,7 @@ def train_(qs, document, transcription, model=None, user=None):
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    device_ = getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu')
-    if device_ == 'cpu':
-        device = None
-    elif device_.startswith('cuda'):
-        device = [int(device_.split(':')[-1])]
+    accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
 
@@ -453,7 +475,8 @@ def train_(qs, document, transcription, model=None, user=None):
                                     # codec=codec,
                                     resize='add')
 
-    trainer = KrakenTrainer(devices=device,
+    trainer = KrakenTrainer(accelerator=accelerator,
+                            devices=device,
                             # max_epochs=,
                             # min_epochs=hyper_params['min_epochs'],
                             enable_progress_bar=False,
@@ -463,11 +486,12 @@ def train_(qs, document, transcription, model=None, user=None):
 
     trainer.fit(kraken_model)
 
-    if kraken_model.best_epoch != 0:
-        best_version = os.path.join(model_dir, f'version_{kraken_model.best_epoch}.mlmodel')
-        shutil.copy(best_version, model.file.path)
+    if kraken_model.best_epoch == -1:
+        raise DidNotConverge
     else:
-        raise ValueError('No model created.')
+        best_version = os.path.join(model_dir, kraken_model.best_model)
+        shutil.copy(best_version, model.file.path)
+        model.training_accuracy = kraken_model.best_metric
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -506,8 +530,15 @@ def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **k
                       line__document_part__pk__in=part_pks)
               .exclude(Q(content='') | Q(content=None)))
         train_(qs, document, transcription, model=model, user=user)
+    except DidNotConverge:
+        send_event('document', document.pk, "training:error", {
+            "id": model.pk,
+        })
+        user.notify(_("The model did not converge, probably because of lack of data."),
+                    id="training-warning", level='warning')
+        model.delete()
+
     except Exception as e:
-        # TODO: catch KrakenInputException specificely?
         send_event('document', document.pk, "training:error", {
             "id": model.pk,
         })
@@ -532,7 +563,62 @@ def train(transcription_pk=None, model_pk=None, part_pks=None, user_pk=None, **k
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
-def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=None, **kwargs):
+def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
+                 part_pk=None, user_pk=None, **kwargs):
+
+    from kraken.align import forced_align as kraken_forced_align
+    from kraken.lib import models as kraken_models
+
+    OcrModel = apps.get_model('core', 'OcrModel')
+    DocumentPart = apps.get_model('core', 'DocumentPart')
+    Transcription = apps.get_model('core', 'Transcription')
+    LineTranscription = apps.get_model('core', 'LineTranscription')
+
+    ocrmodel = OcrModel.objects.get(pk=model_pk)
+    model = kraken_models.load_any(ocrmodel.file.path)
+    transcription = Transcription.objects.get(pk=transcription_pk)
+
+    part = DocumentPart.objects.get(pk=instance_pk)
+    document = part.document
+
+    text_direction = (
+        (document.main_script and document.main_script.text_direction)
+        or "horizontal-lr"
+    )
+
+    linetrans = LineTranscription.objects.filter(
+        line__document_part=part,
+        transcription=transcription
+    ).select_related('line')
+
+    for lt in linetrans:
+        data = {
+            'image': part.image,
+            "lines": [{
+                "text": lt.content,
+                "baseline": lt.line.baseline,
+                "boundary": lt.line.mask,
+                "text_direction": text_direction,
+                "tags": {'type': lt.line.typology and lt.line.typology.name or 'default'},
+            }],
+            "type": "baselines"
+        }
+
+        records = kraken_forced_align(data, model)  # base_dir = L,R
+        for pred in records:
+            # lt.content = pred.prediction
+            lt.graphs = [{
+                'c': letter,
+                'poly': poly,
+                'confidence': float(confidence)
+            } for letter, poly, confidence in zip(
+                pred.prediction, pred.cuts, pred.confidences)]
+            lt.save()
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def transcribe(instance_pk=None, model_pk=None, user_pk=None,
+               transcription_pk=None, text_direction=None, **kwargs):
 
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -556,7 +642,10 @@ def transcribe(instance_pk=None, model_pk=None, user_pk=None, text_direction=Non
     try:
         OcrModel = apps.get_model('core', 'OcrModel')
         model = OcrModel.objects.get(pk=model_pk)
-        part.transcribe(model)
+        Transcription = apps.get_model('core', 'Transcription')
+        transcription = Transcription.objects.get(pk=transcription_pk)
+
+        part.transcribe(model, transcription, user=user)
 
     except Exception as e:
         if user:
@@ -652,3 +741,61 @@ def align(
             user.notify(_("Alignment done!"),
                         id="alignment-success",
                         level='success')
+
+
+@shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
+def replace_line_transcriptions_text(
+    task, find_terms, replace_term, project_pk=None, document_pk=None, transcription_pk=None, part_pk=None, user_pk=None, **kwargs
+):
+    LineTranscription = apps.get_model('core', 'LineTranscription')
+
+    # Get the associated TaskReport
+    TaskReport = apps.get_model('reporting', 'TaskReport')
+    report = TaskReport.objects.get(task_id=task.request.id)
+
+    user = User.objects.get(pk=user_pk)
+    user.notify(_('Your replacements are being applied...'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-running', level='info')
+
+    # Find line transcriptions to update
+    search_results = search_content_psql(
+        find_terms,
+        user,
+        '',
+        project_id=project_pk,
+        document_id=document_pk,
+        transcription_id=transcription_pk,
+        part_id=part_pk,
+    )
+
+    # Apply the replacement on the found line transcriptions
+    total = search_results.count()
+    errors = 0
+    updated = []
+    for result in search_results.iterator(chunk_size=5000):
+        try:
+            report.append(f'Applying the replacement on the transcription from the line {result.line}', logger_fct=logger.info)
+            # Replace on the highlighted content and then remove the highlighting tags
+            result.content = strip_tags(build_highlighted_replacement_psql(find_terms, replace_term, result.highlighted_content))
+        except Exception as e:
+            errors += 1
+            report.append(f'Failed to apply the replacement on the transcription from the line {result.line}: {e}', logger_fct=logger.error)
+            continue
+
+        updated.append(result)
+
+        # Once we have 1000 line transcriptions to update, we do it and clear the list
+        if len(updated) >= 1000:
+            LineTranscription.objects.bulk_update(updated, fields=['content'])
+            updated = []
+
+    # We don't forget to update the remaining line transcriptions
+    if updated:
+        LineTranscription.objects.bulk_update(updated, fields=['content'])
+
+    # Alert the user
+    if total and errors == total:
+        user.notify(_('All replacements failed'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-error', level='danger')
+    elif errors:
+        user.notify(_('Replacements applied with some errors'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-warning', level='warning')
+    else:
+        user.notify(_('Replacements applied!'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-success', level='success')

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load i18n bootstrap %}
+
+{% block body %}
+<div>
+  <h2>{% block title %}{% endblock %}</h2>
+  <form method="get" class="mt-3">
+    <div>{% render_field form.document %}</div>
+    <div>{% render_field form.transcription %}</div>
+    <div class="form-row">
+      <div class="col-auto">{% render_field form.project group=True %}</div>
+      <div class="col">{% render_field form.query group=True %}</div>
+      {% block extra_form_field %}{% endblock %}
+      <div class="col-auto">
+        <input type="submit" value="{% block action_button %}{% endblock %}" class="btn btn-primary"></input>
+      </div>
+    </div>
+
+    {% if form.errors %}
+    <div class="mt-3 alert alert-danger" role="alert">
+      <ul class="mb-0">
+      {% for field_errors in form.errors.values %}
+        {% for error in field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </form>
+
+  <hr>
+
+  {% block results %}
+    {% if 'query' not in request.GET or not request.GET.query or form.errors %}
+    <!-- No need to display anything, user must search terms or the form contains errors -->
+    {% else %}
+      {% if form.cleaned_data.document %}
+      <div class="alert alert-primary" role="alert">
+        {% blocktrans with name=form.cleaned_data.document.name %}
+          Currently searching entered text in the document named <strong>{{ name }}</strong>.
+        {% endblocktrans %}
+        {% if form.cleaned_data.transcription %}
+          {% blocktrans with name=form.cleaned_data.transcription.name %}And on the transcription level <strong>{{ name }}</strong>.{% endblocktrans %}
+        {% endif %}
+        {% if form.cleaned_data.part %}
+          {% blocktrans with name=form.cleaned_data.part.title %}And in the part named <strong>{{ name }}</strong>.{% endblocktrans %}
+        {% endif %}
+        <a href="?query={{ request.GET.query }}&project={{ request.GET.project }}">
+          Click here to remove {% if form.cleaned_data.transcription or form.cleaned_data.part %}these filters{% else %}this filter{% endif %}.
+        </a>
+      </div>
+      {% endif %}
+
+    <div class="my-4">
+      <h4>{% trans "Results" %} ({{ page_obj.paginator.count }}) {% block replacement_button %}{% endblock %}</h4>
+    </div>
+
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>{% trans "Content" %}</th>
+          {% if request.GET.replacement %}
+          <th>{% trans "Replacement preview" %}</th>
+          {% endif %}
+          <th>{% trans "Image preview" %}</th>
+          {% if debug %}
+          <th>{% trans "Score" %}</th>
+          {% endif %}
+          <th>{% trans "Edit" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in page_obj %}
+        <tr>
+          <td>
+            {% if result.context_before %}
+            <small class="context" title="{% trans "Previous line" %}">
+              {{ result.context_before|safe }}
+            </small>
+            <br/>
+            {% endif %}
+
+            {% if result.object.highlighted_content %}
+            <big title="{% trans "Line transcription" %}">
+              {{ result.object.highlighted_content|safe }}
+            </big>
+            {% else %}
+            <small class="text-muted text-sm">
+              {% trans "Search terms found in previous or next line." %}
+            </small>
+            {% endif %}
+
+            {% if result.context_after %}
+            <br/>
+            <small class="context" title="{% trans "Next line" %}">
+              {{ result.context_after|safe }}
+            </small>
+            {% endif %}
+            <br/>
+            <small class="text-muted text-sm align-bottom">
+              {% blocktrans with line=result.object.line.order|add:1 %}Line <strong>#{{ line }}</strong> of{% endblocktrans %}
+              <strong>{% block part_title %}{{ result.object.line.document_part.title }}{% endblock %}</strong>
+              {% trans "in document" %}
+
+              <strong>
+                <a
+                  title="{% trans 'Filter results by this document' %}"
+                  href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ result.object.line.document_part.document.id }}"
+                >
+                  {{ result.object.line.document_part.document.name }}
+                </a>
+              </strong>
+
+              <a
+                title="{% trans 'Filter results by this transcription level' %}"
+                href="?query={{ request.GET.query }}&project={{ request.GET.project }}&document={{ result.object.line.document_part.document.id }}&transcription={{ result.object.transcription.id }}"
+              >
+                ({{ result.object.transcription.name }})
+              </a>
+            </small>
+          </td>
+          {% if request.GET.replacement %}
+          <td>
+            <big>
+              {{ result.replacement_preview|safe }}
+            </big>
+          </td>
+          {% endif %}
+          <td title="{% trans 'Full image cropped according to the transcription bounding box' %}">
+            {% if result.viewbox and result.img_url %}
+            <svg viewBox="{{ result.viewbox }}" class="lazy {% if result.larger %}wide-search-crop{% else %}tall-search-crop{% endif %}">
+              <image x="0" y="0" width="{{ result.img_w }}" height="{{ result.img_h }}" data-src="{{ result.img_url }}">
+            </svg>
+            {% else %}
+            <div class="alert alert-warning pl-3 pr-3 pt-2 pb-2 d-inline-block" role="alert">
+              {% trans "Image preview is not available for this search result" %}
+            </div>
+            {% endif %}
+          </td>
+          {% if debug %}
+          <td title="{% trans 'Search score' %}">{{ result.score }}</td>
+          {% endif %}
+          <td title="{% trans 'Go to document part editing page' %}">
+            <a class="btn btn-primary" target="_blank" href="{% url 'document-part-edit' pk=result.object.line.document_part.document.id part_pk=result.object.line.document_part.id %}">
+              <i class="fas fa-external-link-square-alt"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{% if debug %}4{% else %}3{% endif %}">{% trans "No results matched your search." %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% include 'includes/pagination.html' %}
+    {% endif %}
+  {% endblock %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  $(document).ready(function() {
+    bootLazyload();
+  });
+</script>
+{% endblock %}
