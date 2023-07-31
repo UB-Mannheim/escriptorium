@@ -80,6 +80,7 @@
                             :items="documents"
                             :on-sort="sortDocuments"
                             :sort-disabled="loading"
+                            :linkable="true"
                         >
                             <template #actions="{ item }">
                                 <EscrButton

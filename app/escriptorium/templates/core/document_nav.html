@@ -11,7 +11,12 @@
         {% if object %}
         <a class="mt-2 center px-3"
            title="{% trans "Back to document list" %}"
-           href="{% url 'documents-list' slug=document.project.slug %}">
+           {% if request.user.legacy_mode %}
+             href="{% url 'documents-list' slug=document.project.slug %}"
+           {% else %}
+             href="{% url 'project-dashboard' slug=document.project.slug %}"
+           {% endif %}
+           >
             <i class="fas fa-arrow-left fa-lg"></i>
         </a>
         {% endif %}
