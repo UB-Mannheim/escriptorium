@@ -16,16 +16,16 @@ RUN apt-get update -q && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install OpenJDK-11
+
+# Install OpenJDK
 RUN echo "Installing jvm" && \
     apt update && \
-    apt-get install -y openjdk-11-jdk && \
+    apt install -y default-jre default-jdk && \
     apt-get install -y ant && \
     apt-get clean;
 
 # Set JAVA_HOME
-ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
-RUN export JAVA_HOME
+RUN export JAVA_HOME=$(dirname $(dirname $(readlink -f  /usr/bin/java)))
 
 # Add non privileged user to run the app
 RUN addgroup --system uwsgi

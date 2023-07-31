@@ -171,7 +171,7 @@ export default {
                     break;
                 case "mets":
                     invalid = { layerName: !this.layerName };
-                    invalid =  this.metsType === "file"
+                    invalid =  this.metsType === "local"
                         ? { ...invalid, file: !this.uploadFile }
                         : { ...invalid, metsUri: !this.metsUri };
                     break;

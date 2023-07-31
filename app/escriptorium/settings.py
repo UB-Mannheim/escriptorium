@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.postgres',
     'django.forms',
 
     'django_cleanup',
@@ -432,7 +433,7 @@ QUOTA_CPU_MINUTES = int(os.environ['QUOTA_CPU_MINUTES']) if os.environ.get('QUOT
 # If set to None, users have unlimited GPU minutes capacity
 QUOTA_GPU_MINUTES = int(os.environ['QUOTA_GPU_MINUTES']) if os.environ.get('QUOTA_GPU_MINUTES') else None
 
-# Number of days that we have to wait before sending a new email to an user that reached one or more of its quotas
+# Number of days that we have to wait before sending a new email to a user that reached one or more of its quotas
 QUOTA_NOTIFICATIONS_TIMEOUT = int(os.environ.get('QUOTA_NOTIFICATIONS_TIMEOUT', '3'))
 
 # Boolean used to enable the OpenITI mARkdown export mode

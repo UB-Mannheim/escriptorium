@@ -219,17 +219,20 @@ export default Vue.extend({
                 formatter: textAnnoFormatter.bind(this)
             });
 
-            const isEditorOpen = function(mutationsList, observer) {
+            this.isEditorOpen = false;
+            const editorOpenObserver = function(mutationsList, observer) {
                 // let's hope for no race condition with the contenteditable focusin/out...
                 for (let mutation of mutationsList) {
                     if (mutation.addedNodes.length) {
+                        this.isEditorOpen = true;
                         this.$store.commit('document/setBlockShortcuts', true);
                     } else if (mutation.removedNodes.length) {
+                        this.isEditorOpen = false;
                         this.$store.commit('document/setBlockShortcuts', false);
                     }
                 }
             }.bind(this);
-            const editorObserver = new MutationObserver(isEditorOpen);
+            const editorObserver = new MutationObserver(editorOpenObserver);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
             this.anno.on('createAnnotation', async function(annotation, overrideId) {
@@ -277,13 +280,15 @@ export default Vue.extend({
 
         recalculateAnnotationSelectors() {
             for (let anno of this.anno.getAnnotations()) {
-                let annoEl = document.querySelector('.r6o-annotation[data-id="'+anno.id+'"]');
+                let annoEls = document.querySelectorAll('.r6o-annotation[data-id="'+anno.id+'"]');
 
-                if (annoEl === null) {
+                if (annoEls === null) {
                     this.$store.dispatch('textAnnotations/delete', anno.id);
                 }
+
                 let range = document.createRange();
-                range.selectNodeContents(annoEl);
+                range.setStart(annoEls[0], 0);
+                range.setEnd(annoEls[annoEls.length-1], 1);
                 let rangeBefore = document.createRange();
                 rangeBefore.setStart(this.$refs.contentContainer, 0);
                 rangeBefore.setEnd(range.startContainer, range.startOffset);
@@ -335,9 +340,8 @@ export default Vue.extend({
             }
 
             // need to add/remove danger indicators
-            // for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
-            //    let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
-            for (let line in this.$refs.diplomaticLines.childElement) {
+            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
+                let line = this.$refs.diplomaticLines.querySelector('div:nth-child('+parseInt(i+1)+')');
                 if (line === null) {
                     line.remove();
                     continue;
@@ -362,7 +366,9 @@ export default Vue.extend({
         },
 
         stopEdit(ev) {
-            this.$store.commit('document/setBlockShortcuts', false);
+            if (this.isEditorOpen !== true) {
+               this.$store.commit('document/setBlockShortcuts', false);
+            }
             this.constrainLineNumber();
             this.save();
         },

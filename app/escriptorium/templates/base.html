@@ -1,5 +1,5 @@
 {% load i18n language_flags_tags static %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
+{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" data-bs-theme="dark">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -37,12 +37,10 @@
       ></global-navigation>
     </div>
 
-    <main><section>
-    <div class="container-fluid">
+    <div id="main" class="container-fluid">
     {% block body %}
     {% endblock body %}
     </div>
-    </section></main>
 
     <script src="{% static 'vendor.js' %}"></script>
 

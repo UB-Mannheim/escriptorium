@@ -99,9 +99,11 @@ class METSProcessor:
     def get_pages_from_struct_map(self):
         from imports.parsers import ParseError
 
-        struct_map = self.mets_xml.find("mets:structMap", namespaces=self.NAMESPACES)
+        struct_map = (self.mets_xml.find("mets:structMap[@TYPE='PHYSICAL']", namespaces=self.NAMESPACES)
+                      or self.mets_xml.find("mets:structMap[@TYPE='physical']", namespaces=self.NAMESPACES))
+
         if struct_map is None:
-            raise ParseError("The structure mapping <structMap/> wasn't found in the METS file.")
+            raise ParseError("The physical structure mapping <structMap/> wasn't found in the METS file.")
 
         pages = []
         for element in struct_map.findall(".//mets:div[@TYPE]", namespaces=self.NAMESPACES):
@@ -187,10 +189,9 @@ class METSProcessor:
         except ValidationError:
             return urljoin(f"{self.mets_base_uri}/", href.lstrip("/"))
 
-    def check_is_image(self, uri):
-        head_resp = requests.head(uri)
-        content_type = head_resp.headers["content-type"]
-        return content_type.startswith("image/"), content_type
+    def check_is_image(self, resp):
+        content_type = resp.headers.get("content-type")
+        return content_type and content_type.startswith("image/"), content_type
 
     def handle_remote_pointer(self, href, mets_page_image, mets_page_sources, layer_name, layers_count):
         uri = self.build_remote_uri(href)
@@ -200,18 +201,24 @@ class METSProcessor:
             self.report.append(f'The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "{domain}".', logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
 
-        is_image, content_type = self.check_is_image(uri)
-        # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
-        if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
-            return mets_page_image, mets_page_sources, layers_count
-
         # Downloading the file content
         try:
             get_resp = requests.get(uri)
+            is_image, content_type = self.check_is_image(get_resp)
+
+            # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
+            if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
+                return mets_page_image, mets_page_sources, layers_count
+
             get_resp.raise_for_status()
             content = get_resp.content
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
+            if file.name == 'default.jpg':
+                # Images from IIIF image servers require special handling.
+                # {scheme}://{server}{/prefix}/{identifier}/{region}/{size}/{rotation}/{quality}.{format}
+                scheme_server_prefix, identifier, region, size, rotation, quality_format = uri.rsplit('/', 5)
+                file.name = identifier + '.jpg'
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
@@ -241,6 +248,9 @@ class METSProcessor:
             file = files[file_pointer.get("FILEID")]
             href = self.get_file_location(file)
             layer_name = self.get_file_group_name(file) or f"Layer {layers_count}"
+            # Skip files in some file groups
+            if layer_name in ['DOWNLOAD', 'FULLTEXT', 'MAX', 'MEDIUM', 'MIN', 'PRESENTATION', 'THUMBS']:
+                continue
 
             if self.archive:
                 mets_page_image, mets_page_sources, layers_count = self.handle_pointer_in_archive(href, mets_page_image, mets_page_sources, layer_name, layers_count)

@@ -8,7 +8,8 @@
 {% block extra_nav %}
 {{ block.super }}
 <div class="ml-auto">
-    <form method="get" action="{% url 'document-ontology-export' pk=document.pk %}">
+    <button data-toggle="modal" data-target="#importOntologyModal" class="btn btn-sm btn-primary" type="button">{% translate "Import" %}</button>
+    <form method="get" action="{% url 'document-ontology-export' pk=document.pk %}" class="d-inline-block">
         {% csrf_token %}
         <button class="btn btn-sm btn-primary" type="submit">{% translate "Export" %}</button>
     </form>
@@ -231,6 +232,10 @@
         </fieldset>
     </form>
 </div>
+{% endblock %}
+
+{% block modals %}
+{% include "core/ontology/import_ontology.html" %}
 {% endblock %}
 
 {% block scripts %}

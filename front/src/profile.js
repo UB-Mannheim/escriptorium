@@ -20,7 +20,8 @@ class Profile {
     }
 
     get(key, default_) {
-        return this.settings[key] || default_;
+        if (this.settings[key] !== undefined) return this.settings[key];
+        else return default_;
     }
 
     delete(key) {
