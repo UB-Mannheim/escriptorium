@@ -174,6 +174,7 @@
 /* reset default fonts to 14px normal noto sans, weight 400 */
 .escr-body.escr-vue-enabled,
 .escr-page input[type="text"],
+.escr-sidebar-container input[type="text"],
 .escr-global-nav,
 .v-popper__inner {
     font-family: "Noto Sans", sans-serif;
@@ -189,7 +190,8 @@
 #vue-global-nav .escr-global-nav {
     height: 100vh;
 }
-.escr-page h1 {
+.escr-page h1,
+.escr-sidebar-container h1 {
     font-weight: 700;
     font-size: 24px;
     line-height: 33px;
@@ -200,7 +202,8 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
-.escr-page h2 {
+.escr-page h2,
+.escr-sidebar-container h2 {
     font-weight: 700;
     font-size: 18px;
     line-height: 25px;
@@ -211,7 +214,8 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
-.escr-page h3 {
+.escr-page h3,
+.escr-sidebar-container h3 {
     font-weight: 600;
     font-size: 16px;
     line-height: 22px;
@@ -222,7 +226,8 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
-.escr-page h4 {
+.escr-page h4,
+.escr-sidebar-container h4 {
     font-weight: 600;
     font-size: 14px;
     line-height: 19px;
@@ -235,7 +240,8 @@
 }
 
 /* Horizontal rule */
-.escr-page hr {
+.escr-page hr,
+.escr-sidebar-container hr {
     border: none;
     border-top: 1px solid var(--text3);
 }
