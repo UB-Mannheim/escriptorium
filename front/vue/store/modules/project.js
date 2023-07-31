@@ -49,7 +49,7 @@ const state = () => ({
     editModalOpen: false,
     guidelines: "",
     id: null,
-    loading: false,
+    loading: true,
     menuOpen: false,
     name: "",
     nextPage: "",
@@ -183,7 +183,8 @@ const actions = {
                     },
                     { root: true },
                 );
-                // TODO: redirect to new document
+                // redirect to new document
+                window.location = `/document/${data.pk}/images/`;
                 commit("setCreateDocumentModalOpen", false);
             } else {
                 commit("setLoading", false);
@@ -244,6 +245,7 @@ const actions = {
         commit("setLoading", true);
         try {
             await deleteDocument({ documentId: state?.documentToDelete?.pk });
+            await dispatch("fetchProjectDocuments");
             commit("setDeleteDocumentModalOpen", false);
             // show toast alert on success
             dispatch(
@@ -263,8 +265,16 @@ const actions = {
         commit("setLoading", true);
         try {
             await deleteProject(state.id);
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Project deleted successfully",
+                },
+                { root: true },
+            );
             commit("setDeleteModalOpen", false);
-            // TODO: redirect to projects list on delete
+            window.location = "/projects/";
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -280,7 +290,12 @@ const actions = {
             const { data } = await axios.get(state.nextPage);
             if (data?.results) {
                 data.results.forEach((document) => {
-                    commit("addDocument", document);
+                    commit("addDocument", {
+                        ...document,
+                        tags: { tags: document.tags },
+                        // TODO: link to document dashboard
+                        href: `/document/${document.pk}/images/`,
+                    });
                 });
                 commit("setNextPage", data.next);
             } else {
@@ -306,9 +321,11 @@ const actions = {
         if (data) {
             commit("setName", data.name);
             commit("setSlug", data.slug);
+            commit("setGuidelines", data.guidelines);
+            const tagPks = data.tags.map((tag) => tag.pk);
             commit(
                 "setTags",
-                rootState.projects.tags.filter((t) => data.tags.includes(t.pk)),
+                rootState.projects.tags.filter((t) => tagPks.includes(t.pk)),
             );
             commit("setSharedWithGroups", data.shared_with_groups);
             commit("setSharedWithUsers", data.shared_with_users);
@@ -319,7 +336,7 @@ const actions = {
                     formState: {
                         name: data.name,
                         guidelines: data.guidelines,
-                        tags: data.tags,
+                        tags: tagPks,
                         tagColor: "",
                         tagName: "",
                     },
@@ -345,6 +362,8 @@ const actions = {
         });
         if (data?.next) {
             commit("setNextPage", data.next);
+        } else {
+            commit("setNextPage", "");
         }
         if (data?.results) {
             commit(
@@ -352,6 +371,8 @@ const actions = {
                 data.results.map((result) => ({
                     ...result,
                     tags: { tags: result.tags },
+                    // TODO: link to document dashboard
+                    href: `/document/${result.pk}/images/`,
                 })),
             );
         } else {
@@ -385,13 +406,6 @@ const actions = {
         } else {
             throw new Error("Unable to retrieve scripts");
         }
-    },
-    /**
-     * Navigate to the images page for this document.
-     */
-    navigateToImages(_, item) {
-        // TODO: implement this; not yet designed
-        console.log(item);
     },
     /**
      * Open the "create document" modal.
@@ -444,10 +458,11 @@ const actions = {
             if (data) {
                 commit("setName", name);
                 commit("setGuidelines", guidelines);
+                const tagPks = data.tags.map((tag) => tag.pk);
                 commit(
                     "setTags",
                     rootState.projects.tags.filter((t) =>
-                        data?.tags?.includes(t.pk),
+                        tagPks.includes(t.pk),
                     ),
                 );
                 commit("setEditModalOpen", false);
@@ -508,12 +523,13 @@ const actions = {
      */
     async sortDocuments({ commit, dispatch }, { field, direction }) {
         await commit("setSortState", { field, direction });
+        commit("setLoading", true);
         try {
             await dispatch("fetchProjectDocuments");
         } catch (error) {
-            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
+        commit("setLoading", false);
     },
 };
 

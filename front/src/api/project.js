@@ -35,8 +35,10 @@ export const createProject = async ({ name, guidelines, tags }) =>
     });
 
 export const editProject = async (projectId, { name, guidelines, tags }) =>
-    await axios.put(`/projects/${projectId}`, {
-        params: { name, guidelines, tags },
+    await axios.put(`/projects/${projectId}/`, {
+        name,
+        guidelines,
+        tags,
     });
 
 // delete a project by ID

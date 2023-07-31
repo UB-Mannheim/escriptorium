@@ -112,15 +112,13 @@ export const editDocument = async (
     documentId,
     { name, project, mainScript, readDirection, linePosition, tags },
 ) =>
-    await axios.put(`/documents/${documentId}`, {
-        params: {
-            name,
-            project,
-            main_script: mainScript,
-            read_direction: readDirection,
-            line_offset: linePosition,
-            tags,
-        },
+    await axios.put(`/documents/${documentId}/`, {
+        name,
+        project,
+        main_script: mainScript,
+        read_direction: readDirection,
+        line_offset: linePosition,
+        tags,
     });
 
 // retrieve document metadata
@@ -130,13 +128,13 @@ export const retrieveDocumentMetadata = async (documentId) =>
 // create document metadata
 export const createDocumentMetadata = async ({ documentId, metadatum }) =>
     await axios.post(`/documents/${documentId}/metadata/`, {
-        metadatum,
+        ...metadatum,
     });
 
 // update document metadata
 export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
-    await axios.put(`/documents/${documentId}/metadata/${metadatum.pk}`, {
-        metadatum,
+    await axios.put(`/documents/${documentId}/metadata/${metadatum.pk}/`, {
+        ...metadatum,
     });
 
 // delete document metadata

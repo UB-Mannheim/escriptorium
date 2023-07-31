@@ -12,7 +12,7 @@ import { tagColorToVariant } from "../util/color";
 const state = () => ({
     createModalOpen: false,
     deleteModalOpen: false,
-    loading: false,
+    loading: true,
     /**
      * If there are additional pages of results, the next one will go here
      */
@@ -85,8 +85,8 @@ const actions = {
                     { root: true },
                 );
                 commit("setCreateModalOpen", false);
-                // redirect to `/project/${data.slug}`
-                window.location = `/project/${data.slug}/documents`;
+                // redirect to project dashboard
+                window.location = `/project/${data.slug}`;
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create project");
@@ -191,7 +191,8 @@ const actions = {
                 data.results.map((result) => ({
                     ...result,
                     tags: { tags: result.tags },
-                    href: `/project/${result.slug}/documents`,
+                    // link to project dashboard
+                    href: `/project/${result.slug}`,
                 })),
             );
             commit("setNextPage", data.next);
@@ -214,7 +215,8 @@ const actions = {
                     commit("addProject", {
                         ...result,
                         tags: { tags: result.tags },
-                        href: `/project/${result.slug}/documents`,
+                        // link to project dashboard
+                        href: `/project/${result.slug}`,
                     });
                 });
                 commit("setNextPage", data.next);
