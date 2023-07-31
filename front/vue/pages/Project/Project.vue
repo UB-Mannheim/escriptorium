@@ -188,6 +188,7 @@ import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import "../../components/Common/Card.css"
 import "./Project.css";
 
 export default {
