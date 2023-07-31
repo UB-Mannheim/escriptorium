@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n static %}
 
-{% block head_title %}{% trans "My Projects" %}{% endblock %}
+{% block head_title %}{{ project.name }}{% endblock %}
 
 {% block body %}
     {% if not request.user.legacy_mode %}
