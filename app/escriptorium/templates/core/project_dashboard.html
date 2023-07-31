@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "My Projects" %}{% endblock %}
+
+{% block body %}
+    {% if not request.user.legacy_mode %}
+    <div id="project-dashboard">
+        <project-dashboard
+            :id={{ project_id }}
+            :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+        ></project-dashboard>
+    </div>
+    {% else %}
+        {% translate "This page is not available in legacy mode. Visit your user settings to disable legacy mode." %}
+    {% endif %}
+{% endblock %}
+
+{% block extrascript %}
+    {% if not request.user.legacy_mode %}
+        <script src="{% static 'projectDashboard.js' %}"></script>
+    {% endif %}
+{% endblock extrascript %}
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'projectDashboard.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}
