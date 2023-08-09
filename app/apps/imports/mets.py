@@ -42,7 +42,11 @@ class METSProcessor:
     NAMESPACES = {"mets": "http://www.loc.gov/METS/", "mods": "http://www.loc.gov/mods/v3"}
 
     def __init__(self, mets_xml, report, archive=None, mets_base_uri=None):
-        self.mets_xml = mets_xml
+        if mets_xml.tag == '{http://www.loc.gov/METS/}mets':
+            self.mets_xml = mets_xml
+        else:
+            # The METS XML is a child of the root tag (for example of OAI-PMH)
+            self.mets_xml = mets_xml.find('.//mets:mets', namespaces=self.NAMESPACES)
         self.report = report
         self.archive = archive
         self.mets_base_uri = mets_base_uri
