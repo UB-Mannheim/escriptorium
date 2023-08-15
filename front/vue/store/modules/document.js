@@ -6,12 +6,12 @@ import {
     retrieveDocument,
     retrieveDocumentMetadata,
     retrieveDocumentModels,
+    retrieveDocumentOntology,
     retrieveDocumentParts,
     retrieveDocumentTasks,
     retrieveTextualWitnesses,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
-    retrieveTranscriptionOntology,
     shareDocument,
     updateDocumentMetadata,
 } from "../../../src/api";
@@ -32,7 +32,6 @@ const state = () => ({
         models: false,
         parts: false,
         tasks: false,
-        transcriptions: false,
         user: false,
     },
     mainScript: "",
@@ -150,15 +149,16 @@ const actions = {
      * Change the ontology table category and fetch the selected ontology.
      */
     async changeOntologyCategory({ commit, dispatch }, category) {
-        commit("ontology/setLoading", true, { root: true });
         commit("ontology/setCategory", category, { root: true });
         try {
-            await dispatch("fetchTranscriptionOntology");
+            commit("ontology/setLoading", true, { root: true });
+            await dispatch("fetchDocumentOntology");
+            commit("ontology/setLoading", false, { root: true });
         } catch (error) {
+            commit("ontology/setOntology", [], { root: true });
             commit("ontology/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });
         }
-        commit("ontology/setLoading", false, { root: true });
     },
     /**
      * Change the selected transcription and fetch its ontology/characters.
@@ -181,16 +181,26 @@ const actions = {
         // kickoff fetch
         try {
             commit("characters/setLoading", true, { root: true });
-            commit("ontology/setLoading", true, { root: true });
             commit(
                 "transcription/setLoading",
                 { key: "characterCount", loading: true },
                 { root: true },
             );
             await dispatch("fetchTranscriptionCharacters");
-            await dispatch("fetchTranscriptionCharCount");
-            await dispatch("fetchTranscriptionOntology");
+            dispatch("fetchTranscriptionCharCount");
+            commit("characters/setLoading", false, { root: true });
+            commit(
+                "transcription/setLoading",
+                { key: "characterCount", loading: false },
+                { root: true },
+            );
         } catch (error) {
+            commit("characters/setLoading", false, { root: true });
+            commit(
+                "transcription/setLoading",
+                { key: "characterCount", loading: false },
+                { root: true },
+            );
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -269,6 +279,8 @@ const actions = {
         Object.keys(state.loading).map((key) =>
             commit("setLoading", { key, loading: true }),
         );
+        commit("ontology/setLoading", true, { root: true });
+        commit("characters/setLoading", true, { root: true });
         // fetch document
         const { data } = await retrieveDocument(state.id);
         if (data) {
@@ -372,9 +384,28 @@ const actions = {
                 // kick off the characters and ontology fetching
                 try {
                     await dispatch("fetchTranscriptionCharacters");
-                    await dispatch("fetchTranscriptionCharCount");
-                    await dispatch("fetchTranscriptionOntology");
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: true },
+                        { root: true },
+                    );
+                    dispatch("fetchTranscriptionCharCount");
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: false },
+                        { root: true },
+                    );
+                    await dispatch("fetchDocumentOntology");
+                    commit("ontology/setLoading", false, { root: true });
+                    commit("characters/setLoading", false, { root: true });
                 } catch (error) {
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: false },
+                        { root: true },
+                    );
+                    commit("ontology/setLoading", false, { root: true });
+                    commit("characters/setLoading", false, { root: true });
                     dispatch("alerts/addError", error, { root: true });
                 }
             }
@@ -547,23 +578,19 @@ const actions = {
         }
     },
     /**
-     * Fetch the current transcription's ontology, given this document's id from state, plus
-     * ontology category and sorting params from ontology Vuex store.
+     * Fetch the current document's ontology, given this document's id from
+     * state, plus ontology category and sorting params from ontology Vuex store.
      */
-    async fetchTranscriptionOntology({ commit, state, rootState }) {
-        commit("ontology/setLoading", true, { root: true });
-        const { data } = await retrieveTranscriptionOntology({
+    async fetchDocumentOntology({ commit, state, rootState }) {
+        const { data } = await retrieveDocumentOntology({
             documentId: state.id,
-            transcriptionId: rootState.transcription.selectedTranscription,
             category: rootState.ontology.category,
             sortField: rootState.ontology.sortState?.field,
             sortDirection: rootState.ontology.sortState?.direction,
         });
         if (data?.results) {
             commit("ontology/setOntology", data.results, { root: true });
-            commit("ontology/setLoading", false, { root: true });
         } else {
-            commit("ontology/setLoading", false, { root: true });
             throw new Error(
                 `Unable to retrieve ${rootState.ontology.category} ontology`,
             );
@@ -904,7 +931,9 @@ const actions = {
         }
         commit("characters/setSortState", { field, direction }, { root: true });
         try {
+            commit("characters/setLoading", true, { root: true });
             await dispatch("fetchTranscriptionCharacters");
+            commit("characters/setLoading", false, { root: true });
         } catch (error) {
             commit("characters/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });
@@ -917,7 +946,9 @@ const actions = {
     async sortOntology({ commit, dispatch }, { field, direction }) {
         commit("ontology/setSortState", { field, direction }, { root: true });
         try {
-            await dispatch("fetchTranscriptionOntology");
+            commit("ontology/setLoading", true, { root: true });
+            await dispatch("fetchDocumentOntology");
+            commit("ontology/setLoading", false, { root: true });
         } catch (error) {
             commit("ontology/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });

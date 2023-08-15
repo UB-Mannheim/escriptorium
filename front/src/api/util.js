@@ -1,9 +1,9 @@
 // convenience object mapping frontend labels to ontology model names in API
 export const ontologyMap = {
-    regions: "block",
-    lines: "line",
-    text: "annotations",
-    images: "part",
+    regions: "types/block",
+    lines: "types/line",
+    text: "taxonomies/annotations",
+    image: "taxonomies/annotations",
 };
 
 // construct the URL param for ordering/sort

@@ -26,9 +26,8 @@ export const retrieveDocument = async (documentId) =>
     await axios.get(`/documents/${documentId}`);
 
 // retrieve types list for a specific transcription on a document
-export const retrieveTranscriptionOntology = async ({
+export const retrieveDocumentOntology = async ({
     documentId,
-    transcriptionId,
     category,
     sortField,
     sortDirection,
@@ -40,8 +39,11 @@ export const retrieveTranscriptionOntology = async ({
             direction: sortDirection,
         });
     }
+    if (["image", "text"].includes(category)) {
+        params.target = category;
+    }
     return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/types/${ontologyMap[category]}`,
+        `/documents/${documentId}/${ontologyMap[category]}`,
         { params },
     );
 };
@@ -148,6 +150,15 @@ export const retrieveDocumentModels = async (documentId) =>
             documents: documentId,
         },
     });
+
+const jobTypeIds = {
+    segment: 1,
+    recognize: 2,
+};
+
+// retrieve all models (by job type)
+export const retrieveModels = async (jobType) =>
+    await axios.get("/models", { params: { job: jobTypeIds[jobType] } });
 
 // share this document with a group or user
 export const shareDocument = async ({ documentId, group, user }) =>
