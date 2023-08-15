@@ -1,0 +1,13 @@
+.escr-loader-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 auto;
+    overflow: hidden;
+}
+.escr-loader-container .escr-spinner {
+    width: 24px;
+    height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+}
