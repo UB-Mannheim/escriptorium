@@ -390,6 +390,8 @@ const actions = {
         await dispatch("fetchDocumentMetadata");
         await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
+        await dispatch({ type: "user/fetchSegmentModels" }, { root: true });
+        await dispatch({ type: "user/fetchRecognizeModels" }, { root: true });
         await dispatch("fetchTextualWitnesses");
     },
     /**
