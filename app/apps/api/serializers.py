@@ -809,12 +809,13 @@ class OcrModelSerializer(serializers.ModelSerializer):
     rights = serializers.SerializerMethodField(source='get_rights')
     script = serializers.ReadOnlyField(source='script.name')
     parent = serializers.ReadOnlyField(source='parent.name')
+    can_share = serializers.SerializerMethodField(source='get_can_share')
 
     class Meta:
         model = OcrModel
         fields = ('pk', 'name', 'file', 'file_size', 'job',
                   'owner', 'training', 'versions', 'documents',
-                  'accuracy_percent', 'rights', 'script', 'parent')
+                  'accuracy_percent', 'rights', 'script', 'parent', 'can_share')
 
     def create(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
@@ -835,6 +836,10 @@ class OcrModelSerializer(serializers.ModelSerializer):
             return "public"
         else:
             return "user"
+
+    def get_can_share(self, instance):
+        user = self.context["view"].request.user
+        return instance.owner == user and not instance.public
 
 
 class ProcessSerializerMixin():
