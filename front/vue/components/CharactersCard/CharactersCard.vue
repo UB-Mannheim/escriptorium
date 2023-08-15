@@ -129,7 +129,9 @@ export default {
          * represented in hexadecimal, with U+ at the beginning, such as U+2ACC.
          */
         unicodeCodePoint(str) {
-            return `U+${str.codePointAt(0).toString(16).toUpperCase()}`;
+            if (str) {
+                return `U+${str.codePointAt(0).toString(16).toUpperCase()}`;
+            } return "";
         },
     }
 }
