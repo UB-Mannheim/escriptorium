@@ -192,9 +192,19 @@
                             <dd>{{ transcriptionConfidence }}</dd>
                         </dl>
                     </div>
+                    <!-- Characters section -->
+                    <CharactersCard
+                        class="escr-document-characters"
+                        compact
+                        :loading="charactersLoading"
+                        :on-view="() => openCharactersModal"
+                        :on-sort-characters="sortCharacters"
+                        :sort="charactersSort && charactersSort.field"
+                        :items="characters"
+                    />
                     <!-- Ontology section -->
                     <OntologyCard
-                        class="escr-project-ontology"
+                        class="escr-document-ontology"
                         context="Document"
                         compact
                         :items="ontology"
@@ -203,16 +213,6 @@
                         :on-select-category="changeOntologyCategory"
                         :on-sort="sortOntology"
                         :selected-category="ontologyCategory"
-                    />
-                    <!-- Characters section -->
-                    <CharactersCard
-                        class="escr-project-characters"
-                        compact
-                        :loading="charactersLoading"
-                        :on-view="() => openCharactersModal"
-                        :on-sort-characters="sortCharacters"
-                        :sort="charactersSort && charactersSort.field"
-                        :items="characters"
                     />
                 </div>
                 <!-- delete document modal -->
