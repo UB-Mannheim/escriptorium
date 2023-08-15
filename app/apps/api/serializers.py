@@ -879,7 +879,8 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     )
 
     parts = serializers.PrimaryKeyRelatedField(many=True,
-                                               queryset=DocumentPart.objects.all())
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
     steps = serializers.ChoiceField(choices=STEPS_CHOICES,
                                     required=False,
                                     default='both')
@@ -898,7 +899,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         model = self.validated_data.get('model')
-        parts = self.validated_data.get('parts')
+        parts = self.validated_data.get('parts', self.fields['parts'].queryset)
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1065,8 +1066,9 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
-    parts = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=DocumentPart.objects.all())
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
     model = serializers.PrimaryKeyRelatedField(
         queryset=OcrModel.objects.all())
     transcription = serializers.PrimaryKeyRelatedField(
@@ -1094,7 +1096,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.executed_on = timezone.now()
             ocr_model_document.save()
 
-        for part in self.validated_data.get('parts'):
+        for part in self.validated_data.get('parts', self.fields['parts'].queryset):
             part.chain_tasks(
                 transcribe.si(
                     transcription_pk=transcription.pk,
@@ -1258,7 +1260,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         full_doc = self.validated_data.get("full_doc", True)
         threshold = self.validated_data.get("threshold", 0.8)
         region_types = self.validated_data.get("region_types", ["Orphan", "Undefined"])
-        parts = self.validated_data.get("parts")
+        parts = self.validated_data.get("parts", self.fields["parts"].queryset)
         layer_name = self.validated_data.get("layer_name")
 
         if existing_witness:
