@@ -354,13 +354,15 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.ReadOnlyField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
+    project_name = serializers.SerializerMethodField()
+    project_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'valid_part_types',
-                  'parts_count', 'tags', 'created_at', 'updated_at')
+                  'parts_count', 'tags', 'created_at', 'updated_at', 'project_name', 'project_id')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -371,6 +373,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
+
+    def get_project_name(self, document):
+        return document.project.name
+
+    def get_project_id(self, document):
+        return document.project.id
 
     def to_representation(self, instance):
         # only use DocumentTagSerializer on GET; otherwise, use pks
