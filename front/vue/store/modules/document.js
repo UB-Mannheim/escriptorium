@@ -23,6 +23,8 @@ import { throttle } from "../util/throttle";
 // initial state
 const state = () => ({
     deleteModalOpen: false,
+    // list of all possible document tags from project
+    documentTags: [],
     editModalOpen: false,
     id: null,
     lastModified: "",
@@ -290,9 +292,11 @@ const actions = {
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
             commit("setPartsCount", data.parts_count);
-            commit("setProjectId", data.project?.id);
-            commit("setProjectName", data.project?.name);
-            commit("setRegionTypes", data.valid_block_types);
+            await commit("setRegionTypes", [
+                ...data.valid_block_types,
+                { pk: "Undefined", name: "(Undefined region type)" },
+                { pk: "Orphan", name: "(Orphan lines)" },
+            ]);
             // select all region types on forms that have that key
             Object.keys(forms)
                 .filter((form) =>
@@ -307,7 +311,7 @@ const actions = {
                         {
                             form,
                             field: "regionTypes",
-                            value: data.valid_block_types.map((rt) =>
+                            value: state.regionTypes.map((rt) =>
                                 rt.pk.toString(),
                             ),
                         },
@@ -358,10 +362,13 @@ const actions = {
                 try {
                     commit("setLoading", { key: "parts", loading: true });
                     await dispatch("fetchDocumentParts");
+                    commit("setLoading", { key: "parts", loading: false });
                 } catch (error) {
                     commit("setLoading", { key: "parts", loading: false });
                     dispatch("alerts/addError", error, { root: true });
                 }
+            } else {
+                commit("setLoading", { key: "parts", loading: false });
             }
             if (data.transcriptions?.length) {
                 // set transcription list to non-archived transcriptions
@@ -475,21 +482,24 @@ const actions = {
      * Fetch the current document's most recent images with thumbnails.
      */
     async fetchDocumentParts({ commit, state }) {
-        commit("setLoading", { key: "parts", loading: true });
-        const { data } = await retrieveDocumentParts({ documentId: state.id });
+        const { data } = await retrieveDocumentParts({
+            documentId: state.id,
+            field: "updated_at",
+            direction: -1,
+        });
         if (data?.results) {
             commit(
                 "setParts",
                 data.results.map((part) => ({
                     ...part,
+                    title: `${part.title} - ${part.filename}`,
                     thumbnail: part.image?.thumbnails?.card,
+                    href: `/document/${state.id}/part/${part.pk}/edit/`,
                 })),
             );
         } else {
-            commit("setLoading", { key: "parts", loading: false });
             throw new Error("Unable to retrieve document images");
         }
-        commit("setLoading", { key: "parts", loading: false });
     },
     /**
      * Fetch page 1 of the current document's most recent tasks.
@@ -828,9 +838,10 @@ const actions = {
                 commit("setReadDirection", readDirection);
                 commit(
                     "setTags",
-                    rootState.project.documentTags.filter((t) =>
-                        documentResponse.data.tags?.includes(t.pk),
-                    ),
+                    documentResponse.data.tags.map((tag) => ({
+                        ...tag,
+                        variant: tagColorToVariant(tag.color),
+                    })),
                 );
                 commit("setEditModalOpen", false);
             } else {
