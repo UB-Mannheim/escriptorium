@@ -543,10 +543,12 @@ class DocumentViewSet(ModelViewSet):
 
 
 class TaskReportViewSet(ModelViewSet):
-    queryset = TaskReport.objects.all().order_by("-queued_at", "-started_at", "-done_at")
+    queryset = TaskReport.objects.all()
     serializer_class = TaskReportSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['document']
+    ordering_fields = ['queued_at', 'started_at', 'done_at']
+    ordering = ['-queued_at', '-started_at', '-done_at']
 
     def get_queryset(self):
         qs = super().get_queryset().filter(user=self.request.user)
@@ -608,6 +610,7 @@ class ImportViewSet(GenericViewSet, CreateModelMixin):
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
+    filter_backends = [filters.OrderingFilter]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1046,7 +1049,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 class OcrModelViewSet(ModelViewSet):
     queryset = OcrModel.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['documents']
+    filterset_fields = ['documents', 'job']
     serializer_class = OcrModelSerializer
 
     def get_queryset(self):
