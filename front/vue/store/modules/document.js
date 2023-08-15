@@ -76,6 +76,7 @@ const state = () => ({
     partsCount: null,
     projectId: null,
     projectName: "",
+    projectSlug: "",
     readDirection: "",
     /**
      * regionTypes: [{
@@ -292,6 +293,9 @@ const actions = {
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
             commit("setPartsCount", data.parts_count);
+            commit("setProjectSlug", data.project);
+            commit("setProjectId", data.project_id);
+            commit("setProjectName", data.project_name);
             await commit("setRegionTypes", [
                 ...data.valid_block_types,
                 { pk: "Undefined", name: "(Undefined region type)" },
@@ -416,10 +420,10 @@ const actions = {
                     dispatch("alerts/addError", error, { root: true });
                 }
             }
-            if (data.project?.id) {
+            if (data.project_id) {
                 // set project id and fetch all document tags on the project
                 try {
-                    await commit("project/setId", data.project?.id, {
+                    await commit("project/setId", data.project_id, {
                         root: true,
                     });
                     await dispatch(
@@ -787,6 +791,7 @@ const actions = {
                     mainScript,
                     name,
                     readDirection,
+                    project: state.projectSlug,
                     tags,
                 }),
                 // create, update, delete metadata as needed
@@ -1001,6 +1006,9 @@ const mutations = {
     },
     setProjectId(state, projectId) {
         state.projectId = projectId;
+    },
+    setProjectSlug(state, projectSlug) {
+        state.projectSlug = projectSlug;
     },
     setProjectName(state, projectName) {
         state.projectName = projectName;

@@ -430,6 +430,7 @@ export default {
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
+            projectSlug: (state) => state.document.projectSlug,
             recognitionModels: (state) => state.user.recognitionModels,
             regionTypes: (state) => state.document.regionTypes,
             segmentationModels: (state) => state.user.segmentationModels,
@@ -451,11 +452,11 @@ export default {
          */
         breadcrumbs() {
             let docBreadcrumbs = [{ title: "Loading..." }];
-            if (this.projectName && this.projectId && this.documentName) {
+            if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
                     {
                         title: this.projectName,
-                        href: `/projects/${this.projectId}`
+                        href: `/project/${this.projectSlug}`
                     },
                     { title: this.documentName }
                 ];
