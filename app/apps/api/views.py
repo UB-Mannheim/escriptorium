@@ -450,8 +450,6 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'])
     def export(self, request, pk=None):
         document = self.get_object()
-        # allow no parts = all parts
-        request.data["parts"] = request.data.get("parts", DocumentPart.objects.filter(document=document))
         form = ExportForm(document, request.user, request.data)
         if form.is_valid():
             # return form.stream()

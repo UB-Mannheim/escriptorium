@@ -208,7 +208,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         (export_format, export["label"])
         for export_format, export in ENABLED_EXPORTERS.items()
     )
-    parts = forms.ModelMultipleChoiceField(queryset=None)
+    parts = forms.ModelMultipleChoiceField(queryset=None, required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES, initial=ALTO_FORMAT)
     include_images = forms.BooleanField(
@@ -238,7 +238,8 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         return super().clean()
 
     def process(self):
-        parts = self.cleaned_data['parts']
+        # allow no parts = all parts
+        parts = self.cleaned_data.get('parts', DocumentPart.objects.filter(document=self.document))
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 
