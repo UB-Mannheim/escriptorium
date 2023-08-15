@@ -6,6 +6,7 @@ from core.views import (
     CreateProject,
     DeleteDocumentUserShare,
     DeleteProjectUserShare,
+    DocumentDashboard,
     DocumentImages,
     DocumentModels,
     DocumentOntology,
@@ -49,7 +50,7 @@ urlpatterns = [
     path('project/delete_share/', DeleteProjectUserShare.as_view(), name='delete-project-share'),
 
     path('documents/tasks/', DocumentsTasksList.as_view(), name='documents-tasks-list'),
-    # path('document/<int:pk>/', DocumentDetail.as_view(), name='document-detail'),
+    path('document/<int:pk>/', DocumentDashboard.as_view(), name='document-detail'),
     path('document/<int:pk>/edit/', UpdateDocument.as_view(), name='document-update'),
     path('document/<int:pk>/ontology/', DocumentOntology.as_view(), name='document-ontology'),
     path('document/<int:pk>/parts/edit/', EditPart.as_view(), name='document-part-edit'),
