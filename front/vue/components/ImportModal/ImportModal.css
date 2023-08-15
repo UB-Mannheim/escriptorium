@@ -12,13 +12,14 @@
 }
 .escr-import-modal .escr-modal .modal-actions {
     align-self: flex-end;
+    margin-top: 16px;
 }
 
 /* import mode selector */
 ul.escr-import-modes {
     list-style: none;
     padding: 0;
-    margin: 1rem 0;
+    margin: 1rem 0 0;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 }
