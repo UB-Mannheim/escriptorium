@@ -1,5 +1,5 @@
 <template>
-    <ul v-if="!loading">
+    <ul>
         <li
             v-for="task in taskStatuses"
             :key="task.pk"
@@ -30,17 +30,6 @@
             </EscrButton>
         </li>
     </ul>
-    <div
-        v-else
-        class="escr-spinner-container"
-    >
-        <div
-            class="escr-spinner"
-            role="status"
-        >
-            <span class="sr-only">Loading...</span>
-        </div>
-    </div>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
@@ -52,7 +41,6 @@ export default {
     components: { CancelIcon, EscrButton },
     computed: {
         ...mapState({
-            loading: (state) => state.document.loading.tasks,
             tasks: (state) => state.document.tasks,
         }),
         taskStatuses() {

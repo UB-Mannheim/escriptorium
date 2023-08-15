@@ -27,3 +27,6 @@
 .escr-projects-list .escr-card-actions > button:last-of-type {
     margin-left: 2rem;
 }
+.escr-projects-list .escr-loader-container {
+    margin: 1rem;
+}

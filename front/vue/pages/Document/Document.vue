@@ -45,9 +45,15 @@
                             <h2>Tags</h2>
                         </div>
                         <EscrTags
-                            v-if="tags"
+                            v-if="tags && tags.length"
                             :tags="tags"
                             wrap
+                        />
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.document"
+                            no-data-message="This document does not have any tags.
+                                Add tags using the dropdown menu."
                         />
                     </div>
 
@@ -68,9 +74,17 @@
                                 </EscrButton>
                             </div>
                         </div>
-                        <div class="tasks-container">
+                        <div
+                            v-if="tasks.length"
+                            class="tasks-container"
+                        >
                             <TaskDashboard />
                         </div>
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.tasks"
+                            no-data-message="There are no tasks to display."
+                        />
                     </div>
 
                     <!-- Document images list -->
@@ -90,13 +104,22 @@
                                 </EscrButton>
                             </div>
                         </div>
-                        <div class="table-container">
+                        <div
+                            v-if="parts.length"
+                            class="table-container"
+                        >
                             <EscrTable
                                 :items="parts"
                                 :headers="partsHeaders"
                                 item-key="pk"
+                                linkable
                             />
                         </div>
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.parts"
+                            no-data-message="There are no images to display"
+                        />
                     </div>
                 </div>
                 <div class="escr-doc-right-grid">
@@ -106,7 +129,6 @@
                         <div>
                             <h3>View:</h3>
                             <EscrDropdown
-                                :disabled="loading && loading.transcriptions"
                                 :options="transcriptionLevels"
                                 :on-change="selectTranscription"
                             />
@@ -131,26 +153,36 @@
                         <div class="escr-card-header">
                             <h2>Total Lines</h2>
                         </div>
-                        <span class="escr-stat">
-                            {{
-                                (!loading.transcriptions && lineCount)
-                                    ? lineCount.toLocaleString()
-                                    : "-"
-                            }}
+                        <span
+                            v-if="lineCount"
+                            class="escr-stat"
+                        >
+                            {{ lineCount.toLocaleString() }}
                         </span>
+                        <EscrLoader
+                            v-else
+                            class="escr-stat"
+                            :loading="loading && loading.document"
+                            no-data-message="-"
+                        />
                     </div>
                     <!-- Document total characters card -->
                     <div class="escr-card escr-card-padding chars-stats">
                         <div class="escr-card-header">
                             <h2>Total Characters</h2>
                         </div>
-                        <span class="escr-stat">
-                            {{
-                                (!transcriptionLoading.characterCount && charCount)
-                                    ? charCount.toLocaleString()
-                                    : "-"
-                            }}
+                        <span
+                            v-if="charCount"
+                            class="escr-stat"
+                        >
+                            {{ charCount.toLocaleString() }}
                         </span>
+                        <EscrLoader
+                            v-else
+                            class="escr-stat"
+                            :loading="transcriptionLoading && transcriptionLoading.characterCount"
+                            no-data-message="-"
+                        />
                     </div>
                     <!-- Document transcription status card -->
                     <div class="escr-card escr-card-padding transcription-status">
@@ -285,6 +317,7 @@ import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
+import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
@@ -305,6 +338,7 @@ import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import "../../components/Common/Card.css"
 import "./Document.css";
 
 export default {
@@ -317,6 +351,7 @@ export default {
         EditDocumentModal,
         EscrButton,
         EscrDropdown,
+        EscrLoader,
         EscrPage,
         EscrTable,
         EscrTags,
@@ -399,6 +434,7 @@ export default {
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
             taskModalOpen: (state) => state.tasks.modalOpen,
+            tasks: (state) => state.document.tasks,
             textualWitnesses: (state) => state.document.textualWitnesses,
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,

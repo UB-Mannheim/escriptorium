@@ -58,10 +58,10 @@
                     </template>
                 </EscrModal>
                 <div
+                    v-if="projects.length"
                     class="table-container"
                 >
                     <EscrTable
-                        v-if="projects.length"
                         :items="projects"
                         item-key="slug"
                         :headers="headers"
@@ -84,18 +84,6 @@
                             </EscrButton>
                         </template>
                     </EscrTable>
-                    <div
-                        v-else-if="!loading"
-                        class="escr-empty-msg"
-                    >
-                        There are no projects to display.
-                    </div>
-                    <div
-                        v-else
-                        class="escr-empty-msg"
-                    >
-                        Loading...
-                    </div>
                     <EscrButton
                         v-if="nextPage"
                         label="Load more"
@@ -106,6 +94,11 @@
                         :on-click="async () => await fetchNextPage()"
                     />
                 </div>
+                <EscrLoader
+                    v-else
+                    :loading="loading"
+                    no-data-message="There are no projects to display."
+                />
             </div>
         </template>
     </EscrPage>
@@ -113,6 +106,7 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import EscrButton from "../../components/Button/Button.vue";
+import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrModal from "../../components/Modal/Modal.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
@@ -128,6 +122,7 @@ export default {
     name: "EscrProjectsListPage",
     components: {
         EscrButton,
+        EscrLoader,
         EscrModal,
         EscrPage,
         EscrTable,

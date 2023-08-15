@@ -21,27 +21,35 @@
             :options="sortOptions"
             :on-change-selection="onSortCharacters"
         />
-        <dl>
+        <dl v-if="items.length">
             <div
                 v-for="item in items"
-                :key="item.char"
-                v-tooltip.bottom="unicodeCodePoint(item.char)"
+                :key="item.char || 'no-character'"
+                v-tooltip.bottom="item.char ? unicodeCodePoint(item.char) : 'empty string'"
             >
+                <!-- handle space -->
                 <dt :class="item.char === ' ' ? 'space-char' : ''">
-                    {{ item.char }}
+                    <!-- handle newline -->
+                    {{ item.char === '\n' ? "\\n" : item.char }}
                 </dt>
                 <dd>{{ item.frequency }}</dd>
             </div>
         </dl>
+        <EscrLoader
+            v-else
+            :loading="loading"
+            no-data-message="There are no characters to display."
+        />
     </div>
 </template>
 <script>
+import EscrLoader from "../Loader/Loader.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import "./CharactersCard.css";
 
 export default {
     name: "EscrCharactersCard",
-    components: { SegmentedButtonGroup },
+    components: { EscrLoader, SegmentedButtonGroup },
     props: {
         /**
          * Whether or not to display a compact variant of this card (i.e. for document view).
