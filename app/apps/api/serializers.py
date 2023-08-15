@@ -10,7 +10,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from easy_thumbnails.files import get_thumbnailer
-from rest_framework import serializers
+from rest_framework import fields, serializers
 
 from api.fields import DisplayChoiceField
 from core.models import (
@@ -1091,9 +1091,28 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             )
 
 
+class EditableMultipleChoiceField(serializers.MultipleChoiceField):
+    """Make choices a property, so it can be modified reliably.
+    Adapted from https://github.com/encode/django-rest-framework/issues/3383"""
+    _choices = dict()
+
+    def _set_choices(self, choices):
+        self.grouped_choices = fields.to_choices_dict(self._choices)
+        self._choices = fields.flatten_choices_dict(choices)
+        self.choice_strings_to_values = {
+            str(key): key for key in self._choices.keys()
+        }
+
+    def _get_choices(self):
+        return self._choices
+
+    choices = property(_get_choices, _set_choices)
+
+
 class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
-    parts = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=DocumentPart.objects.all())
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
 
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.filter(archived=False),
@@ -1160,9 +1179,9 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         min_value=0.0,
         max_value=1.0,
     )
-    region_types = serializers.MultipleChoiceField(
+    region_types = EditableMultipleChoiceField(
         required=True,
-        choices=[('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')],
+        choices={'Undefined': '(Undefined region type)', 'Orphan': '(Orphan lines)'},
         help_text=_("Region types to include in the alignment."),
     )
     layer_name = serializers.CharField(
@@ -1175,10 +1194,14 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = self.document.transcriptions.filter(archived=False)
         self.fields['existing_witness'].queryset = TextualWitness.objects.filter(owner=self.user)
-        self.fields['region_types'].choices.update({
-            rt.id: rt.name
-            for rt in self.document.valid_block_types.all()
-        })
+        self.fields['region_types'].choices = {
+            **self.fields['region_types'].choices,
+            **{
+                str(rt.id): rt.name
+                for rt in self.document.valid_block_types.all()
+            },
+        }
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
         data = super().validate(data)
