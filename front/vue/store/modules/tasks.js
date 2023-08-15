@@ -189,11 +189,22 @@ const actions = {
      * Queue the transcription task for a document.
      */
     async transcribeDocument({ rootState }, documentId) {
-        await transcribeDocument({
+        // first, create a transcription layer by POSTing the name to the endpoint
+        const { data } = await createTranscriptionLayer({
             documentId,
-            model: rootState?.forms?.transcribe?.model,
-            layerName: rootState?.forms?.transcribe?.layerName,
+            layerName: rootState.forms.transcribe.layerName,
         });
+        // then, use the result to set the "transcription" param to new layer's pk
+        if (data) {
+            const transcription = data.pk;
+            await transcribeDocument({
+                documentId,
+                model: rootState?.forms?.transcribe?.model,
+                transcription,
+            });
+        } else {
+            throw new Error("Unable to create transcription layer.");
+        }
     },
 };
 

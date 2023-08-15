@@ -3,7 +3,11 @@
         <h3>Import images</h3>
         <ImageDropzone
             id="escr-drop-zone"
-            :options="{ ...dropzoneOptions, url: imageUploadURL }"
+            :options="{
+                ...dropzoneOptions,
+                url: imageUploadURL,
+                headers: { 'X-Csrftoken': getCsrfToken },
+            }"
             :use-custom-slot="true"
         >
             <UploadIcon />
@@ -56,8 +60,11 @@ export default {
          * Use the document ID from vuex store state to get the parts upload URL.
          */
         imageUploadURL() {
-            return `/api/documents/${this.documentId}/parts`;
+            return `/api/documents/${this.documentId}/parts/`;
         },
+        getCsrfToken() {
+            return document.cookie.match("(^|;)\\s*" + "csrftoken" + "\\s*=\\s*([^;]+)")?.pop()
+        }
     },
 }
 </script>

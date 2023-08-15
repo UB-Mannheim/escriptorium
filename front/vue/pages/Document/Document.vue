@@ -212,7 +212,7 @@
                 <!-- segment document modal -->
                 <SegmentModal
                     v-if="taskModalOpen && taskModalOpen.segment"
-                    :models="models"
+                    :models="segmentationModels"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('segment')"
                     :on-submit="handleSubmitSegmentation"
@@ -221,7 +221,7 @@
                 <!-- transcribe document modal -->
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
-                    :models="models"
+                    :models="recognitionModels"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('transcribe')"
                     :on-submit="handleSubmitTranscribe"
@@ -388,7 +388,9 @@ export default {
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
+            recognitionModels: (state) => state.user.recognitionModels,
             regionTypes: (state) => state.document.regionTypes,
+            segmentationModels: (state) => state.user.segmentationModels,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,

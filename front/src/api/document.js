@@ -165,10 +165,14 @@ export const segmentDocument = async ({ documentId, override, model, steps }) =>
     });
 
 // queue the transcription task for this document
-export const transcribeDocument = async ({ documentId, model, layerName }) =>
+export const transcribeDocument = async ({
+    documentId,
+    model,
+    transcription,
+}) =>
     await axios.post(`/documents/${documentId}/transcribe/`, {
         model,
-        name: layerName,
+        transcription,
     });
 
 // retrieve textual witnesses for use in alignment
@@ -193,18 +197,20 @@ export const alignDocument = async ({
 }) => {
     // need to use FormData to handle witness file upload
     const formData = new FormData();
-    formData.append("beam_size", beamSize);
-    formData.append("existing_witness", existingWitness);
+    if (beamSize) formData.append("beam_size", beamSize);
+    if (existingWitness) formData.append("existing_witness", existingWitness);
     formData.append("full_doc", fullDoc);
     formData.append("gap", gap);
     formData.append("layer_name", layerName);
-    formData.append("max_offset", maxOffset);
+    if (maxOffset) formData.append("max_offset", maxOffset);
     formData.append("merge", merge);
     formData.append("n_gram", ngram);
-    formData.append("region_types", regionTypes);
+    if (regionTypes?.length) {
+        regionTypes.forEach((type) => formData.append("region_types", type));
+    }
     formData.append("threshold", threshold);
     formData.append("transcription", transcription);
-    formData.append("witness_file", witnessFile);
+    if (witnessFile) formData.append("witness_file", witnessFile);
     const headers = { "Content-Type": "multipart/form-data" };
     return await axios.post(`/documents/${documentId}/align/`, formData, {
         headers,
@@ -227,8 +233,20 @@ export const exportDocument = async ({
     });
 
 // queue the import task for this document
-export const queueImport = async ({ documentId, params }) =>
-    await axios.post(`/documents/${documentId}/import/`, params);
+export const queueImport = async ({ documentId, params }) => {
+    if (params["upload_file"]) {
+        // need to use FormData to handle file upload
+        const formData = new FormData();
+        Object.keys(params).forEach((key) => {
+            formData.append(key, params[key]);
+        });
+        const headers = { "Content-Type": "multipart/form-data" };
+        return await axios.post(`/documents/${documentId}/import/`, formData, {
+            headers,
+        });
+    }
+    return await axios.post(`/documents/${documentId}/import/`, params);
+};
 
 // retrieve latest tasks for a document
 export const retrieveDocumentTasks = async ({ documentId }) =>

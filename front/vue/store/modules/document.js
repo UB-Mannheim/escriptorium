@@ -328,6 +328,19 @@ const actions = {
                 },
                 { root: true },
             );
+            // set default text direction for the segment form
+            commit(
+                "forms/setFieldValue",
+                {
+                    form: "segment",
+                    field: "textDirection",
+                    value:
+                        data.read_direction === "rtl"
+                            ? "horizontal-rl"
+                            : "horizontal-lr",
+                },
+                { root: true },
+            );
             if (data.parts_count > 0) {
                 // kickoff parts fetch
                 try {
@@ -563,6 +576,16 @@ const actions = {
         try {
             await dispatch("tasks/alignDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "align", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Alignment queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -574,6 +597,16 @@ const actions = {
         try {
             await dispatch("tasks/exportDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "export", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Export queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -581,10 +614,34 @@ const actions = {
     /**
      * Handle submitting the import modal. Queue the task and close the modal.
      */
-    async handleSubmitImport({ dispatch, state }) {
+    async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
-            await dispatch("tasks/importImagesOrTranscription", state.id, { root: true });
+            await dispatch("tasks/importImagesOrTranscription", state.id, {
+                root: true,
+            });
+            const isImages = rootState?.forms?.import?.mode === "images";
             dispatch("tasks/closeModal", "import", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Import queued successfully",
+                },
+                { root: true },
+            );
+            // if importing images, refresh images
+            if (isImages) {
+                try {
+                    commit("setLoading", { key: "parts", loading: true });
+                    await dispatch("fetchDocumentParts");
+                    commit("setLoading", { key: "parts", loading: false });
+                } catch (error) {
+                    commit("setLoading", { key: "parts", loading: false });
+                    dispatch("alerts/addError", error, { root: true });
+                }
+            }
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -593,32 +650,71 @@ const actions = {
      * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
      * is checked, otherwise just queue the segmentation task and close the modal.
      */
-    async handleSubmitSegmentation({ dispatch, state, rootState }) {
+    async handleSubmitSegmentation({ commit, dispatch, state, rootState }) {
         if (rootState?.forms?.segment?.overwrite === true) {
             dispatch("tasks/openModal", "overwriteWarning", { root: true });
         } else {
+            commit("setLoading", { key: "document", loading: true });
             try {
                 await dispatch("tasks/segmentDocument", state.id, {
                     root: true,
                 });
                 dispatch("tasks/closeModal", "segment", { root: true });
+                // set default text direction for the segment form
+                commit(
+                    "forms/setFieldValue",
+                    {
+                        form: "segment",
+                        field: "textDirection",
+                        value:
+                            state.readDirection === "rtl"
+                                ? "horizontal-rl"
+                                : "horizontal-lr",
+                    },
+                    { root: true },
+                );
+                dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: "Segmentation queued successfully",
+                    },
+                    { root: true },
+                );
             } catch (error) {
+                commit("setLoading", { key: "document", loading: false });
                 dispatch("alerts/addError", error, { root: true });
             }
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the transcribe modal: just queue the task and close the modal.
      */
-    async handleSubmitTranscribe({ dispatch, state }) {
+    async handleSubmitTranscribe({ commit, dispatch, state }) {
+        commit("setLoading", { key: "document", loading: true });
         try {
             await dispatch("tasks/transcribeDocument", state.id, {
                 root: true,
             });
             dispatch("tasks/closeModal", "transcribe", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Transcription queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
+        commit("setLoading", { key: "document", loading: false });
     },
     /**
      * Open the "delete document" modal.
