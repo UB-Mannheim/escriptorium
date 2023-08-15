@@ -391,7 +391,14 @@ export default {
         id: {
             type: Number,
             required: true,
-        }
+        },
+        /**
+         * Whether or not search is disabled on the current instance.
+         */
+        searchDisabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     data() {
         return {
@@ -497,19 +504,7 @@ export default {
          * Sidebar quick actions for the document dashboard.
          */
         sidebarActions() {
-            return [
-                {
-                    data: {
-                        disabled: this.loading?.document,
-                        searchScope: "Document",
-                        projectId: this.projectId,
-                        documentId: this.id,
-                    },
-                    icon: SearchIcon,
-                    key: "search",
-                    label: "Search Document",
-                    panel: SearchPanel,
-                },
+            let actions = [
                 {
                     data: {
                         disabled: this.loading?.document,
@@ -543,6 +538,22 @@ export default {
                     panel: ModelsPanel,
                 }
             ];
+            // if search is enabled on the instance, add search as first item
+            if (!this.searchDisabled) {
+                actions.unshift({
+                    data: {
+                        disabled: this.loading?.document,
+                        searchScope: "Document",
+                        projectId: this.projectId,
+                        documentId: this.id,
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Document",
+                    panel: SearchPanel,
+                });
+            }
+            return actions
         },
         transcriptionConfidence() {
             const confidence = this.transcriptions?.find(
