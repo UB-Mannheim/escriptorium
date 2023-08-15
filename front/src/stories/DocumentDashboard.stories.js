@@ -252,9 +252,9 @@ const Template = (args, { argTypes }) => ({
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
                 const { ordering } = config.params;
-                return [200, { results: sorted(characters, { ordering }) }];
+                return [200, sorted(characters, { ordering })];
             }
-            return [200, { results: characters }];
+            return [200, characters];
         });
         mock.onGet(charactersEndpointB).reply(async function(config) {
             const timeout = Math.random() * 200 + 100;
@@ -263,10 +263,10 @@ const Template = (args, { argTypes }) => ({
                 const { ordering } = config.params;
                 return [
                     200,
-                    { results: sorted(charactersRandomized, { ordering }) },
+                    sorted(charactersRandomized, { ordering }),
                 ];
             }
-            return [200, { results: charactersRandomized }];
+            return [200, charactersRandomized];
         });
         mock.onGet(charCountA).reply(async function() {
             const timeout = Math.random() * 200 + 200;

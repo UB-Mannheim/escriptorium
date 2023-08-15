@@ -530,29 +530,18 @@ const actions = {
      * plus sorting params from characters Vuex store.
      */
     async fetchTranscriptionCharacters({ commit, state, rootState }) {
-        commit("characters/setLoading", true, { root: true });
         const { data } = await retrieveTranscriptionCharacters({
             documentId: state.id,
             transcriptionId: rootState.transcription.selectedTranscription,
             field: rootState.characters.sortState?.field,
             direction: rootState.characters.sortState?.direction,
         });
-        if (data?.results) {
-            commit("characters/setCharacters", data.results, { root: true });
-        } else {
-            throw new Error("Unable to retrieve characters");
-        }
-        commit("characters/setLoading", false, { root: true });
+        commit("characters/setCharacters", data, { root: true });
     },
     /**
      * Fetch the number of characters on the currently selected transcription level.
      */
     async fetchTranscriptionCharCount({ commit, state, rootState }) {
-        commit(
-            "transcription/setLoading",
-            { key: "characterCount", loading: true },
-            { root: true },
-        );
         const { data } = await retrieveTranscriptionCharCount({
             documentId: state.id,
             transcriptionId: rootState.transcription.selectedTranscription,
@@ -561,17 +550,7 @@ const actions = {
             commit("transcription/setCharacterCount", data.count, {
                 root: true,
             });
-            commit(
-                "transcription/setLoading",
-                { key: "characterCount", loading: false },
-                { root: true },
-            );
         } else {
-            commit(
-                "transcription/setLoading",
-                { key: "characterCount", loading: false },
-                { root: true },
-            );
             throw new Error(
                 "Unable to retrieve character count for the selected transcription.",
             );

@@ -55,14 +55,19 @@ export const retrieveTranscriptionCharacters = async ({
     field,
     direction,
 }) => {
-    let params = {};
+    let ordering = "-frequency";
     if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
+        ordering = getSortParam({ field, direction });
     }
-    return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/characters`,
-        { params },
-    );
+    if (ordering === "char") {
+        return await axios.get(
+            `/documents/${documentId}/transcriptions/${transcriptionId}/characters_by_char`,
+        );
+    } else {
+        return await axios.get(
+            `/documents/${documentId}/transcriptions/${transcriptionId}/characters`,
+        );
+    }
 };
 
 // retrieve the total number of characters in a specific transcription level on a document
