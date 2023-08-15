@@ -1,6 +1,8 @@
 <template>
-    <div class="escr-models-panel">
-        <span v-if="data.loading">Loading...</span>
+    <div
+        v-if="data.models && data.models.length"
+        class="escr-models-panel"
+    >
         <details
             v-for="model in data.models"
             :key="model.pk"
@@ -32,20 +34,33 @@
                 </dd>
                 <dt>Rights</dt>
                 <dd>{{ model.rights }}</dd>
+                <dt>Sharing</dt>
+                <dd v-if="model.can_share">
+                    <a :href="`/model/${model.pk}/rights/`">Share</a>
+                </dd>
+                <dd v-else>
+                    -
+                </dd>
             </dl>
         </details>
     </div>
+    <EscrLoader
+        v-else
+        :loading="data.loading"
+        no-data-message="No models to display."
+    />
 </template>
 <script>
 import CheckIcon from "../Icons/CheckIcon/CheckIcon.vue";
 import DownloadIcon from "../Icons/DownloadIcon/DownloadIcon.vue";
+import EscrLoader from "../Loader/Loader.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
 import { filesizeformat } from "../../store/util/filesize";
 import "./ModelsPanel.css";
 
 export default {
     name: "EscrModelsPanel",
-    components: { DownloadIcon },
+    components: { DownloadIcon, EscrLoader },
     props: {
         data: {
             type: Object,
