@@ -224,12 +224,6 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                                                                              document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
-    def clean_parts(self):
-        parts = self.cleaned_data['parts']
-        if len(parts) < 1:
-            raise forms.ValidationError(_("Select at least one image to export."))
-        return parts
-
     def clean(self):
         # If quotas are enforced, assert that the user still has free CPU minutes
         if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
