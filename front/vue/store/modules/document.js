@@ -535,7 +535,7 @@ const actions = {
      * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
      */
     fetchDocumentTasksThrottled({ dispatch }) {
-        throttle(function* () {
+        throttle(function*() {
             yield dispatch("fetchDocumentTasks");
         });
     },
@@ -660,6 +660,7 @@ const actions = {
             const isImages = rootState?.forms?.import?.mode === "images";
             dispatch("tasks/closeModal", "import", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            if (!isImages) await dispatch("refreshTranscriptions");
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
@@ -741,6 +742,7 @@ const actions = {
             });
             dispatch("tasks/closeModal", "transcribe", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            await dispatch("refreshTranscriptions");
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
@@ -779,6 +781,24 @@ const actions = {
      */
     openShareModal({ commit }) {
         commit("setShareModalOpen", true);
+    },
+    /**
+     * Fetch the current document, but only update the transcriptions and don't kick off
+     * other fetches.
+     */
+    async refreshTranscriptions({ commit, state }) {
+        // fetch document
+        const { data } = await retrieveDocument(state.id);
+
+        if (data?.transcriptions) {
+            // set transcription list to non-archived transcriptions
+            const transcriptions = data.transcriptions?.filter(
+                (t) => !t.archived,
+            );
+            commit("setTranscriptions", transcriptions);
+        } else {
+            throw new Error("Unable to fetch transcriptions");
+        }
     },
     /**
      * Save changes to the document made in the edit modal.
