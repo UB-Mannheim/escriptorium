@@ -59,11 +59,35 @@ const actions = {
     /**
      * Confirm cancelling a task and close the cancel warning modal.
      */
-    async cancel({ dispatch, state }, { documentId }) {
+    async cancel({ commit, dispatch, state }, { documentId }) {
         try {
+            commit(
+                "document/setLoading",
+                { key: "tasks", loading: true },
+                { root: true },
+            );
             await cancelTask({ documentId, taskReportId: state.selectedTask });
             dispatch("closeModal", "cancelWarning");
+            commit(
+                "document/setLoading",
+                { key: "tasks", loading: false },
+                { root: true },
+            );
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Task canceled successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
+            commit(
+                "document/setLoading",
+                { key: "tasks", loading: false },
+                { root: true },
+            );
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -180,10 +204,10 @@ const actions = {
         });
     },
     /**
-     * Set the selected task on the state (e.g. for cancellation)
+     * Set the selected task pk on the state (e.g. for cancellation)
      */
     selectTask({ commit }, task) {
-        commit("setSelectedTask", task);
+        commit("setSelectedTask", task.pk);
     },
     /**
      * Queue the transcription task for a document.

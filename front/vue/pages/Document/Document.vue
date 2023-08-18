@@ -299,6 +299,7 @@
                     confirm-verb="Yes"
                     cancel-verb="No"
                     :cannot-undo="false"
+                    :disabled="loading && loading.tasks"
                     :on-cancel="() => closeTaskModal('cancelWarning')"
                     :on-confirm="() => cancelTask({ documentId: id })"
                 />
@@ -611,6 +612,7 @@ export default {
             "confirmOverwriteWarning",
             "deleteDocument",
             "fetchDocument",
+            "fetchDocumentTasks",
             "fetchDocumentTasksThrottled",
             "handleSubmitAlign",
             "handleSubmitExport",

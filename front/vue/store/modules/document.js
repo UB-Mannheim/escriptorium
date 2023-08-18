@@ -511,19 +511,17 @@ const actions = {
     async fetchDocumentTasks({ commit, state }) {
         commit("setLoading", { key: "tasks", loading: true });
         const { data } = await retrieveDocumentTasks({ documentId: state.id });
+        commit("setLoading", { key: "tasks", loading: false });
         if (data?.results) {
             commit("setTasks", data.results);
         } else {
-            commit("setLoading", { key: "tasks", loading: false });
             throw new Error("Unable to retrieve document tasks");
         }
-        commit("setLoading", { key: "tasks", loading: false });
     },
     /**
      * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
      */
-    fetchDocumentTasksThrottled({ commit, dispatch }) {
-        commit("setLoading", { key: "tasks", loading: true });
+    fetchDocumentTasksThrottled({ dispatch }) {
         throttle(function* () {
             yield dispatch("fetchDocumentTasks");
         });
