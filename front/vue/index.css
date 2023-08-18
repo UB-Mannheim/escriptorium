@@ -171,24 +171,42 @@
     font-weight: 700;
     src: url("../fonts/NotoSans-BoldItalic.ttf");
 }
+/* arabic resizing */
+@font-face {
+    font-family: "Resized Arabic";
+    size-adjust: 120%;
+    src: local("GeezaPro"), local("Geeza Pro"), local("Times New Roman");
+    unicode-range:
+    /* Arabic */ U+600-6FF, /* Arabic Supplement */ U+750-77F,
+        /* Arabic Extended-A */ U+08A0-08FF, /* Arabic Extended-B */ U+0870-089F,
+        /* Arabic Extended-C */ U+10EC0-10EFF,
+        /* Arabic Presentation Forms-A */ U+FB50-FDFF,
+        /* Arabic Presentation Forms-B */ U+FE70-FEFF,
+        /* Rumi Numeral Symbols */ U+10E60-10E7F,
+        /* Indic Siyaq Numbers */ U+1EC70-1ECBF,
+        /* Ottoman Siyaq Numbers */ U+1ED00-1ED4F,
+        /* Arabic Mathematical Alphabetic Symbols */ U+1EE00-1EEFF;
+}
 /* reset default fonts to 14px normal noto sans, weight 400 */
 .escr-body.escr-vue-enabled,
 .escr-page input[type="text"],
 .escr-sidebar-container input[type="text"],
 .escr-global-nav,
 .v-popper__inner {
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Noto Sans", "Resized Arabic", sans-serif;
     font-size: 14px;
     font-weight: 400;
     color: var(--text1);
     font-style: normal;
 }
+/* tooltip/menu arrows restyling */
 .escr-body .v-popper__popper .v-popper__arrow-inner {
     border-color: var(--background1);
 }
 .escr-body .v-popper__popper .v-popper__arrow-outer {
     border-color: var(--background2);
 }
+/* global nav layout styles */
 #vue-global-nav {
     height: 100vh;
     min-width: 64px;
@@ -196,6 +214,7 @@
 #vue-global-nav .escr-global-nav {
     height: 100vh;
 }
+/* font styles */
 .escr-page h1,
 .escr-sidebar-container h1 {
     font-weight: 700;
