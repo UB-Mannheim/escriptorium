@@ -233,7 +233,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
 
     def process(self):
         # allow no parts = all parts
-        parts = self.cleaned_data.get('parts', DocumentPart.objects.filter(document=self.document))
+        parts = self.cleaned_data['parts'] or self.document.parts.all()
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 

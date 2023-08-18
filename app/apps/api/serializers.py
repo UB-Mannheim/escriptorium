@@ -899,7 +899,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         model = self.validated_data.get('model')
-        parts = self.validated_data.get('parts', self.fields['parts'].queryset)
+        parts = self.validated_data.get('parts') or self.document.parts.all()
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1086,6 +1086,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
     def process(self):
         model = self.validated_data.get('model')
         transcription = self.validated_data.get('transcription')
+        parts = self.validated_data.get('parts') or self.document.parts.all()
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1096,7 +1097,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.executed_on = timezone.now()
             ocr_model_document.save()
 
-        for part in self.validated_data.get('parts', self.fields['parts'].queryset):
+        for part in parts:
             part.chain_tasks(
                 transcribe.si(
                     transcription_pk=transcription.pk,
@@ -1260,7 +1261,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         full_doc = self.validated_data.get("full_doc", True)
         threshold = self.validated_data.get("threshold", 0.8)
         region_types = self.validated_data.get("region_types", ["Orphan", "Undefined"])
-        parts = self.validated_data.get("parts", self.fields["parts"].queryset)
+        parts = self.validated_data.get("parts") or self.document.parts.all()
         layer_name = self.validated_data.get("layer_name")
 
         if existing_witness:
