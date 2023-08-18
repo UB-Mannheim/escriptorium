@@ -183,6 +183,12 @@
     color: var(--text1);
     font-style: normal;
 }
+.escr-body .v-popper__popper .v-popper__arrow-inner {
+    border-color: var(--background1);
+}
+.escr-body .v-popper__popper .v-popper__arrow-outer {
+    border-color: var(--background2);
+}
 #vue-global-nav {
     height: 100vh;
     min-width: 64px;
