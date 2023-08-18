@@ -266,6 +266,7 @@
                         'any existing transcriptions.'"
                     title="Overwrite Existing Segmentation and Transcriptions"
                     confirm-verb="Continue"
+                    :disabled="loading && loading.document"
                     :cannot-undo="true"
                     :on-cancel="() => closeTaskModal('overwriteWarning')"
                     :on-confirm="confirmOverwriteWarning"

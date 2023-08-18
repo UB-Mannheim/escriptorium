@@ -264,7 +264,7 @@ const actions = {
                 "alerts/add",
                 {
                     color: "success",
-                    message: "Alignment queued successfully",
+                    message: "Segmentation queued successfully",
                 },
                 { root: true },
             );
