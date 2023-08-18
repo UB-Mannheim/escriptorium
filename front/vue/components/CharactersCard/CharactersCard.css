@@ -25,11 +25,11 @@
     align-items: center;
     border: 1px solid var(--background2);
     gap: 0;
-    flex-basis: 0 1 auto;
+    flex: 0 1 auto;
 }
 .escr-characters-card dl div dt {
     background-color: var(--background2);
-    flex-basis: 0 1 auto;
+    flex: 0 1 auto;
     height: 100%;
     display: flex;
     align-items: center;
@@ -41,7 +41,7 @@
     outline-offset: -6px;
 }
 .escr-characters-card dl div dd {
-    flex-basis: 0 1 auto;
+    flex: 0 1 auto;
     margin: 0;
     height: 100%;
     display: flex;
