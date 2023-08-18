@@ -284,6 +284,8 @@
                 <!-- export document modal -->
                 <ExportModal
                     v-if="taskModalOpen && taskModalOpen.export"
+                    :markdown-enabled="markdownEnabled"
+                    :tei-enabled="teiEnabled"
                     :transcriptions="transcriptions"
                     :region-types="regionTypes"
                     :disabled="loading && loading.document"
@@ -391,6 +393,20 @@ export default {
          */
         id: {
             type: Number,
+            required: true,
+        },
+        /**
+         * Whether or not OpenITI Markdown export is enabled on the current instance.
+         */
+        markdownEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not OpenITI TEI XML export is enabled on the current instance.
+         */
+        teiEnabled: {
+            type: Boolean,
             required: true,
         },
         /**
