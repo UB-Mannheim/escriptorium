@@ -251,12 +251,25 @@ const actions = {
     /**
      * Handle the user overwriting existing segmentation
      */
-    async confirmOverwriteWarning({ dispatch, state }) {
+    async confirmOverwriteWarning({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/segmentDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "overwriteWarning", { root: true });
             dispatch("tasks/closeModal", "segment", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Alignment queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -590,11 +603,13 @@ const actions = {
     /**
      * Handle submitting the alignment modal. Queue the task and close the modal.
      */
-    async handleSubmitAlign({ dispatch, state }) {
+    async handleSubmitAlign({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/alignDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "align", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
                 "alerts/add",
@@ -606,16 +621,19 @@ const actions = {
             );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the export modal. Queue the task and close the modal.
      */
-    async handleSubmitExport({ dispatch, state }) {
+    async handleSubmitExport({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/exportDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "export", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
                 "alerts/add",
@@ -627,6 +645,7 @@ const actions = {
             );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
@@ -634,12 +653,14 @@ const actions = {
      */
     async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/importImagesOrTranscription", state.id, {
                 root: true,
             });
             const isImages = rootState?.forms?.import?.mode === "images";
             dispatch("tasks/closeModal", "import", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
                 "alerts/add",
@@ -661,6 +682,7 @@ const actions = {
                 }
             }
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -692,6 +714,7 @@ const actions = {
                     { root: true },
                 );
                 dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+                commit("setLoading", { key: "document", loading: false });
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
@@ -705,20 +728,20 @@ const actions = {
                 commit("setLoading", { key: "document", loading: false });
                 dispatch("alerts/addError", error, { root: true });
             }
-            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the transcribe modal: just queue the task and close the modal.
      */
     async handleSubmitTranscribe({ commit, dispatch, state }) {
-        commit("setLoading", { key: "document", loading: true });
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/transcribeDocument", state.id, {
                 root: true,
             });
             dispatch("tasks/closeModal", "transcribe", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
                 "alerts/add",
@@ -732,7 +755,6 @@ const actions = {
             commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
-        commit("setLoading", { key: "document", loading: false });
     },
     /**
      * Open the "delete document" modal.
