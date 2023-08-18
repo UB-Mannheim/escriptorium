@@ -223,6 +223,10 @@ export default {
             tooltipShown: (state) => state.forms.align.tooltipShown,
         }),
     },
+    mounted() {
+        // scroll into view on mount
+        this.$el.scrollIntoView({ behavior: "smooth" });
+    },
     methods: {
         ...mapActions("forms", [
             "handleGenericInput",
