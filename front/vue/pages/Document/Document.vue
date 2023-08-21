@@ -631,6 +631,7 @@ export default {
             "fetchDocument",
             "fetchDocumentTasks",
             "fetchDocumentTasksThrottled",
+            "handleImportDone",
             "handleSubmitAlign",
             "handleSubmitExport",
             "handleSubmitImport",
@@ -686,6 +687,10 @@ export default {
             ) {
                 // these may be frequent, so throttle
                 this.fetchDocumentTasksThrottled();
+
+                if (data.name === "import:done") {
+                    this.handleImportDone();
+                }
             }
         }
     },

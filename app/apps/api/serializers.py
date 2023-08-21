@@ -399,6 +399,7 @@ class ImportSerializer(serializers.Serializer):
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.all(),
         required=False)
+    name = serializers.CharField(required=False)
     override = serializers.BooleanField(required=False)
     upload_file = serializers.FileField(required=False)
 
@@ -478,9 +479,15 @@ class ImportSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        if 'name' in validated_data:
+            name = validated_data.get("name")
+        elif 'transcription' in validated_data:
+            name = validated_data.get('transcription').name
+        else:
+            name = ''
         imp = DocumentImport(
             document=self.document,
-            name=validated_data.get('transcription').name if 'transcription' in validated_data else '',
+            name=name,
             override=validated_data.get('override') or False,
             import_file=self.file,
             total=self.total,

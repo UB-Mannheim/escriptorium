@@ -600,6 +600,22 @@ const actions = {
             );
         }
     },
+    async handleImportDone({ commit, dispatch }) {
+        try {
+            // refresh images on import:done
+            commit("setLoading", { key: "parts", loading: true });
+            await dispatch("fetchDocumentParts");
+            commit("setLoading", { key: "parts", loading: false });
+            // refresh transcriptions on import:done
+            commit("setLoading", { key: "document", loading: true });
+            await dispatch("refreshTranscriptions");
+            commit("setLoading", { key: "document", loading: false });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "parts", loading: false });
+            commit("setLoading", { key: "document", loading: false });
+        }
+    },
     /**
      * Handle submitting the alignment modal. Queue the task and close the modal.
      */
@@ -651,16 +667,14 @@ const actions = {
     /**
      * Handle submitting the import modal. Queue the task and close the modal.
      */
-    async handleSubmitImport({ commit, dispatch, rootState, state }) {
+    async handleSubmitImport({ commit, dispatch, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/importImagesOrTranscription", state.id, {
                 root: true,
             });
-            const isImages = rootState?.forms?.import?.mode === "images";
             dispatch("tasks/closeModal", "import", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
-            if (!isImages) await dispatch("refreshTranscriptions");
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
             dispatch(
@@ -671,17 +685,6 @@ const actions = {
                 },
                 { root: true },
             );
-            // if importing images, refresh images
-            if (isImages) {
-                try {
-                    commit("setLoading", { key: "parts", loading: true });
-                    await dispatch("fetchDocumentParts");
-                    commit("setLoading", { key: "parts", loading: false });
-                } catch (error) {
-                    commit("setLoading", { key: "parts", loading: false });
-                    dispatch("alerts/addError", error, { root: true });
-                }
-            }
         } catch (error) {
             commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });

@@ -166,7 +166,7 @@ const actions = {
                 default:
                     return;
             }
-            if (params["name"]) {
+            if (params["name"] && params["mode"] !== "mets") {
                 // first, create a transcription layer by POSTing the name to the endpoint
                 const { data } = await createTranscriptionLayer({
                     documentId,
