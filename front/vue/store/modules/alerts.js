@@ -23,7 +23,8 @@ const actions = {
         const url = response?.config?.baseURL + response?.config?.url;
         commit("addAlert", {
             color: "alert",
-            message: (response?.data?.message || message) + (url ? `: ${url}` : ""),
+            message:
+                (response?.data?.message || message) + (url ? `: ${url}` : ""),
         });
         console.error(error);
     },

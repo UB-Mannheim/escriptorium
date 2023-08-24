@@ -78,7 +78,7 @@ ManyTags.args = {
             name: "Long tag name 7",
             variant: 15,
             color: tagVariants[15],
-        }
+        },
     ],
     wrap: false,
 };

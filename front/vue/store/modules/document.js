@@ -535,7 +535,7 @@ const actions = {
      * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
      */
     fetchDocumentTasksThrottled({ dispatch }) {
-        throttle(function*() {
+        throttle(function* () {
             yield dispatch("fetchDocumentTasks");
         });
     },
@@ -818,14 +818,11 @@ const actions = {
             tags,
         } = rootState.forms.editDocument;
         // split modified metadata by operation
-        const {
-            metadataToCreate,
-            metadataToUpdate,
-            metadataToDelete,
-        } = getDocumentMetadataCRUD({
-            stateMetadata: state.metadata,
-            formMetadata: metadata,
-        });
+        const { metadataToCreate, metadataToUpdate, metadataToDelete } =
+            getDocumentMetadataCRUD({
+                stateMetadata: state.metadata,
+                formMetadata: metadata,
+            });
         try {
             const [documentResponse, ...metadataResponses] = await Promise.all([
                 // update the document

@@ -147,14 +147,14 @@ const Template = (args, { argTypes }) => ({
         const shareEndpoint = new RegExp(/\/projects\/\d+\/share$/);
         const currentUserEndpoint = "/users/current";
         // mock project page
-        mock.onGet(projectEndpoint).reply(async function() {
+        mock.onGet(projectEndpoint).reply(async function () {
             // wait for 100-300 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, project];
         });
         // mock docmuents
-        mock.onGet(projectDocumentsEndpoint).reply(async function(config) {
+        mock.onGet(projectDocumentsEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -171,14 +171,14 @@ const Template = (args, { argTypes }) => ({
             return [200, { results: documents }];
         });
         // mock create document
-        mock.onPost(projectDocumentsEndpoint).reply(async function() {
+        mock.onPost(projectDocumentsEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, documents[0]];
         });
         // mock ontology
-        mock.onGet(blockEndpoint).reply(async function(config) {
+        mock.onGet(blockEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -187,7 +187,7 @@ const Template = (args, { argTypes }) => ({
             }
             return [200, { results: blockTypes }];
         });
-        mock.onGet(lineEndpoint).reply(async function(config) {
+        mock.onGet(lineEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -196,7 +196,7 @@ const Template = (args, { argTypes }) => ({
             }
             return [200, { results: lineTypes }];
         });
-        mock.onGet(annotationsEndpoint).reply(async function(config) {
+        mock.onGet(annotationsEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -208,7 +208,7 @@ const Template = (args, { argTypes }) => ({
             }
             return [200, { results: annotationTypes }];
         });
-        mock.onGet(partEndpoint).reply(async function(config) {
+        mock.onGet(partEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -217,7 +217,7 @@ const Template = (args, { argTypes }) => ({
             }
             return [200, { results: partTypes }];
         });
-        mock.onGet(charactersEndpoint).reply(async function(config) {
+        mock.onGet(charactersEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (Object.keys(config.params).length) {
@@ -227,13 +227,13 @@ const Template = (args, { argTypes }) => ({
             return [200, { results: characters }];
         });
         // mock document tags
-        mock.onGet(documentTagsEndpoint).reply(async function() {
+        mock.onGet(documentTagsEndpoint).reply(async function () {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: tags }];
         });
         // mock create document tag
-        mock.onPost(documentTagsEndpoint).reply(async function(config) {
+        mock.onPost(documentTagsEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (config?.data) {
@@ -249,7 +249,7 @@ const Template = (args, { argTypes }) => ({
         // mock all-projects tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
         // mock create tag
-        mock.onPost(projectsTagsEndpoint).reply(async function(config) {
+        mock.onPost(projectsTagsEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (config?.data) {
@@ -263,7 +263,7 @@ const Template = (args, { argTypes }) => ({
             return [500];
         });
         // mock edit project
-        mock.onPut(projectEndpoint).reply(async function(config) {
+        mock.onPut(projectEndpoint).reply(async function (config) {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -276,24 +276,21 @@ const Template = (args, { argTypes }) => ({
             return [500];
         });
         // mock scripts
-        mock.onGet(scriptsEndpoint).reply(async function() {
+        mock.onGet(scriptsEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
-            return [
-                200,
-                { results: scripts },
-            ];
+            return [200, { results: scripts }];
         });
         // mock groups
-        mock.onGet(groupsEndpoint).reply(async function() {
+        mock.onGet(groupsEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, { results: userGroups }];
         });
         // mock share
-        mock.onPost(shareEndpoint).reply(async function(config) {
+        mock.onPost(shareEndpoint).reply(async function (config) {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -322,7 +319,7 @@ const Template = (args, { argTypes }) => ({
             return [400];
         });
         // mock delete project (throw an error, for fun!)
-        mock.onDelete(projectEndpoint).reply(async function() {
+        mock.onDelete(projectEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -335,7 +332,7 @@ const Template = (args, { argTypes }) => ({
             ];
         });
         // mock delete document (throw an error, for fun!)
-        mock.onDelete(documentEndpoint).reply(async function() {
+        mock.onDelete(documentEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -348,7 +345,7 @@ const Template = (args, { argTypes }) => ({
             ];
         });
         // mock get current user
-        mock.onGet(currentUserEndpoint).reply(async function() {
+        mock.onGet(currentUserEndpoint).reply(async function () {
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, currentUser];
