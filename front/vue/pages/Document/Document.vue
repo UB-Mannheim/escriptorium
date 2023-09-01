@@ -52,8 +52,9 @@
                         <EscrLoader
                             v-else
                             :loading="loading && loading.document"
-                            no-data-message="This document does not have any tags.
-                                Add tags using the dropdown menu."
+                            no-data-message="This document does not have any tags. You can add tags
+                                using the Edit form, accessible from the dropdown menu in the above
+                                panel (to the right of the document title)."
                         />
                     </div>
 
