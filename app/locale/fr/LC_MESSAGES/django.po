@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-24 19:31+0200\n"
+"POT-Creation-Date: 2023-08-21 22:07+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -32,14 +32,27 @@ msgstr ""
 msgid "PDF is not a valid image, please use the dedicated Import function."
 msgstr ""
 
-#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
-#: escriptorium/templates/core/document_images.html
-msgid "You don't have any disk storage left."
-msgstr "Vous n'avez plus d'espace disque."
+#: apps/api/serializers.py
+msgid "Upload local file"
+msgstr ""
+
+#: apps/api/serializers.py
+msgid "download file from url"
+msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 msgid "You don't have any CPU minutes left."
 msgstr "Il ne vous reste plus de minutes de CPU."
+
+#: apps/api/serializers.py apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+#: escriptorium/templates/core/document_images.html
+msgid "You don't have any disk storage left."
+msgstr "Vous n'avez plus d'espace disque."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You don't have any GPU minutes left."
@@ -90,6 +103,125 @@ msgstr ""
 msgid ""
 "Either use model_name to create a new model, or add a model pk to retrain an "
 "existing one."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The transcription on which to perform alignment."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "N-gram"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; 25 should work well for at "
+"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Beam size"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will "
+"be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Gap"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"The distance between matching unique n-grams; 600 should work well for clean "
+"OCR or texts where passages align to different portions of the witness text. "
+"To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Merge aligned text with existing transcription"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text separately."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Line length match threshold"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Layer name"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
 msgstr ""
 
 #: apps/api/views.py apps/core/models.py
@@ -195,125 +327,6 @@ msgstr ""
 
 #: apps/core/forms.py
 msgid "-- New --"
-msgstr ""
-
-#: apps/core/forms.py
-msgid "The transcription on which to perform alignment."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "The reference text for alignment; must be a .txt file."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Reuse a previously-uploaded reference text."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "N-gram"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Length (2–25) of token sequences to compare; 25 should work well for at "
-"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Max offset"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Enables max-offset and disables beam search. Maximum number of characters "
-"(20–80) difference between the aligned witness text and the original "
-"transcription."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Beam size"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Enables beam search; if this and max offset are left unset, beam search will "
-"be on and beam size set to 20. Higher beam size (1-100) will result in "
-"slower computation but more accurate results."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Gap"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"The distance between matching unique n-grams; 600 should work well for clean "
-"OCR or texts where passages align to different portions of the witness text. "
-"To force end-to-end alignment of two documents, increase to 1,000,000."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Merge aligned text with existing transcription"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will reuse the text of the original transcription "
-"when alignment could not be performed; if unchecked, those lines will be "
-"blank."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Use full transcribed document"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will use all transcribed pages of the document to "
-"find matches. If unchecked, it will compare each page to the text separately."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Line length match threshold"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Minimum proportion (0.0–1.0) of aligned line length to original "
-"transcription, below which matches are ignored. At 0.0, all matches are "
-"accepted."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Region types to include in the alignment."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Layer name"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Name for the new transcription layer produced by this alignment. If you "
-"reuse an existing layer name, the layer will be overwritten; use caution."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You must supply a textual witness (reference text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You may only supply one witness text (file upload or existing text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Alignment layer name cannot be the same as the transcription you are trying "
-"to align."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Max offset and beam size cannot both be non-zero."
 msgstr ""
 
 #: apps/core/forms.py
@@ -669,6 +682,12 @@ msgid "Couldn't parse the given file or its validation failed"
 msgstr ""
 
 #: apps/imports/forms.py
+msgid ""
+"You're not allowed to import files from this domain, please contact your "
+"instance administrator."
+msgstr ""
+
+#: apps/imports/forms.py
 #, python-brace-format
 msgid ""
 "The name of the target transcription. Will default to '{format} Import'."
@@ -710,18 +729,7 @@ msgid "A single ALTO or PAGE XML file."
 msgstr ""
 
 #: apps/imports/forms.py
-msgid ""
-"You're not allowed to import files from this domain, please contact your "
-"instance administrator."
-msgstr ""
-
-#: apps/imports/forms.py
 msgid "Choose one type of import."
-msgstr ""
-
-#: apps/imports/forms.py
-#, python-format
-msgid "Import in %(document_name)s"
 msgstr ""
 
 #: apps/imports/forms.py
@@ -2289,8 +2297,6 @@ msgid "Document report"
 msgstr ""
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Transcribing"
 msgid "Transcription"
 msgstr "Transcription"
 
