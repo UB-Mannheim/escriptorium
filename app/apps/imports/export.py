@@ -1,4 +1,5 @@
 import os.path
+import re
 import time
 import zipfile
 from datetime import datetime
@@ -151,6 +152,8 @@ class XMLTemplateExporter(BaseExporter):
                             **render_orphans,
                         }
                     )
+                    # Remove empty lines from XML output.
+                    page = re.sub(r'\n[ \t]*(?=\n)', '', page)
                 except Exception as e:
                     self.report.append(
                         "Skipped {element}({image}) because '{reason}'.".format(
