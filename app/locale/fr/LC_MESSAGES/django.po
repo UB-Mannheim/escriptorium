@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-10 13:41+0200\n"
+"POT-Creation-Date: 2026-05-10 09:29+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -87,9 +87,151 @@ msgstr ""
 "partir d’un modèle existant."
 
 #: apps/api/serializers.py
+msgid "Upload local file"
+msgstr ""
+
+#: apps/api/serializers.py
+msgid "download file from url"
+msgstr ""
+
+#: apps/api/serializers.py apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr ""
+
+#: apps/api/serializers.py
 msgid ""
 "Either use model_name to create a new model, or add a model pk to retrain an "
 "existing one."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The transcription on which to perform alignment."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "N-gram"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; 25 should work well for at "
+"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Beam size"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will "
+"be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Gap"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"The distance between matching unique n-grams; 600 should work well for clean "
+"OCR or texts where passages align to different portions of the witness text. "
+"To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Merge aligned text with existing transcription"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text separately."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Line length match threshold"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Layer name"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
+msgstr ""
+
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, or provide a base model pk to "
+"retrain."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
 msgstr ""
 
 #: apps/api/views.py apps/core/models.py
@@ -98,17 +240,6 @@ msgstr "Supprimé."
 
 #: apps/api/views.py
 msgid "'lines' is mandatory."
-msgstr ""
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid ""
-"You requested to search text in a {self.obj_name} you don't have access to."
-msgstr ""
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "You requested to search text in a {self.obj_name} that doesn't exist."
 msgstr ""
 
 #: apps/core/forms.py
@@ -122,11 +253,25 @@ msgid ""
 msgstr ""
 
 #: apps/core/forms.py
+msgid "Word by word"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Regular expression"
+msgstr ""
+
+#: apps/core/forms.py
 msgid "Text to replace"
 msgstr ""
 
 #: apps/core/forms.py
 msgid "Text to find"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"You cannot find and replace text across multiple projects at once, please "
+"pick a single project before submitting your request."
 msgstr ""
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
@@ -160,28 +305,6 @@ msgstr ""
 "boîte englobante."
 
 #: apps/core/forms.py
-msgid ""
-"Increase it for low contrast documents, if the letters are not visible "
-"enough."
-msgstr ""
-"Augmentez-la pour les documents à faible contraste, si les lettres ne sont "
-"pas assez visibles."
-
-#: apps/core/forms.py
-msgid "Uploaded image with more than one selected image."
-msgstr "Image téléchargée avec plus d'une image sélectionnée."
-
-#: apps/core/forms.py
-msgid "Uploaded image should be black and white."
-msgstr "L'image téléchargée doit être en noir et blanc."
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "Uploaded image should be the same size as original image {size}."
-msgstr ""
-"L'image téléchargée doit avoir la même taille ({size}) que l'image originale."
-
-#: apps/core/forms.py
 msgid "Model"
 msgstr "Modèle"
 
@@ -198,125 +321,6 @@ msgid "-- New --"
 msgstr ""
 
 #: apps/core/forms.py
-msgid "The transcription on which to perform alignment."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "The reference text for alignment; must be a .txt file."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Reuse a previously-uploaded reference text."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "N-gram"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Length (2–25) of token sequences to compare; 25 should work well for at "
-"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Max offset"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Enables max-offset and disables beam search. Maximum number of characters "
-"(20–80) difference between the aligned witness text and the original "
-"transcription."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Beam size"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Enables beam search; if this and max offset are left unset, beam search will "
-"be on and beam size set to 20. Higher beam size (1-100) will result in "
-"slower computation but more accurate results."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Gap"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"The distance between matching unique n-grams; 600 should work well for clean "
-"OCR or texts where passages align to different portions of the witness text. "
-"To force end-to-end alignment of two documents, increase to 1,000,000."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Merge aligned text with existing transcription"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will reuse the text of the original transcription "
-"when alignment could not be performed; if unchecked, those lines will be "
-"blank."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Use full transcribed document"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will use all transcribed pages of the document to "
-"find matches. If unchecked, it will compare each page to the text separately."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Line length match threshold"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Minimum proportion (0.0–1.0) of aligned line length to original "
-"transcription, below which matches are ignored. At 0.0, all matches are "
-"accepted."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Region types to include in the alignment."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Layer name"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Name for the new transcription layer produced by this alignment. If you "
-"reuse an existing layer name, the layer will be overwritten; use caution."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You must supply a textual witness (reference text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You may only supply one witness text (file upload or existing text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Alignment layer name cannot be the same as the transcription you are trying "
-"to align."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Max offset and beam size cannot both be non-zero."
-msgstr ""
-
-#: apps/core/forms.py
 msgid "The model is already training."
 msgstr ""
 
@@ -327,10 +331,6 @@ msgstr ""
 #: apps/core/forms.py
 msgid ""
 "You need to choose a model to override if the override option is checked."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You can't overwrite the existing file of a model you don't own."
 msgstr ""
 
 #: apps/core/forms.py
@@ -444,10 +444,6 @@ msgstr ""
 msgid "Couldn't find the alignment task."
 msgstr ""
 
-#: apps/core/models.py
-msgid "Binarized image needs to be the same size as original image."
-msgstr "L'image binarisée doit avoir la même taille que l'image originale."
-
 #: apps/core/models.py apps/users/models.py
 msgid "Created"
 msgstr "Crée"
@@ -517,11 +513,7 @@ msgid "Couldn't find the training task."
 msgstr ""
 
 #: apps/core/tasks.py
-msgid "Something went wrong during the binarization!"
-msgstr ""
-
-#: apps/core/tasks.py
-msgid "Binarization done!"
+msgid "D-FINE model fine-tuning is not supported at the moment."
 msgstr ""
 
 #: apps/core/tasks.py
@@ -653,11 +645,16 @@ msgid "Document was successfully migrated to the selected project!"
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "The document cannot be downloaded, certificate verify failed."
+#, python-brace-format
+msgid "Failed to download the document pointed to by the given uri ({error})."
 msgstr ""
 
 #: apps/imports/forms.py
 msgid "The document is unreachable, unreadable or the host timed out."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -666,6 +663,12 @@ msgstr ""
 
 #: apps/imports/forms.py
 msgid "Couldn't parse the given file or its validation failed"
+msgstr ""
+
+#: apps/imports/forms.py
+msgid ""
+"You're not allowed to import files from this domain, please contact your "
+"instance administrator."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -710,18 +713,7 @@ msgid "A single ALTO or PAGE XML file."
 msgstr ""
 
 #: apps/imports/forms.py
-msgid ""
-"You're not allowed to import files from this domain, please contact your "
-"instance administrator."
-msgstr ""
-
-#: apps/imports/forms.py
 msgid "Choose one type of import."
-msgstr ""
-
-#: apps/imports/forms.py
-#, python-format
-msgid "Import in %(document_name)s"
 msgstr ""
 
 #: apps/imports/forms.py
@@ -734,7 +726,13 @@ msgid ""
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "Select at least one image to export."
+msgid "Include character bounding boxes."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid ""
+"This data is only present for transcriptions coming from automatic "
+"recognition and is invalidated by manual edition."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -748,12 +746,6 @@ msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
-msgstr ""
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
-"(over {n_pages - start_at})"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -771,12 +763,6 @@ msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Zip file appears to be corrupted."
-msgstr ""
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - index} files were left to import (over "
-"{total - start_at})"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -801,6 +787,10 @@ msgstr ""
 #, python-brace-format
 msgid ""
 "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
+msgstr ""
+
+#: apps/imports/parsers.py
+msgid "Default ABBYY Import"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -845,12 +835,6 @@ msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Empty or invalid manifest, no images found."
-msgstr ""
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - i} canvases were left to import (over "
-"{total - start_at})"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -920,6 +904,54 @@ msgid_plural "%d invitations were resent."
 msgstr[0] ""
 msgstr[1] ""
 
+#: apps/users/admin.py
+msgid "You do not have permission to send invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid "Successfully sent {count} invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid " The following emails were invalid and were skipped: {emails}"
+msgstr ""
+
+#: apps/users/admin.py
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Bulk Invite"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "CSV file with emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Upload a CSV file with one email per line."
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Enter one email per line."
+msgstr ""
+
+#: apps/users/forms.py apps/users/models.py
+#: escriptorium/templates/users/invitation_form.html
+msgid "Team"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Optional: set an expiry date for these accounts"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Please provide either a CSV file or enter emails directly."
+msgstr ""
+
 #: apps/users/forms.py
 msgid "Email or username."
 msgstr ""
@@ -946,6 +978,13 @@ msgid "email address"
 msgstr "adresse e-mail"
 
 #: apps/users/models.py
+msgid ""
+"Use the legacy version of the user interface. If unchecked, features that "
+"have not yet been ported to the new interface may become unavailable. "
+"Likewise, if checked, newer features may become unavailable."
+msgstr ""
+
+#: apps/users/models.py
 msgid "Error"
 msgstr ""
 
@@ -962,10 +1001,6 @@ msgid "Accepted"
 msgstr ""
 
 #: apps/users/models.py
-msgid "Team"
-msgstr ""
-
-#: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
 msgstr ""
@@ -975,7 +1010,26 @@ msgid "Invitation sent successfully!"
 msgstr ""
 
 #: apps/users/views.py
+msgid "You do not have permission to invite users."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Successfully sent %(count)d invitations."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Skipped invalid: %(emails)s"
+msgstr ""
+
+#: apps/users/views.py
 msgid "Successfully registered, you can now log in!"
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Invitation sent to %(email)s."
 msgstr ""
 
 #: apps/users/views.py
@@ -1014,6 +1068,91 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Steering Committee"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The Steering Committee has met once a week since the project’s inception and "
+"serves primarily to coordinate the work of the different contributors and to "
+"make short-term and strategic decisions about the software, its design and "
+"implementation."
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Founding Team"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The ‘core’ team are the founding members of the eScriptorium project and "
+"have led its development and implementation since the beginning. The two "
+"developers have worked full-time on kraken and eScriptorium since the "
+"beginning, and the two co-directors have been primarily responsible for "
+"coordinating the development, contributions and funding applications."
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Former Committee Members"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Current & Former Intern Students"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The following have contributed as intern students (in alphabetical order):"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Contributors to Source Code"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"Being Free and Open-Source software, the source code of eScriptorium has "
+"benefitted from many contributions, ranging from specific bug-fixes or the "
+"implementation of a given feature through to several years of full-time "
+"development. The following list is correct at the time of writing, in "
+"alphabetical order by last name, but more details and any updates can also "
+"be seen from the project GitLab repository."
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Other Contributors"
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"We have done our best to note the contributors to the eScriptorium software, "
+"but if you or anyone you know is missing then do please let us know."
+msgstr ""
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"We are also very grateful for other types of contribution that is not "
+"specifically related to the software. We cannot list all of these here, but "
+"they include the publication of open datasets (such as those on HTR-United), "
+"open models (particularly those on the kraken open model repository), "
+"tickets reporting bugs and improvements, writing documentation, organising "
+"training sessions, producing plugins and other tools to use with kraken and "
+"eScriptorium, and so on."
+msgstr ""
+
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Institutions & Funding"
 msgstr ""
@@ -1026,11 +1165,7 @@ msgid ""
 msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
-msgid "Funded salaries of two developers for XX years, as well as …"
-msgstr ""
-
-#: contributors/credits_list.html contributors_example/credits_list.html
-msgid "Funded …???"
+msgid "Funded salaries of two developers over multiple years…"
 msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
@@ -1043,8 +1178,8 @@ msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid ""
-"Funded salaries of two developers for XX years, as well as sustaining the "
-"HPC…"
+"Funded salaries of two developers over multiple years, as well as sustaining "
+"the HPC…"
 msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
@@ -1057,10 +1192,6 @@ msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Funded SLURM-based task execution…"
-msgstr ""
-
-#: contributors/credits_list.html contributors_example/credits_list.html
-msgid "Funded salaries of two developers for XX years…"
 msgstr ""
 
 #: contributors/credits_list.html contributors_example/credits_list.html
@@ -1087,17 +1218,21 @@ msgstr ""
 msgid "Inria Paris"
 msgstr ""
 
-#: escriptorium/settings.py
-msgid "English"
-msgstr ""
+#: escriptorium/local_settings.py escriptorium/settings.py
+msgid "German"
+msgstr "Allemand"
 
-#: escriptorium/settings.py
+#: escriptorium/local_settings.py escriptorium/settings.py
+msgid "English"
+msgstr "Anglais"
+
+#: escriptorium/local_settings.py escriptorium/settings.py
 msgid "French"
 msgstr ""
 
-#: escriptorium/settings.py
-msgid "German"
-msgstr ""
+#: escriptorium/local_settings.py escriptorium/settings.py
+msgid "Spanish"
+msgstr "Espagnol"
 
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
@@ -1107,11 +1242,26 @@ msgstr ""
 msgid "Page not found."
 msgstr ""
 
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "OR"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send Invitations"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Add invitation"
+msgstr ""
+
 #: escriptorium/templates/base.html
 msgid "About"
 msgstr ""
 
-#: escriptorium/templates/base.html
+#: escriptorium/templates/base.html escriptorium/templates/users/contactus.html
+#: homepage/instance_contact.html homepage_example/instance_contact.html
 msgid "Contact"
 msgstr "Contact"
 
@@ -1120,12 +1270,20 @@ msgid "Search in all your projects"
 msgstr ""
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/core/search/search.html
+msgid "Search"
+msgstr ""
+
+#: escriptorium/templates/base.html
+msgid "Find & Replace"
+msgstr ""
+
+#: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
 msgid "My Projects"
 msgstr ""
 
 #: escriptorium/templates/base.html
-#: escriptorium/templates/core/models_list/main.html
 msgid "My Models"
 msgstr ""
 
@@ -1152,6 +1310,7 @@ msgid "Tasks monitoring"
 msgstr ""
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Leaderboard"
 msgstr ""
 
@@ -1160,6 +1319,7 @@ msgid "Site administration"
 msgstr ""
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite"
 msgstr ""
 
@@ -1198,6 +1358,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_dashboard.html
 #: escriptorium/templates/core/project_dashboard.html
+#: escriptorium/templates/core/training.html
 msgid ""
 "This page is not available in legacy mode. Visit your user settings to "
 "disable legacy mode."
@@ -1315,14 +1476,6 @@ msgstr ""
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/models_list/table.html
 msgid "Cancel training"
-msgstr ""
-
-#: escriptorium/templates/core/document_images.html
-msgid "Binarize selected images."
-msgstr ""
-
-#: escriptorium/templates/core/document_images.html
-msgid "Binarize"
 msgstr ""
 
 #: escriptorium/templates/core/document_images.html
@@ -1466,6 +1619,7 @@ msgid "Images"
 msgstr ""
 
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/models_list/main.html
 msgid "Models"
 msgstr ""
 
@@ -1565,6 +1719,10 @@ msgstr ""
 msgid "Text Annotations"
 msgstr ""
 
+#: escriptorium/templates/core/documents_tasks_list.html
+msgid "Task Monitoring"
+msgstr ""
+
 #: escriptorium/templates/core/home.html
 msgid "Homepage"
 msgstr ""
@@ -1573,6 +1731,10 @@ msgstr ""
 msgid ""
 "eScriptorium: A Digital Text Production Pipeline for Print and Handwritten "
 "Texts using machine learning techniques."
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "Sign in"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
@@ -1656,12 +1818,32 @@ msgid "Tutorial"
 msgstr "Tutoriel"
 
 #: escriptorium/templates/core/home.html
-msgid "eScriptorium open source code"
-msgstr "eScriptorium code open source"
+msgid "User mailing list"
+msgstr ""
 
 #: escriptorium/templates/core/home.html
-msgid "eScriptorium Blog"
-msgstr "eScriptorium blog"
+msgid "Community Chat"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "General Website"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "Blog"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "eScripta Blog"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "For Developers"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium Application"
+msgstr ""
 
 #: escriptorium/templates/core/home.html
 msgid "Acknowledgements"
@@ -1673,6 +1855,13 @@ msgstr "Mentions légales"
 
 #: escriptorium/templates/core/migrate/migrate_document.html
 msgid "Migrate"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+#, python-format
+msgid ""
+"Please be aware that the epoch versions of the models will only be available "
+"for %(MODELS_VERSION_RETENTION)s days."
 msgstr ""
 
 #: escriptorium/templates/core/models_list/main.html
@@ -1716,6 +1905,10 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Stop sharing"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "No shares on this model."
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -1958,10 +2151,6 @@ msgid "Search feature is deactivated on this instance."
 msgstr ""
 
 #: escriptorium/templates/core/search/search.html
-msgid "Search"
-msgstr ""
-
-#: escriptorium/templates/core/search/search.html
 msgid ""
 "Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
@@ -1994,6 +2183,10 @@ msgstr ""
 msgid "Share"
 msgstr ""
 
+#: escriptorium/templates/core/training.html
+msgid "Model Training"
+msgstr ""
+
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
 msgstr ""
@@ -2015,28 +2208,6 @@ msgstr ""
 
 #: escriptorium/templates/core/wizards/align.html
 msgid "Settings"
-msgstr ""
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid ""
-"Binarization is NOT a mandatory step any more, and might even decrease "
-"quality."
-msgstr ""
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Manually"
-msgstr ""
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Or automatically"
-msgstr ""
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Contrast"
-msgstr ""
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Upload or Binarize"
 msgstr ""
 
 #: escriptorium/templates/core/wizards/import.html
@@ -2314,8 +2485,7 @@ msgid "Your password has successfully been changed."
 msgstr ""
 
 #: escriptorium/templates/registration/password_change_form.html
-#: escriptorium/templates/registration/password_reset_form.html
-msgid "Change your password"
+msgid "Change Password"
 msgstr "Changez votre mot de passe"
 
 #: escriptorium/templates/registration/password_change_form.html
@@ -2399,6 +2569,10 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/registration/password_reset_form.html
+msgid "Change your password"
+msgstr "Changez votre mot de passe"
+
+#: escriptorium/templates/registration/password_reset_form.html
 msgid ""
 "Forgotten your password? Enter your email address below, and we’ll email "
 "instructions for setting a new one."
@@ -2419,8 +2593,6 @@ msgid "Document report"
 msgstr ""
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Transcribing"
 msgid "Transcription"
 msgstr "Transcription"
 
@@ -2650,6 +2822,10 @@ msgid "Ended at:"
 msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html
+msgid "Task Usage"
+msgstr ""
+
+#: escriptorium/templates/reporting/taskreport_list.html
 msgid "Calculated from your images and models"
 msgstr ""
 
@@ -2697,6 +2873,16 @@ msgstr ""
 
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "You don't have any task report yet."
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid "Account Expired"
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid ""
+"Your account has expired. Please reach out to the person who invited you for "
+"assistance."
 msgstr ""
 
 #: escriptorium/templates/users/contactus.html
@@ -2788,7 +2974,39 @@ msgid "Signup"
 msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
+msgid "Invite Users"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Invite mode"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Single"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Bulk"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
 msgid "Recipient's information"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Upload CSV file"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Paste emails (one per line)"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Expiry date (optional)"
+msgstr ""
+
+#: escriptorium/templates/users/profile.html
+msgid "Profile Settings"
 msgstr ""
 
 #: escriptorium/templates/users/profile.html
@@ -2869,6 +3087,18 @@ msgid "You are not part of any team yet."
 msgstr ""
 
 #: escriptorium/templates/users/profile_invitations.html
+msgid "Recipient"
+msgstr ""
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Group"
+msgstr ""
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Status"
+msgstr ""
+
+#: escriptorium/templates/users/profile_invitations.html
 msgid "You didn't send any invitations yet."
 msgstr ""
 
@@ -2900,6 +3130,10 @@ msgstr "Discussions sur l'eScriptorium"
 msgid "(on GitHub)"
 msgstr ""
 
-#: homepage/additional_heading.html
-msgid "Please use our public instance:"
+#: homepage/instance_contact.html homepage_example/instance_contact.html
+msgid "Request an account"
+msgstr ""
+
+#: homepage/instance_contact.html homepage_example/instance_contact.html
+msgid "Report an issue"
 msgstr ""
