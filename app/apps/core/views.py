@@ -814,7 +814,7 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
                                 content_type="application/json", status=400)
 
 
-class DocumentDashboard(DetailView):
+class DocumentDashboard(LoginRequiredMixin, DetailView):
     model = Document
     template_name = "core/document_dashboard.html"
 
