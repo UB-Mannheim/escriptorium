@@ -34,7 +34,8 @@
                     <input
                         type="checkbox"
                         value="include-images"
-                        :checked="includeImages === true"
+                        :checked="includeImages === true && fileFormat !== 'text'"
+                        :disabled="fileFormat === 'text'"
                         @change="handleIncludeImagesChange"
                     >
                     Include images
@@ -225,6 +226,10 @@ export default {
             this.handleGenericInput({
                 form: "export", field: "fileFormat", value: e.target.value,
             });
+            if (e.target.value === "text") {
+                // if switching to text export, uncheck "include images"
+                this.handleGenericInput({ form: "export", field: "includeImages", value: false });
+            }
         },
         handleIncludeImagesChange(e) {
             this.handleGenericInput({

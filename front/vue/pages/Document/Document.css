@@ -55,7 +55,8 @@
     grid-area: tags;
     padding-right: 0;
 }
-.escr-document-dashboard .escr-document-tags .escr-card-header {
+.escr-document-dashboard .escr-document-tags .escr-card-header,
+.escr-document-dashboard .escr-document-tags .escr-loader-container {
     padding-right: 1rem;
 }
 .escr-document-dashboard .escr-tag-group-wrapped {
