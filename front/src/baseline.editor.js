@@ -1284,6 +1284,20 @@ export class Segmenter {
             }.bind(this);
         }.bind(this);
 
+        region.polygonPath.onMouseMove = function () {
+            if (this.mode != "regions") {
+                return;
+            } else if (this.newUiEnabled) {
+                this.setCursor("pointer");
+            }
+        }.bind(this);
+
+        region.polygonPath.onMouseLeave = function () {
+            if (this.newUiEnabled) {
+                this.setCursor();
+            }
+        }.bind(this);
+
         region.polygonPath.onDoubleClick = function (event) {
             // Creates a new control point in the region
             if (event.event.ctrlKey || this.mode != "regions") return;
