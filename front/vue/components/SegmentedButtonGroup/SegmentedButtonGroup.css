@@ -2,7 +2,12 @@
     display: flex;
     flex-flow: row nowrap;
 }
-.escr-segmented-button-group label {
+.escr-segmented-button-group > div {
+    height: 32px;
+    max-height: 32px;
+}
+.escr-segmented-button-group > div > label,
+.escr-segmented-button-group > div > div > label {
     display: flex;
     flex-flow: row nowrap;
     flex: 1 0;
@@ -19,68 +24,87 @@
     cursor: pointer;
 }
 /* separation and border radius */
-.escr-segmented-button-group label:not(:last-of-type) {
+.escr-segmented-button-group > div:not(:last-of-type) > label,
+.escr-segmented-button-group > div:not(:last-of-type) > div > label {
     margin-right: 1px;
 }
-.escr-segmented-button-group label:first-of-type {
+.escr-segmented-button-group > div:first-of-type > label,
+.escr-segmented-button-group > div:first-of-type > div > label {
     border-radius: 5px 0px 0px 5px;
 }
-.escr-segmented-button-group label:last-of-type {
+.escr-segmented-button-group > div:last-of-type > label,
+.escr-segmented-button-group > div:last-of-type > div > label {
     border-radius: 0px 5px 5px 0px;
 }
-.escr-segmented-button-group label:not(:first-of-type):not(:last-of-type) {
+.escr-segmented-button-group > div:not(:first-of-type):not(:last-of-type) > label,
+.escr-segmented-button-group > div:not(:first-of-type):not(:last-of-type) > div > label {
     border-radius: 0px;
 }
-.escr-segmented-button-group label:first-of-type:last-of-type {
+.escr-segmented-button-group > div:first-of-type:last-of-type > label,
+.escr-segmented-button-group > div:first-of-type:last-of-type > div > label {
     border-radius: 5px;
 }
 /* inactive button(s) */
-.escr-segmented-button-group input:not(:checked) + label {
+.escr-segmented-button-group input:not(:checked) + label,
+.escr-segmented-button-group input:not(:checked) + div > label {
     color: var(--text2);
     background-color: var(--background2);
     font-weight: 400;
 }
-.escr-segmented-button-group input:not(:checked) + label:hover {
+.escr-segmented-button-group input:not(:checked) + label:hover,
+.escr-segmented-button-group input:not(:checked) + div > label:hover {
     background-color: var(--background2-dark);
 }
-.escr-segmented-button-group input:not(:checked) + label:active {
+.escr-segmented-button-group input:not(:checked) + label:active,
+.escr-segmented-button-group input:not(:checked) + div > label:active {
     background-color: var(--background2-darker);
 }
 /* active button */
-.escr-segmented-button-group input:checked + label {
+.escr-segmented-button-group input:checked + label,
+.escr-segmented-button-group input:checked + div > label {
     font-weight: 600;
 }
-.escr-segmented-button-group--primary input:checked + label {
+.escr-segmented-button-group--primary input:checked + label,
+.escr-segmented-button-group--primary input:checked + div > label {
     background-color: var(--primary);
 }
-.escr-segmented-button-group--primary input:checked + label:hover {
+.escr-segmented-button-group--primary input:checked + label:hover,
+.escr-segmented-button-group--primary input:checked + div > label:hover {
     background-color: var(--primary-dark);
 }
-.escr-segmented-button-group--primary input:checked + label:active {
+.escr-segmented-button-group--primary input:checked + label:active,
+.escr-segmented-button-group--primary input:checked + div > label:active {
     background-color: var(--primary-darker);
 }
-.escr-segmented-button-group--secondary input:checked + label {
+.escr-segmented-button-group--secondary input:checked + label,
+.escr-segmented-button-group--secondary input:checked + div > label {
     background-color: var(--secondary);
 }
-.escr-segmented-button-group--secondary input:checked + label:hover {
+.escr-segmented-button-group--secondary input:checked + label:hover,
+.escr-segmented-button-group--secondary input:checked + div > label:hover {
     background-color: var(--secondary-dark);
 }
-.escr-segmented-button-group--secondary input:checked + label:active {
+.escr-segmented-button-group--secondary input:checked + label:active,
+.escr-segmented-button-group--secondary input:checked + div > label:active {
     background-color: var(--secondary-darker);
 }
 /* focus */
-.escr-segmented-button-group input:focus + label {
+.escr-segmented-button-group input:focus + label,
+.escr-segmented-button-group input:focus + div > label {
     z-index: var(--segmented-button-focus-z);
 }
-.escr-segmented-button-group--primary input:focus + label {
+.escr-segmented-button-group--primary input:focus + label,
+.escr-segmented-button-group--primary input:focus + div > label {
     box-shadow: 0 0 0 0.1rem var(--primary-focus);
 }
-.escr-segmented-button-group--secondary input:focus + label {
+.escr-segmented-button-group--secondary input:focus + label,
+.escr-segmented-button-group--secondary input:focus + div > label {
     box-shadow: 0 0 0 0.1rem var(--secondary-focus);
 }
 
 /* disabled */
-.escr-segmented-button-group input:disabled + label {
+.escr-segmented-button-group input:disabled + label,
+.escr-segmented-button-group input:disabled + div > label {
     pointer-events: none;
     cursor: default;
     color: var(--text3);
