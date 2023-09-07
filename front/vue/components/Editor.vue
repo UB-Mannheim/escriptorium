@@ -13,7 +13,7 @@
             </div>
         </nav>
 
-        <tabcontent />
+        <tabcontent :legacy-mode-enabled="legacyModeEnabled" />
     </div>
 </template>
 
@@ -31,14 +31,39 @@ export default {
         "extranav": ExtraNav,
         "tabcontent": TabContent,
     },
-    props: [
-        "documentId",
-        "documentName",
-        "partId",
-        "defaultTextDirection",
-        "mainTextDirection",
-        "readDirection",
-    ],
+    props: {
+        documentId: {
+            type: String,
+            required: true,
+        },
+        documentName: {
+            type: String,
+            required: true,
+        },
+        partId: {
+            type: String,
+            required: true,
+        },
+        defaultTextDirection: {
+            type: String,
+            required: true,
+        },
+        mainTextDirection: {
+            type: String,
+            required: true,
+        },
+        readDirection: {
+            type: String,
+            required: true,
+        },
+        /**
+         * Whether or not legacy mode is enabled on this instance.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
+    },
     computed: {
         navEditActive() {
             return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
