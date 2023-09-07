@@ -1,0 +1,51 @@
+.escr-toolbar {
+    /* TODO: 54px after full UX redesign */
+    min-height: 45px;
+    /* TODO: margin 0 after full UX redesign*/
+    margin-bottom: 5px;
+}
+.escr-segmentation-toolbar > i {
+    margin: 0 1rem;
+    color: var(--text1);
+    fill: var(--text1);
+}
+.escr-segmentation-toolbar {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    background-color: var(--background1);
+}
+.escr-segmentation-toolbar .new-section {
+    margin-left: 0.5rem;
+}
+.escr-toolbar-tooltip {
+    text-align: center;
+}
+.escr-segmentation-toolbar #escr-delete-dropdown-button svg:first-of-type {
+    margin: 0 0.2rem 0 0.5rem;
+}
+.escr-segmentation-toolbar #escr-delete-dropdown-button svg:last-of-type {
+    margin: 0 0.5rem 0 0.2rem;
+    width: 0.5rem;
+    height: 0.5rem;
+}
+
+/* undo/redo buttons have special styling, no background when disabled */
+.escr-segmentation-toolbar .escr-button#undo-button:disabled,
+.escr-segmentation-toolbar .escr-button#redo-button:disabled {
+    background: transparent;
+}
+
+/* switchable tools section */
+.escr-segmentation-toolbar .mode-tools {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+}
+.escr-segmentation-toolbar .mode-tools::before {
+    width: 1px;
+    content: "";
+    height: 1rem;
+    border-left: 1px solid var(--text3);
+    padding-left: 0.5rem;
+}

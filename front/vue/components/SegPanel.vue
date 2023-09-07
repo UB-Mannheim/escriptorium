@@ -1,6 +1,7 @@
 <template>
     <div class="col panel">
         <div
+            v-if="legacyModeEnabled"
             class="tools"
         >
             <i
@@ -169,8 +170,34 @@
                 <help />
             </div>
         </div>
-
-        <div id="context-menu">
+        <SegmentationToolbar
+            v-else
+            ref="segmentation-toolbar"
+            :display-mode="(segmenter && segmenter.mode) || 'lines'"
+            :can-redo="undoManager && undoManager.hasRedo()"
+            :can-undo="undoManager && undoManager.hasUndo()"
+            :disabled="isWorking"
+            :has-selection="hasSelection"
+            :has-points-selection="hasPointsSelection"
+            :line-numbering-enabled="(segmenter && segmenter.showLineNumbers) || false"
+            :on-change-mode="onChangeMode"
+            :on-change-selection-type="onChangeType"
+            :on-delete="onDelete"
+            :on-link-unlink="onLinkUnlink"
+            :on-join="onJoin"
+            :on-toggle-line-numbering="onToggleLineNumbering"
+            :on-redo="redo"
+            :on-reverse="onReverse"
+            :on-undo="undo"
+            :selected-type="selectedType"
+            :selection-is-linked="selectionIsLinked"
+            :toggle-tool="onToggleTool"
+            :tool="(segmenter && segmenter.activeTool) || ''"
+        />
+        <div
+            v-if="legacyModeEnabled"
+            id="context-menu"
+        >
             <button
                 id="be-link-region"
                 title="Link selected lines to (the first detected) background region. (Y)"
@@ -281,6 +308,7 @@
 import { BasePanel } from "../../src/editor/mixins.js";
 import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
+import SegmentationToolbar from "./SegmentationToolbar/SegmentationToolbar.vue";
 import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
 
@@ -288,10 +316,23 @@ export default Vue.extend({
     components: {
         segline: SegLine,
         segregion: SegRegion,
-        help: Help
+        help: Help,
+        SegmentationToolbar,
     },
     mixins: [BasePanel],
-    props: ["fullsizeimage"],
+    props: {
+        fullsizeimage: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not legacy mode is enabled on this instance.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        }
+    },
     data() {
         return {
             segmenter: { loaded: false },
@@ -299,7 +340,7 @@ export default Vue.extend({
             colorMode: "color", //  color - binary - grayscale
             undoManager: new UndoManager(),
             isWorking: false,
-            autoOrder: userProfile.get("autoOrder", true)
+            autoOrder: userProfile.get("autoOrder", true),
         };
     },
     computed: {
@@ -332,6 +373,54 @@ export default Vue.extend({
         src;
 
             return bwSrc;
+        },
+        /**
+         * Return true if there are any segments, regions, or lines selected.
+         */
+        hasSelection() {
+            return (
+                this.segmenter?.selection?.segments?.length !== 0 ||
+                this.segmenter?.selection?.regions?.length !== 0 ||
+                this.segmenter?.selection?.lines?.length !== 0
+            ) || false;
+        },
+        /**
+         * Return true if there are any segments selected.
+         */
+        hasPointsSelection() {
+            return this.segmenter?.selection?.segments?.length !== 0 || false;
+        },
+        /**
+         * Return true if there is any line selected that is linked to a region.
+         */
+        selectionIsLinked() {
+            return (this.segmenter?.regions?.length > 0 &&
+                    this.segmenter.selection?.lines?.filter(
+                        (l) => l.region !== null
+                    ).length > 0
+            ) || false;
+        },
+        /**
+         * Returns the selected type name, if all selected lines or regions are the same type,
+         * or else returns "None".
+         */
+        selectedType() {
+            if (
+                this.segmenter?.selection?.lines?.length && this.segmenter.selection.lines.every(
+                    (line, _, lines) => line.type === lines[0].type,
+                )
+            ) {
+                return this.segmenter.selection.lines[0].type || "None";
+            } else if (
+                this.segmenter?.selection?.regions?.length &&
+                this.segmenter.selection.regions.every(
+                    (reg, _, regions) => reg.type === regions[0].type
+                )
+            ) {
+                return this.segmenter.selection.regions[0].type || "None";
+            } else {
+                return "None";
+            }
         },
     },
     watch: {
@@ -393,6 +482,12 @@ export default Vue.extend({
                     baselinesColor: beSettings["color-baselines"] || null,
                     regionColors: beSettings["color-regions"] || null,
                     directionHintColors: beSettings["color-directions"] || null,
+                    newUiEnabled: !this.legacyModeEnabled,
+                    toolbar: this.$refs["segmentation-toolbar"]?.$el,
+                    toolbarSubmenuIds: [
+                        // for click handling on toolbar, list all submenu node IDs here
+                        "type-select-menu",
+                    ],
                 });
                 // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
@@ -530,18 +625,24 @@ export default Vue.extend({
         );
 
         // history
-        this.$refs.undo.addEventListener(
-            "click",
-            function (ev) {
-                this.undo();
-            }.bind(this)
-        );
-        this.$refs.redo.addEventListener(
-            "click",
-            function (ev) {
-                this.redo();
-            }.bind(this)
-        );
+        if (this.legacyModeEnabled) {
+            this.$refs.undo.addEventListener(
+                "click",
+                function (ev) {
+                    this.undo();
+                }.bind(this)
+            );
+            this.$refs.redo.addEventListener(
+                "click",
+                function (ev) {
+                    this.redo();
+                }.bind(this)
+            );
+        }
+
+        // when undo or redo completes, turn off isWorking
+        this.undoManager.setCallback(() => this.isWorking = false);
+
         this.$refs.img.addEventListener(
             "load",
             function (ev) {
@@ -603,7 +704,7 @@ export default Vue.extend({
                     if (this.segmenter.loaded) {
                         this.segmenter.refresh();
                     } else {
-                        this.segmenter.init();
+                        this.segmenter.init({ newUiEnabled: !this.legacyModeEnabled });
                     }
                 }.bind(this)
             );
@@ -885,18 +986,107 @@ export default Vue.extend({
         },
         /* History */
         undo() {
+            this.isWorking = true;
             this.undoManager.undo();
             this.refreshHistoryBtns();
         },
         redo() {
+            this.isWorking = true;
             this.undoManager.redo();
             this.refreshHistoryBtns();
         },
         refreshHistoryBtns() {
-            if (this.undoManager.hasUndo()) this.$refs.undo.disabled = false;
-            else this.$refs.undo.disabled = true;
-            if (this.undoManager.hasRedo()) this.$refs.redo.disabled = false;
-            else this.$refs.redo.disabled = true;
+            if (this.$refs.undo) {
+                if (this.undoManager.hasUndo()) this.$refs.undo.disabled = false;
+                else this.$refs.undo.disabled = true;
+                if (this.undoManager.hasRedo()) this.$refs.redo.disabled = false;
+                else this.$refs.redo.disabled = true;
+            }
+        },
+        /**
+         * Change the mode between lines, regions, and masks.
+         *
+         * @param {String} value One of "lines", "regions", or "masks"
+         */
+        onChangeMode(value) {
+            this.segmenter.purgeSelection();
+            this.segmenter.toggleTool(this.segmenter.activeTool || "");
+            this.segmenter.setMode(value);
+            switch(value) {
+                case "lines":
+                    this.segmenter.toggleMasks(false);
+                    this.segmenter.toggleLineStrokes(true);
+                    this.segmenter.evenMasksGroup.bringToFront();
+                    this.segmenter.oddMasksGroup.bringToFront();
+                    this.segmenter.linesGroup.bringToFront();
+                    break;
+                case "regions":
+                    this.segmenter.toggleMasks(false);
+                    this.segmenter.toggleLineStrokes(false);
+                    break;
+                case "masks":
+                    this.segmenter.toggleMasks(true);
+                    this.segmenter.toggleLineStrokes(true);
+                    this.segmenter.evenMasksGroup.bringToFront();
+                    this.segmenter.oddMasksGroup.bringToFront();
+                    this.segmenter.linesGroup.sendToBack();
+                    break;
+            }
+            this.segmenter.applyRegionMode();
+        },
+        /**
+         * Turn line numbering on and off.
+         */
+        onToggleLineNumbering(e) {
+            this.segmenter.setOrdering(e.target.checked);
+        },
+        /**
+         * change the currently active tool
+         */
+        onToggleTool(tool) {
+            this.segmenter.toggleTool(tool);
+        },
+        /**
+         * Link or unlink depending on state of selection.
+         */
+        onLinkUnlink() {
+            if (this.selectionIsLinked) {
+                this.segmenter.unlinkSelection();
+            } else if (this.hasSelection) {
+                this.segmenter.linkSelection();
+            }
+        },
+        /**
+         * Change the type of lines or regions
+         *
+         * @param {String} type Name of the selected type
+         */
+        onChangeType(type) {
+            this.segmenter.setSelectionType(type);
+        },
+        /**
+         * Delete the currently selected points, lines, or regions
+         *
+         * @param {Boolean} onlyPoints Whether or not to delete selected points
+         */
+        onDelete(onlyPoints) {
+            if (onlyPoints) {
+                this.segmenter.deleteSelectedSegments();
+            } else {
+                this.segmenter.deleteSelection();
+            }
+        },
+        /**
+         * Merge/join the currently selected lines or regions
+         */
+        onJoin() {
+            this.segmenter.mergeSelection();
+        },
+        /**
+         * Reverse the direction of the currently selected lines
+         */
+        onReverse() {
+            this.segmenter.reverseSelection();
         },
     },
 });
