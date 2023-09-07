@@ -1435,7 +1435,6 @@ export class Segmenter {
                     event.point,
                 ).segment;
                 this.tool.onMouseDrag = function (event) {
-                    this.selecting = false;
                     if (!event.event.shiftKey && !event.event.ctrlKey) {
                         this.movePointInView(dragging.point, event.delta);
                     }
