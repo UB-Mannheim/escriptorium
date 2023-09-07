@@ -266,7 +266,11 @@ class SegmenterLine {
 
     select() {
         if (this.selected) return;
-        if (this.maskPath && this.maskPath.visible) {
+        if (
+            this.maskPath &&
+            this.maskPath.visible &&
+            (!this.segmenter.newUiEnabled || this.segmenter.mode === "masks")
+        ) {
             this.maskPath.selected = true;
             this.maskPath.fillColor = this.segmenter.shadeColor(
                 this.getMaskColor(),
@@ -274,7 +278,11 @@ class SegmenterLine {
             );
             this.maskPath.bringToFront();
         }
-        if (this.baselinePath) {
+        if (
+            this.baselinePath &&
+            (!this.segmenter.newUiEnabled || this.segmenter.mode === "lines")
+        ) {
+            // TODO: Should selecting masks also select lines??
             this.baselinePath.selected = true;
             this.baselinePath.bringToFront();
             this.baselinePath.strokeColor = this.segmenter.shadeColor(
@@ -588,6 +596,12 @@ export class Segmenter {
             // field to store and reuse in output from loaded data
             // can be set to null to disable behavior
             idField = "id",
+            // whether or not we are using the new UI
+            newUiEnabled = false,
+            // the new UI segmentation toolbar ref, for click handlers
+            toolbar = null,
+            // the new UI type select dropdown, for click handlers
+            toolbarSubmenuIds = [],
         } = {},
     ) {
         this.loaded = false;
@@ -607,6 +621,17 @@ export class Segmenter {
         this.canvas.style.position = "absolute";
         this.canvas.style.top = 0;
         this.canvas.style.left = 0;
+
+        /** New UI */
+        this.newUiEnabled = newUiEnabled;
+        this.toolbar = toolbar;
+        this.toolbarSubmenuIds = toolbarSubmenuIds;
+        // values for activeTool:
+        // cut - splitting tool
+        // add-lines - drawing lines tool
+        // add-regions - drawing regions tool
+        this.activeTool = "";
+        /** end New UI */
 
         // paper.js helpers
         this.inactiveLayerOpacity = inactiveLayerOpacity;
@@ -644,65 +669,72 @@ export class Segmenter {
         this.splitting = false;
         this.copy = null;
 
-        // menu btns
-        this.toggleMasksBtn = document.getElementById("be-toggle-masks");
-        this.toggleLineModeBtn = document.getElementById("be-toggle-line-mode");
-        this.toggleOrderingBtn = document.getElementById("be-toggle-order");
-        this.toggleRegionModeBtn = document.getElementById("be-toggle-regions");
-        this.splitBtn = document.getElementById("be-split-lines");
-
-        // contextual btns
-        this.deletePointBtn = document.getElementById("be-delete-point");
-        this.deleteSelectionBtn = document.getElementById(
-            "be-delete-selection",
-        );
-        this.mergeBtn = document.getElementById("be-merge-selection");
-        this.reverseBtn = document.getElementById("be-reverse-selection");
-        this.linkRegionBtn = document.getElementById("be-link-region");
-        this.unlinkRegionBtn = document.getElementById("be-unlink-region");
-        this.setTypeBtn = document.getElementById("be-set-type");
-
-        // editor settings;
-        this.baselinesColorInput = document.getElementById("be-bl-color");
-        this.evenMasksColorInput =
-            document.getElementById("be-even-mask-color");
-        this.oddMasksColorInput = document.getElementById("be-odd-mask-color");
-        this.dirHintColorInputs = [];
-        for (let index in this.lineTypes) {
-            this.dirHintColorInputs.push(
-                document.getElementById("be-dir-color-" + index),
-            );
-        }
-        this.regionColorInputs = [];
-        for (let index in this.regionTypes) {
-            this.regionColorInputs.push(
-                document.getElementById("be-reg-color-" + index),
-            );
-        }
-
-        // create a menu for the context buttons
-        this.contextMenu = document.getElementById("context-menu");
-        if (!this.contextMenu) {
-            document.createElement("div");
-            this.contextMenu.id = "context-menu";
-        }
-        if (this.linkRegionBtn)
-            this.contextMenu.appendChild(this.linkRegionBtn);
-        if (this.unlinkRegionBtn)
-            this.contextMenu.appendChild(this.unlinkRegionBtn);
-        if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
-        if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
-        if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
-        if (this.deletePointBtn)
-            this.contextMenu.appendChild(this.deletePointBtn);
-        if (this.deleteSelectionBtn)
-            this.contextMenu.appendChild(this.deleteSelectionBtn);
-
         this.tooltip = document.getElementById("info-tooltip");
 
-        this.createTypeSelects();
-        this.bindButtons();
+        if (!this.newUiEnabled) {
+            // menu btns
+            this.toggleMasksBtn = document.getElementById("be-toggle-masks");
+            this.toggleLineModeBtn = document.getElementById(
+                "be-toggle-line-mode",
+            );
+            this.toggleOrderingBtn = document.getElementById("be-toggle-order");
+            this.toggleRegionModeBtn =
+                document.getElementById("be-toggle-regions");
+            this.splitBtn = document.getElementById("be-split-lines");
 
+            // contextual btns
+            this.deletePointBtn = document.getElementById("be-delete-point");
+            this.deleteSelectionBtn = document.getElementById(
+                "be-delete-selection",
+            );
+            this.mergeBtn = document.getElementById("be-merge-selection");
+            this.reverseBtn = document.getElementById("be-reverse-selection");
+            this.linkRegionBtn = document.getElementById("be-link-region");
+            this.unlinkRegionBtn = document.getElementById("be-unlink-region");
+            this.setTypeBtn = document.getElementById("be-set-type");
+
+            // editor settings;
+            this.baselinesColorInput = document.getElementById("be-bl-color");
+            this.evenMasksColorInput =
+                document.getElementById("be-even-mask-color");
+            this.oddMasksColorInput =
+                document.getElementById("be-odd-mask-color");
+            this.dirHintColorInputs = [];
+            for (let index in this.lineTypes) {
+                this.dirHintColorInputs.push(
+                    document.getElementById("be-dir-color-" + index),
+                );
+            }
+            this.regionColorInputs = [];
+            for (let index in this.regionTypes) {
+                this.regionColorInputs.push(
+                    document.getElementById("be-reg-color-" + index),
+                );
+            }
+
+            // create a menu for the context buttons
+            this.contextMenu = document.getElementById("context-menu");
+            if (!this.contextMenu) {
+                document.createElement("div");
+                this.contextMenu.id = "context-menu";
+            }
+            if (this.linkRegionBtn)
+                this.contextMenu.appendChild(this.linkRegionBtn);
+            if (this.unlinkRegionBtn)
+                this.contextMenu.appendChild(this.unlinkRegionBtn);
+            if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
+            if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+            if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
+            if (this.deletePointBtn)
+                this.contextMenu.appendChild(this.deletePointBtn);
+            if (this.deleteSelectionBtn)
+                this.contextMenu.appendChild(this.deleteSelectionBtn);
+
+            this.createTypeSelects();
+            this.bindButtons();
+        } else {
+            this.bindGlobalEvents();
+        }
         // init paperjs
         if (!delayInit) {
             this.init();
@@ -726,7 +758,9 @@ export class Segmenter {
         for (let i = this.selection.regions.length - 1; i >= 0; i--) {
             this.selection.regions[i].delete();
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     deleteSelectedSegments() {
@@ -751,7 +785,9 @@ export class Segmenter {
             this.selection.regions[i].updateDataFromCanvas();
         }
 
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     bindButtons() {
@@ -864,50 +900,56 @@ export class Segmenter {
         if (this.dirHintColorInputs) {
             for (let index in this.dirHintColorInputs) {
                 let input = this.dirHintColorInputs[index];
-                input.addEventListener(
-                    "change",
-                    function (ev) {
-                        let type = this.lineTypes[index];
-                        this.directionHintColors[type] = ev.target.value;
-                        if (type == "None") type = null; // switch to null for comparison
-                        for (let index in this.lines) {
-                            let line = this.lines[index];
-                            if (line.type == type) {
-                                line.refresh();
+                if (input) {
+                    input.addEventListener(
+                        "change",
+                        function (ev) {
+                            let type = this.lineTypes[index];
+                            this.directionHintColors[type] = ev.target.value;
+                            if (type == "None") type = null; // switch to null for comparison
+                            for (let index in this.lines) {
+                                let line = this.lines[index];
+                                if (line.type == type) {
+                                    line.refresh();
+                                }
                             }
-                        }
-                        this.trigger("baseline-editor:settings", {
-                            name: "color-directions",
-                            value: this.directionHintColors,
-                        });
-                    }.bind(this),
-                );
+                            this.trigger("baseline-editor:settings", {
+                                name: "color-directions",
+                                value: this.directionHintColors,
+                            });
+                        }.bind(this),
+                    );
+                }
             }
         }
         if (this.regionColorInputs) {
             for (let index in this.regionColorInputs) {
                 let input = this.regionColorInputs[index];
-                input.addEventListener(
-                    "change",
-                    function (ev) {
-                        let type = this.regionTypes[index];
-                        this.regionColors[type] = ev.target.value;
-                        if (type == "None") type = null; // switch to null for comparison
-                        for (let index in this.regions) {
-                            let region = this.regions[index];
-                            if (region.type == type) {
-                                region.refresh();
+                if (input) {
+                    input.addEventListener(
+                        "change",
+                        function (ev) {
+                            let type = this.regionTypes[index];
+                            this.regionColors[type] = ev.target.value;
+                            if (type == "None") type = null; // switch to null for comparison
+                            for (let index in this.regions) {
+                                let region = this.regions[index];
+                                if (region.type == type) {
+                                    region.refresh();
+                                }
                             }
-                        }
-                        this.trigger("baseline-editor:settings", {
-                            name: "color-regions",
-                            value: this.regionColors,
-                        });
-                    }.bind(this),
-                );
+                            this.trigger("baseline-editor:settings", {
+                                name: "color-regions",
+                                value: this.regionColors,
+                            });
+                        }.bind(this),
+                    );
+                }
             }
         }
-
+        this.bindGlobalEvents();
+    }
+    bindGlobalEvents() {
         document.addEventListener(
             "keydown",
             function (event) {
@@ -922,7 +964,7 @@ export class Segmenter {
                     } else {
                         this.deleteSelection();
                     }
-                } else if (event.keyCode == 67) {
+                } else if (!this.newUiEnabled && event.keyCode == 67) {
                     // C
                     this.splitting = !this.splitting;
                     if (this.splitBtn) {
@@ -951,7 +993,7 @@ export class Segmenter {
                 } else if (event.keyCode == 85) {
                     // U
                     this.unlinkSelection();
-                } else if (event.keyCode == 84) {
+                } else if (!this.newUiEnabled && event.keyCode == 84) {
                     // T
                     this.showTypeSelect();
                     event.preventDefault(); // avoid selecting an option starting with T
@@ -960,7 +1002,7 @@ export class Segmenter {
                     event.preventDefault();
                     event.stopPropagation();
                     // select all
-                    if (this.mode == "lines") {
+                    if (["lines", "masks"].includes(this.mode)) {
                         for (let i in this.lines) this.lines[i].select();
                     } else if (this.mode == "regions") {
                         for (let i in this.regions) this.regions[i].select();
@@ -1329,7 +1371,7 @@ export class Segmenter {
                     this.splitting ||
                     isRightClick(event.event) ||
                     this.selecting ||
-                    this.mode != "lines"
+                    !["lines", "masks"].includes(this.mode)
                 )
                     return;
                 this.selecting = line;
@@ -1347,7 +1389,11 @@ export class Segmenter {
                                 e.index == hit.segment.index,
                         ) == -1
                     ) {
-                        this.addToSelection(hit.segment);
+                        if (this.mode !== "masks") {
+                            // in masks mode, this causes mask to get deselected and replaced
+                            // with line selection, which is not desired behavior
+                            this.addToSelection(hit.segment);
+                        }
                     } else {
                         this.removeFromSelection(hit.segment);
                     }
@@ -1369,7 +1415,11 @@ export class Segmenter {
                 }.bind(this);
             }.bind(this);
             line.maskPath.onMouseMove = function (event) {
-                if (event.event.ctrlKey || this.mode != "lines") return;
+                if (
+                    event.event.ctrlKey ||
+                    !["lines", "masks"].includes(this.mode)
+                )
+                    return;
                 if (line.selected) this.setCursor("grab");
                 else this.setCursor("pointer");
             }.bind(this);
@@ -1377,8 +1427,14 @@ export class Segmenter {
                 this.setCursor();
             }.bind(this);
             line.maskPath.onMouseDrag = function (event) {
-                if (event.event.ctrlKey || this.mode != "lines") return;
-                this.setCursor("move");
+                if (
+                    event.event.ctrlKey ||
+                    !["lines", "masks"].includes(this.mode)
+                )
+                    return;
+                if (this.canvas.style.cursor !== "move") {
+                    this.setCursor("move");
+                }
             }.bind(this);
         }
     }
@@ -1406,8 +1462,9 @@ export class Segmenter {
 
     multiMove(event) {
         var delta = event.delta;
-        if (this.mode == "lines") {
+        if (["lines", "masks"].includes(this.mode)) {
             if (this.selection.segments.length) {
+                // if segments are selected, move those
                 for (let i in this.selection.segments) {
                     this.movePointInView(
                         this.selection.segments[i].point,
@@ -1422,7 +1479,7 @@ export class Segmenter {
                 // move the entire line
                 for (let i in this.selection.lines) {
                     let line = this.selection.lines[i];
-                    if (line.baselinePath) {
+                    if (line.baselinePath && this.mode === "lines") {
                         for (let j in line.baselinePath.segments) {
                             this.movePointInView(
                                 line.baselinePath.segments[j].point,
@@ -1430,7 +1487,10 @@ export class Segmenter {
                             );
                         }
                     }
-                    if (line.maskPath) {
+                    if (
+                        line.maskPath &&
+                        (!this.newUiEnabled || this.mode === "masks")
+                    ) {
                         for (let j in line.maskPath.segments) {
                             this.movePointInView(
                                 line.maskPath.segments[j].point,
@@ -1469,7 +1529,8 @@ export class Segmenter {
             this.multiMove(event);
             this.tool.onMouseUp = function (event) {
                 this.resetToolEvents();
-                if (this.mode == "lines") {
+                // TODO: Should moving masks also move lines??
+                if (["lines", "masks"].includes(this.mode)) {
                     for (let i in this.selection.lines) {
                         this.selection.lines[i].updateDataFromCanvas();
                     }
@@ -1650,7 +1711,7 @@ export class Segmenter {
             return null;
         }.bind(this);
         let finishCut = function (event) {
-            if (this.mode == "lines") {
+            if (["lines", "masks"].includes(this.mode)) {
                 this.splitLinesByPath(clip);
             } else if (this.mode == "regions") {
                 this.splitRegionsByPath(clip);
@@ -1703,7 +1764,7 @@ export class Segmenter {
         let tmpSelected = [];
         this.tool.onMouseDrag = function (event) {
             this.updateSelectionRectangle(clip, event);
-            if (this.mode == "lines") {
+            if (["lines", "masks"].includes(this.mode)) {
                 this.lassoSelectionLines(clip, allLines, tmpSelected);
             } else if (this.mode == "regions") {
                 this.lassoSelectionRegions(clip, allRegions, tmpSelected);
@@ -2224,7 +2285,9 @@ export class Segmenter {
                 obj.selected = true;
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     removeFromSelection(obj) {
@@ -2252,7 +2315,9 @@ export class Segmenter {
                 obj.point.selected = false;
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     purgeSelection(except) {
@@ -2277,7 +2342,9 @@ export class Segmenter {
                 this.removeFromSelection(this.selection.segments[i]);
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     makeSelectionRectangle(event) {
@@ -2355,30 +2422,41 @@ export class Segmenter {
             let allSegments;
             let line = allLines[i];
             if (this.showMasks && line.maskPath) {
-                if (line.baselinePath)
+                if (
+                    line.baselinePath &&
+                    (!this.newUiEnabled || this.mode === "lines")
+                ) {
                     allSegments = line.baselinePath.segments.concat(
                         line.maskPath.segments,
                     );
-                else allSegments = line.maskPath.segments;
+                } else {
+                    allSegments = line.maskPath.segments;
+                }
             } else {
                 allSegments = line.baselinePath.segments;
             }
             this.clipSelectPoly(clip, allSegments, tmpSelected);
             if (
-                (line.baselinePath && line.baselinePath.intersects(clip)) ||
-                (line.baselinePath &&
-                    line.baselinePath.isInside(clip.bounds)) ||
-                (this.showMasks &&
-                    line.maskPath &&
-                    line.maskPath.intersects(clip))
-            )
+                this.mode === "lines" &&
+                ((line.baselinePath && line.baselinePath.intersects(clip)) ||
+                    (line.baselinePath &&
+                        line.baselinePath.isInside(clip.bounds)) ||
+                    (this.showMasks &&
+                        line.maskPath &&
+                        line.maskPath.intersects(clip)))
+            ) {
                 line.select();
-            else if (allLines.length == this.lines.length) line.unselect();
+            } else if (
+                this.mode === "lines" &&
+                allLines.length == this.lines.length
+            ) {
+                line.unselect();
+            }
         }
     }
 
     splitHelper(clip, event) {
-        if (this.mode == "lines") {
+        if (["lines", "masks"].includes(this.mode)) {
             this.lines.forEach(
                 function (line) {
                     if (!line.baselinePath) return;
@@ -2665,7 +2743,9 @@ export class Segmenter {
                 this.addToUpdateQueue({ lines: [line] });
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     unlinkSelection() {
@@ -2975,12 +3055,26 @@ export class Segmenter {
             this.baselinesColorInput.value = this.baselinesColor;
         for (let index in this.dirHintColorInputs) {
             let input = this.dirHintColorInputs[index];
-            input.value = this.directionHintColors[this.lineTypes[index]];
+            if (input)
+                input.value = this.directionHintColors[this.lineTypes[index]];
         }
         for (let index in this.regionColorInputs) {
             let input = this.regionColorInputs[index];
-            input.value = this.regionColors[this.regionTypes[index]];
+            if (input) input.value = this.regionColors[this.regionTypes[index]];
         }
+    }
+
+    /**
+     * "New UI"-related methods
+     */
+
+    /**
+     * On mode change, purge selection and set the new mode
+     * @param {String} mode - The name of the mode ("lines", "regions", or "masks")
+     */
+    setMode(mode) {
+        this.purgeSelection();
+        this.mode = mode;
     }
 }
 
