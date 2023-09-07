@@ -290,7 +290,8 @@
 }
 
 /* tooltip styling */
-.v-popper--theme-escr-tooltip .v-popper__inner {
+.v-popper--theme-escr-tooltip .v-popper__inner,
+.v-popper--theme-escr-tooltip-small .v-popper__inner {
     background: var(--background1);
     border-radius: 15px;
     padding: 16px;
@@ -299,10 +300,16 @@
     max-width: 220px;
     font-size: 12px;
 }
-.v-popper--theme-escr-tooltip .v-popper__arrow-inner {
+.v-popper--theme-escr-tooltip-small .v-popper__inner {
+    padding: 8px;
+    border-radius: 8px;
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-inner,
+.v-popper--theme-escr-tooltip-small .v-popper__arrow-inner {
     border-color: var(--background1);
 }
-.v-popper--theme-escr-tooltip .v-popper__arrow-outer {
+.v-popper--theme-escr-tooltip .v-popper__arrow-outer,
+.v-popper--theme-escr-tooltip-small .v-popper__arrow-outer {
     border-color: var(--background2);
 }
 
