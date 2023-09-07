@@ -1,0 +1,58 @@
+.escr-toggle-button {
+    margin-bottom: 0;
+    color: var(--text1);
+    background-color: var(--background2);
+    border-color: var(--background2);
+}
+.escr-toggle-button--text {
+    margin-bottom: 0;
+    color: var(--text1);
+    background-color: transparent;
+    border: none;
+}
+.escr-toggle-button:hover,
+.escr-toggle-button--text:hover {
+    background-color: var(--background2-dark);
+}
+.escr-toggle-button:focus,
+.escr-toggle-button:focus-within {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+
+/* active/toggled on state */
+.escr-toggle-button[class*="escr-toggle-button--active"] {
+    color: var(--button-text);
+}
+.escr-toggle-button--active-primary {
+    border: 1px solid var(--primary);
+    background-color: var(--primary);
+}
+.escr-toggle-button--active-primary:hover {
+    border-color: var(--primary-dark);
+    background-color: var(--primary-dark);
+}
+.escr-toggle-button--active-secondary,
+.escr-toggle-button--active-text {
+    border: 1px solid var(--secondary);
+    background-color: var(--secondary);
+}
+.escr-toggle-button--active-secondary:hover,
+.escr-toggle-button--active-text:hover {
+    border-color: var(--secondary-dark);
+    background-color: var(--secondary-dark);
+}
+.escr-toggle-button--active-tertiary {
+    border: 1px solid var(--tertiary);
+    background-color: var(--tertiary);
+}
+.escr-toggle-button--active-tertiary:hover {
+    border-color: var(--tertiary-dark);
+    background-color: var(--tertiary-dark);
+}
+.escr-toggle-button--active-danger {
+    border: 1px solid var(--alert);
+    background-color: var(--alert);
+}
+.escr-toggle-button--active-danger:hover {
+    background-color: var(--alert-dark);
+}
