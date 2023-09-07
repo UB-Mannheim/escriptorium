@@ -3131,6 +3131,22 @@ export class Segmenter {
     }
 
     /**
+     * Set line ordering (known on/off value, rather than toggle)
+     * @param {Boolean} enabled - Whether or not the line number layer should be visible
+     */
+    setOrdering(enabled) {
+        if (enabled === true) {
+            this.showLineNumbers = true;
+            this.orderingLayer.visible = true;
+            this.orderingLayer.bringToFront();
+        } else {
+            this.showLineNumbers = false;
+            this.orderingLayer.visible = false;
+            this.orderingLayer.sendToBack();
+        }
+    }
+
+    /**
      * Change the active tool by toggling on and off, by name
      * @param {String} tool - The name of the tool to toggle
      */
