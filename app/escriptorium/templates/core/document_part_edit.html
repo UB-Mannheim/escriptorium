@@ -9,7 +9,8 @@
             :part-id="'{{part.id}}'"
             :default-text-direction="'{{ document.default_text_direction }}'"
             :main-text-direction="'{{ document.main_script.text_direction }}'"
-            :read-direction="'{{ document.read_direction }}'">
+            :read-direction="'{{ document.read_direction }}'"
+            :legacy-mode-enabled="{% if request.user.legacy_mode %}true{% else %}false{% endif %}">
 
         {% block nav %}{{ block.super }}{% endblock %}
   </editor>
@@ -29,3 +30,10 @@
 
   <script src="{% static 'editor.js' %}"></script>
 {% endblock %}
+
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'editor.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}

@@ -71,6 +71,7 @@
                 id="segmentation-panel"
                 ref="segPanel"
                 :fullsizeimage="fullsizeimage"
+                :legacy-mode-enabled="legacyModeEnabled"
             />
         </keep-alive>
 
@@ -129,6 +130,15 @@ export default {
         VisuPanel,
         DiploPanel,
         PartMetadataPanel,
+    },
+    props: {
+        /**
+         * Whether or not legacy mode is enabled on this instance.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     data: function() {
         return {
