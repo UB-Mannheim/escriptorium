@@ -51,6 +51,10 @@
 .escr-vertical-menu a:hover {
     background-color: var(--background2);
 }
+.escr-vertical-menu button.preselected,
+.escr-vertical-menu a.preselected {
+    background-color: var(--background3);
+}
 .escr-vertical-menu button:active,
 .escr-vertical-menu button:focus,
 .escr-vertical-menu a:active,
