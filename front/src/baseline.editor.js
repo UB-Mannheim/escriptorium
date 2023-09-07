@@ -2377,6 +2377,11 @@ export class Segmenter {
                 !except ||
                 except.baselinePath != this.selection.segments[i].path
             ) {
+                if (this.mode === "masks") {
+                    // also unselect paths if in new UI "mask" mode; this usually happens in
+                    // SegmenterLine.unselect
+                    this.selection.segments[i].path.selected = false;
+                }
                 this.removeFromSelection(this.selection.segments[i]);
             }
         }
