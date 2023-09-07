@@ -1046,9 +1046,28 @@ export class Segmenter {
         document.addEventListener(
             "mousedown",
             function (event) {
+                // special handling for menus inside toolbar, since they are poppers
+                // and we can't use their refs directly
+                let isInToolbarSubmenu = false;
+                if (this.newUiEnabled) {
+                    // menu item clicks could be span or button, depending on where clicked
+                    if (event.target.nodeName === "SPAN") {
+                        isInToolbarSubmenu = this.toolbarSubmenuIds.includes(
+                            // ul#id > li > button > span
+                            event.target.parentNode?.parentNode?.parentNode?.id,
+                        );
+                    } else if (event.target.nodeName === "BUTTON") {
+                        isInToolbarSubmenu = this.toolbarSubmenuIds.includes(
+                            // ul#id > li > button
+                            event.target.parentNode?.parentNode?.id,
+                        );
+                    }
+                }
                 if (
                     event.target != this.canvas &&
-                    !this.contextMenu.contains(event.target)
+                    !this.contextMenu?.contains(event.target) &&
+                    !this.toolbar?.contains(event.target) &&
+                    !(this.newUiEnabled && isInToolbarSubmenu)
                 ) {
                     this.purgeSelection();
                 }
@@ -1552,12 +1571,18 @@ export class Segmenter {
             } else if (event.event.shiftKey) {
                 // lasso selection tool
                 this.startLassoSelection(event);
-            } else if (this.mode == "regions") {
+            } else if (
+                (this.mode == "regions" && !this.newUiEnabled) ||
+                this.activeTool === "add-regions"
+            ) {
                 this.startNewRegion(event);
-            } else {
+            } else if (!this.newUiEnabled || this.activeTool === "add-lines") {
                 // mode = 'lines'
                 // create a new line
                 this.startNewLine(event);
+            } else if (this.newUiEnabled) {
+                // normal mouse tool, click outside selection = deselect all
+                this.purgeSelection();
             }
         }
     }
@@ -2757,7 +2782,9 @@ export class Segmenter {
                 this.addToUpdateQueue({ lines: [line] });
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     mergeSelection() {
@@ -2890,6 +2917,14 @@ export class Segmenter {
     setCursor(style) {
         if (style) {
             this.canvas.style.cursor = style;
+        } else if (this.newUiEnabled) {
+            if (this.activeTool === "cut") {
+                this.canvas.style.cursor = "crosshair";
+            } else if (["add-lines", "add-regions"].includes(this.activeTool)) {
+                this.canvas.style.cursor = "copy";
+            } else {
+                this.canvas.style.cursor = "default";
+            }
         } else {
             this.canvas.style.cursor = this.splitting ? "crosshair" : "copy";
         }
@@ -3075,6 +3110,31 @@ export class Segmenter {
     setMode(mode) {
         this.purgeSelection();
         this.mode = mode;
+    }
+
+    /**
+     * Change the active tool by toggling on and off, by name
+     * @param {String} tool - The name of the tool to toggle
+     */
+    toggleTool(tool) {
+        // purge the selection before changing tool
+        this.purgeSelection();
+        // toggle
+        if (tool === this.activeTool) {
+            this.activeTool = "";
+        } else {
+            this.activeTool = tool;
+        }
+
+        // handle other per-tool state requirements
+        if (tool === "cut") {
+            this.splitting = !this.splitting;
+        } else {
+            this.splitting = false;
+        }
+
+        // change the cursor according to the active tool
+        this.setCursor();
     }
 }
 
