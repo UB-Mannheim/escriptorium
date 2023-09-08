@@ -17,6 +17,7 @@ from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
@@ -539,6 +540,7 @@ class ImportViewSet(GenericViewSet, CreateModelMixin):
 
 
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
+    filter_backends = (OrderingFilter,)
     queryset = DocumentPart.objects.all().select_related('document')
 
     def get_queryset(self):
