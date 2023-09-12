@@ -779,6 +779,10 @@ export default Vue.extend({
       let region = this.segmenter.regions.find(
           (r) => r.context.pk == createdLine.region
       );
+      if (createdLine.typology) {
+        var typo = this.$store.state.document.types.lines.find(t => t.pk == createdLine.typology);
+        createdLine.type = typo.name;
+      }
       const segmenterLine = this.segmenter.loadLine(createdLine, region);
 
       // update the segmenter pk
