@@ -280,8 +280,17 @@ const actions = {
         commit("setLoading", { key: "document", loading: true });
         try {
             await deleteDocument({ documentId: state.id });
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Document deleted successfully",
+                },
+                { root: true },
+            );
             commit("setDeleteModalOpen", false);
-            // TODO: redirect to project on delete
+            // redirect to project on delete
+            window.location = `/project/${state.projectSlug}`;
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
