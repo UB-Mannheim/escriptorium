@@ -51,9 +51,9 @@
         </ul>
 
         <ul class="navbar-nav ml-auto mr-auto pt-1">
-          {% if user.is_authenticated and not DISABLE_ELASTICSEARCH and request.resolver_match.view_name != "search" %}
+          {% if user.is_authenticated and not DISABLE_ELASTICSEARCH and request.resolver_match.view_name != "search" and request.resolver_match.view_name != "find-replace" %}
           <li class="nav-item">
-            <form method="get" action="{% url 'search' %}">
+            <form method="get" action="{% url 'search' %}" id="searchbar">
               {% block searchbar_hidden_inputs %}{% endblock %}
               <div class="input-group">
                 {% block searchbar_transcription_filter %}{% endblock %}
@@ -68,8 +68,19 @@
                   <button
                     class="btn btn-primary btn-sm mb-2"
                     type="submit"
+                    title="{% translate 'Search' %}"
                   >
                     <i class="fas fa-search"></i>
+                  </button>
+                </div>
+                <div class="input-group-append">
+                  <button
+                    id="find-replace-button"
+                    class="btn btn-secondary btn-sm mb-2"
+                    type="submit"
+                    title="{% translate 'Find & Replace' %}"
+                  >
+                    <i class="fas fa-sync-alt"></i>
                   </button>
                 </div>
               </div>
@@ -157,6 +168,10 @@
       <script>
         $(document).ready(function(){
           bootWebsocket();
+
+          $('#find-replace-button').on('click', function(ev) {
+            $('#searchbar').attr('action', {% url 'find-replace' %});
+          });
         });
       </script>
       {% include 'includes/messages.html' %}
