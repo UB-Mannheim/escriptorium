@@ -15,6 +15,7 @@ const state = () => ({
         align: false,
         cancelWarning: false,
         export: false,
+        imageCancelWarning: false,
         import: false,
         overwriteWarning: false,
         segment: false,

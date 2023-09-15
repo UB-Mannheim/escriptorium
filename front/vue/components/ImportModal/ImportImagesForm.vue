@@ -9,6 +9,8 @@
                 headers: { 'X-Csrftoken': getCsrfToken },
             }"
             :use-custom-slot="true"
+            @vdropzone-processing="() => setImagesLoading(true)"
+            @vdropzone-queue-complete="() => queueComplete()"
         >
             <UploadIcon />
             <h4>Drag and drop files here</h4>
@@ -25,7 +27,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapActions, mapState } from "vuex";
 import UploadIcon from "../Icons/UploadIcon/UploadIcon.vue";
 import ImageDropzone from "vue2-dropzone";
 import "vue2-dropzone/dist/vue2Dropzone.min.css";
@@ -66,5 +68,17 @@ export default {
             return document.cookie.match("(^|;)\\s*" + "csrftoken" + "\\s*=\\s*([^;]+)")?.pop()
         }
     },
+    methods: {
+        ...mapActions("forms", [
+            "handleGenericInput",
+        ]),
+        setImagesLoading(value) {
+            this.handleGenericInput({ form: "import", field: "imagesLoading", value })
+        },
+        queueComplete() {
+            this.setImagesLoading(false);
+            this.handleGenericInput({ form: "import", field: "imagesComplete", value: true });
+        }
+    }
 }
 </script>
