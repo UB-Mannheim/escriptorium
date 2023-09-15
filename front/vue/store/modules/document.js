@@ -274,6 +274,35 @@ const actions = {
         }
     },
     /**
+     * Handle confirming image cancellation by closing the modal, displaying
+     * a relevant message, and reloading images.
+     */
+    async confirmImageCancelWarning({ commit, dispatch, rootState }) {
+        if (rootState?.forms?.import?.imagesComplete === true) {
+            // success message if ALL images imported successfully
+            dispatch(
+                "alerts/add",
+                { color: "success", message: "Images imported successfully" },
+                { root: true },
+            );
+        } else {
+            // otherwise, message that import has been canceled
+            dispatch(
+                "alerts/add",
+                { color: "text", message: "Image import canceled" },
+                { root: true },
+            );
+        }
+        // close modals and sidebar
+        dispatch("tasks/closeModal", "imageCancelWarning", { root: true });
+        dispatch("tasks/closeModal", "import", { root: true });
+        dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+        // reload images
+        commit("setLoading", { key: "parts", loading: true });
+        await dispatch("fetchDocumentParts");
+        commit("setLoading", { key: "parts", loading: false });
+    },
+    /**
      * Delete the current document.
      */
     async deleteDocument({ dispatch, commit, state }) {
@@ -544,7 +573,7 @@ const actions = {
      * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
      */
     fetchDocumentTasksThrottled({ dispatch }) {
-        throttle(function*() {
+        throttle(function* () {
             yield dispatch("fetchDocumentTasks");
         });
     },
@@ -676,7 +705,7 @@ const actions = {
     /**
      * Handle submitting the import modal. Queue the task and close the modal.
      */
-    async handleSubmitImport({ commit, dispatch, state }) {
+    async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/importImagesOrTranscription", state.id, {
@@ -686,14 +715,23 @@ const actions = {
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
+            const importMode = rootState?.forms?.import?.mode;
             dispatch(
                 "alerts/add",
                 {
                     color: "success",
-                    message: "Import queued successfully",
+                    message:
+                        importMode === "images"
+                            ? "Images imported successfully"
+                            : "Import queued successfully",
                 },
                 { root: true },
             );
+            if (importMode === "images") {
+                commit("setLoading", { key: "parts", loading: true });
+                await dispatch("fetchDocumentParts");
+                commit("setLoading", { key: "parts", loading: false });
+            }
         } catch (error) {
             commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
@@ -827,14 +865,11 @@ const actions = {
             tags,
         } = rootState.forms.editDocument;
         // split modified metadata by operation
-        const {
-            metadataToCreate,
-            metadataToUpdate,
-            metadataToDelete,
-        } = getDocumentMetadataCRUD({
-            stateMetadata: state.metadata,
-            formMetadata: metadata,
-        });
+        const { metadataToCreate, metadataToUpdate, metadataToDelete } =
+            getDocumentMetadataCRUD({
+                stateMetadata: state.metadata,
+                formMetadata: metadata,
+            });
         try {
             const [documentResponse, ...metadataResponses] = await Promise.all([
                 // update the document

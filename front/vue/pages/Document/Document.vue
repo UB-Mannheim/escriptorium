@@ -242,6 +242,19 @@
                     :on-cancel="() => closeTaskModal('import')"
                     :on-submit="handleSubmitImport"
                 />
+                <!-- cancel image uploads modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen && taskModalOpen.imageCancelWarning"
+                    :body-text="'Uploads are still in progress. Are you sure you want ' +
+                        'to cancel? Incomplete uploads may be lost.'"
+                    title="Cancel Upload In Progress"
+                    cancel-verb="No"
+                    confirm-verb="Yes, cancel"
+                    :disabled="loading && loading.document"
+                    :on-cancel="() => closeTaskModal('imageCancelWarning')"
+                    :on-confirm="confirmImageCancelWarning"
+                    :cannot-undo="false"
+                />
                 <!-- segment document modal -->
                 <SegmentModal
                     v-if="taskModalOpen && taskModalOpen.segment"
@@ -627,6 +640,7 @@ export default {
             "closeDocumentMenu",
             "closeEditModal",
             "closeShareModal",
+            "confirmImageCancelWarning",
             "confirmOverwriteWarning",
             "deleteDocument",
             "fetchDocument",
