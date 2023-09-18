@@ -176,7 +176,7 @@
             :display-mode="(segmenter && segmenter.mode) || 'lines'"
             :can-redo="undoManager && undoManager.hasRedo()"
             :can-undo="undoManager && undoManager.hasUndo()"
-            :disabled="isWorking"
+            :disabled="isWorking || disabled"
             :has-selection="hasSelection"
             :has-points-selection="hasPointsSelection"
             :line-numbering-enabled="(segmenter && segmenter.showLineNumbers) || false"
@@ -238,7 +238,11 @@
         <div id="info-tooltip" />
 
         <div
-            :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }"
+            :class="{
+                'content-container': true,
+                'pan-active': activeTool === 'pan',
+                disabled,
+            }"
         >
             <div
                 id="seg-zoom-container"
@@ -324,6 +328,13 @@ export default Vue.extend({
     },
     mixins: [BasePanel],
     props: {
+        /**
+         * true if all buttons and controls should be disabled
+         */
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
         fullsizeimage: {
             type: Boolean,
             required: true,
@@ -334,7 +345,7 @@ export default Vue.extend({
         legacyModeEnabled: {
             type: Boolean,
             required: true,
-        }
+        },
     },
     data() {
         return {
@@ -443,6 +454,10 @@ export default Vue.extend({
 
             // change the cursor according to the active tool
             this.segmenter.setCursor();
+        },
+        disabled: function (isDisabled, _) {
+            // pass disabled state along to segmenter to prevent keyboard shortcuts
+            this.segmenter.setDisabled(isDisabled);
         },
         "$store.state.parts.loaded": function (isLoaded, wasLoaded) {
             if (isLoaded === true) {

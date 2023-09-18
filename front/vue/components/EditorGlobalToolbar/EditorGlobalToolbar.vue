@@ -3,6 +3,7 @@
         <VDropdown
             theme="escr-tooltip-small"
             placement="bottom"
+            :disabled="disabled"
             :distance="8"
             :triggers="['hover']"
         >
@@ -24,6 +25,7 @@
         <VDropdown
             theme="escr-tooltip-small"
             placement="bottom"
+            :disabled="disabled"
             :distance="8"
             :triggers="['hover']"
         >
@@ -104,12 +106,56 @@
                 </template>
             </VDropdown>
         </div>
+        <div class="new-section with-separator">
+            <VDropdown
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    aria-label="Rotate Counterclockwise"
+                    color="text"
+                    :on-click="() => onRotate(270)"
+                    :disabled="disabled"
+                >
+                    <template #button-icon>
+                        <RotateCCWIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Rotate Counterclockwise (Ctrl ,)
+                </template>
+            </VDropdown>
+            <VDropdown
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    aria-label="Rotate Clockwise"
+                    color="text"
+                    :on-click="() => onRotate(90)"
+                    :disabled="disabled"
+                >
+                    <template #button-icon>
+                        <RotateCWIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Rotate Clockwise (Ctrl .)
+                </template>
+            </VDropdown>
+        </div>
     </div>
 </template>
 <script>
 import CursorPanIcon from "../Icons/CursorPanIcon/CursorPanIcon.vue";
 import CursorSelectIcon from "../Icons/CursorSelectIcon/CursorSelectIcon.vue";
 import EscrButton from "../Button/Button.vue";
+import RotateCCWIcon from "../Icons/RotateCCWIcon/RotateCCWIcon.vue";
+import RotateCWIcon from "../Icons/RotateCWIcon/RotateCWIcon.vue";
 import ToggleButton from "../ToggleButton/ToggleButton.vue";
 import ZoomInIcon from "../Icons/ZoomInIcon/ZoomInIcon.vue";
 import ZoomOutIcon from "../Icons/ZoomOutIcon/ZoomOutIcon.vue";
@@ -123,6 +169,8 @@ export default {
         CursorPanIcon,
         CursorSelectIcon,
         EscrButton,
+        RotateCCWIcon,
+        RotateCWIcon,
         ToggleButton,
         VDropdown,
         ZoomInIcon,
@@ -135,6 +183,13 @@ export default {
          */
         disabled: {
             type: Boolean,
+            required: true,
+        },
+        /**
+         * Callback function to rotate
+         */
+        onRotate: {
+            type: Function,
             required: true,
         },
         /**

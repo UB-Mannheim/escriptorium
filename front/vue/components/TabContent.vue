@@ -5,7 +5,8 @@
             :on-zoom-in="zoomIn"
             :on-zoom-out="zoomOut"
             :on-zoom-reset="resetZoom"
-            :disabled="!partsLoaded"
+            :on-rotate="onRotate"
+            :disabled="isWorking || !partsLoaded"
             :toggle-tool="toggleTool"
             :tool="activeTool"
         />
@@ -82,6 +83,7 @@
                     ref="segPanel"
                     :fullsizeimage="fullsizeimage"
                     :legacy-mode-enabled="legacyModeEnabled"
+                    :disabled="isWorking"
                 />
             </keep-alive>
 
@@ -162,6 +164,7 @@ export default {
                 getActiveTool: this.getActiveTool,
             }),
             fullsizeimage: false,
+            isWorking: false,
         };
     },
     computed: {
@@ -197,7 +200,7 @@ export default {
         }.bind(this));
     },
     methods: {
-        ...mapActions("parts", ["loadPart"]),
+        ...mapActions("parts", ["loadPart", "rotate"]),
         ...mapActions("globalTools", ["toggleTool"]),
         prefetchImage(src, callback) {
             // It is the panel's responsibility to call this!
@@ -228,7 +231,20 @@ export default {
          */
         getActiveTool() {
             return this.activeTool;
-        }
+        },
+        /**
+         * Rotate the current part by `angle` degrees
+         * @param {Number} angle The angle to rotate, in degrees
+         */
+        async onRotate(angle) {
+            try {
+                this.isWorking = true;
+                await this.rotate(angle);
+            } catch (error) {
+                this.addError(error);
+            }
+            this.isWorking = false;
+        },
     }
 }
 </script>

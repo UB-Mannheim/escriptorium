@@ -3172,6 +3172,14 @@ export class Segmenter {
         // change the cursor according to the active tool
         this.setCursor();
     }
+
+    /**
+     * Set the segmenter's disableShortcuts state
+     * @param {Boolean} disabled - The current disabled state
+     */
+    setDisabled(disabled) {
+        this.disableShortcuts = disabled;
+    }
 }
 
 window.Segmenter = Segmenter;

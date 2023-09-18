@@ -84,6 +84,7 @@ export default {
         classes() {
             return {
                 "escr-toggle-button": true,
+                "escr-toggle-button--disabled": this.disabled,
                 [`escr-toggle-button--${this.color}`]: true,
                 [`escr-toggle-button--active-${this.color}`]: this.checked,
                 "escr-button": true,
