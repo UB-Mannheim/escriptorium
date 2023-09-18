@@ -1,10 +1,12 @@
 /* restyled from floating-vue */
 .v-popper--theme-vertical-menu .v-popper__inner {
-    background: var(--background1);
-    box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.15), 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
+    /* have to use !important here because sometimes floating-vue's v-popper--theme-dropdown's CSS,
+    which is automatically applied, is loaded after this sequentially */
+    background: var(--background1) !important;
+    box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.15), 0px 4px 4px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 15px !important;
     padding: 16px 0;
-    border: none;
+    border: none !important;
 }
 .v-popper--theme-vertical-menu .v-popper__arrow-inner {
     display: none;
