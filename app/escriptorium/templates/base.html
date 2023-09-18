@@ -170,7 +170,7 @@
           bootWebsocket();
 
           $('#find-replace-button').on('click', function(ev) {
-            $('#searchbar').attr('action', {% url 'find-replace' %});
+            $('#searchbar').attr('action', '{% url 'find-replace' %}');
           });
         });
       </script>
