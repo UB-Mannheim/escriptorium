@@ -19,8 +19,7 @@ mkdir /var/www/html/WEBROOT
 ## Upgrade
 
 source venv/bin/activate
-pip install -U pip setuptools==59.5.0 wheel
-pip install -U -r app/requirements.txt -r app/requirements-dev.txt
+pip install -U pip setuptools wheel -r app/requirements.txt -r app/requirements-dev.txt
 cd front
 sudo npm install -g npm
 npm ci
