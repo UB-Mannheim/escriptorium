@@ -602,6 +602,8 @@ export class Segmenter {
             toolbar = null,
             // the new UI type select dropdown, for click handlers
             toolbarSubmenuIds = [],
+            // the active tool from state, see editor/store/globalTools for info
+            activeTool = "",
         } = {},
     ) {
         this.loaded = false;
@@ -626,11 +628,7 @@ export class Segmenter {
         this.newUiEnabled = newUiEnabled;
         this.toolbar = toolbar;
         this.toolbarSubmenuIds = toolbarSubmenuIds;
-        // values for activeTool:
-        // cut - splitting tool
-        // add-lines - drawing lines tool
-        // add-regions - drawing regions tool
-        this.activeTool = "";
+        this.activeTool = activeTool;
         /** end New UI */
 
         // paper.js helpers
@@ -1224,6 +1222,7 @@ export class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function (event) {
             if (
+                this.activeTool === "pan" ||
                 event.event.ctrlKey ||
                 this.splitting ||
                 // this.selecting ||
@@ -1313,6 +1312,7 @@ export class Segmenter {
         if (line.baselinePath) {
             line.baselinePath.onMouseDown = function (event) {
                 if (
+                    this.activeTool === "pan" ||
                     event.event.ctrlKey ||
                     this.splitting ||
                     isRightClick(event.event) ||
@@ -1400,6 +1400,7 @@ export class Segmenter {
         if (line.maskPath) {
             line.maskPath.onMouseDown = function (event) {
                 if (
+                    this.activeTool === "pan" ||
                     event.event.ctrlKey ||
                     this.splitting ||
                     isRightClick(event.event) ||
@@ -1578,8 +1579,13 @@ export class Segmenter {
     onMouseDown(event) {
         if (isRightClick(event.event)) return;
         if (!this.selecting) {
-            if (event.event.ctrlKey) return;
-            if (this.splitting) {
+            if (
+                event.event.ctrlKey ||
+                (this.newUiEnabled && this.activeTool === "pan")
+            ) {
+                // don't do any segmentation action if moving items or panning
+                return;
+            } else if (this.splitting) {
                 this.startCuter(event);
             } else if (event.event.shiftKey) {
                 // lasso selection tool
@@ -2933,10 +2939,12 @@ export class Segmenter {
     }
 
     setCursor(style) {
-        if (style) {
+        if (style && !(this.newUiEnabled && this.activeTool === "pan")) {
             this.canvas.style.cursor = style;
         } else if (this.newUiEnabled) {
-            if (this.activeTool === "cut") {
+            if (this.activeTool === "pan") {
+                this.canvas.style.cursor = "grab";
+            } else if (this.activeTool === "cut") {
                 this.canvas.style.cursor = "crosshair";
             } else if (["add-lines", "add-regions"].includes(this.activeTool)) {
                 this.canvas.style.cursor = "copy";
@@ -3147,18 +3155,12 @@ export class Segmenter {
     }
 
     /**
-     * Change the active tool by toggling on and off, by name
-     * @param {String} tool - The name of the tool to toggle
+     * Callback to perform any additional actions after changing the tool
+     * @param {String} tool - The name of the new tool
      */
-    toggleTool(tool) {
+    setActiveTool(tool) {
         // purge the selection before changing tool
         this.purgeSelection();
-        // toggle
-        if (tool === this.activeTool) {
-            this.activeTool = "";
-        } else {
-            this.activeTool = tool;
-        }
 
         // handle other per-tool state requirements
         if (tool === "cut") {

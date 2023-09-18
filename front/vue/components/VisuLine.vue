@@ -51,11 +51,15 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import { LineBase } from "../../src/editor/mixins.js";
 
 export default Vue.extend({
     mixins: [LineBase],
     computed: {
+        ...mapState({
+            activeTool: (state) => state.globalTools.activeTool,
+        }),
         textPathId() {
             return this.line ? "textPath"+this.line.pk : "";
         },
@@ -74,6 +78,7 @@ export default Vue.extend({
                 const lineConfidences = this.line.currentTrans.graphs.map((g) => g.confidence);
                 return lineConfidences.reduce((all, one, _, src) => all += one / src.length, 0);
             }
+            return null;
         },
         maskFillColor() {
             if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
@@ -195,7 +200,9 @@ export default Vue.extend({
             }
         },
         edit() {
-            this.$store.dispatch("lines/toggleLineEdition", this.line);
+            if (this.activeTool !== "pan") {
+                this.$store.dispatch("lines/toggleLineEdition", this.line);
+            }
         },
         reset() {
             this.computeLineHeight();

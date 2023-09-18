@@ -61,15 +61,17 @@
     --background-alert: #f8caca;
 
     /* z-index layers */
-    --segmented-button-focus-z: 1;
-    --table-actions-z: 2;
-    --taggroup-overflow-z: 3;
-    --sidebar-backdrop-z: 4;
-    --sidebar-container-z: 5;
-    --sidebar-z: 6;
-    --modal-backdrop-z: 7;
-    --modal-z: 8;
-    --toast-z: 9;
+    --editor-toolbar-z: 1;
+    --editor-global-toolbar-z: 2;
+    --segmented-button-focus-z: 3;
+    --table-actions-z: 4;
+    --taggroup-overflow-z: 5;
+    --sidebar-backdrop-z: 6;
+    --sidebar-container-z: 7;
+    --sidebar-z: 8;
+    --modal-backdrop-z: 9;
+    --modal-z: 10;
+    --toast-z: 11;
 }
 .light-mode {
     /* button colors */
@@ -350,4 +352,31 @@
     border-right-color: var(--alert);
     -webkit-animation: none;
     animation: none;
+}
+
+/* toolbars */
+.escr-toolbar {
+    z-index: var(--editor-toolbar-z);
+    /* TODO: 54px after full UX redesign */
+    min-height: 45px;
+    /* TODO: margin 0 after full UX redesign*/
+    margin-bottom: 5px;
+}
+.escr-toolbar-tooltip {
+    text-align: center;
+}
+.escr-toolbar .new-section {
+    margin-left: 0.5rem;
+}
+.escr-toolbar .new-section.with-separator {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+}
+.escr-toolbar .new-section.with-separator::before {
+    width: 1px;
+    content: "";
+    height: 1rem;
+    border-left: 1px solid var(--text3);
+    padding-left: 0.5rem;
 }

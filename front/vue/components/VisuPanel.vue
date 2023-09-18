@@ -18,14 +18,14 @@
                 @input="changeConfidenceScale"
             >
         </div>
-        <div class="content-container">
+        <div :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }">
             <div
                 id="visu-zoom-container"
                 class="content"
             >
-                <svg :class="'w-100 ' + $store.state.document.defaultTextDirection">
-                    <visuline
-                        v-for="line in $store.state.lines.all"
+                <svg :class="`w-100 ${defaultTextDirection}`">
+                    <VisuLine
+                        v-for="line in allLines"
                         ref="visulines"
                         :key="'VL' + line.pk"
                         :line="line"
@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        <TranscriptionModal v-if="$store.state.lines.editedLine" />
+        <TranscriptionModal v-if="editedLine" />
     </div>
 </template>
 
@@ -43,26 +43,31 @@
 /*
 Visual transcription panel (or visualisation panel)
 */
+import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
 import VisuLine from "./VisuLine.vue";
 import TranscriptionModal from "./TranscriptionModal.vue";
 
 export default Vue.extend({
     components: {
-        "visuline": VisuLine,
+        VisuLine,
         TranscriptionModal,
     },
     mixins: [BasePanel],
-    data() {
-        return {
-            confidenceScale: this.$store.state.document.confidenceScale,
-        }
-    },
     computed: {
+        ...mapState({
+            activeTool: (state) => state.globalTools.activeTool,
+            allLines: (state) => state.lines.all,
+            confidenceScale: (state) => state.document.confidenceScale,
+            confidenceVisible: (state) => state.document.confidenceVisible,
+            defaultTextDirection: (state) => state.document.defaultTextDirection,
+            editedLine: (state) => state.lines.editedLine,
+            image: (state) => state.parts.image,
+        }),
         hasConfidence() {
-            return this.$store.state.lines.all.some((line) => (
+            return this.allLines.some((line) => (
                 line.currentTrans?.graphs?.length || line.currentTrans?.avg_confidence
-            )) && this.$store.state.document.confidenceVisible
+            )) && this.confidenceVisible
         },
     },
     mounted() {
@@ -78,21 +83,23 @@ export default Vue.extend({
         }
     },
     methods: {
+        ...mapActions("document", ["scaleConfidence"]),
         resetLines() {
-            if (this.$store.state.lines.all.length && this.$refs.visulines.length) {
+            if (this.allLines.length && this.$refs.visulines.length) {
                 this.$refs.visulines.forEach(function(line) {
                     line.reset();
                 });
             }
         },
         updateView() {
-            this.$el.querySelector("svg").style.height = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + "px";
+            const svgHeight = Math.round(this.image.size[1] * this.ratio);
+            this.$el.querySelector("svg").style.height = `${svgHeight}px`;
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));
         },
         changeConfidenceScale(e) {
-            this.$store.dispatch("document/scaleConfidence", e.target.value);
+            this.scaleConfidence(e.target.value);
         }
     }
 });

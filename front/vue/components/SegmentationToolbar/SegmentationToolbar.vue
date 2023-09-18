@@ -62,7 +62,7 @@
                 </template>
             </EscrButton>
             <template #popper>
-                Undo (Ctrl+Z)
+                Undo (Ctrl Z)
             </template>
         </VDropdown>
         <VDropdown
@@ -85,13 +85,13 @@
                 </template>
             </EscrButton>
             <template #popper>
-                Redo (Ctrl+Y)
+                Redo (Ctrl Y)
             </template>
         </VDropdown>
 
         <!-- mode-dependent tools -->
         <div
-            class="new-section mode-tools"
+            class="new-section with-separator"
         >
             <!-- add line tool -->
             <VDropdown
@@ -170,7 +170,7 @@
         <!-- selection-dependent tools -->
         <div
             v-if="hasSelection"
-            class="new-section mode-tools"
+            class="new-section with-separator"
         >
             <!-- link/unlink -->
             <VDropdown
@@ -304,7 +304,7 @@
         </div>
         <div
             v-if="hasSelection"
-            class="new-section mode-tools"
+            class="new-section with-separator"
         >
             <!-- delete -->
             <VDropdown
@@ -343,7 +343,7 @@
                                     :disabled="disabled"
                                     @mousedown="() => clickDelete(true)"
                                 >
-                                    <span>Delete selected points (Ctrl+Del)</span>
+                                    <span>Delete selected points (Ctrl Del)</span>
                                 </button>
                             </li>
                             <li>

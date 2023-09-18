@@ -192,7 +192,7 @@
             :selected-type="selectedType"
             :selection-is-linked="selectionIsLinked"
             :toggle-tool="onToggleTool"
-            :tool="(segmenter && segmenter.activeTool) || ''"
+            :tool="activeTool"
         />
         <div
             v-if="legacyModeEnabled"
@@ -237,7 +237,9 @@
 
         <div id="info-tooltip" />
 
-        <div class="content-container">
+        <div
+            :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }"
+        >
             <div
                 id="seg-zoom-container"
                 ref="segZoomContainer"
@@ -305,6 +307,7 @@
 /*
    Baseline editor panel (or segmentation panel)
  */
+import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
 import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
@@ -344,6 +347,9 @@ export default Vue.extend({
         };
     },
     computed: {
+        ...mapState({
+            activeTool: (state) => state.globalTools.activeTool,
+        }),
         hasBinaryColor() {
             return (
                 this.$store.state.parts.loaded &&
@@ -424,6 +430,20 @@ export default Vue.extend({
         },
     },
     watch: {
+        activeTool: function (tool, _) {
+            // set active tool on segmenter
+            this.segmenter.activeTool = tool;
+
+            // handle other per-tool state requirements
+            if (tool === "cut") {
+                this.segmenter.splitting = !this.segmenter.splitting;
+            } else {
+                this.segmenter.splitting = false;
+            }
+
+            // change the cursor according to the active tool
+            this.segmenter.setCursor();
+        },
         "$store.state.parts.loaded": function (isLoaded, wasLoaded) {
             if (isLoaded === true) {
                 if (this.colorMode !== "binary" && !this.hasBinaryColor) {
@@ -488,6 +508,7 @@ export default Vue.extend({
                         // for click handling on toolbar, list all submenu node IDs here
                         "type-select-menu",
                     ],
+                    activeTool: this.activeTool,
                 });
                 // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
@@ -661,6 +682,7 @@ export default Vue.extend({
         );
     },
     methods: {
+        ...mapActions("globalTools", ["toggleTool"]),
         toggleBinary(ev) {
             if (this.colorMode == "color") this.colorMode = "binary";
             else this.colorMode = "color";
@@ -1010,7 +1032,10 @@ export default Vue.extend({
          */
         onChangeMode(value) {
             this.segmenter.purgeSelection();
-            this.segmenter.toggleTool(this.segmenter.activeTool || "");
+            if (this.activeTool !== "pan") {
+                // set tool back to select (default), unless in pan tool
+                this.toggleTool("select");
+            }
             this.segmenter.setMode(value);
             switch(value) {
                 case "lines":
@@ -1044,7 +1069,11 @@ export default Vue.extend({
          * change the currently active tool
          */
         onToggleTool(tool) {
-            this.segmenter.toggleTool(tool);
+            // purge the selection before changing tool
+            this.segmenter.purgeSelection();
+
+            // use the vuex store callback for toggling the active tool
+            this.toggleTool(tool);
         },
         /**
          * Link or unlink depending on state of selection.

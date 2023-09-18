@@ -136,12 +136,16 @@ export class WheelZoom {
         maxScale = 10,
         initialScale = 1,
         disabled = false,
+        legacyModeEnabled = true,
+        getActiveTool = () => {},
     } = {}) {
         this.factor = factor;
         this.minScale = minScale;
         this.maxScale = maxScale;
         this.initialScale = initialScale;
         this.disabled = disabled;
+        this.legacyModeEnabled = legacyModeEnabled;
+        this.getActiveTool = getActiveTool;
 
         // create a dummy tag for event bindings
         this.events = document.createElement("div");
@@ -168,16 +172,21 @@ export class WheelZoom {
         if (!mirror) {
             // domElement.style.cursor = 'zoom-in';
 
-            function scroll(event) {
+            const scroll = function (event) {
                 // looks like it breaks on some configurations?
                 // if (event.altKey) return;  // supposed to move in history
                 // if (event.ctrlKey) return;  // browser zoom
                 this.scrolling = target;
                 this.scrolled.bind(this)(event);
             }
-            function drag(event) {
+            const drag = function (event) {
                 // in case of mask over the element, bc we bind to document so event.target can be whatever
-                if (!(event.which === 3 || event.button === 2)) return; // right click only
+                if (
+                    (this.legacyModeEnabled || this.getActiveTool() !== "pan") &&
+                    !(event.which === 3 || event.button === 2)
+                ) {
+                    return; // right click only
+                }
                 this.dragging = target;
                 this.draggable.bind(this)(event);
             }

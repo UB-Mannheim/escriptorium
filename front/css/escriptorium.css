@@ -505,6 +505,11 @@ i.panel-icon {
     max-height: calc(100vh - 200px);
 }
 
+/* grab cursor for pan tool (new ui) */
+.content-container.pan-active {
+    cursor: grab;
+}
+
 .panel .panel-img {
     width: 100%;
 }
