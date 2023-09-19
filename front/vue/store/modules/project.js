@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
     createDocument,
+    createDocumentMetadata,
     createProjectDocumentTag,
     deleteDocument,
     deleteProject,
@@ -143,10 +144,11 @@ const actions = {
         commit("setMenuOpen", false);
     },
     /**
-     * Close the "add group or user" modal.
+     * Close the "add group or user" modal and clear out state.
      */
-    closeShareModal({ commit }) {
+    closeShareModal({ commit, dispatch }) {
         commit("setShareModalOpen", false);
+        dispatch("forms/clearForm", "share", { root: true });
     },
     /**
      * Create a new document with the data from state.
@@ -163,6 +165,15 @@ const actions = {
                 tags: rootState.forms?.editDocument?.tags,
             });
             if (data) {
+                // try to create metadata too
+                await Promise.all(
+                    rootState.forms?.editDocument?.metadata.map((metadatum) =>
+                        createDocumentMetadata({
+                            documentId: data.pk,
+                            metadatum,
+                        }),
+                    ),
+                );
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
@@ -204,8 +215,8 @@ const actions = {
                 commit("setDocumentTags", documentTags);
                 // select the new tag and reset the tag name add/search field
                 commit(
-                    "forms/selectTag",
-                    { form: "editDocument", tag: data },
+                    "forms/addToArray",
+                    { form: "editDocument", field: "tags", value: data.pk },
                     { root: true },
                 );
                 commit(
@@ -277,6 +288,7 @@ const actions = {
                 throw new Error("Unable to retrieve projects");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -443,6 +455,7 @@ const actions = {
                 throw new Error("Unable to retrieve project");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -462,14 +475,20 @@ const actions = {
     async share({ commit, dispatch, rootState, state }) {
         const { user, group } = rootState.forms.share;
         try {
-            const { data } = await shareProject({ projectId: state.id, user, group });
+            const { data } = await shareProject({
+                projectId: state.id,
+                user,
+                group,
+            });
             if (data) {
                 // show toast alert on success
                 dispatch(
                     "alerts/add",
                     {
                         color: "success",
-                        message: `${user ? "User" : "Group"} added successfully`,
+                        message: `${
+                            user ? "User" : "Group"
+                        } added successfully`,
                     },
                     { root: true },
                 );
@@ -492,6 +511,7 @@ const actions = {
         try {
             await dispatch("fetchProjectDocuments");
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
     },

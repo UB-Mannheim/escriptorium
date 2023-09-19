@@ -6,6 +6,7 @@ const state = () => ({
      * }]
      */
     characters: [],
+    loading: false,
     modalOpen: false,
     /**
      * sortState: {
@@ -26,6 +27,9 @@ const actions = {};
 const mutations = {
     setCharacters(state, characters) {
         state.characters = characters;
+    },
+    setLoading(state, loading) {
+        state.loading = loading;
     },
     setModalOpen(state, open) {
         state.modalOpen = open;

@@ -1,0 +1,103 @@
+/* modal basics */
+.escr-import-modal .escr-modal {
+    top: 5%;
+    width: 620px;
+    height: 648px;
+    max-height: calc(100vh - 74px);
+    left: calc(50% - 315px);
+}
+.escr-import-modal .escr-modal-content ul + div {
+    height: min(408px, calc(100vh - 316px));
+    overflow: auto;
+}
+.escr-import-modal .escr-modal .modal-actions {
+    align-self: flex-end;
+}
+
+/* import mode selector */
+ul.escr-import-modes {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+}
+ul.escr-import-modes li button {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--text3);
+    fill: var(--text3);
+    padding: 5px;
+    border: none;
+    background-color: transparent;
+    font: inherit;
+    cursor: pointer;
+    border-bottom: 4px solid var(--background2);
+    padding: 5px;
+}
+ul.escr-import-modes li button svg {
+    width: 40px;
+    height: 40px;
+    margin: 0.5rem 0 1rem;
+}
+ul.escr-import-modes li.selected button {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+    fill: var(--primary);
+}
+
+/* all fieldsets */
+.escr-import-modal ul.escr-import-modes + div fieldset {
+    border: none;
+    margin: 0 2rem 1.5rem;
+}
+
+/* file inputs */
+.escr-import-modal input[type="file"] {
+    margin: 0.5rem 0 0.5rem;
+}
+
+/* image import drop zone */
+#escr-drop-zone {
+    font: inherit;
+    border: 2px dashed var(--text3);
+    border-radius: 15px;
+    padding: 22px 0 32px;
+    text-align: center;
+    cursor: pointer;
+}
+#escr-drop-zone button {
+    margin: 0 auto;
+}
+#escr-drop-zone.dz-drag-hover {
+    border: 2px solid var(--primary);
+    background-color: var(--primary-focus);
+}
+#escr-drop-zone h4 {
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+}
+#escr-drop-zone p {
+    margin: 5px 0;
+}
+#escr-drop-zone p + p {
+    margin: 16px 0;
+}
+#escr-drop-zone svg {
+    fill: var(--text2);
+}
+
+/* pdf import */
+.escr-import-modal ul.escr-import-modes + div fieldset.pdf-import,
+.escr-import-modal ul.escr-import-modes + div fieldset.xml-import {
+    margin: 1rem 2rem 1.5rem;
+}
+
+/* mets import */
+.escr-import-modal .escr-segmented-button-group {
+    margin-bottom: 1rem;
+}

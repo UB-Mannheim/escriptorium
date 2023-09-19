@@ -17,6 +17,7 @@
                 label="Name"
                 placeholder="Name"
                 :disabled="disabled"
+                :max-length="512"
                 :on-input="(e) => handleTextFieldInput('name', e.target.value)"
                 :value="name"
                 required
@@ -32,9 +33,9 @@
                 label="Read Direction"
                 :disabled="disabled"
                 :help-text="(
-                    'The read direction describes the order of the elements in the ' +
-                    'document, in opposition with the text direction which describes the ' +
-                    'order of the words in a line and is set by the script.'
+                    'The read direction describes the overall order of elements/pages in the ' +
+                    'document; NOT the order of words in a line, which will be automatically ' +
+                    'determined by the script.'
                 )"
                 :on-change="(e) => handleTextFieldInput('readDirection', e.target.value)"
                 :options="readDirectionOptions"
@@ -47,6 +48,13 @@
                 :on-change="(e) => handleTextFieldInput('linePosition', e.target.value)"
                 :options="linePositionOptions"
                 required
+            />
+            <MetadataField
+                :disabled="disabled"
+                :items="metadata"
+                :on-change="handleUpdateMetadatum"
+                :on-add="handleAddMetadatum"
+                :on-remove="handleRemoveMetadatum"
             />
             <TagsField
                 label="Tags"
@@ -80,9 +88,10 @@ import { mapActions, mapState } from "vuex";
 import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
+import MetadataField from "../MetadataField/MetadataField.vue";
+import TagsField from "../TagsField/TagsField.vue";
 import TextField from "../TextField/TextField.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
-import TagsField from "../TagsField/TagsField.vue";
 import "./EditDocumentModal.css";
 
 export default {
@@ -91,6 +100,7 @@ export default {
         DropdownField,
         EscrButton,
         EscrModal,
+        MetadataField,
         TextField,
         XIcon,
         TagsField
@@ -150,6 +160,7 @@ export default {
         ...mapState({
             linePosition: (state) => state.forms.editDocument.linePosition,
             mainScript: (state) => state.forms.editDocument.mainScript,
+            metadata: (state) => state.forms.editDocument.metadata,
             name: (state) => state.forms.editDocument.name,
             readDirection: (state) => state.forms.editDocument.readDirection,
             selectedTags: (state) => state.forms.editDocument.tags,
@@ -162,7 +173,8 @@ export default {
             return !this.name ||
                 !this.readDirection ||
                 !this.mainScript ||
-                (!this.linePosition && this.linePosition !== 0);
+                (!this.linePosition && this.linePosition !== 0) ||
+                this.metadata.some((meta) => !meta.key?.name || !meta.value);
         },
         /**
          * Populate dropdown options for line position.
@@ -204,14 +216,51 @@ export default {
     },
     methods: {
         ...mapActions("forms", [
-            "handleTextInput",
+            "handleGenericInput",
             "handleTagsInput",
+            "handleMetadataInput",
         ]),
+        handleAddMetadatum(index) {
+            this.handleMetadataInput({
+                form: "editDocument",
+                action: "add",
+                metadatum: {
+                    key: {
+                        name: "",
+                    },
+                    value: "",
+                    index: `newMeta${index}`,
+                }
+            });
+        },
+        handleUpdateMetadatum(metadatum, field, value) {
+            const updatedMetadatum = structuredClone(metadatum);
+            switch (field) {
+                case "key":
+                    updatedMetadatum["key"]["name"] = value;
+                    break;
+                case "value":
+                    updatedMetadatum["value"] = value;
+                    break;
+            }
+            this.handleMetadataInput({
+                form: "editDocument",
+                action: "update",
+                metadatum: updatedMetadatum,
+            })
+        },
+        handleRemoveMetadatum(metadatum) {
+            this.handleMetadataInput({
+                form: "editDocument",
+                action: "remove",
+                metadatum,
+            });
+        },
         handleTagsFieldInput({ checked, tag }) {
             this.handleTagsInput({ checked, tag, form: "editDocument" });
         },
         handleTextFieldInput(field, value) {
-            this.handleTextInput({ field, value, form: "editDocument" });
+            this.handleGenericInput({ field, value, form: "editDocument" });
         },
         handleMainScriptChange(e) {
             this.handleTextFieldInput("mainScript", e.target.value);

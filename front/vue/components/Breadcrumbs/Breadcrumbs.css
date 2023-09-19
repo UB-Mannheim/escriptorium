@@ -9,11 +9,21 @@
     margin: 0 0 1rem 0;
     padding: 0;
 }
+.escr-breadcrumbs li:not(.escr-first-crumb) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+}
 .escr-breadcrumbs li:not(.escr-first-crumb)::before {
     content: "/";
     display: inline;
     margin-right: 8px;
 }
+.escr-breadcrumbs li.escr-first-crumb {
+    min-width: 81px;
+}
+
 .escr-breadcrumbs li a {
     font-weight: 600;
     text-decoration-line: underline;

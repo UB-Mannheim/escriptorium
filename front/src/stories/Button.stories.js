@@ -16,6 +16,7 @@ export default {
                 "danger",
                 "text",
                 "link-primary",
+                "link-secondary",
                 "outline-primary",
                 "outline-secondary",
                 "outline-tertiary",

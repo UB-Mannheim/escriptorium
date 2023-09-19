@@ -17,6 +17,7 @@
                 label="Name"
                 placeholder="Enter project name"
                 :disabled="disabled"
+                :max-length="512"
                 :on-input="(e) => handleTextFieldInput('name', e.target.value)"
                 :value="name"
                 required
@@ -137,14 +138,14 @@ export default {
     },
     methods: {
         ...mapActions("forms", [
-            "handleTextInput",
+            "handleGenericInput",
             "handleTagsInput",
         ]),
         handleTagsFieldInput({ checked, tag }) {
             this.handleTagsInput({ checked, tag, form: "editProject" });
         },
         handleTextFieldInput(field, value) {
-            this.handleTextInput({ form: "editProject", field, value });
+            this.handleGenericInput({ form: "editProject", field, value });
         },
         isHttpUrl(string) {
             let givenURL;

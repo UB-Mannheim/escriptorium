@@ -142,6 +142,9 @@ const PageTemplate = (args, { argTypes }) => ({
     },
 });
 export const ProjectsListPage = PageTemplate.bind({});
+ProjectsListPage.parameters = {
+    layout: "fullscreen",
+};
 ProjectsListPage.args = {
     user: {
         first_name: "John",

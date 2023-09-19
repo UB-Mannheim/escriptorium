@@ -133,6 +133,9 @@ export default {
         TrashIcon,
     },
     props: {
+        /**
+         * User object, at least requires a first_name key for "Welcome" message display.
+         */
         user: {
             type: Object,
             required: true,

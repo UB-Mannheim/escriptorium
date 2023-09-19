@@ -16,6 +16,12 @@
 .escr-project-details {
     grid-area: header;
 }
+.escr-project-dashboard .escr-project-details .escr-card-header h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
 .escr-project-guidelines {
     display: inline-block;
     color: var(--text2);

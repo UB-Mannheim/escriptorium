@@ -13,6 +13,7 @@ import {
     sorted,
     tags,
     users,
+    userGroups,
 } from "./util";
 
 export default {
@@ -100,18 +101,6 @@ const documents = [
         tags: tags.slice(5, 8),
         parts_count: 72,
         updated_at: "2023-02-12T19:47:56.943325Z",
-    },
-];
-
-const userGroups = [
-    ...groups,
-    {
-        pk: 4,
-        name: "Example group",
-    },
-    {
-        pk: 5,
-        name: "Group 2",
     },
 ];
 

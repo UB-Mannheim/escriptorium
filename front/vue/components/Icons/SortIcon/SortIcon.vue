@@ -19,6 +19,9 @@ import "./SortIcon.css";
 export default {
     name: "EscrSortIcon",
     props: {
+        /**
+         * Directional state of the sort icon (descending, ascending, none).
+         */
         state: {
             type: Number,
             default: 0,

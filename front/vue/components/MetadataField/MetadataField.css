@@ -1,0 +1,33 @@
+.escr-metadata-field {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+.escr-metadata-field legend {
+    margin-bottom: 0.5rem;
+}
+.escr-metadata-field .metadatum {
+    display: flex;
+    flex-flow: row nowrap;
+    margin-bottom: 0.5rem;
+}
+.escr-metadata-field .metadatum input {
+    padding: 0.5rem 1rem;
+    border: none;
+    box-sizing: border-box;
+}
+.escr-metadata-field .metadatum input:first-of-type {
+    flex: 1 1 auto;
+    width: 15%;
+    border-radius: 4px 0px 0px 4px;
+    background-color: var(--background2);
+}
+.escr-metadata-field .metadatum input:nth-of-type(2) {
+    flex: 0 1 auto;
+    width: 55%;
+    border-radius: 0px 4px 4px 0px;
+    background-color: var(--background);
+}
+.escr-metadata-field .metadatum button {
+    margin-left: 0.5rem;
+}

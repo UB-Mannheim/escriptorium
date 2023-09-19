@@ -1,21 +1,25 @@
 <template>
-    <div class="escr-card escr-card-table escr-ontology-card">
+    <div :class="classes">
         <div class="escr-card-header">
-            <h2>{{ context }} Ontology</h2>
+            <h2 v-if="!compact">
+                {{ context }} Ontology
+            </h2>
+            <h2 v-else>
+                Ontology
+            </h2>
             <div class="escr-card-actions">
-                <EscrButton
-                    label="View"
-                    size="small"
+                <SegmentedButtonGroup
+                    v-if="compact"
+                    color="secondary"
+                    name="ontology-category"
                     :disabled="loading"
-                    :on-click="onView"
-                >
-                    <template #button-icon>
-                        <OpenIcon />
-                    </template>
-                </EscrButton>
+                    :options="categories"
+                    :on-change-selection="onSelectCategory"
+                />
             </div>
         </div>
         <SegmentedButtonGroup
+            v-if="!compact"
             color="secondary"
             name="ontology-category"
             :disabled="loading"
@@ -45,6 +49,13 @@ export default {
     name: "EscrOntologyCard",
     components: { EscrButton, EscrTable, OpenIcon, SegmentedButtonGroup },
     props: {
+        /**
+         * Whether or not to display a compact variant of this card (i.e. for document view).
+         */
+        compact: {
+            type: Boolean,
+            default: false,
+        },
         /**
          * The context for the ontology card; should be Project or Document.
          */
@@ -91,13 +102,6 @@ export default {
             type: Function,
             default: () => {},
         },
-        /**
-         * Callback function for clicking the "View" button to open the modal.
-         */
-        onView: {
-            type: Function,
-            default: () => {},
-        },
     },
     computed: {
         /**
@@ -114,6 +118,17 @@ export default {
                 ...category,
                 selected: this.selectedCategory === category.value,
             }));
+        },
+        /**
+         * Apply the compact class if needed
+         */
+        classes() {
+            return {
+                "escr-card": true,
+                "escr-card-table": true,
+                "escr-ontology-card": true,
+                "escr-ontology-card--compact": this.compact,
+            };
         },
         /**
          * Headers for all ontology tables (type, # in project/document).

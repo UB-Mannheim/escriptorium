@@ -1,6 +1,7 @@
 // initial state
 const state = () => ({
     category: "regions",
+    loading: false,
     modalOpen: false,
     // ontology: [{
     //    pk: Number,
@@ -21,6 +22,9 @@ const mutations = {
     },
     setOntology(state, ontology) {
         state.ontology = ontology;
+    },
+    setLoading(state, loading) {
+        state.loading = loading;
     },
     setModalOpen(state, open) {
         state.modalOpen = open;

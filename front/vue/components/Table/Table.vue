@@ -39,7 +39,12 @@
                 <td
                     v-for="(header, index) in headers"
                     :key="header.value"
+                    :class="header.image ? 'with-img' : ''"
                 >
+                    <img
+                        v-if="header.image"
+                        :src="item[header.image]"
+                    >
                     <a
                         v-if="linkable && item.href && index == 0"
                         class="row-link"
@@ -64,7 +69,7 @@
                     </a>
                     <component
                         :is="header.component"
-                        v-if="header.component && item[header.value]"
+                        v-else-if="header.component && item[header.value]"
                         v-bind="item[header.value]"
                     />
                     <span v-else>
@@ -117,6 +122,9 @@ export default {
          *
          * If you need to apply formatting to a column, you can provide a `format` function in
          * the header object.
+         *
+         * You can also add a thumbnail image to a column by providing an `image` key, which should
+         * match the key in each object containing an image URL.
          *
          * It is also possible to use a Vue component for table cells. To do this, add a `component`
          * key to the header for that column and pass the component along. In the data, the item's

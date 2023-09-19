@@ -10,6 +10,9 @@ Vue.prototype.$store = store;
 
 Vue.use(FloatingVue, {
     themes: {
+        "escr-tooltip": {
+            $extend: "dropdown",
+        },
         "tags-dropdown": {
             $extend: "dropdown",
         },

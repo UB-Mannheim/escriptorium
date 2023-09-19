@@ -16,22 +16,49 @@
     --alert-focus: rgb(227 43 43 / 50%);
     /* text on all filled buttons */
     --button-text: #ffffff;
+
     /* tag colors */
-    --tag-1: #e0726e;
-    --tag-2: #f78d8d;
-    --tag-3: #ff9a6f;
-    --tag-4: #fcb55f;
-    --tag-5: #f2cd5c;
-    --tag-6: #cbe364;
-    --tag-7: #80c6ba;
-    --tag-8: #88c9f2;
-    --tag-9: #99aff2;
-    --tag-10: #c195db;
-    --tag-11: #f2a7c3;
-    --tag-12: #c6c4c4;
+    --tag-0: #c6c4c4;
+    --tag-1: #adffd9;
+    --tag-2: #adfeff;
+    --tag-3: #99e6ff;
+    --tag-4: #88c9f2;
+    --tag-5: #99aff2;
+    --tag-6: #b3b3e6;
+    --tag-7: #c195db;
+    --tag-8: #da9ecf;
+    --tag-9: #f2a7c3;
+    --tag-10: #dc8f8d;
+    --tag-11: #ff9a6f;
+    --tag-12: #fcb55f;
+    --tag-13: #f7ed78;
+    --tag-14: #cbe364;
+    --tag-15: #a9d69a;
+    --tag-16: #006644;
+    --tag-17: #006666;
+    --tag-18: #006699;
+    --tag-19: #0074de;
+    --tag-20: #3864e5;
+    --tag-21: #5056ce;
+    --tag-22: #5d36b4;
+    --tag-23: #a126a0;
+    --tag-24: #d61c71;
+    --tag-25: #ed0020;
+    --tag-26: #ff621f;
+    --tag-27: #fba841;
+    --tag-28: #e7d50d;
+    --tag-29: #979f34;
+    --tag-30: #41742f;
     --tag-text: #212323;
+    --tag-text-ondark: #ffffff;
     /* drop shadow */
     --drop-shadow: rgba(0, 0, 0, 0.15);
+
+    /* color combinations on some components (e.g. Alert) */
+    --foreground-secondary: #104581;
+    --background-secondary: #b9d0e9;
+    --foreground-alert: #771010;
+    --background-alert: #f8caca;
 
     /* z-index layers */
     --segmented-button-focus-z: 1;
@@ -51,18 +78,20 @@
     --secondary-focus: rgb(23 97 181 / 50%);
     --secondary-hover: rgb(23 97 181 / 20%);
     /* light mode backgrounds */
-    --background: #F0F0F0;
+    --background: #f0f0f0;
     --background1: #ffffff;
     --background2: #e9e9e9;
     --background2-dark: #cacaca;
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
+    --background3: #dfdfdf;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 10%);
     /* light mode text */
     --text1: #212323;
     --text2: #666768;
     --text3: #a7a8a9;
+    --toast-text: #ffffff;
 }
 .dark-mode {
     /* button colors */
@@ -78,12 +107,14 @@
     --background2-dark: #565a5b;
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
+    --background3: #383b3c;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 33%);
     /* dark mode text */
     --text1: #ffffff;
     --text2: #a7a8a9;
     --text3: #717373;
+    --toast-text: #ffffff;
 }
 
 /* Site-wide styles */
@@ -142,4 +173,65 @@ hr {
     position: absolute !important;
     width: 1px !important;
     white-space: nowrap !important;
+}
+
+/* tooltip styling */
+.v-popper--theme-escr-tooltip .v-popper__inner {
+    background: var(--background1);
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15), 0px 2px 4px rgba(0, 0, 0, 0.15);
+    border: none;
+    max-width: 220px;
+    font-size: 12px;
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-inner {
+    border-color: var(--background1);
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-outer {
+    border-color: var(--background2);
+}
+
+/* spinner (adapted from bootstrap) */
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+.escr-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 4px solid var(--background2);
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-animation: spinner-border 1s linear infinite;
+    animation: spinner-border 1s linear infinite;
+}
+.escr-spinner--inactive {
+    border-right-color: var(--background2);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner--secondary {
+    border-color: var(--secondary);
+    border-right-color: transparent;
+}
+.escr-spinner--secondary-inactive {
+    border-color: var(--secondary);
+    border-right-color: var(--secondary);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner--danger {
+    border-color: var(--alert);
+    border-right-color: var(--alert);
+    -webkit-animation: none;
+    animation: none;
+}
+.escr-spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 auto;
 }

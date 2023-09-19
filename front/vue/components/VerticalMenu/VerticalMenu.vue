@@ -1,6 +1,6 @@
 <template>
     <VMenu
-        :delay="{ show: 0, hide: 200 }"
+        :delay="{ show: 0, hide: 100 }"
         theme="vertical-menu"
         placement="bottom-end"
         :shown="isOpen"

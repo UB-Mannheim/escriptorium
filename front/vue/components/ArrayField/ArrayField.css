@@ -1,0 +1,14 @@
+.escr-form-field.escr-checkbox-field.escr-region-types {
+    display: flex;
+    flex-flow: row wrap;
+}
+.escr-form-field.escr-checkbox-field.escr-region-types > span {
+    flex: 1 0 100%;
+}
+.escr-form-field.escr-checkbox-field.escr-region-types label input {
+    margin-right: 7px;
+    margin-left: 0;
+}
+.escr-form-field.escr-checkbox-field.escr-region-types label span {
+    margin-right: 15px;
+}

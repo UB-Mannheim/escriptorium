@@ -91,6 +91,7 @@ const actions = {
                 throw new Error("Unable to create project");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -112,8 +113,8 @@ const actions = {
                 commit("setTags", tags);
                 // select the new tag and reset the tag name add/search field
                 commit(
-                    "forms/selectTag",
-                    { form: "editProject", tag: data },
+                    "forms/addToArray",
+                    { form: "editProject", field: "tags", value: data.pk },
                     { root: true },
                 );
                 commit(
@@ -147,6 +148,7 @@ const actions = {
             // fetch projects list again
             dispatch("fetchProjects");
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -215,6 +217,7 @@ const actions = {
                 throw new Error("Unable to retrieve projects");
             }
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
         commit("setLoading", false);
@@ -242,6 +245,7 @@ const actions = {
         try {
             await dispatch("fetchProjects");
         } catch (error) {
+            commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
         }
     },

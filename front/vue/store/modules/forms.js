@@ -8,9 +8,9 @@ const getters = {};
 
 const actions = {
     /**
-     * Handle text input generically
+     * Handle text (or other) input generically
      */
-    handleTextInput({ commit }, { form, field, value }) {
+    handleGenericInput({ commit }, { form, field, value }) {
         commit("setFieldValue", { form, field, value });
     },
     /**
@@ -27,23 +27,80 @@ const actions = {
      */
     handleTagsInput({ commit }, { form, checked, tag }) {
         if (checked) {
-            commit("selectTag", { form, tag });
+            commit("addToArray", { form, field: "tags", value: tag.pk });
         } else {
-            commit("deselectTag", { form, tag });
+            commit("removeFromArray", { form, field: "tags", value: tag.pk });
         }
+    },
+    /**
+     * Update the list of metadata items on the state.
+     */
+    handleMetadataInput({ commit }, { form, action, metadatum }) {
+        switch (action) {
+            case "add":
+                commit("addMetadatum", { form, metadatum });
+                break;
+            case "remove":
+                commit("removeMetadatum", { form, metadatum });
+                break;
+            case "update":
+                commit("updateMetadatum", { form, metadatum });
+                break;
+        }
+    },
+    /**
+     * Take a checkbox input and translate it into array add/remove operations.
+     */
+    handleCheckboxArrayInput({ commit }, { form, field, checked, value }) {
+        if (checked) {
+            commit("addToArray", { form, field, value });
+        } else {
+            commit("removeFromArray", { form, field, value });
+        }
+    },
+    /**
+     * Show a named tooltip on a form
+     */
+    showTooltip({ commit }, { form, tooltip }) {
+        commit("setTooltipShown", { form, tooltip, shown: true })
+    },
+    /**
+     * Hide a named tooltip on a form
+     */
+    hideTooltip({ commit }, { form, tooltip }) {
+        commit("setTooltipShown", { form, tooltip, shown: false })
     },
 };
 
 const mutations = {
-    deselectTag(state, { form, tag }) {
+    addToArray(state, { form, field, value }) {
         const formClone = structuredClone(state[form]);
-        formClone.tags.splice(formClone.tags.indexOf(tag.pk), 1);
+        formClone[field].push(value);
         state[form] = formClone;
     },
-    selectTag(state, { form, tag }) {
+    addMetadatum(state, { form, metadatum }) {
         const formClone = structuredClone(state[form]);
-        formClone.tags.push(tag.pk);
+        formClone.metadata.push(metadatum);
         state[form] = formClone;
+    },
+    removeFromArray(state, { form, field, value }) {
+        const formClone = structuredClone(state[form]);
+        formClone[field].splice(formClone[field].indexOf(value), 1);
+        state[form] = formClone;
+    },
+    removeMetadatum(state, { form, metadatum }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone.metadata.findIndex(
+            (m) =>
+                // use pk if it exists on the backend, otherwise use index
+                (metadatum.pk && m.pk.toString() === metadatum.pk.toString()) ||
+                (metadatum.index && m.index === metadatum.index),
+        );
+        // remove if found
+        if (foundIndex !== -1) {
+            formClone.metadata.splice(foundIndex, 1);
+            state[form] = formClone;
+        }
     },
     setFieldValue(state, { form, field, value }) {
         const formClone = structuredClone(state[form]);
@@ -52,6 +109,25 @@ const mutations = {
     },
     setFormState(state, { form, formState }) {
         state[form] = formState;
+    },
+    updateMetadatum(state, { form, metadatum }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone.metadata.findIndex(
+            (m) =>
+                // use pk if it exists on the backend, otherwise use index
+                (metadatum.pk && m.pk.toString() === metadatum.pk.toString()) ||
+                (metadatum.index && m.index === metadatum.index),
+        );
+        // update if found
+        if (foundIndex !== -1) {
+            formClone.metadata[foundIndex] = metadatum;
+            state[form] = formClone;
+        }
+    },
+    setTooltipShown(state, { form, tooltip, shown }) {
+        const formClone = structuredClone(state[form]);
+        formClone.tooltipShown[tooltip] = shown;
+        state[form] = formClone;
     },
 };
 

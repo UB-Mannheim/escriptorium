@@ -1,0 +1,60 @@
+/* models panel */
+.escr-selected-action .escr-action-panel.escr-models-panel {
+    overflow-y: auto;
+    max-height: calc(100% - 96px);
+    padding: 0;
+}
+/* each model <details> element gets a bottom border */
+.escr-models-panel .escr-model-details {
+    border-bottom: 1px solid var(--background2);
+}
+/* clickable name of model, with download link */
+.escr-models-panel .escr-model-details summary {
+    padding: 1rem;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+.escr-models-panel .escr-model-details summary span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.escr-models-panel .escr-model-details summary span::before {
+    content: "►";
+    width: 16px;
+    height: 14px;
+    font-size: 12px;
+}
+.escr-models-panel .escr-model-details[open] summary span::before {
+    content: "▼";
+}
+.escr-models-panel .escr-model-details summary a {
+    margin-left: 1rem;
+}
+/* list of key/value pairs */
+.escr-models-panel .escr-model-details dl {
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 45% 55%;
+    gap: 12px 6px;
+    margin: 0 0 1rem;
+}
+.escr-models-panel .escr-model-details dt,
+.escr-models-panel .escr-model-details dd {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.escr-models-panel .escr-model-details dd svg.escr-check-icon {
+    fill: green;
+}
+.escr-models-panel .escr-model-details dd svg.escr-x-icon {
+    fill: red;
+}

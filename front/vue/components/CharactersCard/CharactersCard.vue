@@ -1,30 +1,27 @@
 <template>
-    <div class="escr-characters-card escr-card escr-card-padding">
+    <div :class="classes">
         <div class="escr-card-header">
             <h2>{{ label }}</h2>
             <div class="escr-card-actions">
-                <EscrButton
-                    label="View"
-                    size="small"
+                <SegmentedButtonGroup
+                    v-if="compact"
+                    color="secondary"
+                    name="characters-sort"
                     :disabled="loading"
-                    :on-click="onView"
-                >
-                    <template #button-icon>
-                        <OpenIcon />
-                    </template>
-                </EscrButton>
+                    :options="sortOptions"
+                    :on-change-selection="onSortCharacters"
+                />
             </div>
         </div>
         <SegmentedButtonGroup
+            v-if="!compact"
             color="secondary"
             name="characters-sort"
             :disabled="loading"
             :options="sortOptions"
             :on-change-selection="onSortCharacters"
         />
-        <dl
-            v-if="items.length"
-        >
+        <dl>
             <div
                 v-for="item in items"
                 :key="item.char"
@@ -39,15 +36,20 @@
     </div>
 </template>
 <script>
-import EscrButton from "../Button/Button.vue";
-import OpenIcon from "../Icons/OpenIcon/OpenIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import "./CharactersCard.css";
 
 export default {
     name: "EscrCharactersCard",
-    components: { EscrButton, OpenIcon, SegmentedButtonGroup },
+    components: { SegmentedButtonGroup },
     props: {
+        /**
+         * Whether or not to display a compact variant of this card (i.e. for document view).
+         */
+        compact: {
+            type: Boolean,
+            default: false,
+        },
         /**
          * A list of character items, each of which should have a `char` and `frequency` field.
          */
@@ -77,13 +79,6 @@ export default {
             required: true,
         },
         /**
-         * Callback function for opening the "View" modal.
-         */
-        onView: {
-            type: Function,
-            required: true,
-        },
-        /**
          * The currently selected sort option.
          */
         sort: {
@@ -95,6 +90,17 @@ export default {
         },
     },
     computed: {
+        /**
+         * Apply the compact class if needed
+         */
+        classes() {
+            return {
+                "escr-card": true,
+                "escr-card-padding": true,
+                "escr-characters-card": true,
+                "escr-characters-card--compact": this.compact,
+            };
+        },
         /**
          * Mapping of sort options to label/value pairs, passing the `selected` prop to the
          * currently selected one.

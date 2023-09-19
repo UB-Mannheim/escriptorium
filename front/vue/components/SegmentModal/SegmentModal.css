@@ -1,0 +1,7 @@
+.escr-segment-modal .escr-overwrite-field label {
+    margin-top: 0;
+}
+.escr-segment-modal .escr-overwrite-field .escr-help-text {
+    margin: 8px 30px 0;
+    font-style: italic;
+}

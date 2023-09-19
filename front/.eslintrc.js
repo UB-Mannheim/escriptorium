@@ -19,11 +19,11 @@ module.exports = {
                 SwitchCase: 1,
             },
         ],
-        quotes: ["warn", "double"],
+        quotes: ["warn", "double", { avoidEscape: true }],
         "vue/html-indent": ["warn", 4],
         "no-trailing-spaces": "error",
         "multiline-ternary": ["error", "always-multiline"],
-        "max-len": ["warn", 100, { ignorePattern: "d=\"([\\s\\S]*?)\"" }],
+        "max-len": ["warn", 100, { ignorePattern: 'd="([\\s\\S]*?)"' }],
         "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
 };

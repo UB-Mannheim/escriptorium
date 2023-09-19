@@ -52,7 +52,7 @@ export default {
         /**
          * The list of tags, each an `Object` with a `name` (`String`) property,
          * a `pk` (`Number`) property, and a `variant` (`Number`) property, which
-         * must be between 1 and 12
+         * must be between 0 and 30
          */
         tags: {
             type: Array,
@@ -117,7 +117,7 @@ export default {
         tagClasses(variant) {
             return {
                 "escr-tag": true,
-                [`escr-tag--variant-${variant || 12}`]: true,
+                [`escr-tag--variant-${variant || 0}`]: true,
             };
         },
         /**

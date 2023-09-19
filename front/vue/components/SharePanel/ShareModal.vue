@@ -29,6 +29,7 @@
                 :label-visible="false"
                 :on-input="handleUserInput"
                 :disabled="disabled"
+                :max-length="150"
                 :value="username"
             />
         </template>
@@ -67,18 +68,34 @@ export default {
         XIcon,
     },
     props: {
+        /**
+         * Boolean to indicate whether fields should be disabled.
+         */
         disabled: {
             type: Boolean,
             default: false,
         },
+        /**
+         * Array of all of the current user's groups, each structured as follows:
+         * {
+         *     name: String,
+         *     pk: Number,
+         * }
+         */
         groups: {
             type: Array,
             default: () => [],
         },
+        /**
+         * Callback function for cancelling the action.
+         */
         onCancel: {
             type: Function,
             required: true,
         },
+        /**
+         * Callback function for submitting the form.
+         */
         onSubmit: {
             type: Function,
             required: true,
@@ -98,18 +115,18 @@ export default {
         },
     },
     methods: {
-        ...mapActions("forms", ["clearForm", "handleTextInput"]),
+        ...mapActions("forms", ["clearForm", "handleGenericInput"]),
         handleGroupChange(e) {
             if (this.username !== "") {
-                this.handleTextInput({ form: "share", field: "user", value: "" });
+                this.handleGenericInput({ form: "share", field: "user", value: "" });
             }
-            this.handleTextInput({ form: "share", field: "group", value: e.target.value });
+            this.handleGenericInput({ form: "share", field: "group", value: e.target.value });
         },
         handleUserInput(e) {
             if (this.selectedGroup !== "") {
-                this.handleTextInput({ form: "share", field: "group", value: "" });
+                this.handleGenericInput({ form: "share", field: "group", value: "" });
             }
-            this.handleTextInput({ form: "share", field: "user", value: e.target.value });
+            this.handleGenericInput({ form: "share", field: "user", value: e.target.value });
         },
     },
 }

@@ -343,6 +343,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
+    tags = DocumentTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
@@ -504,6 +505,18 @@ class DocumentTasksSerializer(serializers.ModelSerializer):
         return last_task.started_at
 
 
+class TaskReportSerializer(serializers.ModelSerializer):
+    document_part = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TaskReport
+        fields = ('pk', 'document', 'document_part', 'workflow_state', 'label', 'messages',
+                  'queued_at', 'started_at', 'done_at', 'method', 'user')
+
+    def get_document_part(self, task_report):
+        return str(task_report.document_part) if task_report.document_part else None
+
+
 class MetadataSerializer(serializers.ModelSerializer):
     name = serializers.CharField(validators=[])
 
@@ -530,6 +543,18 @@ class DocumentMetadataSerializer(serializers.ModelSerializer):
                                               key=md,
                                               **validated_data)
         return dmd
+
+    def update(self, instance, validated_data):
+        instance.value = validated_data.get('value', instance.value)
+        instance.save()
+
+        if "key" in validated_data:
+            new_key = validated_data.get('key')
+            nested_serializer = self.fields['key']
+            nested_instance = instance.key
+            nested_serializer.update(nested_instance, new_key)
+
+        return instance
 
 
 class DocumentPartMetadataSerializer(serializers.ModelSerializer):
@@ -587,7 +612,8 @@ class PartSerializer(serializers.ModelSerializer):
             'transcription_progress',
             'source',
             'max_avg_confidence',
-            'comments'
+            'comments',
+            'updated_at',
         )
 
     def validate(self, data):
@@ -759,11 +785,15 @@ class OcrModelSerializer(serializers.ModelSerializer):
     job = DisplayChoiceField(choices=OcrModel.MODEL_JOB_CHOICES)
     training = serializers.ReadOnlyField()
     file_size = serializers.IntegerField(required=False)
+    rights = serializers.SerializerMethodField(source='get_rights')
+    script = serializers.ReadOnlyField(source='script.name')
+    parent = serializers.ReadOnlyField(source='parent.name')
 
     class Meta:
         model = OcrModel
         fields = ('pk', 'name', 'file', 'file_size', 'job',
-                  'owner', 'training', 'versions')
+                  'owner', 'training', 'versions', 'documents',
+                  'accuracy_percent', 'rights', 'script', 'parent')
 
     def create(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
@@ -774,6 +804,16 @@ class OcrModelSerializer(serializers.ModelSerializer):
         data['file_size'] = data['file'].size
         obj = super().create(data)
         return obj
+
+    def get_rights(self, instance):
+        # get the requesting user's permissions for the model
+        user = self.context["view"].request.user
+        if instance.owner == user:
+            return "owner"
+        elif instance.public:
+            return "public"
+        else:
+            return "user"
 
 
 class ProcessSerializerMixin():
@@ -920,6 +960,14 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                        part_pks=[part.pk for part in self.validated_data.get('parts')],
                        document_pk=self.document.pk,
                        user_pk=self.user.pk)
+
+
+class TextualWitnessSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = TextualWitness
+        fields = ('name', 'pk', 'file', 'owner')
 
 
 class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
