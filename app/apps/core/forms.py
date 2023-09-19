@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 from os.path import basename, splitext
 
@@ -37,7 +38,13 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
-from core.search import search_content_es, search_content_psql
+from core.search import (
+    REGEX_SEARCH_MODE,
+    WORD_BY_WORD_SEARCH_MODE,
+    search_content_es,
+    search_content_psql_regex,
+    search_content_psql_word,
+)
 from users.models import User
 
 logger = logging.getLogger(__name__)
@@ -150,6 +157,12 @@ class SearchForm(BaseSearchForm):
 
 
 class FindAndReplaceForm(BaseSearchForm):
+    SEARCH_MODE_CHOICES = ((WORD_BY_WORD_SEARCH_MODE, _("Word by word")), (REGEX_SEARCH_MODE, _("Regular expression")))
+    mode = forms.ChoiceField(
+        required=False,
+        initial=WORD_BY_WORD_SEARCH_MODE,
+        choices=SEARCH_MODE_CHOICES
+    )
     replacement = forms.CharField(label=_("Text to replace"), required=False)
     part = SearchModelChoiceField(
         queryset=DocumentPart.objects.none(),
@@ -161,7 +174,7 @@ class FindAndReplaceForm(BaseSearchForm):
     )
 
     class Meta(BaseSearchForm.Meta):
-        fields = BaseSearchForm.Meta.fields + ['replacement', 'part']
+        fields = BaseSearchForm.Meta.fields + ['mode', 'replacement', 'part']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -176,13 +189,39 @@ class FindAndReplaceForm(BaseSearchForm):
             except ValueError:
                 pass
 
+    def clean(self):
+        if self.cleaned_data['replacement'] and not self.cleaned_data.get('project'):
+            raise forms.ValidationError(_("You cannot find and replace text across multiple projects at once, please pick a single project before submitting your request."))
+
+        mode = self.cleaned_data.get('mode')
+        query_pattern = self.cleaned_data['query']
+        if mode == REGEX_SEARCH_MODE and query_pattern:
+            try:
+                re.compile(query_pattern)
+            except re.error as e:
+                self.add_error('query', f'You must enter a valid regex pattern: {e}')
+
+        replacement_pattern = self.cleaned_data['replacement']
+        if mode == REGEX_SEARCH_MODE and replacement_pattern:
+            try:
+                # We want to compile the pattern and check for invalid group references
+                re.sub(query_pattern, replacement_pattern, '')
+            except re.error as e:
+                self.add_error('replacement', f'You must enter a valid regex pattern: {e}')
+
+        return super().clean()
+
     def search(self, page=None, paginate_by=None):
         project_id = self.cleaned_data['project'].id if self.cleaned_data['project'] else None
         document_id = self.cleaned_data['document'].id if self.cleaned_data['document'] else None
         transcription_id = self.cleaned_data['transcription'].id if self.cleaned_data['transcription'] else None
         part_id = self.cleaned_data['part'].id if self.cleaned_data['part'] else None
 
-        return search_content_psql(
+        search_method = search_content_psql_word
+        if self.cleaned_data.get('mode') == REGEX_SEARCH_MODE:
+            search_method = search_content_psql_regex
+
+        return search_method(
             self.cleaned_data['query'],
             self.user,
             'text-danger' if self.cleaned_data['replacement'] else 'text-success',

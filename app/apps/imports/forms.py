@@ -112,9 +112,9 @@ class ImportForm(BootstrapFormMixin, forms.Form):
         try:
             uri = self.cleaned_data.get('uri')
             if uri:
-                parser = clean_import_uri(uri, self.document, 'tmp.json')
-                self.cleaned_data['total'] = parser.total
-                return parser.file
+                content, total = clean_import_uri(uri, self.document, 'tmp.json')
+                self.cleaned_data['total'] = total
+                return content
         except FileImportError as e:
             raise forms.ValidationError(repr(e))
 
@@ -123,10 +123,11 @@ class ImportForm(BootstrapFormMixin, forms.Form):
             uri = self.cleaned_data.get('mets_uri')
             self.mets_uri = os.path.dirname(uri)
             if uri:
-                parser = clean_import_uri(uri, self.document, 'tmp.xml',
-                                          is_mets=True, mets_base_uri=self.mets_uri)
-                self.cleaned_data['total'] = parser.total
-                return parser.file
+                content, total = clean_import_uri(uri, self.document, 'tmp.xml',
+                                                  is_mets=True,
+                                                  mets_base_uri=self.mets_uri)
+                self.cleaned_data['total'] = total
+                return content
         except FileImportError as e:
             raise forms.ValidationError(repr(e))
 

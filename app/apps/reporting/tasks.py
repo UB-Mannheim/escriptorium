@@ -68,7 +68,8 @@ def create_task_reporting(sender, body, **kwargs):
             model = OcrModel.objects.get(pk=task_kwargs["model_pk"])
         except OcrModel.DoesNotExist:
             pass
-    elif task_kwargs.get("document_pk"):
+
+    if task_kwargs.get("document_pk"):
         try:
             document = Document.objects.get(pk=task_kwargs["document_pk"])
         except Document.DoesNotExist:
