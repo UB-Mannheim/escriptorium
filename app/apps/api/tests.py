@@ -36,14 +36,14 @@ class UserViewSetTestCase(CoreFactoryTestCase):
     def test_simple_list(self):
         self.client.force_login(self.user)
         uri = reverse('api:user-list')
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(6):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
     def test_simple_detail(self):
         self.client.force_login(self.user)
         uri = reverse('api:user-detail', kwargs={'pk': self.user.pk})
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(5):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -83,6 +83,26 @@ class UserViewSetTestCase(CoreFactoryTestCase):
                 'color': '#123456'
             })
             self.assertEqual(resp.status_code, 201, resp.content)
+
+    def test_get_current_user(self):
+        uri = reverse('api:user-current')
+
+        # should respond with 401 unauthorized if not logged in
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 401)
+
+        # should respond with the current user with status 200 when logged in
+        self.client.force_login(self.user)
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["pk"], self.user.pk)
+        self.assertEqual(resp.json()["is_staff"], False)
+
+        # should correctly respond for an admin user is_staff=True
+        self.client.force_login(self.admin)
+        resp = self.client.get(uri)
+        self.assertEqual(resp.json()["pk"], self.admin.pk)
+        self.assertEqual(resp.json()["is_staff"], True)
 
 
 class DocumentViewSetTestCase(CoreFactoryTestCase):

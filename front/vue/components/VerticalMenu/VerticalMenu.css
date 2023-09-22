@@ -26,8 +26,10 @@
     height: 16px;
     margin-right: 1rem;
 }
-.escr-vertical-menu button {
+.escr-vertical-menu button,
+.escr-vertical-menu a {
     display: flex;
+    box-sizing: border-box;
     flex-flow: row nowrap;
     align-items: center;
     background: transparent;
@@ -38,21 +40,25 @@
     text-align: left;
     font-size: 14px;
     font-weight: 400;
+    text-decoration: none;
     padding: 8px 32px;
     cursor: pointer;
     transition: background-color 0.15s ease-in-out;
     color: var(--text1);
-}
-.escr-vertical-menu button svg {
     fill: var(--text1);
 }
-.escr-vertical-menu button:hover {
+.escr-vertical-menu button:hover,
+.escr-vertical-menu a:hover {
     background-color: var(--background2);
 }
 .escr-vertical-menu button:active,
-.escr-vertical-menu button:focus {
+.escr-vertical-menu button:focus,
+.escr-vertical-menu a:active,
+.escr-vertical-menu a:focus {
     background-color: var(--secondary-hover);
 }
 .escr-vertical-menu .new-section {
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid var(--background2);
 }

@@ -12,6 +12,9 @@
     <meta name="author" content="">
     {% endcomment %}
     <link rel="icon" href="{% static "images/favicon.ico" %}">
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -22,10 +25,14 @@
     {% block styles %}
     <link href="{% static 'vendor.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
+    {% if not user.legacy_mode %}
+    <link href="{% static 'globalNavigation.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
     <link href="{% static 'css/flags.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
   </head>
-  <body id="escriptorium" class="{% block bodyclass %}{% endblock %}">
+  <body id="escriptorium" class="escr-body {% block bodyclass %}{% endblock %}">
+    {% if user.legacy_mode %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'home' %}">
         <img src="{% static "images/escriptorium_hd.png" %}" alt="" width="30" height="30" class="mb-1">
@@ -151,6 +158,14 @@
         </ul>
       </div>
     </nav>
+    {% else %}
+    <div id="vue-global-nav">
+      <global-navigation
+        :is-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
+        :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+      ></global-navigation>
+    </div>
+    {% endif %}
 
     <div id="main" class="container-fluid">
     {% block body %}
@@ -161,6 +176,9 @@
 
     {% block scripts %}
     <script src="{% static 'main.js' %}"></script>
+    {% if not user.legacy_mode %}
+    <script src="{% static 'globalNavigation.js' %}"></script>
+    {% endif %}
     <script>
      const DEBUG = {% if debug %}true{% else %}false{% endif %};
     </script>
@@ -181,7 +199,7 @@
         userProfile.getCookieConsent();
       </script>
       {% endif %}
-      {% endif %}
-   {% endblock scripts %}
+    {% endif %}
+    {% endblock scripts %}
   </body>
 </html>

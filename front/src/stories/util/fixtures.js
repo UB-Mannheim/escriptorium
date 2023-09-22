@@ -261,3 +261,15 @@ export const tasks = [
         user: 1,
     },
 ];
+
+export const currentUser = {
+    pk: 1,
+    is_active: true,
+    username: "ben",
+    email: "ben@performantsoftware.com",
+    first_name: "Ben",
+    last_name: "Silverman",
+    date_joined: "2022-03-14T14:51:34.427131Z",
+    last_login: "2023-06-14T19:58:49.660611Z",
+    is_staff: true,
+};

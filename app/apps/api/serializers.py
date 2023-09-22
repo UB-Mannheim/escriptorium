@@ -91,12 +91,17 @@ class ScriptSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    can_invite = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ('pk', 'is_active',
                   'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login')
-        read_only_fields = ('date_joined', 'last_login')
+                  'date_joined', 'last_login', 'is_staff', 'can_invite')
+        read_only_fields = ('date_joined', 'last_login', 'is_staff', 'can_invite')
+
+    def get_can_invite(self, user):
+        return user.has_perms(['user.can_invite'])
 
 
 class DetailedGroupSerializer(serializers.ModelSerializer):

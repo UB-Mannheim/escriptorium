@@ -17,6 +17,7 @@ from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
@@ -169,6 +170,24 @@ class UserViewSet(ModelViewSet):
         if not self.request.user.is_staff:
             return qs.filter(id=self.request.user.id)
         return qs
+
+    @action(detail=False, methods=['get'])
+    def current(self, request):
+        """Get the currently logged in user"""
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        qs = self.get_queryset()
+        # get_queryset will contain only the current user for non-staff, so we can save a DB query
+        if not request.user.is_staff:
+            user = qs.first()
+        else:
+            user = qs.get(id=request.user.id)
+        serializer = UserSerializer(user)
+        json = serializer.data
+        return Response(
+            status=status.HTTP_200_OK,
+            data=json,
+        )
 
 
 class GroupViewSet(ModelViewSet):

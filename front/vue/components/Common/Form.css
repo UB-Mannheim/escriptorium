@@ -37,14 +37,14 @@ h3 span.escr-required {
     margin-top: 8px;
 }
 
-input[type="file"] {
+.escr-page input[type="file"] {
     font: inherit;
     background-color: var(--background);
     width: 100%;
     border-radius: 4px;
     height: 38px;
 }
-input[type="file"]::file-selector-button {
+.escr-page input[type="file"]::file-selector-button {
     padding: 8px 16px;
     height: 100%;
     font: inherit;
@@ -56,6 +56,6 @@ input[type="file"]::file-selector-button {
     cursor: pointer;
 }
 
-input[type="file"].invalid {
+.escr-page input[type="file"].invalid {
     outline: 1px solid var(--alert);
 }

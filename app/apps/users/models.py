@@ -25,6 +25,10 @@ class User(AbstractUser):
         unique=True,
     )
     fields = models.ManyToManyField('ResearchField', blank=True)
+    legacy_mode = models.BooleanField(
+        default=False,
+        help_text=_("Use the legacy version of the user interface. If unchecked, features that have not yet been ported to the new interface may become unavailable. Likewise, if checked, newer features may become unavailable."),
+    )
 
     # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
     # quota_disk_storage is to be defined in Mb
