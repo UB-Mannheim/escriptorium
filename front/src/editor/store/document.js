@@ -3,6 +3,8 @@ import * as api from "../api";
 export const initialState = () => ({
     id: null,
     name: "",
+    projectSlug: "",
+    projectName: "",
     partsCount: 0,
     defaultTextDirection: null,
     mainTextDirection: null,
@@ -82,6 +84,12 @@ export const mutations = {
     setConfidenceVizGloballyEnabled(state, enabled) {
         state.confidenceVisible = enabled;
     },
+    setProjectSlug(state, projectSlug) {
+        state.projectSlug = projectSlug;
+    },
+    setProjectName(state, projectName) {
+        state.projectName = projectName;
+    },
     reset(state) {
         Object.assign(state, initialState());
     },
@@ -100,6 +108,8 @@ export const actions = {
             lines: data.valid_line_types,
             parts: valid_part_types,
         });
+        commit("setProjectSlug", data.project);
+        commit("setProjectName", data.project_name);
         commit("setPartsCount", data.parts_count);
         commit("setConfidenceVizGloballyEnabled", data.show_confidence_viz);
 

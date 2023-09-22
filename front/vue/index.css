@@ -63,15 +63,17 @@
     /* z-index layers */
     --editor-toolbar-z: 1;
     --editor-global-toolbar-z: 2;
-    --segmented-button-focus-z: 3;
-    --table-actions-z: 4;
-    --taggroup-overflow-z: 5;
-    --sidebar-backdrop-z: 6;
-    --sidebar-container-z: 7;
-    --sidebar-z: 8;
-    --modal-backdrop-z: 9;
-    --modal-z: 10;
-    --toast-z: 11;
+    --editor-nav-z: 3;
+    --global-nav-z: 4;
+    --segmented-button-focus-z: 5;
+    --table-actions-z: 6;
+    --taggroup-overflow-z: 7;
+    --sidebar-backdrop-z: 8;
+    --sidebar-container-z: 9;
+    --sidebar-z: 10;
+    --modal-backdrop-z: 11;
+    --modal-z: 12;
+    --toast-z: 13;
 }
 .light-mode {
     /* button colors */
@@ -202,16 +204,15 @@
     font-style: normal;
 }
 /* tooltip/menu arrows restyling */
-.escr-body .v-popper__popper .v-popper__arrow-inner {
-    border-color: var(--background1);
-}
+.escr-body .v-popper__popper .v-popper__arrow-inner,
 .escr-body .v-popper__popper .v-popper__arrow-outer {
-    border-color: var(--background2);
+    border-color: var(--background1);
 }
 /* global nav layout styles */
 #vue-global-nav {
     height: 100vh;
     min-width: 64px;
+    z-index: var(--global-nav-z);
 }
 #vue-global-nav .escr-global-nav {
     height: 100vh;
@@ -356,11 +357,12 @@
 
 /* toolbars */
 .escr-toolbar {
+    position: relative;
     z-index: var(--editor-toolbar-z);
-    /* TODO: 54px after full UX redesign */
-    min-height: 45px;
-    /* TODO: margin 0 after full UX redesign*/
-    margin-bottom: 5px;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+    min-height: 54px;
+    max-height: 54px;
+    margin: 0;
 }
 .escr-toolbar-tooltip {
     text-align: center;

@@ -3,7 +3,7 @@
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block body %}
-<div id="editor">
+<div id="editor"{% if not request.user.legacy_mode %} class="escr-vue-enabled"{% endif %}>
     <editor :document-id="'{{document.id}}'"
             :document-name="'{{ document.name|escapejs }}'"
             :part-id="'{{part.id}}'"

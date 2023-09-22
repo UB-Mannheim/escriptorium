@@ -1,35 +1,39 @@
 <template>
-    <div>
-        <nav>
+    <div id="escr-editor">
+        <nav v-if="legacyModeEnabled">
             <div
                 id="nav-tab"
                 class="nav nav-tabs mb-3"
                 role="tablist"
             >
                 <slot />
-                <extrainfo />
-                <transmanagement />
-                <extranav />
+                <ExtraInfo />
+                <TranscriptionManagement />
+                <ExtraNav />
             </div>
         </nav>
+        <EditorNavigation v-else />
 
-        <tabcontent :legacy-mode-enabled="legacyModeEnabled" />
+        <TabContent :legacy-mode-enabled="legacyModeEnabled" />
     </div>
 </template>
 
 <script>
+import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
 import ExtraInfo from "./ExtraInfo.vue";
-import TranscriptionManagement from "./TranscriptionManagement.vue";
 import ExtraNav from "./ExtraNav.vue";
 import TabContent from "./TabContent.vue";
+import TranscriptionManagement from "./TranscriptionManagement.vue";
+import "./Editor.css";
 
 export default {
-
+    name: "EscrEditor",
     components: {
-        "extrainfo": ExtraInfo,
-        "transmanagement": TranscriptionManagement,
-        "extranav": ExtraNav,
-        "tabcontent": TabContent,
+        EditorNavigation,
+        ExtraInfo,
+        ExtraNav,
+        TabContent,
+        TranscriptionManagement,
     },
     props: {
         documentId: {
