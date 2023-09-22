@@ -3,6 +3,7 @@
         id="transcription-panel"
         class="col panel"
     >
+        <!-- legacy mode toolbar -->
         <div
             v-if="legacyModeEnabled"
             class="tools"
@@ -24,6 +25,8 @@
                 @input="changeConfidenceScale"
             >
         </div>
+
+        <!-- new UI toolbar -->
         <EditorToolbar
             v-else
             panel-type="visualisation"
@@ -32,6 +35,12 @@
         >
             <template #editor-tools-center>
                 <div class="escr-editortools-paneltools">
+                    <!-- transcription switcher -->
+                    <TranscriptionDropdown
+                        :disabled="disabled"
+                    />
+
+                    <!-- confidence visualization control -->
                     <input
                         v-if="hasConfidence"
                         id="confidence-range"
@@ -47,12 +56,17 @@
                 </div>
             </template>
         </EditorToolbar>
+
+        <!-- panel content -->
         <div :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }">
             <div
                 id="visu-zoom-container"
                 class="content"
             >
-                <svg ref="visu-svg" :class="`w-100 ${defaultTextDirection}`">
+                <svg
+                    ref="visu-svg"
+                    :class="`w-100 ${defaultTextDirection}`"
+                >
                     <VisuLine
                         v-for="line in allLines"
                         ref="visulines"
@@ -75,13 +89,16 @@ Visual transcription panel (or visualisation panel)
 import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
+import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
 import VisuLine from "./VisuLine.vue";
 import TranscriptionModal from "./TranscriptionModal.vue";
 
-export default Vue.extend({
+export default {
+    name: "VisuPanel",
     components: {
         EditorToolbar,
         VisuLine,
+        TranscriptionDropdown,
         TranscriptionModal,
     },
     mixins: [BasePanel],
@@ -131,9 +148,9 @@ export default Vue.extend({
         },
         changeConfidenceScale(e) {
             this.scaleConfidence(e.target.value);
-        }
+        },
     }
-});
+}
 </script>
 
 <style scoped>

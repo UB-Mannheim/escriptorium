@@ -69,7 +69,13 @@
                         title="There is content waiting to be saved (don't leave the page)"
                         class="notice fas fa-save hide"
                     />
-                    <button
+
+                    <!-- transcription switcher -->
+                    <TranscriptionDropdown
+                        :disabled="disabled"
+                    />
+
+                    <!-- <button
                         id="sortMode"
                         ref="sortMode"
                         title="Toggle sorting mode."
@@ -105,7 +111,7 @@
                         >
                             {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
                         </button>
-                    </div>
+                    </div> -->
                 </div>
             </template>
         </EditorToolbar>
@@ -144,12 +150,14 @@
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
 import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
+import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
 import { Recogito } from "@recogito/recogito-js";
 
 export default Vue.extend({
     components: {
         DiploLine,
         EditorToolbar,
+        TranscriptionDropdown,
     },
     mixins: [BasePanel, AnnoPanel],
     data() { return {

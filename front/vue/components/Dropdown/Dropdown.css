@@ -31,4 +31,5 @@
     top: 14px;
     right: 14px;
     fill: var(--text1);
+    pointer-events: none;
 }
