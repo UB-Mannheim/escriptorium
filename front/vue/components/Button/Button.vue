@@ -40,6 +40,7 @@ export default {
                     "tertiary",
                     "danger",
                     "text",
+                    "text-alt",
                     "link-primary",
                     "link-secondary",
                     "outline-primary",
