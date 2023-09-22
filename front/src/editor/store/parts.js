@@ -6,6 +6,7 @@ export const initialState = () => ({
     loaded: false,
     previous: null,
     next: null,
+    order: 0,
     image: {},
     bw_image: {},
     filename: "",
@@ -23,6 +24,9 @@ export const initialState = () => ({
 export const mutations = {
     setPartPk(state, pk) {
         state.pk = pk;
+    },
+    setOrder(state, order) {
+        state.order = order;
     },
     load(state, part) {
         assign(state, part);
@@ -56,6 +60,13 @@ export const actions = {
         }
 
         let data = resp.data;
+
+        if (order) {
+            commit("setOrder", order);
+        } else if (Object.hasOwn(data, "order")) {
+            commit("setOrder", parseInt(data.order) + 1);
+        }
+        delete data.order;
 
         data.lines.forEach(function (line) {
             let type_ =

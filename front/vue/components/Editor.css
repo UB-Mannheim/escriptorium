@@ -1,0 +1,54 @@
+/* overall editor layout */
+main:has(#escr-editor) {
+    background-color: var(--background2);
+    font-family: "Noto Sans", "Resized Arabic", sans-serif;
+}
+#escr-editor {
+    display: flex;
+    flex-flow: column;
+}
+
+/* generic panel styling */
+div.escr-editor-tabcontent,
+div.escr-editor-tabcontent .marginless.row {
+    min-height: calc(100vh - 126px);
+    max-height: calc(100vh - 126px);
+}
+div.escr-editor-tabcontent .marginless.row {
+    margin: 0;
+    display: flex;
+    flex-flow: row;
+    gap: 0;
+    padding: 0;
+}
+div.escr-editor-tabcontent .marginless.row div.col:not(:first-of-type) {
+    border-left: 4px solid var(--text1);
+}
+#escriptorium div.escr-editor-tabcontent .col.panel {
+    padding: 0;
+}
+
+/* content container */
+div.escr-editor-tabcontent .col.panel .content-container {
+    background-color: var(--background2);
+    border: none;
+    border-radius: 0;
+    flex: 1 0 auto;
+}
+div.escr-editor-tabcontent .col.panel .content-container,
+div.escr-editor-tabcontent .col.panel .js-wheelzoom-container {
+    min-height: calc(100vh - 180px);
+    max-height: calc(100vh - 180px);
+}
+
+/* DiploPanel height override */
+.panel#diplo-panel .content-container {
+    overflow-y: auto;
+    max-height: calc(100vh - 180px);
+}
+
+/* ensure the page background is white for VisuPanel and DiploPanel */
+div.escr-editor-tabcontent #visu-zoom-container,
+div.escr-editor-tabcontent #diplo-panel .content-container {
+    background-color: white;
+}

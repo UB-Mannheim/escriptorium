@@ -1,6 +1,12 @@
 <template>
-    <div class="col panel">
-        <div class="tools">
+    <div
+        id="transcription-panel"
+        class="col panel"
+    >
+        <div
+            v-if="legacyModeEnabled"
+            class="tools"
+        >
             <i
                 title="Visual Transcription Panel"
                 class="panel-icon fas fa-language"
@@ -18,12 +24,35 @@
                 @input="changeConfidenceScale"
             >
         </div>
+        <EditorToolbar
+            v-else
+            panel-type="visualisation"
+            :disabled="disabled"
+            :panel-index="panelIndex"
+        >
+            <template #editor-tools-center>
+                <div class="escr-editortools-paneltools">
+                    <input
+                        v-if="hasConfidence"
+                        id="confidence-range"
+                        v-model="confidenceScale"
+                        type="range"
+                        class="custom-range ml-2"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        title="Scale the color range for average confidence visualizations"
+                        @input="changeConfidenceScale"
+                    >
+                </div>
+            </template>
+        </EditorToolbar>
         <div :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }">
             <div
                 id="visu-zoom-container"
                 class="content"
             >
-                <svg :class="`w-100 ${defaultTextDirection}`">
+                <svg ref="visu-svg" :class="`w-100 ${defaultTextDirection}`">
                     <VisuLine
                         v-for="line in allLines"
                         ref="visulines"
@@ -45,11 +74,13 @@ Visual transcription panel (or visualisation panel)
 */
 import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
+import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
 import VisuLine from "./VisuLine.vue";
 import TranscriptionModal from "./TranscriptionModal.vue";
 
 export default Vue.extend({
     components: {
+        EditorToolbar,
         VisuLine,
         TranscriptionModal,
     },
@@ -93,7 +124,7 @@ export default Vue.extend({
         },
         updateView() {
             const svgHeight = Math.round(this.image.size[1] * this.ratio);
-            this.$el.querySelector("svg").style.height = `${svgHeight}px`;
+            this.$refs["visu-svg"].style.height = `${svgHeight}px`;
             Vue.nextTick(function() {
                 this.resetLines();
             }.bind(this));

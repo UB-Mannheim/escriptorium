@@ -189,6 +189,7 @@
             :on-redo="redo"
             :on-reverse="onReverse"
             :on-undo="undo"
+            :panel-index="panelIndex"
             :selected-type="selectedType"
             :selection-is-linked="selectionIsLinked"
             :toggle-tool="onToggleTool"
@@ -328,21 +329,7 @@ export default Vue.extend({
     },
     mixins: [BasePanel],
     props: {
-        /**
-         * true if all buttons and controls should be disabled
-         */
-        disabled: {
-            type: Boolean,
-            default: false,
-        },
         fullsizeimage: {
-            type: Boolean,
-            required: true,
-        },
-        /**
-         * Whether or not legacy mode is enabled on this instance.
-         */
-        legacyModeEnabled: {
             type: Boolean,
             required: true,
         },
@@ -360,6 +347,8 @@ export default Vue.extend({
     computed: {
         ...mapState({
             activeTool: (state) => state.globalTools.activeTool,
+            editorPanels: (state) => state.document.editorPanels,
+            visiblePanels: (state) => state.document.visible_panels,
         }),
         hasBinaryColor() {
             return (

@@ -1,14 +1,50 @@
-.escr-segmentation-toolbar > i {
-    margin: 0 1rem;
-    color: var(--text1);
-    fill: var(--text1);
-}
+/* segmentation toolbar styling */
 .escr-segmentation-toolbar {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    background-color: var(--background2);
+    max-height: 130px;
+}
+
+/* special styling for segmentation-specific tools */
+.escr-segmentation-toolbar .escr-editortools-paneltools {
     display: flex;
     flex-flow: row wrap;
     align-items: center;
+}
+
+/* segmented button groups special styling */
+.escr-segmentation-toolbar .escr-segmented-button-group,
+.escr-segmentation-toolbar .escr-segmented-button-group label {
+    height: 38px;
+}
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + label,
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + div > label {
     background-color: var(--background1);
 }
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + label:hover,
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + div > label:hover {
+    background-color: var(--background2-dark);
+}
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + label:active,
+.escr-segmentation-toolbar .escr-segmented-button-group input:not(:checked) + div > label:active {
+    background-color: var(--background2-darker);
+}
+
+/* line numbering toggle special styling */
+#line-numbers-toggle .escr-toggle-button:not([class*="active"]):not(:hover) {
+    background-color: var(--background1);
+}
+
+/* undo/redo buttons special styling, no background when disabled */
+.escr-segmentation-toolbar .escr-button#undo-button:disabled,
+.escr-segmentation-toolbar .escr-button#redo-button:disabled {
+    background: transparent;
+}
+
+/* delete dropdown special styling */
 .escr-segmentation-toolbar #escr-delete-dropdown-button svg:first-of-type {
     margin: 0 0.2rem 0 0.5rem;
 }
@@ -16,10 +52,4 @@
     margin: 0 0.5rem 0 0.2rem;
     width: 0.5rem;
     height: 0.5rem;
-}
-
-/* undo/redo buttons have special styling, no background when disabled */
-.escr-segmentation-toolbar .escr-button#undo-button:disabled,
-.escr-segmentation-toolbar .escr-button#redo-button:disabled {
-    background: transparent;
 }

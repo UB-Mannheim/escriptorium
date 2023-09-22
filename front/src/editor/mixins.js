@@ -3,6 +3,29 @@ window.Vue = require("vue/dist/vue");
 export var BasePanel = {
     // Base class for all editor panels.
 
+    props: {
+        /**
+         * true if all buttons and controls should be disabled
+         */
+        disabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not legacy mode is enabled on this instance.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * The index of this panel, to allow swapping in EditorToolbar dropdown
+         */
+        panelIndex: {
+            type: Number,
+            default: -1,
+        },
+    },
     data() {
         return {
             ratio: 1,
@@ -22,6 +45,11 @@ export var BasePanel = {
             }
         },
         "$store.state.document.visible_panels": function (n, o) {
+            if (this.$store.state.parts.loaded) {
+                this.refresh();
+            }
+        },
+        "$store.state.document.editorPanels": function (n, o) {
             if (this.$store.state.parts.loaded) {
                 this.refresh();
             }

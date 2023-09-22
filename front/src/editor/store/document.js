@@ -34,6 +34,12 @@ export const initialState = () => ({
             : false,
     },
 
+    // "New UI" version of visible_panels management
+    // get from userProfile, or by default, [segmentation, visualisation]
+    editorPanels: userProfile.get("editor-panels")
+        ? userProfile.get("editor-panels")
+        : ["segmentation", "visualisation"],
+
     // Confidence overlay visibility
     confidenceVisible: false,
     // exponential scale factor for confidence overlay
@@ -45,6 +51,13 @@ export const initialState = () => ({
 });
 
 export const mutations = {
+    addEditorPanel(state, panel) {
+        const editorPanels = structuredClone(state.editorPanels);
+        editorPanels.push(panel);
+        state.editorPanels = editorPanels;
+        // Persist final value in user profile
+        userProfile.set("editor-panels", editorPanels);
+    },
     setId(state, id) {
         state.id = id;
     },
@@ -89,6 +102,30 @@ export const mutations = {
     },
     setProjectName(state, projectName) {
         state.projectName = projectName;
+    },
+    switchEditorPanel(state, { index, panel }) {
+        let editorPanels = structuredClone(state.editorPanels);
+        if (editorPanels[index] !== panel) {
+            // do nothing if it's the same panel
+            if (editorPanels.includes(panel)) {
+                // if it's open, replace panel at its index with this panel
+                const thisPanel = editorPanels[index];
+                const thatIndex = editorPanels.indexOf(panel);
+                editorPanels[thatIndex] = thisPanel;
+            }
+            editorPanels[index] = panel;
+            state.editorPanels = editorPanels;
+            // Persist final value in user profile
+            userProfile.set("editor-panels", editorPanels);
+        }
+    },
+    removeEditorPanel(state, panel) {
+        let editorPanels = structuredClone(state.editorPanels).filter(
+            (editorPanel) => editorPanel.toString() !== panel.toString(),
+        );
+        state.editorPanels = editorPanels;
+        // Persist final value in user profile
+        userProfile.set("editor-panels", editorPanels);
     },
     reset(state) {
         Object.assign(state, initialState());
@@ -155,6 +192,48 @@ export const actions = {
     async scaleConfidence({ commit }, scale) {
         commit("setConfidenceScale", scale);
     },
+
+    /**
+     * Add an editor panel by clicking the "add panel" button (new UI)
+     */
+    addEditorPanel({ state, commit, dispatch }, panel) {
+        if (
+            state.editorPanels.length < 3 &&
+            !state.editorPanels.includes(panel)
+        ) {
+            // add to the end
+            commit("addEditorPanel", panel);
+        } else if (state.editorPanels.length >= 3) {
+            dispatch("alerts/addError", "Cannot view more than three panels", {
+                root: true,
+            });
+        }
+    },
+
+    /**
+     * Remove an editor panel by clicking the "add panel" button (new UI)
+     */
+    removeEditorPanel({ state, commit, dispatch }, panel) {
+        if (state.editorPanels.length > 0) {
+            // remove by name
+            commit("removeEditorPanel", panel);
+        } else {
+            dispatch(
+                "alerts/addError",
+                "Must have at least one visible panel",
+                {
+                    root: true,
+                },
+            );
+        }
+    },
+
+    /**
+     * Switch an editor panel out for another one (new UI)
+     */
+    switchEditorPanel({ commit }, { index, panel }) {
+        commit("switchEditorPanel", { index, panel });
+    }
 };
 
 export default {

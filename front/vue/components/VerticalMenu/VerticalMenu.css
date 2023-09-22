@@ -49,6 +49,12 @@
     color: var(--text1);
     fill: var(--text1);
 }
+.escr-vertical-menu svg {
+    width: 20px;
+    max-height: 20px;
+    text-align: center;
+    margin-right: 1rem;
+}
 .escr-vertical-menu button:hover,
 .escr-vertical-menu a:hover {
     background-color: var(--background2);

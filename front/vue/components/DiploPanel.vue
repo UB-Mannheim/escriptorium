@@ -1,6 +1,12 @@
 <template>
-    <div class="col panel">
-        <div class="tools">
+    <div
+        id="diplo-panel"
+        class="col panel"
+    >
+        <div
+            v-if="legacyModeEnabled"
+            class="tools"
+        >
             <i
                 title="Text Panel"
                 class="panel-icon fas fa-list-ol"
@@ -31,12 +37,14 @@
             </button>
 
             <div
-                v-for="typo in groupedTaxonomies"
+                v-for="(typo, idx) in groupedTaxonomies"
+                :key="idx"
                 class="btn-group taxo-group ml-2 mr-1"
             >
                 <button
                     v-for="taxo in typo"
                     :id="'anno-taxo-' + taxo.pk"
+                    :key="taxo.pk"
                     :data-taxo="taxo"
                     :title="taxo.name"
                     class="btn btn-sm btn-outline-info"
@@ -47,11 +55,65 @@
                 </button>
             </div>
         </div>
+        <EditorToolbar
+            v-else
+            panel-type="diplomatic"
+            :disabled="disabled"
+            :panel-index="panelIndex"
+        >
+            <template #editor-tools-center>
+                <div class="escr-editortools-paneltools">
+                    <i
+                        id="save-notif"
+                        ref="saveNotif"
+                        title="There is content waiting to be saved (don't leave the page)"
+                        class="notice fas fa-save hide"
+                    />
+                    <button
+                        id="sortMode"
+                        ref="sortMode"
+                        title="Toggle sorting mode."
+                        class="btn btn-sm ml-3 btn-info fas fa-sort"
+                        autocomplete="off"
+                        :disabled="isVKEnabled"
+                        @click="toggleSort"
+                    />
+
+                    <button
+                        class="btn btn-sm ml-2"
+                        :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
+                        title="Toggle Virtual Keyboard for this document."
+                        @click="toggleVK"
+                    >
+                        <i class="fas fa-keyboard" />
+                    </button>
+
+                    <div
+                        v-for="(typo, idx) in groupedTaxonomies"
+                        :key="idx"
+                        class="btn-group taxo-group ml-2 mr-1"
+                    >
+                        <button
+                            v-for="taxo in typo"
+                            :id="'anno-taxo-' + taxo.pk"
+                            :key="taxo.pk"
+                            :data-taxo="taxo"
+                            :title="taxo.name"
+                            class="btn btn-sm btn-outline-info"
+                            autocomplete="off"
+                            @click="toggleTaxonomy(taxo)"
+                        >
+                            {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </EditorToolbar>
         <div
             ref="contentContainer"
             :class="'content-container ' + $store.state.document.readDirection"
         >
-            <diploline
+            <DiploLine
                 v-for="line in $store.state.lines.all"
                 :key="'DL' + line.pk"
                 :line="line"
@@ -81,11 +143,13 @@
 <script>
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
 import DiploLine from "./DiploLine.vue";
+import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
 import { Recogito } from "@recogito/recogito-js";
 
 export default Vue.extend({
     components: {
-        "diploline": DiploLine,
+        DiploLine,
+        EditorToolbar,
     },
     mixins: [BasePanel, AnnoPanel],
     data() { return {

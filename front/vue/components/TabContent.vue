@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div :class="{ 'escr-editor-tabcontent': !legacyModeEnabled }">
         <EditorGlobalToolbar
             v-if="!legacyModeEnabled"
             :on-zoom-in="zoomIn"
@@ -10,8 +10,13 @@
             :toggle-tool="toggleTool"
             :tool="activeTool"
         />
-        <div class="row">
-            <div class="col-sides">
+        <div
+            v-if="legacyModeEnabled"
+            class="row"
+        >
+            <div
+                class="col-sides"
+            >
                 <a
                     v-if="readDirection == 'rtl' && nextPart"
                     id="next-part"
@@ -30,7 +35,7 @@
                     @click="getPrevious"
                 >
                     <i class="fas fa-angle-left" /></a>
-                <div v-if="legacyModeEnabled">
+                <div>
                     <button
                         id="zoom-reset"
                         class="btn btn-sm btn-info"
@@ -90,20 +95,22 @@
             <keep-alive>
                 <VisuPanel
                     v-if="visiblePanels.visualisation && partsLoaded"
-                    id="transcription-panel"
                     ref="visuPanel"
+                    :legacy-mode-enabled="legacyModeEnabled"
+                    :disabled="isWorking"
                 />
             </keep-alive>
 
             <keep-alive>
                 <DiploPanel
                     v-if="visiblePanels.diplomatic && partsLoaded"
-                    id="diplo-panel"
                     ref="diploPanel"
                 />
             </keep-alive>
 
-            <div class="col-sides">
+            <div
+                class="col-sides"
+            >
                 <a
                     v-if="readDirection == 'rtl' && prevPart"
                     id="prev-part"
@@ -125,6 +132,20 @@
                     <i class="fas fa-angle-right" />
                 </a>
             </div>
+        </div>
+        <div
+            v-else-if="partsLoaded"
+            class="row marginless"
+        >
+            <component
+                :is="getComponent(panel)"
+                v-for="(panel, index) in editorPanels"
+                :key="panel"
+                :panel-index="index"
+                :fullsizeimage="fullsizeimage"
+                :legacy-mode-enabled="legacyModeEnabled"
+                :disabled="isWorking"
+            />
         </div>
     </div>
 </template>
@@ -171,6 +192,7 @@ export default {
         ...mapState({
             activeTool: (state) => state.globalTools.activeTool,
             blockShortcuts: (state) => state.document.blockShortcuts,
+            editorPanels: (state) => state.document.editorPanels,
             image: (state) => state.parts.image,
             nextPart: (state) => state.parts.next,
             partsLoaded: (state) => state.parts.loaded,
@@ -245,6 +267,20 @@ export default {
             }
             this.isWorking = false;
         },
+        /**
+         * Get the correct component by panel name
+         * @param {String} panel Panel name
+         */
+        getComponent(panel) {
+            switch (panel) {
+                case "segmentation":
+                    return SegPanel;
+                case "visualisation":
+                    return VisuPanel;
+                case "diplomatic":
+                    return DiploPanel;
+            }
+        }
     }
 }
 </script>
