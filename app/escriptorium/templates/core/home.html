@@ -56,10 +56,6 @@
         <a href="https://lectaurep.hypotheses.org/" class="pl-4 pb-2" target="_blank"><img src="{% static "images/lectaurep.png" "%}" alt="Lectaurep logo" height="100"></a>
 
     </div>
-
-    {% if CUSTOM_HOME %}
-    {% include "additional_icons.html" %}
-    {% endif %}
 </div>
 
 <div class="row">
@@ -88,6 +84,10 @@
     </div>
 </div>
 
+
+{% if CUSTOM_HOME %}
+{% include "additional_icons.html" %}
+{% endif %}
 
 <footer class="bg-light mt-5 pt-1">
     <div class="container">
