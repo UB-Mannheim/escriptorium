@@ -110,7 +110,7 @@ class ImportForm(BootstrapFormMixin, forms.Form):
 
     def clean_iiif_uri(self):
         try:
-            uri = self.cleaned_data.get('uri')
+            uri = self.cleaned_data.get('iiif_uri')
             if uri:
                 content, total = clean_import_uri(uri, self.document, 'tmp.json')
                 self.cleaned_data['total'] = total
