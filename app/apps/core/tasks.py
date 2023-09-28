@@ -613,7 +613,6 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
         records = kraken_forced_align(data, model)  # base_dir = L,R
         for pred in records:
             # lt.content = pred.prediction
-            pred.logical_order()
             lt.graphs = [{
                 'c': letter,
                 'poly': poly,
