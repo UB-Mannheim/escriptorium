@@ -768,11 +768,14 @@ export default Vue.extend({
         },
 
         setHeight() {
-            this.$refs.contentContainer.style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + "px";
+            const minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio);
+            this.$refs.contentContainer.style.minHeight =  `${minHeight}px`;
         },
 
         updateView() {
-            this.setHeight();
+            if (this.legacyModeEnabled) {
+                this.setHeight();
+            }
         },
 
         setThisAnnoTaxonomy(taxo) {
