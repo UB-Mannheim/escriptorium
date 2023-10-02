@@ -46,7 +46,7 @@
                     </template>
                 </ToggleButton>
                 <template #popper>
-                    Pan (H)
+                    Pan (P)
                 </template>
             </VDropdown>
             <div class="new-section with-separator">

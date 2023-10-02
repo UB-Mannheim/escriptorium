@@ -202,10 +202,63 @@ export default {
         }),
     },
     created() {
-        document.addEventListener("keydown", function(event) {
+        document.addEventListener("keydown", async function(event) {
             if (this.blockShortcuts) return;
-            if (event.keyCode == 8 && event.ctrlKey) {  // backspace
-                this.zoom.reset();
+            const { key, ctrlKey } = event;
+            switch (key.toLowerCase()) {
+                case "backspace":
+                    // reset zoom (legacy UI)
+                    if (this.legacyModeEnabled && ctrlKey) {
+                        this.zoom.reset();
+                    }
+                    break;
+                case "s":
+                    // select tool
+                    if (!this.legacyModeEnabled) {
+                        this.setActiveTool("select");
+                    }
+                    break;
+                case "p":
+                    // pan tool
+                    if (!this.legacyModeEnabled) {
+                        this.setActiveTool("pan");
+                    }
+                    break;
+                case "0":
+                    // reset zoom (new ui)
+                    if (!this.legacyModeEnabled && ctrlKey) {
+                        event.preventDefault();
+                        this.zoom.reset();
+                    }
+                    break;
+                case "-":
+                    // zoom out (new ui)
+                    if (!this.legacyModeEnabled && ctrlKey) {
+                        event.preventDefault();
+                        this.zoom.zoomOut();
+                    }
+                    break;
+                case "=":
+                    // zoom in (new ui)
+                    if (!this.legacyModeEnabled && ctrlKey) {
+                        event.preventDefault();
+                        this.zoom.zoomIn();
+                    }
+                    break;
+                case ".":
+                    // rotate CW
+                    if (!this.legacyModeEnabled && ctrlKey) {
+                        await this.onRotate(90);
+                    }
+                    break;
+                case ",":
+                    // rotate CCW
+                    if (!this.legacyModeEnabled && ctrlKey) {
+                        await this.onRotate(270);
+                    }
+                    break;
+                default:
+                    break;
             }
         }.bind(this));
 
@@ -223,7 +276,7 @@ export default {
     },
     methods: {
         ...mapActions("parts", ["loadPart", "rotate"]),
-        ...mapActions("globalTools", ["toggleTool"]),
+        ...mapActions("globalTools", ["toggleTool", "setActiveTool"]),
         prefetchImage(src, callback) {
             // It is the panel's responsibility to call this!
             let img = new Image();

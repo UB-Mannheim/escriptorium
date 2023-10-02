@@ -12,6 +12,11 @@ const state = () => ({
 const getters = {};
 
 const actions = {
+    setActiveTool({ commit, state }, tool) {
+        if (tool !== state.activeTool) {
+            commit("setActiveTool", tool);
+        }
+    },
     toggleTool({ commit, state }, tool) {
         if (tool === state.activeTool) {
             commit("setActiveTool", "select");

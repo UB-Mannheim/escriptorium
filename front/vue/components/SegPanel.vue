@@ -513,6 +513,7 @@ export default Vue.extend({
                         "type-select-menu",
                     ],
                     activeTool: this.activeTool,
+                    setActiveTool: this.setActiveTool,
                 });
                 // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
@@ -686,7 +687,7 @@ export default Vue.extend({
         );
     },
     methods: {
-        ...mapActions("globalTools", ["toggleTool"]),
+        ...mapActions("globalTools", ["setActiveTool", "toggleTool"]),
         toggleBinary(ev) {
             if (this.colorMode == "color") this.colorMode = "binary";
             else this.colorMode = "color";
@@ -1035,33 +1036,7 @@ export default Vue.extend({
          * @param {String} value One of "lines", "regions", or "masks"
          */
         onChangeMode(value) {
-            this.segmenter.purgeSelection();
-            if (this.activeTool !== "pan") {
-                // set tool back to select (default), unless in pan tool
-                this.toggleTool("select");
-            }
             this.segmenter.setMode(value);
-            switch(value) {
-                case "lines":
-                    this.segmenter.toggleMasks(false);
-                    this.segmenter.toggleLineStrokes(true);
-                    this.segmenter.evenMasksGroup.bringToFront();
-                    this.segmenter.oddMasksGroup.bringToFront();
-                    this.segmenter.linesGroup.bringToFront();
-                    break;
-                case "regions":
-                    this.segmenter.toggleMasks(false);
-                    this.segmenter.toggleLineStrokes(false);
-                    break;
-                case "masks":
-                    this.segmenter.toggleMasks(true);
-                    this.segmenter.toggleLineStrokes(true);
-                    this.segmenter.evenMasksGroup.bringToFront();
-                    this.segmenter.oddMasksGroup.bringToFront();
-                    this.segmenter.linesGroup.sendToBack();
-                    break;
-            }
-            this.segmenter.applyRegionMode();
         },
         /**
          * Turn line numbering on and off.

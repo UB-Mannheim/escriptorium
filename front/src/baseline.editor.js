@@ -604,6 +604,8 @@ export class Segmenter {
             toolbarSubmenuIds = [],
             // the active tool from state, see editor/store/globalTools for info
             activeTool = "",
+            // callback function (Vuex action) to set the active tool on state
+            setActiveTool = () => {},
         } = {},
     ) {
         this.loaded = false;
@@ -629,6 +631,7 @@ export class Segmenter {
         this.toolbar = toolbar;
         this.toolbarSubmenuIds = toolbarSubmenuIds;
         this.activeTool = activeTool;
+        this.setActiveTool = setActiveTool;
         /** end New UI */
 
         // paper.js helpers
@@ -952,61 +955,105 @@ export class Segmenter {
             "keydown",
             function (event) {
                 if (this.disableShortcuts) return;
-                if (event.keyCode == 27) {
-                    // escape
-                    this.purgeSelection();
-                } else if (event.keyCode == 46) {
-                    // supr
-                    if (event.ctrlKey) {
-                        this.deleteSelectedSegments();
-                    } else {
-                        this.deleteSelection();
-                    }
-                } else if (!this.newUiEnabled && event.keyCode == 67) {
-                    // C
-                    this.splitting = !this.splitting;
-                    if (this.splitBtn) {
-                        this.splitBtn.classList.toggle("btn-warning");
-                        this.splitBtn.classList.toggle("btn-success");
-                    }
-                    this.setCursor();
-                } else if (event.keyCode == 73) {
-                    // K
-                    this.reverseSelection();
-                } else if (event.keyCode == 74) {
-                    // J (for join)
-                    this.mergeSelection();
-                } else if (event.keyCode == 77) {
-                    // M
-                    this.toggleLineMode();
-                } else if (event.keyCode == 76) {
-                    // L
-                    this.toggleOrdering();
-                } else if (event.keyCode == 82) {
-                    // R
-                    this.toggleRegionMode();
-                } else if (event.keyCode == 89) {
-                    // Y
-                    this.linkSelection();
-                } else if (event.keyCode == 85) {
-                    // U
-                    this.unlinkSelection();
-                } else if (!this.newUiEnabled && event.keyCode == 84) {
-                    // T
-                    this.showTypeSelect();
-                    event.preventDefault(); // avoid selecting an option starting with T
-                } else if (event.keyCode == 65 && event.ctrlKey) {
-                    // Ctrl+A
-                    event.preventDefault();
-                    event.stopPropagation();
-                    // select all
-                    if (["lines", "masks"].includes(this.mode)) {
-                        for (let i in this.lines) this.lines[i].select();
-                    } else if (this.mode == "regions") {
-                        for (let i in this.regions) this.regions[i].select();
-                    }
+                const { ctrlKey, key } = event;
+                switch (key.toLowerCase()) {
+                    case "delete":
+                        // delete points or entire selection
+                        if (ctrlKey) {
+                            this.deleteSelectedSegments();
+                        } else {
+                            this.deleteSelection();
+                        }
+                        break;
+                    case "escape":
+                        // clear selection
+                        this.purgeSelection();
+                        break;
+                    case "a":
+                        if (ctrlKey) {
+                            // select all
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (["lines", "masks"].includes(this.mode)) {
+                                for (let i in this.lines)
+                                    this.lines[i].select();
+                            } else if (this.mode == "regions") {
+                                for (let i in this.regions)
+                                    this.regions[i].select();
+                            }
+                        } else if (this.newUiEnabled) {
+                            if (this.mode === "lines") {
+                                // add lines
+                                this.setActiveTool("add-lines");
+                            } else if (this.mode === "regions") {
+                                // add regions
+                                this.setActiveTool("add-regions");
+                            }
+                        }
+                        break;
+                    case "c":
+                        // activate cutting tool
+                        if (this.newUiEnabled) {
+                            this.setActiveTool("cut");
+                        } else {
+                            this.splitting = !this.splitting;
+                            if (this.splitBtn) {
+                                this.splitBtn.classList.toggle("btn-warning");
+                                this.splitBtn.classList.toggle("btn-success");
+                            }
+                            this.setCursor();
+                        }
+                        break;
+                    case "i":
+                        // reverse direction of selected lines
+                        this.reverseSelection();
+                        break;
+                    case "j":
+                        // join selected lines
+                        this.mergeSelection();
+                        break;
+                    case "l":
+                        // toggle line numbers overlay
+                        if (this.newUiEnabled) {
+                            this.setOrdering(!this.showLineNumbers);
+                        } else {
+                            this.toggleOrdering();
+                        }
+                        break;
+                    case "m":
+                        // masks mode
+                        if (this.newUiEnabled) {
+                            this.setMode("masks");
+                        } else {
+                            this.toggleLineMode();
+                        }
+                        break;
+                    case "r":
+                        // regions mode
+                        if (this.newUiEnabled) {
+                            this.setMode("regions");
+                        } else {
+                            this.toggleRegionMode();
+                        }
+                        break;
+                    case "t":
+                        // open type select options
+                        if (!this.newUiEnabled) {
+                            this.showTypeSelect();
+                            event.preventDefault(); // avoid selecting an option starting with T
+                        }
+                        break;
+                    case "u":
+                        // unlink selected lines from region
+                        this.unlinkSelection();
+                        break;
+                    case "y":
+                        // link selected lines to background region
+                        this.linkSelection();
+                        break;
+                    default:
+                        break;
                 }
-
                 // Attempt to duplicate content...
                 // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
                 //     this.copy = this.selection.map(a => [
@@ -3134,8 +3181,33 @@ export class Segmenter {
      * @param {String} mode - The name of the mode ("lines", "regions", or "masks")
      */
     setMode(mode) {
+        if (this.activeTool !== "pan") {
+            // set tool back to select (default), unless in pan tool
+            this.setActiveTool("select");
+        }
         this.purgeSelection();
         this.mode = mode;
+        switch(mode) {
+            case "lines":
+                this.toggleMasks(false);
+                this.toggleLineStrokes(true);
+                this.evenMasksGroup.bringToFront();
+                this.oddMasksGroup.bringToFront();
+                this.linesGroup.bringToFront();
+                break;
+            case "regions":
+                this.toggleMasks(false);
+                this.toggleLineStrokes(false);
+                break;
+            case "masks":
+                this.toggleMasks(true);
+                this.toggleLineStrokes(true);
+                this.evenMasksGroup.bringToFront();
+                this.oddMasksGroup.bringToFront();
+                this.linesGroup.sendToBack();
+                break;
+        }
+        this.applyRegionMode();
     }
 
     /**
@@ -3152,25 +3224,6 @@ export class Segmenter {
             this.orderingLayer.visible = false;
             this.orderingLayer.sendToBack();
         }
-    }
-
-    /**
-     * Callback to perform any additional actions after changing the tool
-     * @param {String} tool - The name of the new tool
-     */
-    setActiveTool(tool) {
-        // purge the selection before changing tool
-        this.purgeSelection();
-
-        // handle other per-tool state requirements
-        if (tool === "cut") {
-            this.splitting = !this.splitting;
-        } else {
-            this.splitting = false;
-        }
-
-        // change the cursor according to the active tool
-        this.setCursor();
     }
 
     /**
