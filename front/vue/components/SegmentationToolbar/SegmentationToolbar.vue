@@ -110,7 +110,7 @@
                             </template>
                         </ToggleButton>
                         <template #popper>
-                            Add lines
+                            Add lines (A)
                         </template>
                     </VDropdown>
 
@@ -134,7 +134,7 @@
                             </template>
                         </ToggleButton>
                         <template #popper>
-                            Add region
+                            Add region (A)
                         </template>
                     </VDropdown>
 
@@ -590,7 +590,7 @@ export default {
                     value: "masks",
                     label: MasksIcon,
                     selected: this.displayMode === "masks",
-                    tooltip: "Masks mode",
+                    tooltip: "Masks mode (M)",
                 },
                 {
                     value: "regions",
