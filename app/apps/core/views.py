@@ -415,13 +415,6 @@ class ProjectDashboard(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         return Project.objects.for_user_read(self.request.user)
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data.update({
-            "project_id": self.get_object().pk
-        })
-        return context_data
-
 
 class DocumentsList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Document
