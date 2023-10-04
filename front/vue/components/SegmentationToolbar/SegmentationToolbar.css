@@ -10,9 +10,7 @@
 
 /* special styling for segmentation-specific tools */
 .escr-segmentation-toolbar .escr-editortools-paneltools {
-    display: flex;
     flex-flow: row wrap;
-    align-items: center;
 }
 
 /* segmented button groups special styling */

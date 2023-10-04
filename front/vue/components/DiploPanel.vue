@@ -63,16 +63,15 @@
         >
             <template #editor-tools-center>
                 <div class="escr-editortools-paneltools">
+                    <!-- transcription switcher -->
+                    <TranscriptionDropdown
+                        :disabled="disabled"
+                    />
                     <i
                         id="save-notif"
                         ref="saveNotif"
                         title="There is content waiting to be saved (don't leave the page)"
-                        class="notice fas fa-save hide"
-                    />
-
-                    <!-- transcription switcher -->
-                    <TranscriptionDropdown
-                        :disabled="disabled"
+                        class="notice fas fa-save hide new-section"
                     />
 
                     <!-- <button

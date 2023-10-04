@@ -105,6 +105,8 @@
                 <DiploPanel
                     v-if="visiblePanels.diplomatic && partsLoaded"
                     ref="diploPanel"
+                    :legacy-mode-enabled="legacyModeEnabled"
+                    :disabled="isWorking"
                 />
             </keep-alive>
 

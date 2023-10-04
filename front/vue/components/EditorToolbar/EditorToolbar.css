@@ -28,6 +28,9 @@
 
 /* center panel-specific tools */
 .escr-toolbar .escr-editortools-paneltools {
+    display: flex;
+    align-items: center;
+    flex-flow: row nowrap;
     flex: 1 0 calc(100% - 122px);
     padding: 0.5rem 0;
     margin: 0;
