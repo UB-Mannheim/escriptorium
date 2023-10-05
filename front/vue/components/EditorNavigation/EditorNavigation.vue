@@ -22,7 +22,7 @@
                     color="text"
                     :aria-label="`${getPrevOrNextString('left')} page`"
                     :on-click="() => loadPart(getPrevOrNextString('left'))"
-                    :disabled="!hasPrevOrNextElement('left')"
+                    :disabled="disabled || !hasPrevOrNextElement('left')"
                 >
                     <template #button-icon>
                         <ArrowCircleLeftIcon />
@@ -42,7 +42,7 @@
                     color="text"
                     :aria-label="`${getPrevOrNextString('right')} page`"
                     :on-click="() => loadPart(getPrevOrNextString('right'))"
-                    :disabled="!hasPrevOrNextElement('right')"
+                    :disabled="disabled || !hasPrevOrNextElement('right')"
                 >
                     <template #button-icon>
                         <ArrowCircleRightIcon />
@@ -78,6 +78,15 @@ export default {
         EscrBreadcrumbs,
         EscrButton,
         VDropdown,
+    },
+    props: {
+        /**
+         * True if all buttons and tools should be disabled
+         */
+        disabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     computed: {
         ...mapState({

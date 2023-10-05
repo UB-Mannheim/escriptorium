@@ -12,13 +12,17 @@
                 <ExtraNav />
             </div>
         </nav>
-        <EditorNavigation v-else />
+        <EditorNavigation
+            v-else
+            :disabled="!partsLoaded"
+        />
 
         <TabContent :legacy-mode-enabled="legacyModeEnabled" />
     </div>
 </template>
 
 <script>
+import { mapActions, mapState } from "vuex";
 import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
 import ExtraInfo from "./ExtraInfo.vue";
 import ExtraNav from "./ExtraNav.vue";
@@ -69,12 +73,10 @@ export default {
         },
     },
     computed: {
-        navEditActive() {
-            return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
-        },
-        partPk() {
-            return this.$store.state.parts.pk
-        }
+        ...mapState({
+            modalOpen: (state) => state.globalTools.modalOpen,
+            partsLoaded: (state) => state.parts.loaded,
+        }),
     },
     watch: {
         "$store.state.parts.pk": function(n, o) {
