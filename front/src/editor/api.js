@@ -8,12 +8,6 @@ axios.defaults.withCredentials = true;
 export const retrieveDocument = async (document_id) =>
     await axios.get(`/documents/${document_id}/`);
 
-export const retrieveDocumentPart = async (document_id, part_id) =>
-    await axios.get(`/documents/${document_id}/parts/${part_id}/`);
-
-export const retrieveDocumentPartByOrder = async (document_id, order) =>
-    await axios.get(`/documents/${document_id}/parts/byorder/?order=${order}`);
-
 export const retrievePage = async (document_id, part_id, transcription, page) =>
     await axios.get(
         `/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`,
@@ -85,12 +79,6 @@ export const recalculateMasks = async (document_id, part_id, data, params) =>
 export const recalculateOrdering = async (document_id, part_id, data) =>
     await axios.post(
         `/documents/${document_id}/parts/${part_id}/recalculate_ordering/`,
-        data,
-    );
-
-export const rotateDocumentPart = async (document_id, part_id, data) =>
-    await axios.post(
-        `/documents/${document_id}/parts/${part_id}/rotate/`,
         data,
     );
 
@@ -185,31 +173,3 @@ export const deletetag = async (project_id, tag_id) =>
 
 export const updatetag = async (project_id, tag_id, data) =>
     await axios.put(`/projects/${project_id}/tags/${tag_id}/`, data);
-
-export const updatePart = async (document_id, part_id, data) =>
-    await axios.patch(`/documents/${document_id}/parts/${part_id}/`, data);
-
-export const retrievePartMetadata = async (document_id, part_id) =>
-    await axios.get(`/documents/${document_id}/parts/${part_id}/metadata/`);
-
-export const createPartMetadata = async (document_id, part_id, data) =>
-    await axios.post(
-        `/documents/${document_id}/parts/${part_id}/metadata/`,
-        data,
-    );
-
-export const updatePartMetadata = async (
-    document_id,
-    part_id,
-    metadata_id,
-    data,
-) =>
-    await axios.patch(
-        `/documents/${document_id}/parts/${part_id}/metadata/${metadata_id}/`,
-        data,
-    );
-
-export const deletePartMetadata = async (document_id, part_id, metadata_id) =>
-    await axios.delete(
-        `/documents/${document_id}/parts/${part_id}/metadata/${metadata_id}/`,
-    );

@@ -1,5 +1,14 @@
 import { assign } from "lodash";
-import * as api from "../api";
+import {
+    retrieveDocumentPart,
+    retrieveDocumentPartByOrder,
+    updatePart as apiUpdatePart,
+    rotateDocumentPart,
+    createPartMetadata as apiCreatePartMetadata,
+    retrievePartMetadata,
+    updatePartMetadata as apiUpdatePartMetadata,
+    deletePartMetadata as apiDeletePartMetadata,
+} from "../../api";
 
 export const initialState = () => ({
     pk: null,
@@ -50,9 +59,9 @@ export const actions = {
         var resp;
         if (pk) {
             commit("setPartPk", pk);
-            resp = await api.retrieveDocumentPart(rootState.document.id, pk);
+            resp = await retrieveDocumentPart(rootState.document.id, pk);
         } else {
-            resp = await api.retrieveDocumentPartByOrder(
+            resp = await retrieveDocumentPartByOrder(
                 rootState.document.id,
                 order,
             );
@@ -93,17 +102,14 @@ export const actions = {
         commit("load", data);
     },
 
-    async updatePart({ state, commit, dispatch, rootState }, data) {
-        const resp = await api.updatePart(
-            rootState.document.id,
-            state.pk,
-            data,
-        );
+
+    async updatePart({ state, commit, rootState }, data) {
+        const resp = await apiUpdatePart(rootState.document.id, state.pk, data);
         commit("load", resp.data);
     },
 
     async rotate({ state, commit, dispatch, rootState }, angle) {
-        await api.rotateDocumentPart(rootState.document.id, state.pk, {
+        await rotateDocumentPart(rootState.document.id, state.pk, {
             angle: angle,
         });
 
@@ -116,7 +122,7 @@ export const actions = {
         await dispatch("fetchPart", { pk: pk });
     },
 
-    async loadPartByOrder({ state, commit, dispatch, rootState }, order) {
+    async loadPartByOrder({ commit, dispatch, rootState }, order) {
         commit("regions/reset", {}, { root: true });
         commit("lines/reset", {}, { root: true });
         commit("imageAnnotations/reset", {}, { root: true });
@@ -164,18 +170,18 @@ export const actions = {
         }
     },
     async createPartMetadata({ state, commit, rootState }, data) {
-        await api.createPartMetadata(rootState.document.id, state.pk, data);
-        const resp = await api.retrievePartMetadata(
+        await apiCreatePartMetadata(rootState.document.id, state.pk, data);
+        const resp = await retrievePartMetadata(
             rootState.document.id,
             state.pk,
         );
         commit("setMetadata", resp.data.results);
     },
-    async updatePartMetadata({ state, commit, rootState }, { pk, data }) {
-        await api.updatePartMetadata(rootState.document.id, state.pk, pk, data);
+    async updatePartMetadata({ state, rootState }, { pk, data }) {
+        await apiUpdatePartMetadata(rootState.document.id, state.pk, pk, data);
     },
-    async deletePartMetadata({ state, commit, rootState }, rowPk) {
-        await api.deletePartMetadata(rootState.document.id, state.pk, rowPk);
+    async deletePartMetadata({ state, rootState }, rowPk) {
+        await apiDeletePartMetadata(rootState.document.id, state.pk, rowPk);
         var metadata = state.metadata;
         const idx = metadata.findIndex((md) => md.id == rowPk);
         metadata.splice(idx, 1);
