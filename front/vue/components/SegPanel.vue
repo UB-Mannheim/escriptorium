@@ -347,6 +347,7 @@ export default Vue.extend({
     computed: {
         ...mapState({
             activeTool: (state) => state.globalTools.activeTool,
+            blockShortcuts: (state) => state.document.blockShortcuts,
             editorPanels: (state) => state.document.editorPanels,
             visiblePanels: (state) => state.document.visible_panels,
         }),
@@ -679,7 +680,7 @@ export default Vue.extend({
         document.addEventListener(
             "keyup",
             function (ev) {
-                if (ev.ctrlKey) {
+                if (!this.blockShortcuts && ev.ctrlKey) {
                     if (ev.key == "z") this.undo();
                     if (ev.key == "y") this.redo();
                 }

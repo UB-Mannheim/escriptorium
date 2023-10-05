@@ -572,6 +572,7 @@ export default {
     },
     computed: {
         ...mapState({
+            blockShortcuts: (state) => state.document.blockShortcuts,
             lineTypes: (state) => state.document.types.lines,
             regionTypes: (state) => state.document.types.regions,
         }),
@@ -672,21 +673,23 @@ export default {
          * @param {KeyboardEvent} evt
          */
         typeSelectKeydown(evt) {
-            // on keydown, if the type menu is open, listen for numerals
-            if (this.typeMenuOpen) {
-                const num = Number(evt.key);
-                const types = this.typeOptions;
-                // if it's a number, and in the range of indices, select the type at that index
-                if (!isNaN(num) && num < types.length) {
-                    this.clickSelectionType(types[num]);
-                } else if (evt.key === "t") {
-                    this.closeTypeMenu();
-                }
-            } else {
-                if (evt.key === "t" && this.hasSelection) {
-                    this.openTypeMenu();
-                } else if (evt.key === "c") {
-                    this.toggleTool("cut");
+            if (!this.blockShortcuts) {
+                // on keydown, if the type menu is open, listen for numerals
+                if (this.typeMenuOpen) {
+                    const num = Number(evt.key);
+                    const types = this.typeOptions;
+                    // if it's a number, and in the range of indices, select the type at that index
+                    if (!isNaN(num) && num < types.length) {
+                        this.clickSelectionType(types[num]);
+                    } else if (evt.key === "t") {
+                        this.closeTypeMenu();
+                    }
+                } else {
+                    if (evt.key === "t" && this.hasSelection) {
+                        this.openTypeMenu();
+                    } else if (evt.key === "c") {
+                        this.toggleTool("cut");
+                    }
                 }
             }
         }
