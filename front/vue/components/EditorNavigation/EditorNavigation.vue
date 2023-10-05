@@ -58,6 +58,27 @@
             >
                 <span>{{ elementNumber || "-" }}</span> / {{ partsCount }}
             </span>
+            <VDropdown
+                class="new-section with-separator"
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    color="text"
+                    aria-label="View Element Details"
+                    :disabled="disabled"
+                    :on-click="() => openModal('elementDetails')"
+                >
+                    <template #button-icon>
+                        <InfoOutlineIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    View Element Details
+                </template>
+            </VDropdown>
         </div>
     </nav>
 </template>
@@ -68,6 +89,7 @@ import ArrowCircleLeftIcon from "../Icons/ArrowCircleLeftIcon/ArrowCircleLeftIco
 import ArrowCircleRightIcon from "../Icons/ArrowCircleRightIcon/ArrowCircleRightIcon.vue";
 import EscrBreadcrumbs from "../Breadcrumbs/Breadcrumbs.vue";
 import EscrButton from "../Button/Button.vue";
+import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
 import "./EditorNavigation.css";
 
 export default {
@@ -77,6 +99,7 @@ export default {
         ArrowCircleRightIcon,
         EscrBreadcrumbs,
         EscrButton,
+        InfoOutlineIcon,
         VDropdown,
     },
     props: {
@@ -133,6 +156,7 @@ export default {
     },
     methods: {
         ...mapActions("parts", ["loadPart"]),
+        ...mapActions("globalTools", ["openModal"]),
         hasPrevOrNextElement(direction) {
             if (direction === "left") {
                 // left = next in RTL, previous in LTR

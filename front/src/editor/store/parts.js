@@ -1,4 +1,5 @@
 import { assign } from "lodash";
+import { getMetadataCRUD } from "../../../vue/store/util/metadata";
 import {
     retrieveDocumentPart,
     retrieveDocumentPartByOrder,
@@ -41,15 +42,39 @@ export const mutations = {
         assign(state, part);
         state.loaded = true;
     },
+    addMetadatum(state, metadatum) {
+        const metadata = structuredClone(state.metadata);
+        metadata.push(metadatum);
+        state.metadata = metadata;
+    },
+    removeMetadatum(state, removePk) {
+        const clone = structuredClone(state.metadata);
+        state.metadata = clone.filter(
+            (metadatum) => metadatum.pk.toString() !== removePk.toString(),
+        );
+    },
+    updateMetadatum(state, metadatumToUpdate) {
+        const metadata = structuredClone(state.metadata).map((m) => {
+            if (m.pk.toString() === metadatumToUpdate.pk.toString()) {
+                return metadatumToUpdate;
+            }
+            return m;
+        });
+        state.metadata = metadata;
+    },
     setMetadata(state, metadata) {
         state.metadata = metadata;
     },
     reset(state) {
         assign(state, initialState());
     },
+    setLoaded(state, loaded) {
+        state.loaded = loaded;
+    },
 };
 
 export const actions = {
+    // fetch a single part from API and set its data on state
     async fetchPart({ commit, dispatch, rootState }, { pk, order }) {
         if (!rootState.transcriptions.all.length) {
             await dispatch("document/fetchDocument", rootState.document.id, {
@@ -68,8 +93,9 @@ export const actions = {
             commit("setPartPk", resp.data.pk);
         }
 
-        let data = resp.data;
+        let { data } = resp;
 
+        // set order on state
         if (order) {
             commit("setOrder", order);
         } else if (Object.hasOwn(data, "order")) {
@@ -77,6 +103,7 @@ export const actions = {
         }
         delete data.order;
 
+        // map lines and region types to names and set on state, then remove from data object
         data.lines.forEach(function (line) {
             let type_ =
                 line.typology &&
@@ -99,9 +126,100 @@ export const actions = {
         commit("regions/set", data.regions, { root: true });
         delete data.regions;
 
+        // set form state for the details modal
+        commit(
+            "forms/setFormState",
+            {
+                form: "elementDetails",
+                formState: {
+                    comments: data.comments,
+                    metadata: data.metadata,
+                    name: data.name,
+                    typology: data.typology,
+                },
+            },
+            { root: true },
+        );
+
+        // load the rest of the data object onto state with existing key/value pairs
         commit("load", data);
     },
 
+    // save part changes from the modal form
+    async savePartChanges({ commit, rootState, state }) {
+        if (rootState?.forms?.elementDetails) {
+            // start loading
+            commit("setLoaded", false);
+
+            // get element details form data
+            const { comments, metadata, name, typology } =
+                rootState.forms.elementDetails;
+
+            // make api call(s) to update metadata
+            const { metadataToCreate, metadataToUpdate, metadataToDelete } =
+                getMetadataCRUD({
+                    stateMetadata: state.metadata,
+                    formMetadata: metadata,
+                });
+            const metadataResponses = await Promise.all([
+                ...metadataToCreate.map((m) =>
+                    apiCreatePartMetadata(rootState.document.id, state.pk, m),
+                ),
+                ...metadataToUpdate.map((metadatum) =>
+                    apiUpdatePartMetadata(
+                        rootState.document.id,
+                        state.pk,
+                        metadatum.pk,
+                        metadatum,
+                    ),
+                ),
+                ...metadataToDelete.map((metadatum) =>
+                    apiDeletePartMetadata(
+                        rootState.document.id,
+                        state.pk,
+                        metadatum.pk,
+                    ),
+                ),
+            ]);
+
+            // update state for metadata responses
+            metadataResponses
+                .filter((r) => !!r)
+                .forEach(async (response) => {
+                    if (response.status === 200) {
+                        // updated
+                        const { data } = response;
+                        commit("updateMetadatum", data);
+                    } else if (response.status === 201) {
+                        // created
+                        const { data } = response;
+                        commit("addMetadatum", data);
+                    } else if (response.status === 204) {
+                        // deleted
+                        const { request } = response;
+                        const splitURL = request?.responseURL.split("/");
+                        const pk = splitURL[splitURL.length - 2];
+                        commit("removeMetadatum", pk);
+                    }
+                });
+
+            // make api call to update part
+            const { data } = await apiUpdatePart(
+                rootState.document.id,
+                state.pk,
+                { comments, name, typology },
+            );
+
+            // set order on state and remove
+            if (Object.hasOwn(data, "order")) {
+                commit("setOrder", parseInt(data.order) + 1);
+            }
+            delete data.order;
+
+            // load remaining data
+            commit("load", data);
+        }
+    },
 
     async updatePart({ state, commit, rootState }, data) {
         const resp = await apiUpdatePart(rootState.document.id, state.pk, data);

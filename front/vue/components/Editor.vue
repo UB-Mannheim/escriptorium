@@ -18,12 +18,20 @@
         />
 
         <TabContent :legacy-mode-enabled="legacyModeEnabled" />
+
+        <ElementDetailsModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.elementDetails"
+            :disabled="!partsLoaded"
+            :on-cancel="closeElementDetailsModal"
+            :on-save="onSavePart"
+        />
     </div>
 </template>
 
 <script>
 import { mapActions, mapState } from "vuex";
 import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
+import ElementDetailsModal from "./ElementDetailsModal/ElementDetailsModal.vue";
 import ExtraInfo from "./ExtraInfo.vue";
 import ExtraNav from "./ExtraNav.vue";
 import TabContent from "./TabContent.vue";
@@ -33,6 +41,7 @@ import "./Editor.css";
 export default {
     name: "EscrEditor",
     components: {
+        ElementDetailsModal,
         EditorNavigation,
         ExtraInfo,
         ExtraNav,
@@ -151,6 +160,14 @@ export default {
             }.bind(this));
         }.bind(this));
     },
+    methods: {
+        ...mapActions("globalTools", ["closeElementDetailsModal"]),
+        ...mapActions("parts", ["savePartChanges"]),
+        async onSavePart() {
+            await this.savePartChanges();
+            this.closeElementDetailsModal();
+        },
+    }
 }
 </script>
 

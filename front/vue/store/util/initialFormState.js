@@ -40,6 +40,12 @@ export default {
         tags: [],
         tagName: "",
     },
+    elementDetails: {
+        comments: "",
+        metadata: [],
+        name: "",
+        typology: "",
+    },
     export: {
         fileFormat: "",
         includeImages: false,

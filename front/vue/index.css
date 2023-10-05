@@ -231,6 +231,7 @@
     font-weight: bold;
 }
 .escr-page h2,
+.escr-modal h2,
 .escr-sidebar-container h2 {
     font-weight: 700;
     font-size: 18px;
@@ -243,6 +244,7 @@
     font-weight: bold;
 }
 .escr-page h3,
+.escr-modal h3,
 .escr-sidebar-container h3 {
     font-weight: 600;
     font-size: 16px;
@@ -367,15 +369,18 @@
 .escr-toolbar-tooltip {
     text-align: center;
 }
-.escr-toolbar .new-section {
+.escr-toolbar .new-section,
+nav.escr-editor-nav .new-section {
     margin-left: 0.5rem;
 }
-.escr-toolbar .new-section.with-separator {
+.escr-toolbar .new-section.with-separator,
+nav.escr-editor-nav .new-section.with-separator {
     display: flex;
     flex-flow: row;
     align-items: center;
 }
-.escr-toolbar .new-section.with-separator::before {
+.escr-toolbar .new-section.with-separator::before,
+nav.escr-editor-nav .new-section.with-separator::before {
     width: 1px;
     content: "";
     height: 1rem;

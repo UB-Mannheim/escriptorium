@@ -7,16 +7,55 @@ const state = () => ({
      *  add-regions - drawing regions tool (segmentation)
      */
     activeTool: "select",
+    modalOpen: {
+        elementDetails: false,
+        models: false,
+        ontology: false,
+        transcriptions: false,
+    },
 });
 
 const getters = {};
 
 const actions = {
-    setActiveTool({ commit, state }, tool) {
-        if (tool !== state.activeTool) {
-            commit("setActiveTool", tool);
-        }
+    /**
+     * Close the "element details" modal and reset form state.
+     */
+    closeElementDetailsModal({ commit, rootState }) {
+        commit("setModalOpen", { key: "elementDetails", open: false });
+        commit(
+            "forms/setFormState",
+            {
+                form: "elementDetails",
+                formState: {
+                    comments: rootState.parts.comments,
+                    metadata: rootState.parts.metadata,
+                    name: rootState.parts.name,
+                    typology: rootState.parts.typology,
+                },
+            },
+            { root: true },
+        );
+        // re-allow keyboard shortcuts
+        commit("document/setBlockShortcuts", false, { root: true });
     },
+    /**
+     * Open an editor modal by key.
+     */
+    openModal({ commit }, key) {
+        commit("setModalOpen", { key, open: true });
+        // prevent keyboard shortcuts
+        commit("document/setBlockShortcuts", true, { root: true });
+    },
+    /**
+     * Set the currently active tool in the editor by name.
+     */
+    setActiveTool({ commit }, tool) {
+        commit("setActiveTool", tool);
+    },
+    /**
+     * Toggle the currently active tool in the editor by name.
+     */
     toggleTool({ commit, state }, tool) {
         if (tool === state.activeTool) {
             commit("setActiveTool", "select");
@@ -29,6 +68,9 @@ const actions = {
 const mutations = {
     setActiveTool(state, activeTool) {
         state.activeTool = activeTool;
+    },
+    setModalOpen(state, { key, open }) {
+        state.modalOpen[key] = open;
     },
 };
 
