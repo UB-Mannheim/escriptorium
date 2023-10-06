@@ -28,7 +28,7 @@
         />
         <TranscriptionsModal
             v-if="!legacyModeEnabled && modalOpen && modalOpen.transcriptions"
-            :disabled="!partsLoaded"
+            :disabled="!partsLoaded || saveTranscriptionsLoading"
             :on-cancel="closeTranscriptionsModal"
             :on-save="onSaveTranscriptions"
         />
@@ -107,6 +107,7 @@ export default {
             modalOpen: (state) => state.globalTools.modalOpen,
             partsLoaded: (state) => state.parts.loaded,
             transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,
+            saveTranscriptionsLoading: (state) => state.transcriptions.saveLoading,
         }),
     },
     watch: {

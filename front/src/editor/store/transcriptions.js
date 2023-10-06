@@ -8,6 +8,7 @@ export const initialState = () => ({
     comparedTranscriptions: [],
     transcriptionsLoaded: false,
     transcriptionToDelete: null,
+    saveLoading: false,
 });
 
 export const mutations = {
@@ -36,6 +37,9 @@ export const mutations = {
     },
     setTranscriptionToDelete(state, transcription) {
         state.transcriptionToDelete = transcription;
+    },
+    setSaveLoading(state, loading) {
+        state.saveLoading = loading;
     },
 };
 
@@ -280,6 +284,7 @@ export const actions = {
      * Save all transcriptions on the document and set results on state
      */
     async saveTranscriptionsChanges({ commit, rootState }) {
+        commit("setSaveLoading", true);
         try {
             const updatedTranscriptions = await Promise.all(
                 rootState.forms.transcriptionManagement.transcriptions.map(
@@ -299,7 +304,9 @@ export const actions = {
             );
         } catch (err) {
             console.log("couldn't edit transcriptions", err);
+            commit("setSaveLoading", false);
         }
+        commit("setSaveLoading", false);
     },
 };
 
