@@ -77,6 +77,8 @@
                     v-if="visiblePanels.source && partsLoaded"
                     ref="sourcePanel"
                     :fullsizeimage="fullsizeimage"
+                    :legacy-mode-enabled="legacyModeEnabled"
+                    :disabled="isWorking"
                 />
             </keep-alive>
 
@@ -136,18 +138,22 @@
             </div>
         </div>
         <div
-            v-else-if="partsLoaded"
+            v-else
             class="row marginless"
         >
-            <component
-                :is="getComponent(panel)"
+            <keep-alive
                 v-for="(panel, index) in editorPanels"
                 :key="panel"
-                :panel-index="index"
-                :fullsizeimage="fullsizeimage"
-                :legacy-mode-enabled="legacyModeEnabled"
-                :disabled="isWorking"
-            />
+            >
+                <component
+                    :is="getComponent(panel)"
+                    v-if="partsLoaded"
+                    :panel-index="index"
+                    :fullsizeimage="fullsizeimage"
+                    :legacy-mode-enabled="legacyModeEnabled"
+                    :disabled="isWorking"
+                />
+            </keep-alive>
         </div>
     </div>
 </template>
