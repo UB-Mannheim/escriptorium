@@ -6,9 +6,9 @@
             />
             <h1
                 class="escr-element-title"
-                :title="elementTitle"
+                :title="elementHeading"
             >
-                {{ elementTitle }}
+                {{ elementHeading }}
             </h1>
         </div>
         <div class="escr-editor-nav-actions">
@@ -79,6 +79,26 @@
                     View Element Details
                 </template>
             </VDropdown>
+            <VDropdown
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    color="text"
+                    aria-label="View Transcriptions"
+                    :disabled="disabled"
+                    :on-click="() => openModal('transcriptions')"
+                >
+                    <template #button-icon>
+                        <TranscribeIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Transcriptions
+                </template>
+            </VDropdown>
         </div>
     </nav>
 </template>
@@ -90,6 +110,7 @@ import ArrowCircleRightIcon from "../Icons/ArrowCircleRightIcon/ArrowCircleRight
 import EscrBreadcrumbs from "../Breadcrumbs/Breadcrumbs.vue";
 import EscrButton from "../Button/Button.vue";
 import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
+import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import "./EditorNavigation.css";
 
 export default {
@@ -100,6 +121,7 @@ export default {
         EscrBreadcrumbs,
         EscrButton,
         InfoOutlineIcon,
+        TranscribeIcon,
         VDropdown,
     },
     props: {
@@ -117,6 +139,7 @@ export default {
             documentName: (state) => state.document.name,
             elementFilename: (state) => state.parts.filename,
             elementNumber: (state) => state.parts.order,
+            elementTitle: (state) => state.parts.title,
             nextPart: (state) => state.parts.next,
             partsCount: (state) => state.document.partsCount,
             prevPart: (state) => state.parts.previous,
@@ -142,15 +165,15 @@ export default {
                         href: `/document/${this.documentId}/images`,
                     },
                     {
-                        title: this.elementNumber ? `Element ${this.elementNumber}` : "Loading...",
+                        title: this.elementTitle ? this.elementTitle : "Loading...",
                     },
                 ];
             }
             return breadcrumbs;
         },
-        elementTitle() {
-            return (this.elementNumber && this.elementFilename)
-                ? `Element ${this.elementNumber} – ${this.elementFilename}`
+        elementHeading() {
+            return (this.elementTitle && this.elementFilename)
+                ? `${this.elementTitle} – ${this.elementFilename}`
                 : "Loading...";
         },
     },

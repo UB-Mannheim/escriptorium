@@ -1,16 +1,19 @@
 import { assign } from "lodash";
 import * as api from "../api";
+import { updateTranscription } from "../../api/document";
 
 export const initialState = () => ({
     all: [],
     selectedTranscription: null,
     comparedTranscriptions: [],
     transcriptionsLoaded: false,
+    transcriptionToDelete: null,
 });
 
 export const mutations = {
     set(state, transcriptions) {
-        assign(state.all, transcriptions);
+        // use structuredClone for proper reactivity in other components
+        state.all = structuredClone(transcriptions);
     },
     remove(state, pk) {
         let index = state.all.findIndex((t) => t.pk == pk);
@@ -30,6 +33,9 @@ export const mutations = {
     },
     reset(state) {
         assign(state, initialState());
+    },
+    setTranscriptionToDelete(state, transcription) {
+        state.transcriptionToDelete = transcription;
     },
 };
 
@@ -224,6 +230,76 @@ export const actions = {
         commit("lines/updateCurrentTrans", state.selectedTranscription, {
             root: true,
         });
+    },
+
+    /**
+     * Open the "delete transcription" modal.
+     */
+    openDeleteModal({ commit }, transcription) {
+        commit("setTranscriptionToDelete", transcription);
+        commit(
+            "globalTools/setModalOpen",
+            { key: "deleteTranscription", open: true },
+            { root: true },
+        );
+    },
+    /**
+     * Close the "delete transcription" modal.
+     */
+    closeDeleteModal({ commit }) {
+        commit("setTranscriptionToDelete", null);
+        commit(
+            "globalTools/setModalOpen",
+            { key: "deleteTranscription", open: false },
+            { root: true },
+        );
+    },
+    /**
+     * Delete a single transcription
+     */
+    async deleteTranscription({ commit, dispatch, rootState, state }) {
+        // archive transcription
+        await dispatch("archive", state.transcriptionToDelete.pk);
+        // update form state
+        let formClone = structuredClone(
+            rootState.forms.transcriptionManagement.transcriptions,
+        ).filter((item) => item.pk !== state.transcriptionToDelete.pk);
+        commit(
+            "forms/setFieldValue",
+            {
+                form: "transcriptionManagement",
+                field: "transcriptions",
+                value: formClone,
+            },
+            { root: true },
+        );
+        // close modal
+        dispatch("closeDeleteModal");
+    },
+    /**
+     * Save all transcriptions on the document and set results on state
+     */
+    async saveTranscriptionsChanges({ commit, rootState }) {
+        try {
+            const updatedTranscriptions = await Promise.all(
+                rootState.forms.transcriptionManagement.transcriptions.map(
+                    async (formTranscription) =>
+                        await updateTranscription({
+                            documentId: rootState.document.id,
+                            transcriptionId: formTranscription.pk,
+                            // only name and comments are editable, at least for now
+                            name: formTranscription.name,
+                            comments: formTranscription.comments,
+                        }),
+                ),
+            );
+            commit(
+                "set",
+                updatedTranscriptions.map((t) => t.data),
+            );
+        } catch (err) {
+            console.log("couldn't edit transcriptions", err);
+        }
     },
 };
 

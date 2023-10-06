@@ -77,4 +77,7 @@ export default {
         model: "",
         layerName: "",
     },
+    transcriptionManagement: {
+        transcriptions: [],
+    },
 };

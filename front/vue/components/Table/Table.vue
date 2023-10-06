@@ -1,5 +1,6 @@
 <template>
     <table :class="classes">
+        <!-- table head with (possibly sortable) labels -->
         <thead>
             <tr>
                 <th
@@ -10,6 +11,7 @@
                         <span v-if="!header.sortable">
                             {{ header.label }}
                         </span>
+                        <!-- sort button -->
                         <button
                             v-else
                             class="escr-sort-button"
@@ -45,6 +47,7 @@
                         v-if="header.image"
                         :src="item[header.image]"
                     >
+                    <!-- linkable: component (e.g. tags) or simple span -->
                     <a
                         v-if="linkable && item.href && index == 0"
                         class="row-link"
@@ -67,12 +70,22 @@
                             }}
                         </span>
                     </a>
+                    <!-- non-linkable: component or span -->
                     <component
                         :is="header.component"
                         v-if="header.component && item[header.value]"
                         v-bind="item[header.value]"
                     />
-                    <span v-else>
+                    <input
+                        v-else-if="header.editable && editingKey === item[itemKey].toString()"
+                        type="text"
+                        :value="item[header.value]"
+                        :maxlength="512"
+                        @input="(e) => onEdit({ field: header.value, value: e.target.value })"
+                    >
+                    <span
+                        v-else
+                    >
                         {{
                             header.format
                                 ? header.format(item[header.value])
@@ -80,6 +93,7 @@
                         }}
                     </span>
                 </td>
+                <!-- row actions -->
                 <td
                     v-if="!!$scopedSlots['actions']"
                     class="escr-row-actions"
@@ -112,6 +126,14 @@ export default {
         compact: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * If this table should have editable rows, this key should correspond to the row currently
+         * being edited, or be empty.
+         */
+        editingKey: {
+            type: String,
+            default: "",
         },
         /**
          * List of headers, each of which is an object that should have a `value` and a `label`.
@@ -163,6 +185,19 @@ export default {
         linkable: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * Callback for editing a field in a row. Currently only supports text.
+         *
+         * Must be a function that accepts a single object param with the following two keys:
+         * `field`, a string for the field being edited, and
+         * `value`, the new text value of the field.
+         * It should be mapped back to the row item by the value of the `editingKey` prop.
+         */
+        onEdit: {
+            type: Function,
+            // eslint-disable-next-line no-unused-vars
+            default: ({ field, value }) => {},
         },
         /**
          * A callback function for sorting, which may be used for frontend sorting or for API calls

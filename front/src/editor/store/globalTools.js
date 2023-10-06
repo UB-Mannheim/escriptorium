@@ -8,6 +8,7 @@ const state = () => ({
      */
     activeTool: "select",
     modalOpen: {
+        deleteTranscription: false,
         elementDetails: false,
         models: false,
         ontology: false,
@@ -38,6 +39,23 @@ const actions = {
         );
         // re-allow keyboard shortcuts
         commit("document/setBlockShortcuts", false, { root: true });
+    },
+    /**
+     * Close the transcriptions modal and reset form state.
+     */
+    closeTranscriptionsModal({ commit, rootState }) {
+        commit("setModalOpen", { key: "transcriptions", open: false });
+        commit("document/setBlockShortcuts", false, { root: true });
+        commit(
+            "forms/setFormState",
+            {
+                form: "transcriptionManagement",
+                formState: {
+                    transcriptions: rootState.transcriptions.all,
+                },
+            },
+            { root: true },
+        );
     },
     /**
      * Open an editor modal by key.

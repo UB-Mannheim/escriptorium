@@ -139,7 +139,18 @@ export const actions = {
         var valid_part_types = data.valid_part_types;
         valid_part_types.unshift({ pk: null, name: "Element" });
 
+        // set transcriptions state
         commit("transcriptions/set", data.transcriptions, { root: true });
+        // set transcriptions form state
+        commit(
+            "forms/setFormState",
+            {
+                form: "transcriptionManagement",
+                formState: { transcriptions: data.transcriptions },
+            },
+            { root: true },
+        );
+
         commit("setTypes", {
             regions: data.valid_block_types,
             lines: data.valid_line_types,
@@ -233,7 +244,7 @@ export const actions = {
      */
     switchEditorPanel({ commit }, { index, panel }) {
         commit("switchEditorPanel", { index, panel });
-    }
+    },
 };
 
 export default {

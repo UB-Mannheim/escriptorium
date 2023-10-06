@@ -19,34 +19,55 @@
 
         <TabContent :legacy-mode-enabled="legacyModeEnabled" />
 
+        <!-- modals -->
         <ElementDetailsModal
             v-if="!legacyModeEnabled && modalOpen && modalOpen.elementDetails"
             :disabled="!partsLoaded"
             :on-cancel="closeElementDetailsModal"
             :on-save="onSavePart"
         />
+        <TranscriptionsModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.transcriptions"
+            :disabled="!partsLoaded"
+            :on-cancel="closeTranscriptionsModal"
+            :on-save="onSaveTranscriptions"
+        />
+        <ConfirmModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.deleteTranscription"
+            :body-text="`Are you sure you want to delete ${transcriptionToDelete.name}?`"
+            confirm-verb="Delete"
+            title="Delete Transcription"
+            :cannot-undo="true"
+            :disabled="!partsLoaded"
+            :on-cancel="closeDeleteTranscriptionModal"
+            :on-confirm="deleteTranscription"
+        />
     </div>
 </template>
 
 <script>
 import { mapActions, mapState } from "vuex";
+import ConfirmModal from "./ConfirmModal/ConfirmModal.vue";
 import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
 import ElementDetailsModal from "./ElementDetailsModal/ElementDetailsModal.vue";
 import ExtraInfo from "./ExtraInfo.vue";
 import ExtraNav from "./ExtraNav.vue";
 import TabContent from "./TabContent.vue";
 import TranscriptionManagement from "./TranscriptionManagement.vue";
+import TranscriptionsModal from "./TranscriptionsModal/TranscriptionsModal.vue";
 import "./Editor.css";
 
 export default {
     name: "EscrEditor",
     components: {
+        ConfirmModal,
         ElementDetailsModal,
         EditorNavigation,
         ExtraInfo,
         ExtraNav,
         TabContent,
         TranscriptionManagement,
+        TranscriptionsModal,
     },
     props: {
         documentId: {
@@ -85,6 +106,7 @@ export default {
         ...mapState({
             modalOpen: (state) => state.globalTools.modalOpen,
             partsLoaded: (state) => state.parts.loaded,
+            transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,
         }),
     },
     watch: {
@@ -161,11 +183,20 @@ export default {
         }.bind(this));
     },
     methods: {
-        ...mapActions("globalTools", ["closeElementDetailsModal"]),
+        ...mapActions("globalTools", ["closeElementDetailsModal", "closeTranscriptionsModal"]),
+        ...mapActions("transcriptions", {
+            closeDeleteTranscriptionModal: "closeDeleteModal",
+            deleteTranscription: "deleteTranscription",
+            saveTranscriptionsChanges: "saveTranscriptionsChanges",
+        }),
         ...mapActions("parts", ["savePartChanges"]),
         async onSavePart() {
             await this.savePartChanges();
             this.closeElementDetailsModal();
+        },
+        async onSaveTranscriptions() {
+            await this.saveTranscriptionsChanges();
+            this.closeTranscriptionsModal();
         },
     }
 }

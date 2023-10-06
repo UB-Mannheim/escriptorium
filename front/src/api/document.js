@@ -80,6 +80,17 @@ export const retrieveTranscriptionCharCount = async ({
     );
 };
 
+export const updateTranscription = async ({
+    documentId,
+    transcriptionId,
+    name,
+    comments,
+}) =>
+    await axios.put(
+        `/documents/${documentId}/transcriptions/${transcriptionId}/`,
+        { name, comments },
+    );
+
 // retrieve document parts
 export const retrieveDocumentParts = async ({
     documentId,

@@ -95,14 +95,23 @@ export default {
         TextField,
     },
     props: {
+        /**
+         * If true, all buttons and form fields are disabled
+         */
         disabled: {
             type: Boolean,
             required: true,
         },
+        /**
+         * Callback for canceling changes (by closing modal or clicking the cancel button)
+         */
         onCancel: {
             type: Function,
             required: true,
         },
+        /**
+         * Callback for clicking the save button
+         */
         onSave: {
             type: Function,
             required: true,
