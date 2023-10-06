@@ -1878,6 +1878,7 @@ class Transcription(ExportModelOperationsMixin("Transcription"), models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     archived = models.BooleanField(default=False)
     avg_confidence = models.FloatField(null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
 
     DEFAULT_NAME = "manual"
 
