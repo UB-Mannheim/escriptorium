@@ -1,3 +1,3 @@
 import axios from "axios";
 
-export const retrieveScripts = async () => await axios.get("/scripts");
+export const retrieveScripts = async () => await axios.get("/scripts/");

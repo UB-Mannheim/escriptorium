@@ -18,12 +18,12 @@ export const retrieveDocumentsList = async ({
     if (filters) {
         params = { ...params, ...getFilterParams({ filters }) };
     }
-    return await axios.get("/documents", { params });
+    return await axios.get("/documents/", { params });
 };
 
 // retrieve single document by ID
 export const retrieveDocument = async (documentId) =>
-    await axios.get(`/documents/${documentId}`);
+    await axios.get(`/documents/${documentId}/`);
 
 // retrieve types list for a specific transcription on a document
 export const retrieveTranscriptionOntology = async ({
@@ -41,7 +41,9 @@ export const retrieveTranscriptionOntology = async ({
         });
     }
     return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/types/${ontologyMap[category]}`,
+        `/documents/${documentId}/transcriptions/${transcriptionId}/types/${ontologyMap[
+            category
+        ]}/`,
         { params },
     );
 };
@@ -58,7 +60,7 @@ export const retrieveTranscriptionCharacters = async ({
         params.ordering = getSortParam({ field, direction });
     }
     return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/characters`,
+        `/documents/${documentId}/transcriptions/${transcriptionId}/characters/`,
         { params },
     );
 };
@@ -69,7 +71,7 @@ export const retrieveTranscriptionCharCount = async ({
     transcriptionId,
 }) => {
     return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/character_count`,
+        `/documents/${documentId}/transcriptions/${transcriptionId}/character_count/`,
     );
 };
 
@@ -83,7 +85,7 @@ export const retrieveDocumentParts = async ({
     if (field && direction) {
         params.ordering = getSortParam({ field, direction });
     }
-    return await axios.get(`/documents/${documentId}/parts`, { params });
+    return await axios.get(`/documents/${documentId}/parts/`, { params });
 };
 // create a new document
 export const createDocument = async ({
@@ -105,7 +107,7 @@ export const createDocument = async ({
 
 // delete a document
 export const deleteDocument = async ({ documentId }) =>
-    await axios.delete(`/documents/${documentId}`);
+    await axios.delete(`/documents/${documentId}/`);
 
 // edit a document
 export const editDocument = async (
@@ -123,7 +125,7 @@ export const editDocument = async (
 
 // retrieve document metadata
 export const retrieveDocumentMetadata = async (documentId) =>
-    await axios.get(`/documents/${documentId}/metadata`);
+    await axios.get(`/documents/${documentId}/metadata/`);
 
 // create document metadata
 export const createDocumentMetadata = async ({ documentId, metadatum }) =>
@@ -139,11 +141,11 @@ export const updateDocumentMetadata = async ({ documentId, metadatum }) =>
 
 // delete document metadata
 export const deleteDocumentMetadata = async ({ documentId, metadatumId }) =>
-    await axios.delete(`/documents/${documentId}/metadata/${metadatumId}`);
+    await axios.delete(`/documents/${documentId}/metadata/${metadatumId}/`);
 
 // retrieve document models
 export const retrieveDocumentModels = async (documentId) =>
-    await axios.get("/models", {
+    await axios.get("/models/", {
         params: {
             documents: documentId,
         },
@@ -173,7 +175,7 @@ export const transcribeDocument = async ({ documentId, model, layerName }) =>
 
 // retrieve textual witnesses for use in alignment
 export const retrieveTextualWitnesses = async () =>
-    await axios.get("/textual-witnesses");
+    await axios.get("/textual-witnesses/");
 
 // queue the alignment task for this document
 export const alignDocument = async ({
@@ -232,7 +234,7 @@ export const queueImport = async ({ documentId, params }) =>
 
 // retrieve latest tasks for a document
 export const retrieveDocumentTasks = async ({ documentId }) =>
-    await axios.get("/tasks", {
+    await axios.get("/tasks/", {
         params: {
             document: documentId,
         },
