@@ -149,7 +149,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
 
         # should call align task with passed user, transcription, witness, n_gram, etc
         mock_task.assert_called_with(
-            parts_qs=parts_qs,
+            parts=parts_qs,
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
@@ -196,7 +196,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
         }
         align_form.process()
         mock_task.assert_called_with(
-            parts_qs=parts_qs,
+            parts=parts_qs,
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,
@@ -221,7 +221,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
         }
         align_form.process()
         mock_task.assert_called_with(
-            parts_qs=parts_qs,
+            parts=parts_qs,
             user_pk=self.user.pk,
             transcription_pk=self.transcription.pk,
             witness_pk=self.witness.pk,

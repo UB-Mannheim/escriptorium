@@ -945,7 +945,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
 
         document = parts.first().document
         document.queue_alignment(
-            parts_qs=parts,
+            parts=parts,
             user_pk=self.user.pk,
             transcription_pk=transcription.pk,
             witness_pk=witness.pk,
