@@ -2,10 +2,29 @@
 .escr-tag-filter {
     width: 360px;
 }
+.escr-tag-filter h3 {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
+}
 .escr-tag-filter h4 {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19px;
+    margin-block-start: 1.33em;
+    margin-block-end: 1.33em;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    font-weight: bold;
 }
 .escr-tag-filter h4  div {
     display: flex;
@@ -55,4 +74,7 @@
 .escr-tag-filter label {
     display: flex;
     align-items: center;
+}
+.escr-tag-filter input#untagged {
+    margin-right: 0.5rem;
 }

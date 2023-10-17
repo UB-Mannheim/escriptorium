@@ -20,6 +20,7 @@ const state = () => ({
      */
     groups: [],
     isStaff: false,
+    username: "",
 });
 
 const getters = {};
@@ -31,6 +32,7 @@ const actions = {
             commit("setCanInvite", data.can_invite);
             commit("setIsStaff", data.is_staff);
             commit("setFirstName", data.first_name);
+            commit("setUsername", data.username);
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -55,6 +57,9 @@ const mutations = {
     },
     setIsStaff(state, isStaff) {
         state.isStaff = isStaff;
+    },
+    setUsername(state, username) {
+        state.username = username;
     },
 };
 

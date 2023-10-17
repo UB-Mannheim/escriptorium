@@ -1,30 +1,41 @@
 <template>
     <div class="escr-filter-set">
         <span>Filter by:</span>
-        <FilterButton
-            :active="tagFilterActive"
-            :count="tagCount"
-            label="Tags"
-            :on-click="() => toggleOpen('tags')"
-            :on-clear="() => clearFilter('tags')"
-            :disabled="disabled"
+        <VMenu
+            :delay="{ show: 0, hide: 100 }"
+            :triggers="[]"
+            :shown="openFilter === 'tags'"
+            :auto-hide="false"
+            @apply-hide="() => toggleOpen(undefined)"
         >
-            <template #filter-icon="{active}">
-                <TagIcon :active="active" />
+            <FilterButton
+                :active="tagFilterActive"
+                :count="tagCount"
+                label="Tags"
+                :on-click="() => toggleOpen('tags')"
+                :on-clear="() => clearFilter('tags')"
+                :disabled="disabled"
+            >
+                <template #filter-icon="{active}">
+                    <TagIcon :active="active" />
+                </template>
+            </FilterButton>
+            <template #popper>
+                <TagFilter
+                    v-if="openFilter === 'tags'"
+                    :tags="tags"
+                    :selected="tagFilterSelectedTags"
+                    :operator="tagFilterOperator"
+                    :untagged-selected="untaggedSelected"
+                    :on-apply="toggleClosedAndFilter"
+                    :on-cancel="() => toggleOpen(undefined)"
+                />
             </template>
-        </FilterButton>
-        <TagFilter
-            v-if="openFilter === 'tags'"
-            :tags="tags"
-            :selected="tagFilterSelectedTags"
-            :operator="tagFilterOperator"
-            :untagged-selected="untaggedSelected"
-            :on-apply="toggleClosedAndFilter"
-            :on-cancel="() => toggleOpen(undefined)"
-        />
+        </VMenu>
     </div>
 </template>
 <script>
+import { Menu as VMenu } from "floating-vue";
 import { mapActions, mapGetters, mapState } from "vuex";
 import FilterButton from "../FilterButton/FilterButton.vue";
 import TagFilter from "../TagFilter/TagFilter.vue";
@@ -33,7 +44,7 @@ import "./FilterSet.css";
 
 export default {
     name: "EscrFilterSet",
-    components: { TagFilter, TagIcon, FilterButton },
+    components: { TagFilter, TagIcon, FilterButton, VMenu },
     props: {
         /**
          * Boolean indicating if the filter buttons should be disabled, e.g. during loading.

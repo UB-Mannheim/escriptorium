@@ -30,6 +30,7 @@
     {% endif %}
     <link href="{% static 'css/flags.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
+    {% block extrastyle %}{% endblock extrastyle %}
   </head>
   <body id="escriptorium" class="escr-body {% block bodyclass %}{% endblock %}">
     {% if user.legacy_mode %}
@@ -167,10 +168,12 @@
     </div>
     {% endif %}
 
-    <div id="main" class="container-fluid">
+    <main><section>
+    <div id="main" {% if user.legacy_mode %} class="container-fluid"{% endif %}>
     {% block body %}
     {% endblock body %}
     </div>
+    </section></main>
 
     <script src="{% static 'vendor.js' %}"></script>
 
@@ -201,5 +204,6 @@
       {% endif %}
     {% endif %}
     {% endblock scripts %}
+    {% block extrascript %}{% endblock extrascript %}
   </body>
 </html>

@@ -11,7 +11,7 @@
             <input
                 type="text"
                 :disabled="disabled"
-                :value="item.key?.name"
+                :value="item.key && item.key.name"
                 placeholder="Key"
                 @input="(e) => onChange(item, 'key', e.target.value)"
             >

@@ -11,6 +11,7 @@ module.exports = {
         doclist: "./src/documentlist/main.js",
         docstasks: "./src/documentstasks/main.js",
         globalNavigation: "./vue/globalNavigation.js",
+        projectsList: "./vue/projectsList.js",
     },
 
     output: {

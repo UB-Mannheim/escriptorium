@@ -139,7 +139,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
     def test_list(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-list')
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(18):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -147,7 +147,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-detail',
                       kwargs={'pk': self.doc.pk})
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             resp = self.client.get(uri)
         self.assertEqual(resp.status_code, 200)
 
@@ -597,8 +597,13 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['count'], 1)
         self.assertEqual(resp.json()['results'][0]['pk'], self.doc2.pk)
 
+        # test OR logic
         resp = self.client.get(uri + '?tags=' + str(tag1.pk) + '|' + str(tag2.pk))
         self.assertEqual(resp.json()['count'], 2)
+
+        # test AND logic
+        resp = self.client.get(uri + '?tags=' + str(tag1.pk) + ',' + str(tag2.pk))
+        self.assertEqual(resp.json()['count'], 1)
 
     def test_filter_no_tag(self):
         tag1 = self.factory.make_document_tag(project=self.doc.project)
@@ -1177,7 +1182,7 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         tag = self.factory.make_project_tag(user=self.project.owner)
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             resp = self.client.patch(uri, {
                 'tags': [tag.pk]
             }, content_type='application/json')
@@ -1192,7 +1197,7 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(self.project.tags.count(), 2)
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-detail', kwargs={'pk': self.project.pk})
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             resp = self.client.patch(uri, {
                 'tags': [tag2.pk]
             }, content_type='application/json')
@@ -1220,8 +1225,13 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['count'], 1)
         self.assertEqual(resp.json()['results'][0]['id'], project2.pk)
 
+        # test OR logic
         resp = self.client.get(uri + '?tags=' + str(tag1.pk) + '|' + str(tag2.pk))
         self.assertEqual(resp.json()['count'], 2)
+
+        # test AND logic
+        resp = self.client.get(uri + '?tags=' + str(tag1.pk) + ',' + str(tag2.pk))
+        self.assertEqual(resp.json()['count'], 1)
 
     def test_filter_no_tag(self):
         tag1 = self.factory.make_project_tag(user=self.project.owner)

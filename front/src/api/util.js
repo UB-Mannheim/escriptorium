@@ -22,8 +22,10 @@ export const getFilterParams = ({ filters }) => {
         if (filter.operator === "or" && Array.isArray(filter.value)) {
             // "or" should be constructed as "?tags=1|2|none" for api
             params[filter.type] = filter.value.join("|");
+        } else if (Array.isArray(filter.value)) {
+            // "and" should be constructed as "?tags=1,2" for api, so pass array
+            params[filter.type] = filter.value.join(",");
         } else {
-            // "and" should be constructed as "?tags=1&tags=2" for api, so pass array
             params[filter.type] = filter.value;
         }
     });

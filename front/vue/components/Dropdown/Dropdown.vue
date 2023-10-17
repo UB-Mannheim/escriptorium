@@ -3,13 +3,13 @@
         <select
             :aria-label="label"
             :disabled="disabled"
-            :invalid="!options?.some((option) => option.selected)"
+            :invalid="!options || !options.some((option) => option.selected)"
             @change="onChange"
         >
             <option
                 value=""
                 disabled
-                :selected="!options?.some((option) => option.selected)"
+                :selected="!options || !options.some((option) => option.selected)"
             >
                 Select
             </option>

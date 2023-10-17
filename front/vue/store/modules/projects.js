@@ -84,8 +84,9 @@ const actions = {
                     },
                     { root: true },
                 );
-                // TODO: redirect to `/project/${data.slug}`
                 commit("setCreateModalOpen", false);
+                // redirect to `/project/${data.slug}`
+                window.location = `/project/${data.slug}/documents`;
             } else {
                 commit("setLoading", false);
                 throw new Error("Unable to create project");
@@ -144,9 +145,9 @@ const actions = {
                 },
                 { root: true },
             );
-            commit("setDeleteModalOpen", false);
             // fetch projects list again
-            dispatch("fetchProjects");
+            await dispatch("fetchProjects");
+            commit("setDeleteModalOpen", false);
         } catch (error) {
             commit("setLoading", false);
             dispatch("alerts/addError", error, { root: true });
@@ -190,6 +191,7 @@ const actions = {
                 data.results.map((result) => ({
                     ...result,
                     tags: { tags: result.tags },
+                    href: `/project/${result.slug}/documents`,
                 })),
             );
             commit("setNextPage", data.next);
@@ -208,8 +210,12 @@ const actions = {
         try {
             const { data } = await axios.get(state.nextPage);
             if (data?.results) {
-                data.results.forEach((project) => {
-                    commit("addProject", project);
+                data.results.forEach((result) => {
+                    commit("addProject", {
+                        ...result,
+                        tags: { tags: result.tags },
+                        href: `/project/${result.slug}/documents`,
+                    });
                 });
                 commit("setNextPage", data.next);
             } else {

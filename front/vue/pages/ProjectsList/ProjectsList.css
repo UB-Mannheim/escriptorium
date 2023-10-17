@@ -6,6 +6,19 @@
     top: 25%;
     left: calc(50% - 216px);
 }
+/* table height */
+.escr-projects-list .escr-card-table {
+    overflow: hidden;
+    display: flex;
+    flex-flow: column;
+    padding: 0;
+    max-height: calc(90vh - 32px);
+}
+.escr-projects-list .table-container {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
 /* constrain tags cells width */
 .escr-projects-list table td:nth-of-type(2) {
     width: 300px;

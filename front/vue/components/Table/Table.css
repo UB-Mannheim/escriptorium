@@ -112,4 +112,10 @@
     align-items: center;
     justify-content: flex-end;
     margin-right: 18px;
+    position: relative;
+    z-index: var(--table-actions-z);
+}
+/* ensure tags dropdown above table row link */
+.escr-table .v-popper--theme-tags-dropdown {
+    z-index: var(--table-actions-z);
 }

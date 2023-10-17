@@ -119,6 +119,16 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ('pk', 'name')
 
 
+class ProjectTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectTag
+        fields = ("pk", "name", "color")
+
+    def create(self, data):
+        data['user'] = self.context['request'].user
+        return super().create(data)
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     slug = serializers.ReadOnlyField()
@@ -134,6 +144,12 @@ class ProjectSerializer(serializers.ModelSerializer):
         data['owner'] = self.context["view"].request.user
         obj = super().create(data)
         return obj
+
+    def to_representation(self, instance):
+        # only use ProjectTagSerializer on GET; otherwise, use pks
+        repr = super().to_representation(instance)
+        repr['tags'] = [ProjectTagSerializer(tag).data for tag in instance.tags.all()]
+        return repr
 
 
 class PartMoveSerializer(serializers.ModelSerializer):
@@ -322,16 +338,6 @@ class TextAnnotationSerializer(serializers.ModelSerializer):
         return anno
 
 
-class ProjectTagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectTag
-        fields = ("pk", "name", "color")
-
-    def create(self, data):
-        data['user'] = self.context['request'].user
-        return super().create(data)
-
-
 class DocumentTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentTag
@@ -348,7 +354,6 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.SerializerMethodField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
-    tags = DocumentTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
@@ -369,6 +374,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
+
+    def to_representation(self, instance):
+        # only use DocumentTagSerializer on GET; otherwise, use pks
+        repr = super().to_representation(instance)
+        repr['tags'] = [DocumentTagSerializer(tag).data for tag in instance.tags.all()]
+        return repr
 
 
 class ImportSerializer(serializers.Serializer):

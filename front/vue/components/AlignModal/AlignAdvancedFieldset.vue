@@ -16,7 +16,7 @@
                         :on-click="() => {}"
                     >
                         <template #button-icon>
-                            <InfoFilledIcon v-if="tooltipShown?.threshold" />
+                            <InfoFilledIcon v-if="tooltipShown && tooltipShown.threshold" />
                             <InfoOutlineIcon v-else />
                         </template>
                     </EscrButton>
@@ -55,7 +55,7 @@
                         :on-click="() => {}"
                     >
                         <template #button-icon>
-                            <InfoFilledIcon v-if="tooltipShown?.ngram" />
+                            <InfoFilledIcon v-if="tooltipShown && tooltipShown.ngram" />
                             <InfoOutlineIcon v-else />
                         </template>
                     </EscrButton>
@@ -92,7 +92,7 @@
                         :on-click="() => {}"
                     >
                         <template #button-icon>
-                            <InfoFilledIcon v-if="tooltipShown?.beamSize" />
+                            <InfoFilledIcon v-if="tooltipShown && tooltipShown.beamSize" />
                             <InfoOutlineIcon v-else />
                         </template>
                     </EscrButton>
@@ -130,7 +130,7 @@
                         :on-click="() => {}"
                     >
                         <template #button-icon>
-                            <InfoFilledIcon v-if="tooltipShown?.maxOffset" />
+                            <InfoFilledIcon v-if="tooltipShown && tooltipShown.maxOffset" />
                             <InfoOutlineIcon v-else />
                         </template>
                     </EscrButton>
@@ -168,7 +168,7 @@
                         :on-click="() => {}"
                     >
                         <template #button-icon>
-                            <InfoFilledIcon v-if="tooltipShown?.gap" />
+                            <InfoFilledIcon v-if="tooltipShown && tooltipShown.gap" />
                             <InfoOutlineIcon v-else />
                         </template>
                     </EscrButton>
