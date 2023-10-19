@@ -10,8 +10,9 @@ module.exports = {
         editor: "./src/editor/main.js",
         doclist: "./src/documentlist/main.js",
         docstasks: "./src/documentstasks/main.js",
-        globalNavigation: "./vue/globalNavigation.js",
-        projectsList: "./vue/projectsList.js",
+        globalNavigation: "./vue/exports/globalNavigation.js",
+        projectDashboard: "./vue/exports/projectDashboard.js",
+        projectsList: "./vue/exports/projectsList.js",
     },
 
     output: {

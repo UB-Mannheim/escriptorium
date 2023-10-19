@@ -1,6 +1,6 @@
 import Vue from "vue";
-import store from "./store";
-import ProjectsList from "../vue/pages/ProjectsList/ProjectsList.vue";
+import store from "../store";
+import ProjectsList from "../pages/ProjectsList/ProjectsList.vue";
 
 export default new Vue({
     el: "#projects-list",

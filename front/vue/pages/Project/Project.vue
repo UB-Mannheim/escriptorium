@@ -80,6 +80,7 @@
                             :items="documents"
                             :on-sort="sortDocuments"
                             :sort-disabled="loading"
+                            :linkable="true"
                         >
                             <template #actions="{ item }">
                                 <EscrButton
@@ -187,6 +188,7 @@ import ShareModal from "../../components/SharePanel/ShareModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import "../../components/Common/Card.css"
 import "./Project.css";
 
 export default {
@@ -221,7 +223,14 @@ export default {
         id: {
             type: Number,
             required: true,
-        }
+        },
+        /**
+         * Whether or not search is disabled on the current instance.
+         */
+        searchDisabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     computed: {
         ...mapState({
@@ -300,18 +309,7 @@ export default {
          * Sidebar quick actions for the project dashboard.
          */
         sidebarActions() {
-            return [
-                {
-                    data: {
-                        disabled: this.loading,
-                        projectId: this.projectId,
-                        searchScope: "Project",
-                    },
-                    icon: SearchIcon,
-                    key: "search",
-                    label: "Search Project",
-                    panel: SearchPanel,
-                },
+            let actions = [
                 {
                     data: {
                         disabled: this.loading,
@@ -325,6 +323,21 @@ export default {
                     panel: SharePanel,
                 },
             ];
+            // if search is enabled on the index, add search as first item
+            if (!this.searchDisabled) {
+                actions.unshift({
+                    data: {
+                        disabled: this.loading,
+                        projectId: this.projectId,
+                        searchScope: "Project",
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Project",
+                    panel: SearchPanel,
+                });
+            }
+            return actions;
         },
     },
     /**

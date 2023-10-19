@@ -105,6 +105,8 @@
 /* variable content in a sidebar panel */
 .escr-selected-action .escr-action-panel {
     padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(100% - 96px);
 }
 /* backdrop to prevent interactions with rest of page while sidebar panel open */
 .escr-sidebar-backdrop {

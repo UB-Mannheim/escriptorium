@@ -268,9 +268,7 @@ export default {
                 (script) => script.name === e.target.value
             );
             const readDirection = script.text_direction.endsWith("-rl") ? "rtl" : "ltr";
-            this.handleTextInput(
-                { field: "readDirection", value: readDirection, form: "editDocument" }
-            );
+            this.handleTextFieldInput("readDirection", readDirection);
         }
     },
 }

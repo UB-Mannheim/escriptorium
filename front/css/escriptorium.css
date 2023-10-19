@@ -6,8 +6,9 @@ body {
     margin-top: 15px;
 }
 
-#escriptorium section:has(.escr-vue-enabled) {
+#escriptorium #main:has(.escr-vue-enabled) {
     margin: 0;
+    padding: 0;
 }
 
 .hide {

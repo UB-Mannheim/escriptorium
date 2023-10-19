@@ -28,9 +28,10 @@
                 </li>
             </ul>
         </div>
+        <!-- disabled until invite API endpoint implemented -->
         <EscrButton
             :on-click="(data && data.openShareModal) || (() => {})"
-            :disabled="data && data.disabled"
+            :disabled="/*data && data.disabled*/ true"
             label="Add Group or User"
             size="small"
             color="outline-primary"

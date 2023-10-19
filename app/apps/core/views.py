@@ -421,6 +421,14 @@ class UpdateProject(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         return reverse('project-update', kwargs={'slug': self.object.slug})
 
 
+class ProjectDashboard(LoginRequiredMixin, DetailView):
+    model = Project
+    template_name = "core/project_dashboard.html"
+
+    def get_queryset(self):
+        return Project.objects.for_user_read(self.request.user)
+
+
 class DocumentsList(LoginRequiredMixin, PerPageMixin, ListView):
     model = Document
     paginate_by = 10

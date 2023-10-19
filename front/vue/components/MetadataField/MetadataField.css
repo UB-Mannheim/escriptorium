@@ -5,6 +5,11 @@
 }
 .escr-metadata-field legend {
     margin-bottom: 0.5rem;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text1);
+    font-style: normal;
 }
 .escr-metadata-field .metadatum {
     display: flex;

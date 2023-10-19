@@ -351,7 +351,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     valid_block_types = BlockTypeSerializer(many=True, read_only=True)
     valid_line_types = LineTypeSerializer(many=True, read_only=True)
     valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True)
-    parts_count = serializers.SerializerMethodField()
+    parts_count = serializers.ReadOnlyField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
 
@@ -365,9 +365,6 @@ class DocumentSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['project'].queryset = Project.objects.for_user_write(self.context['user'])
-
-    def get_parts_count(self, document):
-        return document.parts.count()
 
     def validate_main_script(self, value):
         try:
