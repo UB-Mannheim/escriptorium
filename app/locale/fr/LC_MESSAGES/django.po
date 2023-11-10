@@ -1491,7 +1491,7 @@ msgstr ""
 "documents imprimés ou manuscrits."
 
 #: escriptorium/templates/core/home.html
-msgid "Manual<br>transcription"
+msgid "Manual<br>Transcription"
 msgstr "Transcription<br>manuelle"
 
 #: escriptorium/templates/core/home.html

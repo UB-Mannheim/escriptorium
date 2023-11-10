@@ -1473,7 +1473,7 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/home.html
-msgid "Manual<br>transcription"
+msgid "Manual<br>Transcription"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
