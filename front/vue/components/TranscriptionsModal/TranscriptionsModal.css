@@ -2,6 +2,7 @@
     width: 800px;
     top: 60px;
     left: calc(50% - 400px);
+    color: var(--text1);
 }
 .escr-transcription-management .escr-modal-content {
     max-height: calc(100vh - 250px);

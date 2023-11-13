@@ -32,6 +32,7 @@ nav.escr-editor-nav .escr-editor-nav-actions {
 }
 nav.escr-editor-nav .escr-editor-nav-actions span.element-switcher {
     margin: 0 0.5rem;
+    color: var(--text1);
 }
 nav.escr-editor-nav .escr-editor-nav-actions span.element-switcher > span {
     display: inline-block;
