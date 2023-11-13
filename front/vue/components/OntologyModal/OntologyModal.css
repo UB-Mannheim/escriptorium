@@ -1,0 +1,63 @@
+.escr-edit-ontology .escr-modal {
+    top: 60px;
+    color: var(--text1);
+}
+.escr-edit-ontology .escr-modal-content {
+    max-height: calc(100vh - 250px);
+}
+.escr-edit-ontology h3 {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+.escr-edit-ontology .escr-segmented-button-group > div {
+    flex: 1 0 auto;
+}
+.escr-edit-ontology .escr-table tr > td.checkbox-column,
+.escr-edit-ontology .escr-table tr > th.checkbox-column {
+    width: 32px;
+    padding: 0 0.5rem;
+}
+.escr-edit-ontology .escr-table tr > td.name-column,
+.escr-edit-ontology .escr-table tr > th.name-column {
+    width: calc(100% - 6rem);
+    padding: 0;
+}
+.escr-edit-ontology .escr-table tr > td.color-column,
+.escr-edit-ontology .escr-table tr > th.color-column {
+    width: 72px;
+}
+.escr-edit-ontology .escr-table tr > td:nth-of-type(2).color-column,
+.escr-edit-ontology .escr-table tr > th:nth-of-type(2).color-column {
+    width: 32px;
+    padding: 0 0.5rem;
+}
+.escr-edit-ontology .escr-table td.remove-column,
+.escr-edit-ontology .escr-table th.remove-column {
+    padding: 0;
+    width: 2rem;
+    max-width: 2rem;
+    color: var(--text2);
+}
+.escr-edit-ontology .remove-column svg {
+    fill: var(--text2);
+}
+.escr-color-button {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease-in-out;
+}
+.escr-color-button:hover {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.1);
+}
+.escr-color-button:active {
+    box-shadow: inset 0 0 0 34px rgba(0, 0, 0, 0.2);
+}
+.escr-edit-ontology .name-column input {
+    background-color: var(--background);
+}

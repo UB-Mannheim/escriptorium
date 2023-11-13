@@ -41,6 +41,22 @@ const actions = {
         commit("document/setBlockShortcuts", false, { root: true });
     },
     /**
+     * Close the ontology modal and reset form state.
+     */
+    closeOntologyModal({ commit, rootState }) {
+        commit("setModalOpen", { key: "ontology", open: false });
+        commit(
+            "forms/setFormState",
+            {
+                form: "ontology",
+                formState: { ...rootState.document.types },
+            },
+            { root: true },
+        );
+        // re-allow keyboard shortcuts
+        commit("document/setBlockShortcuts", false, { root: true });
+    },
+    /**
      * Close the transcriptions modal and reset form state.
      */
     closeTranscriptionsModal({ commit, rootState }) {

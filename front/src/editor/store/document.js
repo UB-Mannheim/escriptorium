@@ -1,4 +1,5 @@
 import * as api from "../api";
+import { retrieveDefaultOntology } from "../../api";
 
 export const initialState = () => ({
     id: null,
@@ -48,6 +49,9 @@ export const initialState = () => ({
     enabledVKs: userProfile.get("VK-enabled")
         ? userProfile.get("VK-enabled")
         : [],
+
+    defaultTypes: {},
+    loading: false,
 });
 
 export const mutations = {
@@ -130,10 +134,16 @@ export const mutations = {
     reset(state) {
         Object.assign(state, initialState());
     },
+    setDefaultTypes(state, types) {
+        state.defaultTypes = types;
+    },
+    setLoading(state, loading) {
+        state.loading = loading;
+    },
 };
 
 export const actions = {
-    async fetchDocument({ state, commit }) {
+    async fetchDocument({ state, commit, dispatch }) {
         const resp = await api.retrieveDocument(state.id);
         let data = resp.data;
         var valid_part_types = data.valid_part_types;
@@ -151,11 +161,22 @@ export const actions = {
             { root: true },
         );
 
-        commit("setTypes", {
+        // set types on state
+        const types = {
             regions: data.valid_block_types,
             lines: data.valid_line_types,
             parts: valid_part_types,
-        });
+        };
+        commit("setTypes", types);
+        // set types form state
+        commit(
+            "forms/setFormState",
+            {
+                form: "ontology",
+                formState: { ...types },
+            },
+            { root: true },
+        );
         commit("setProjectSlug", data.project);
         commit("setProjectName", data.project_name);
         commit("setPartsCount", data.parts_count);
@@ -188,6 +209,8 @@ export const actions = {
             else page = null;
         }
         commit("setAnnotationTaxonomies", { type: "text", taxos: text_taxos });
+
+        await dispatch("fetchDefaultTypes");
     },
 
     async togglePanel({ state, commit }, panel) {
@@ -222,6 +245,26 @@ export const actions = {
     },
 
     /**
+     * Fetch default types
+     */
+    async fetchDefaultTypes({ commit }) {
+        let types = {};
+        await Promise.all(
+            ["regions", "lines", "parts"].map(async (category) => {
+                const { data } = await retrieveDefaultOntology(category);
+                if (data?.results) {
+                    types[category] = data.results;
+                }
+                let noneType = { pk: null, name: "None" };
+                if (category === "parts") noneType.name = "Element";
+                types[category] = [noneType, ...types[category]];
+                return;
+            }),
+        );
+        commit("setDefaultTypes", types);
+    },
+
+    /**
      * Remove an editor panel by clicking the "add panel" button (new UI)
      */
     removeEditorPanel({ state, commit, dispatch }, panel) {
@@ -237,6 +280,13 @@ export const actions = {
                 },
             );
         }
+    },
+
+    saveOntologyChanges({ commit, state }) {
+        commit("setLoading", true);
+        // TODO: persist changes to ontology.
+        // NOTE: colors were saved separately (local settings only), in the modal.
+        commit("setLoading", false);
     },
 
     /**

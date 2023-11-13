@@ -1118,6 +1118,28 @@ export class Segmenter {
                 }
             }.bind(this),
         );
+
+        if (this.newUiEnabled) {
+            // custom event for live color changing after form save; must be on document so
+            // modal can send event
+            document.addEventListener(
+                "baseline-editor:ontology-colors",
+                ((ev) => {
+                    let { category, colors } = ev.detail;
+                    if (category === "color-regions") {
+                        this.regionColors = colors;
+                        for (let index in this.regions) {
+                            this.regions[index].refresh();
+                        }
+                    } else if (category === "color-directions") {
+                        this.directionHintColors = colors;
+                        for (let index in this.lines) {
+                            this.lines[index].refresh();
+                        }
+                    }
+                }).bind(this),
+            );
+        }
     }
 
     init() {

@@ -63,6 +63,11 @@ export default {
         overwrite: false,
         uploadFile: "",
     },
+    ontology: {
+        lines: [],
+        parts: [],
+        regions: [],
+    },
     segment: {
         model: "",
         overwrite: false,

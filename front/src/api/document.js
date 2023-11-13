@@ -48,6 +48,10 @@ export const retrieveDocumentOntology = async ({
     );
 };
 
+// retrieve default types list by category (regions, lines, parts)
+export const retrieveDefaultOntology = async (category) =>
+    await axios.get(`/${ontologyMap[category]}/`);
+
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
     documentId,

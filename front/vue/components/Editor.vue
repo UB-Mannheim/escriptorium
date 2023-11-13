@@ -32,6 +32,12 @@
             :on-cancel="closeTranscriptionsModal"
             :on-save="onSaveTranscriptions"
         />
+        <OntologyModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.ontology"
+            :disabled="!partsLoaded || saveOntologyLoading"
+            :on-cancel="closeOntologyModal"
+            :on-save="onSaveOntology"
+        />
         <ConfirmModal
             v-if="!legacyModeEnabled && modalOpen && modalOpen.deleteTranscription"
             :body-text="`Are you sure you want to delete ${transcriptionToDelete.name}?`"
@@ -52,6 +58,7 @@ import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
 import ElementDetailsModal from "./ElementDetailsModal/ElementDetailsModal.vue";
 import ExtraInfo from "./ExtraInfo.vue";
 import ExtraNav from "./ExtraNav.vue";
+import OntologyModal from "./OntologyModal/OntologyModal.vue";
 import TabContent from "./TabContent.vue";
 import TranscriptionManagement from "./TranscriptionManagement.vue";
 import TranscriptionsModal from "./TranscriptionsModal/TranscriptionsModal.vue";
@@ -65,6 +72,7 @@ export default {
         EditorNavigation,
         ExtraInfo,
         ExtraNav,
+        OntologyModal,
         TabContent,
         TranscriptionManagement,
         TranscriptionsModal,
@@ -107,6 +115,7 @@ export default {
             modalOpen: (state) => state.globalTools.modalOpen,
             partsLoaded: (state) => state.parts.loaded,
             transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,
+            saveOntologyLoading: (state) => state.document.loading,
             saveTranscriptionsLoading: (state) => state.transcriptions.saveLoading,
         }),
     },
@@ -184,16 +193,25 @@ export default {
         }.bind(this));
     },
     methods: {
-        ...mapActions("globalTools", ["closeElementDetailsModal", "closeTranscriptionsModal"]),
+        ...mapActions("globalTools", [
+            "closeElementDetailsModal",
+            "closeOntologyModal",
+            "closeTranscriptionsModal",
+        ]),
         ...mapActions("transcriptions", {
             closeDeleteTranscriptionModal: "closeDeleteModal",
             deleteTranscription: "deleteTranscription",
             saveTranscriptionsChanges: "saveTranscriptionsChanges",
         }),
+        ...mapActions("document", ["saveOntologyChanges"]),
         ...mapActions("parts", ["savePartChanges"]),
         async onSavePart() {
             await this.savePartChanges();
             this.closeElementDetailsModal();
+        },
+        async onSaveOntology() {
+            await this.saveOntologyChanges();
+            this.closeOntologyModal();
         },
         async onSaveTranscriptions() {
             await this.saveTranscriptionsChanges();

@@ -87,7 +87,27 @@
             >
                 <EscrButton
                     color="text"
-                    aria-label="View Transcriptions"
+                    aria-label="Manage Ontology"
+                    :disabled="disabled"
+                    :on-click="() => openModal('ontology')"
+                >
+                    <template #button-icon>
+                        <OntologyIcon />
+                    </template>
+                </EscrButton>
+                <template #popper>
+                    Ontology
+                </template>
+            </VDropdown>
+            <VDropdown
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <EscrButton
+                    color="text"
+                    aria-label="Manage Transcriptions"
                     :disabled="disabled"
                     :on-click="() => openModal('transcriptions')"
                 >
@@ -110,6 +130,7 @@ import ArrowCircleRightIcon from "../Icons/ArrowCircleRightIcon/ArrowCircleRight
 import EscrBreadcrumbs from "../Breadcrumbs/Breadcrumbs.vue";
 import EscrButton from "../Button/Button.vue";
 import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
+import OntologyIcon from "../Icons/OntologyIcon/OntologyIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import "./EditorNavigation.css";
 
@@ -121,6 +142,7 @@ export default {
         EscrBreadcrumbs,
         EscrButton,
         InfoOutlineIcon,
+        OntologyIcon,
         TranscribeIcon,
         VDropdown,
     },
