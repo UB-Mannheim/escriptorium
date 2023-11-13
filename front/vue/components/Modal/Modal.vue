@@ -7,8 +7,14 @@
             <div class="escr-modal-header">
                 <slot name="modal-header" />
             </div>
-            <div class="escr-modal-content">
-                <slot name="modal-content" />
+            <div
+                ref="escr-modal-content"
+                class="escr-modal-content"
+            >
+                <slot
+                    name="modal-content"
+                    :scroll="onScrollContent"
+                />
             </div>
             <div class="modal-actions">
                 <slot name="modal-actions" />
@@ -20,5 +26,13 @@
 import "./Modal.css";
 export default {
     name: "EscrModal",
+    methods: {
+        onScrollContent() {
+            this.$refs["escr-modal-content"].scroll({
+                top: this.$refs["escr-modal-content"].scrollHeight,
+                behavior: "smooth",
+            });
+        }
+    }
 }
 </script>
