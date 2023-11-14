@@ -98,15 +98,29 @@
                     </VDropdown>
 
                     <!-- Virtual keyboard -->
-                    <!-- <button
-                        class="btn btn-sm ml-2"
-                        :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
-                        title="Toggle Virtual Keyboard for this document."
-                        @click="toggleVK"
-                    >
-                        <i class="fas fa-keyboard" />
-                    </button> -->
+                    <div class="vk-container">
+                        <VDropdown
+                            theme="escr-tooltip-small"
+                            placement="bottom"
+                            :distance="8"
+                            :triggers="['hover']"
+                        >
+                            <ToggleButton
+                                :checked="isVKEnabled"
+                                :disabled="disabled"
+                                :on-change="toggleVK"
+                            >
+                                <template #button-icon>
+                                    <i class="fas fa-keyboard" />
+                                </template>
+                            </ToggleButton>
+                            <template #popper>
+                                Virtual keyboard
+                            </template>
+                        </VDropdown>
+                    </div>
 
+                    <!-- TODO: Annotation -->
                     <!--
                     <div
                         v-for="(typo, idx) in groupedTaxonomies"
@@ -145,7 +159,7 @@
             <div
                 id="diplomatic-lines"
                 ref="diplomaticLines"
-                :class="$store.state.document.mainTextDirection"
+                :class="{ [mainTextDirection]: true, sortmode: isSortModeEnabled }"
                 contenteditable="true"
                 autocomplete="off"
                 @keydown="onKeyPress"
@@ -162,6 +176,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
@@ -189,6 +204,9 @@ export default Vue.extend({
         isSortModeEnabled: false,
     };},
     computed: {
+        ...mapState({
+            mainTextDirection: (state) => state.document.mainTextDirection,
+        }),
         groupedTaxonomies() {
             return _.groupBy(this.$store.state.document.annotationTaxonomies.text,
                 function(taxo) {
@@ -855,6 +873,11 @@ export default Vue.extend({
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.activateVK(c);
                 });
+                if (!this.legacyModeEnabled && this.isSortModeEnabled) {
+                    this.$refs.diplomaticLines.contentEditable = "true";
+                    this.sortable.option("disabled", true);
+                    this.isSortModeEnabled = false;
+                }
             } else {
                 // Make sure we save changes made before we remove the VK
                 vks.splice(vks.indexOf(this.$store.state.document.id), 1);

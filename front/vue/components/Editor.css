@@ -53,28 +53,6 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
     background-color: white;
 }
 
-/* confidence toggle special styling */
-.escr-confidence-control {
-    margin-right: 8px;
-}
-.escr-confidence-control
-    .escr-button:not(:disabled):not([class*="disabled"]):not(
-        [class*="active"]
-    ):not(:hover) {
-    background-color: var(--background1);
-}
-.escr-confidence-control .escr-toggle-button {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-right: 1px;
-}
-.escr-confidence-control .escr-button.menu-toggle {
-    min-width: 24px;
-    min-height: 38px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
 /* confidence visualization scale panel */
 .confidence-scale {
     display: flex;
@@ -120,44 +98,34 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
     margin-right: -42px;
     margin-left: 1rem;
 }
-.escr-editor-tabcontent #diplomatic-lines[contenteditable="false"] > div {
+.escr-editor-tabcontent #diplomatic-lines.sortmode > div {
     cursor: pointer;
     border-bottom: 1px solid var(--line-ordering-border);
 }
-.escr-editor-tabcontent
-    #diplomatic-lines[contenteditable="false"]
-    div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected {
     cursor: grab;
     background-color: var(--line-ordering-selected);
     border-left-color: var(--secondary);
 }
-.escr-editor-tabcontent
-    .rtl
-    #diplomatic-lines[contenteditable="false"]
-    div.selected {
+.escr-editor-tabcontent .rtl #diplomatic-lines.sortmode div.selected {
     border-left-color: transparent;
     border-right-color: var(--secondary);
 }
-.escr-editor-tabcontent
-    #diplomatic-lines[contenteditable="false"]
-    div.selected
-    + div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected + div.selected {
     border-bottom-color: var(--line-ordering-border);
     border-top-color: transparent;
 }
 .escr-editor-tabcontent
-    #diplomatic-lines[contenteditable="false"]
+    #diplomatic-lines.sortmode
     div:not(.selected):has(+ div.selected) {
     border-bottom-color: transparent;
 }
 .escr-editor-tabcontent
-    #diplomatic-lines[contenteditable="false"]
+    #diplomatic-lines.sortmode
     div:not(.selected)
     + div.selected {
     border-top-color: var(--line-ordering-border);
 }
-.escr-editor-tabcontent
-    #diplomatic-lines[contenteditable="false"]
-    div[draggable="true"] {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div[draggable="true"] {
     cursor: grabbing;
 }
