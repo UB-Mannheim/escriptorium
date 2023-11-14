@@ -60,6 +60,10 @@
     --foreground-alert: #771010;
     --background-alert: #f8caca;
 
+    /* line ordering panel */
+    --line-ordering-border: rgba(0, 0, 0, 0.15);
+    --line-ordering-selected: rgba(23, 97, 181, 0.2);
+
     /* z-index layers */
     --editor-toolbar-z: 1;
     --editor-global-toolbar-z: 2;

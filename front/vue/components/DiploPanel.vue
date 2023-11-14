@@ -74,25 +74,40 @@
                         class="notice fas fa-save hide new-section"
                     />
 
-                    <!-- <button
-                        id="sortMode"
-                        ref="sortMode"
-                        title="Toggle sorting mode."
-                        class="btn btn-sm ml-3 btn-info fas fa-sort"
-                        autocomplete="off"
-                        :disabled="isVKEnabled"
-                        @click="toggleSort"
-                    />
+                    <!-- Line reordering -->
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <ToggleButton
+                            color="secondary"
+                            class="sort-mode-toggle"
+                            :checked="isSortModeEnabled"
+                            :disabled="disabled || isVKEnabled"
+                            :on-change="toggleSort"
+                        >
+                            <template #button-icon>
+                                <LineOrderingIcon />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Line ordering mode
+                        </template>
+                    </VDropdown>
 
-                    <button
+                    <!-- Virtual keyboard -->
+                    <!-- <button
                         class="btn btn-sm ml-2"
                         :class="{'btn-info': isVKEnabled, 'btn-outline-info': !isVKEnabled}"
                         title="Toggle Virtual Keyboard for this document."
                         @click="toggleVK"
                     >
                         <i class="fas fa-keyboard" />
-                    </button>
+                    </button> -->
 
+                    <!--
                     <div
                         v-for="(typo, idx) in groupedTaxonomies"
                         :key="idx"
@@ -120,6 +135,7 @@
         >
             <DiploLine
                 v-for="line in $store.state.lines.all"
+                ref="diploLineComponents"
                 :key="'DL' + line.pk"
                 :line="line"
                 :ratio="ratio"
@@ -146,24 +162,31 @@
 </template>
 
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
+import { Recogito } from "@recogito/recogito-js";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
+import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
-import { Recogito } from "@recogito/recogito-js";
 
 export default Vue.extend({
     components: {
         DiploLine,
         EditorToolbar,
+        LineOrderingIcon,
+        ToggleButton,
         TranscriptionDropdown,
+        VDropdown,
     },
     mixins: [BasePanel, AnnoPanel],
     data() { return {
         updatedLines : [],
         createdLines : [],
         movedLines:[],
-        isVKEnabled: false
+        isVKEnabled: false,
+        isSortModeEnabled: false,
     };},
     computed: {
         groupedTaxonomies() {
@@ -207,7 +230,7 @@ export default Vue.extend({
             vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
                 disabled: true,
                 multiDrag: true,
-                multiDragKey : "CTRL",
+                multiDragKey : "Meta",
                 selectedClass: "selected",
                 ghostClass: "ghost",
                 dragClass: "info",
@@ -237,8 +260,8 @@ export default Vue.extend({
         getAPITextAnnotationBody(annotation, offsets) {
             var body = this.getAPIAnnotationBody(annotation);
             let total = 0;
-            for(let i=0; i<this.$children.length; i++) {
-                let currentLine = this.$children[i];
+            for(let i=0; i<this.$refs.diploLineComponents.length; i++) {
+                let currentLine = this.$refs.diploLineComponents[i];
                 let content = currentLine.getEl().textContent;
                 if (!body.start_line && total+content.length > offsets.start) {
                     body.start_line = currentLine.line.pk;
@@ -362,13 +385,19 @@ export default Vue.extend({
             if (this.$refs.diplomaticLines.contentEditable === "true") {
                 this.$refs.diplomaticLines.contentEditable = "false";
                 this.sortable.option("disabled", false);
-                this.$refs.sortMode.classList.remove("btn-info");
-                this.$refs.sortMode.classList.add("btn-success");
+                this.isSortModeEnabled = true;
+                if (this.$refs.sortMode) {
+                    this.$refs.sortMode.classList.remove("btn-info");
+                    this.$refs.sortMode.classList.add("btn-success");
+                }
             } else {
                 this.$refs.diplomaticLines.contentEditable = "true";
                 this.sortable.option("disabled", true);
-                this.$refs.sortMode.classList.remove("btn-success");
-                this.$refs.sortMode.classList.add("btn-info");
+                this.isSortModeEnabled = false;
+                if (this.$refs.sortMode) {
+                    this.$refs.sortMode.classList.remove("btn-success");
+                    this.$refs.sortMode.classList.add("btn-info");
+                }
             }
         },
 
@@ -472,7 +501,7 @@ export default Vue.extend({
                Finish dragging lines, save new positions
              */
             if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex) {
-                let diploLine = this.$children.find((dl)=>dl.line.order==ev.oldIndex);
+                let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndex);
                 this.movedLines.push({
                     "pk": diploLine.line.pk,
                     "order": ev.newIndex
@@ -480,7 +509,7 @@ export default Vue.extend({
             } else {
                 for(let i=0; i< ev.newIndicies.length; i++) {
 
-                    let diploLine = this.$children.find((dl)=>dl.line.order==ev.oldIndicies[i].index);
+                    let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndicies[i].index);
                     this.movedLines.push({
                         "pk": diploLine.line.pk,
                         "order": ev.newIndicies[i].index
@@ -707,8 +736,8 @@ export default Vue.extend({
         showOverlay(ev) {
             let target = ev.target.closest("div");
             let index = Array.prototype.indexOf.call(target.parentNode.children, target);
-            if (index > -1 && index < this.$children.length) {
-                let diploLine = this.$children.find((dl)=>dl.line.order==index);
+            if (index > -1 && index < this.$refs.diploLineComponents.length) {
+                let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==index);
                 if (diploLine) diploLine.showOverlay();
             } else {
                 this.hideOverlay();
@@ -716,7 +745,9 @@ export default Vue.extend({
         },
 
         hideOverlay() {
-            if (this.$children.length) this.$children[0].hideOverlay();
+            if (this.$refs.diploLineComponents.length) {
+                this.$refs.diploLineComponents[0].hideOverlay();
+            }
         },
 
         async bulkUpdate() {
@@ -739,8 +770,8 @@ export default Vue.extend({
             /*
                parse all lines if the content changed, add it to updated lines
              */
-            for(let i=0; i<this.$children.length; i++) {
-                let currentLine = this.$children[i];
+            for(let i=0; i<this.$refs.diploLineComponents.length; i++) {
+                let currentLine = this.$refs.diploLineComponents[i];
                 let content = currentLine.getEl().textContent;
                 if(currentLine.line.currentTrans.content != content){
                     currentLine.line.currentTrans.content = content;
