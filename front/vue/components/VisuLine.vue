@@ -5,7 +5,7 @@
         @click="edit"
     >
         <polygon
-            :fill="$store.state.document.confidenceVisible ? maskFillColor : 'transparent'"
+            :fill="(legacyModeEnabled && globalConfidenceVisible) || confidenceVizOn ? maskFillColor : 'transparent'"
             :stroke="maskStrokeColor"
             :points="maskPoints"
         />
@@ -56,9 +56,20 @@ import { LineBase } from "../../src/editor/mixins.js";
 
 export default Vue.extend({
     mixins: [LineBase],
+    props: {
+        /**
+         * Whether or not legacy mode is enabled on this instance.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
+    },
     computed: {
         ...mapState({
             activeTool: (state) => state.globalTools.activeTool,
+            globalConfidenceVisible: (state) => state.document.confidenceVisible,
+            confidenceVizOn: (state) => state.document.confidenceVizOn,
         }),
         textPathId() {
             return this.line ? "textPath"+this.line.pk : "";

@@ -41,8 +41,10 @@ export const initialState = () => ({
         ? userProfile.get("editor-panels")
         : ["segmentation", "visualisation"],
 
-    // Confidence overlay visibility
+    // Confidence overlay visibility (global, from document settings)
     confidenceVisible: false,
+    // Confidence overlay visibility (local, new UI)
+    confidenceVizOn: false,
     // exponential scale factor for confidence overlay
     confidenceScale: 4,
 
@@ -139,6 +141,9 @@ export const mutations = {
     },
     setLoading(state, loading) {
         state.loading = loading;
+    },
+    toggleConfidenceVizOn(state) {
+        state.confidenceVizOn = !state.confidenceVizOn;
     },
 };
 
@@ -295,6 +300,13 @@ export const actions = {
     switchEditorPanel({ commit }, { index, panel }) {
         commit("switchEditorPanel", { index, panel });
     },
+
+    /**
+     * Toggle the confidence visualization locally
+     */
+    toggleConfidence({ commit }) {
+        commit("toggleConfidenceVizOn");
+    }
 };
 
 export default {

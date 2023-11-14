@@ -57,3 +57,10 @@
     min-height: 54px;
     max-height: 108px;
 }
+
+.escr-toolbar .escr-editortools-paneltools .escr-confidence-control {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    align-content: center;
+}
