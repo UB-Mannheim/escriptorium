@@ -83,7 +83,7 @@
                             </EscrButton>
                             <template #popper>
                                 <div class="confidence-scale">
-                                    <h3>Confidence visualization</h3>
+                                    <h3>Confidence range scale</h3>
                                     <input
                                         id="confidence-range"
                                         type="range"
@@ -91,6 +91,7 @@
                                         min="1"
                                         max="10"
                                         step="0.1"
+                                        :value="confidenceScale"
                                         @input="changeConfidenceScale"
                                     >
                                     <span class="small">
