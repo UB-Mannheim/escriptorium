@@ -58,7 +58,7 @@ export default Vue.extend({
     mixins: [LineBase],
     props: {
         /**
-         * Whether or not legacy mode is enabled on this instance.
+         * Whether or not legacy mode is enabled by the user.
          */
         legacyModeEnabled: {
             type: Boolean,

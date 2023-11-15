@@ -127,7 +127,10 @@
             </div>
         </div>
 
-        <TranscriptionModal v-if="editedLine" />
+        <TranscriptionModal
+            v-if="editedLine"
+            :legacy-mode-enabled="legacyModeEnabled"
+        />
     </div>
 </template>
 

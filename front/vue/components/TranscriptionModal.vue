@@ -295,6 +295,15 @@ export default Vue.extend({
         HelpVersions,
         HelpCompareTranscriptions,
     },
+    props: {
+        /**
+         * Whether or not legacy mode is enabled by the user.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
+    },
     data() {
         return {
             isVKEnabled: false
