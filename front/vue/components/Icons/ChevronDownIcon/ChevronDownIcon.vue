@@ -1,6 +1,6 @@
 <template>
     <svg
-        class="escr-chervon-down-icon"
+        class="escr-chevron-down-icon"
         width="10"
         height="6"
         viewBox="0 0 10 6"

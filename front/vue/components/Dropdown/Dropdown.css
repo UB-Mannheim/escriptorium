@@ -26,7 +26,7 @@
 .escr-dropdown select[invalid=true] {
     color: var(--text2);
 }
-.escr-dropdown .escr-chervon-down-icon {
+.escr-dropdown .escr-chevron-down-icon {
     position: absolute;
     top: 14px;
     right: 14px;
