@@ -12,6 +12,14 @@ export const initialState = () => ({
 });
 
 export const mutations = {
+    addComparedTranscription(state, pk) {
+        const clone = structuredClone(state.comparedTranscriptions);
+        clone.push(pk);
+        state.comparedTranscriptions = clone;
+    },
+    setComparedTranscriptions(state, transcriptions) {
+        state.comparedTranscriptions = transcriptions;
+    },
     set(state, transcriptions) {
         // use structuredClone for proper reactivity in other components
         state.all = structuredClone(transcriptions);
@@ -25,7 +33,7 @@ export const mutations = {
         state.selectedTranscription = pk;
     },
     removeComparedTranscription(state, pk) {
-        let index = state.comparedTranscriptions.findIndex((e) => e.pk == pk);
+        let index = state.comparedTranscriptions.findIndex((tr) => tr === pk);
         if (index < 0) return;
         Vue.delete(state.comparedTranscriptions, index);
     },

@@ -236,6 +236,7 @@
 }
 .escr-page h2,
 .escr-modal h2,
+.escr-line-modal h2,
 .escr-sidebar-container h2 {
     font-weight: 700;
     font-size: 18px;
@@ -275,6 +276,7 @@
 
 /* Horizontal rule */
 .escr-page hr,
+.escr-line-modal hr,
 .escr-sidebar-container hr {
     border: none;
     border-top: 1px solid var(--text3);
@@ -383,8 +385,7 @@ nav.escr-editor-nav .new-section.with-separator {
     flex-flow: row;
     align-items: center;
 }
-.escr-toolbar .new-section.with-separator::before,
-nav.escr-editor-nav .new-section.with-separator::before {
+.new-section.with-separator::before {
     width: 1px;
     content: "";
     height: 1rem;

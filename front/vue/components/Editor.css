@@ -21,7 +21,7 @@ div.escr-editor-tabcontent .marginless.row {
     gap: 0;
     padding: 0;
 }
-div.escr-editor-tabcontent .marginless.row div.col:not(:first-of-type) {
+div.escr-editor-tabcontent .marginless.row div.col.panel:not(:first-of-type) {
     border-left: 4px solid var(--text1);
 }
 #escriptorium div.escr-editor-tabcontent .col.panel {
