@@ -111,7 +111,7 @@
                                 :on-change="toggleVK"
                             >
                                 <template #button-icon>
-                                    <i class="fas fa-keyboard" />
+                                    <KeyboardIcon />
                                 </template>
                             </ToggleButton>
                             <template #popper>
@@ -180,6 +180,7 @@ import { mapState } from "vuex";
 import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
@@ -190,6 +191,7 @@ export default Vue.extend({
     components: {
         DiploLine,
         EditorToolbar,
+        KeyboardIcon,
         LineOrderingIcon,
         ToggleButton,
         TranscriptionDropdown,
