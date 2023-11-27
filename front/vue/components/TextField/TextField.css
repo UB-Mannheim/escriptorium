@@ -13,7 +13,12 @@
     background-color: var(--background);
     pointer-events: none;
 }
-.escr-text-field input:invalid,
-.escr-text-field input[invalid] {
-    border: 1px solid var(--alert);
+.escr-text-field input:invalid:not(:focus-visible),
+.escr-text-field input[invalid]:not(:focus-visible) {
+    outline: 1px solid var(--alert);
+}
+.escr-text-field input:invalid:focus-visible,
+.escr-text-field input[invalid]:focus-visible {
+    outline-color: var(--alert);
+    border-color: var(--alert);
 }
