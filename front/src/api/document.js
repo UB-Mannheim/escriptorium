@@ -85,10 +85,14 @@ export const retrieveDocumentParts = async ({
     documentId,
     field,
     direction,
+    pageSize,
 }) => {
     let params = {};
     if (field && direction) {
         params.ordering = getSortParam({ field, direction });
+    }
+    if (pageSize) {
+        params.paginate_by = pageSize;
     }
     return await axios.get(`/documents/${documentId}/parts/`, { params });
 };
