@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
-{% load i18n bootstrap %}
+{% load i18n bootstrap static %}
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block body %}
+{% if request.user.legacy_mode %}
 <div id="part-edit">
     <nav>
       <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
@@ -10,13 +11,8 @@
 
         {% if object %}
         <a class="mt-2 center px-3"
-           {% if request.user.legacy_mode %}
              title="{% trans "Back to document list" %}"
              href="{% url 'documents-list' slug=document.project.slug %}"
-           {% else %}
-             title="{% trans "Back to document dashboard" %}"
-             href="{% url 'document-detail' pk=document.pk %}"
-           {% endif %}
            >
             <i class="fas fa-arrow-left fa-lg"></i>
         </a>
@@ -52,9 +48,29 @@
   {% block tab_content %}{% endblock %}
 </div>
 {% block modals %}{% endblock %}
+{% else %}
+  <div id="images-page">
+    <images-page
+        :id={{ document.pk }}
+        :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+    ></images-page>
+  </div>
+{% endif %}
 {% endblock %}
 
-{% if not DISABLE_ELASTICSEARCH %}
+{% block extrascript %}
+    {% if not request.user.legacy_mode %}
+        <script src="{% static 'imagesPage.js' %}"></script>
+    {% endif %}
+{% endblock extrascript %}
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'imagesPage.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}
+
+{% if request.user.legacy_mode and not DISABLE_ELASTICSEARCH %}
   {% block searchbar_hidden_inputs %}
   <input name="project" type="text" value="{{document.project.pk}}" hidden>
   <input name="document" type="text" value="{{document.pk}}" hidden>

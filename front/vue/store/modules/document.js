@@ -1039,6 +1039,9 @@ const actions = {
 };
 
 const mutations = {
+    addPart(state, part) {
+        state.parts.push(part);
+    },
     addMetadatum(state, metadatum) {
         const metadata = structuredClone(state.metadata);
         metadata.push(metadatum);

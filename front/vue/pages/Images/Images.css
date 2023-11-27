@@ -1,0 +1,303 @@
+/* special styling for images page */
+.escr-images-page.escr-body.escr-vue-enabled .escr-page {
+    padding: 0;
+}
+.escr-images-page.escr-body.escr-vue-enabled .escr-breadcrumbs {
+    padding: 1rem 2rem;
+    margin: 0;
+    background-color: var(--background2);
+}
+/* header */
+.escr-images-page .escr-images-header {
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--background2);
+    z-index: var(--editor-nav-z);
+    padding: 0 2rem 1rem;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+}
+.escr-images-header .escr-images-title {
+    display: flex;
+    flex-flow: column;
+}
+.escr-images-header .escr-images-title h3,
+.escr-images-header .escr-images-title h1 {
+    margin: 0;
+}
+.escr-images-page .grid-spinner.escr-loader-container {
+    margin-top: 4rem;
+}
+.escr-images-page .grid-spinner.escr-loader-container .escr-spinner {
+    border-width: 8px;
+    width: 64px;
+    height: 64px;
+    max-width: 64px;
+    max-height: 64px;
+}
+.escr-images-page .escr-spinner {
+    border-color: var(--text3);
+    border-right-color: transparent;
+}
+
+/* toolbar */
+.escr-images-toolbar {
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 64px;
+    background-color: var(--background2);
+    z-index: var(--editor-global-toolbar-z);
+    padding: 0 2rem;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+}
+.escr-images-toolbar .escr-toolbar-left {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-images-toolbar .escr-toolbar-right {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+.escr-parts-count {
+    font-weight: 600;
+    margin-right: 2rem;
+    min-width: 85px;
+}
+.escr-images-toolbar .escr-text-field {
+    margin: 0;
+}
+.escr-images-toolbar .escr-text-field input {
+    background-color: var(--background1);
+}
+.escr-images-toolbar .escr-text-field.range-text-field {
+    margin-right: 1rem;
+}
+.escr-toolbar-right .escr-button:not(:active):not(:hover) {
+    background-color: transparent;
+}
+
+/* image grid */
+.escr-image-grid {
+    overflow: auto;
+    margin: 0;
+    max-height: calc(100vh - 188px);
+}
+.escr-image-grid ul {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 2rem;
+    list-style: none;
+    margin: 0 auto;
+    padding: 2rem;
+    justify-content: center;
+}
+.escr-image-grid .escr-image-tile {
+    position: relative;
+    width: 220px;
+    height: 248px;
+    border-radius: 15px;
+    background-color: var(--background1);
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.escr-image-grid .escr-image-tile.image-selected {
+    outline: 4px solid var(--secondary);
+}
+.escr-image-grid .escr-load-more-btn {
+    margin: 0 auto 2rem;
+}
+
+/* checkbox for each image selection */
+.escr-image-tile label.image-checkbox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"] {
+    pointer-events: all;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"] + svg,
+.escr-image-tile label.image-checkbox input[type="checkbox"] + svg + span::before {
+    color: var(--secondary);
+    width: 20px;
+    height: 20px;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"] + svg {
+    display: none;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"]:checked + svg {
+    display: block;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"] + svg + span::before {
+    display: block;
+    content: " ";
+    box-sizing: border-box;
+    border: 2px solid var(--secondary);
+    border-radius: 50%;
+}
+.escr-image-tile label.image-checkbox input[type="checkbox"]:checked + svg + span::before {
+    display: none;
+}
+.escr-image-tile label.image-checkbox:focus-within svg + span::before,
+.escr-image-tile label.image-checkbox:focus-within svg {
+    box-shadow: 0 0 0 0.2rem  var(--secondary-focus);
+    border-radius: 50%;
+}
+
+/* image actions panel */
+.escr-image-tile .escr-image-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+    flex-flow: row nowrap;
+    background-color: var(--secondary);
+    padding: 3px 0.5rem;
+    border-top-right-radius: 15px;
+}
+.escr-image-actions a {
+    color: var(--button-text);
+}
+.escr-image-actions a:focus:not(:active) {
+    background-color: var(--secondary-dark);
+}
+.escr-image-tile:hover .escr-image-actions,
+.escr-image-tile:focus-within .escr-image-actions {
+    display: flex;
+}
+
+/* image thumbnail */
+.escr-image-grid .escr-image-tile img {
+    min-width: 100%;
+    max-height: 144px;
+    object-fit: cover;
+    border-top-right-radius: 15px;
+    border-top-left-radius: 15px;
+}
+
+/* image metadata */
+.escr-image-grid .escr-image-tile .filename {
+    margin: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.escr-image-grid .escr-image-tile .element-number {
+    margin-top: 8px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* image task status */
+.escr-image-grid .escr-image-tile .image-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    max-height: 24px;
+    max-width: 100%;
+}
+.escr-image-grid .escr-image-tile .image-status div {
+    padding: 0 21px;
+}
+.escr-image-grid .escr-image-tile .image-status div:not(:last-of-type) {
+    border-right: 1px solid var(--background2);
+}
+.escr-image-grid .escr-image-tile .image-status svg {
+    max-height: 20px;
+    fill: var(--background2);
+}
+.escr-image-grid .escr-image-tile .image-status svg.done {
+    fill: var(--completed);
+}
+
+/* task status tooltips */
+.v-popper--theme-escr-task-tooltip .v-popper__inner {
+    background-color: var(--tag-text);
+    color: var(--button-text);
+    fill: var(--button-text);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    padding: 8px 8px 8px 4px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__arrow-inner,
+.v-popper--theme-escr-task-tooltip .v-popper__arrow-outer {
+    display: none;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner > div {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    gap: 16px;
+    font-weight: 600;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner > div > div:not(.task-metadata) {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner svg {
+    max-height: 16px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata {
+    display: flex;
+    flex-flow: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    font-size: 10px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .date {
+    font-weight: 400;
+}
+
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    gap: 5px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status::before {
+    content: " ";
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--text2);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.done::before {
+    background-color: var(--completed);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.pending::before {
+    background-color: var(--initiated);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.ongoing::before {
+    background-color: var(--in-progress);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.error::before {
+    background-color: var(--alert);
+}
+
+/* special styling for normal tooltips */
+.v-popper--theme-escr-tooltip-small .v-popper__inner {
+    text-align: center;
+    max-width: none;
+}

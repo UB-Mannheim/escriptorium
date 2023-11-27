@@ -249,6 +249,7 @@
 </script>
 
 {{ block.super }}
+{% if request.user.legacy_mode %}
 <script>
   $(document).ready(function() {
     // join the ws room
@@ -258,4 +259,5 @@
     bootHelp();
   });
 </script>
+{% endif %}
 {% endblock %}
