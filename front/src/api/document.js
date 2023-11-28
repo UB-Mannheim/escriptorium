@@ -282,7 +282,12 @@ export const cancelTask = async ({ documentId, taskReportId }) =>
         task_report: taskReportId,
     });
 
+// create a new transcription layer
 export const createTranscriptionLayer = async ({ documentId, layerName }) =>
     await axios.post(`/documents/${documentId}/transcriptions/`, {
         name: layerName,
     });
+
+// delete a part (image) on a document
+export const deleteDocumentPart = async ({ documentId, partPk }) =>
+    await axios.delete(`/documents/${documentId}/parts/${partPk}/`);

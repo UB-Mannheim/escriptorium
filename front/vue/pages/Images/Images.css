@@ -171,11 +171,14 @@
 .escr-image-actions a {
     color: var(--button-text);
 }
-.escr-image-actions a:focus:not(:active) {
+.escr-image-actions a:focus:not(:active),
+.escr-image-actions button:focus:not(:active),
+.escr-image-actions.context-menu-open .context-menu-button  {
     background-color: var(--secondary-dark);
 }
 .escr-image-tile:hover .escr-image-actions,
-.escr-image-tile:focus-within .escr-image-actions {
+.escr-image-tile:focus-within .escr-image-actions,
+.escr-image-actions.context-menu-open {
     display: flex;
 }
 

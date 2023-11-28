@@ -143,7 +143,12 @@
                             </label>
 
                             <!-- edit link and quick actions menu -->
-                            <div class="escr-image-actions">
+                            <div
+                                :class="{
+                                    'escr-image-actions': true,
+                                    'context-menu-open': contextMenuOpen === part.pk,
+                                }"
+                            >
                                 <VDropdown
                                     placement="bottom"
                                     :triggers="['hover']"
@@ -167,6 +172,70 @@
                                         Edit
                                     </template>
                                 </VDropdown>
+                                <VMenu
+                                    placement="bottom-start"
+                                    :triggers="['click']"
+                                    theme="vertical-menu"
+                                    @apply-show="openContextMenu(part.pk)"
+                                    @apply-hide="closeContextMenu()"
+                                >
+                                    <EscrButton
+                                        class="context-menu-button"
+                                        color="secondary"
+                                        round
+                                        size="small"
+                                        :disabled="loading && loading.images"
+                                        :on-click="() => {}"
+                                    >
+                                        <template #button-icon>
+                                            <HorizMenuIcon />
+                                        </template>
+                                    </EscrButton>
+                                    <template #popper>
+                                        <ul class="escr-vertical-menu">
+                                            <li>
+                                                <button
+                                                    @mousedown="() => openSegmentModal(part.pk)"
+                                                >
+                                                    <SegmentIcon class="escr-menuitem-icon" />
+                                                    <span>Segment</span>
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    @mousedown="() => openTranscribeModal(part.pk)"
+                                                >
+                                                    <TranscribeIcon class="escr-menuitem-icon" />
+                                                    <span>Transcribe</span>
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    @mousedown="() => openAlignModal(part.pk)"
+                                                >
+                                                    <AlignIcon class="escr-menuitem-icon" />
+                                                    <span>Align</span>
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    @mousedown="() => openExportModal(part.pk)"
+                                                >
+                                                    <ExportIcon class="escr-menuitem-icon" />
+                                                    <span>Export</span>
+                                                </button>
+                                            </li>
+                                            <li class="new-section">
+                                                <button
+                                                    @mousedown="() => openDeleteModal(part)"
+                                                >
+                                                    <TrashIcon class="escr-menuitem-icon" />
+                                                    <span>Delete</span>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </template>
+                                </VMenu>
                             </div>
 
                             <!-- filename with tooltip for overflow -->
@@ -318,12 +387,25 @@
                     :on-cancel="() => closeTaskModal('import')"
                     :on-submit="onSubmitImport"
                 />
+                <!-- delete image modal -->
+                <ConfirmModal
+                    v-if="deleteModalOpen"
+                    :body-text="partTitleToDelete ?
+                        `Are you sure you want to delete ${partTitleToDelete}?` :
+                        'Are you sure you want to delete the selected image(s)?'"
+                    confirm-verb="Delete"
+                    title="Delete Image"
+                    :cannot-undo="true"
+                    :disabled="loading && loading.images"
+                    :on-cancel="closeDeleteModal"
+                    :on-confirm="deleteSelectedParts"
+                />
             </div>
         </template>
     </EscrPage>
 </template>
 <script>
-import { Dropdown as VDropdown } from "floating-vue";
+import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
 import { range } from "lodash";
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapMutations, mapState } from "vuex";
@@ -331,10 +413,13 @@ import { mapActions, mapMutations, mapState } from "vuex";
 import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
 // eslint-disable-next-line max-len
 import CheckCircleFilledIcon from "../../components/Icons/CheckCircleFilledIcon/CheckCircleFilledIcon.vue";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditImageIcon from "../../components/Icons/EditImageIcon/EditImageIcon.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
+import ExportIcon from "../../components/Icons/ExportIcon/ExportIcon.vue";
+import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
@@ -346,6 +431,8 @@ import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
 import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
+import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import "../../components/VerticalMenu/VerticalMenu.css";
 import "./Images.css";
 
 export default {
@@ -353,10 +440,13 @@ export default {
     components: {
         AlignIcon,
         CheckCircleFilledIcon,
+        ConfirmModal,
         EditImageIcon,
         EscrButton,
         EscrLoader,
         EscrPage,
+        ExportIcon,
+        HorizMenuIcon,
         ImportIcon,
         ImportModal,
         // eslint-disable-next-line vue/no-unused-components
@@ -374,7 +464,9 @@ export default {
         SharePanel,
         TextField,
         TranscribeIcon,
+        TrashIcon,
         VDropdown,
+        VMenu,
     },
     filters: {
         formatDate(date) {
@@ -423,6 +515,7 @@ export default {
     },
     data() {
         return {
+            contextMenuOpen: null,
             lastSelected: null,
             rangeValidationError: null,
             rangeInputValue: "",
@@ -432,9 +525,11 @@ export default {
     },
     computed: {
         ...mapState({
+            deleteModalOpen: (state) => state.images.deleteModalOpen,
             documentName: (state) => state.document.name,
             loading: (state) => state.images.loading,
             nextPage: (state) => state.images.nextPage,
+            partTitleToDelete: (state) => state.images.partTitleToDelete,
             parts: (state) => state.document.parts,
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.project.id,
@@ -582,8 +677,11 @@ export default {
             "setId",
         ]),
         ...mapActions("images", [
+            "closeDeleteModal",
+            "deleteSelectedParts",
             "fetchDocument",
             "fetchNextPage",
+            "openDeleteModal",
             "setSelectedPartsByOrder",
             "togglePartSelected",
         ]),
@@ -597,6 +695,12 @@ export default {
         }),
         ...mapActions("user", ["fetchGroups", "fetchRecognizeModels", "fetchSegmentModels"]),
         ...mapMutations("images", ["setLoading", "setSelectedParts"]),
+        /**
+         * Close a context menu for an image.
+         */
+        closeContextMenu() {
+            this.contextMenuOpen = null;
+        },
         /**
          * Handle range input, validate, and set selected parts if valid
          */
@@ -658,6 +762,12 @@ export default {
             this.setLoading({ key: "document", loading: true });
             await this.handleSubmitImport();
             this.setLoading({ key: "document", loading: false });
+        },
+        /**
+         * Open a context menu for an image by pk.
+         */
+        openContextMenu(pk) {
+            this.contextMenuOpen = pk;
         },
         /**
          * Handler for clicking "select all"

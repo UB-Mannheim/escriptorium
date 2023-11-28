@@ -1,4 +1,8 @@
 /* restyled from floating-vue */
+.v-popper--theme-vertical-menu.v-popper__popper {
+    /* prevent z-fighting with modals */
+    z-index: var(--menu-z) !important;
+}
 .v-popper--theme-vertical-menu .v-popper__inner {
     /* have to use !important here because sometimes floating-vue's v-popper--theme-dropdown's CSS,
     which is automatically applied, is loaded after this sequentially */

@@ -1,9 +1,14 @@
 import axios from "axios";
-import { retrieveDocument, retrieveDocumentParts } from "../../../src/api";
+import {
+    deleteDocumentPart,
+    retrieveDocument,
+    retrieveDocumentParts,
+} from "../../../src/api";
 import forms from "../util/initialFormState";
 
 // initial state
 const state = () => ({
+    deleteModalOpen: false,
     loading: {
         document: true,
         groups: true,
@@ -11,12 +16,69 @@ const state = () => ({
         models: true,
     },
     nextPage: "",
+    partTitleToDelete: "",
     selectedParts: [],
 });
 
 const getters = {};
 
 const actions = {
+    /**
+     * Close the delete confirmation modal.
+     */
+    closeDeleteModal({ commit }, part) {
+        if (part) {
+            // if this was just for a single part from context menu, remove the selection
+            commit("setSelectedParts", []);
+            commit("setPartTitleToDelete", "");
+        }
+        commit("setDeleteModalOpen", false);
+    },
+    /**
+     * Delete the selected parts, close the modal, and update the count.
+     */
+    async deleteSelectedParts({ commit, dispatch, rootState, state }) {
+        commit("setLoading", { key: "images", loading: true });
+        try {
+            // delete each selected part
+            await Promise.all(
+                state.selectedParts.map(async (pk) => {
+                    return await deleteDocumentPart({
+                        documentId: rootState.document.id,
+                        partPk: pk,
+                    });
+                }),
+            );
+
+            // re-fetch parts and update count
+            await dispatch("fetchParts");
+            commit(
+                "document/setPartsCount",
+                rootState.document.partsCount - state.selectedParts.length,
+                { root: true },
+            );
+
+            // deselect deleted parts
+            commit("setSelectedParts", []);
+
+            // give user success feedback and close modal
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Image(s) deleted successfully",
+                },
+                { root: true },
+            );
+            commit("setDeleteModalOpen", false);
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+        commit("setLoading", { key: "images", loading: false });
+    },
+    /**
+     * Fetch the document and its images, and set on state.
+     */
     async fetchDocument({ commit, dispatch, rootState }) {
         commit("setLoading", { key: "document", loading: true });
         const { data } = await retrieveDocument(rootState.document.id);
@@ -160,12 +222,30 @@ const actions = {
             throw new Error("Unable to retrieve document images");
         }
     },
+    /**
+     * Open the delete confirmation modal for a part.
+     */
+    openDeleteModal({ commit }, part) {
+        if (part) {
+            // if this was just for a single part from context menu, set the selection
+            commit("setSelectedParts", [part.pk]);
+            commit("setPartTitleToDelete", part.title);
+        }
+        commit("setDeleteModalOpen", true);
+    },
+    /**
+     * Set selected parts by passing an array of numbers, which correspond to the `order` attribute
+     * of the desired parts.
+     */
     setSelectedPartsByOrder({ commit, rootState }, selected) {
         const parts = rootState.document.parts.map((part) => {
             if (selected.includes(part.order + 1)) return part.pk;
         });
         commit("setSelectedParts", parts);
     },
+    /**
+     * Select or deselect a part, depending on its current state.
+     */
     togglePartSelected({ commit, state }, pk) {
         if (state.selectedParts.includes(pk)) {
             commit("deselectPart", pk);
@@ -186,11 +266,17 @@ const mutations = {
         clone.push(partPk);
         state.selectedParts = clone;
     },
+    setDeleteModalOpen(state, open) {
+        state.deleteModalOpen = open;
+    },
     setLoading(state, { key, loading }) {
         state.loading[key] = loading;
     },
     setNextPage(state, nextPage) {
         state.nextPage = nextPage;
+    },
+    setPartTitleToDelete(state, partTitle) {
+        state.partTitleToDelete = partTitle;
     },
     setSelectedParts(state, parts) {
         state.selectedParts = parts;

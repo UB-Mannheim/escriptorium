@@ -81,9 +81,10 @@
     --sidebar-backdrop-z: 8;
     --sidebar-container-z: 9;
     --sidebar-z: 10;
-    --modal-backdrop-z: 11;
-    --modal-z: 12;
-    --toast-z: 13;
+    --menu-z: 11;
+    --modal-backdrop-z: 12;
+    --modal-z: 13;
+    --toast-z: 14;
 }
 .light-mode {
     /* light mode backgrounds */
