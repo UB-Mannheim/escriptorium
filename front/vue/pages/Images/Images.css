@@ -230,6 +230,15 @@
 .escr-image-grid .escr-image-tile .image-status svg.done {
     fill: var(--completed);
 }
+.escr-image-grid .escr-image-tile .image-status svg.pending {
+    fill: var(--initiated);
+}
+.escr-image-grid .escr-image-tile .image-status svg.ongoing {
+    fill: var(--in-progress);
+}
+.escr-image-grid .escr-image-tile .image-status svg.error {
+    fill: var(--alert);
+}
 
 /* task status tooltips */
 .v-popper--theme-escr-task-tooltip .v-popper__inner {

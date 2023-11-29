@@ -53,6 +53,8 @@
     <images-page
         :id={{ document.pk }}
         :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+        :markdown-enabled="{% if EXPORT_OPENITI_MARKDOWN_ENABLED %}true{% else %}false{% endif %}"
+        :tei-enabled="{% if EXPORT_TEI_XML_ENABLED %}true{% else %}false{% endif %}"
     ></images-page>
   </div>
 {% endif %}

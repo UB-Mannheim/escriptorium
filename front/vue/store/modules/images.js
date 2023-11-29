@@ -35,6 +35,22 @@ const actions = {
         commit("setDeleteModalOpen", false);
     },
     /**
+     * Handle the user overwriting existing segmentation
+     */
+    async confirmOverwriteWarning({ commit, dispatch }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/confirmOverwriteWarning", null, {
+                root: true,
+            });
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Delete the selected parts, close the modal, and update the count.
      */
     async deleteSelectedParts({ commit, dispatch, rootState, state }) {
@@ -145,6 +161,15 @@ const actions = {
                 },
                 { root: true },
             );
+            if (data.transcriptions?.length) {
+                // set transcription list to non-archived transcriptions
+                const transcriptions = data.transcriptions?.filter(
+                    (t) => !t.archived,
+                );
+                commit("document/setTranscriptions", transcriptions, {
+                    root: true,
+                });
+            }
 
             commit("setLoading", { key: "document", loading: false });
 
@@ -163,6 +188,8 @@ const actions = {
             commit("setLoading", { key: "document", loading: false });
             throw new Error("Unable to retrieve document");
         }
+        // fetch textual witnesses
+        await dispatch("document/fetchTextualWitnesses", null, { root: true });
     },
     /**
      * Fetch the next page of images, retrieved from fetchImages, and add
@@ -220,6 +247,72 @@ const actions = {
             commit("setNextPage", data.next || "");
         } else {
             throw new Error("Unable to retrieve document images");
+        }
+    },
+    /**
+     * Handle submitting the align modal.
+     */
+    async handleSubmitAlign({ commit, dispatch }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/handleSubmitAlign", null, {
+                root: true,
+            });
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the export modal.
+     */
+    async handleSubmitExport({ commit, dispatch }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/handleSubmitExport", null, {
+                root: true,
+            });
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the segmentation modal.
+     */
+    async handleSubmitSegmentation({ commit, dispatch, rootState }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/handleSubmitSegmentation", null, {
+                root: true,
+            });
+            if (rootState?.forms?.segment?.overwrite !== true) {
+                commit("setSelectedParts", []);
+                commit("setLoading", { key: "images", loading: false });
+            }
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Handle submitting the transcribe modal.
+     */
+    async handleSubmitTranscribe({ commit, dispatch }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/handleSubmitTranscribe", null, {
+                root: true,
+            });
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
         }
     },
     /**

@@ -110,258 +110,17 @@
                     :dir="readDirection"
                 >
                     <ul>
-                        <!-- image card -->
-                        <li
+                        <!-- image cards -->
+                        <ImageCard
                             v-for="part in filteredParts"
                             :key="part.pk"
-                            :class="{
-                                ['escr-image-tile']: true,
-                                ['image-selected']: selectedParts.includes(parseInt(part.pk)),
-                            }"
-                            dir="ltr"
-                        >
-                            <img :src="part.thumbnail">
-
-                            <!-- select button -->
-                            <label
-                                :for="`select-${part.pk}`"
-                                class="image-checkbox"
-                            >
-                                <input
-                                    :id="`select-${part.pk}`"
-                                    type="checkbox"
-                                    class="sr-only"
-                                    :name="`select-${part.pk}`"
-                                    :checked="selectedParts.includes(parseInt(part.pk))"
-                                    @change="(e) => onToggleSelected(
-                                        e, parseInt(part.pk), part.order + 1
-                                    )"
-                                    @click="(e) => onClickSelect(e, part.order + 1)"
-                                >
-                                <CheckCircleFilledIcon aria-hidden="true" />
-                                <span aria-hidden="true" />
-                            </label>
-
-                            <!-- edit link and quick actions menu -->
-                            <div
-                                :class="{
-                                    'escr-image-actions': true,
-                                    'context-menu-open': contextMenuOpen === part.pk,
-                                }"
-                            >
-                                <VDropdown
-                                    placement="bottom"
-                                    :triggers="['hover']"
-                                    theme="escr-tooltip-small"
-                                >
-                                    <a
-                                        :class="{
-                                            'escr-button': true,
-                                            'escr-button--secondary': true,
-                                            'escr-button--small': true,
-                                            'escr-button--round': true,
-                                            'escr-button--icon-only': true
-                                        }"
-                                        :disabled="loading && loading.images"
-                                        :href="part.href"
-                                        aria-label="edit image"
-                                    >
-                                        <EditImageIcon />
-                                    </a>
-                                    <template #popper>
-                                        Edit
-                                    </template>
-                                </VDropdown>
-                                <VMenu
-                                    placement="bottom-start"
-                                    :triggers="['click']"
-                                    theme="vertical-menu"
-                                    @apply-show="openContextMenu(part.pk)"
-                                    @apply-hide="closeContextMenu()"
-                                >
-                                    <EscrButton
-                                        class="context-menu-button"
-                                        color="secondary"
-                                        round
-                                        size="small"
-                                        :disabled="loading && loading.images"
-                                        :on-click="() => {}"
-                                    >
-                                        <template #button-icon>
-                                            <HorizMenuIcon />
-                                        </template>
-                                    </EscrButton>
-                                    <template #popper>
-                                        <ul class="escr-vertical-menu">
-                                            <li>
-                                                <button
-                                                    @mousedown="() => openSegmentModal(part.pk)"
-                                                >
-                                                    <SegmentIcon class="escr-menuitem-icon" />
-                                                    <span>Segment</span>
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button
-                                                    @mousedown="() => openTranscribeModal(part.pk)"
-                                                >
-                                                    <TranscribeIcon class="escr-menuitem-icon" />
-                                                    <span>Transcribe</span>
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button
-                                                    @mousedown="() => openAlignModal(part.pk)"
-                                                >
-                                                    <AlignIcon class="escr-menuitem-icon" />
-                                                    <span>Align</span>
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button
-                                                    @mousedown="() => openExportModal(part.pk)"
-                                                >
-                                                    <ExportIcon class="escr-menuitem-icon" />
-                                                    <span>Export</span>
-                                                </button>
-                                            </li>
-                                            <li class="new-section">
-                                                <button
-                                                    @mousedown="() => openDeleteModal(part)"
-                                                >
-                                                    <TrashIcon class="escr-menuitem-icon" />
-                                                    <span>Delete</span>
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </template>
-                                </VMenu>
-                            </div>
-
-                            <!-- filename with tooltip for overflow -->
-                            <VDropdown
-                                placement="bottom"
-                                :triggers="['hover']"
-                                theme="escr-tooltip-small"
-                                class="filename"
-                            >
-                                <span>{{ part.title }}</span>
-                                <template #popper>
-                                    {{ part.title }}
-                                </template>
-                            </VDropdown>
-
-                            <!-- image task status -->
-                            <div class="image-status">
-                                <VDropdown
-                                    placement="bottom"
-                                    :triggers="['hover']"
-                                    theme="escr-task-tooltip"
-                                >
-                                    <SegmentIcon
-                                        :class="(part.workflow && part.workflow.segment) || ''"
-                                    />
-                                    <template #popper>
-                                        <div>
-                                            <SegmentIcon />
-                                            <span>Segmentation</span>
-                                        </div>
-                                        <div class="task-metadata">
-                                            <span
-                                                v-if="part.workflow && part.workflow.segment"
-                                                :class="{
-                                                    [part.workflow.segment]: true,
-                                                    status: true,
-                                                }"
-                                            >
-                                                {{ part.workflow.segment|workflowString }}
-                                            </span>
-                                            <span
-                                                v-else
-                                                class="status"
-                                            >
-                                                Not initiated
-                                            </span>
-                                            <!-- TODO: Uncomment when task date info in API -->
-                                            <!-- <span class="date">
-                                                {{ part.segment_date|formatDate }}
-                                            </span> -->
-                                        </div>
-                                    </template>
-                                </VDropdown>
-                                <VDropdown
-                                    placement="bottom"
-                                    :triggers="['hover']"
-                                    theme="escr-task-tooltip"
-                                >
-                                    <TranscribeIcon
-                                        :class="(part.workflow && part.workflow.transcribe) || ''"
-                                    />
-                                    <template #popper>
-                                        <div>
-                                            <TranscribeIcon />
-                                            <span>Transcription</span>
-                                        </div>
-                                        <div class="task-metadata">
-                                            <span
-                                                v-if="part.workflow && part.workflow.transcribe"
-                                                :class="{
-                                                    [part.workflow.transcribe]: true,
-                                                    status: true,
-                                                }"
-                                            >
-                                                {{ part.workflow.transcribe|workflowString }}
-                                            </span>
-                                            <span
-                                                v-else
-                                                class="status"
-                                            >
-                                                Not initiated
-                                            </span>
-                                            <!-- <span class="date">
-                                                {{ part.transcribe_date|formatDate }}
-                                            </span> -->
-                                        </div>
-                                    </template>
-                                </VDropdown>
-                                <VDropdown
-                                    placement="bottom"
-                                    :triggers="['hover']"
-                                    theme="escr-task-tooltip"
-                                >
-                                    <AlignIcon
-                                        :class="(part.workflow && part.workflow.align) || ''"
-                                    />
-                                    <template #popper>
-                                        <div>
-                                            <AlignIcon />
-                                            <span>Alignment</span>
-                                        </div>
-                                        <div class="task-metadata">
-                                            <span
-                                                v-if="part.workflow && part.workflow.align"
-                                                :class="{
-                                                    [part.workflow.align]: true,
-                                                    status: true,
-                                                }"
-                                            >
-                                                {{ part.workflow.align|workflowString }}
-                                            </span>
-                                            <span
-                                                v-else
-                                                class="status"
-                                            >
-                                                Not initiated
-                                            </span>
-                                            <!-- <span class="date">
-                                                {{ part.align_date|formatDate }}
-                                            </span> -->
-                                        </div>
-                                    </template>
-                                </VDropdown>
-                            </div>
-                            <span class="element-number">{{ part.order + 1 }}</span>
-                        </li>
+                            :part="part"
+                            :close-context-menu="closeContextMenu"
+                            :open-context-menu="openContextMenu"
+                            :context-menu-open="contextMenuOpen === part.pk"
+                            :on-toggle-selected="onToggleSelected"
+                            :on-click-select="onClickSelect"
+                        />
                     </ul>
                     <EscrButton
                         v-if="nextPage"
@@ -387,7 +146,85 @@
                     :on-cancel="() => closeTaskModal('import')"
                     :on-submit="onSubmitImport"
                 />
-                <!-- delete image modal -->
+                <!-- cancel image uploads modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen && taskModalOpen.imageCancelWarning"
+                    :body-text="'Uploads are still in progress. Are you sure you want ' +
+                        'to cancel? Incomplete uploads may be lost.'"
+                    title="Cancel Upload In Progress"
+                    cancel-verb="No"
+                    confirm-verb="Yes, cancel"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => closeTaskModal('imageCancelWarning')"
+                    :on-confirm="confirmImageCancelWarning"
+                    :cannot-undo="false"
+                />
+                <!-- segment images modal -->
+                <SegmentModal
+                    v-if="taskModalOpen && taskModalOpen.segment"
+                    :models="segmentationModels"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => {
+                        closeTaskModal('segment');
+                        if (selectedParts.length === 1) setSelectedParts([]);
+                    }"
+                    :on-submit="handleSubmitSegmentation"
+                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                />
+                <!-- transcribe images modal -->
+                <TranscribeModal
+                    v-if="taskModalOpen && taskModalOpen.transcribe"
+                    :models="recognitionModels"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => {
+                        closeTaskModal('transcribe');
+                        if (selectedParts.length === 1) setSelectedParts([]);
+                    }"
+                    :on-submit="handleSubmitTranscribe"
+                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                />
+                <!-- overwrite segmentation modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen && taskModalOpen.overwriteWarning"
+                    :body-text="'Are you sure you want to continue? Re-segmenting will delete ' +
+                        'any existing transcriptions.'"
+                    title="Overwrite Existing Segmentation and Transcriptions"
+                    confirm-verb="Continue"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :cannot-undo="true"
+                    :on-cancel="() => closeTaskModal('overwriteWarning')"
+                    :on-confirm="confirmOverwriteWarning"
+                />
+                <!-- align images modal -->
+                <AlignModal
+                    v-if="taskModalOpen && taskModalOpen.align"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => {
+                        closeTaskModal('align');
+                        if (selectedParts.length === 1) setSelectedParts([]);
+                    }"
+                    :on-submit="handleSubmitAlign"
+                    :textual-witnesses="textualWitnesses"
+                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                />
+                <!-- export images modal -->
+                <ExportModal
+                    v-if="taskModalOpen && taskModalOpen.export"
+                    :markdown-enabled="markdownEnabled"
+                    :tei-enabled="teiEnabled"
+                    :transcriptions="transcriptions"
+                    :region-types="regionTypes"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => {
+                        closeTaskModal('export');
+                        if (selectedParts.length === 1) setSelectedParts([]);
+                    }"
+                    :on-submit="handleSubmitExport"
+                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                />
+                <!-- delete images modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
                     :body-text="partTitleToDelete ?
@@ -397,7 +234,7 @@
                     title="Delete Image"
                     :cannot-undo="true"
                     :disabled="loading && loading.images"
-                    :on-cancel="closeDeleteModal"
+                    :on-cancel="() => closeDeleteModal(!!partTitleToDelete)"
                     :on-confirm="deleteSelectedParts"
                 />
             </div>
@@ -405,21 +242,18 @@
     </EscrPage>
 </template>
 <script>
-import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
+import { Dropdown as VDropdown } from "floating-vue";
 import { range } from "lodash";
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapMutations, mapState } from "vuex";
 
-import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
-// eslint-disable-next-line max-len
-import CheckCircleFilledIcon from "../../components/Icons/CheckCircleFilledIcon/CheckCircleFilledIcon.vue";
+import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
-import EditImageIcon from "../../components/Icons/EditImageIcon/EditImageIcon.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
-import ExportIcon from "../../components/Icons/ExportIcon/ExportIcon.vue";
-import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vue";
+import ExportModal from "../../components/ExportModal/ExportModal.vue";
+import ImageCard from "../../components/ImageCard/ImageCard.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
@@ -427,26 +261,23 @@ import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
-import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
+import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
-import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
-import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import "../../components/VerticalMenu/VerticalMenu.css";
 import "./Images.css";
 
 export default {
     name: "EscrImages",
     components: {
-        AlignIcon,
-        CheckCircleFilledIcon,
+        AlignModal,
+        ExportModal,
         ConfirmModal,
-        EditImageIcon,
         EscrButton,
         EscrLoader,
         EscrPage,
-        ExportIcon,
-        HorizMenuIcon,
+        ImageCard,
         ImportIcon,
         ImportModal,
         // eslint-disable-next-line vue/no-unused-components
@@ -459,43 +290,12 @@ export default {
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
-        SegmentIcon,
+        SegmentModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TextField,
-        TranscribeIcon,
-        TrashIcon,
+        TranscribeModal,
         VDropdown,
-        VMenu,
-    },
-    filters: {
-        formatDate(date) {
-            return new Date(date).toLocaleDateString(
-                undefined,
-                {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    second: "numeric",
-                },
-            );
-        },
-        workflowString(state) {
-            switch (state) {
-                case "pending":
-                    return "Initiated";
-                case "ongoing":
-                    return "In Progress";
-                case "error":
-                    return "Error";
-                case "done":
-                    return "Completed";
-                default:
-                    return "Not initiated";
-            }
-        }
     },
     props: {
         /**
@@ -503,6 +303,20 @@ export default {
          */
         id: {
             type: Number,
+            required: true,
+        },
+        /**
+         * Whether or not OpenITI Markdown export is enabled on the current instance.
+         */
+        markdownEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not OpenITI TEI XML export is enabled on the current instance.
+         */
+        teiEnabled: {
+            type: Boolean,
             required: true,
         },
         /**
@@ -528,6 +342,7 @@ export default {
             deleteModalOpen: (state) => state.images.deleteModalOpen,
             documentName: (state) => state.document.name,
             loading: (state) => state.images.loading,
+            models: (state) => state.document.models,
             nextPage: (state) => state.images.nextPage,
             partTitleToDelete: (state) => state.images.partTitleToDelete,
             parts: (state) => state.document.parts,
@@ -536,8 +351,13 @@ export default {
             projectName: (state) => state.document.projectName,
             projectSlug: (state) => state.document.projectSlug,
             readDirection: (state) => state.document.readDirection,
+            recognitionModels: (state) => state.user.recognitionModels,
+            regionTypes: (state) => state.document.regionTypes,
+            segmentationModels: (state) => state.user.segmentationModels,
             selectedParts: (state) => state.images.selectedParts,
             taskModalOpen: (state) => state.tasks.modalOpen,
+            textualWitnesses: (state) => state.document.textualWitnesses,
+            transcriptions: (state) => state.document.transcriptions,
         }),
         /**
          * Links and titles for the breadcrumbs above the page.
@@ -672,16 +492,21 @@ export default {
     methods: {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("document", [
+            "confirmImageCancelWarning",
             "fetchDocumentModels",
             "handleSubmitImport",
             "setId",
         ]),
         ...mapActions("images", [
+            "confirmOverwriteWarning",
             "closeDeleteModal",
             "deleteSelectedParts",
             "fetchDocument",
             "fetchNextPage",
-            "openDeleteModal",
+            "handleSubmitAlign",
+            "handleSubmitExport",
+            "handleSubmitSegmentation",
+            "handleSubmitTranscribe",
             "setSelectedPartsByOrder",
             "togglePartSelected",
         ]),
