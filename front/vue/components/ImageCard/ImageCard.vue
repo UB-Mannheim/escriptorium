@@ -1,7 +1,7 @@
 <template>
     <li
         :class="{
-            ['escr-image-tile']: true,
+            ['escr-image-card']: true,
             ['image-selected']: selectedParts.includes(parseInt(part.pk)),
         }"
         dir="ltr"
@@ -264,6 +264,7 @@ import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vu
 import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
 import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import "./ImageCard.css";
 
 export default {
     name: "EscrImageCard",
