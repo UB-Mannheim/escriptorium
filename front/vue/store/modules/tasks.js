@@ -31,7 +31,7 @@ const actions = {
      * Queue the alignment task for a document, passing in the correct type of witness
      * (selected existing or upload), and the correct choice of beam size or max offset.
      */
-    async alignDocument({ rootState }, documentId) {
+    async alignDocument({ rootState }, { documentId, parts }) {
         if (rootState?.forms?.align) {
             const witness =
                 rootState.forms.align.textualWitnessType === "select"
@@ -50,6 +50,7 @@ const actions = {
                 regionTypes: rootState.forms.align.regionTypes,
                 threshold: rootState.forms.align.threshold,
                 transcription: rootState.forms.align.transcription,
+                parts,
                 ...beamOrOffset,
                 ...witness,
             });
@@ -122,13 +123,14 @@ const actions = {
     /**
      * Queue the export task for a document.
      */
-    async exportDocument({ rootState }, documentId) {
+    async exportDocument({ rootState }, { documentId, parts }) {
         await exportDocument({
             documentId,
             regionTypes: rootState?.forms?.export?.regionTypes,
             fileFormat: rootState?.forms?.export?.fileFormat,
             transcription: rootState?.forms?.export?.transcription,
             includeImages: rootState?.forms?.export?.includeImages,
+            parts,
         });
     },
     /**
@@ -191,7 +193,7 @@ const actions = {
     /**
      * Queue the segmentation task for a document.
      */
-    async segmentDocument({ rootState }, documentId) {
+    async segmentDocument({ rootState }, { documentId, parts }) {
         // segmentation steps should be "both", "regions", or "lines"
         const steps =
             rootState?.forms?.segment?.include?.length === 2
@@ -202,6 +204,7 @@ const actions = {
             override: rootState?.forms?.segment?.overwrite,
             model: rootState?.forms?.segment?.model,
             steps,
+            parts,
         });
     },
     /**
@@ -213,7 +216,7 @@ const actions = {
     /**
      * Queue the transcription task for a document.
      */
-    async transcribeDocument({ rootState }, documentId) {
+    async transcribeDocument({ rootState }, { documentId, parts }) {
         // first, create a transcription layer by POSTing the name to the endpoint
         const { data } = await createTranscriptionLayer({
             documentId,
@@ -226,6 +229,7 @@ const actions = {
                 documentId,
                 model: rootState?.forms?.transcribe?.model,
                 transcription,
+                parts,
             });
         } else {
             throw new Error("Unable to create transcription layer.");

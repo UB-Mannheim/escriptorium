@@ -251,10 +251,17 @@ const actions = {
     /**
      * Handle the user overwriting existing segmentation
      */
-    async confirmOverwriteWarning({ commit, dispatch, state }) {
+    async confirmOverwriteWarning({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/segmentDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/segmentDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "overwriteWarning", { root: true });
             dispatch("tasks/closeModal", "segment", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
@@ -657,10 +664,17 @@ const actions = {
     /**
      * Handle submitting the alignment modal. Queue the task and close the modal.
      */
-    async handleSubmitAlign({ commit, dispatch, state }) {
+    async handleSubmitAlign({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/alignDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/alignDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "align", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
@@ -681,10 +695,17 @@ const actions = {
     /**
      * Handle submitting the export modal. Queue the task and close the modal.
      */
-    async handleSubmitExport({ commit, dispatch, state }) {
+    async handleSubmitExport({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/exportDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/exportDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "export", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
@@ -747,9 +768,14 @@ const actions = {
         } else {
             commit("setLoading", { key: "document", loading: true });
             try {
-                await dispatch("tasks/segmentDocument", state.id, {
-                    root: true,
-                });
+                await dispatch(
+                    "tasks/segmentDocument",
+                    {
+                        documentId: state.id,
+                        parts: rootState.images.selectedParts || [],
+                    },
+                    { root: true },
+                );
                 dispatch("tasks/closeModal", "segment", { root: true });
                 // set default text direction for the segment form
                 commit(
@@ -784,12 +810,17 @@ const actions = {
     /**
      * Handle submitting the transcribe modal: just queue the task and close the modal.
      */
-    async handleSubmitTranscribe({ commit, dispatch, state }) {
+    async handleSubmitTranscribe({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/transcribeDocument", state.id, {
-                root: true,
-            });
+            await dispatch(
+                "tasks/transcribeDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "transcribe", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             await dispatch("refreshTranscriptions");
