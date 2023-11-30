@@ -15,6 +15,7 @@ const state = () => ({
         images: true,
         models: true,
     },
+    moveModalOpen: false,
     nextPage: "",
     partTitleToDelete: "",
     selectedParts: [],
@@ -315,6 +316,14 @@ const actions = {
         }
     },
     /**
+     * Move the selected images to the specified index.
+     * if index is -1, move to the end of the list of parts.
+     */
+    async moveSelectedParts({ dispatch }) {
+        // TODO: Implement when we have bulk move backend.
+        dispatch("alerts/addError", { message: "Not implemented" }, { root: true });
+    },
+    /**
      * Open the delete confirmation modal for a part.
      */
     openDeleteModal({ commit }, part) {
@@ -324,6 +333,28 @@ const actions = {
             commit("setPartTitleToDelete", part.title);
         }
         commit("setDeleteModalOpen", true);
+    },
+    /**
+     * Open the move modal
+     */
+    openMoveModal({ commit }) {
+        commit("setMoveModalOpen", true);
+    },
+    /**
+     * Submit the move modal
+     */
+    async onSubmitMove({ commit, dispatch }) {
+        // TODO: Implement when we have bulk move backend.
+        await dispatch("moveSelectedParts");
+        commit("setMoveModalOpen", false);
+        dispatch("forms/clearForm", "moveImages", { root: true });
+    },
+    /**
+     * Close the move modal and reset its form state
+     */
+    onCancelMove({ commit, dispatch }) {
+        commit("setMoveModalOpen", false);
+        dispatch("forms/clearForm", "moveImages", { root: true });
     },
     /**
      * Set selected parts by passing an array of numbers, which correspond to the `order` attribute
@@ -363,6 +394,9 @@ const mutations = {
     },
     setLoading(state, { key, loading }) {
         state.loading[key] = loading;
+    },
+    setMoveModalOpen(state, open) {
+        state.moveModalOpen = open;
     },
     setNextPage(state, nextPage) {
         state.nextPage = nextPage;

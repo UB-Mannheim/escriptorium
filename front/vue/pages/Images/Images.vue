@@ -47,7 +47,7 @@
                         >
                             {{
                                 (!loading.document && partsCount)
-                                    ? `${partsCount.toLocaleString()} elements`
+                                    ? `${partsCount.toLocaleString()} images`
                                     : ''
                             }}
                         </span>
@@ -55,7 +55,7 @@
                             v-else
                             class="escr-parts-count"
                             :loading="loading && loading.document"
-                            no-data-message="0 elements"
+                            no-data-message="0 images"
                         />
                         <TextField
                             :disabled="loading && loading.images"
@@ -93,6 +93,19 @@
                             :disabled="(loading && loading.images) || selectedParts.length === parts.length"
                             :on-click="selectAll"
                         />
+                        <div class="new-section">
+                            <ToggleButton
+                                color="secondary"
+                                label="Reorder"
+                                :checked="isReorderMode"
+                                :disabled="loading && loading.images"
+                                :on-change="() => isReorderMode = !isReorderMode"
+                            >
+                                <template #button-icon>
+                                    <LineOrderingIcon />
+                                </template>
+                            </ToggleButton>
+                        </div>
                     </div>
                 </div>
 
@@ -104,7 +117,45 @@
                     <span class="selected-count">
                         {{ selectedParts.length }} selected
                     </span>
-                    <div class="escr-toolbar-center">
+                    <div
+                        v-if="isReorderMode"
+                        class="escr-toolbar-center"
+                    >
+                        <EscrButton
+                            color="secondary"
+                            label="Move to top"
+                            size="small"
+                            :on-click="() => moveSelectedParts(0)"
+                        >
+                            <template #button-icon>
+                                <MoveToTopIcon />
+                            </template>
+                        </EscrButton>
+                        <EscrButton
+                            color="secondary"
+                            label="Move to bottom"
+                            size="small"
+                            :on-click="() => moveSelectedParts(-1)"
+                        >
+                            <template #button-icon>
+                                <MoveToBottomIcon />
+                            </template>
+                        </EscrButton>
+                        <EscrButton
+                            color="secondary"
+                            label="Move to..."
+                            size="small"
+                            :on-click="openMoveModal"
+                        >
+                            <template #button-icon>
+                                <MoveImageIcon />
+                            </template>
+                        </EscrButton>
+                    </div>
+                    <div
+                        v-else
+                        class="escr-toolbar-center"
+                    >
                         <EscrButton
                             color="secondary"
                             label="Segment"
@@ -192,7 +243,7 @@
 
                 <!-- image grid -->
                 <div
-                    v-if="parts && parts.length"
+                    v-if="parts && parts.length && !(loading && loading.images)"
                     class="escr-image-grid"
                     :dir="readDirection"
                 >
@@ -215,12 +266,12 @@
                         >
                             <span>
                                 {{ parts.length - filteredParts.length }}
-                                elements hidden by search filter
+                                images hidden by search filter
                             </span>
                             <span
                                 v-if="hiddenSelectedCount > 0"
                             >
-                                including {{ hiddenSelectedCount }} selected elements
+                                including {{ hiddenSelectedCount }} selected images
                             </span>
                             <EscrButton
                                 label="Clear search filter"
@@ -272,6 +323,15 @@
                     :on-confirm="confirmImageCancelWarning"
                     :cannot-undo="false"
                 />
+
+                <!-- move images modal -->
+                <MoveImagesModal
+                    v-if="moveModalOpen"
+                    :disabled="loading && loading.images"
+                    :on-cancel="onCancelMove"
+                    :on-submit="onSubmitMove"
+                />
+
                 <!-- segment images modal -->
                 <SegmentModal
                     v-if="taskModalOpen && taskModalOpen.segment"
@@ -344,7 +404,7 @@
                         `Are you sure you want to delete ${partTitleToDelete}?` :
                         'Are you sure you want to delete the selected image(s)?'"
                     confirm-verb="Delete"
-                    title="Delete Image(s)"
+                    :title="selectedParts.length === 1 ? 'Delete Image' : 'Delete Images'"
                     :cannot-undo="true"
                     :disabled="loading && loading.images"
                     :on-cancel="() => closeDeleteModal(!!partTitleToDelete)"
@@ -372,8 +432,13 @@ import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vu
 import ImageCard from "../../components/ImageCard/ImageCard.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
+import LineOrderingIcon from "../../components/Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
+import MoveImageIcon from "../../components/Icons/MoveImageIcon/MoveImageIcon.vue";
+import MoveImagesModal from "../../components/MoveImagesModal/MoveImagesModal.vue";
+import MoveToBottomIcon from "../../components/Icons/MoveToBottomIcon/MoveToBottomIcon.vue";
+import MoveToTopIcon from "../../components/Icons/MoveToTopIcon/MoveToTopIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
@@ -381,6 +446,7 @@ import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
 import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
+import ToggleButton from "../../components/ToggleButton/ToggleButton.vue";
 import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
@@ -403,10 +469,15 @@ export default {
         ImageCard,
         ImportIcon,
         ImportModal,
+        LineOrderingIcon,
         // eslint-disable-next-line vue/no-unused-components
         ModelsIcon,
         // eslint-disable-next-line vue/no-unused-components
         ModelsPanel,
+        MoveImageIcon,
+        MoveImagesModal,
+        MoveToBottomIcon,
+        MoveToTopIcon,
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -418,6 +489,7 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TextField,
+        ToggleButton,
         TranscribeIcon,
         TranscribeModal,
         TrashIcon,
@@ -458,6 +530,7 @@ export default {
     data() {
         return {
             contextMenuOpen: null,
+            isReorderMode: false,
             lastSelected: null,
             rangeValidationError: null,
             rangeInputValue: "",
@@ -471,6 +544,7 @@ export default {
             documentName: (state) => state.document.name,
             loading: (state) => state.images.loading,
             models: (state) => state.document.models,
+            moveModalOpen: (state) => state.images.moveModalOpen,
             nextPage: (state) => state.images.nextPage,
             partTitleToDelete: (state) => state.images.partTitleToDelete,
             parts: (state) => state.document.parts,
@@ -643,7 +717,11 @@ export default {
             "handleSubmitExport",
             "handleSubmitSegmentation",
             "handleSubmitTranscribe",
+            "moveSelectedParts",
+            "onCancelMove",
+            "onSubmitMove",
             "openDeleteModal",
+            "openMoveModal",
             "setSelectedPartsByOrder",
             "togglePartSelected",
         ]),

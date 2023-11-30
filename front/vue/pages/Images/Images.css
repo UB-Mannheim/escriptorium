@@ -83,6 +83,17 @@
 .escr-toolbar-right .escr-button:not(:active):not(:hover) {
     background-color: transparent;
 }
+.escr-toolbar-right .escr-toggle-button--active-secondary:not(:active):not(:hover) {
+    background-color: var(--secondary);
+}
+.escr-toolbar-right .escr-toggle-button {
+    border: none;
+}
+.escr-toolbar-right .new-section {
+    padding-left: 1rem;
+    margin-left: 1rem;
+    border-left: 1px solid var(--text3);
+}
 
 /* image selection toolbar */
 .escr-image-selection-toolbar {
@@ -107,6 +118,9 @@
     display: flex;
     align-items: center;
     flex-flow: row nowrap;
+}
+.escr-image-selection-toolbar .escr-button:focus:not(:hover) {
+    background-color: var(--secondary-darker);
 }
 
 /* image grid */

@@ -57,6 +57,10 @@ export default {
         overwrite: false,
         uploadFile: "",
     },
+    moveImages: {
+        index: "",
+        location: "before",
+    },
     segment: {
         model: "",
         overwrite: false,
