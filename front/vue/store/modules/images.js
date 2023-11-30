@@ -198,7 +198,6 @@ const actions = {
     async fetchNextPage({ state, commit, dispatch, rootState }) {
         commit("setLoading", { key: "images", loading: true });
         try {
-            console.log(state.nextPage);
             const { data } = await axios.get(state.nextPage);
             if (data?.results) {
                 data.results.forEach((part) => {
@@ -331,9 +330,9 @@ const actions = {
      * of the desired parts.
      */
     setSelectedPartsByOrder({ commit, rootState }, selected) {
-        const parts = rootState.document.parts.map((part) => {
-            if (selected.includes(part.order + 1)) return part.pk;
-        });
+        const parts = rootState.document.parts
+            .filter((part) => selected.includes(part.order + 1))
+            .map((part) => part.pk);
         commit("setSelectedParts", parts);
     },
     /**
