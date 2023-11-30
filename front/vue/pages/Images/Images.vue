@@ -93,14 +93,101 @@
                             :disabled="(loading && loading.images) || selectedParts.length === parts.length"
                             :on-click="selectAll"
                         />
-                        <EscrButton
-                            color="text"
-                            label="Select None"
-                            size="small"
-                            :disabled="(loading && loading.images) || selectedParts.length === 0"
-                            :on-click="selectNone"
-                        />
                     </div>
+                </div>
+
+                <!-- selection toolbar -->
+                <div
+                    v-if="selectedParts && selectedParts.length > 0"
+                    class="escr-image-selection-toolbar"
+                >
+                    <span class="selected-count">
+                        {{ selectedParts.length }} selected
+                    </span>
+                    <div class="escr-toolbar-center">
+                        <EscrButton
+                            color="secondary"
+                            label="Segment"
+                            size="small"
+                            :disabled="loading && loading.images"
+                            :on-click="() => openModal('segment')"
+                        >
+                            <template #button-icon>
+                                <SegmentIcon />
+                            </template>
+                        </EscrButton>
+                        <EscrButton
+                            color="secondary"
+                            label="Transcribe"
+                            size="small"
+                            :disabled="loading && loading.images"
+                            :on-click="() => openModal('transcribe')"
+                        >
+                            <template #button-icon>
+                                <TranscribeIcon />
+                            </template>
+                        </EscrButton>
+                        <EscrButton
+                            color="secondary"
+                            label="Align"
+                            size="small"
+                            :disabled="loading && loading.images"
+                            :on-click="() => openModal('align')"
+                        >
+                            <template #button-icon>
+                                <AlignIcon />
+                            </template>
+                        </EscrButton>
+                        <VMenu
+                            placement="bottom-start"
+                            :triggers="['click']"
+                            theme="vertical-menu"
+                        >
+                            <EscrButton
+                                class="context-menu-button"
+                                color="secondary"
+                                round
+                                size="small"
+                                :disabled="loading && loading.images"
+                                :on-click="() => {}"
+                            >
+                                <template #button-icon>
+                                    <HorizMenuIcon />
+                                </template>
+                            </EscrButton>
+                            <template #popper>
+                                <ul class="escr-vertical-menu">
+                                    <li>
+                                        <button
+                                            @mousedown="() => openModal('export')"
+                                        >
+                                            <ExportIcon class="escr-menuitem-icon" />
+                                            <span>Export</span>
+                                        </button>
+                                    </li>
+                                    <li class="new-section">
+                                        <button
+                                            @mousedown="() => openDeleteModal()"
+                                        >
+                                            <TrashIcon class="escr-menuitem-icon" />
+                                            <span>Delete</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </template>
+                        </VMenu>
+                    </div>
+                    <EscrButton
+                        color="secondary"
+                        label="Clear All"
+                        size="small"
+                        :disabled="loading && loading.images"
+                        :on-click="selectNone"
+                    >
+                        <template #button-icon>
+                            <XCircleFilledIcon />
+                        </template>
+                    </EscrButton>
                 </div>
 
                 <!-- image grid -->
@@ -169,7 +256,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitSegmentation"
-                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
                 <!-- transcribe images modal -->
                 <TranscribeModal
@@ -181,7 +268,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitTranscribe"
-                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
                 <!-- overwrite segmentation modal -->
                 <ConfirmModal
@@ -207,7 +294,7 @@
                     }"
                     :on-submit="handleSubmitAlign"
                     :textual-witnesses="textualWitnesses"
-                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
                 <!-- export images modal -->
                 <ExportModal
@@ -222,7 +309,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitExport"
-                    :scope="selectedParts.length === 1 ? 'Image' : 'Images'"
+                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
                 <!-- delete images modal -->
                 <ConfirmModal
@@ -231,7 +318,7 @@
                         `Are you sure you want to delete ${partTitleToDelete}?` :
                         'Are you sure you want to delete the selected image(s)?'"
                     confirm-verb="Delete"
-                    title="Delete Image"
+                    title="Delete Image(s)"
                     :cannot-undo="true"
                     :disabled="loading && loading.images"
                     :on-cancel="() => closeDeleteModal(!!partTitleToDelete)"
@@ -242,17 +329,20 @@
     </EscrPage>
 </template>
 <script>
-import { Dropdown as VDropdown } from "floating-vue";
+import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
 import { range } from "lodash";
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapMutations, mapState } from "vuex";
 
+import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
+import ExportIcon from "../../components/Icons/ExportIcon/ExportIcon.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
+import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vue";
 import ImageCard from "../../components/ImageCard/ImageCard.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
@@ -261,22 +351,29 @@ import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
+import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
 import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
+import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
+import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
+import XCircleFilledIcon from "../../components/Icons/XCircleFilledIcon/XCircleFilledIcon.vue";
 import "../../components/VerticalMenu/VerticalMenu.css";
 import "./Images.css";
 
 export default {
     name: "EscrImages",
     components: {
+        AlignIcon,
         AlignModal,
         ExportModal,
         ConfirmModal,
         EscrButton,
         EscrLoader,
         EscrPage,
+        ExportIcon,
+        HorizMenuIcon,
         ImageCard,
         ImportIcon,
         ImportModal,
@@ -290,12 +387,17 @@ export default {
         SearchIcon,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
+        SegmentIcon,
         SegmentModal,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TextField,
+        TranscribeIcon,
         TranscribeModal,
+        TrashIcon,
         VDropdown,
+        VMenu,
+        XCircleFilledIcon,
     },
     props: {
         /**
@@ -507,6 +609,7 @@ export default {
             "handleSubmitExport",
             "handleSubmitSegmentation",
             "handleSubmitTranscribe",
+            "openDeleteModal",
             "setSelectedPartsByOrder",
             "togglePartSelected",
         ]),
