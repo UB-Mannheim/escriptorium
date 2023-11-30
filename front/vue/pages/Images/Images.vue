@@ -208,6 +208,32 @@
                             :on-toggle-selected="onToggleSelected"
                             :on-click-select="onClickSelect"
                         />
+                        <li
+                            v-if="filteredParts.length < parts.length"
+                            class="not-shown"
+                            dir="ltr"
+                        >
+                            <span>
+                                {{ parts.length - filteredParts.length }}
+                                elements hidden by search filter
+                            </span>
+                            <span
+                                v-if="hiddenSelectedCount > 0"
+                            >
+                                including {{ hiddenSelectedCount }} selected elements
+                            </span>
+                            <EscrButton
+                                label="Clear search filter"
+                                color="outline-secondary"
+                                size="small"
+                                :disabled="loading && loading.images"
+                                :on-click="() => textFilter = ''"
+                            >
+                                <template #button-icon>
+                                    <XCircleFilledIcon />
+                                </template>
+                            </EscrButton>
+                        </li>
                     </ul>
                     <EscrButton
                         v-if="nextPage"
@@ -547,6 +573,14 @@ export default {
                 });
             }
             return actions
+        },
+        /**
+         * number of items selected but filtered out
+         */
+        hiddenSelectedCount() {
+            return this.selectedParts.filter(
+                (pk) => !this.filteredParts.map((part) => part.pk).includes(pk)
+            ).length;
         },
     },
     /**
