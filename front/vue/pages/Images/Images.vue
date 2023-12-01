@@ -243,7 +243,7 @@
 
                 <!-- image grid -->
                 <div
-                    v-if="parts && parts.length && !(loading && loading.images)"
+                    v-if="parts && parts.length"
                     class="escr-image-grid"
                     :dir="readDirection"
                 >
@@ -294,6 +294,10 @@
                         size="small"
                         :disabled="loading && loading.images"
                         :on-click="async () => await fetchNextPage()"
+                    />
+                    <div
+                        v-if="loading && loading.images"
+                        class="images-loading-overlay"
                     />
                 </div>
                 <EscrLoader

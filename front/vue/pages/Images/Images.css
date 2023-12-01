@@ -159,3 +159,16 @@
     font-weight: 600;
     text-align: center;
 }
+
+.escr-image-grid .images-loading-overlay {
+    position: fixed;
+    width: calc(100vw - 128px);
+    height: calc(100vh - 188px);
+    top: 188px;
+    left: 64px;
+    background-color: rgba(0, 0, 0, 0.25);
+}
+.escr-image-selection-toolbar + .escr-image-grid .images-loading-overlay {
+    height: calc(100vh - 236px);
+    top: 236px;
+}
