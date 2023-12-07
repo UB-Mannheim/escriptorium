@@ -1,5 +1,13 @@
+.escr-card-container {
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-start;
+}
 .escr-image-card {
     position: relative;
+    margin: 0 15px;
     width: 220px;
     height: 248px;
     border-radius: 15px;
@@ -13,6 +21,55 @@
     outline: 4px solid var(--secondary);
 }
 
+/* drop zones for drag and drop reordering */
+.escr-part-dropzone-before,
+.escr-part-dropzone-after {
+    position: absolute;
+    top: 0;
+    width: 125px;
+    height: 248px;
+    background-color: transparent;
+    pointer-events: none;
+    z-index: var(--editor-toolbar-z);
+}
+.escr-part-dropzone-before.is-dragging,
+.escr-part-dropzone-after.is-dragging {
+    pointer-events: all;
+}
+.escr-part-dropzone-after {
+    left: auto;
+    right: 0;
+    border-right: 6px solid transparent;
+}
+.escr-image-grid[dir="rtl"] .escr-part-dropzone-after {
+    left: 0;
+    right: auto;
+    border-right: none;
+    border-left: 6px solid transparent;
+}
+.escr-part-dropzone-after.drag-over {
+    border-right-color: var(--secondary);
+}
+.escr-image-grid[dir="rtl"] .escr-part-dropzone-after.drag-over {
+    border-left-color: var(--secondary);
+}
+.escr-part-dropzone-before {
+    left: 0;
+    right: auto;
+    border-left: 6px solid transparent;
+}
+.escr-image-grid[dir="rtl"] .escr-part-dropzone-before {
+    left: auto;
+    right: 0;
+    border-left: none;
+    border-right: 6px solid transparent;
+}
+.escr-part-dropzone-before.drag-over {
+    border-left-color: var(--secondary);
+}
+.escr-image-grid[dir="rtl"] .escr-part-dropzone-before.drag-over {
+    border-right-color: var(--secondary);
+}
 /* checkbox for each image selection */
 .escr-image-card label.image-checkbox {
     position: absolute;
@@ -51,6 +108,21 @@
 .escr-image-card label.image-checkbox:focus-within svg {
     box-shadow: 0 0 0 0.2rem  var(--secondary-focus);
     border-radius: 50%;
+}
+
+/* drag handle */
+.escr-card-container .escr-drag-handle {
+    position: absolute;
+    width: 48px;
+    height: 32px;
+    top: 0;
+    padding: 4px 0;
+    left: calc(50% - 24px);
+    background-color: var(--secondary);
+    color: var(--button-text);
+    text-align: center;
+    cursor: move;
+    z-index: var(--editor-global-toolbar-z);
 }
 
 /* image actions panel */

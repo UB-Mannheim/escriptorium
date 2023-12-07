@@ -258,6 +258,7 @@
                             :context-menu-open="contextMenuOpen === part.pk"
                             :on-toggle-selected="onToggleSelected"
                             :on-click-select="onClickSelect"
+                            :is-draggable="isReorderMode"
                         />
                         <li
                             v-if="filteredParts.length < parts.length"
@@ -463,12 +464,12 @@ export default {
     components: {
         AlignIcon,
         AlignModal,
-        ExportModal,
         ConfirmModal,
         EscrButton,
         EscrLoader,
         EscrPage,
         ExportIcon,
+        ExportModal,
         HorizMenuIcon,
         ImageCard,
         ImportIcon,

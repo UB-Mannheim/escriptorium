@@ -9,6 +9,7 @@ import forms from "../util/initialFormState";
 // initial state
 const state = () => ({
     deleteModalOpen: false,
+    isDragging: false,
     loading: {
         document: true,
         groups: true,
@@ -391,6 +392,9 @@ const mutations = {
     },
     setDeleteModalOpen(state, open) {
         state.deleteModalOpen = open;
+    },
+    setIsDragging(state, isDragging) {
+        state.isDragging = isDragging;
     },
     setLoading(state, { key, loading }) {
         state.loading[key] = loading;
