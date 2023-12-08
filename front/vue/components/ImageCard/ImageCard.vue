@@ -503,11 +503,16 @@ export default {
          * component and store states.
          */
         handleDrop(e, idx) {
-            // TODO: perform the actual reordering here
-            this.addError({ message: `pk ${
-                e.dataTransfer.getData("draggingPk")
-            } will move ${idx === -1 ? "before": "after"} image #${this.part.order + 1}`});
-            // TODO: incorporate multi-select reordering when backend available
+            // TODO: perform the actual reordering here. incorporate multi-select reordering
+            // when backend available
+            const draggingPk = parseInt(e.dataTransfer.getData("draggingPk"));
+            let draggedItemStr = `element with pk ${draggingPk}`;
+            if (this.selectedParts.length > 1 && this.selectedParts.includes(draggingPk)) {
+                draggedItemStr = `${this.selectedParts.length} elements`;
+            }
+            this.addError({ message: `${draggedItemStr} will move ${
+                idx === -1 ? "before": "after"
+            } image #${this.part.order + 1}`});
 
             this.isBeingDragged = false;
             this.dragOver = 0;
