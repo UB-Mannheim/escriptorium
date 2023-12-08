@@ -125,7 +125,8 @@
 
 /* image grid */
 .escr-image-grid {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     margin: 0;
     max-height: calc(100vh - 188px);
 }

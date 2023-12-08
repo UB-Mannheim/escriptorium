@@ -17,7 +17,7 @@
     align-items: center;
     justify-content: flex-start;
 }
-.escr-image-grid .escr-image-card.image-selected {
+.escr-image-card.image-selected {
     outline: 4px solid var(--secondary);
 }
 
@@ -125,6 +125,32 @@
     z-index: var(--editor-global-toolbar-z);
 }
 
+/* drag image (what shows up while dragging) */
+.escr-card-container#is-drag-image {
+    position: absolute;
+    top: -1000px;
+    flex-flow: column;
+    min-height: 240px;
+    justify-content: center;
+    color: var(--text1);
+}
+.escr-card-container#is-drag-image img {
+    display: block !important;
+}
+.escr-card-container#is-drag-image .elements-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    margin-bottom: 3px;
+    height: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    background-color: var(--tag-text);
+    color: var(--button-text);
+    z-index: var(--editor-nav-z);
+}
+
 /* image actions panel */
 .escr-image-card .escr-image-actions {
     position: absolute;
@@ -151,7 +177,7 @@
 }
 
 /* image thumbnail */
-.escr-image-grid .escr-image-card img {
+.escr-image-card img {
     min-width: 100%;
     max-height: 144px;
     object-fit: cover;
@@ -160,7 +186,7 @@
 }
 
 /* image metadata */
-.escr-image-grid .escr-image-card .filename {
+.escr-image-card .filename {
     margin: 8px;
     text-align: center;
     font-size: 12px;
@@ -170,14 +196,14 @@
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-.escr-image-grid .escr-image-card .element-number {
+.escr-image-card .element-number {
     margin-top: 8px;
     font-size: 18px;
     font-weight: 700;
 }
 
 /* image task status */
-.escr-image-grid .escr-image-card .image-status {
+.escr-image-card .image-status {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -185,26 +211,26 @@
     max-height: 24px;
     max-width: 100%;
 }
-.escr-image-grid .escr-image-card .image-status div {
+.escr-image-card .image-status div {
     padding: 0 21px;
 }
-.escr-image-grid .escr-image-card .image-status div:not(:last-of-type) {
+.escr-image-card .image-status div:not(:last-of-type) {
     border-right: 1px solid var(--background2);
 }
-.escr-image-grid .escr-image-card .image-status svg {
+.escr-image-card .image-status svg {
     max-height: 20px;
     fill: var(--background2);
 }
-.escr-image-grid .escr-image-card .image-status svg.done {
+.escr-image-card .image-status svg.done {
     fill: var(--completed);
 }
-.escr-image-grid .escr-image-card .image-status svg.pending {
+.escr-image-card .image-status svg.pending {
     fill: var(--initiated);
 }
-.escr-image-grid .escr-image-card .image-status svg.ongoing {
+.escr-image-card .image-status svg.ongoing {
     fill: var(--in-progress);
 }
-.escr-image-grid .escr-image-card .image-status svg.error {
+.escr-image-card .image-status svg.error {
     fill: var(--alert);
 }
 

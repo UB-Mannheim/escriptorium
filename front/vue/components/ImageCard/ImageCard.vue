@@ -6,9 +6,9 @@
                 ['is-dragging']: isDragging,
                 ['drag-over']: dragOver === -1,
             }"
-            @dragover="(e) => { e.preventDefault(); handleDragOver(-1); }"
-            @dragenter="(e) => { e.preventDefault(); }"
-            @dragleave="() => handleDragOver(0)"
+            @dragover="(e) => handleDragOver(e, -1)"
+            @dragenter="(e) => e.preventDefault()"
+            @dragleave="() => setDragOver(0)"
             @drop="(e) => handleDrop(e, -1)"
         />
         <div
@@ -279,9 +279,9 @@
                 ['is-dragging']: isDragging,
                 ['drag-over']: dragOver === 1,
             }"
-            @dragover="(e) => { e.preventDefault(); handleDragOver(1); }"
-            @dragenter="(e) => { e.preventDefault(); }"
-            @dragleave="() => handleDragOver(0)"
+            @dragover="(e) => handleDragOver(e, 1)"
+            @dragenter="(e) => e.preventDefault()"
+            @dragleave="() => setDragOver(0)"
             @drop="(e) => handleDrop(e, 1)"
         />
     </li>
@@ -437,6 +437,11 @@ export default {
          */
         handleDragEnd() {
             this.isBeingDragged = false;
+            // clean up drag image if present (which has to be added to DOM, unfortunately!)
+            const dragImage = document.getElementById("is-drag-image");
+            if (dragImage) {
+                document.body.removeChild(dragImage);
+            }
             // timeout hack to prevent z-fighting with drag handle
             setTimeout(() => {
                 this.setIsDragging(false);
@@ -453,17 +458,45 @@ export default {
             }, 100);
         },
         /**
-         * On drag, set this part's pk on the event data so that it can be retrieved on drop
+         * On drag, set this part's pk on the event data so that it can be retrieved on drop.
+         * Also, if more than one element is selected, and this is one of the selected elements,
+         * show the number of selected elements on drag.
          */
         handleDragStart(e) {
-            e.dataTransfer.setData("draggingPk", this.part.pk);
+            if(this.isBeingDragged) {
+                e.dataTransfer.setData("draggingPk", this.part.pk);
+                // a bit of DOM manipulation to show # of selected elements being moved
+                if (this.selectedParts.length > 1 && this.selectedParts.includes(this.part.pk)) {
+                    // create a copy of this node
+                    const clonedNode = e.target.parentNode.cloneNode(true);
+                    clonedNode.id = "is-drag-image";
+                    // add the elements label
+                    const elementsLabel = document.createElement("div");
+                    elementsLabel.innerText = `${this.selectedParts.length} elements`;
+                    elementsLabel.classList.add("elements-count");
+                    clonedNode.prepend(elementsLabel);
+                    // append the cloned node to the DOM (it will be positioned offscreen)
+                    document.body.appendChild(clonedNode);
+                    // use it as the drag image
+                    e.dataTransfer.setDragImage(clonedNode, clonedNode.clientWidth / 2, 40);
+                }
+            }
+        },
+        /**
+         * Set the component state to indicate whether the "after" drop zone is being dragged
+         * over (1), the "before" drop zone is (-1), or neither is (0)
+         */
+        setDragOver(idx) {
+            this.dragOver = idx;
         },
         /**
          * When one of this part's drop zones are dragged over, tell component whether it is
-         * "before" or "after" this part
+         * before (-1) or after (1) this part; also, set the drop effect on the event
          */
-        handleDragOver(idx) {
-            this.dragOver = idx;
+        handleDragOver(e, idx) {
+            e.preventDefault();
+            this.setDragOver(idx);
+            e.dataTransfer.dropEffect = "move";
         },
         /**
          * On drop, perform the reordering operation, then turn off all drag-related
