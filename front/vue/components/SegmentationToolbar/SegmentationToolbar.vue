@@ -271,7 +271,7 @@
                                     class="escr-vertical-menu"
                                 >
                                     <li
-                                        v-for="item in typeOptions"
+                                        v-for="(item, index) in typeOptions"
                                         :key="item.pk"
                                     >
                                         <button
@@ -280,7 +280,7 @@
                                             @mousedown="() => clickSelectionType(item)"
                                         >
                                             <span>
-                                                {{ item.name }}
+                                                {{ item.name }}{{ index <= 9 ? ` (${index})` : '' }}
                                             </span>
                                         </button>
                                     </li>
