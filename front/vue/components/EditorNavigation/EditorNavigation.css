@@ -30,12 +30,33 @@ nav.escr-editor-nav .escr-editor-nav-actions {
     flex-flow: row nowrap;
     align-items: center;
 }
-nav.escr-editor-nav .escr-editor-nav-actions span.element-switcher {
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher {
     margin: 0 0.5rem;
     color: var(--text1);
 }
-nav.escr-editor-nav .escr-editor-nav-actions span.element-switcher > span {
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher > span,
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher > input {
     display: inline-block;
     min-width: 24px;
+    max-width: 48px;
     text-align: center;
+}
+.escr-editor-nav-actions .element-switcher > input {
+    background-color: var(--background2);
+    color: var(--text1);
+    border: none;
+    border-bottom: 1px solid var(--text1);
+}
+
+/* Chrome, Safari, Edge, Opera */
+.element-switcher > input::-webkit-outer-spin-button,
+.element-switcher > input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+.element-switcher > input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
 }

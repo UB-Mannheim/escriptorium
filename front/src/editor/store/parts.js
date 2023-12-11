@@ -16,7 +16,7 @@ export const initialState = () => ({
     loaded: false,
     previous: null,
     next: null,
-    order: 0,
+    order: -1,
     image: {},
     bw_image: {},
     filename: "",
@@ -99,7 +99,7 @@ export const actions = {
         if (order) {
             commit("setOrder", order);
         } else if (Object.hasOwn(data, "order")) {
-            commit("setOrder", parseInt(data.order) + 1);
+            commit("setOrder", parseInt(data.order));
         }
         delete data.order;
 

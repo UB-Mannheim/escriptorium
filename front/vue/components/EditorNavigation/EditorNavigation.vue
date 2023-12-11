@@ -52,12 +52,22 @@
                     {{ getPrevOrNextTooltip('right') }}
                 </template>
             </VDropdown>
-            <span
+            <div
                 v-if="partsCount"
                 class="element-switcher"
             >
-                <span>{{ elementNumber || "-" }}</span> / {{ partsCount }}
-            </span>
+                <input
+                    v-if="(elementNumber || elementNumber === 0) && elementNumber !== -1"
+                    type="number"
+                    :min="1"
+                    :max="partsCount"
+                    :value="elementNumber + 1"
+                    @focus="() => setBlockShortcuts(true)"
+                    @blur="() => setBlockShortcuts(false)"
+                    @keydown="submitNavigation"
+                >
+                <span v-else>-</span> / {{ partsCount }}
+            </div>
             <VDropdown
                 class="new-section with-separator"
                 theme="escr-tooltip-small"
@@ -124,7 +134,7 @@
 </template>
 <script>
 import { Dropdown as VDropdown } from "floating-vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapMutations, mapState } from "vuex";
 import ArrowCircleLeftIcon from "../Icons/ArrowCircleLeftIcon/ArrowCircleLeftIcon.vue";
 import ArrowCircleRightIcon from "../Icons/ArrowCircleRightIcon/ArrowCircleRightIcon.vue";
 import EscrBreadcrumbs from "../Breadcrumbs/Breadcrumbs.vue";
@@ -200,8 +210,9 @@ export default {
         },
     },
     methods: {
-        ...mapActions("parts", ["loadPart"]),
+        ...mapActions("parts", ["loadPart", "loadPartByOrder"]),
         ...mapActions("globalTools", ["openModal"]),
+        ...mapMutations("document", ["setBlockShortcuts"]),
         hasPrevOrNextElement(direction) {
             if (direction === "left") {
                 // left = next in RTL, previous in LTR
@@ -233,6 +244,12 @@ export default {
                     : "Next Element (PgDn)";
             }
         },
+        submitNavigation(e) {
+            const num = parseInt(e.target.value);
+            if (e.key === "Enter" && num && num > 0 && num <= this.partsCount) {
+                this.loadPartByOrder(num - 1);
+            }
+        }
     }
 }
 </script>
