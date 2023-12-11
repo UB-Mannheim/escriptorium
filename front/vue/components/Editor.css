@@ -27,6 +27,9 @@ div.escr-editor-tabcontent .marginless.row div.col.panel:not(:first-of-type) {
 #escriptorium div.escr-editor-tabcontent .col.panel {
     padding: 0;
 }
+#editor .escr-modal {
+    color: var(--text1);
+}
 
 /* content container */
 div.escr-editor-tabcontent .col.panel .content-container {
