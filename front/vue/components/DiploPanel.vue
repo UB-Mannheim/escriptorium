@@ -121,19 +121,19 @@
                     </div>
 
                     <!-- TODO: Annotation -->
-                    <!--
-                    <div
+                    <!-- <div
                         v-for="(typo, idx) in groupedTaxonomies"
                         :key="idx"
-                        class="btn-group taxo-group ml-2 mr-1"
                     >
                         <button
                             v-for="taxo in typo"
                             :id="'anno-taxo-' + taxo.pk"
                             :key="taxo.pk"
-                            :data-taxo="taxo"
+                            :style="{
+                                backgroundColor: taxo.marker_detail,
+                            }"
                             :title="taxo.name"
-                            class="btn btn-sm btn-outline-info"
+                            class="escr-anno-pill"
                             autocomplete="off"
                             @click="toggleTaxonomy(taxo)"
                         >
@@ -148,7 +148,7 @@
             :class="'content-container ' + $store.state.document.readDirection"
         >
             <DiploLine
-                v-for="line in $store.state.lines.all"
+                v-for="line in allLines"
                 ref="diploLineComponents"
                 :key="'DL' + line.pk"
                 :line="line"
@@ -176,7 +176,8 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { nextTick } from "vue";
+import { mapActions, mapMutations, mapState } from "vuex";
 import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
@@ -186,8 +187,9 @@ import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
+import "../components/Common/Annotation.css";
 
-export default Vue.extend({
+export default {
     components: {
         DiploLine,
         EditorToolbar,
@@ -198,36 +200,47 @@ export default Vue.extend({
         VDropdown,
     },
     mixins: [BasePanel, AnnoPanel],
-    data() { return {
-        updatedLines : [],
-        createdLines : [],
-        movedLines:[],
-        isVKEnabled: false,
-        isSortModeEnabled: false,
-    };},
+    data() {
+        return {
+            updatedLines : [],
+            createdLines : [],
+            movedLines:[],
+            isVKEnabled: false,
+            isSortModeEnabled: false,
+        };
+    },
     computed: {
         ...mapState({
+            allLines: (state) => state.lines.all,
+            allTextAnnotations: (state) => state.textAnnotations.all,
+            annotationTaxonomies: (state) => state.document.annotationTaxonomies,
+            documentId: (state) => state.document.id,
+            enabledVKs: (state) => state.document.enabledVKs,
             mainTextDirection: (state) => state.document.mainTextDirection,
+            selectedTranscription: (state) => state.transcriptions.selectedTranscription,
+            transcriptionsLoaded: (state) => state.transcriptions.transcriptionsLoaded,
+            partsLoaded: (state) => state.parts.loaded,
         }),
         groupedTaxonomies() {
-            return _.groupBy(this.$store.state.document.annotationTaxonomies.text,
-                function(taxo) {
-                    return taxo.typology && taxo.typology.name
-                });
+            // eslint-disable-next-line no-undef
+            return _.groupBy(
+                this.annotationTaxonomies.text,
+                (taxo) => taxo.typology && taxo.typology.name,
+            );
         }
     },
     watch: {
-        "$store.state.parts.loaded": function(isLoaded, wasLoaded) {
+        partsLoaded(isLoaded) {
             if (!isLoaded) {
                 // changed page probably
                 this.empty();
             }
         },
-        "$store.state.document.enabledVKs"() {
-            this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        enabledVKs() {
+            this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
         },
-        "$store.state.transcriptions.transcriptionsLoaded"(new_, old_) {
-            if (new_ === true) {
+        transcriptionsLoaded(isLoaded) {
+            if (isLoaded === true) {
                 this.loadAnnotations();
             }
         }
@@ -236,17 +249,22 @@ export default Vue.extend({
     created() {
         // vue.js quirck, have to dynamically create the event handler
         // call save every 10 seconds after last change
+        // eslint-disable-next-line no-undef
         this.debouncedSave = _.debounce(function() {
             this.save();
         }.bind(this), 10000);
     },
 
     mounted() {
-        // fix the original width so that when content texts are loaded/page refreshed with diplo panel, the panel width won't be bigger than other, especially for ttb text:
-        document.querySelector("#diplo-panel").style.width = document.querySelector("#diplo-panel").clientWidth + "px";
-
-        Vue.nextTick(function() {
+        if (this.legacyModeEnabled) {
+            // fix the original width so that when content texts are loaded/page refreshed with
+            // diplo panel, the panel width won't be bigger than other, especially for ttb text:
+            const clientWidth = document.querySelector("#diplo-panel").clientWidth;
+            document.querySelector("#diplo-panel").style.width = `${clientWidth}px`;
+        }
+        nextTick(function() {
             var vm = this ;
+            // eslint-disable-next-line no-undef
             vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
                 disabled: true,
                 multiDrag: true,
@@ -266,10 +284,18 @@ export default Vue.extend({
 
         this.initAnnotations();
 
-        this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
     },
 
     methods: {
+        ...mapActions("textAnnotations", {
+            createTextAnnotation: "create",
+            deleteTextAnnotation: "delete",
+            fetchTextAnnotations: "fetch",
+            updateTextAnnotation: "update",
+        }),
+        ...mapMutations("document", ["setBlockShortcuts"]),
+
         empty() {
             this.anno.clearAnnotations();
             while (this.$refs.diplomaticLines.hasChildNodes()) {
@@ -312,7 +338,7 @@ export default Vue.extend({
             style.id = "anno-text-taxonomies-styles";
             document.getElementsByTagName("head")[0].appendChild(style);
             // dynamically creates a class for each taxonomies
-            this.$store.state.document.annotationTaxonomies.text.forEach((taxo) => {
+            this.annotationTaxonomies.text.forEach((taxo) => {
                 let className = "anno-" + taxo.pk;
                 if (taxo.marker_type == "Background Color") {
                     let rgb = hexToRGB(taxo.marker_detail);
@@ -328,14 +354,19 @@ export default Vue.extend({
         },
 
         async loadAnnotations() {
-            if (document.getElementById("anno-text-taxonomies-styles") == null)
+            if (
+                this.legacyModeEnabled &&
+                document.getElementById("anno-text-taxonomies-styles") == null
+            )
                 this.makeTaxonomiesStyles();
 
-            let annos = await this.$store.dispatch("textAnnotations/fetch");
+            let annos = await this.fetchTextAnnotations();
             annos.forEach(function(annotation) {
                 let data = annotation.as_w3c;
                 data.id = annotation.pk;
-                data.taxonomy = this.$store.state.document.annotationTaxonomies.text.find((e) => e.pk == annotation.taxonomy);
+                data.taxonomy = this.annotationTaxonomies.text.find(
+                    (e) => e.pk == annotation.taxonomy
+                );
                 this.anno.addAnnotation(data);
             }.bind(this));
         },
@@ -343,7 +374,9 @@ export default Vue.extend({
         initAnnotations() {
             const textAnnoFormatter = function(annotation) {
                 const anno = annotation.underlying;
-                const className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
+                const className = "anno-" + (
+                    anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk
+                );
                 return className;
             };
 
@@ -357,27 +390,29 @@ export default Vue.extend({
             });
 
             this.isEditorOpen = false;
-            const editorOpenObserver = function(mutationsList, observer) {
+            const editorOpenObserver = function(mutationsList) {
                 // let's hope for no race condition with the contenteditable focusin/out...
                 for (let mutation of mutationsList) {
                     if (mutation.addedNodes.length) {
                         this.isEditorOpen = true;
-                        this.$store.commit("document/setBlockShortcuts", true);
+                        this.setBlockShortcuts(true);
                     } else if (mutation.removedNodes.length) {
                         this.isEditorOpen = false;
-                        this.$store.commit("document/setBlockShortcuts", false);
+                        this.setBlockShortcuts(false);
                     }
                 }
             }.bind(this);
             const editorObserver = new MutationObserver(editorOpenObserver);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
-            this.anno.on("createAnnotation", async function(annotation, overrideId) {
+            this.anno.on("createAnnotation", async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
-                let offsets = annotation.target.selector.find((e) => e.type == "TextPositionSelector");
+                let offsets = annotation.target.selector.find(
+                    (e) => e.type == "TextPositionSelector"
+                );
                 let body = this.getAPITextAnnotationBody(annotation, offsets);
-                body.transcription = this.$store.state.transcriptions.selectedTranscription;
-                const newAnno = await this.$store.dispatch("textAnnotations/create", body);
+                body.transcription = this.selectedTranscription;
+                const newAnno = await this.createTextAnnotation(body);
                 // updates actual object (annotation is just a copy)
                 annotation.id = newAnno.pk;
                 this.anno.addAnnotation(annotation);
@@ -387,7 +422,7 @@ export default Vue.extend({
                 let offsets = annotation.target.selector;
                 let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.id = annotation.id;
-                this.$store.dispatch("textAnnotations/update", body);
+                this.updateTextAnnotation(body);
             }.bind(this));
 
             this.anno.on("selectAnnotation", function(annotation) {
@@ -397,7 +432,7 @@ export default Vue.extend({
             }.bind(this));
 
             this.anno.on("deleteAnnotation", function(annotation) {
-                this.$store.dispatch("textAnnotations/delete", annotation.id);
+                this.deleteTextAnnotation(annotation.id);
             }.bind(this));
         },
 
@@ -426,7 +461,7 @@ export default Vue.extend({
                 let annoEls = document.querySelectorAll('.r6o-annotation[data-id="'+anno.id+'"]');
 
                 if (annoEls === null) {
-                    this.$store.dispatch("textAnnotations/delete", anno.id);
+                    this.deleteTextAnnotation(anno.id);
                 }
 
                 let range = document.createRange();
@@ -449,12 +484,12 @@ export default Vue.extend({
                 let body = this.getAPITextAnnotationBody(anno, anno.target.selector);
                 body.id = anno.id;
                 if (oldStart != start || oldEnd != end) {
-                    this.$store.dispatch("textAnnotations/update", body);
+                    this.updateTextAnnotation(body);
                 }
             }
         },
 
-        changed(ev) {
+        changed() {
             this.$refs.saveNotif.classList.remove("hide");
             this.debouncedSave();
         },
@@ -475,25 +510,26 @@ export default Vue.extend({
 
         constrainLineNumber() {
             // Removes any rogue 'br' added by the browser
-            this.$refs.diplomaticLines.querySelectorAll(":scope > br").forEach((n) => n.remove());
+            const diploLines = this.$refs.diplomaticLines;
+            diploLines.querySelectorAll(":scope > br").forEach((n) => n.remove());
 
             // Add lines until we have enough of them
-            while (this.$refs.diplomaticLines.childElementCount < this.$store.state.lines.all.length) {
+            while (diploLines.childElementCount < this.allLines.length) {
                 this.appendLine();
             }
 
             // need to add/remove danger indicators
-            for (let i=0; i<this.$refs.diplomaticLines.childElementCount; i++) {
-                let line = this.$refs.diplomaticLines.querySelector("div:nth-child("+parseInt(i+1)+")");
+            for (let i=0; i<diploLines.childElementCount; i++) {
+                let line = diploLines.querySelector(`div:nth-child(${parseInt(i+1)})`);
                 if (line === null) {
                     line.remove();
                     continue;
                 }
 
-                if (i<this.$store.state.lines.all.length) {
+                if (i<this.allLines.length) {
                     line.classList.remove("alert-danger");
                     line.setAttribute("title", "");
-                } else if (i>=this.$store.state.lines.all.length) {
+                } else if (i>=this.allLines.length) {
                     if (line.textContent == "") { // just remove empty lines
                         line.remove();
                     } else  {
@@ -504,13 +540,13 @@ export default Vue.extend({
             }
         },
 
-        startEdit(ev) {
-            this.$store.commit("document/setBlockShortcuts", true);
+        startEdit() {
+            this.setBlockShortcuts(true);
         },
 
-        stopEdit(ev) {
+        stopEdit() {
             if (this.isEditorOpen !== true) {
-                this.$store.commit("document/setBlockShortcuts", false);
+                this.setBlockShortcuts(false);
             }
             this.constrainLineNumber();
             this.save();
@@ -521,7 +557,9 @@ export default Vue.extend({
                Finish dragging lines, save new positions
              */
             if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex) {
-                let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndex);
+                let diploLine = this.$refs.diploLineComponents.find(
+                    (dl)=>dl.line.order==ev.oldIndex
+                );
                 this.movedLines.push({
                     "pk": diploLine.line.pk,
                     "order": ev.newIndex
@@ -529,7 +567,9 @@ export default Vue.extend({
             } else {
                 for(let i=0; i< ev.newIndicies.length; i++) {
 
-                    let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndicies[i].index);
+                    let diploLine = this.$refs.diploLineComponents.find(
+                        (dl)=>dl.line.order==ev.oldIndicies[i].index
+                    );
                     this.movedLines.push({
                         "pk": diploLine.line.pk,
                         "order": ev.newIndicies[i].index
@@ -564,9 +604,9 @@ export default Vue.extend({
             }.bind(this));
 
             // check if some annotations were completely deleted by the erasing the text
-            for (let annotation of this.$store.state.textAnnotations.all) {
+            for (let annotation of this.allTextAnnotations) {
                 let annoEl = document.querySelector('.r6o-annotation[data-id="'+annotation.pk+'"]');
-                if (annoEl === null) this.$store.dispatch("textAnnotations/delete", annotation.pk);
+                if (annoEl === null) this.deleteTextAnnotation(annotation.pk);
             }
         },
 
@@ -576,9 +616,9 @@ export default Vue.extend({
                 range.setStart(line.nextSibling, 0);
                 range.collapse(false);
                 sel.removeAllRanges();
+                const container = this.$refs.contentContainer;
 
-                if (line.nextSibling.offsetTop >
-                    this.$refs.contentContainer.scrollTop + this.$refs.contentContainer.clientHeight) {
+                if (line.nextSibling.offsetTop > (container.scrollTop + container.clientHeight)) {
                     line.nextSibling.scrollIntoView(false);
                 }
 
@@ -605,12 +645,16 @@ export default Vue.extend({
             // arrows  needed to avoid skipping empty lines
             if (ev.key == "ArrowDown" && !ev.shiftKey) {
                 let sel = window.getSelection();
-                let div = sel.anchorNode.nodeType==Node.TEXT_NODE?sel.anchorNode.parentElement:sel.anchorNode;
+                let div = sel.anchorNode.nodeType === Node.TEXT_NODE
+                    ? sel.anchorNode.parentElement
+                    : sel.anchorNode;
                 this.focusNextLine(sel, div);
                 ev.preventDefault();
             } else if (ev.key == "ArrowUp" && !ev.shiftKey) {
                 let sel = window.getSelection();
-                let div = sel.anchorNode.nodeType==Node.TEXT_NODE?sel.anchorNode.parentElement:sel.anchorNode;
+                let div = sel.anchorNode.nodeType === Node.TEXT_NODE
+                    ? sel.anchorNode.parentElement
+                    : sel.anchorNode;
                 this.focusPreviousLine(sel, div);
                 ev.preventDefault();
             }
@@ -628,21 +672,23 @@ export default Vue.extend({
         onPaste(e) {
             let diplomaticLines=document.querySelector("#diplomatic-lines");
             let sel = window.getSelection();
-            let tmpDiv = document.createElement("div");
 
             let pastedData;
             if (e && e.clipboardData && e.clipboardData.getData) {
                 pastedData = e.clipboardData.getData("text/plain");
 
                 var cursor = sel.getRangeAt(0);  // specific position or range
-                // for a range, delete content to clean data and to get resulting specific cursor position from it:
-                cursor.deleteContents(); // if selection is done on several lines, cursor caret be placed between 2 divs
+                // for a range, delete content to clean data and to get resulting
+                // specific cursor position from it:
+                cursor.deleteContents();
+                // if selection is done on several lines, cursor caret be placed between 2 divs
 
                 // after deleting (for an range),
                 // check if resulting cursor is in or off a line div or some errors will occur!:
                 let parentEl = sel.getRangeAt(0).commonAncestorContainer;
                 if (parentEl.nodeType != 1) {
-                    parentEl = parentEl.parentNode;   //  for several different lines, commonAncestorContainer does not exist
+                    // for several different lines, commonAncestorContainer does not exist
+                    parentEl = parentEl.parentNode;
                 }
 
                 let pasted_data_split = pastedData.split("\n");
@@ -651,11 +697,13 @@ export default Vue.extend({
                 let textBeforeCursor = "";
                 let textAfterCursor = "";
 
-                // nodes which will be placed before and after the targetnode - where text is pasted (new node or current node)
+                // nodes which will be placed before and after the targetnode where text is
+                // pasted (new node or current node)
                 let prevSibling;
                 let nextSibling;
 
-                if(parentEl.id == "diplomatic-lines"){  //  if parent node IS the main diplomatic panel div = cursor is offline
+                if(parentEl.id == "diplomatic-lines"){
+                    // if parent node IS the main diplomatic panel div = cursor is offline
                     // occurs when a selection is made on several lines or all is selected
 
                     //we create a between node:
@@ -669,7 +717,8 @@ export default Vue.extend({
                     cursor.setStart(refNode,0);
                     cursor.setEnd(refNode,0);
 
-                    // in this case, contents before and after selection will belong to near siblings
+                    // in this case, contents before and after selection will belong to near
+                    // siblings
                     if(refNode.previousSibling != null){
                         prevSibling = refNode.previousSibling;
                     }
@@ -679,14 +728,19 @@ export default Vue.extend({
                 }
 
                 //  get current cursor position within the line div tag
-                let caretPos = cursor.endOffset;    //  4   //  nombre de caractères du début jusqu'à la position du curseur
+                let caretPos = cursor.endOffset;
+                //  4   //  nombre de caractères du début jusqu'à la position du curseur
 
                 // store previous and next text in the line to it / for a selection within on line:
                 textBeforeCursor = refNode.textContent.substring(0, caretPos);
-                textAfterCursor = refNode.textContent.substring(caretPos, refNode.textContent.length);
+                textAfterCursor = refNode.textContent.substring(
+                    caretPos, refNode.textContent.length
+                );
 
-                // for a selection between several lines, contents before and after will be the contents of siblings
-                // to avoid create new lines before and after, fusion of sibling contents to the current node and removing it
+                // for a selection between several lines, contents before and after will be the
+                // contents of siblings
+                // to avoid create new lines before and after, fusion of sibling contents to the
+                // current node and removing it
                 if(typeof(prevSibling) != "undefined"){
                     textBeforeCursor = prevSibling.textContent;
                     prevSibling.parentNode.removeChild(prevSibling);
@@ -695,9 +749,10 @@ export default Vue.extend({
                     textAfterCursor = nextSibling.textContent;
                     nextSibling.parentNode.removeChild(nextSibling);
                 }
-
-                let endPos = 0; //  will set the new cursor position
-                let lastTargetNode = refNode;   //  last impacted node for a copy-paste (for several lines)
+                // will set the new cursor position
+                let endPos = 0;
+                // last impacted node for a copy-paste (for several lines)
+                let lastTargetNode = refNode;
 
                 if(pasted_data_split.length == 1){
                     refNode.textContent = textBeforeCursor + pasted_data_split[0] + textAfterCursor;
@@ -726,10 +781,11 @@ export default Vue.extend({
 
                     nextNodesContents = nextNodesContents.reverse();
 
-                    for(var j=1; j < nextNodesContents.length; j++) //  for any other line, we add a div and set this content
+                    for(var k=1; k < nextNodesContents.length; k++)
                     {
+                        //  for any other line, we add a div and set this content
                         var prevLineDiv = document.createElement("div");
-                        prevLineDiv.textContent = nextNodesContents[j];
+                        prevLineDiv.textContent = nextNodesContents[k];
                         // add the new line as a next neighbor of current div:
                         refNode = diplomaticLines.insertBefore(prevLineDiv, refNode);
                     }
@@ -748,7 +804,8 @@ export default Vue.extend({
                 // so we do nothing; keeping original content
             }
 
-            // Stop the data from actually being pasted //  without it will paste the native copied text after "content"
+            // Stop the data from actually being pasted
+            //  without it will paste the native copied text after "content"
             e.stopPropagation();
             e.preventDefault();
         },
@@ -833,14 +890,14 @@ export default Vue.extend({
         },
 
         setTextAnnoTaxonomy(taxo) {
-            var colorFormatter = function(annotation) {
+            var colorFormatter = function() {
                 // todo: find a way to pass the marker_detail..
                 return "colored-text";
             };
-            var boldFormatter = function(annotation) {
+            var boldFormatter = function() {
                 return "strong";
             };
-            var italicFormatter = function(annotation) {
+            var italicFormatter = function() {
                 return "italic";
             };
             let marker_map = {
@@ -856,6 +913,7 @@ export default Vue.extend({
         activateVK(div) {
             div.contentEditable = "true";
             this.$refs.diplomaticLines.contentEditable = "false";
+            // eslint-disable-next-line no-undef
             enableVirtualKeyboard(div);
         },
 
@@ -867,10 +925,11 @@ export default Vue.extend({
 
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
-            let vks = this.$store.state.document.enabledVKs;
+            let vks = this.enabledVKs;
             if (this.isVKEnabled) {
-                vks.push(this.$store.state.document.id);
+                vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
+                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.activateVK(c);
@@ -882,8 +941,9 @@ export default Vue.extend({
                 }
             } else {
                 // Make sure we save changes made before we remove the VK
-                vks.splice(vks.indexOf(this.$store.state.document.id), 1);
+                vks.splice(vks.indexOf(this.documentId), 1);
                 this.$store.commit("document/setEnabledVKs", vks);
+                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.deactivateVK(c);
@@ -891,8 +951,5 @@ export default Vue.extend({
             }
         }
     }
-});
+}
 </script>
-
-<style scoped>
-</style>

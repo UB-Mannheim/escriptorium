@@ -194,8 +194,10 @@ export var AnnoPanel = {
         enableTaxonomy(taxo) {
             let btn = this.getTaxoButton(taxo);
             this.anno.readOnly = false;
-            btn.classList.remove("btn-outline-info");
-            btn.classList.add("btn-info");
+            if (btn) {
+                btn.classList.remove("btn-outline-info");
+                btn.classList.add("btn-info");
+            }
         },
 
         getTaxoButton(taxo) {
