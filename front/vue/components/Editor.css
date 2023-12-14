@@ -45,9 +45,11 @@ div.escr-editor-tabcontent .col.panel .js-wheelzoom-container {
 }
 
 /* DiploPanel height override */
-.panel#diplo-panel .content-container {
+div.escr-editor-tabcontent #diplo-panel .content-container {
     overflow-y: auto;
-    max-height: calc(100vh - 180px);
+}
+div.escr-editor-tabcontent #diplo-panel #save-notif {
+    color: var(--primary);
 }
 
 /* ensure the page background is white for VisuPanel and DiploPanel */

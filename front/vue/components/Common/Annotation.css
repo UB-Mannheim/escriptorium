@@ -1,0 +1,28 @@
+.escr-annotation-toolbar {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 24px;
+    min-height: 34px;
+    padding: 4px 16px;
+    background: var(--background3);
+}
+.escr-annotation-toolbar .escr-anno-group {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 4px;
+}
+.escr-annotation-toolbar .escr-anno-pill {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    max-height: 28px;
+    padding: 4px 10px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    color: var(--tag-text);
+    font-size: 14px;
+    font-weight: 400;
+}
+.escr-annotation-toolbar .escr-anno-pill.selected {
+    border-color: var(--text1);
+}

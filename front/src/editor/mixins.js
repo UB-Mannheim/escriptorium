@@ -192,11 +192,13 @@ export var AnnoPanel = {
         },
 
         enableTaxonomy(taxo) {
-            let btn = this.getTaxoButton(taxo);
             this.anno.readOnly = false;
-            if (btn) {
-                btn.classList.remove("btn-outline-info");
-                btn.classList.add("btn-info");
+            if (taxo) {
+                let btn = this.getTaxoButton(taxo);
+                if (btn) {
+                    btn.classList.remove("btn-outline-info");
+                    btn.classList.add("btn-info");
+                }
             }
         },
 

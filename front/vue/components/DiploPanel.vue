@@ -67,12 +67,6 @@
                     <TranscriptionDropdown
                         :disabled="disabled"
                     />
-                    <i
-                        id="save-notif"
-                        ref="saveNotif"
-                        title="There is content waiting to be saved (don't leave the page)"
-                        class="notice fas fa-save hide new-section"
-                    />
 
                     <!-- Line reordering -->
                     <VDropdown
@@ -97,6 +91,13 @@
                         </template>
                     </VDropdown>
 
+                    <i
+                        id="save-notif"
+                        ref="saveNotif"
+                        title="There is content waiting to be saved (don't leave the page)"
+                        class="notice fas fa-save hide new-section"
+                    />
+
                     <!-- Virtual keyboard -->
                     <div class="vk-container">
                         <VDropdown
@@ -119,30 +120,41 @@
                             </template>
                         </VDropdown>
                     </div>
-
-                    <!-- TODO: Annotation -->
-                    <!-- <div
-                        v-for="(typo, idx) in groupedTaxonomies"
-                        :key="idx"
-                    >
-                        <button
-                            v-for="taxo in typo"
-                            :id="'anno-taxo-' + taxo.pk"
-                            :key="taxo.pk"
-                            :style="{
-                                backgroundColor: taxo.marker_detail,
-                            }"
-                            :title="taxo.name"
-                            class="escr-anno-pill"
-                            autocomplete="off"
-                            @click="toggleTaxonomy(taxo)"
-                        >
-                            {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
-                        </button>
-                    </div> -->
                 </div>
             </template>
         </EditorToolbar>
+        <div
+            v-if="!legacyModeEnabled"
+            ref="annotationToolbar"
+            class="escr-annotation-toolbar"
+        >
+            <!-- TODO: Annotation -->
+            <div
+                v-for="(typo, idx) in groupedTaxonomies"
+                :key="idx"
+                class="escr-anno-group"
+            >
+                <button
+                    v-for="taxo in typo"
+                    :id="'anno-taxo-' + taxo.pk"
+                    :key="taxo.pk"
+                    :style="{
+                        backgroundColor: currentTaxonomy == taxo
+                            ? taxo.marker_detail
+                            : `${taxo.marker_detail}AA`,
+                    }"
+                    :title="taxo.name"
+                    :class="{
+                        'escr-anno-pill': true,
+                        'selected': currentTaxonomy == taxo,
+                    }"
+                    autocomplete="off"
+                    @click="() => toggleTaxonomy(taxo)"
+                >
+                    {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
+                </button>
+            </div>
+        </div>
         <div
             ref="contentContainer"
             :class="'content-container ' + $store.state.document.readDirection"
@@ -261,6 +273,10 @@ export default {
             // diplo panel, the panel width won't be bigger than other, especially for ttb text:
             const clientWidth = document.querySelector("#diplo-panel").clientWidth;
             document.querySelector("#diplo-panel").style.width = `${clientWidth}px`;
+        } else if (this.$refs.annotationToolbar && this.$refs.contentContainer) {
+            // ensure panel height takes anno toolbar into account, and does so again on resize
+            this.recalculatePanelHeight();
+            window.addEventListener("resize", this.recalculatePanelHeight);
         }
         nextTick(function() {
             var vm = this ;
@@ -355,7 +371,6 @@ export default {
 
         async loadAnnotations() {
             if (
-                this.legacyModeEnabled &&
                 document.getElementById("anno-text-taxonomies-styles") == null
             )
                 this.makeTaxonomiesStyles();
@@ -426,7 +441,7 @@ export default {
             }.bind(this));
 
             this.anno.on("selectAnnotation", function(annotation) {
-                if (this.currentTaxonomy != annotation.taxonomy) {
+                if (annotation.taxonomy && this.currentTaxonomy != annotation.taxonomy) {
                     this.toggleTaxonomy(annotation.taxonomy);
                 }
             }.bind(this));
@@ -949,7 +964,18 @@ export default {
                     this.deactivateVK(c);
                 });
             }
-        }
+        },
+
+        /**
+         * New UI: ensure max height of DiploPanel takes height of annotation toolbar
+         * into account.
+         */
+        recalculatePanelHeight() {
+            const toolbarHeight = this.$refs.annotationToolbar.clientHeight;
+            const newHeight = `calc(100vh - 180px - ${toolbarHeight}px)`;
+            this.$refs.contentContainer.style.setProperty("min-height", newHeight);
+            this.$refs.contentContainer.style.setProperty("max-height", newHeight);
+        },
     }
 }
 </script>
