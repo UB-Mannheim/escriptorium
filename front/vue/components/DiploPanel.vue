@@ -124,11 +124,14 @@
             </template>
         </EditorToolbar>
         <div
-            v-if="!legacyModeEnabled"
+            v-if="!legacyModeEnabled && (
+                annotationTaxonomies &&
+                annotationTaxonomies.text &&
+                annotationTaxonomies.text.length > 0
+            )"
             ref="annotationToolbar"
             class="escr-annotation-toolbar"
         >
-            <!-- TODO: Annotation -->
             <div
                 v-for="(typo, idx) in groupedTaxonomies"
                 :key="idx"
@@ -141,7 +144,7 @@
                     :style="{
                         backgroundColor: currentTaxonomy == taxo
                             ? taxo.marker_detail
-                            : `${taxo.marker_detail}AA`,
+                            : `${taxo.marker_detail}CC`,
                     }"
                     :title="taxo.name"
                     :class="{
@@ -371,6 +374,7 @@ export default {
 
         async loadAnnotations() {
             if (
+                this.legacyModeEnabled &&
                 document.getElementById("anno-text-taxonomies-styles") == null
             )
                 this.makeTaxonomiesStyles();
@@ -385,23 +389,43 @@ export default {
                 this.anno.addAnnotation(data);
             }.bind(this));
         },
-
-        initAnnotations() {
-            const textAnnoFormatter = function(annotation) {
-                const anno = annotation.underlying;
+        textAnnoFormatter (annotation) {
+            const anno = annotation.underlying;
+            if (this.legacyModeEnabled) {
                 const className = "anno-" + (
                     anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk
                 );
                 return className;
-            };
-
+            } else {
+                const color = anno?.taxonomy?.marker_detail || this.currentTaxonomy.marker_detail;
+                let style = "background-color: white; border-bottom: none;";
+                switch (anno?.taxonomy?.marker_type || this.currentTaxonomy.marker_type) {
+                    case "Background Color":
+                        style = `background-color: ${color}33; border-bottom: 2px solid ${color};`;
+                        break;
+                    case "Text Color":
+                        style = `${style} color: ${color};`
+                        break;
+                    case "Bold":
+                        style = `${style} font-weight: bold;`;
+                        break;
+                    case "Italic":
+                        style = `${style} font-style: italic;`;
+                        break;
+                    default:
+                        break;
+                }
+                return { style };
+            }
+        },
+        initAnnotations() {
             this.anno = new Recogito({
                 content: this.$refs.contentContainer,
                 allowEmpty: true,
                 readOnly: true,
                 widgets: [],
                 disableEditor: false,
-                formatter: textAnnoFormatter.bind(this)
+                formatter: this.textAnnoFormatter.bind(this),
             });
 
             this.isEditorOpen = false;
