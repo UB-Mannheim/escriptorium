@@ -35,7 +35,7 @@
                         </template>
                     </ToggleButton>
                     <template #popper>
-                        Line numbering (L)
+                        Line numbering (N)
                     </template>
                 </VDropdown>
 
@@ -585,7 +585,7 @@ export default {
                     value: "lines",
                     label: LinesIcon,
                     selected: this.displayMode === "lines",
-                    tooltip: "Lines mode",
+                    tooltip: "Lines mode (L)",
                 },
                 {
                     value: "masks",

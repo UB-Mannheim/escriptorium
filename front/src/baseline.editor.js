@@ -1013,10 +1013,11 @@ export class Segmenter {
                         this.mergeSelection();
                         break;
                     case "l":
-                        // toggle line numbers overlay
                         if (this.newUiEnabled) {
-                            this.setOrdering(!this.showLineNumbers);
+                            // lines mode
+                            this.setMode("lines");
                         } else {
+                            // toggle line numbers overlay
                             this.toggleOrdering();
                         }
                         break;
@@ -1026,6 +1027,12 @@ export class Segmenter {
                             this.setMode("masks");
                         } else {
                             this.toggleLineMode();
+                        }
+                        break;
+                    case "n":
+                        // toggle line numbers overlay
+                        if (this.newUiEnabled) {
+                            this.setOrdering(!this.showLineNumbers);
                         }
                         break;
                     case "r":
