@@ -119,3 +119,14 @@
 .escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation:active {
     background-color: var(--alert-darker);
 }
+
+/* new UI annotation underlines */
+.escr-editor-tabcontent .r6o-annotation {
+    text-underline-offset: 0px;
+}
+.escr-editor-tabcontent .r6o-annotation > .r6o-annotation {
+    text-underline-offset: 4px;
+}
+.escr-editor-tabcontent .r6o-annotation > .r6o-annotation > .r6o-annotation {
+    text-underline-offset: 8px;
+}

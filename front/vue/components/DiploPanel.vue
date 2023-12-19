@@ -407,10 +407,16 @@ export default {
                 return className;
             } else {
                 const color = anno?.taxonomy?.marker_detail || this.currentTaxonomy.marker_detail;
-                let style = "background-color: white; border-bottom: none;";
+                // all annotations get underlines
+                let style = `
+                    background-color: transparent;
+                    border-bottom: none;
+                    text-decoration: underline 3px ${color};
+                    text-underline-position: under;
+                `;
                 switch (anno?.taxonomy?.marker_type || this.currentTaxonomy.marker_type) {
                     case "Background Color":
-                        style = `background-color: ${color}33; border-bottom: 2px solid ${color};`;
+                        style = `${style} background-color: ${color}33;`;
                         break;
                     case "Text Color":
                         style = `${style} color: ${color};`
