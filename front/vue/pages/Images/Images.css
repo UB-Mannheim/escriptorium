@@ -80,13 +80,13 @@
 .escr-images-toolbar .escr-text-field.range-text-field {
     margin-right: 1rem;
 }
-.escr-toolbar-right .escr-button:not(:active):not(:hover) {
+.escr-toolbar-right .escr-button:not(:active):not(:hover):not([disabled]) {
     background-color: transparent;
 }
-.escr-toolbar-right .escr-toggle-button--active-secondary:not(:active):not(:hover) {
+.escr-toolbar-right .escr-toggle-button--active-secondary:not(:active):not(:hover):not([disabled]) {
     background-color: var(--secondary);
 }
-.escr-toolbar-right .escr-toggle-button {
+.escr-toolbar-right .escr-toggle-button:not([disabled]) {
     border: none;
 }
 .escr-toolbar-right .new-section {

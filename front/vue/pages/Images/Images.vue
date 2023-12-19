@@ -749,7 +749,7 @@ export default {
         /**
          * Handle range input, validate, and set selected parts if valid
          */
-        onRangeInput(e) {
+        async onRangeInput(e) {
             this.rangeInputValue = e.target.value;
             // collect selected indices and validate for errors
             const { selected, error } = this.validateSelectRange(
@@ -759,6 +759,9 @@ export default {
             this.rangeValidationError = error;
             if (!error) {
                 // set selected items on state
+                while (selected.length > this.parts.length && this.nextPage) {
+                    await this.fetchNextPage();
+                }
                 this.setSelectedPartsByOrder(selected);
             }
         },
@@ -817,7 +820,12 @@ export default {
         /**
          * Handler for clicking "select all"
          */
-        selectAll() {
+        async selectAll() {
+            this.setLoading({ key: "images", loading: true });
+            while (this.nextPage) {
+                await this.fetchNextPage();
+            }
+            this.setLoading({ key: "images", loading: false });
             this.setSelectedParts(this.parts.map((part) => part.pk));
         },
         /**

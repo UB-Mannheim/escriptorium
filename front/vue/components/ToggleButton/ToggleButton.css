@@ -56,3 +56,9 @@
 .escr-toggle-button--active-danger:hover {
     background-color: var(--alert-dark);
 }
+.escr-toggle-button[disabled] {
+    pointer-events: none;
+    color: var(--text3);
+    background-color: transparent;
+    border-color: var(--text3);
+}
