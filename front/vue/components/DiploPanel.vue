@@ -137,25 +137,34 @@
                 :key="idx"
                 class="escr-anno-group"
             >
-                <button
+                <VDropdown
                     v-for="taxo in typo"
-                    :id="'anno-taxo-' + taxo.pk"
                     :key="taxo.pk"
-                    :style="{
-                        backgroundColor: currentTaxonomy == taxo
-                            ? taxo.marker_detail
-                            : `${taxo.marker_detail}CC`,
-                    }"
-                    :title="taxo.name"
-                    :class="{
-                        'escr-anno-pill': true,
-                        'selected': currentTaxonomy == taxo,
-                    }"
-                    autocomplete="off"
-                    @click="() => toggleTaxonomy(taxo)"
+                    theme="escr-tooltip-small"
+                    placement="bottom"
+                    :distance="8"
+                    :triggers="['hover']"
                 >
-                    {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
-                </button>
+                    <button
+                        :id="'anno-taxo-' + taxo.pk"
+                        :style="{
+                            backgroundColor: currentTaxonomy == taxo
+                                ? taxo.marker_detail
+                                : `${taxo.marker_detail}CC`,
+                        }"
+                        :class="{
+                            'escr-anno-pill': true,
+                            'selected': currentTaxonomy == taxo,
+                        }"
+                        autocomplete="off"
+                        @click="() => toggleTaxonomy(taxo)"
+                    >
+                        {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
+                    </button>
+                    <template #popper>
+                        {{ taxo.name }}
+                    </template>
+                </VDropdown>
             </div>
         </div>
         <div
