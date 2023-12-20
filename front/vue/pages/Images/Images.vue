@@ -758,10 +758,16 @@ export default {
             );
             this.rangeValidationError = error;
             if (!error) {
-                // set selected items on state
-                while (selected.length > this.parts.length && this.nextPage) {
+                // fetch more pages if needed
+                while (this.nextPage && (
+                    // more items selected than are loaded
+                    selected.length > this.parts.length ||
+                    // specific items are selected that have not been loaded
+                    selected.some((order) => !this.parts.find((p) => p.order === order))
+                )) {
                     await this.fetchNextPage();
                 }
+                // set selected items on state
                 this.setSelectedPartsByOrder(selected);
             }
         },
