@@ -407,16 +407,20 @@ export default {
                 return className;
             } else {
                 const color = anno?.taxonomy?.marker_detail || this.currentTaxonomy.marker_detail;
-                // all annotations get underlines
+                /**
+                 *  TODO: all annotations get underlines
+                 *  text-decoration: underline 3px ${color};
+                 *  text-underline-position: under;
+                 */
                 let style = `
                     background-color: transparent;
                     border-bottom: none;
-                    text-decoration: underline 3px ${color};
-                    text-underline-position: under;
                 `;
                 switch (anno?.taxonomy?.marker_type || this.currentTaxonomy.marker_type) {
                     case "Background Color":
                         style = `${style} background-color: ${color}33;`;
+                        // TODO: remove below when doubling bug is fixed
+                        style = `${style} border-bottom: 2px solid ${color};`;
                         break;
                     case "Text Color":
                         style = `${style} color: ${color};`
