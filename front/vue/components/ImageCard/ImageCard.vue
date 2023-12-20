@@ -17,6 +17,7 @@
                 ['image-selected']: selectedParts.includes(parseInt(part.pk)),
             }"
             :draggable="isBeingDragged"
+            dir="ltr"
             @dragstart="handleDragStart"
             @dragend="handleDragEnd"
         >

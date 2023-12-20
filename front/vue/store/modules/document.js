@@ -1067,6 +1067,21 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
         }
     },
+    /**
+     * Update a part's workflow status.
+     */
+    updatePartTaskStatus({ commit, state }, { id, process, status }) {
+        if (id) {
+            const part = structuredClone(
+                state.parts.find((p) => p.pk.toString() === id.toString()),
+            );
+            if (part) {
+                part.workflow[process] =
+                    status === "canceled" ? "error" : status;
+                commit("updatePart", part);
+            }
+        }
+    },
 };
 
 const mutations = {
@@ -1169,6 +1184,15 @@ const mutations = {
             return m;
         });
         state.metadata = metadata;
+    },
+    updatePart(state, partToUpdate) {
+        const parts = structuredClone(state.parts).map((p) => {
+            if (p.pk.toString() === partToUpdate.pk.toString()) {
+                return partToUpdate;
+            }
+            return p;
+        });
+        state.parts = parts;
     },
 };
 

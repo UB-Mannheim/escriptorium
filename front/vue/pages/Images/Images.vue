@@ -711,6 +711,7 @@ export default {
             "fetchDocumentModels",
             "handleSubmitImport",
             "setId",
+            "updatePartTaskStatus",
         ]),
         ...mapActions("images", [
             "confirmOverwriteWarning",
@@ -897,8 +898,7 @@ export default {
             if (
                 data.type === "event" && taskEvents.some((task) => data.name.startsWith(task))
             ) {
-                // TODO: how to handle? we need image part statuses to update
-                // these may be frequent, so throttle
+                this.updatePartTaskStatus(data?.data);
             }
         },
     },
