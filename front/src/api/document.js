@@ -52,6 +52,23 @@ export const retrieveDocumentOntology = async ({
 export const retrieveDefaultOntology = async (category) =>
     await axios.get(`/${ontologyMap[category]}/`);
 
+// retrieve the taxonomies for annotation components
+export const retrieveComponentTaxonomies = async (documentId) =>
+    await axios.get(
+        `/documents/${documentId}/taxonomies/components/?paginate_by=50`,
+    );
+
+// retrieve the taxonomies for annotation components
+export const createComponentTaxonomy = async ({
+    documentId,
+    name,
+    allowedValues,
+}) =>
+    await axios.post(`/documents/${documentId}/taxonomies/components/`, {
+        name,
+        allowed_values: allowedValues,
+    });
+
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
     documentId,

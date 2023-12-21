@@ -1,5 +1,9 @@
 import * as api from "../api";
-import { retrieveDefaultOntology } from "../../api";
+import {
+    createComponentTaxonomy,
+    retrieveComponentTaxonomies,
+    retrieveDefaultOntology,
+} from "../../api";
 
 export const initialState = () => ({
     id: null,
@@ -14,6 +18,7 @@ export const initialState = () => ({
     blockShortcuts: false,
 
     annotationTaxonomies: {},
+    componentTaxonomies: [],
 
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
@@ -94,6 +99,9 @@ export const mutations = {
     setAnnotationTaxonomies(state, { type, taxos }) {
         state.annotationTaxonomies[type] = taxos;
     },
+    setComponentTaxonomies(state, taxos) {
+        state.componentTaxonomies = taxos;
+    },
     setEnabledVKs(state, vks) {
         state.enabledVKs = Object.assign([], state.enabledVKs, vks);
     },
@@ -166,27 +174,6 @@ export const actions = {
             { root: true },
         );
 
-        // set types on state
-        const types = {
-            regions: data.valid_block_types,
-            lines: data.valid_line_types,
-            parts: valid_part_types,
-        };
-        commit("setTypes", types);
-        // set types form state
-        commit(
-            "forms/setFormState",
-            {
-                form: "ontology",
-                formState: { ...types },
-            },
-            { root: true },
-        );
-        commit("setProjectSlug", data.project);
-        commit("setProjectName", data.project_name);
-        commit("setPartsCount", data.parts_count);
-        commit("setConfidenceVizGloballyEnabled", data.show_confidence_viz);
-
         let page = 1;
         var img_taxos = [];
         while (page) {
@@ -214,6 +201,40 @@ export const actions = {
             else page = null;
         }
         commit("setAnnotationTaxonomies", { type: "text", taxos: text_taxos });
+
+        // fetch annotation components
+        page = 1;
+        let componentTaxonomies = [];
+        while (page) {
+            let resp = await retrieveComponentTaxonomies(data.pk);
+            componentTaxonomies = componentTaxonomies.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("setComponentTaxonomies", componentTaxonomies);
+
+        // set types on state
+        const types = {
+            regions: data.valid_block_types || [],
+            lines: data.valid_line_types || [],
+            parts: valid_part_types || [],
+            textAnnotations: text_taxos || [],
+            imageAnnotations: img_taxos || [],
+        };
+        commit("setTypes", types);
+        // set types form state
+        commit(
+            "forms/setFormState",
+            {
+                form: "ontology",
+                formState: { ...types },
+            },
+            { root: true },
+        );
+        commit("setProjectSlug", data.project);
+        commit("setProjectName", data.project_name);
+        commit("setPartsCount", data.parts_count);
+        commit("setConfidenceVizGloballyEnabled", data.show_confidence_viz);
 
         await dispatch("fetchDefaultTypes");
     },
@@ -247,6 +268,38 @@ export const actions = {
                 root: true,
             });
         }
+    },
+
+    /**
+     * Create a new annotation component
+     */
+    async createComponent({ commit, dispatch, state, rootState }) {
+        const { name, values } = rootState.forms.addComponent;
+        const documentId = state.id;
+        commit("setLoading", true);
+        try {
+            await createComponentTaxonomy({
+                documentId,
+                name,
+                allowedValues: values.split(","),
+            });
+        } catch (err) {
+            commit("setLoading", false);
+            dispatch("alerts/addError", err, { root: true });
+        }
+
+        let page = 1;
+        let componentTaxonomies = [];
+        while (page) {
+            const resp = await retrieveComponentTaxonomies(documentId);
+            componentTaxonomies = componentTaxonomies.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("document/setComponentTaxonomies", componentTaxonomies, {
+            root: true,
+        });
+        commit("setLoading", false);
     },
 
     /**
@@ -306,7 +359,7 @@ export const actions = {
      */
     toggleConfidence({ commit }) {
         commit("toggleConfidenceVizOn");
-    }
+    },
 };
 
 export default {

@@ -1,0 +1,108 @@
+/* annotation ontology table */
+.escr-table.annotation-ontology .escr-dropdown-field {
+    margin: 0;
+    width: 180px;
+}
+.escr-edit-ontology .escr-table.annotation-ontology tr > td.escr-text-field {
+    padding-right: 16px;
+}
+.escr-table.annotation-ontology .escr-dropdown-field select {
+    min-height: 37px;
+    margin: 0;
+}
+.escr-table.annotation-ontology .escr-dropdown-field .escr-chevron-down-icon {
+    top: 16px;
+}
+.escr-table.annotation-ontology input[type="text"] {
+    background-color: var(--background);
+}
+.escr-table.annotation-ontology .abbreviation-column {
+    width: 90px;
+}
+
+/* comments toggle */
+.escr-table.annotation-ontology label.comments-toggle {
+    cursor: pointer;
+    margin: 0;
+    background-color: var(--background1);
+    border-radius: 50%;
+}
+.escr-table.annotation-ontology label.comments-toggle:focus-within svg {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+.escr-table.annotation-ontology .escr-toggle-on {
+    color: var(--primary);
+}
+.escr-table.annotation-ontology .escr-toggle-off {
+    color: var(--background3);
+}
+
+/* components dropdown */
+.escr-component-dropdown {
+    min-width: 160px;
+    min-height: 37px;
+    background-color: var(--background);
+    justify-content: flex-start;
+}
+.escr-component-dropdown .escr-chevron-down-icon {
+    margin: 0 0 0 auto;
+}
+.escr-component-dropdown span {
+    padding-left: 10px;
+    font-weight: 400;
+    font-size: 14px;
+}
+.escr-component-dropdown.placeholder span {
+    color: var(--text2);
+}
+
+/* component selector */
+.escr-component-selector {
+    min-width: 220px;
+}
+.escr-component-selector ul {
+    margin: 0;
+    padding: 0 0 8px;
+    list-style: none;
+    border-bottom: 1px solid var(--background2);
+}
+.escr-component-selector ul li label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-left: 24px;
+    height: 42px;
+    margin: 0;
+}
+.escr-component-selector ul li label span {
+    margin-left: 16px;
+    font-weight: 600;
+    font-size: 14px;
+}
+.escr-component-selector .escr-no-components {
+    display: flex;
+    flex-flow: column;
+    gap: 8px;
+    padding: 0 0 16px 24px;
+    border-bottom: 1px solid var(--background2);
+}
+.escr-component-selector .escr-no-components span {
+    font-size: 14px;
+    color: var(--text1);
+}
+.escr-component-selector .escr-no-components small {
+    font-size: 12px;
+    color: var(--text3);
+}
+.escr-component-selector + div {
+    margin: 16px 0 0 16px;
+}
+
+/* add component modal */
+.escr-add-component .escr-modal {
+    min-width: 340px;
+    width: 340px;
+    left: calc(50% - 340px / 2);
+    top: 120px;
+}

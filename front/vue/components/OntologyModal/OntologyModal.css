@@ -1,6 +1,8 @@
-.escr-edit-ontology .escr-modal {
+.escr-edit-ontology > .escr-modal {
     top: 60px;
     color: var(--text1);
+    min-width: 1080px;
+    left: calc(50% - 1080px / 2);
 }
 .escr-edit-ontology .escr-modal-content {
     max-height: calc(100vh - 250px);
@@ -11,8 +13,14 @@
     align-items: center;
     justify-content: space-between;
 }
+.escr-edit-ontology h3:not(.anno-header) {
+    max-width: 500px;
+}
 .escr-edit-ontology .escr-segmented-button-group > div {
     flex: 1 0 auto;
+}
+.escr-edit-ontology .escr-table:not(.annotation-ontology) {
+    max-width: 500px;
 }
 .escr-edit-ontology .escr-table tr > td.checkbox-column,
 .escr-edit-ontology .escr-table tr > th.checkbox-column {
