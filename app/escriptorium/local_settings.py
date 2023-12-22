@@ -37,7 +37,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2023-05-17'
+VERSION_DATE = 'UBMA-2023-12-22'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -71,7 +71,7 @@ INTERNAL_IPS = ['127.0.0.1']
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
 KRAKEN_TRAINING_DEVICE = 'cuda:0'
-#KRAKEN_TRAINING_DEVICE = 'cpu'
+# KRAKEN_TRAINING_DEVICE = 'cpu'
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda r: False,  # disables it
