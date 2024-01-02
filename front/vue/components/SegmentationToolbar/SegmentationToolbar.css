@@ -51,3 +51,28 @@
     width: 0.5rem;
     height: 0.5rem;
 }
+
+/* detachable toolbar */
+.escr-button.attach-detach-toolbar svg {
+    stroke: var(--background2);
+}
+.escr-segmentation-toolbar.detached-toolbar {
+    flex-flow: row wrap;
+    align-items: center;
+    background-color: var(--background2);
+    position: absolute;
+    border-radius: 5px;
+    min-height: 44px;
+    padding: 0 8px 0 0;
+    margin: 0;
+    box-shadow: 0px 4px 4px 0px #00000040;
+    z-index: var(--detached-toolbar-z);
+}
+.detached-toolbar .drag-handle {
+    color: var(--text1);
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    min-height: 38px;
+    cursor: pointer;
+}

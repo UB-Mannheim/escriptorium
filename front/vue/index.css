@@ -68,16 +68,17 @@
     --editor-toolbar-z: 1;
     --editor-global-toolbar-z: 2;
     --editor-nav-z: 3;
-    --global-nav-z: 4;
-    --segmented-button-focus-z: 5;
-    --table-actions-z: 6;
-    --taggroup-overflow-z: 7;
-    --sidebar-backdrop-z: 8;
-    --sidebar-container-z: 9;
-    --sidebar-z: 10;
-    --modal-backdrop-z: 11;
-    --modal-z: 12;
-    --toast-z: 13;
+    --detached-toolbar-z: 4;
+    --global-nav-z: 5;
+    --segmented-button-focus-z: 6;
+    --table-actions-z: 7;
+    --taggroup-overflow-z: 8;
+    --sidebar-backdrop-z: 9;
+    --sidebar-container-z: 10;
+    --sidebar-z: 11;
+    --modal-backdrop-z: 12;
+    --modal-z: 13;
+    --toast-z: 14;
 }
 .light-mode {
     /* button colors */

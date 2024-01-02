@@ -600,6 +600,8 @@ export class Segmenter {
             newUiEnabled = false,
             // the new UI segmentation toolbar ref, for click handlers
             toolbar = null,
+            // detachable segmentation toolbar ref, for click handlers
+            detachableToolbar = null,
             // the new UI type select dropdown, for click handlers
             toolbarSubmenuIds = [],
             // the active tool from state, see editor/store/globalTools for info
@@ -629,6 +631,7 @@ export class Segmenter {
         /** New UI */
         this.newUiEnabled = newUiEnabled;
         this.toolbar = toolbar;
+        this.detachableToolbar = detachableToolbar;
         this.toolbarSubmenuIds = toolbarSubmenuIds;
         this.activeTool = activeTool;
         this.setActiveTool = setActiveTool;
@@ -1119,6 +1122,10 @@ export class Segmenter {
                     event.target != this.canvas &&
                     !this.contextMenu?.contains(event.target) &&
                     !this.toolbar?.contains(event.target) &&
+                    !(
+                        this.newUiEnabled &&
+                        this.detachableToolbar?.contains(event.target)
+                    ) &&
                     !(this.newUiEnabled && isInToolbarSubmenu)
                 ) {
                     this.purgeSelection();
@@ -3261,6 +3268,14 @@ export class Segmenter {
      */
     setDisabled(disabled) {
         this.disableShortcuts = disabled;
+    }
+
+    /**
+     * Set the segmenter's detachableToolbar to the detached toolbar element
+     * @param {HTMLElement} element
+     */
+    setDetachableToolbar(element) {
+        this.detachableToolbar = element;
     }
 }
 
