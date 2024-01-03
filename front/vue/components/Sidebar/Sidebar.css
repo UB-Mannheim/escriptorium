@@ -22,6 +22,11 @@
 /* individual sidebar button */
 .escr-sidebar-button {
     cursor: pointer;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     border: none;
     font: inherit;
     font-size: 10px;
