@@ -18,13 +18,33 @@ const actions = {
     /**
      * Helper function to reuse common logic for errors
      */
-    addError({ commit }, error) {
+    async addError({ commit }, error) {
         const { response, message } = error;
         const url = response?.config?.baseURL + response?.config?.url;
-        commit("addAlert", {
-            color: "alert",
-            message: (response?.data?.message || message) + (url ? `: ${url}` : ""),
-        });
+        if (response?.status === 400) {
+            Object.entries(response.data?.error || {}).forEach(
+                ([key, value]) => {
+                    if (key === "non_field_errors") {
+                        commit("addAlert", {
+                            color: "alert",
+                            message: `Error: ${value}`,
+                        });
+                    } else {
+                        commit("addAlert", {
+                            color: "alert",
+                            message: `Error for field ${key}: ${value}`,
+                        });
+                    }
+                },
+            );
+        } else {
+            commit("addAlert", {
+                color: "alert",
+                message:
+                    (response?.data?.message || message) +
+                    (url ? `: ${url}` : ""),
+            });
+        }
         console.error(error);
     },
     remove({ _, commit }, index) {
