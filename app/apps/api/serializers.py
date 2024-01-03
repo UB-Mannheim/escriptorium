@@ -941,7 +941,12 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).filter(
-            Q(public=True) | Q(owner=self.user)
+            # Note: Only an owner should be able to train on top of an existing model
+            # if the model is public, the user can only clone it (override=False)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         )
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
@@ -979,7 +984,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 file_size=file_.size if file_ else 0
             )
         elif not override:
-            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
+            model = model.clone_for_training(self.user, name=None)
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1022,7 +1027,12 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
         ).filter(
-            Q(public=True) | Q(owner=self.user)
+            # Note: Only an owner should be able to train on top of an existing model
+            # if the model is public, the user can only clone it (override=False)
+            Q(public=True)
+            | Q(owner=self.user)
+            | Q(ocr_model_rights__user=self.user)
+            | Q(ocr_model_rights__group__user=self.user)
         )
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
@@ -1055,7 +1065,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
                 file_size=file_.size if file_ else 0
             )
         elif not override:
-            model = model.clone_for_training(self.user, name=self.validated_data['model_name'])
+            model = model.clone_for_training(self.user, name=None)
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
