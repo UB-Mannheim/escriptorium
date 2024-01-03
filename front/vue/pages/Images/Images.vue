@@ -195,6 +195,49 @@
                             theme="vertical-menu"
                         >
                             <EscrButton
+                                color="secondary"
+                                class="context-menu-button"
+                                label="Train Model"
+                                size="small"
+                                :disabled="loading && loading.images"
+                                :on-click="() => {}"
+                            >
+                                <template #button-icon>
+                                    <TrainIcon />
+                                </template>
+                                <template #button-icon-right>
+                                    <ChevronDownIcon />
+                                </template>
+                            </EscrButton>
+                            <template #popper>
+                                <ul class="escr-vertical-menu">
+                                    <li>
+                                        <button
+                                            :disabled="selectedParts && selectedParts.length < 2"
+                                            @mousedown="() => openModal('trainSegmenter')"
+                                        >
+                                            <span>Segmenter*</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @mousedown="() => openModal('trainRecognizer')"
+                                        >
+                                            <span>Recognizer</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="escr-help-text">
+                                    * Requires at least two selected images.
+                                </div>
+                            </template>
+                        </VMenu>
+                        <VMenu
+                            placement="bottom-start"
+                            :triggers="['click']"
+                            theme="vertical-menu"
+                        >
+                            <EscrButton
                                 class="context-menu-button"
                                 color="secondary"
                                 round
@@ -387,6 +430,20 @@
                     :textual-witnesses="textualWitnesses"
                     :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
+                <!-- train model modal -->
+                <TrainModal
+                    v-if="taskModalOpen && (
+                        taskModalOpen.trainSegmenter || taskModalOpen.trainRecognizer
+                    )"
+                    :transcriptions="transcriptions"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => {
+                        closeTaskModal('trainSegmenter');
+                        closeTaskModal('trainRecognizer');
+                    }"
+                    :on-submit="handleSubmitTraining"
+                    :models="taskModalOpen.trainSegmenter ? segmentationModels : recognitionModels"
+                />
                 <!-- export images modal -->
                 <ExportModal
                     v-if="taskModalOpen && taskModalOpen.export"
@@ -428,6 +485,7 @@ import { mapActions, mapMutations, mapState } from "vuex";
 import AlignIcon from "../../components/Icons/AlignIcon/AlignIcon.vue";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
+import ChevronDownIcon from "../../components/Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
@@ -452,6 +510,8 @@ import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
 import ToggleButton from "../../components/ToggleButton/ToggleButton.vue";
+import TrainIcon from "../../components/Icons/TrainIcon/TrainIcon.vue";
+import TrainModal from "../../components/TrainModal/TrainModal.vue";
 import TranscribeIcon from "../../components/Icons/TranscribeIcon/TranscribeIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
@@ -464,6 +524,7 @@ export default {
     components: {
         AlignIcon,
         AlignModal,
+        ChevronDownIcon,
         ConfirmModal,
         EscrButton,
         EscrLoader,
@@ -495,6 +556,8 @@ export default {
         SharePanel,
         TextField,
         ToggleButton,
+        TrainIcon,
+        TrainModal,
         TranscribeIcon,
         TranscribeModal,
         TrashIcon,
@@ -722,6 +785,7 @@ export default {
             "handleSubmitAlign",
             "handleSubmitExport",
             "handleSubmitSegmentation",
+            "handleSubmitTraining",
             "handleSubmitTranscribe",
             "moveSelectedParts",
             "onCancelMove",

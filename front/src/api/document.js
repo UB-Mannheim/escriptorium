@@ -306,3 +306,43 @@ export const createTranscriptionLayer = async ({ documentId, layerName }) =>
 // delete a part (image) on a document
 export const deleteDocumentPart = async ({ documentId, partPk }) =>
     await axios.delete(`/documents/${documentId}/parts/${partPk}/`);
+
+export const trainRecognizerModel = async ({
+    documentId,
+    model,
+    modelName,
+    override,
+    parts,
+    transcription,
+}) => {
+    const params = {
+        override,
+        parts,
+        transcription,
+    };
+    if (model) {
+        params.model = model;
+    } else {
+        params.model_name = modelName;
+    }
+    return await axios.post(`/documents/${documentId}/train/`, params);
+};
+
+export const trainSegmenterModel = async ({
+    documentId,
+    model,
+    modelName,
+    override,
+    parts,
+}) => {
+    const params = {
+        override,
+        parts,
+    };
+    if (model) {
+        params.model = model;
+    } else {
+        params.model_name = modelName;
+    }
+    return await axios.post(`/documents/${documentId}/segtrain/`, params);
+};

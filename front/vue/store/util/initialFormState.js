@@ -71,6 +71,12 @@ export default {
         group: "",
         user: "",
     },
+    train: {
+        model: "",
+        modelName: "",
+        override: false,
+        transcription: "",
+    },
     transcribe: {
         model: "",
         layerName: "",

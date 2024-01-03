@@ -5,6 +5,8 @@ import {
     exportDocument,
     queueImport,
     segmentDocument,
+    trainRecognizerModel,
+    trainSegmenterModel,
     transcribeDocument,
 } from "../../../src/api";
 import initialFormState from "../util/initialFormState";
@@ -20,6 +22,8 @@ const state = () => ({
         overwriteWarning: false,
         segment: false,
         transcribe: false,
+        trainSegmenter: false,
+        trainRecognizer: false,
     },
     selectedTask: undefined,
 });
@@ -98,17 +102,20 @@ const actions = {
      */
     closeModal({ commit, dispatch, rootState }, key) {
         commit("setModalOpen", { key, open: false });
-        if (Object.hasOwnProperty.call(initialFormState, key)) {
-            dispatch("forms/clearForm", key, { root: true });
+        let form = key;
+        // ensure training forms are cleared (different modals that share a key)
+        if (key.startsWith("train")) form = "train";
+        if (Object.hasOwnProperty.call(initialFormState, form)) {
+            dispatch("forms/clearForm", form, { root: true });
             // when clearing forms with regionTypes, ensure default (all types selected)
             // is set if possible
             if (
-                Object.hasOwnProperty.call(initialFormState[key], "regionTypes")
+                Object.hasOwnProperty.call(initialFormState[form], "regionTypes")
             ) {
                 commit(
                     "forms/setFieldValue",
                     {
-                        form: key,
+                        form,
                         field: "regionTypes",
                         value:
                             rootState?.document?.regionTypes?.map((rt) =>
@@ -212,6 +219,26 @@ const actions = {
      */
     selectTask({ commit }, task) {
         commit("setSelectedTask", task.pk);
+    },
+    /**
+     * Queue the model training task.
+     */
+    async trainModel({ rootState }, { documentId, parts, modelType }) {
+        const params = {
+            documentId,
+            model: rootState?.forms?.train?.model,
+            modelName: rootState?.forms?.train?.modelName,
+            override: rootState?.forms?.train?.override,
+            parts,
+        };
+        if (modelType === "recognizer") {
+            await trainRecognizerModel({
+                ...params,
+                transcription: rootState?.forms?.train?.transcription,
+            });
+        } else if (modelType === "segmenter") {
+            await trainSegmenterModel(params);
+        }
     },
     /**
      * Queue the transcription task for a document.

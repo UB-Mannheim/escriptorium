@@ -301,6 +301,41 @@ const actions = {
         }
     },
     /**
+     * Handle submitting the model training modal.
+     */
+    async handleSubmitTraining({ commit, dispatch, rootState, state }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch(
+                "tasks/trainModel",
+                {
+                    documentId: rootState.document.id,
+                    parts: state.selectedParts,
+                    modelType: rootState.tasks.modalOpen.trainSegmenter
+                        ? "segmenter"
+                        : "recognizer",
+                },
+                { root: true },
+            );
+            dispatch("tasks/closeModal", "trainSegmenter", { root: true });
+            dispatch("tasks/closeModal", "trainRecognizer", { root: true });
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Training queued successfully",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Handle submitting the transcribe modal.
      */
     async handleSubmitTranscribe({ commit, dispatch }) {
