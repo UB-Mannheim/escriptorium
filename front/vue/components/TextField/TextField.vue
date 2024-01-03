@@ -9,6 +9,18 @@
                 class="escr-required"
             >*</span>
         </span>
+        <ul
+            v-if="errors && errors.length > 0"
+            class="escr-field-errors"
+        >
+            <li
+                v-for="(error, i) in errors"
+                :key="`error-${i}`"
+                class="escr-help-text escr-error-text"
+            >
+                {{ error }}
+            </li>
+        </ul>
         <input
             type="text"
             :placeholder="placeholder"
@@ -108,6 +120,13 @@ export default {
         value: {
             type: String,
             default: "",
+        },
+        /**
+         * Array of error strings.
+         */
+        errors: {
+            type: Array,
+            default: () => [],
         },
     },
 }

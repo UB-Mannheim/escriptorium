@@ -12,6 +12,11 @@ h3 span.escr-required {
     font-family: 'Noto Sans';
     font-style: normal;
 }
+.escr-field-errors {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+}
 .escr-error-text {
     color: var(--alert);
 }

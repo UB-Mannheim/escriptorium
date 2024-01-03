@@ -6,7 +6,7 @@
     border: none;
     border-radius: 4px;
     padding: 8px;
-    margin: 8px 0;
+    margin: 8px 0 0 1px;
 }
 .escr-text-field input:disabled {
     color: var(--text3);
