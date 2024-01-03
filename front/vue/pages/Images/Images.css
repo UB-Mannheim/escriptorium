@@ -7,6 +7,9 @@
     margin: 0;
     background-color: var(--background2);
 }
+.escr-images-page .escr-modal .escr-text-field input {
+    background-color: var(--background);
+}
 /* header */
 .escr-images-page .escr-images-header {
     position: relative;
@@ -76,6 +79,7 @@
 }
 .escr-images-toolbar .escr-text-field input {
     background-color: var(--background1);
+    margin: 0;
 }
 .escr-images-toolbar .escr-text-field.range-text-field {
     margin-right: 1rem;

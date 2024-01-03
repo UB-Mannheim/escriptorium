@@ -63,8 +63,21 @@
 .escr-vertical-menu a:focus {
     background-color: var(--secondary-hover);
 }
-.escr-vertical-menu .new-section {
+.escr-vertical-menu button:disabled {
+    background-color: var(--background1);
+    color: var(--text3);
+    pointer-events: none;
+    cursor: default;
+}
+.escr-vertical-menu .new-section,
+.escr-vertical-menu + .escr-help-text {
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid var(--background2);
+}
+
+/* help text */
+.escr-vertical-menu + .escr-help-text {
+    color: var(--text1);
+    padding: 8px 32px 0;
 }
