@@ -342,7 +342,14 @@
                     <div
                         v-if="loading && loading.images"
                         class="images-loading-overlay"
-                    />
+                    >
+                        <div
+                            class="escr-spinner"
+                            role="status"
+                        >
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
                 </div>
                 <EscrLoader
                     v-else

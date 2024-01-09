@@ -33,7 +33,8 @@
 .escr-images-page .grid-spinner.escr-loader-container {
     margin-top: 4rem;
 }
-.escr-images-page .grid-spinner.escr-loader-container .escr-spinner {
+.escr-images-page .grid-spinner.escr-loader-container .escr-spinner,
+.escr-image-grid .images-loading-overlay .escr-spinner {
     border-width: 8px;
     width: 64px;
     height: 64px;
@@ -42,6 +43,10 @@
 }
 .escr-images-page .escr-spinner {
     border-color: var(--text3);
+    border-right-color: transparent;
+}
+.escr-image-grid .images-loading-overlay .escr-spinner {
+    border-color: var(--button-text);
     border-right-color: transparent;
 }
 
@@ -173,6 +178,8 @@
     top: 188px;
     left: 64px;
     background-color: rgba(0, 0, 0, 0.25);
+    text-align: center;
+    padding-top: 4rem;
 }
 .escr-image-selection-toolbar + .escr-image-grid .images-loading-overlay {
     height: calc(100vh - 236px);
