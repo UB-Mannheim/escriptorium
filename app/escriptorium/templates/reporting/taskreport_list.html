@@ -2,6 +2,7 @@
 {% load i18n timedelta %}
 
 {% block body %}
+<h1>{% trans 'Task Usage' %}</h1>
 <div>
     <div class="row mt-4 mb-3">
         <div class="col">
@@ -74,7 +75,7 @@
             </div>
         </div>
     </div>
-    <div class="mb-4 text-center">
+    <div class="mb-3 text-center">
         <div class="alert alert-warning mb-2" role="alert">
             {% trans "CPU/GPU usage values also include automatic processing of the images on upload, those tasks aren't listed below." %}
         </div>

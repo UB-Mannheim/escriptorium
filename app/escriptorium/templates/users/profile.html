@@ -2,9 +2,10 @@
 {% load i18n bootstrap %}
 
 {% block body %}
+<h1>{% trans 'Profile Settings' %}</h1>
 <div class="container">
-    <div class="row">
-        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+    <div{% if request.user.legacy_mode %} class="row"{% endif %}>
+        <div class="nav {% if request.user.legacy_mode %}flex-column {% endif %}nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <a class="nav-link {% block infos-tab-active %}active{% endblock %}" id="nav-infos-tab" href="{% url 'profile' %}" role="tab">{% trans "Information" %}</a>
             <a class="nav-link {% block key-tab-active %}{% endblock %}" id="nav-key-tab"  href="{% url 'profile-api-key' %}" role="tab">{% trans "API key" %}</a>
             <a class="nav-link {% block files-tab-active %}{% endblock %}" id="nav-files-tab" href="{% url 'profile-files' %}" role="tab">{% trans "Files" %}</a>

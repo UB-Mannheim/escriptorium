@@ -2,15 +2,18 @@
 {% load i18n bootstrap %}
 
 {% block body %}
-<h2>{% trans "Upload a model" %}</h2>
-<form method="post" class="inline-form" enctype="multipart/form-data" action="{% url 'model-upload' %}">
-    {% csrf_token %}
-    {% render_field form.file %}
-    {% render_field form.name %}
-    <button type="submit" value="" class="nav-item btn btn-success" {% if not has_disk_storage_left %}disabled title="You don't have any disk storage left"{% endif %}>{% trans 'Upload' %}</button>
-</form>
+<h1>{% trans "Upload a model" %}</h1>
+<div class="container">
+    <form method="post" class="inline-form" enctype="multipart/form-data" action="{% url 'model-upload' %}">
+        {% csrf_token %}
+        {% render_field form.file %}
+        {% render_field form.name %}
+        <button type="submit" value="" class="nav-item btn btn-success" {% if not has_disk_storage_left %}disabled title="You don't have any disk storage left"{% endif %}>{% trans 'Upload' %}</button>
+    </form>
+</div>
 {% endblock %}
 {% block scripts %}
+{{ block.super }}
 <script>
 /* Handle a basic name field auto filling */
 const fileInput = document.getElementById('id_file');

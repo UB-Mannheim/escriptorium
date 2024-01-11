@@ -6,6 +6,11 @@
 
 {% block tab-content %}
 <table class="table">
+    <tr>
+        <th>{% trans 'Recipient' %}</th>
+        <th>{% trans 'Group' %}</th>
+        <th>{% trans 'Status' %}</th>
+    </tr>
 {% for invite in page_obj %}
     <tr>
         <td>{{invite.recipient_email|default:invite.recipient}}</td>
