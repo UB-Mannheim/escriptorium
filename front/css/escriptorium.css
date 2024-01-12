@@ -1027,7 +1027,8 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) .card-subtitle {
 
 /* models page */
 main:has(.escr-vue-enabled):not(:has(.escr-page)) #models-table .btn.btn-sm,
-main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .btn.btn-sm {
+main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .btn.btn-sm,
+body.search main:has(.escr-vue-enabled) table .btn.btn-sm {
     min-width: 32px;
 }
 main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .form-group {
@@ -1038,17 +1039,23 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .form-group {
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .page-link {
     cursor: pointer;
 }
-main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert.alert-warning {
-    height: 32px;
-    padding: 8px 0;
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert {
+    padding: 8px;
     border-radius: 5px;
-    background: var(--at-risk-light);
-    border: 1px solid var(--at-risk);
     font-family: "Noto Sans";
     font-size: 12px;
     font-weight: 400;
     line-height: 16px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-warning {
+    background: var(--at-risk-light);
+    border: 1px solid var(--at-risk);
     color: var(--text1);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-danger {
+    background-color: var(--background-alert);
+    border: 1px solid var(--foreground-alert);
+    color: var(--foreground-alert);
 }
 
 /* profile */
@@ -1151,4 +1158,12 @@ body.homepage main:has(.escr-vue-enabled) .jumbotron {
 body.homepage main:has(.escr-vue-enabled) footer {
     background-color: transparent !important;
     margin: 2rem 0 1rem !important;
+}
+
+/* search page */
+body.search main:has(.escr-vue-enabled) .text-success {
+    color: var(--primary-dark) !important;
+}
+body.search main:has(.escr-vue-enabled) select {
+    min-height: 38px;
 }

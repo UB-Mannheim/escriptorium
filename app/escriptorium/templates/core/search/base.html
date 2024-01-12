@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 {% load i18n bootstrap %}
 
+{% block bodyclass %}search{% endblock %}
+
 {% block body %}
 <div>
-  <h2>{% block title %}{% endblock %}</h2>
+  <h1>{% block title %}{% endblock %}</h1>
   <form method="get" class="mt-3">
     <div>{% render_field form.document %}</div>
     <div>{% render_field form.transcription %}</div>
@@ -53,7 +55,7 @@
       {% endif %}
 
     <div class="my-4">
-      <h4>{% trans "Results" %} ({{ page_obj.paginator.count }}) {% block replacement_button %}{% endblock %}</h4>
+      <h2>{% trans "Results" %} ({{ page_obj.paginator.count }}) {% block replacement_button %}{% endblock %}</h2>
     </div>
 
     <table class="table table-hover">
@@ -142,7 +144,7 @@
           <td title="{% trans 'Search score' %}">{{ result.score }}</td>
           {% endif %}
           <td title="{% trans 'Go to document part editing page' %}">
-            <a class="btn btn-primary" target="_blank" href="{% url 'document-part-edit' pk=result.object.line.document_part.document.id part_pk=result.object.line.document_part.id %}">
+            <a class="btn btn-primary btn-sm" target="_blank" href="{% url 'document-part-edit' pk=result.object.line.document_part.document.id part_pk=result.object.line.document_part.id %}">
               <i class="fas fa-external-link-square-alt"></i>
             </a>
           </td>
