@@ -987,17 +987,27 @@ export class Segmenter {
                         } else if (this.newUiEnabled) {
                             if (this.mode === "lines") {
                                 // add lines
-                                this.setActiveTool("add-lines");
+                                this.setActiveTool(
+                                    this.activeTool === "add-lines"
+                                        ? "select"
+                                        : "add-lines",
+                                );
                             } else if (this.mode === "regions") {
                                 // add regions
-                                this.setActiveTool("add-regions");
+                                this.setActiveTool(
+                                    this.activeTool === "add-regions"
+                                        ? "select"
+                                        : "add-regions",
+                                );
                             }
                         }
                         break;
                     case "c":
                         // activate cutting tool
                         if (this.newUiEnabled) {
-                            this.setActiveTool("cut");
+                            this.setActiveTool(
+                                this.activeTool === "cut" ? "select" : "cut",
+                            );
                         } else {
                             this.splitting = !this.splitting;
                             if (this.splitBtn) {
@@ -3223,7 +3233,7 @@ export class Segmenter {
         }
         this.purgeSelection();
         this.mode = mode;
-        switch(mode) {
+        switch (mode) {
             case "lines":
                 this.toggleMasks(false);
                 this.toggleLineStrokes(true);

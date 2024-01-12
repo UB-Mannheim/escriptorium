@@ -476,8 +476,6 @@ export default {
                 } else {
                     if (evt.key === "t" && this.hasSelection) {
                         this.openTypeMenu();
-                    } else if (evt.key === "c") {
-                        this.toggleTool("cut");
                     }
                 }
             }
