@@ -17,7 +17,9 @@
                     </template>
                 </EscrButton>
                 <template #popper>
-                    Import images or transcription content.
+                    <span class="escr-tooltip-text">
+                        Import images or transcription content.
+                    </span>
                 </template>
             </VDropdown>
         </li>

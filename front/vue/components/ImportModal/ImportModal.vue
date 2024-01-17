@@ -6,7 +6,7 @@
             <h2>Import Elements</h2>
             <EscrButton
                 color="text"
-                :on-click="onCancel"
+                :on-click="imagesLoading ? () => openModal('imageCancelWarning') : onCancel"
                 size="small"
             >
                 <template #button-icon>
@@ -53,13 +53,16 @@
             />
         </template>
         <template #modal-actions>
+            <!-- TODO: Show tooltip here while images loading to indicate why
+            it is disabled. -->
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
-                :on-click="onCancel"
-                :disabled="disabled"
+                :label="(importMode !== 'images' || imagesLoading) ? 'Cancel' : 'Close'"
+                :on-click="() => clickCancelButton()"
+                :disabled="disabled || imagesLoading"
             />
             <EscrButton
+                v-if="importMode !== 'images'"
                 color="primary"
                 label="Upload"
                 :on-click="handleSubmit"
@@ -128,6 +131,8 @@ export default {
     computed: {
         ...mapState({
             iiifUri: (state) => state.forms.import.iiifUri,
+            imagesComplete: (state) => state.forms.import.imagesComplete,
+            imagesLoading: (state) => state.forms.import.imagesLoading,
             importMode: (state) => state.forms.import.mode,
             layerName: (state) => state.forms.import.layerName,
             metsUri: (state) => state.forms.import.metsUri,
@@ -151,9 +156,8 @@ export default {
         },
     },
     methods: {
-        ...mapActions("forms", [
-            "handleGenericInput",
-        ]),
+        ...mapActions("forms", ["handleGenericInput"]),
+        ...mapActions("tasks", ["openModal"]),
         setImportMode(mode) {
             this.handleGenericInput({ form: "import", field: "mode", value: mode })
         },
@@ -195,6 +199,21 @@ export default {
                 this.onSubmit();
             }
         },
+        /**
+         * Handle clicks on the cancel button depending on import mode and state.
+         */
+        clickCancelButton() {
+            if (this.importMode === "images" && this.imagesLoading) {
+                // In images mode and uploads in progress, show cancel warning
+                this.openModal("imageCancelWarning");
+            } else if (this.importMode === "images" && this.imagesComplete) {
+                // In images mode and uploads completed successfully, show success dialog
+                this.handleSubmit();
+            } else {
+                // Otherwise, regardless of mode, just close dialog
+                this.onCancel();
+            }
+        }
     },
 }
 </script>

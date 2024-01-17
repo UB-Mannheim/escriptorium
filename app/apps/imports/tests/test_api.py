@@ -650,12 +650,3 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                                      'parts': [str(p.pk) for p in self.parts],
                                      'region_types': self.region_types_choices})
         self.assertEqual(response.status_code, 400)
-
-        # no img
-        response = self.client.post(reverse('api:document-export',
-                                            kwargs={'pk': self.trans.document.pk}),
-                                    {'transcription': self.trans.pk,
-                                     'file_format': 'text',
-                                     'parts': [],
-                                     'region_types': self.region_types_choices})
-        self.assertEqual(response.status_code, 400)

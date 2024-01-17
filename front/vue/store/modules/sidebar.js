@@ -14,6 +14,12 @@ const actions = {
             commit("setSelectedAction", key)
         }
     },
+    /**
+     * Close the sidebar, no matter the selected action
+     */
+    closeSidebar({ commit }) {
+        commit("setSelectedAction", "");
+    }
 };
 
 const mutations = {

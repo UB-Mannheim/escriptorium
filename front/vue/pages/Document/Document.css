@@ -9,13 +9,14 @@
     display: grid;
     gap: 24px;
     grid-template-columns: 56% 44%;
+    min-height: calc(100vh - 51px);
 }
 .escr-document-dashboard .escr-doc-left-grid,
 .escr-document-dashboard .escr-doc-right-grid {
     display: grid;
     gap: 24px;
     align-items: stretch;
-    height: calc(100vh - 75px);
+    min-height: 100%;
     max-height: calc(100vh - 75px);
 }
 
@@ -54,7 +55,8 @@
     grid-area: tags;
     padding-right: 0;
 }
-.escr-document-dashboard .escr-document-tags .escr-card-header {
+.escr-document-dashboard .escr-document-tags .escr-card-header,
+.escr-document-dashboard .escr-document-tags .escr-loader-container {
     padding-right: 1rem;
 }
 .escr-document-dashboard .escr-tag-group-wrapped {
@@ -69,6 +71,8 @@
 .escr-document-dashboard .escr-document-tasks {
     grid-area: tasks;
     overflow: hidden;
+    display: flex;
+    flex-flow: column;
 }
 .escr-document-dashboard .escr-document-tasks .escr-card-header {
     margin-bottom: 0;
@@ -79,6 +83,7 @@
     padding: 0;
     height: 100%;
     max-height: calc(100% - 28px);
+    flex: 1 0 auto;
 }
 .escr-document-dashboard .escr-document-tasks ul {
     display: grid;
@@ -98,6 +103,12 @@
 }
 .escr-document-dashboard .escr-document-tasks ul > li:last-of-type {
     border-bottom: none;
+}
+.escr-document-dashboard .escr-spinner {
+    width: 24px;
+    height: 24px;
+    max-width: 24px;
+    max-height: 24px;
 }
 .escr-document-dashboard .escr-document-tasks ul > li .escr-spinner {
     margin-right: 1rem;
@@ -155,6 +166,7 @@
         "chars chars chars"
         "ontology ontology ontology"
         "ontology ontology ontology";
+    min-height: calc(100% + 51px);
 }
 /* right side header and select element */
 .escr-document-dashboard .doc-stats-header {

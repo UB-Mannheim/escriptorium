@@ -34,7 +34,8 @@
                     <input
                         type="checkbox"
                         value="include-images"
-                        :checked="includeImages === true"
+                        :checked="includeImages === true && fileFormat !== 'text'"
+                        :disabled="fileFormat === 'text'"
                         @change="handleIncludeImagesChange"
                     >
                     Include images
@@ -95,10 +96,24 @@ export default {
             required: true,
         },
         /**
+         * Whether or not the OpenITI Markdown export is enabled on the instance.
+         */
+        markdownEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
          * List of all region types on this document.
          */
         regionTypes: {
             type: Array,
+            required: true,
+        },
+        /**
+         * Whether or not the OpenITI TEI XML export is enabled on the instance.
+         */
+        teiEnabled: {
+            type: Boolean,
             required: true,
         },
         /**
@@ -168,7 +183,7 @@ export default {
          * File format options for export
          */
         fileFormatOptions() {
-            return [
+            const formatOptions = [
                 {
                     label: "Text",
                     value: "text",
@@ -176,8 +191,8 @@ export default {
                 },
                 {
                     label: "PageXML",
-                    value: "page",
-                    selected: this.fileFormat === "page",
+                    value: "pagexml",
+                    selected: this.fileFormat === "pagexml",
                 },
                 {
                     label: "ALTO",
@@ -185,6 +200,21 @@ export default {
                     selected: this.fileFormat === "alto",
                 },
             ];
+            if (this.markdownEnabled) {
+                formatOptions.push({
+                    label: "OpenITI Markdown",
+                    value: "openitimarkdown",
+                    selected: this.fileFormat === "openitimarkdown",
+                });
+            }
+            if (this.teiEnabled) {
+                formatOptions.push({
+                    label: "OpenITI TEI XML",
+                    value: "teixml",
+                    selected: this.fileFormat === "teixml",
+                });
+            }
+            return formatOptions;
         },
     },
     methods: {
@@ -196,6 +226,10 @@ export default {
             this.handleGenericInput({
                 form: "export", field: "fileFormat", value: e.target.value,
             });
+            if (e.target.value === "text") {
+                // if switching to text export, uncheck "include images"
+                this.handleGenericInput({ form: "export", field: "includeImages", value: false });
+            }
         },
         handleIncludeImagesChange(e) {
             this.handleGenericInput({

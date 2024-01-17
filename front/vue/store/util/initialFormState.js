@@ -48,6 +48,8 @@ export default {
     },
     import: {
         iiifUri: "",
+        imagesComplete: false,
+        imagesLoading: false,
         layerName: "",
         metsType: "url",
         metsUri: "",

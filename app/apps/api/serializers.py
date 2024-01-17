@@ -10,7 +10,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from easy_thumbnails.files import get_thumbnailer
-from rest_framework import serializers
+from rest_framework import fields, serializers
 
 from api.fields import DisplayChoiceField
 from core.models import (
@@ -354,13 +354,15 @@ class DocumentSerializer(serializers.ModelSerializer):
     parts_count = serializers.ReadOnlyField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
+    project_name = serializers.SerializerMethodField()
+    project_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'valid_part_types',
-                  'parts_count', 'tags', 'created_at', 'updated_at')
+                  'parts_count', 'tags', 'created_at', 'updated_at', 'project_name', 'project_id')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -371,6 +373,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             return Script.objects.get(name=value)
         except Script.DoesNotExist:
             raise serializers.ValidationError('This script does not exists in the database.')
+
+    def get_project_name(self, document):
+        return document.project.name
+
+    def get_project_id(self, document):
+        return document.project.id
 
     def to_representation(self, instance):
         # only use DocumentTagSerializer on GET; otherwise, use pks
@@ -391,6 +399,7 @@ class ImportSerializer(serializers.Serializer):
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.all(),
         required=False)
+    name = serializers.CharField(required=False)
     override = serializers.BooleanField(required=False)
     upload_file = serializers.FileField(required=False)
 
@@ -470,9 +479,15 @@ class ImportSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        if 'name' in validated_data:
+            name = validated_data.get("name")
+        elif 'transcription' in validated_data:
+            name = validated_data.get('transcription').name
+        else:
+            name = ''
         imp = DocumentImport(
             document=self.document,
-            name=validated_data.get('transcription').name if 'transcription' in validated_data else '',
+            name=name,
             override=validated_data.get('override') or False,
             import_file=self.file,
             total=self.total,
@@ -801,12 +816,13 @@ class OcrModelSerializer(serializers.ModelSerializer):
     rights = serializers.SerializerMethodField(source='get_rights')
     script = serializers.ReadOnlyField(source='script.name')
     parent = serializers.ReadOnlyField(source='parent.name')
+    can_share = serializers.SerializerMethodField(source='get_can_share')
 
     class Meta:
         model = OcrModel
         fields = ('pk', 'name', 'file', 'file_size', 'job',
                   'owner', 'training', 'versions', 'documents',
-                  'accuracy_percent', 'rights', 'script', 'parent')
+                  'accuracy_percent', 'rights', 'script', 'parent', 'can_share')
 
     def create(self, data):
         # If quotas are enforced, assert that the user still has free disk storage
@@ -827,6 +843,10 @@ class OcrModelSerializer(serializers.ModelSerializer):
             return "public"
         else:
             return "user"
+
+    def get_can_share(self, instance):
+        user = self.context["view"].request.user
+        return instance.owner == user and not instance.public
 
 
 class ProcessSerializerMixin():
@@ -866,7 +886,8 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     )
 
     parts = serializers.PrimaryKeyRelatedField(many=True,
-                                               queryset=DocumentPart.objects.all())
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
     steps = serializers.ChoiceField(choices=STEPS_CHOICES,
                                     required=False,
                                     default='both')
@@ -885,7 +906,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def process(self):
         model = self.validated_data.get('model')
-        parts = self.validated_data.get('parts')
+        parts = self.validated_data.get('parts') or self.document.parts.all()
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1052,8 +1073,9 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
-    parts = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=DocumentPart.objects.all())
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
     model = serializers.PrimaryKeyRelatedField(
         queryset=OcrModel.objects.all())
     transcription = serializers.PrimaryKeyRelatedField(
@@ -1071,6 +1093,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
     def process(self):
         model = self.validated_data.get('model')
         transcription = self.validated_data.get('transcription')
+        parts = self.validated_data.get('parts') or self.document.parts.all()
 
         ocr_model_document, created = OcrModelDocument.objects.get_or_create(
             document=self.document,
@@ -1081,7 +1104,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             ocr_model_document.executed_on = timezone.now()
             ocr_model_document.save()
 
-        for part in self.validated_data.get('parts'):
+        for part in parts:
             part.chain_tasks(
                 transcribe.si(
                     transcription_pk=transcription.pk,
@@ -1091,9 +1114,28 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             )
 
 
+class EditableMultipleChoiceField(serializers.MultipleChoiceField):
+    """Make choices a property, so it can be modified reliably.
+    Adapted from https://github.com/encode/django-rest-framework/issues/3383"""
+    _choices = dict()
+
+    def _set_choices(self, choices):
+        self.grouped_choices = fields.to_choices_dict(self._choices)
+        self._choices = fields.flatten_choices_dict(choices)
+        self.choice_strings_to_values = {
+            str(key): key for key in self._choices.keys()
+        }
+
+    def _get_choices(self):
+        return self._choices
+
+    choices = property(_get_choices, _set_choices)
+
+
 class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
-    parts = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=DocumentPart.objects.all())
+    parts = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=DocumentPart.objects.all(),
+                                               required=False)
 
     transcription = serializers.PrimaryKeyRelatedField(
         queryset=Transcription.objects.filter(archived=False),
@@ -1160,9 +1202,9 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         min_value=0.0,
         max_value=1.0,
     )
-    region_types = serializers.MultipleChoiceField(
+    region_types = EditableMultipleChoiceField(
         required=True,
-        choices=[('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')],
+        choices={'Undefined': '(Undefined region type)', 'Orphan': '(Orphan lines)'},
         help_text=_("Region types to include in the alignment."),
     )
     layer_name = serializers.CharField(
@@ -1175,10 +1217,14 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['transcription'].queryset = self.document.transcriptions.filter(archived=False)
         self.fields['existing_witness'].queryset = TextualWitness.objects.filter(owner=self.user)
-        self.fields['region_types'].choices.update({
-            rt.id: rt.name
-            for rt in self.document.valid_block_types.all()
-        })
+        self.fields['region_types'].choices = {
+            **self.fields['region_types'].choices,
+            **{
+                str(rt.id): rt.name
+                for rt in self.document.valid_block_types.all()
+            },
+        }
+        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
         data = super().validate(data)
@@ -1222,7 +1268,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         full_doc = self.validated_data.get("full_doc", True)
         threshold = self.validated_data.get("threshold", 0.8)
         region_types = self.validated_data.get("region_types", ["Orphan", "Undefined"])
-        parts = self.validated_data.get("parts")
+        parts = self.validated_data.get("parts") or self.document.parts.all()
         layer_name = self.validated_data.get("layer_name")
 
         if existing_witness:

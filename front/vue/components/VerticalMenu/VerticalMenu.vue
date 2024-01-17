@@ -1,6 +1,6 @@
 <template>
     <VMenu
-        :delay="{ show: 0, hide: 100 }"
+        :delay="{ show: 0, hide: 20 }"
         theme="vertical-menu"
         placement="bottom-end"
         :shown="isOpen"
@@ -28,7 +28,7 @@
                 >
                     <button
                         v-if="item.onClick"
-                        @click="item.onClick"
+                        @mousedown="item.onClick"
                     >
                         <component
                             :is="item.icon"

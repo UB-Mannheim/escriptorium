@@ -16,3 +16,6 @@
 .escr-quick-actions li button svg {
     margin-right: 12px;
 }
+.escr-tooltip-text {
+    color: var(--text1);
+}

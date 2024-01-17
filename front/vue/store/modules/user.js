@@ -1,4 +1,4 @@
-import { retrieveCurrentUser, retrieveGroups } from "../../../src/api";
+import { retrieveCurrentUser, retrieveGroups, retrieveModels } from "../../../src/api";
 
 // initial state
 const state = () => ({
@@ -20,6 +20,8 @@ const state = () => ({
      */
     groups: [],
     isStaff: false,
+    segmentationModels: [],
+    recognitionModels: [],
     username: "",
 });
 
@@ -43,6 +45,28 @@ const actions = {
             commit("setGroups", data.results);
         }
     },
+    /**
+     * Fetch segmentation models the user has access to.
+     */
+    async fetchSegmentModels({ commit }) {
+        const { data } = await retrieveModels("segment");
+        if (data?.results) {
+            commit("setSegmentationModels", data.results);
+        } else {
+            throw new Error("Unable to retrieve segmentation models");
+        }
+    },
+    /**
+     * Fetch recognition models the user has access to.
+     */
+    async fetchRecognizeModels({ commit }) {
+        const { data } = await retrieveModels("recognize");
+        if (data?.results) {
+            commit("setRecognitionModels", data.results);
+        } else {
+            throw new Error("Unable to retrieve recognition models");
+        }
+    },
 };
 
 const mutations = {
@@ -57,6 +81,12 @@ const mutations = {
     },
     setIsStaff(state, isStaff) {
         state.isStaff = isStaff;
+    },
+    setRecognitionModels(state, models) {
+        state.recognitionModels = models;
+    },
+    setSegmentationModels(state, models) {
+        state.segmentationModels = models;
     },
     setUsername(state, username) {
         state.username = username;

@@ -45,9 +45,16 @@
                             <h2>Tags</h2>
                         </div>
                         <EscrTags
-                            v-if="tags"
+                            v-if="tags && tags.length"
                             :tags="tags"
                             wrap
+                        />
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.document"
+                            no-data-message="This document does not have any tags. You can add tags
+                                using the Edit form, accessible from the dropdown menu in the above
+                                panel (to the right of the document title)."
                         />
                     </div>
 
@@ -68,9 +75,17 @@
                                 </EscrButton>
                             </div>
                         </div>
-                        <div class="tasks-container">
+                        <div
+                            v-if="tasks.length"
+                            class="tasks-container"
+                        >
                             <TaskDashboard />
                         </div>
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.tasks"
+                            no-data-message="There are no tasks to display."
+                        />
                     </div>
 
                     <!-- Document images list -->
@@ -90,13 +105,22 @@
                                 </EscrButton>
                             </div>
                         </div>
-                        <div class="table-container">
+                        <div
+                            v-if="parts.length"
+                            class="table-container"
+                        >
                             <EscrTable
                                 :items="parts"
                                 :headers="partsHeaders"
                                 item-key="pk"
+                                linkable
                             />
                         </div>
+                        <EscrLoader
+                            v-else
+                            :loading="loading && loading.parts"
+                            no-data-message="There are no images to display"
+                        />
                     </div>
                 </div>
                 <div class="escr-doc-right-grid">
@@ -106,7 +130,6 @@
                         <div>
                             <h3>View:</h3>
                             <EscrDropdown
-                                :disabled="loading && loading.transcriptions"
                                 :options="transcriptionLevels"
                                 :on-change="selectTranscription"
                             />
@@ -131,26 +154,36 @@
                         <div class="escr-card-header">
                             <h2>Total Lines</h2>
                         </div>
-                        <span class="escr-stat">
-                            {{
-                                (!loading.transcriptions && lineCount)
-                                    ? lineCount.toLocaleString()
-                                    : "-"
-                            }}
+                        <span
+                            v-if="lineCount"
+                            class="escr-stat"
+                        >
+                            {{ lineCount.toLocaleString() }}
                         </span>
+                        <EscrLoader
+                            v-else
+                            class="escr-stat"
+                            :loading="loading && loading.document"
+                            no-data-message="-"
+                        />
                     </div>
                     <!-- Document total characters card -->
                     <div class="escr-card escr-card-padding chars-stats">
                         <div class="escr-card-header">
                             <h2>Total Characters</h2>
                         </div>
-                        <span class="escr-stat">
-                            {{
-                                (!transcriptionLoading.characterCount && charCount)
-                                    ? charCount.toLocaleString()
-                                    : "-"
-                            }}
+                        <span
+                            v-if="charCount"
+                            class="escr-stat"
+                        >
+                            {{ charCount.toLocaleString() }}
                         </span>
+                        <EscrLoader
+                            v-else
+                            class="escr-stat"
+                            :loading="transcriptionLoading && transcriptionLoading.characterCount"
+                            no-data-message="-"
+                        />
                     </div>
                     <!-- Document transcription status card -->
                     <div class="escr-card escr-card-padding transcription-status">
@@ -160,9 +193,19 @@
                             <dd>{{ transcriptionConfidence }}</dd>
                         </dl>
                     </div>
+                    <!-- Characters section -->
+                    <CharactersCard
+                        class="escr-document-characters"
+                        compact
+                        :loading="charactersLoading"
+                        :on-view="() => openCharactersModal"
+                        :on-sort-characters="sortCharacters"
+                        :sort="charactersSort && charactersSort.field"
+                        :items="characters"
+                    />
                     <!-- Ontology section -->
                     <OntologyCard
-                        class="escr-project-ontology"
+                        class="escr-document-ontology"
                         context="Document"
                         compact
                         :items="ontology"
@@ -171,16 +214,6 @@
                         :on-select-category="changeOntologyCategory"
                         :on-sort="sortOntology"
                         :selected-category="ontologyCategory"
-                    />
-                    <!-- Characters section -->
-                    <CharactersCard
-                        class="escr-project-characters"
-                        compact
-                        :loading="charactersLoading"
-                        :on-view="() => openCharactersModal"
-                        :on-sort-characters="sortCharacters"
-                        :sort="charactersSort && charactersSort.field"
-                        :items="characters"
                     />
                 </div>
                 <!-- delete document modal -->
@@ -209,10 +242,23 @@
                     :on-cancel="() => closeTaskModal('import')"
                     :on-submit="handleSubmitImport"
                 />
+                <!-- cancel image uploads modal -->
+                <ConfirmModal
+                    v-if="taskModalOpen && taskModalOpen.imageCancelWarning"
+                    :body-text="'Uploads are still in progress. Are you sure you want ' +
+                        'to cancel? Incomplete uploads may be lost.'"
+                    title="Cancel Upload In Progress"
+                    cancel-verb="No"
+                    confirm-verb="Yes, cancel"
+                    :disabled="loading && loading.document"
+                    :on-cancel="() => closeTaskModal('imageCancelWarning')"
+                    :on-confirm="confirmImageCancelWarning"
+                    :cannot-undo="false"
+                />
                 <!-- segment document modal -->
                 <SegmentModal
                     v-if="taskModalOpen && taskModalOpen.segment"
-                    :models="models"
+                    :models="segmentationModels"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('segment')"
                     :on-submit="handleSubmitSegmentation"
@@ -221,7 +267,7 @@
                 <!-- transcribe document modal -->
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
-                    :models="models"
+                    :models="recognitionModels"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('transcribe')"
                     :on-submit="handleSubmitTranscribe"
@@ -234,6 +280,7 @@
                         'any existing transcriptions.'"
                     title="Overwrite Existing Segmentation and Transcriptions"
                     confirm-verb="Continue"
+                    :disabled="loading && loading.document"
                     :cannot-undo="true"
                     :on-cancel="() => closeTaskModal('overwriteWarning')"
                     :on-confirm="confirmOverwriteWarning"
@@ -252,6 +299,8 @@
                 <!-- export document modal -->
                 <ExportModal
                     v-if="taskModalOpen && taskModalOpen.export"
+                    :markdown-enabled="markdownEnabled"
+                    :tei-enabled="teiEnabled"
                     :transcriptions="transcriptions"
                     :region-types="regionTypes"
                     :disabled="loading && loading.document"
@@ -267,6 +316,7 @@
                     confirm-verb="Yes"
                     cancel-verb="No"
                     :cannot-undo="false"
+                    :disabled="loading && loading.tasks"
                     :on-cancel="() => closeTaskModal('cancelWarning')"
                     :on-confirm="() => cancelTask({ documentId: id })"
                 />
@@ -285,6 +335,7 @@ import ConfirmModal from "../../components/ConfirmModal/ConfirmModal.vue";
 import EditDocumentModal from "../../components/EditDocumentModal/EditDocumentModal.vue";
 import EscrButton from "../../components/Button/Button.vue";
 import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
+import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTags from "../../components/Tags/Tags.vue";
 import EscrTable from "../../components/Table/Table.vue";
@@ -305,6 +356,7 @@ import ToolsIcon from "../../components/Icons/ToolsIcon/ToolsIcon.vue";
 import TrashIcon from "../../components/Icons/TrashIcon/TrashIcon.vue";
 import TranscribeModal from "../../components/TranscribeModal/TranscribeModal.vue";
 import VerticalMenu from "../../components/VerticalMenu/VerticalMenu.vue";
+import "../../components/Common/Card.css"
 import "./Document.css";
 
 export default {
@@ -317,6 +369,7 @@ export default {
         EditDocumentModal,
         EscrButton,
         EscrDropdown,
+        EscrLoader,
         EscrPage,
         EscrTable,
         EscrTags,
@@ -356,7 +409,28 @@ export default {
         id: {
             type: Number,
             required: true,
-        }
+        },
+        /**
+         * Whether or not OpenITI Markdown export is enabled on the current instance.
+         */
+        markdownEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not OpenITI TEI XML export is enabled on the current instance.
+         */
+        teiEnabled: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * Whether or not search is disabled on the current instance.
+         */
+        searchDisabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     data() {
         return {
@@ -388,7 +462,10 @@ export default {
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
             projectName: (state) => state.document.projectName,
+            projectSlug: (state) => state.document.projectSlug,
+            recognitionModels: (state) => state.user.recognitionModels,
             regionTypes: (state) => state.document.regionTypes,
+            segmentationModels: (state) => state.user.segmentationModels,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             scripts: (state) => state.project.scripts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
@@ -397,6 +474,7 @@ export default {
             tags: (state) => state.document.tags,
             tagsModalOpen: (state) => state.document.tagsModalOpen,
             taskModalOpen: (state) => state.tasks.modalOpen,
+            tasks: (state) => state.document.tasks,
             textualWitnesses: (state) => state.document.textualWitnesses,
             transcriptionLoading: (state) => state.transcription.loading,
             transcriptions: (state) => state.document.transcriptions,
@@ -406,11 +484,11 @@ export default {
          */
         breadcrumbs() {
             let docBreadcrumbs = [{ title: "Loading..." }];
-            if (this.projectName && this.projectId && this.documentName) {
+            if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
                     {
                         title: this.projectName,
-                        href: `/projects/${this.projectId}`
+                        href: `/project/${this.projectSlug}`
                     },
                     { title: this.documentName }
                 ];
@@ -459,19 +537,7 @@ export default {
          * Sidebar quick actions for the document dashboard.
          */
         sidebarActions() {
-            return [
-                {
-                    data: {
-                        disabled: this.loading?.document,
-                        searchScope: "Document",
-                        projectId: this.projectId,
-                        documentId: this.id,
-                    },
-                    icon: SearchIcon,
-                    key: "search",
-                    label: "Search Document",
-                    panel: SearchPanel,
-                },
+            let actions = [
                 {
                     data: {
                         disabled: this.loading?.document,
@@ -505,6 +571,22 @@ export default {
                     panel: ModelsPanel,
                 }
             ];
+            // if search is enabled on the instance, add search as first item
+            if (!this.searchDisabled) {
+                actions.unshift({
+                    data: {
+                        disabled: this.loading?.document,
+                        searchScope: "Document",
+                        projectId: this.projectId,
+                        documentId: this.id,
+                    },
+                    icon: SearchIcon,
+                    key: "search",
+                    label: "Search Document",
+                    panel: SearchPanel,
+                });
+            }
+            return actions
         },
         transcriptionConfidence() {
             const confidence = this.transcriptions?.find(
@@ -558,13 +640,13 @@ export default {
             "closeDocumentMenu",
             "closeEditModal",
             "closeShareModal",
+            "confirmImageCancelWarning",
             "confirmOverwriteWarning",
             "deleteDocument",
             "fetchDocument",
-            "fetchDocumentMetadata",
+            "fetchDocumentTasks",
             "fetchDocumentTasksThrottled",
-            "fetchTranscriptionCharacters",
-            "fetchTranscriptionOntology",
+            "handleImportDone",
             "handleSubmitAlign",
             "handleSubmitExport",
             "handleSubmitImport",
@@ -620,6 +702,10 @@ export default {
             ) {
                 // these may be frequent, so throttle
                 this.fetchDocumentTasksThrottled();
+
+                if (data.name === "import:done") {
+                    this.handleImportDone();
+                }
             }
         }
     },

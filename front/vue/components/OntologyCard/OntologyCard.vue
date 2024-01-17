@@ -26,7 +26,10 @@
             :options="categories"
             :on-change-selection="onSelectCategory"
         />
-        <div class="escr-ontology-table-container">
+        <div
+            v-if="items.length"
+            class="escr-ontology-table-container"
+        >
             <EscrTable
                 item-key="pk"
                 compact
@@ -36,18 +39,22 @@
                 :sort-disabled="loading"
             />
         </div>
+        <EscrLoader
+            v-else
+            :loading="loading"
+            no-data-message="There is no ontology to display."
+        />
     </div>
 </template>
 <script>
-import EscrButton from "../Button/Button.vue";
+import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
-import OpenIcon from "../Icons/OpenIcon/OpenIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import "./OntologyCard.css";
 
 export default {
     name: "EscrOntologyCard",
-    components: { EscrButton, EscrTable, OpenIcon, SegmentedButtonGroup },
+    components: { EscrLoader, EscrTable, SegmentedButtonGroup },
     props: {
         /**
          * Whether or not to display a compact variant of this card (i.e. for document view).
@@ -72,13 +79,13 @@ export default {
         },
         /**
          * The currently selected ontology category, which should be one of the four types
-         * `regions`, `lines`, `text`, or `images`.
+         * `regions`, `lines`, `text`, or `image`.
          */
         selectedCategory: {
             type: String,
             default: "regions",
             validator(value) {
-                return ["regions", "lines", "text", "images"].includes(value);
+                return ["regions", "lines", "text", "image"].includes(value);
             },
         },
         /**
@@ -89,7 +96,7 @@ export default {
             default: false,
         },
         /**
-         * Callback function for changing the category (regions, lines, text, images).
+         * Callback function for changing the category (regions, lines, text, image).
          */
         onSelectCategory: {
             type: Function,
@@ -113,7 +120,7 @@ export default {
                 { label: "Regions", value: "regions" },
                 { label: "Lines", value: "lines" },
                 { label: "Text", value: "text" },
-                { label: "Images", value: "images" },
+                { label: "Images", value: "image" },
             ].map((category) => ({
                 ...category,
                 selected: this.selectedCategory === category.value,

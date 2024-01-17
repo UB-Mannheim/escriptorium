@@ -112,6 +112,8 @@ TEMPLATES = [
                 'escriptorium.context_processors.custom_homepage',
                 'escriptorium.context_processors.disable_search',
                 'escriptorium.context_processors.enable_text_alignment',
+                'escriptorium.context_processors.enable_markdown_export',
+                'escriptorium.context_processors.enable_tei_export',
             ],
         },
     },

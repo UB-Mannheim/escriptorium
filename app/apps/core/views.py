@@ -820,8 +820,19 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
                                 content_type="application/json", status=400)
 
 
-class DocumentDetail(DetailView):
+class DocumentDashboard(LoginRequiredMixin, DetailView):
     model = Document
+    template_name = "core/document_dashboard.html"
+
+    def get_queryset(self):
+        return Document.objects.for_user(self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data.update({
+            "document_id": self.get_object().pk
+        })
+        return context_data
 
 
 class EditPart(LoginRequiredMixin, DetailView):

@@ -209,7 +209,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         (export_format, export["label"])
         for export_format, export in ENABLED_EXPORTERS.items()
     )
-    parts = forms.ModelMultipleChoiceField(queryset=None)
+    parts = forms.ModelMultipleChoiceField(queryset=None, required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all())
     file_format = forms.ChoiceField(choices=FORMAT_CHOICES, initial=ALTO_FORMAT)
     include_images = forms.BooleanField(
@@ -225,12 +225,6 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                                                                              document=self.document)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
-    def clean_parts(self):
-        parts = self.cleaned_data['parts']
-        if len(parts) < 1:
-            raise forms.ValidationError(_("Select at least one image to export."))
-        return parts
-
     def clean(self):
         # If quotas are enforced, assert that the user still has free CPU minutes
         if not settings.DISABLE_QUOTAS and not self.user.has_free_cpu_minutes():
@@ -239,7 +233,8 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         return super().clean()
 
     def process(self):
-        parts = self.cleaned_data['parts']
+        # allow no parts = all parts
+        parts = self.cleaned_data['parts'] or self.document.parts.all()
         file_format = self.cleaned_data['file_format']
         transcription = self.cleaned_data['transcription']
 

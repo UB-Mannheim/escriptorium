@@ -542,10 +542,12 @@ class DocumentViewSet(ModelViewSet):
 
 
 class TaskReportViewSet(ModelViewSet):
-    queryset = TaskReport.objects.all().order_by("-queued_at", "-started_at", "-done_at")
+    queryset = TaskReport.objects.all()
     serializer_class = TaskReportSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['document']
+    ordering_fields = ['queued_at', 'started_at', 'done_at']
+    ordering = ['-queued_at', '-started_at', '-done_at']
 
     def get_queryset(self):
         qs = super().get_queryset().filter(user=self.request.user)
@@ -608,6 +610,7 @@ class ImportViewSet(GenericViewSet, CreateModelMixin):
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     filter_backends = (OrderingFilter,)
     queryset = DocumentPart.objects.all().select_related('document')
+    filter_backends = [filters.OrderingFilter]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -724,9 +727,7 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         except ProtectedObjectException:
             return Response("This object can not be deleted.", status=400)
 
-    @method_decorator(cache_page(60 * 60))  # one hour
-    @action(detail=True, methods=['GET'])
-    def characters(self, request, document_pk=None, pk=None):
+    def characters_query(self, order_by):
         transcription = self.get_object()
         with connection.cursor() as cursor:
             cursor.execute('''
@@ -735,11 +736,21 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
             WHERE "core_linetranscription"."line_id" = "core_line"."id"
             AND "core_line"."document_part_id" = "core_documentpart"."id"
             AND ("core_documentpart"."document_id" = %s AND "core_linetranscription"."transcription_id" = %s)
-            GROUP BY char ORDER BY frequency DESC;
-            ''', [self.document.pk, transcription.pk])
+            GROUP BY char ORDER BY
+            ''' + order_by + ';', [self.document.pk, transcription.pk])
             all_ = cursor.fetchall()
             data = [{'char': char, 'frequency': freq} for char, freq in all_]
         return Response(data)
+
+    @method_decorator(cache_page(60 * 60))  # one hour
+    @action(detail=True, methods=['GET'])
+    def characters(self, request, document_pk=None, pk=None):
+        return self.characters_query("frequency DESC")
+
+    @method_decorator(cache_page(60 * 60))  # one hour
+    @action(detail=True, methods=['GET'])
+    def characters_by_char(self, request, document_pk=None, pk=None):
+        return self.characters_query("char ASC")
 
 
 class BlockTypeViewSet(ModelViewSet):
@@ -1046,7 +1057,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 class OcrModelViewSet(ModelViewSet):
     queryset = OcrModel.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['documents']
+    filterset_fields = ['documents', 'job']
     serializer_class = OcrModelSerializer
 
     def get_queryset(self):

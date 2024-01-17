@@ -184,7 +184,7 @@ const actions = {
                     { root: true },
                 );
                 // redirect to new document
-                window.location = `/document/${data.pk}/images/`;
+                window.location = `/document/${data.pk}/`;
                 commit("setCreateDocumentModalOpen", false);
             } else {
                 commit("setLoading", false);
@@ -293,8 +293,8 @@ const actions = {
                     commit("addDocument", {
                         ...document,
                         tags: { tags: document.tags },
-                        // TODO: link to document dashboard
-                        href: `/document/${document.pk}/images/`,
+                        // link to document dashboard
+                        href: `/document/${document.pk}/`,
                     });
                 });
                 commit("setNextPage", data.next);
@@ -371,8 +371,8 @@ const actions = {
                 data.results.map((result) => ({
                     ...result,
                     tags: { tags: result.tags },
-                    // TODO: link to document dashboard
-                    href: `/document/${result.pk}/images/`,
+                    // link to document dashboard
+                    href: `/document/${result.pk}/`,
                 })),
             );
         } else {

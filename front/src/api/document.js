@@ -25,10 +25,9 @@ export const retrieveDocumentsList = async ({
 export const retrieveDocument = async (documentId) =>
     await axios.get(`/documents/${documentId}/`);
 
-// retrieve types list for a specific transcription on a document
-export const retrieveTranscriptionOntology = async ({
+// retrieve types list for a document
+export const retrieveDocumentOntology = async ({
     documentId,
-    transcriptionId,
     category,
     sortField,
     sortDirection,
@@ -40,10 +39,11 @@ export const retrieveTranscriptionOntology = async ({
             direction: sortDirection,
         });
     }
+    if (["image", "text"].includes(category)) {
+        params.target = category;
+    }
     return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/types/${ontologyMap[
-            category
-        ]}/`,
+        `/documents/${documentId}/${ontologyMap[category]}/`,
         { params },
     );
 };
@@ -55,14 +55,19 @@ export const retrieveTranscriptionCharacters = async ({
     field,
     direction,
 }) => {
-    let params = {};
+    let ordering = "-frequency";
     if (field && direction) {
-        params.ordering = getSortParam({ field, direction });
+        ordering = getSortParam({ field, direction });
     }
-    return await axios.get(
-        `/documents/${documentId}/transcriptions/${transcriptionId}/characters/`,
-        { params },
-    );
+    if (ordering === "char") {
+        return await axios.get(
+            `/documents/${documentId}/transcriptions/${transcriptionId}/characters_by_char/`,
+        );
+    } else {
+        return await axios.get(
+            `/documents/${documentId}/transcriptions/${transcriptionId}/characters/`,
+        );
+    }
 };
 
 // retrieve the total number of characters in a specific transcription level on a document
@@ -151,6 +156,15 @@ export const retrieveDocumentModels = async (documentId) =>
         },
     });
 
+const jobTypeIds = {
+    segment: 1,
+    recognize: 2,
+};
+
+// retrieve all models (by job type)
+export const retrieveModels = async (jobType) =>
+    await axios.get("/models", { params: { job: jobTypeIds[jobType] } });
+
 // share this document with a group or user
 export const shareDocument = async ({ documentId, group, user }) =>
     await axios.post(`/documents/${documentId}/share/`, {
@@ -167,10 +181,14 @@ export const segmentDocument = async ({ documentId, override, model, steps }) =>
     });
 
 // queue the transcription task for this document
-export const transcribeDocument = async ({ documentId, model, layerName }) =>
+export const transcribeDocument = async ({
+    documentId,
+    model,
+    transcription,
+}) =>
     await axios.post(`/documents/${documentId}/transcribe/`, {
         model,
-        name: layerName,
+        transcription,
     });
 
 // retrieve textual witnesses for use in alignment
@@ -195,18 +213,20 @@ export const alignDocument = async ({
 }) => {
     // need to use FormData to handle witness file upload
     const formData = new FormData();
-    formData.append("beam_size", beamSize);
-    formData.append("existing_witness", existingWitness);
+    if (beamSize) formData.append("beam_size", beamSize);
+    if (existingWitness) formData.append("existing_witness", existingWitness);
     formData.append("full_doc", fullDoc);
     formData.append("gap", gap);
     formData.append("layer_name", layerName);
-    formData.append("max_offset", maxOffset);
+    if (maxOffset) formData.append("max_offset", maxOffset);
     formData.append("merge", merge);
     formData.append("n_gram", ngram);
-    formData.append("region_types", regionTypes);
+    if (regionTypes?.length) {
+        regionTypes.forEach((type) => formData.append("region_types", type));
+    }
     formData.append("threshold", threshold);
     formData.append("transcription", transcription);
-    formData.append("witness_file", witnessFile);
+    if (witnessFile) formData.append("witness_file", witnessFile);
     const headers = { "Content-Type": "multipart/form-data" };
     return await axios.post(`/documents/${documentId}/align/`, formData, {
         headers,
@@ -229,8 +249,20 @@ export const exportDocument = async ({
     });
 
 // queue the import task for this document
-export const queueImport = async ({ documentId, params }) =>
-    await axios.post(`/documents/${documentId}/import/`, params);
+export const queueImport = async ({ documentId, params }) => {
+    if (params["upload_file"]) {
+        // need to use FormData to handle file upload
+        const formData = new FormData();
+        Object.keys(params).forEach((key) => {
+            formData.append(key, params[key]);
+        });
+        const headers = { "Content-Type": "multipart/form-data" };
+        return await axios.post(`/documents/${documentId}/import/`, formData, {
+            headers,
+        });
+    }
+    return await axios.post(`/documents/${documentId}/import/`, params);
+};
 
 // retrieve latest tasks for a document
 export const retrieveDocumentTasks = async ({ documentId }) =>

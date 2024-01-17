@@ -6,12 +6,12 @@ import {
     retrieveDocument,
     retrieveDocumentMetadata,
     retrieveDocumentModels,
+    retrieveDocumentOntology,
     retrieveDocumentParts,
     retrieveDocumentTasks,
     retrieveTextualWitnesses,
     retrieveTranscriptionCharacters,
     retrieveTranscriptionCharCount,
-    retrieveTranscriptionOntology,
     shareDocument,
     updateDocumentMetadata,
 } from "../../../src/api";
@@ -23,6 +23,8 @@ import { throttle } from "../util/throttle";
 // initial state
 const state = () => ({
     deleteModalOpen: false,
+    // list of all possible document tags from project
+    documentTags: [],
     editModalOpen: false,
     id: null,
     lastModified: "",
@@ -32,7 +34,6 @@ const state = () => ({
         models: false,
         parts: false,
         tasks: false,
-        transcriptions: false,
         user: false,
     },
     mainScript: "",
@@ -75,6 +76,7 @@ const state = () => ({
     partsCount: null,
     projectId: null,
     projectName: "",
+    projectSlug: "",
     readDirection: "",
     /**
      * regionTypes: [{
@@ -150,15 +152,16 @@ const actions = {
      * Change the ontology table category and fetch the selected ontology.
      */
     async changeOntologyCategory({ commit, dispatch }, category) {
-        commit("ontology/setLoading", true, { root: true });
         commit("ontology/setCategory", category, { root: true });
         try {
-            await dispatch("fetchTranscriptionOntology");
+            commit("ontology/setLoading", true, { root: true });
+            await dispatch("fetchDocumentOntology");
+            commit("ontology/setLoading", false, { root: true });
         } catch (error) {
+            commit("ontology/setOntology", [], { root: true });
             commit("ontology/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });
         }
-        commit("ontology/setLoading", false, { root: true });
     },
     /**
      * Change the selected transcription and fetch its ontology/characters.
@@ -181,16 +184,26 @@ const actions = {
         // kickoff fetch
         try {
             commit("characters/setLoading", true, { root: true });
-            commit("ontology/setLoading", true, { root: true });
             commit(
                 "transcription/setLoading",
                 { key: "characterCount", loading: true },
                 { root: true },
             );
             await dispatch("fetchTranscriptionCharacters");
-            await dispatch("fetchTranscriptionCharCount");
-            await dispatch("fetchTranscriptionOntology");
+            dispatch("fetchTranscriptionCharCount");
+            commit("characters/setLoading", false, { root: true });
+            commit(
+                "transcription/setLoading",
+                { key: "characterCount", loading: false },
+                { root: true },
+            );
         } catch (error) {
+            commit("characters/setLoading", false, { root: true });
+            commit(
+                "transcription/setLoading",
+                { key: "characterCount", loading: false },
+                { root: true },
+            );
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -238,14 +251,56 @@ const actions = {
     /**
      * Handle the user overwriting existing segmentation
      */
-    async confirmOverwriteWarning({ dispatch, state }) {
+    async confirmOverwriteWarning({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/segmentDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "overwriteWarning", { root: true });
             dispatch("tasks/closeModal", "segment", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Segmentation queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
+    },
+    /**
+     * Handle confirming image cancellation by closing the modal, displaying
+     * a relevant message, and reloading images.
+     */
+    async confirmImageCancelWarning({ commit, dispatch, rootState }) {
+        if (rootState?.forms?.import?.imagesComplete === true) {
+            // success message if ALL images imported successfully
+            dispatch(
+                "alerts/add",
+                { color: "success", message: "Images imported successfully" },
+                { root: true },
+            );
+        } else {
+            // otherwise, message that import has been canceled
+            dispatch(
+                "alerts/add",
+                { color: "text", message: "Image import canceled" },
+                { root: true },
+            );
+        }
+        // close modals and sidebar
+        dispatch("tasks/closeModal", "imageCancelWarning", { root: true });
+        dispatch("tasks/closeModal", "import", { root: true });
+        dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+        // reload images
+        commit("setLoading", { key: "parts", loading: true });
+        await dispatch("fetchDocumentParts");
+        commit("setLoading", { key: "parts", loading: false });
     },
     /**
      * Delete the current document.
@@ -254,8 +309,17 @@ const actions = {
         commit("setLoading", { key: "document", loading: true });
         try {
             await deleteDocument({ documentId: state.id });
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Document deleted successfully",
+                },
+                { root: true },
+            );
             commit("setDeleteModalOpen", false);
-            // TODO: redirect to project on delete
+            // redirect to project on delete
+            window.location = `/project/${state.projectSlug}`;
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
         }
@@ -269,6 +333,8 @@ const actions = {
         Object.keys(state.loading).map((key) =>
             commit("setLoading", { key, loading: true }),
         );
+        commit("ontology/setLoading", true, { root: true });
+        commit("characters/setLoading", true, { root: true });
         // fetch document
         const { data } = await retrieveDocument(state.id);
         if (data) {
@@ -278,9 +344,14 @@ const actions = {
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
             commit("setPartsCount", data.parts_count);
-            commit("setProjectId", data.project?.id);
-            commit("setProjectName", data.project?.name);
-            commit("setRegionTypes", data.valid_block_types);
+            commit("setProjectSlug", data.project);
+            commit("setProjectId", data.project_id);
+            commit("setProjectName", data.project_name);
+            await commit("setRegionTypes", [
+                ...data.valid_block_types,
+                { pk: "Undefined", name: "(Undefined region type)" },
+                { pk: "Orphan", name: "(Orphan lines)" },
+            ]);
             // select all region types on forms that have that key
             Object.keys(forms)
                 .filter((form) =>
@@ -295,7 +366,7 @@ const actions = {
                         {
                             form,
                             field: "regionTypes",
-                            value: data.valid_block_types.map((rt) =>
+                            value: state.regionTypes.map((rt) =>
                                 rt.pk.toString(),
                             ),
                         },
@@ -328,15 +399,31 @@ const actions = {
                 },
                 { root: true },
             );
+            // set default text direction for the segment form
+            commit(
+                "forms/setFieldValue",
+                {
+                    form: "segment",
+                    field: "textDirection",
+                    value:
+                        data.read_direction === "rtl"
+                            ? "horizontal-rl"
+                            : "horizontal-lr",
+                },
+                { root: true },
+            );
             if (data.parts_count > 0) {
                 // kickoff parts fetch
                 try {
                     commit("setLoading", { key: "parts", loading: true });
                     await dispatch("fetchDocumentParts");
+                    commit("setLoading", { key: "parts", loading: false });
                 } catch (error) {
                     commit("setLoading", { key: "parts", loading: false });
                     dispatch("alerts/addError", error, { root: true });
                 }
+            } else {
+                commit("setLoading", { key: "parts", loading: false });
             }
             if (data.transcriptions?.length) {
                 // set transcription list to non-archived transcriptions
@@ -359,16 +446,35 @@ const actions = {
                 // kick off the characters and ontology fetching
                 try {
                     await dispatch("fetchTranscriptionCharacters");
-                    await dispatch("fetchTranscriptionCharCount");
-                    await dispatch("fetchTranscriptionOntology");
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: true },
+                        { root: true },
+                    );
+                    dispatch("fetchTranscriptionCharCount");
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: false },
+                        { root: true },
+                    );
+                    await dispatch("fetchDocumentOntology");
+                    commit("ontology/setLoading", false, { root: true });
+                    commit("characters/setLoading", false, { root: true });
                 } catch (error) {
+                    commit(
+                        "transcription/setLoading",
+                        { key: "characterCount", loading: false },
+                        { root: true },
+                    );
+                    commit("ontology/setLoading", false, { root: true });
+                    commit("characters/setLoading", false, { root: true });
                     dispatch("alerts/addError", error, { root: true });
                 }
             }
-            if (data.project?.id) {
+            if (data.project_id) {
                 // set project id and fetch all document tags on the project
                 try {
-                    await commit("project/setId", data.project?.id, {
+                    await commit("project/setId", data.project_id, {
                         root: true,
                     });
                     await dispatch(
@@ -390,6 +496,8 @@ const actions = {
         await dispatch("fetchDocumentMetadata");
         await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
+        await dispatch({ type: "user/fetchSegmentModels" }, { root: true });
+        await dispatch({ type: "user/fetchRecognizeModels" }, { root: true });
         await dispatch("fetchTextualWitnesses");
     },
     /**
@@ -429,21 +537,24 @@ const actions = {
      * Fetch the current document's most recent images with thumbnails.
      */
     async fetchDocumentParts({ commit, state }) {
-        commit("setLoading", { key: "parts", loading: true });
-        const { data } = await retrieveDocumentParts({ documentId: state.id });
+        const { data } = await retrieveDocumentParts({
+            documentId: state.id,
+            field: "updated_at",
+            direction: -1,
+        });
         if (data?.results) {
             commit(
                 "setParts",
                 data.results.map((part) => ({
                     ...part,
+                    title: `${part.title} - ${part.filename}`,
                     thumbnail: part.image?.thumbnails?.card,
+                    href: `/document/${state.id}/part/${part.pk}/edit/`,
                 })),
             );
         } else {
-            commit("setLoading", { key: "parts", loading: false });
             throw new Error("Unable to retrieve document images");
         }
-        commit("setLoading", { key: "parts", loading: false });
     },
     /**
      * Fetch page 1 of the current document's most recent tasks.
@@ -451,19 +562,17 @@ const actions = {
     async fetchDocumentTasks({ commit, state }) {
         commit("setLoading", { key: "tasks", loading: true });
         const { data } = await retrieveDocumentTasks({ documentId: state.id });
+        commit("setLoading", { key: "tasks", loading: false });
         if (data?.results) {
             commit("setTasks", data.results);
         } else {
-            commit("setLoading", { key: "tasks", loading: false });
             throw new Error("Unable to retrieve document tasks");
         }
-        commit("setLoading", { key: "tasks", loading: false });
     },
     /**
      * Fetch the most recent tasks, but throttle the fetch so it only happens once per 1000ms.
      */
-    fetchDocumentTasksThrottled({ commit, dispatch }) {
-        commit("setLoading", { key: "tasks", loading: true });
+    fetchDocumentTasksThrottled({ dispatch }) {
         throttle(function* () {
             yield dispatch("fetchDocumentTasks");
         });
@@ -484,29 +593,18 @@ const actions = {
      * plus sorting params from characters Vuex store.
      */
     async fetchTranscriptionCharacters({ commit, state, rootState }) {
-        commit("characters/setLoading", true, { root: true });
         const { data } = await retrieveTranscriptionCharacters({
             documentId: state.id,
             transcriptionId: rootState.transcription.selectedTranscription,
             field: rootState.characters.sortState?.field,
             direction: rootState.characters.sortState?.direction,
         });
-        if (data?.results) {
-            commit("characters/setCharacters", data.results, { root: true });
-        } else {
-            throw new Error("Unable to retrieve characters");
-        }
-        commit("characters/setLoading", false, { root: true });
+        commit("characters/setCharacters", data, { root: true });
     },
     /**
      * Fetch the number of characters on the currently selected transcription level.
      */
     async fetchTranscriptionCharCount({ commit, state, rootState }) {
-        commit(
-            "transcription/setLoading",
-            { key: "characterCount", loading: true },
-            { root: true },
-        );
         const { data } = await retrieveTranscriptionCharCount({
             documentId: state.id,
             transcriptionId: rootState.transcription.selectedTranscription,
@@ -515,75 +613,133 @@ const actions = {
             commit("transcription/setCharacterCount", data.count, {
                 root: true,
             });
-            commit(
-                "transcription/setLoading",
-                { key: "characterCount", loading: false },
-                { root: true },
-            );
         } else {
-            commit(
-                "transcription/setLoading",
-                { key: "characterCount", loading: false },
-                { root: true },
-            );
             throw new Error(
                 "Unable to retrieve character count for the selected transcription.",
             );
         }
     },
     /**
-     * Fetch the current transcription's ontology, given this document's id from state, plus
-     * ontology category and sorting params from ontology Vuex store.
+     * Fetch the current document's ontology, given this document's id from
+     * state, plus ontology category and sorting params from ontology Vuex store.
      */
-    async fetchTranscriptionOntology({ commit, state, rootState }) {
-        commit("ontology/setLoading", true, { root: true });
-        const { data } = await retrieveTranscriptionOntology({
-            documentId: state.id,
-            transcriptionId: rootState.transcription.selectedTranscription,
-            category: rootState.ontology.category,
-            sortField: rootState.ontology.sortState?.field,
-            sortDirection: rootState.ontology.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("ontology/setOntology", data.results, { root: true });
-            commit("ontology/setLoading", false, { root: true });
+    async fetchDocumentOntology({ commit, state, rootState }) {
+        // TODO: Remove this check once regions and lines ontology
+        // endpoints have been written.
+        if (!["regions", "lines"].includes(rootState.ontology.category)) {
+            const { data } = await retrieveDocumentOntology({
+                documentId: state.id,
+                category: rootState.ontology.category,
+                sortField: rootState.ontology.sortState?.field,
+                sortDirection: rootState.ontology.sortState?.direction,
+            });
+            if (data?.results) {
+                commit("ontology/setOntology", data.results, { root: true });
+            } else {
+                throw new Error(
+                    `Unable to retrieve ${rootState.ontology.category} ontology`,
+                );
+            }
         } else {
-            commit("ontology/setLoading", false, { root: true });
-            throw new Error(
-                `Unable to retrieve ${rootState.ontology.category} ontology`,
-            );
+            commit("ontology/setOntology", [], { root: true });
+        }
+    },
+    async handleImportDone({ commit, dispatch }) {
+        try {
+            // refresh images on import:done
+            commit("setLoading", { key: "parts", loading: true });
+            await dispatch("fetchDocumentParts");
+            commit("setLoading", { key: "parts", loading: false });
+            // refresh transcriptions on import:done
+            commit("setLoading", { key: "document", loading: true });
+            await dispatch("refreshTranscriptions");
+            commit("setLoading", { key: "document", loading: false });
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "parts", loading: false });
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the alignment modal. Queue the task and close the modal.
      */
-    async handleSubmitAlign({ dispatch, state }) {
+    async handleSubmitAlign({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/alignDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "align", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Alignment queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the export modal. Queue the task and close the modal.
      */
-    async handleSubmitExport({ dispatch, state }) {
+    async handleSubmitExport({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/exportDocument", state.id, { root: true });
             dispatch("tasks/closeModal", "export", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Export queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
             dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
         }
     },
     /**
      * Handle submitting the import modal. Queue the task and close the modal.
      */
-    async handleSubmitImport({ dispatch, state }) {
+    async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
-            await dispatch("tasks/importImagesOrTranscription", state.id, { root: true });
+            commit("setLoading", { key: "document", loading: true });
+            await dispatch("tasks/importImagesOrTranscription", state.id, {
+                root: true,
+            });
             dispatch("tasks/closeModal", "import", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            const importMode = rootState?.forms?.import?.mode;
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message:
+                        importMode === "images"
+                            ? "Images imported successfully"
+                            : "Import queued successfully",
+                },
+                { root: true },
+            );
+            if (importMode === "images") {
+                commit("setLoading", { key: "parts", loading: true });
+                await dispatch("fetchDocumentParts");
+                commit("setLoading", { key: "parts", loading: false });
+            }
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -591,16 +747,42 @@ const actions = {
      * Handle submitting the segmentation modal. Open the confirm overwrite modal if overwrite
      * is checked, otherwise just queue the segmentation task and close the modal.
      */
-    async handleSubmitSegmentation({ dispatch, state, rootState }) {
+    async handleSubmitSegmentation({ commit, dispatch, state, rootState }) {
         if (rootState?.forms?.segment?.overwrite === true) {
             dispatch("tasks/openModal", "overwriteWarning", { root: true });
         } else {
+            commit("setLoading", { key: "document", loading: true });
             try {
                 await dispatch("tasks/segmentDocument", state.id, {
                     root: true,
                 });
                 dispatch("tasks/closeModal", "segment", { root: true });
+                // set default text direction for the segment form
+                commit(
+                    "forms/setFieldValue",
+                    {
+                        form: "segment",
+                        field: "textDirection",
+                        value:
+                            state.readDirection === "rtl"
+                                ? "horizontal-rl"
+                                : "horizontal-lr",
+                    },
+                    { root: true },
+                );
+                dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+                commit("setLoading", { key: "document", loading: false });
+                // show toast alert on success
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "success",
+                        message: "Segmentation queued successfully",
+                    },
+                    { root: true },
+                );
             } catch (error) {
+                commit("setLoading", { key: "document", loading: false });
                 dispatch("alerts/addError", error, { root: true });
             }
         }
@@ -608,13 +790,27 @@ const actions = {
     /**
      * Handle submitting the transcribe modal: just queue the task and close the modal.
      */
-    async handleSubmitTranscribe({ dispatch, state }) {
+    async handleSubmitTranscribe({ commit, dispatch, state }) {
         try {
+            commit("setLoading", { key: "document", loading: true });
             await dispatch("tasks/transcribeDocument", state.id, {
                 root: true,
             });
             dispatch("tasks/closeModal", "transcribe", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            await dispatch("refreshTranscriptions");
+            commit("setLoading", { key: "document", loading: false });
+            // show toast alert on success
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: "Transcription queued successfully",
+                },
+                { root: true },
+            );
         } catch (error) {
+            commit("setLoading", { key: "document", loading: false });
             dispatch("alerts/addError", error, { root: true });
         }
     },
@@ -643,6 +839,24 @@ const actions = {
         commit("setShareModalOpen", true);
     },
     /**
+     * Fetch the current document, but only update the transcriptions and don't kick off
+     * other fetches.
+     */
+    async refreshTranscriptions({ commit, state }) {
+        // fetch document
+        const { data } = await retrieveDocument(state.id);
+
+        if (data?.transcriptions) {
+            // set transcription list to non-archived transcriptions
+            const transcriptions = data.transcriptions?.filter(
+                (t) => !t.archived,
+            );
+            commit("setTranscriptions", transcriptions);
+        } else {
+            throw new Error("Unable to fetch transcriptions");
+        }
+    },
+    /**
      * Save changes to the document made in the edit modal.
      */
     async saveDocument({ commit, dispatch, rootState, state }) {
@@ -657,14 +871,11 @@ const actions = {
             tags,
         } = rootState.forms.editDocument;
         // split modified metadata by operation
-        const {
-            metadataToCreate,
-            metadataToUpdate,
-            metadataToDelete,
-        } = getDocumentMetadataCRUD({
-            stateMetadata: state.metadata,
-            formMetadata: metadata,
-        });
+        const { metadataToCreate, metadataToUpdate, metadataToDelete } =
+            getDocumentMetadataCRUD({
+                stateMetadata: state.metadata,
+                formMetadata: metadata,
+            });
         try {
             const [documentResponse, ...metadataResponses] = await Promise.all([
                 // update the document
@@ -673,6 +884,7 @@ const actions = {
                     mainScript,
                     name,
                     readDirection,
+                    project: state.projectSlug,
                     tags,
                 }),
                 // create, update, delete metadata as needed
@@ -724,9 +936,10 @@ const actions = {
                 commit("setReadDirection", readDirection);
                 commit(
                     "setTags",
-                    rootState.project.documentTags.filter((t) =>
-                        documentResponse.data.tags?.includes(t.pk),
-                    ),
+                    documentResponse.data.tags.map((tag) => ({
+                        ...tag,
+                        variant: tagColorToVariant(tag.color),
+                    })),
                 );
                 commit("setEditModalOpen", false);
             } else {
@@ -806,7 +1019,9 @@ const actions = {
         }
         commit("characters/setSortState", { field, direction }, { root: true });
         try {
+            commit("characters/setLoading", true, { root: true });
             await dispatch("fetchTranscriptionCharacters");
+            commit("characters/setLoading", false, { root: true });
         } catch (error) {
             commit("characters/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });
@@ -819,7 +1034,9 @@ const actions = {
     async sortOntology({ commit, dispatch }, { field, direction }) {
         commit("ontology/setSortState", { field, direction }, { root: true });
         try {
-            await dispatch("fetchTranscriptionOntology");
+            commit("ontology/setLoading", true, { root: true });
+            await dispatch("fetchDocumentOntology");
+            commit("ontology/setLoading", false, { root: true });
         } catch (error) {
             commit("ontology/setLoading", false, { root: true });
             dispatch("alerts/addError", error, { root: true });
@@ -882,6 +1099,9 @@ const mutations = {
     },
     setProjectId(state, projectId) {
         state.projectId = projectId;
+    },
+    setProjectSlug(state, projectSlug) {
+        state.projectSlug = projectSlug;
     },
     setProjectName(state, projectName) {
         state.projectName = projectName;

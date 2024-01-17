@@ -3,7 +3,7 @@ const state = () => ({
     characterCount: null,
     lineCount: null,
     loading: {
-        characterCount: false,
+        characterCount: true,
     },
     selectedTranscription: null,
 });
