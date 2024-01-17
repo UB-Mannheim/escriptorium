@@ -9,7 +9,11 @@
 {% trans "Find and replace text in projects" %}
 {% endblock %}
 
-{% block extra_form_field %}
+{% block extra_form_field_before %}
+<div class="col-auto">{% render_field form.mode group=True %}</div>
+{% endblock %}
+
+{% block extra_form_field_after %}
 <div class="col">{% render_field form.replacement group=True %}</div>
 {% endblock %}
 
@@ -33,4 +37,18 @@
 >
   {{ result.object.line.document_part.title }}
 </a>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+  $(document).ready(function(){
+    $('#search-form').on('submit', function(ev) {
+      if ($('#id_replacement').val() && !$('#id_project').val()) {
+        alert('You cannot find and replace text across multiple projects at once, please pick a single project before submitting your request.');
+        ev.preventDefault();
+      }
+    });
+ });
+</script>
 {% endblock %}

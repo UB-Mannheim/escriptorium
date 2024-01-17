@@ -53,11 +53,13 @@
             />
         </template>
         <template #modal-actions>
+            <!-- TODO: Show tooltip here while images loading to indicate why
+            it is disabled. -->
             <EscrButton
                 color="outline-primary"
                 :label="(importMode !== 'images' || imagesLoading) ? 'Cancel' : 'Close'"
                 :on-click="() => clickCancelButton()"
-                :disabled="disabled"
+                :disabled="disabled || imagesLoading"
             />
             <EscrButton
                 v-if="importMode !== 'images'"
