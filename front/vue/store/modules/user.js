@@ -1,4 +1,8 @@
-import { retrieveCurrentUser, retrieveGroups, retrieveModels } from "../../../src/api";
+import {
+    retrieveCurrentUser,
+    retrieveGroups,
+    retrieveModels,
+} from "../../../src/api";
 
 // initial state
 const state = () => ({

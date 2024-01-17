@@ -9,7 +9,7 @@ const messages = [
     "Test",
     "Random alert message",
     "Rather long-ish alert message example for display purposes",
-]
+];
 
 export default {
     title: "Components/Toast",
@@ -25,7 +25,7 @@ export default {
 const Template = (args, { argTypes }) => ({
     props: Object.keys(argTypes),
     components: { EscrToast },
-    template: "<EscrToast v-bind=\"$props\" />",
+    template: '<EscrToast v-bind="$props" />',
 });
 
 export const Toast = Template.bind({});

@@ -16,6 +16,6 @@
 <script>
 import "./CheckIcon.css";
 export default {
-    name: "escr-check-icon",
+    name: "EscrCheckIcon",
 };
 </script>

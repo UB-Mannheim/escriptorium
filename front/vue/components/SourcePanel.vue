@@ -1,52 +1,93 @@
 <template>
     <div class="col panel">
         <div class="tools">
-            <i title="Source Panel" class="panel-icon fas fa-eye"></i>
-            <a v-bind:href="$store.state.parts.image.uri" target="_blank">
-                <button class="btn btn-sm btn-info ml-3 fas fa-download"
-                        title="Download full size image" download></button>
+            <i
+                title="Source Panel"
+                class="panel-icon fas fa-eye"
+            />
+            <a
+                :href="$store.state.parts.image.uri"
+                target="_blank"
+            >
+                <button
+                    class="btn btn-sm btn-info ml-3 fas fa-download"
+                    title="Download full size image"
+                    download
+                />
             </a>
             <div class="btn-group">
-                <button id="rotate-counter-clock"
-                        @click="rotate(360-90)"
-                        title="Rotate 90° counter-clockwise."
-                        class="btn btn-sm btn-info ml-3 fas fa-undo"
-                        autocomplete="off">R</button>
-                <button id="rotate-clock"
-                        @click="rotate(90)"
-                        title="Rotate 90° clockwise."
-                        class="btn btn-sm btn-info  fas fa-redo"
-                        autocomplete="off">R</button>
+                <button
+                    id="rotate-counter-clock"
+                    title="Rotate 90° counter-clockwise."
+                    class="btn btn-sm btn-info ml-3 fas fa-undo"
+                    autocomplete="off"
+                    @click="rotate(360-90)"
+                >
+                    R
+                </button>
+                <button
+                    id="rotate-clock"
+                    title="Rotate 90° clockwise."
+                    class="btn btn-sm btn-info  fas fa-redo"
+                    autocomplete="off"
+                    @click="rotate(90)"
+                >
+                    R
+                </button>
             </div>
 
-            <div class="btn-group taxo-group ml-2"
-                 v-for="typo,group in groupedTaxonomies">
-            <button v-for="taxo in typo"
+            <div
+                v-for="typo,group in groupedTaxonomies"
+                class="btn-group taxo-group ml-2"
+            >
+                <button
+                    v-for="taxo in typo"
                     :id="'anno-taxo-' + taxo.pk"
-                    @click="toggleTaxonomy(taxo)"
                     class="btn btn-sm btn-outline-info"
                     :title="taxo.name"
-                    autocomplete="off">{{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}</button>
+                    autocomplete="off"
+                    @click="toggleTaxonomy(taxo)"
+                >
+                    {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
+                </button>
             </div>
         </div>
-        <div ref="content" class="content-container">
-            <div id="source-zoom-container" class="content">
-                <img id="source-panel-img" ref="img" class="panel-img" v-bind:src="imageSrc"/>
+        <div
+            ref="content"
+            class="content-container"
+        >
+            <div
+                id="source-zoom-container"
+                class="content"
+            >
+                <img
+                    id="source-panel-img"
+                    ref="img"
+                    class="panel-img"
+                    :src="imageSrc"
+                >
                 <div class="overlay panel-overlay">
-                    <svg width="100%" height="100%">
+                    <svg
+                        width="100%"
+                        height="100%"
+                    >
                         <defs>
                             <mask id="source-overlay">
-                                <rect width="100%"
-                                        height="100%"
-                                        fill="white"/>
-                                <polygon points=""/>
+                                <rect
+                                    width="100%"
+                                    height="100%"
+                                    fill="white"
+                                />
+                                <polygon points="" />
                             </mask>
                         </defs>
-                        <rect fill="grey"
-                                opacity="0.5"
-                                width="100%"
-                                height="100%"
-                                mask="url(#source-overlay)" />
+                        <rect
+                            fill="grey"
+                            opacity="0.5"
+                            width="100%"
+                            height="100%"
+                            mask="url(#source-overlay)"
+                        />
                     </svg>
                 </div>
             </div>
@@ -55,17 +96,16 @@
 </template>
 
 <script>
-import { assign } from 'lodash'
-import { BasePanel } from '../../src/editor/mixins.js';
-import { AnnoPanel } from '../../src/editor/mixins.js';
-import { Annotorious } from '@recogito/annotorious';
+import { assign } from "lodash"
+import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import { Annotorious } from "@recogito/annotorious";
 
 const rectangleRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?,(?<w>\d+)(?:\.\d+)?,(?<h>\d+)(?:\.\d+)?/);
 const polygonRegExp = new RegExp(/(?<x>\d+)(?:\.\d+)?,(?<y>\d+)(?:\.\d+)?/g);
 
 export default Vue.extend({
     mixins: [BasePanel, AnnoPanel],
-    props: ['fullsizeimage'],
+    props: ["fullsizeimage"],
     data() { return {
         imageLoaded: false,
         isWorking: false
@@ -81,9 +121,9 @@ export default Vue.extend({
         },
         groupedTaxonomies() {
             return _.groupBy(this.$store.state.document.annotationTaxonomies.image,
-                             function(taxo) {
-                                 return taxo.typology && taxo.typology.name
-                             });
+                function(taxo) {
+                    return taxo.typology && taxo.typology.name
+                });
         }
     },
     watch: {
@@ -101,7 +141,7 @@ export default Vue.extend({
     },
     mounted: function() {
         this.$parent.zoom.register(
-            this.$el.querySelector('#source-zoom-container'),
+            this.$el.querySelector("#source-zoom-container"),
             {map: true});
 
         this.$refs.img.addEventListener(
@@ -118,7 +158,7 @@ export default Vue.extend({
         async rotate(angle) {
             try {
                 this.isWorking = true;
-                await this.$store.dispatch('parts/rotate', angle);
+                await this.$store.dispatch("parts/rotate", angle);
                 this.loadAnnotations();
             } catch {
                 // oh well
@@ -134,15 +174,15 @@ export default Vue.extend({
 
         getCoordinatesFromW3C(annotation) {
             var coordinates = [];
-            if (annotation.target.selector.type == 'FragmentSelector') {
+            if (annotation.target.selector.type == "FragmentSelector") {
                 // looks like xywh=pixel:133.98072814941406,144.94607543945312,169.30674743652344,141.2919921875"
                 let m = annotation.target.selector.value.match(rectangleRegExp).groups;
                 coordinates = [[parseInt(m.x), parseInt(m.y)],
-                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)],
-                               [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)],
-                               [parseInt(m.x), parseInt(m.y)+parseInt(m.h)]
-                              ];
-            } else if (annotation.target.selector.type == 'SvgSelector') {
+                    [parseInt(m.x)+parseInt(m.w), parseInt(m.y)],
+                    [parseInt(m.x)+parseInt(m.w), parseInt(m.y)+parseInt(m.h)],
+                    [parseInt(m.x), parseInt(m.y)+parseInt(m.h)]
+                ];
+            } else if (annotation.target.selector.type == "SvgSelector") {
                 // looks like <svg><polygon points=\"168.08567810058594,230.20848083496094 422.65484619140625,242.38882446289062 198.5365447998047,361.75616455078125\"></polygon></svg>
                 let matches = annotation.target.selector.value.matchAll(polygonRegExp);
                 for (let m of matches) {
@@ -160,33 +200,33 @@ export default Vue.extend({
         },
 
         makeTaxonomiesStyles() {
-            let style = document.createElement('style');
-            style.type = 'text/css';
-            style.id = 'anno-img-taxonomies-styles';
-            document.getElementsByTagName('head')[0].appendChild(style);
-            this.$store.state.document.annotationTaxonomies.image.forEach(taxo => {
-                let className = 'anno-' + taxo.pk;
+            let style = document.createElement("style");
+            style.type = "text/css";
+            style.id = "anno-img-taxonomies-styles";
+            document.getElementsByTagName("head")[0].appendChild(style);
+            this.$store.state.document.annotationTaxonomies.image.forEach((taxo) => {
+                let className = "anno-" + taxo.pk;
                 style.innerHTML += "\n ." + className + " .a9s-inner {stroke: " + taxo.marker_detail + ";}";
             });
         },
 
         async fetchAnnotations() {
-            await this.$store.dispatch('imageAnnotations/fetch');
+            await this.$store.dispatch("imageAnnotations/fetch");
             if (this.imageLoaded) this.loadAnnotations();
         },
 
         initAnnotations() {
-            if (document.getElementById('anno-taxonomies-styles') == null)
+            if (document.getElementById("anno-taxonomies-styles") == null)
                 this.makeTaxonomiesStyles();
 
             var imgAnnoFormatter = function(annotation) {
-               let anno = annotation.underlying;
-               let className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
-               return className;
+                let anno = annotation.underlying;
+                let className = "anno-" + (anno.taxonomy != undefined && anno.taxonomy.pk || this.currentTaxonomy.pk);
+                return className;
             };
 
             this.anno = new Annotorious({
-                image: document.getElementById('source-panel-img'),
+                image: document.getElementById("source-panel-img"),
                 allowEmpty: true,
                 readOnly: true,
                 widgets: [],
@@ -195,7 +235,7 @@ export default Vue.extend({
             });
 
             // We need to move the annotation editor out of the zoom container
-            const img = document.getElementById('source-panel-img');
+            const img = document.getElementById("source-panel-img");
             this.$refs.content.insertBefore(img.nextElementSibling, null);
 
             // The annotation editor doesn't take zoom into account
@@ -211,31 +251,31 @@ export default Vue.extend({
                 for (let mutation of mutationsList) {
                     if (mutation.addedNodes.length) {
                         this.fixEditorPosition();
-                        this.$store.commit('document/setBlockShortcuts', true);
+                        this.$store.commit("document/setBlockShortcuts", true);
                     } else if (mutation.removedNodes.length) {
-                        this.$store.commit('document/setBlockShortcuts', false);
+                        this.$store.commit("document/setBlockShortcuts", false);
                     }
                 }
             }.bind(this);
             const editorObserver = new MutationObserver(isEditorOpen);
             editorObserver.observe(this.anno._appContainerEl, {childList: true});
 
-            this.anno.on('createAnnotation', async function(annotation) {
+            this.anno.on("createAnnotation", async function(annotation) {
                 annotation.taxonomy = this.currentTaxonomy;
                 let body = this.getAPIAnnotationBody(annotation);
                 body.coordinates = this.getCoordinatesFromW3C(annotation);
-                const newAnno = await this.$store.dispatch('imageAnnotations/create', body);
+                const newAnno = await this.$store.dispatch("imageAnnotations/create", body);
                 annotation.id = newAnno.pk;
             }.bind(this));
 
-            this.anno.on('updateAnnotation', function(annotation) {
+            this.anno.on("updateAnnotation", function(annotation) {
                 let body = this.getAPIAnnotationBody(annotation);
                 body.id = annotation.id;
                 body.coordinates = this.getCoordinatesFromW3C(annotation);
-                this.$store.dispatch('imageAnnotations/update', body);
+                this.$store.dispatch("imageAnnotations/update", body);
             }.bind(this));
 
-            this.anno.on('selectAnnotation', function(annotation) {
+            this.anno.on("selectAnnotation", function(annotation) {
                 if (this.currentTaxonomy != annotation.taxonomy) {
                     this.toggleTaxonomy(annotation.taxonomy);
                     // have to use this trick to make it editable..
@@ -244,8 +284,8 @@ export default Vue.extend({
                 }
             }.bind(this));
 
-            this.anno.on('deleteAnnotation', function(annotation) {
-                this.$store.dispatch('imageAnnotations/delete', annotation.id);
+            this.anno.on("deleteAnnotation", function(annotation) {
+                this.$store.dispatch("imageAnnotations/delete", annotation.id);
             }.bind(this));
         },
 
@@ -253,14 +293,14 @@ export default Vue.extend({
             // coordinates are stored for real size image,
             // we need to pass actual thumbnail coords to annotorious
             const scale = this.$refs.img.naturalWidth / this.$store.state.parts.image.size[0];
-            if (selector.type == 'FragmentSelector') {
+            if (selector.type == "FragmentSelector") {
                 return selector.value.replace(rectangleRegExp, function(match, x, y, w, h) {
-                    return parseInt(x * scale) + ',' +
-                        parseInt(y * scale) + ',' +
-                        parseInt(w * scale) + ',' +
+                    return parseInt(x * scale) + "," +
+                        parseInt(y * scale) + "," +
+                        parseInt(w * scale) + "," +
                         parseInt(h * scale);
                 });
-            } else if (selector.type == 'SvgSelector') {
+            } else if (selector.type == "SvgSelector") {
                 return selector.value.replace(polygonRegExp, function(match, x, y) {
                     return [
                         parseInt(x * scale),
@@ -277,7 +317,7 @@ export default Vue.extend({
                 // ugly way to deep copy so that we don't modify data in the store
                 let data = JSON.parse(JSON.stringify(annotation.as_w3c));
                 data.id = annotation.pk;
-                data.taxonomy = this.$store.state.document.annotationTaxonomies.image.find(e => e.pk == annotation.taxonomy);
+                data.taxonomy = this.$store.state.document.annotationTaxonomies.image.find((e) => e.pk == annotation.taxonomy);
                 data.target.selector.value = this.updateW3CCoordsToUIImg(data.target.selector);
                 this.anno.addAnnotation(data);
             }.bind(this));
@@ -286,7 +326,7 @@ export default Vue.extend({
         fixEditorPosition() {
             const zoom = this.$parent.zoom;
             const editor = this.anno._appContainerEl.firstChild;
-            if (editor) editor.style.transform = 'translate('+(zoom.pos.x)+'px,'+(zoom.pos.y)+'px)';
+            if (editor) editor.style.transform = "translate("+(zoom.pos.x)+"px,"+(zoom.pos.y)+"px)";
         },
 
         setThisAnnoTaxonomy(taxo) {
@@ -295,8 +335,8 @@ export default Vue.extend({
 
         setImgAnnoTaxonomy(taxo) {
             let marker_map = {
-                'Rectangle': 'rect',
-                'Polygon': 'polygon'
+                "Rectangle": "rect",
+                "Polygon": "polygon"
             };
             this.anno.setDrawingTool(marker_map[taxo.marker_type]);
             this.setAnnoTaxonomy(taxo);
