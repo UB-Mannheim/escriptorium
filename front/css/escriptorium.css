@@ -1057,6 +1057,11 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-danger {
     border: 1px solid var(--foreground-alert);
     color: var(--foreground-alert);
 }
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-primary {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--foreground-secondary);
+    color: var(--tag-text);
+}
 
 /* profile */
 main:has(.escr-vue-enabled):not(:has(.escr-page)) .container:not(table) {
