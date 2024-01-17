@@ -6,13 +6,14 @@
 {% block body %}
 <div>
   <h1>{% block title %}{% endblock %}</h1>
-  <form method="get" class="mt-3">
+  <form method="get" id="search-form" class="mt-3">
     <div>{% render_field form.document %}</div>
     <div>{% render_field form.transcription %}</div>
     <div class="form-row">
       <div class="col-auto">{% render_field form.project group=True %}</div>
+      {% block extra_form_field_before %}{% endblock %}
       <div class="col">{% render_field form.query group=True %}</div>
-      {% block extra_form_field %}{% endblock %}
+      {% block extra_form_field_after %}{% endblock %}
       <div class="col-auto">
         <input type="submit" value="{% block action_button %}{% endblock %}" class="btn btn-primary"></input>
       </div>

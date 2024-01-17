@@ -7,7 +7,7 @@ from zipfile import ZipFile
 from django.test import override_settings
 from lxml import etree
 
-from core.models import Block, BlockType, Line, LineTranscription
+from core.models import Block, BlockType, DocumentPart, Line, LineTranscription
 from core.tests.factory import CoreFactoryTestCase
 from escriptorium.test_settings import MEDIA_ROOT
 from imports.export import (
@@ -61,14 +61,17 @@ class ExportersTestCase(CoreFactoryTestCase):
 
         user = self.factory.make_user()
         doc = self.factory.make_document(owner=user)
+        dt = datetime.datetime.fromisoformat("2022-01-01T00:00:00")
         self.part = self.factory.make_part(document=doc)
         self.part_xml_export_filename = f"{os.path.splitext(self.part.filename)[0]}.xml"
         self.part_md_export_filename = (
             f"{os.path.splitext(self.part.filename)[0]}.mARkdown"
         )
         self.part2 = self.factory.make_part(
-            document=doc, image_asset="segmentation/default2.png"
+            document=doc,
+            image_asset="segmentation/default2.png",
         )
+        DocumentPart.objects.update(created_at=dt, updated_at=dt)
         self.part2_xml_export_filename = (
             f"{os.path.splitext(self.part2.filename)[0]}.xml"
         )

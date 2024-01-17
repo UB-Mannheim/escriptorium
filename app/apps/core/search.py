@@ -3,9 +3,12 @@ from urllib.parse import unquote_plus
 
 from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
+from django.db.models import CharField, F, Func, Value
 from elasticsearch import Elasticsearch
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
+WORD_BY_WORD_SEARCH_MODE = "word-by-word"
+REGEX_SEARCH_MODE = "regex"
 
 
 def search_content_es(current_page, page_size, user_id, terms, projects=None, documents=None, transcriptions=None):
@@ -71,10 +74,8 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
     return es_client.search(index=settings.ELASTICSEARCH_COMMON_INDEX, body=body)
 
 
-def search_content_psql(terms, user, highlight_class, project_id=None, document_id=None, transcription_id=None, part_id=None):
+def get_filtered_queryset(user, project_id, document_id, transcription_id, part_id):
     from core.models import Document, LineTranscription, Project
-
-    cleaned_terms = re.escape(terms)
 
     right_filters = {
         "line__document_part__document__project_id__in": Project.objects.for_user_read(user),
@@ -94,15 +95,19 @@ def search_content_psql(terms, user, highlight_class, project_id=None, document_
     if part_id:
         filters["line__document_part_id"] = part_id
 
-    search_query = SearchQuery(cleaned_terms)
+    return LineTranscription.objects.select_related(
+        "transcription",
+        "line",
+        "line__document_part",
+        "line__document_part__document",
+    ).filter(**right_filters, **filters)
+
+
+def search_content_psql_word(terms, user, highlight_class, project_id=None, document_id=None, transcription_id=None, part_id=None):
+    search_query = SearchQuery(terms)
     return (
-        LineTranscription.objects.select_related(
-            "transcription",
-            "line",
-            "line__document_part",
-            "line__document_part__document",
-        )
-        .filter(content__search=search_query, **right_filters, **filters)
+        get_filtered_queryset(user, project_id, document_id, transcription_id, part_id)
+        .filter(content__search=search_query)
         .annotate(
             highlighted_content=SearchHeadline(
                 "content",
@@ -114,8 +119,30 @@ def search_content_psql(terms, user, highlight_class, project_id=None, document_
     )
 
 
-def build_highlighted_replacement_psql(find_terms, replace_term, highlighted_content):
+def search_content_psql_regex(terms, user, highlight_class, project_id=None, document_id=None, transcription_id=None, part_id=None):
+    return (
+        get_filtered_queryset(user, project_id, document_id, transcription_id, part_id)
+        .filter(content__regex=terms)
+        .annotate(
+            highlighted_content=Func(
+                F("content"),
+                Value(r"(%s)" % terms),
+                Value(r'<strong class="%s">\1</strong>' % highlight_class),
+                Value("g"),
+                function="REGEXP_REPLACE",
+                output_field=CharField(),
+            )
+        )
+    )
+
+
+def build_highlighted_replacement_psql(mode, find_terms, replace_term, highlighted_content):
     if not replace_term:
         return None
 
-    return re.sub(find_terms, replace_term, highlighted_content, flags=re.IGNORECASE).replace("text-danger", "text-success")
+    extra = {}
+    if mode == WORD_BY_WORD_SEARCH_MODE:
+        replace_term = replace_term.replace('\\', r'\\')
+        extra = {"flags": re.IGNORECASE}
+
+    return re.sub(r'<strong class="text-danger">%s</strong>' % find_terms, r'<strong class="text-success">%s</strong>' % replace_term, highlighted_content, **extra)
