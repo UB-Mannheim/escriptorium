@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Page, Paginator
-from django.db import transaction
+from django.db import DataError, transaction
 from django.db.models import Count, Q
 from django.http import (
     Http404,
@@ -63,7 +63,7 @@ from core.models import (
     OcrModelRight,
     Project,
 )
-from core.search import build_highlighted_replacement_psql
+from core.search import WORD_BY_WORD_SEARCH_MODE, build_highlighted_replacement_psql
 from core.tasks import replace_line_transcriptions_text
 from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
 from imports.serializers import OntologyImportSerializer
@@ -286,7 +286,7 @@ class FindAndReplace(BaseSearch):
             for value, factor in zip(line_box, scale_factors)
         ]
 
-    def convert_lt_object_to_template(self, find_terms, replace_term, lt_object, thumbnails):
+    def convert_lt_object_to_template(self, mode, find_terms, replace_term, lt_object, thumbnails):
         if lt_object.line.document_part_id not in thumbnails:
             try:
                 thumbnail_url, thumbnail_width, thumbnail_height, scale_factors = self.get_part_image_thumbnail(lt_object.line.document_part.image)
@@ -303,7 +303,7 @@ class FindAndReplace(BaseSearch):
             'object': lt_object,
             'context_before': None,
             'context_after': None,
-            'replacement_preview': build_highlighted_replacement_psql(find_terms, replace_term, lt_object.highlighted_content),
+            'replacement_preview': build_highlighted_replacement_psql(mode, find_terms, replace_term, lt_object.highlighted_content),
             'score': 100,
             'img_url': thumbnails[lt_object.line.document_part_id]['url'],
             'img_w': thumbnails[lt_object.line.document_part_id]['width'],
@@ -312,21 +312,32 @@ class FindAndReplace(BaseSearch):
             'larger': larger,
         }, thumbnails
 
+    def get_mandatory_params(self):
+        return self.form.cleaned_data.get('mode', WORD_BY_WORD_SEARCH_MODE), self.form.cleaned_data['query'], self.form.cleaned_data['replacement']
+
     def get_and_format_results(self, page=None, paginate_by=None):
         results = self.form.search()
-        find_terms = '|'.join(self.form.cleaned_data['query'].split(' '))
-        replace_term = self.form.cleaned_data['replacement']
+        mode, find_terms, replace_term = self.get_mandatory_params()
+        if mode == WORD_BY_WORD_SEARCH_MODE:
+            find_terms = '|'.join(find_terms.split(' '))
+
+        try:
+            results = list(results)
+        except DataError as e:
+            self.form.add_error(None, f'Something went wrong while searching for results - {e}')
+            return [], None
 
         thumbnails = {}
         template_results = []
         for lt_object in results:
-            template_result, thumbnails = self.convert_lt_object_to_template(find_terms, replace_term, lt_object, thumbnails)
+            template_result, thumbnails = self.convert_lt_object_to_template(mode, find_terms, replace_term, lt_object, thumbnails)
             template_results.append(template_result)
 
         return template_results, None
 
     def get_filters(self):
         return {
+            'mode': self.request.GET.get('mode'),
             'project': self.request.GET.get('project'),
             'document': self.request.GET.get('document'),
             'transcription': self.request.GET.get('transcription'),
@@ -341,10 +352,12 @@ class FindAndReplace(BaseSearch):
         if not form.is_valid():
             return self.form_invalid(form)
 
+        mode, find_terms, replace_term = self.get_mandatory_params()
         filters = self.get_filters()
         replace_line_transcriptions_text.delay(
-            form.cleaned_data['query'],
-            form.cleaned_data['replacement'],
+            mode,
+            find_terms,
+            replace_term,
             project_pk=filters['project'],
             document_pk=filters['document'],
             transcription_pk=filters['transcription'],

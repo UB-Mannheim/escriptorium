@@ -631,18 +631,24 @@ const actions = {
      * state, plus ontology category and sorting params from ontology Vuex store.
      */
     async fetchDocumentOntology({ commit, state, rootState }) {
-        const { data } = await retrieveDocumentOntology({
-            documentId: state.id,
-            category: rootState.ontology.category,
-            sortField: rootState.ontology.sortState?.field,
-            sortDirection: rootState.ontology.sortState?.direction,
-        });
-        if (data?.results) {
-            commit("ontology/setOntology", data.results, { root: true });
+        // TODO: Remove this check once regions and lines ontology
+        // endpoints have been written.
+        if (!["regions", "lines"].includes(rootState.ontology.category)) {
+            const { data } = await retrieveDocumentOntology({
+                documentId: state.id,
+                category: rootState.ontology.category,
+                sortField: rootState.ontology.sortState?.field,
+                sortDirection: rootState.ontology.sortState?.direction,
+            });
+            if (data?.results) {
+                commit("ontology/setOntology", data.results, { root: true });
+            } else {
+                throw new Error(
+                    `Unable to retrieve ${rootState.ontology.category} ontology`,
+                );
+            }
         } else {
-            throw new Error(
-                `Unable to retrieve ${rootState.ontology.category} ontology`,
-            );
+            commit("ontology/setOntology", [], { root: true });
         }
     },
     async handleImportDone({ commit, dispatch }) {

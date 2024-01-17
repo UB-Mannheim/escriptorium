@@ -110,7 +110,6 @@ Text.args = {
     color: "text",
 };
 
-
 export const Disabled = Template.bind({});
 Disabled.args = {
     label: "Button",

@@ -62,13 +62,13 @@ const actions = {
      * Show a named tooltip on a form
      */
     showTooltip({ commit }, { form, tooltip }) {
-        commit("setTooltipShown", { form, tooltip, shown: true })
+        commit("setTooltipShown", { form, tooltip, shown: true });
     },
     /**
      * Hide a named tooltip on a form
      */
     hideTooltip({ commit }, { form, tooltip }) {
-        commit("setTooltipShown", { form, tooltip, shown: false })
+        commit("setTooltipShown", { form, tooltip, shown: false });
     },
 };
 

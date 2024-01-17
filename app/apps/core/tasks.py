@@ -19,7 +19,13 @@ from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPE
 from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
 from pytorch_lightning.callbacks import Callback
 
-from core.search import build_highlighted_replacement_psql, search_content_psql
+from core.search import (
+    REGEX_SEARCH_MODE,
+    WORD_BY_WORD_SEARCH_MODE,
+    build_highlighted_replacement_psql,
+    search_content_psql_regex,
+    search_content_psql_word,
+)
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
@@ -745,7 +751,7 @@ def align(
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)
 def replace_line_transcriptions_text(
-    task, find_terms, replace_term, project_pk=None, document_pk=None, transcription_pk=None, part_pk=None, user_pk=None, **kwargs
+    task, mode, find_terms, replace_term, project_pk=None, document_pk=None, transcription_pk=None, part_pk=None, user_pk=None, **kwargs
 ):
     LineTranscription = apps.get_model('core', 'LineTranscription')
 
@@ -757,15 +763,22 @@ def replace_line_transcriptions_text(
     user.notify(_('Your replacements are being applied...'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-running', level='info')
 
     # Find line transcriptions to update
-    search_results = search_content_psql(
+    search_method = search_content_psql_word
+    if mode == REGEX_SEARCH_MODE:
+        search_method = search_content_psql_regex
+
+    search_results = search_method(
         find_terms,
         user,
-        '',
+        'text-danger',
         project_id=project_pk,
         document_id=document_pk,
         transcription_id=transcription_pk,
         part_id=part_pk,
     )
+
+    if mode == WORD_BY_WORD_SEARCH_MODE:
+        find_terms = '|'.join(find_terms.split(' '))
 
     # Apply the replacement on the found line transcriptions
     total = search_results.count()
@@ -775,7 +788,7 @@ def replace_line_transcriptions_text(
         try:
             report.append(f'Applying the replacement on the transcription from the line {result.line}', logger_fct=logger.info)
             # Replace on the highlighted content and then remove the highlighting tags
-            result.content = strip_tags(build_highlighted_replacement_psql(find_terms, replace_term, result.highlighted_content))
+            result.content = strip_tags(build_highlighted_replacement_psql(mode, find_terms, replace_term, result.highlighted_content))
         except Exception as e:
             errors += 1
             report.append(f'Failed to apply the replacement on the transcription from the line {result.line}: {e}', logger_fct=logger.error)

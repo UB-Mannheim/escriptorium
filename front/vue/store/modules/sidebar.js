@@ -11,7 +11,7 @@ const actions = {
         if (key === state.selectedAction) {
             commit("setSelectedAction", "");
         } else {
-            commit("setSelectedAction", key)
+            commit("setSelectedAction", key);
         }
     },
     /**
@@ -19,14 +19,14 @@ const actions = {
      */
     closeSidebar({ commit }) {
         commit("setSelectedAction", "");
-    }
+    },
 };
 
 const mutations = {
     setSelectedAction(state, action) {
         state.selectedAction = action;
-    }
-}
+    },
+};
 
 export default {
     namespaced: true,

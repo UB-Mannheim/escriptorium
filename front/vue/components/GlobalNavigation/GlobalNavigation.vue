@@ -7,14 +7,43 @@
             >
                 <EscrLogo />
             </a>
-            <a
+            <VMenu
                 v-if="isAuthenticated && !searchDisabled"
-                href="/search/"
-                aria-label="global search"
-                class="escr-global-search"
+                placement="right-start"
+                theme="vertical-menu"
+                :triggers="['click']"
             >
-                <SearchLargeIcon />
-            </a>
+                <button
+                    v-if="isAuthenticated && !searchDisabled"
+                    href="/search/"
+                    aria-label="global search"
+                    class="escr-global-search"
+                    :class="{
+                        'escr-globalnav-icon': true,
+                        'escr-globalnav-icon-active': ['/search/', '/find-replace/'].some(
+                            (page) => location.href.endsWith(page)
+                        ),
+                    }"
+                >
+                    <SearchLargeIcon />
+                    <span>Search</span>
+                </button>
+
+                <template #popper>
+                    <ul class="escr-vertical-menu escr-tasks-menu">
+                        <li>
+                            <a href="/search/">
+                                <span>Search</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/find-replace/">
+                                <span>Find and Replace</span>
+                            </a>
+                        </li>
+                    </ul>
+                </template>
+            </VMenu>
             <a
                 v-if="isAuthenticated"
                 href="/projects/"

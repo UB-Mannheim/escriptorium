@@ -1,35 +1,118 @@
 <template>
-    <div class="modal fade" id="tagsModal" ref="tagsModal" tabindex="-1" role="dialog" aria-labelledby="tagsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-md" id="modaltag" role="document">
+    <div
+        id="tagsModal"
+        ref="tagsModal"
+        class="modal fade"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="tagsModalLabel"
+        aria-hidden="true"
+    >
+        <div
+            id="modaltag"
+            class="modal-dialog modal-dialog-centered modal-md"
+            role="document"
+        >
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Assign tags</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title">
+                        Assign tags
+                    </h5>
+                    <button
+                        type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close"
+                    >
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form method="post" action="#" id="formTag" ref="formTag">
+                <form
+                    id="formTag"
+                    ref="formTag"
+                    method="post"
+                    action="#"
+                >
                     <div class="modal-body">
-                        <input type="hidden" class="form-control" id="project-id" name="project" v-model="projectIdComputed">
-                        <input type="hidden" class="form-control" id="document-id" name="document" v-model="documentId">
-                        <input type="hidden" class="form-control" id="valuesSelected" name="selectedtags" v-model="valuesSelected">
-                        <input type="hidden" class="form-control" id="checkboxlist" name="checkboxlist" v-model="checkboxListData">
+                        <input
+                            id="project-id"
+                            v-model="projectIdComputed"
+                            type="hidden"
+                            class="form-control"
+                            name="project"
+                        >
+                        <input
+                            id="document-id"
+                            v-model="documentId"
+                            type="hidden"
+                            class="form-control"
+                            name="document"
+                        >
+                        <input
+                            id="valuesSelected"
+                            v-model="valuesSelected"
+                            type="hidden"
+                            class="form-control"
+                            name="selectedtags"
+                        >
+                        <input
+                            id="checkboxlist"
+                            v-model="checkboxListData"
+                            type="hidden"
+                            class="form-control"
+                            name="checkboxlist"
+                        >
                         <div class="form-row form-group justify-content-center">
-                            <select name="tags" id="mselect-tags" ref="mselectTags" v-model="valuesSelected" data-live-search="true" data-live-search-placeholder="filters" multiple>
-                                <option v-for="tag in tags" :key="tag.pk" v-bind:value="tag.pk" >
+                            <select
+                                id="mselect-tags"
+                                ref="mselectTags"
+                                v-model="valuesSelected"
+                                name="tags"
+                                data-live-search="true"
+                                data-live-search-placeholder="filters"
+                                multiple
+                            >
+                                <option
+                                    v-for="tag in tags"
+                                    :key="tag.pk"
+                                    :value="tag.pk"
+                                >
                                     {{ tag.name }}
                                 </option>
                             </select>
                         </div>
                         <div class="form-row form-group justify-content-center">
-                            <input type="text" class="form-control w-50" ref="nameNewTag" name="name" placeholder="Type to add a tag">
-                            <input type="color" class="form-control" name="color" style="width: 10%;" v-model="rColor">
+                            <input
+                                ref="nameNewTag"
+                                type="text"
+                                class="form-control w-50"
+                                name="name"
+                                placeholder="Type to add a tag"
+                            >
+                            <input
+                                v-model="rColor"
+                                type="color"
+                                class="form-control"
+                                name="color"
+                                style="width: 10%;"
+                            >
                         </div>
-
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" v-on:click="updateTagList">Save</button>
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal"
+                        >
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            @click="updateTagList"
+                        >
+                            Save
+                        </button>
                     </div>
                 </form>
             </div>
@@ -40,7 +123,7 @@
 <script>
 export default {
     props: [
-        'projectId',
+        "projectId",
     ],
     data () {
         return {
@@ -66,25 +149,45 @@ export default {
             return this.$store.state.documentslist.tagColor;
         }
     },
+    watch: {
+        "$store.state.documentslist.checkedTags": {
+            handler: function(nv) {
+                this.$nextTick(function(){
+                    this.$store.commit("documentslist/setTagColor");
+                    this.valuesSelected = nv;
+                    $(this.$refs.mselectTags).selectpicker("val", nv);
+                    $(this.$refs.mselectTags).selectpicker("refresh");
+                    this.rColor = this.randomColor;
+                });
+            },
+            immediate: true
+        },
+        "$store.state.documentslist.mapTags": {
+            handler: function(nv) {
+                this.tags = nv;
+            },
+            immediate: true
+        }
+    },
     mounted(){
         $(this.$refs.tagsModal).on("hide.bs.modal", this.hideModal);
         $(this.$refs.tagsModal).on("show.bs.modal", this.populateItems);
-        this.$store.commit('documentslist/setTagColor');
+        this.$store.commit("documentslist/setTagColor");
     },
     updated: function(){
         this.$nextTick(function(){
             $(this.$refs.mselectTags).selectpicker({
                 liveSearch: true,
-                size: 'auto',
-                width: 'auto'
+                size: "auto",
+                width: "auto"
             });
         });
     },
     methods: {
         async updateTagList(){
             let json_data = this.buildJSONData($(this.$refs.formTag)[0].elements);
-            await this.$store.dispatch('documentslist/updateDocumentTags', json_data);
-            $(this.$refs.tagsModal).modal('hide');
+            await this.$store.dispatch("documentslist/updateDocumentTags", json_data);
+            $(this.$refs.tagsModal).modal("hide");
         },
         buildJSONData(el){
             let element = {};
@@ -100,31 +203,11 @@ export default {
             return element;
         },
         hideModal(){
-            this.$store.commit('documentslist/setDocumentID', null);
+            this.$store.commit("documentslist/setDocumentID", null);
         },
         populateItems(){
-            this.$store.commit('documentslist/setProjectID', this.projectId);
+            this.$store.commit("documentslist/setProjectID", this.projectId);
             $(this.$refs.nameNewTag).val("");
-        }
-    },
-    watch: {
-        "$store.state.documentslist.checkedTags": {
-            handler: function(nv) {
-                this.$nextTick(function(){
-                    this.$store.commit('documentslist/setTagColor');
-                    this.valuesSelected = nv;
-                    $(this.$refs.mselectTags).selectpicker('val', nv);
-                    $(this.$refs.mselectTags).selectpicker('refresh');
-                    this.rColor = this.randomColor;
-                });
-            },
-            immediate: true
-        },
-        "$store.state.documentslist.mapTags": {
-            handler: function(nv) {
-                this.tags = nv;
-            },
-            immediate: true
         }
     }
 }

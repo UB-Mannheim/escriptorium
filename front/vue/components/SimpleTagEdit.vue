@@ -1,22 +1,26 @@
 <template>
-    <button type="button"
-            v-on:click="launchModal"
-            data-toggle="modal"
-            data-target="#tagsModal"
-            title="Assign tags"
-            class="nav-item btn btn-sm btn-primary"><i class="fas fa fa-tags"></i></button>
+    <button
+        type="button"
+        data-toggle="modal"
+        data-target="#tagsModal"
+        title="Assign tags"
+        class="nav-item btn btn-sm btn-primary"
+        @click="launchModal"
+    >
+        <i class="fas fa fa-tags" />
+    </button>
 </template>
 
 <script>
 
 export default {
     props: [
-        'documentId',
+        "documentId",
     ],
     methods: {
         async launchModal(event){
-            this.$store.commit('documentslist/setDocumentID', this.documentId);
-            await this.$store.dispatch('documentslist/getUnlinkTagByDocument', this.documentId);
+            this.$store.commit("documentslist/setDocumentID", this.documentId);
+            await this.$store.dispatch("documentslist/getUnlinkTagByDocument", this.documentId);
         },
     }
 }
