@@ -1048,6 +1048,9 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     PROCESS_NAME = 'recognition training'
 
     model_name = forms.CharField(required=False)
+    if False:
+        queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+        logger.info(f'TRACE: {queryset=}')
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                    required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
