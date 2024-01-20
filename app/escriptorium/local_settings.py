@@ -93,6 +93,7 @@ USE_CELERY = True
 # CELERY_TASK_ALWAYS_EAGER = True
 
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
+LOGGING['handlers']['console_info']['level'] = 'DEBUG'
 
 CUSTOM_HOME = True
 
