@@ -744,6 +744,9 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 
 class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
+    logger.info('TRACE: TranscribeForm')
+    # queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+    # logger.info(f'TRACE: {queryset=}')
     model = forms.ModelChoiceField(
         queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE))
     transcription = forms.ModelChoiceField(
@@ -1064,7 +1067,11 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
 
 
 class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
+    logger.info('TRACE: RecTrainForm')
     model_name = forms.CharField(required=False)
+    if False:
+        queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE)
+        logger.info(f'TRACE: {queryset=}')
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                    required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
