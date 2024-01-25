@@ -91,6 +91,28 @@
                         </template>
                     </VDropdown>
 
+                    <!-- Regions mode -->
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <ToggleButton
+                            color="secondary"
+                            :checked="isRegionsModeEnabled"
+                            :disabled="disabled"
+                            :on-change="toggleRegions"
+                        >
+                            <template #button-icon>
+                                <RegionsIcon />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Show regions
+                        </template>
+                    </VDropdown>
+
                     <i
                         id="save-notif"
                         ref="saveNotif"
@@ -168,6 +190,7 @@
             </div>
         </div>
         <div
+            v-if="legacyModeEnabled || !isRegionsModeEnabled"
             ref="contentContainer"
             :class="'content-container ' + readDirection"
         >
@@ -184,7 +207,7 @@
                 id="diplomatic-lines"
                 ref="diplomaticLines"
                 :class="{ [mainTextDirection]: true, sortmode: isSortModeEnabled }"
-                contenteditable="true"
+                :contenteditable="!isSortModeEnabled"
                 autocomplete="off"
                 @keydown="onKeyPress"
                 @keyup="constrainLineNumber"
@@ -196,6 +219,59 @@
                 @mouseleave="hideOverlay"
             />
         </div>
+        <div
+            v-else
+            ref="contentContainer"
+            :class="{
+                'content-container': true,
+                'escr-diplo-container': true,
+                [readDirection]: true,
+                sortmode: isSortModeEnabled
+            } "
+        >
+            <details
+                v-for="(region, idx) in linesByRegion.filter(
+                    (r) => r.lines && r.lines.some((l) => l.currentTrans)
+                )"
+                :key="`diplo-region-${region.pk}-${idx}`"
+                open
+            >
+                <summary
+                    :draggable="isSortModeEnabled"
+                    @dragstart="(e) => handleRegionDragStart(e, region)"
+                    @dragend="handleRegionDragEnd"
+                >
+                    <span>{{ region.type || "Region (no type)" }}</span>
+                    <ChevronDownIcon aria-hidden="true" />
+                </summary>
+                <ol
+                    class="escr-lines-region"
+                    autocomplete="off"
+                    :dir="mainTextDirection.includes('rl') ? 'rtl' : 'ltr'"
+                    :class="{ sortmode: isSortModeEnabled }"
+                    :start="region.lines[0].order + 1"
+                    :contenteditable="!isSortModeEnabled"
+                    @focus="startEdit"
+                    @blur="stopEdit"
+                    @keydown="onKeyPress"
+                    @paste="onPaste"
+                    @input="changed"
+                >
+                    <GroupedLine
+                        v-for="line in region.lines"
+                        ref="diploLineComponents"
+                        :key="`diplo-line-${line.pk}`"
+                        :class="{selected: selectedLines.includes(line.pk)}"
+                        :line="line"
+                        :move-lines="moveLines"
+                        :ratio="ratio"
+                        :select-line="(evt) => handleSelectLine(evt, line.pk)"
+                        :selected-lines="selectedLines"
+                        :sort-mode="isSortModeEnabled"
+                    />
+                </ol>
+            </details>
+        </div>
     </div>
 </template>
 
@@ -206,20 +282,26 @@ import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
 import { debounce, groupBy } from "lodash";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import ChevronDownIcon from "./Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
+import GroupedLine from "../components/GroupedLine/GroupedLine.vue";
+import RegionsIcon from "./Icons/RegionsIcon/RegionsIcon.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
 import "../components/Common/Annotation.css";
 
 export default {
     components: {
+        ChevronDownIcon,
         DiploLine,
         EditorToolbar,
+        GroupedLine,
         KeyboardIcon,
         LineOrderingIcon,
+        RegionsIcon,
         ToggleButton,
         TranscriptionDropdown,
         VDropdown,
@@ -231,7 +313,10 @@ export default {
             createdLines : [],
             movedLines:[],
             isVKEnabled: false,
+            isRegionsModeEnabled: false,
             isSortModeEnabled: false,
+            selectedLines: [],
+            selectionAnchor: null,
         };
     },
     computed: {
@@ -253,7 +338,40 @@ export default {
                 this.annotationTaxonomies.text,
                 (taxo) => taxo.typology && taxo.typology.name,
             );
-        }
+        },
+        /**
+         * New UI: Group lines into arrays by region, then return regions in order.
+         */
+        linesByRegion() {
+            const regions = [];
+            let lastRegion = null;
+            // loop through all lines until we encounter the beginning of each region
+            this.allLines.forEach((line, i) => {
+                if (lastRegion && lastRegion.pk !== line.region) {
+                    // new region: push the last one to the array and set lastRegion to null
+                    regions.push(lastRegion);
+                    lastRegion = null;
+                }
+                if (!lastRegion) {
+                    // find new region in allRegions and create its structure
+                    let foundRegion = this.allRegions.find((r) => r.pk === line.region);
+                    lastRegion = {
+                        lines: [line],
+                        pk: line.region,
+                        type: foundRegion?.type,
+                        typology: foundRegion?.typology,
+                    };
+                } else {
+                    // still the same region: add the line to it
+                    lastRegion["lines"].push(line);
+                }
+                if (i === this.allLines.length - 1) {
+                    // at the end of the list of all lines, push the last region to the array
+                    regions.push(lastRegion);
+                }
+            });
+            return regions;
+        },
     },
     watch: {
         partsLoaded(isLoaded) {
@@ -269,6 +387,32 @@ export default {
             if (isLoaded === true) {
                 this.loadAnnotations();
             }
+        },
+        isRegionsModeEnabled(isEnabled) {
+            // reset selected lines on regions mode toggle
+            this.selectedLines = [];
+            // recreate Sortable component for old non-regions sort mode
+            if (!isEnabled) {
+                this.$nextTick(() => {
+                    const vm = this;
+                    this.sortable = window.Sortable.create(this.$refs.diplomaticLines, {
+                        disabled: !this.isSortModeEnabled,
+                        multiDrag: true,
+                        multiDragKey : "Meta",
+                        selectedClass: "selected",
+                        ghostClass: "ghost",
+                        dragClass: "info",
+                        animation: 150,
+                        onEnd: ((evt) => {
+                            vm.onDraggingEnd(evt);
+                        }).bind(this),
+                    });
+                });
+            }
+        },
+        isSortModeEnabled() {
+            // reset selected lines on sort mode toggle
+            this.selectedLines = [];
         }
     },
 
@@ -323,6 +467,7 @@ export default {
             updateTextAnnotation: "update",
         }),
         ...mapMutations("document", ["setBlockShortcuts"]),
+        ...mapMutations("lines", ["setIsDragging"]),
 
         empty() {
             this.anno.clearAnnotations();
@@ -504,18 +649,19 @@ export default {
         },
 
         toggleSort() {
-            if (this.$refs.diplomaticLines.contentEditable === "true") {
-                this.$refs.diplomaticLines.contentEditable = "false";
-                this.sortable.option("disabled", false);
-                this.isSortModeEnabled = true;
+            this.isSortModeEnabled = !this.isSortModeEnabled;
+            if (this.isSortModeEnabled) {
+                if (this.$refs.diplomaticLines)
+                    this.$refs.diplomaticLines.contentEditable = "false";
                 if (this.$refs.sortMode) {
                     this.$refs.sortMode.classList.remove("btn-info");
                     this.$refs.sortMode.classList.add("btn-success");
                 }
+                this.sortable.option("disabled", false);
             } else {
-                this.$refs.diplomaticLines.contentEditable = "true";
+                if (this.$refs.diplomaticLines)
+                    this.$refs.diplomaticLines.contentEditable = "true";
                 this.sortable.option("disabled", true);
-                this.isSortModeEnabled = false;
                 if (this.$refs.sortMode) {
                     this.$refs.sortMode.classList.remove("btn-success");
                     this.$refs.sortMode.classList.add("btn-info");
@@ -562,46 +708,83 @@ export default {
         },
 
         appendLine(pos) {
-            let div = document.createElement("div");
-            div.appendChild(document.createElement("br"));
-            if (pos === undefined) {
-                this.$refs.diplomaticLines.appendChild(div);
+            if (this.isRegionsModeEnabled) {
+                // regions mode: just append an LI element to the final region
+                const li = document.createElement("li");
+                const lastRegion = this.$refs.contentContainer.querySelector(
+                    "details:last-of-type ol"
+                );
+                lastRegion.appendChild(li);
             } else {
-                this.$refs.diplomaticLines.insertBefore(div, pos);
+                // non-regions mode: append a DIV element to the end of the list (or position)
+                let div = document.createElement("div");
+                div.appendChild(document.createElement("br"));
+                if (pos === undefined) {
+                    this.$refs.diplomaticLines.appendChild(div);
+                } else {
+                    this.$refs.diplomaticLines.insertBefore(div, pos);
+                }
+                if (this.isVKEnabled) {
+                    this.activateVK(div);
+                }
+                return div;
             }
-            if (this.isVKEnabled) {
-                this.activateVK(div);
-            }
-            return div;
         },
 
         constrainLineNumber() {
             // Removes any rogue 'br' added by the browser
             const diploLines = this.$refs.diplomaticLines;
-            diploLines.querySelectorAll(":scope > br").forEach((n) => n.remove());
-
-            // Add lines until we have enough of them
-            while (diploLines.childElementCount < this.allLines.length) {
-                this.appendLine();
+            const linesContainer = this.$refs.contentContainer;
+            let regions = [];
+            if (this.isRegionsModeEnabled) {
+                regions = linesContainer.querySelectorAll("ol");
+                regions.forEach((region) => region.querySelectorAll(":scope > br").forEach(
+                    (n) => n.remove(),
+                ));
+            } else {
+                diploLines.querySelectorAll(":scope > br").forEach((n) => n.remove());
             }
 
-            // need to add/remove danger indicators
-            for (let i=0; i<diploLines.childElementCount; i++) {
-                let line = diploLines.querySelector(`div:nth-child(${parseInt(i+1)})`);
-                if (line === null) {
-                    line.remove();
-                    continue;
+            if (this.isRegionsModeEnabled) {
+                // Add lines until we have enough of them
+                let lineCount = linesContainer.querySelectorAll("li").length;
+                for (let newLines = 0; newLines < this.allLines.length - lineCount; newLines++) {
+                    this.appendLine();
                 }
-
-                if (i<this.allLines.length) {
-                    line.classList.remove("alert-danger");
-                    line.setAttribute("title", "");
-                } else if (i>=this.allLines.length) {
-                    if (line.textContent == "") { // just remove empty lines
-                        line.remove();
-                    } else  {
+                // need to add/remove danger indicators
+                for (let i = 0; i < linesContainer.querySelectorAll("li").length; i++) {
+                    let line = linesContainer.querySelectorAll("li")[i];
+                    if (i < this.allLines.length) {
+                        line.classList.remove("alert-danger");
+                        line.setAttribute("title", "");
+                    } else if (i >= this.allLines.length) {
                         line.classList.add("alert-danger");
-                        line.setAttribute("title", "More lines than there is in the segmentation!");
+                        line.setAttribute("title", "Line not present in segmentation");
+                    }
+                }
+            } else {
+                // Add lines until we have enough of them
+                while (diploLines.childElementCount < this.allLines.length) {
+                    this.appendLine();
+                }
+                // need to add/remove danger indicators
+                for (let i = 0; i < diploLines.childElementCount; i++) {
+                    let line = diploLines.querySelector(`div:nth-child(${parseInt(i+1)})`);
+                    if (line === null) {
+                        line.remove();
+                        continue;
+                    }
+
+                    if (i < this.allLines.length) {
+                        line.classList.remove("alert-danger");
+                        line.setAttribute("title", "");
+                    } else if (i >= this.allLines.length) {
+                        if (line.textContent == "") { // just remove empty lines
+                            line.remove();
+                        } else  {
+                            line.classList.add("alert-danger");
+                            line.setAttribute("title", "Line not present in segmentation");
+                        }
                     }
                 }
             }
@@ -612,7 +795,7 @@ export default {
         },
 
         stopEdit() {
-            if (this.isEditorOpen !== true) {
+            if (this.isRegionsModeEnabled || !this.isEditorOpen) {
                 this.setBlockShortcuts(false);
             }
             this.constrainLineNumber();
@@ -646,10 +829,12 @@ export default {
             this.moveLines();
         },
 
-        async moveLines() {
-            if(this.movedLines.length != 0) {
+        async moveLines(lines) {
+            let movedLines = this.movedLines;
+            if (lines && lines.length) movedLines = lines;
+            if(movedLines.length != 0) {
                 try {
-                    await this.$store.dispatch("lines/move", this.movedLines)
+                    await this.$store.dispatch("lines/move", movedLines)
                     this.movedLines = []
                 } catch (err) {
                     console.log("couldn't recalculate order of line", err)
@@ -678,15 +863,24 @@ export default {
         },
 
         focusNextLine(sel, line) {
-            if (line.nextSibling) {
+            let nextLine = line.nextSibling;
+            if (
+                this.isRegionsModeEnabled &&
+                !nextLine &&
+                line.parentNode.parentNode.nextSibling
+            ) {
+                const details = line.parentNode.parentNode.nextSibling;
+                nextLine = details.querySelector("li");
+            }
+            if (nextLine) {
                 let range = document.createRange();
-                range.setStart(line.nextSibling, 0);
+                range.setStart(nextLine, 0);
                 range.collapse(false);
                 sel.removeAllRanges();
                 const container = this.$refs.contentContainer;
 
-                if (line.nextSibling.offsetTop > (container.scrollTop + container.clientHeight)) {
-                    line.nextSibling.scrollIntoView(false);
+                if (nextLine.offsetTop > (container.scrollTop + container.clientHeight)) {
+                    nextLine.scrollIntoView(false);
                 }
 
                 sel.addRange(range);
@@ -694,14 +888,23 @@ export default {
         },
 
         focusPreviousLine(sel, line) {
-            if (line.previousSibling) {
+            let prevLine = line.previousSibling;
+            if (
+                this.isRegionsModeEnabled &&
+                !prevLine &&
+                line.parentNode.parentNode.previousSibling
+            ) {
+                const details = line.parentNode.parentNode.previousSibling;
+                prevLine = details.querySelector("li:last-of-type");
+            }
+            if (prevLine) {
                 let range = document.createRange();
-                range.setStart(line.previousSibling, 0);
+                range.setStart(prevLine, 0);
                 sel.removeAllRanges();
 
-                if (line.previousSibling.offsetTop - this.$refs.contentContainer.offsetTop <
+                if (prevLine.offsetTop - this.$refs.contentContainer.offsetTop <
                     this.$refs.contentContainer.scrollTop) {
-                    line.previousSibling.scrollIntoView(true);
+                    prevLine.scrollIntoView(true);
                 }
 
                 sel.addRange(range);
@@ -712,17 +915,19 @@ export default {
             // arrows  needed to avoid skipping empty lines
             if (ev.key == "ArrowDown" && !ev.shiftKey) {
                 let sel = window.getSelection();
-                let div = sel.anchorNode.nodeType === Node.TEXT_NODE
+                let line = sel.anchorNode.nodeType === Node.TEXT_NODE
                     ? sel.anchorNode.parentElement
                     : sel.anchorNode;
-                this.focusNextLine(sel, div);
+                if (line.nodeName === "SPAN") line = line.parentNode;
+                this.focusNextLine(sel, line);
                 ev.preventDefault();
             } else if (ev.key == "ArrowUp" && !ev.shiftKey) {
                 let sel = window.getSelection();
-                let div = sel.anchorNode.nodeType === Node.TEXT_NODE
+                let line = sel.anchorNode.nodeType === Node.TEXT_NODE
                     ? sel.anchorNode.parentElement
                     : sel.anchorNode;
-                this.focusPreviousLine(sel, div);
+                if (line.nodeName === "SPAN") line = line.parentNode;
+                this.focusPreviousLine(sel, line);
                 ev.preventDefault();
             }
         },
@@ -1015,7 +1220,46 @@ export default {
                 });
             }
         },
-
+        /**
+         * New UI: Turn regions mode on and off.
+         */
+        toggleRegions() {
+            this.isRegionsModeEnabled = !this.isRegionsModeEnabled;
+        },
+        /**
+         * New UI: Handle multiselect of lines in regions mode.
+         */
+        handleSelectLine(evt, linePk) {
+            if (evt.shiftKey && this.selectionAnchor) {
+                // shift + click = select contiguous
+                const originOrder = this.allLines.find(
+                    (l) => l.pk === this.selectionAnchor
+                ).order;
+                const destOrder = this.allLines.find((l) => l.pk === linePk).order;
+                if (originOrder > destOrder) {
+                    this.selectedLines = this.allLines.filter(
+                        (l) => l.order >= destOrder && l.order <= originOrder
+                    ).map((l) => l.pk);
+                } else {
+                    this.selectedLines = this.allLines.filter(
+                        (l) => l.order <= destOrder && l.order >= originOrder
+                    ).map((l) => l.pk);
+                }
+            } else if (evt.metaKey) {
+                // ctrl/cmd + click = add to selection or deselect
+                if (this.selectedLines.includes(linePk)) {
+                    this.selectedLines.splice(this.selectedLines.indexOf(linePk), 1);
+                    this.selectionAnchor = null;
+                } else {
+                    this.selectedLines.push(linePk);
+                    this.selectionAnchor = linePk;
+                }
+            } else {
+                // click = new selection with just the one line
+                this.selectedLines = [linePk];
+                this.selectionAnchor = linePk;
+            }
+        },
         /**
          * New UI: ensure max height of DiploPanel takes height of annotation toolbar
          * into account.
@@ -1025,6 +1269,25 @@ export default {
             const newHeight = `calc(100vh - 180px - ${toolbarHeight}px)`;
             this.$refs.contentContainer.style.setProperty("min-height", newHeight);
             this.$refs.contentContainer.style.setProperty("max-height", newHeight);
+        },
+        /**
+         * New UI: On region drag, set the dragged region's lines selected and set dragging state
+         * on the store.
+         */
+        handleRegionDragStart(e, region) {
+            this.selectedLines = region.lines.map((l) => l.pk);
+            e.dataTransfer.setData("draggingPk", this.selectedLines[0]);
+            setTimeout(() => {
+                this.setIsDragging(true);
+            }, 100);
+        },
+        /**
+         * New UI: On drag end, turn off dragging state on the store.
+         */
+        handleRegionDragEnd() {
+            setTimeout(() => {
+                this.setIsDragging(false);
+            }, 100);
         },
     }
 }

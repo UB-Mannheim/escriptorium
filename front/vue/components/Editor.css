@@ -112,30 +112,36 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
     cursor: pointer;
     border-bottom: 1px solid var(--line-ordering-border);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected,
+.escr-diplo-container.sortmode li.selected .draggable-overlay {
     cursor: grab;
     background-color: var(--line-ordering-selected);
     border-left-color: var(--secondary);
 }
-.escr-editor-tabcontent .rtl #diplomatic-lines.sortmode div.selected {
+.escr-editor-tabcontent .rtl #diplomatic-lines.sortmode div.selected,
+.escr-diplo-container.sortmode.rtl li.selected .draggable-overlay {
     border-left-color: transparent;
     border-right-color: var(--secondary);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected + div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected + div.selected,
+.escr-diplo-container.sortmode li.selected + li.selected .draggable-overlay {
     border-bottom-color: var(--line-ordering-border);
     border-top-color: transparent;
 }
 .escr-editor-tabcontent
     #diplomatic-lines.sortmode
-    div:not(.selected):has(+ div.selected) {
+    div:not(.selected):has(+ div.selected),
+.escr-diplo-container.sortmode li:not(.selected):has(+ li.selected .draggable-overlay) {
     border-bottom-color: transparent;
 }
 .escr-editor-tabcontent
     #diplomatic-lines.sortmode
     div:not(.selected)
-    + div.selected {
+    + div.selected,
+.escr-diplo-container.sortmode li:not(.selected) + li.selected .draggable-overlay {
     border-top-color: var(--line-ordering-border);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div[draggable="true"] {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div[draggable="true"],
+.escr-diplo-container.sortmode li[draggable="true"] {
     cursor: grabbing;
 }
