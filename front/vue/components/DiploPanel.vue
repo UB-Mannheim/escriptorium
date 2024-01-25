@@ -146,11 +146,12 @@
             </template>
         </EditorToolbar>
         <div
-            v-if="!legacyModeEnabled && (
-                annotationTaxonomies &&
-                annotationTaxonomies.text &&
-                annotationTaxonomies.text.length > 0
-            )"
+            v-if="!legacyModeEnabled &&
+                !isRegionsModeEnabled && (
+                    annotationTaxonomies &&
+                    annotationTaxonomies.text &&
+                    annotationTaxonomies.text.length > 0
+                )"
             ref="annotationToolbar"
             class="escr-annotation-toolbar"
         >
@@ -388,12 +389,13 @@ export default {
                 this.loadAnnotations();
             }
         },
-        isRegionsModeEnabled(isEnabled) {
+        async isRegionsModeEnabled(isEnabled) {
             // reset selected lines on regions mode toggle
             this.selectedLines = [];
-            // recreate Sortable component for old non-regions sort mode
             if (!isEnabled) {
-                this.$nextTick(() => {
+                // recreate Sortable component for old (non-regions) sort mode
+                // also reinitialize recogito and annotations
+                this.$nextTick(async () => {
                     const vm = this;
                     this.sortable = window.Sortable.create(this.$refs.diplomaticLines, {
                         disabled: !this.isSortModeEnabled,
@@ -407,8 +409,15 @@ export default {
                             vm.onDraggingEnd(evt);
                         }).bind(this),
                     });
+                    // reset recogito app container element
+                    this.anno._appContainerEl = this.$refs.contentContainer;
+                    await this.loadAnnotations();
+                    this.anno.readOnly = false;
                 });
+            } else {
+                this.anno.readOnly = true;
             }
+            this.$nextTick(() => this.recalculatePanelHeight())
         },
         isSortModeEnabled() {
             // reset selected lines on sort mode toggle
@@ -549,7 +558,9 @@ export default {
                 data.taxonomy = this.annotationTaxonomies.text.find(
                     (e) => e.pk == annotation.taxonomy
                 );
-                this.anno.addAnnotation(data);
+                if (!this.isRegionsModeEnabled) {
+                    this.anno.addAnnotation(data);
+                }
             }.bind(this));
         },
         textAnnoFormatter (annotation) {
@@ -852,13 +863,15 @@ export default {
             var updated = this.bulkUpdate();
             this.bulkCreate();
             updated.then(function(value) {
-                if (value > 0) this.recalculateAnnotationSelectors();
+                if (value > 0 && !this.isRegionsModeEnabled) this.recalculateAnnotationSelectors();
             }.bind(this));
 
-            // check if some annotations were completely deleted by the erasing the text
-            for (let annotation of this.allTextAnnotations) {
-                let annoEl = document.querySelector('.r6o-annotation[data-id="'+annotation.pk+'"]');
-                if (annoEl === null) this.deleteTextAnnotation(annotation.pk);
+            if (!this.isRegionsModeEnabled) {
+                // check if some annotations were completely deleted by the erasing the text
+                for (let annotation of this.allTextAnnotations) {
+                    let annoEl = document.querySelector('.r6o-annotation[data-id="'+annotation.pk+'"]');
+                    if (annoEl === null) this.deleteTextAnnotation(annotation.pk);
+                }
             }
         },
 
@@ -1265,10 +1278,13 @@ export default {
          * into account.
          */
         recalculatePanelHeight() {
-            const toolbarHeight = this.$refs.annotationToolbar.clientHeight;
-            const newHeight = `calc(100vh - 180px - ${toolbarHeight}px)`;
-            this.$refs.contentContainer.style.setProperty("min-height", newHeight);
-            this.$refs.contentContainer.style.setProperty("max-height", newHeight);
+            let newHeight = "100vh - 180px";
+            if (this.$refs.annotationToolbar) {
+                const toolbarHeight = this.$refs.annotationToolbar.clientHeight;
+                newHeight = `100vh - 180px - ${toolbarHeight}px`;
+            }
+            this.$refs.contentContainer.style.setProperty("min-height", `calc(${newHeight})`);
+            this.$refs.contentContainer.style.setProperty("max-height", `calc(${newHeight})`);
         },
         /**
          * New UI: On region drag, set the dragged region's lines selected and set dragging state
