@@ -47,6 +47,8 @@ div.escr-editor-tabcontent .col.panel .js-wheelzoom-container {
 /* DiploPanel height override */
 div.escr-editor-tabcontent #diplo-panel .content-container {
     overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 180px);
 }
 div.escr-editor-tabcontent #diplo-panel #save-notif {
     color: var(--primary);
@@ -81,6 +83,7 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 /* DiploPanel sort mode toggle */
 .sort-mode-toggle.escr-toggle-button {
     margin-left: 16px;
+    margin-right: 4px;
 }
 
 /* DiploPanel line and cursor styling */
@@ -95,6 +98,8 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 }
 .escr-editor-tabcontent #diplomatic-lines div:before {
     border: none;
+    font-family: "Noto Sans";
+    font-size: 14px;
     font-weight: 600;
     margin-right: 1rem;
     margin-left: 0;

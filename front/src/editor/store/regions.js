@@ -22,7 +22,9 @@ export const mutations = {
     update(state, { pk, region }) {
         let index = state.all.findIndex((r) => r.pk == pk);
         if (index < 0) return;
-        state.all[index].box = region.box;
+        const clone = structuredClone(state.all);
+        clone[index] = region;
+        state.all = [...clone];
     },
     remove(state, pk) {
         let index = state.all.findIndex((r) => r.pk == pk);
@@ -74,7 +76,10 @@ export const actions = {
             data,
         );
         let updatedRegion = resp.data;
-        commit("update", { pk: region.pk, region: updatedRegion });
+        commit("update", {
+            pk: region.pk,
+            region: { ...updatedRegion, type: type?.name },
+        });
 
         return updatedRegion;
     },

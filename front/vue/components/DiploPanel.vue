@@ -169,7 +169,7 @@
         </div>
         <div
             ref="contentContainer"
-            :class="'content-container ' + $store.state.document.readDirection"
+            :class="'content-container ' + readDirection"
         >
             <DiploLine
                 v-for="line in allLines"
@@ -204,6 +204,7 @@ import { nextTick } from "vue";
 import { mapActions, mapMutations, mapState } from "vuex";
 import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
+import { debounce, groupBy } from "lodash";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
 import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
@@ -236,18 +237,19 @@ export default {
     computed: {
         ...mapState({
             allLines: (state) => state.lines.all,
+            allRegions: (state) => state.regions.all,
             allTextAnnotations: (state) => state.textAnnotations.all,
             annotationTaxonomies: (state) => state.document.annotationTaxonomies,
             documentId: (state) => state.document.id,
             enabledVKs: (state) => state.document.enabledVKs,
             mainTextDirection: (state) => state.document.mainTextDirection,
+            readDirection: (state) => state.document.readDirection,
             selectedTranscription: (state) => state.transcriptions.selectedTranscription,
             transcriptionsLoaded: (state) => state.transcriptions.transcriptionsLoaded,
             partsLoaded: (state) => state.parts.loaded,
         }),
         groupedTaxonomies() {
-            // eslint-disable-next-line no-undef
-            return _.groupBy(
+            return groupBy(
                 this.annotationTaxonomies.text,
                 (taxo) => taxo.typology && taxo.typology.name,
             );
@@ -273,8 +275,7 @@ export default {
     created() {
         // vue.js quirck, have to dynamically create the event handler
         // call save every 10 seconds after last change
-        // eslint-disable-next-line no-undef
-        this.debouncedSave = _.debounce(function() {
+        this.debouncedSave = debounce(function() {
             this.save();
         }.bind(this), 10000);
     },
@@ -291,9 +292,8 @@ export default {
             window.addEventListener("resize", this.recalculatePanelHeight);
         }
         nextTick(function() {
-            var vm = this ;
-            // eslint-disable-next-line no-undef
-            vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
+            var vm = this;
+            vm.sortable = window.Sortable.create(this.$refs.diplomaticLines, {
                 disabled: true,
                 multiDrag: true,
                 multiDragKey : "Meta",
@@ -326,7 +326,7 @@ export default {
 
         empty() {
             this.anno.clearAnnotations();
-            while (this.$refs.diplomaticLines.hasChildNodes()) {
+            while (this.$refs.diplomaticLines && this.$refs.diplomaticLines.hasChildNodes()) {
                 this.$refs.diplomaticLines.removeChild(this.$refs.diplomaticLines.lastChild);
             }
         },
@@ -370,13 +370,22 @@ export default {
                 let className = "anno-" + taxo.pk;
                 if (taxo.marker_type == "Background Color") {
                     let rgb = hexToRGB(taxo.marker_detail);
-                    style.innerHTML += "\n." + className + " {background-color: rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+", 0.2); border-bottom: 2px solid "+taxo.marker_detail+";}";
+                    style.innerHTML += `\n.${className}{
+                        background-color: rgba(${rgb[0]},${rgb[1]},${rgb[2]}, 0.2);
+                        border-bottom: 2px solid ${taxo.marker_detail};
+                    }`;
                 } else if (taxo.marker_type == "Text Color") {
-                    style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; color: " + taxo.marker_detail + ";}";
+                    style.innerHTML += `\n.${className}{
+                        background-color: white; border-bottom: none; color: ${taxo.marker_detail};
+                    }`;
                 } else if (taxo.marker_type == "Bold") {
-                    style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-weight: bold;}";
+                    style.innerHTML += `\n.${className}{
+                        background-color: white; border-bottom: none; font-weight: bold;
+                    }`;
                 } else if (taxo.marker_type == "Italic") {
-                    style.innerHTML += "\n." + className + " {background-color: white; border-bottom: none; font-style: italic;}";
+                    style.innerHTML += `\n.${className} {
+                        background-color: white; border-bottom: none; font-style: italic;
+                    }`;
                 }
             });
         },
@@ -905,18 +914,18 @@ export default {
             /*
                parse all lines if the content changed, add it to updated lines
              */
-            for(let i=0; i<this.$refs.diploLineComponents.length; i++) {
-                let currentLine = this.$refs.diploLineComponents[i];
+            this.$refs.diploLineComponents.forEach((currentLine) => {
                 let content = currentLine.getEl().textContent;
                 if(currentLine.line.currentTrans.content != content){
                     currentLine.line.currentTrans.content = content;
                     if(currentLine.line.currentTrans.pk) {
                         this.addToUpdatedLines(currentLine.line.currentTrans);
                     } else {
+                        // NOTE: possibly never reached?
                         this.createdLines.push(currentLine.line.currentTrans);
                     }
                 }
-            }
+            });
         },
 
         addToUpdatedLines(lt) {
@@ -987,8 +996,7 @@ export default {
             if (this.isVKEnabled) {
                 vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
-                // eslint-disable-next-line no-undef
-                userProfile.set("VK-enabled", vks);
+                window.userProfile.set("VK-enabled", vks);
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.activateVK(c);
                 });
@@ -1001,8 +1009,7 @@ export default {
                 // Make sure we save changes made before we remove the VK
                 vks.splice(vks.indexOf(this.documentId), 1);
                 this.$store.commit("document/setEnabledVKs", vks);
-                // eslint-disable-next-line no-undef
-                userProfile.set("VK-enabled", vks);
+                window.userProfile.set("VK-enabled", vks);
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.deactivateVK(c);
                 });
